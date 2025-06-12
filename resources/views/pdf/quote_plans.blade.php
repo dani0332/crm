@@ -363,7 +363,8 @@
         .footer-box {
             border-radius: 24px;
             border: 2px solid #CF9E3C;
-            /*padding: 6px 10px;*/
+            padding: 6px 10px;
+            text-align: left;
 
         }
 
@@ -591,7 +592,7 @@
 <div style="page-break-after: always;"></div>
 
 {{-- Second Page --}}
-<img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
+<img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image" />
 <div style="page-break-after: always;"></div>
 
 {{-- PDF Page Header --}}
@@ -955,13 +956,13 @@
 
 {{-- Second Last Page --}}
 <div style="page-break-after: always;"></div>
-<img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
+<img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}"
      class="full-page-image" />
 
 
 {{-- Last Page --}}
 <div style="page-break-after: always;"></div>
-<img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
+<img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}"
      class="full-page-image" />
 </body>
 </html>

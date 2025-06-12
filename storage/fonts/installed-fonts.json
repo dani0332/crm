@@ -37,8 +37,8 @@
         "300": "\/var\/www\/storage\/fonts\/prompt_300_45116809930de15cab87ad5cde4a922d",
         "normal": "\/var\/www\/storage\/fonts\/prompt_normal_e3f188baead447247bd77ce0abe9d8a5",
         "500": "\/var\/www\/storage\/fonts\/prompt_500_cfce2555afc7d6fb39dd8331ab85613d",
-        "600": "prompt_600_1a623c9a3c7d56df975e0d074acf579d",
-        "bold": "\/var\/www\/storage\/fonts\/prompt_bold_dea4c5c1a128f1422de6563c30cffca3"
+        "600": "\/var\/www\/storage\/fonts\/prompt_600_1a623c9a3c7d56df975e0d074acf579d",
+        "bold": "prompt_bold_dea4c5c1a128f1422de6563c30cffca3"
     },
     "raleway": {
         "300": "\/var\/www\/storage\/fonts\/raleway_300_ad9d3f8761ee766fd1da75743110796e",
