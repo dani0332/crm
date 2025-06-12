@@ -1,9 +1,11 @@
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 import SavingsAllocationConfigTemplate from './Savings/SavingsAllocationConfigTemplate.vue';
+import ErrorDisplay from './components/ErrorDisplay.vue';
+import { useErrorHandling } from './composables/useErrorHandling.js';
+import { useAllocationForm } from './composables/useAllocationForm.js';
 
 const props = defineProps({
   quoteTypes: Array,
@@ -13,232 +15,39 @@ const props = defineProps({
 
 const { isRequired } = useRules();
 
-const isQuoteTypeLoading = ref(false);
-const isSubmitting = ref(false);
+// Initialize error handling
+const errorHandling = useErrorHandling();
+const {
+  hasErrors,
+  errorTitle,
+  hasValidationErrors,
+  groupedErrors,
+  allErrors,
+  getErrorIcon,
+  getErrorTitle,
+} = errorHandling;
 
-const successMessage = ref('');
-const errorMessage = ref('');
+// Initialize form logic
+const formLogic = useAllocationForm(props, errorHandling);
+const {
+  isQuoteTypeLoading,
+  isSubmitting,
+  successMessage,
+  templateData,
+  advisorOptions,
+  nationalityOptions,
+  currentConfiguration,
+  savingsTemplateRef,
+  form,
+  quoteTypeOptions,
+  initializeOptions,
+  onTemplateDataUpdate,
+  onSubmit,
+} = formLogic;
 
-const templateData = ref({});
-
-const advisorOptions = ref([]);
-const nationalityOptions = ref([]);
-const currentConfiguration = ref(null);
-
-const savingsTemplateRef = ref(null);
-
-const getInitialFormData = () => {
-  return {
-    quote_type: '',
-    quote_type_id: '',
-  };
-};
-
-const form = useForm(getInitialFormData());
-
-const quoteTypeOptions = computed(() => {
-  return props.quoteTypes.map(type => ({
-    value: type.id,
-    label: type.text,
-  }));
+onMounted(() => {
+  initializeOptions();
 });
-
-const initializeOptions = () => {
-  nationalityOptions.value = props.nationalities.map(nationality => ({
-    value: nationality.id,
-    label: nationality.text,
-  }));
-};
-
-const getQuoteType = quoteTypeId => {
-  return props.quoteTypes.find(type => type.id === quoteTypeId);
-};
-
-const fetchAdvisors = async quoteType => {
-  advisorOptions.value = [];
-  try {
-    const response = await axios.post('/advisors/by-quote-type', {
-      quote_type: quoteType.code,
-    });
-
-    if (
-      response.data.success &&
-      response.data.data &&
-      response.data.data.length > 0
-    ) {
-      advisorOptions.value = response.data.data.map(advisor => ({
-        value: advisor.id,
-        label: advisor.name,
-      }));
-    }
-  } catch (error) {
-    console.error('Error fetching advisors:', error);
-  }
-};
-
-const fetchConfiguration = async quoteType => {
-  currentConfiguration.value = null;
-  try {
-    const response = await axios.post(
-      route('admin.allocation-configuration.fetch'),
-      {
-        quote_type: quoteType.code,
-      },
-    );
-
-    if (response.data.success && response.data.data) {
-      currentConfiguration.value = response.data.data;
-    }
-  } catch (error) {
-    console.error('Error fetching configuration:', error);
-  }
-};
-
-const handleQuoteTypeChange = async quoteType => {
-  form.quote_type = quoteType.code;
-  form.quote_type_id = quoteType.id;
-
-  templateData.value = {};
-  advisorOptions.value = [];
-  currentConfiguration.value = null;
-
-  isQuoteTypeLoading.value = true;
-
-  try {
-    await Promise.all([
-      fetchAdvisors(quoteType),
-      fetchConfiguration(quoteType),
-    ]);
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-  } catch (error) {
-    console.error('Error handling quote type change:', error);
-  } finally {
-    isQuoteTypeLoading.value = false;
-  }
-};
-
-watch(
-  () => form.quote_type_id,
-  (newQuoteTypeId, oldQuoteTypeId) => {
-    if (newQuoteTypeId && newQuoteTypeId !== oldQuoteTypeId) {
-      const newQuoteType = getQuoteType(newQuoteTypeId);
-
-      if (!newQuoteType) {
-        return;
-      }
-
-      handleQuoteTypeChange(newQuoteType);
-    }
-  },
-);
-
-const onTemplateDataUpdate = data => {
-  templateData.value = data;
-};
-
-initializeOptions();
-
-const scrollToValidationErrors = () => {
-  nextTick(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  });
-};
-
-async function onSubmit(isValid) {
-  if (isValid) {
-    if (
-      form.quote_type === props.quoteTypeCodeEnum.SAVINGS &&
-      savingsTemplateRef.value
-    ) {
-      if (advisorOptions.value.length === 0) {
-        errorMessage.value =
-          'No advisors available for this quote type. Please ensure advisors are configured.';
-        isSubmitting.value = false;
-        scrollToValidationErrors();
-        return;
-      }
-
-      const templateValidation = savingsTemplateRef.value.validate();
-
-      if (!templateValidation.isValid) {
-        isSubmitting.value = false;
-        scrollToValidationErrors();
-        return;
-      }
-    }
-
-    isSubmitting.value = true;
-    errorMessage.value = '';
-    successMessage.value = '';
-
-    const submitData = {
-      ...form.data(),
-      ...templateData.value,
-    };
-
-    try {
-      let response;
-
-      if (currentConfiguration.value) {
-        // Update existing configuration
-        response = await axios.put(
-          route(
-            'admin.allocation-configuration.update',
-            currentConfiguration.value.id,
-          ),
-          submitData,
-        );
-      } else {
-        // Create new configuration
-        response = await axios.post(
-          route('admin.allocation-configuration.store'),
-          submitData,
-        );
-      }
-
-      if (response.data.success) {
-        successMessage.value = response.data.message;
-        currentConfiguration.value = response.data.data;
-        form.clearErrors();
-
-        // Clear template validation errors on success
-        if (savingsTemplateRef.value) {
-          savingsTemplateRef.value.clearValidationErrors();
-        }
-      } else {
-        errorMessage.value =
-          response.data.message ||
-          'An error occurred while saving the configuration.';
-        scrollToValidationErrors();
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-
-      if (error.response && error.response.status === 422) {
-        const validationErrors = error.response.data.errors || {};
-        Object.keys(validationErrors).forEach(key => {
-          form.setError(key, validationErrors[key][0]);
-        });
-        errorMessage.value =
-          'Please correct the validation errors and try again.';
-      } else if (error.response && error.response.data.message) {
-        errorMessage.value = error.response.data.message;
-      } else {
-        errorMessage.value = 'An unexpected error occurred. Please try again.';
-      }
-
-      scrollToValidationErrors();
-    } finally {
-      isSubmitting.value = false;
-    }
-  } else {
-    scrollToValidationErrors();
-  }
-}
 </script>
 
 <template>
@@ -249,6 +58,8 @@ async function onSubmit(isValid) {
   </h2>
 
   <div class="mx-auto sm:px-6 lg:px-8">
+    <!-- Unified Error Display - Moved to Top -->
+
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 bg-white border-b border-gray-200">
@@ -315,6 +126,43 @@ async function onSubmit(isValid) {
         </div>
       </div>
 
+      <ErrorDisplay
+        :has-errors="hasErrors"
+        :error-title="errorTitle"
+        :has-validation-errors="hasValidationErrors"
+        :grouped-errors="groupedErrors"
+        :all-errors="allErrors"
+        :get-error-icon="getErrorIcon"
+        :get-error-title="getErrorTitle"
+      />
+
+      <!-- Success Message -->
+      <div
+        v-if="successMessage"
+        class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4"
+      >
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-5 w-5 text-green-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium text-green-800">
+              {{ successMessage }}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div class="mt-4" v-if="form.quote_type && !isQuoteTypeLoading">
         <div v-if="form.quote_type === quoteTypeCodeEnum.SAVINGS">
           <SavingsAllocationConfigTemplate
@@ -371,20 +219,6 @@ async function onSubmit(isValid) {
             </div>
           </div>
         </div>
-      </div>
-
-      <div
-        v-if="successMessage"
-        class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 mt-4"
-      >
-        <p class="text-sm text-green-700">{{ successMessage }}</p>
-      </div>
-
-      <div
-        v-if="errorMessage"
-        class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 mt-4"
-      >
-        <p class="text-sm text-red-700">{{ errorMessage }}</p>
       </div>
 
       <div
