@@ -393,15 +393,23 @@ async function onSubmit(isValid) {
       >
         <div class="p-6 bg-white border-b border-gray-200">
           <div class="flex justify-end gap-3 mb-4">
-            <x-button
-              size="md"
-              color="emerald"
-              type="submit"
-              :loading="isSubmitting"
-            >
-              {{ currentConfiguration ? 'Update' : 'Save' }}
-              {{ form.quote_type }} Configuration
-            </x-button>
+            <x-tooltip>
+              <x-button
+                size="md"
+                color="emerald"
+                type="submit"
+                :loading="isSubmitting"
+              >
+                {{ currentConfiguration ? 'Update' : 'Save' }}
+                {{ form.quote_type }} Configuration
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  Click to {{ currentConfiguration ? 'update' : 'save' }} and
+                  apply all configuration changes.
+                </span>
+              </template>
+            </x-tooltip>
           </div>
         </div>
       </div>
