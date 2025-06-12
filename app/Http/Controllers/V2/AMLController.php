@@ -384,13 +384,13 @@ class AMLController extends Controller
             }
 
             // Wrap insured processing and related operations in a single transaction
-            [$shouldApplicableForScreening, $insured, $entityId] = DB::transaction(function () use ($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening, $processbyUser, $isAutomation, $systemUser, $quoteRequestId) {
-                [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening);
-                app(AMLService::class)->updatePAIdPersonalQuote([
+            [$shouldApplicableForScreening, $insured, $entityId] = DB::transaction(function () use ($AMLCheckRequest, $quoteType, $updateQuote, $getLastScreening, $processbyUser, $isAutomation, $systemUser, $quoteRequestId) {
+                [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteType->id, $updateQuote, $getLastScreening);
+                app(AMLService::class)->updatePAId([
                     'isAutomation' => $isAutomation,
                     'systemUser' => $systemUser,
                     'processbyUser' => $processbyUser,
-                    'quoteTypeId' => $quoteTypeId,
+                    'quoteType' => $quoteType,
                     'quoteRequestId' => $quoteRequestId,
                 ], $updateQuote);
 

@@ -1441,12 +1441,12 @@ class AMLService
         }
     }
 
-    public function updatePAIdPersonalQuote($payload, $updateQuote)
+    public function updatePAId($payload, $updateQuote)
     {
         // Update PA ID if user has appropriate roles
         if (auth()->user()?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]) || ($payload['isAutomation'] && $payload['systemUser']?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]))) {
-            if (checkPersonalQuotes($payload['quoteTypeId'])) {
-                AMLService::updatePaIdForPersonalQuotes($payload['quoteTypeId'], $payload['quoteRequestId'], true, ['pa_id' => $payload['processbyUser']->id]);
+            if (checkPersonalQuotes(ucwords($payload['quoteType']->code))) {
+                AMLService::updatePaIdForPersonalQuotes((string) $payload['quoteType']->id, $payload['quoteRequestId'], true, ['pa_id' => $payload['processbyUser']->id]);
             } else {
                 $updateQuote->pa_id = $payload['processbyUser']->id;
                 $updateQuote->save();
