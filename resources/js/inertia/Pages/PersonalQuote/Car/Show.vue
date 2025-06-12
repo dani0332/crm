@@ -1338,7 +1338,8 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
-const enabledCustomerType = page.props.record.customer_type ?? page.props.customerTypeEnum.Individual;
+const enabledCustomerType =
+  page.props.record.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.record.customer_id,
   customer_type: enabledCustomerType,
@@ -2211,8 +2212,7 @@ const isCommercialVehicle = computed(() => {
             <div class="text-sm">
               <dl
                 v-if="
-                  enabledCustomerType ===
-                  page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >

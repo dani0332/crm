@@ -54,7 +54,7 @@ const passingDecisions = [
 const complianceComponent = reactive({
   insured_id: props.insured?.id ?? null,
   customer_id: props.customerId ?? null,
-  pep: props.insured?.insured_kyc?.pep ?? null, 
+  pep: props.insured?.insured_kyc?.pep ?? null,
   financial_sanctions: props.insured?.insured_kyc?.financial_sanctions ?? null,
   dual_nationality: props.insured?.insured_kyc?.dual_nationality ?? null,
   in_sanction_list: props.insured?.insured_kyc?.in_sanction_list ?? null,

@@ -659,7 +659,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
-            
             <div class="text-sm">
               <dl
                 v-if="

@@ -477,7 +477,8 @@ const memberForm = useForm({
   relation_code: null,
   quote_type: page.props.modelType,
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type ?? page.props.customerTypeEnum.Individual,
+  customer_type:
+    page.props.quote.customer_type ?? page.props.customerTypeEnum.Individual,
   customer_member_id: null,
   quoteId: page.props.quote.uuid,
 });
@@ -1488,7 +1489,8 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
-const enabledCustomerType = page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual;
+const enabledCustomerType =
+  page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: enabledCustomerType,

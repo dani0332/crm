@@ -574,7 +574,8 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
-const enabledCustomerType = page.props.quote.customer_type ?? page.props.customerTypeEnum.Entity;
+const enabledCustomerType =
+  page.props.quote.customer_type ?? page.props.customerTypeEnum.Entity;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: enabledCustomerType,
