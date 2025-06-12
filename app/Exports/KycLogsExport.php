@@ -71,8 +71,7 @@ class KycLogsExport implements CsvExportableInterface
         $chunkSize = 1000;
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
-            // Use the same processing logic as AMLService::processAMLDataFromQuery
-            // but apply it to this specific chunk
+            // Use the EXACT same processing logic as AMLService::processAMLDataFromQuery
             $quoteTypeGroup = $chunk->groupBy('quote_type_id');
 
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
@@ -92,21 +91,25 @@ class KycLogsExport implements CsvExportableInterface
                 foreach ($quoteRequestData as $quoteRequest) {
                     $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
 
-                    // Process each record in this chunk exactly like AMLService does
+                    // Use the same approach as AMLService - modify the chunk items
                     foreach ($amlData as $index => $value) {
-                        // Create a copy to avoid modifying the original
-                        $recordData = (array) $value;
-                        $recordData['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
-                        $recordData['aml_status'] = $quoteRequest->aml_status;
+                        // Find the original index in the chunk and modify it
+                        $originalIndex = $chunk->search(function ($item) use ($value) {
+                            return $item->id === $value->id;
+                        });
 
-                        // Convert back to object for the map function
-                        $record = (object) $recordData;
-
-                        // Write directly to stream
-                        fputcsv($stream, $this->map($record));
-                        $totalRecords++;
+                        if ($originalIndex !== false) {
+                            $chunk[$originalIndex]->uuid = $quoteType->shortCode().$quoteRequest->uuid;
+                            $chunk[$originalIndex]->aml_status = $quoteRequest->aml_status;
+                        }
                     }
                 }
+            }
+
+            // Now process ALL records in the chunk (just like the download path does)
+            foreach ($chunk as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
             }
         });
 
