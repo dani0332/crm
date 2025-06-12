@@ -21,14 +21,34 @@ export function useErrorHandling() {
   };
 
   /**
-   * Determines error type based on field key
+   * Determines error type based on field key or error context
    */
-  const getErrorType = fieldKey => {
-    if (fieldKey.includes('lumpsum')) return 'lumpsum';
-    if (fieldKey.includes('regular')) return 'regular';
-    if (fieldKey.includes('advisor')) return 'advisor';
-    if (fieldKey.includes('nationality')) return 'nationality';
-    if (fieldKey.includes('bracket')) return 'bracket';
+  const getErrorType = (fieldKey, message = '') => {
+    if (fieldKey) {
+      if (fieldKey.includes('lumpsum')) return 'lumpsum';
+      if (fieldKey.includes('regular')) return 'regular';
+      if (fieldKey.includes('advisor')) return 'advisor';
+      if (fieldKey.includes('nationality')) return 'nationality';
+      if (fieldKey.includes('bracket')) return 'bracket';
+    }
+
+    // For client errors, try to determine type from message content
+    if (message) {
+      const lowerMessage = message.toLowerCase();
+      if (lowerMessage.includes('lumpsum') || lowerMessage.includes('lump sum'))
+        return 'lumpsum';
+      if (lowerMessage.includes('regular') || lowerMessage.includes('monthly'))
+        return 'regular';
+      if (lowerMessage.includes('advisor')) return 'advisor';
+      if (
+        lowerMessage.includes('nationality') ||
+        lowerMessage.includes('nation')
+      )
+        return 'nationality';
+      if (lowerMessage.includes('bracket') || lowerMessage.includes('range'))
+        return 'bracket';
+    }
+
     return 'general';
   };
 
@@ -73,12 +93,15 @@ export function useErrorHandling() {
   /**
    * Adds a frontend error to the error list
    */
-  const addError = (message, type = 'general', field = null) => {
+  const addError = (message, type = null, field = null) => {
+    // Auto-determine type if not provided
+    const errorType = type || getErrorType(field, message);
+
     // Check if this exact error already exists
     const existingError = allErrors.value.find(
       error =>
         error.message === message &&
-        error.type === type &&
+        error.type === errorType &&
         error.field === field,
     );
 
@@ -86,7 +109,7 @@ export function useErrorHandling() {
       allErrors.value.push({
         field: field,
         message: message,
-        type: type,
+        type: errorType,
         source: 'frontend',
       });
 
@@ -112,7 +135,7 @@ export function useErrorHandling() {
         allErrors.value.push({
           field: key,
           message: message,
-          type: getErrorType(key),
+          type: getErrorType(key, message),
           source: 'backend',
         });
       });
@@ -127,12 +150,14 @@ export function useErrorHandling() {
   /**
    * Processes generic errors (non-validation)
    */
-  const processGenericError = (message, type = 'general') => {
+  const processGenericError = (message, type = null) => {
+    const errorType = type || getErrorType(null, message);
+
     allErrors.value = [
       {
         field: null,
         message: message,
-        type: type,
+        type: errorType,
         source: 'frontend',
       },
     ];
@@ -180,7 +205,7 @@ export function useErrorHandling() {
     if (hasValidationErrors.value) {
       return 'Please review and correct the validation errors below:';
     }
-    return 'Error';
+    return 'Please review and correct the errors below:';
   });
 
   return {

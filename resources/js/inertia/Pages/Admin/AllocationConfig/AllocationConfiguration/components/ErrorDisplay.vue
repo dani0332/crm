@@ -61,8 +61,8 @@ const props = defineProps({
           {{ errorTitle }}
         </h3>
 
-        <!-- Show grouped errors when we have validation errors -->
-        <div v-if="hasValidationErrors" class="space-y-3">
+        <!-- Unified grouped error display for all error types -->
+        <div class="space-y-3">
           <div
             v-for="(errorGroup, type) in groupedErrors"
             :key="type"
@@ -84,7 +84,7 @@ const props = defineProps({
               >
                 {{ error.message }}
                 <span
-                  v-if="shouldShowFieldName(error.field)"
+                  v-if="error.field && shouldShowFieldName(error.field)"
                   class="text-xs text-red-500 ml-1"
                 >
                   ({{ getReadableFieldName(error.field) }})
@@ -92,27 +92,16 @@ const props = defineProps({
               </li>
             </ul>
           </div>
-          <div class="mt-3 pt-2 border-t border-red-200">
+
+          <!-- Show helpful tip for validation-related errors -->
+          <div
+            v-if="hasValidationErrors"
+            class="mt-3 pt-2 border-t border-red-200"
+          >
             <p class="text-xs text-red-600">
               💡 Tip: Make sure all amount ranges don't overlap, each profile
               has advisors and nationalities selected, and all required fields
               are filled.
-            </p>
-          </div>
-        </div>
-
-        <!-- Show simple list for frontend errors -->
-        <div v-else class="space-y-2">
-          <div
-            v-for="error in allErrors"
-            :key="error.message"
-            class="flex items-start"
-          >
-            <span class="text-lg mr-2 flex-shrink-0">{{
-              getErrorIcon(error.type)
-            }}</span>
-            <p class="text-sm text-red-700 leading-relaxed">
-              {{ error.message }}
             </p>
           </div>
         </div>
