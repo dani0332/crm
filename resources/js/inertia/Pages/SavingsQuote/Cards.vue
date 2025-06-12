@@ -37,7 +37,9 @@ watch(
     quotes.data = page.props.quotes;
     // Reinitialize pages and queries when data changes
     quotes.data.forEach(quote => {
-      quotes.pages[quote.id] = quote.data.leads_list?.current_page ? quote.data.leads_list.current_page + 1 : 2;
+      quotes.pages[quote.id] = quote.data.leads_list?.current_page
+        ? quote.data.leads_list.current_page + 1
+        : 2;
       quotes.queries[quote.id] = quotes.queries[quote.id] || '';
     });
   },
@@ -82,8 +84,6 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
-
 
 const serverOptions = ref({
   page: 1,
@@ -150,7 +150,9 @@ onMounted(() => {
 
   // Initialize pages and queries for each quote status
   quotes.data.forEach(quote => {
-    quotes.pages[quote.id] = quote.data.leads_list?.current_page ? quote.data.leads_list.current_page + 1 : 2;
+    quotes.pages[quote.id] = quote.data.leads_list?.current_page
+      ? quote.data.leads_list.current_page + 1
+      : 2;
     quotes.queries[quote.id] = '';
   });
 
@@ -201,8 +203,6 @@ const validateDateRange = () => {
         <h2 class="text-xl font-semibold">Savings Quotes Cards View</h2>
       </template>
       <template #default>
-
-
         <FiltersButton
           :is-shown="showFilters"
           :filters="filters"

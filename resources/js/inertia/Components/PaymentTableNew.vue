@@ -3023,8 +3023,7 @@ const getPlanName = computed(() => {
   }
 
   if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
-    return props.quoteRequest?.insurance_provider_plan?.text ||
-           'Not Available';
+    return props.quoteRequest?.insurance_provider_plan?.text || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
