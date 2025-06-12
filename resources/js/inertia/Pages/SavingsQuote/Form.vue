@@ -125,7 +125,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.first_name"
           type="text"
-          label="FIRST NAME"
+          label="First Name"
           required
           :rules="[isRequired]"
           class="w-full"
@@ -135,7 +135,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.last_name"
           type="text"
-          label="LAST NAME"
+          label="Last Name"
           required
           maxLength="50"
           :rules="[isRequired]"
@@ -145,7 +145,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.email"
           type="email"
-          label="EMAIL"
+          label="Email"
           required
           :disabled="editMode"
           :rules="[isRequired, isEmail]"
@@ -155,7 +155,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.mobile_no"
           type="tel"
-          label="MOBILE NUMBER"
+          label="Phone Number"
           required
           :disabled="editMode"
           :rules="[isRequired, isMobileNo]"
@@ -168,7 +168,7 @@ function onSubmit(isValid) {
           class="w-full"
           :rules="[isRequired]"
           :max-date="new Date()"
-          label="DATE OF BIRTH"
+          label="Date of Birth"
           format="dd-MM-yyyy"
           required
         />
@@ -179,7 +179,7 @@ function onSubmit(isValid) {
           class="w-full"
           :error="quoteForm.errors.nationality_id"
           :rules="[isRequired]"
-          label="NATIONALITY"
+          label="Nationality"
           filterable
           placeholder="Search by Nationality"
           required
@@ -189,7 +189,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.gender"
           :options="props.genders"
           class="w-full"
-          label="GENDER"
+          label="Gender"
           placeholder="Select Gender"
           required
           :rules="[isRequired]"
@@ -200,7 +200,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.marital_status_id"
           :options="maritalStatuses"
           class="w-full"
-          label="MARITAL STATUS"
+          label="Marital Status"
           placeholder="Select Marital Status"
           required
           :error="quoteForm.errors.marital_status_id"
@@ -214,15 +214,15 @@ function onSubmit(isValid) {
           class="w-full"
           :rules="[isRequired]"
           :error="quoteForm.errors.tenure_id"
-          label="TENURE OF SAVINGS"
+          label="Tenure of savings"
           placeholder="Select Tenure of Savings"
           required
         />
 
         <div class="w-full">
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            HAVE YOU USED ANY NICOTINE-CONTAINING PRODUCTS WITHIN THE PAST 12
-            MONTHS? <span class="text-red-500">*</span>
+            Have you used any nicotine-containing products within the past 12
+            months? <span class="text-red-500">*</span>
           </label>
           <div class="flex gap-12 mt-2">
             <x-form-group
@@ -241,7 +241,7 @@ function onSubmit(isValid) {
           class="w-full"
           :rules="[isRequired]"
           :error="quoteForm.errors.purpose_id"
-          label="PURPOSE OF SAVINGS"
+          label="Purpose of savings"
           placeholder="Select Purpose of Savings"
           required
         />
@@ -253,7 +253,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.currency_id"
-            label="INVESTMENT CURRENCY"
+            label="Currency"
             placeholder="Select Investment Currency"
             required
           />
@@ -263,14 +263,14 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.investment_amount"
-            label="AMOUNT"
+            label="Investment amount"
             required
           />
         </div>
 
         <div class="px-2 w-full">
           <div class="mb-2">
-            <x-field label="Investment Frequency" required>
+            <x-field label="Investment frequency" required>
               <div class="flex gap-12 mt-2">
                 <x-form-group
                   v-model="quoteForm.investment_frequency"
