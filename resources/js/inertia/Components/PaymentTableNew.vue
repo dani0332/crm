@@ -1760,7 +1760,8 @@ const editPaymentModal = async (
     payment?.insurance_provider?.code == 'AXA' &&
     (props.quoteType === quoteTypeCodeEnum.Bike ||
       props.quoteType === quoteTypeCodeEnum.Car ||
-      props.quoteType === quoteTypeCodeEnum.Home)
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel)
   ) {
     capturePaymentValidationInProcess.value = true;
     isTransactionCaptureButtonEnabled.value = false;
