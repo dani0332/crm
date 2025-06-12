@@ -82,7 +82,6 @@ class CommaSeparatedEmails extends Command
                     'email' => $quote['email'],
                 ]);
 
-
                 $additionalContact = DB::table('customer_additional_contact')->insertOrIgnore([
                     'customer_id' => $customer->id,
                     'key' => 'email',
