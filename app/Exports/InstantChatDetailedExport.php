@@ -12,8 +12,13 @@ class InstantChatDetailedExport implements CsvExportableInterface
 
     public function collection(array $requestParams = []): \Illuminate\Support\Collection
     {
-        // Note: InstantAlfredService currently uses request() directly,
-        // so parameters are handled via the request instance
+        // Merge export parameters with the current request to ensure date filters are applied
+        if (! empty($requestParams)) {
+            // Map export parameters to the format expected by InstantAlfredService
+            $mappedParams = $this->mapExportParameters($requestParams);
+            request()->merge($mappedParams);
+        }
+
         return app(InstantAlfredService::class)->generateChatDetailedReport();
     }
 
@@ -80,6 +85,50 @@ class InstantChatDetailedExport implements CsvExportableInterface
 
         // If it's not a BSONDocument, return it as-is (assuming it's already a string or null)
         return $channel ?? 'N/A';
+    }
+
+    /**
+     * Map export parameters to the format expected by InstantAlfredService
+     */
+    private function mapExportParameters(array $requestParams): array
+    {
+        $mappedParams = [];
+
+        // Map date parameters - InstantAlfredService expects 'chat_initiated_at' as an array
+        if (isset($requestParams['created_at_start']) && isset($requestParams['created_at_end'])) {
+            $mappedParams['chat_initiated_at'] = [
+                $requestParams['created_at_start'],
+                $requestParams['created_at_end'],
+            ];
+        }
+
+        // Map other common parameters
+        if (isset($requestParams['quoteType'])) {
+            $mappedParams['quoteType'] = $requestParams['quoteType'];
+        }
+
+        if (isset($requestParams['report'])) {
+            $mappedParams['report'] = $requestParams['report'];
+        }
+
+        if (isset($requestParams['sortType'])) {
+            $mappedParams['sortType'] = $requestParams['sortType'];
+        }
+
+        // Pass through any other parameters that might be relevant
+        $passThroughParams = [
+            'quoteId', 'email', 'mobile_no', 'transaction_type_id',
+            'quote_batch_id', 'quote_status_id', 'payment_status_id',
+            'assigment_type', 'sale_leads', 'segment',
+        ];
+
+        foreach ($passThroughParams as $param) {
+            if (isset($requestParams[$param])) {
+                $mappedParams[$param] = $requestParams[$param];
+            }
+        }
+
+        return $mappedParams;
     }
 
     /**
