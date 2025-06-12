@@ -1,9 +1,6 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 
-/**
- * Composable for handling allocation form logic
- */
 export function useAllocationForm(props, errorHandling) {
   const isQuoteTypeLoading = ref(false);
   const isSubmitting = ref(false);
@@ -130,7 +127,6 @@ export function useAllocationForm(props, errorHandling) {
   };
 
   const onSubmit = async isValid => {
-    // Clear any existing errors at the start
     clearAllErrors();
 
     if (isValid) {
@@ -150,7 +146,6 @@ export function useAllocationForm(props, errorHandling) {
         const templateValidation = savingsTemplateRef.value.validate();
 
         if (!templateValidation.isValid) {
-          // Add specific template validation errors to our unified system
           templateValidation.errors.forEach(error => {
             addError(error, 'bracket');
           });
@@ -192,12 +187,10 @@ export function useAllocationForm(props, errorHandling) {
           form.clearErrors();
           clearAllErrors();
 
-          // Clear template validation errors on success
           if (savingsTemplateRef.value) {
             savingsTemplateRef.value.clearValidationErrors();
           }
 
-          // Force AuditLogs component to re-initialize by changing its key
           auditLogsKey.value += 1;
 
           scrollToSuccess();
@@ -209,8 +202,6 @@ export function useAllocationForm(props, errorHandling) {
           );
         }
       } catch (error) {
-        console.error('Error submitting form:', error);
-
         if (error.response && error.response.status === 422) {
           const validationErrors = error.response.data.errors || {};
 
