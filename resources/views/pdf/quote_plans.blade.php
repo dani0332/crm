@@ -69,7 +69,7 @@
             font-size: 14px;
             /*font-weight: 600;*/
             text-align: center;
-            padding: 8px 10px;
+            padding: 8px 0px;
             width: 100%;
             height: 150px;
             max-height: 150px;
@@ -280,7 +280,7 @@
             border-bottom: 2px solid #D3D3D3;
             font-size: 14px;
             color: #5B5F60;
-            padding: 10px 0;
+            padding: 10px 10px;
         }
 
         /* Left Side Text */
@@ -297,7 +297,7 @@
             text-align: right;
             white-space: nowrap;
             width: 25%;
-            padding-right: 20px;
+            /*padding-right: 20px;*/
             vertical-align: middle;
         }
 
@@ -338,29 +338,33 @@
             width: 100%;
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 10px;
+            padding: 0;
             text-align: center;
             height: 160px;
         }
 
         .footer-table {
             width: 100%;
-            table-layout: fixed;
+            /*table-layout: fixed;*/
             border-collapse: collapse;
-            color: #ffffff
+            color: #ffffff;
+            margin: 0;
+
         }
 
         .footer-td {
-            padding: 10px;
+            padding: 0px 8px;
             vertical-align: top;
             border: none;
+            text-align: center;
+
         }
 
         .footer-box {
             border-radius: 24px;
             border: 2px solid #CF9E3C;
-            padding: 6px 10px;
-            text-align: left;
+            /*padding: 6px 10px;*/
+
         }
 
         .footer-link {
@@ -380,8 +384,8 @@
         }
 
         .footer-header {
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 16px;
+            /*font-weight: bold;*/
             text-align: center;
         }
 
@@ -396,6 +400,7 @@
         .advisor-section {
             display: table;
             width: 100%;
+            text-align: left;
         }
 
         .advisor-photo-container {
@@ -463,6 +468,12 @@
         }
         .gr_border{
             border: 1px solid green;
+        }
+        .ye_border{
+            border: 1px solid yellow;
+        }
+        .pu_border{
+            border: 1px solid magenta;
         }
     </style>
 </head>
@@ -585,11 +596,11 @@
 
 {{-- PDF Page Header --}}
 <header>
-    <div class="header gr_border">
-        <div class="logo re_border">
+    <div class="header">
+        <div class="logo">
             <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
         </div>
-        <div class="header-bottom re_border">
+        <div class="header-bottom">
             <!-- Left Side Text -->
             <div class="header-text">
                 <strong class="raleway-font" style="font-weight: 600 !important;">Car Insurance Comparison Table</strong>
@@ -831,16 +842,14 @@
         </tbody>
     </table>
 
-    <table class="tbl-dec">
+    <table class="tbl-dec re_border">
         <tbody>
         <tr>
-            <td>
-                <span class="text-sm"><b>MATERIAL INFORMATION DECLARATION</b></span>
-                <p class="text-left text-xs">All quotes we provide are indicative and based on the information you have provided to us.</p>
-                <span class="text-sm"><b>DISCLAIMER</b></span>
+            <td class="gr_border">
                 <p class="text-left text-xs">
-                    Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>
-                    To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
+                    <b>Disclaimer: </b>Quotes are based on the details you provided and may change after the insurer reviews your profile. If there are differences, the insurer's policy terms will apply. Please check your policy once issued to ensure it meets your needs.
+{{--                    Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>--}}
+{{--                    To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.--}}
                 </p>
             </td>
         </tr>
@@ -857,7 +866,7 @@
         InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
     </h4>
 
-    <table class="footer-table" align="center">
+    <table class="footer-table" >
         <tr>
             <td class="footer-td" style="width: 42%">
                 <div class="footer-box" style="line-height: 0.8;">
@@ -889,11 +898,11 @@
             </td>
 
             <td class="footer-td" style="width: 30%;">
-                <div class="footer-box" style="margin-right: 20px; padding: 5px 10px">
+                <div class="footer-box" style="/*margin-right: 20px;*/ padding: 5px 10px">
                     <div class="advisor-section">
                         @if($quote->advisor)
                             <div class="advisor-photo-container">
-                                <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                                <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-1.png') }}"
                                      alt="Advisor Photo" class="advisor-photo">
                             </div>
                             <div class="advisor-details">
