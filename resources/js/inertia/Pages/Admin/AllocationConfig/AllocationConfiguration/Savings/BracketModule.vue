@@ -248,19 +248,6 @@ onMounted(() => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <x-tooltip>
-                <label class="block text-sm font-medium text-gray-700">
-                  <span class="underline decoration-dotted"
-                    >Minimum Amount</span
-                  >
-                  <span class="text-red-500">*</span>
-                </label>
-                <template #tooltip>
-                  <span class="custom-tooltip-content">
-                    Set the min investment amount for leads in this category.
-                  </span>
-                </template>
-              </x-tooltip>
               <x-input
                 v-model="bracket.min"
                 class="!mb-0 mt-1"
@@ -268,6 +255,8 @@ onMounted(() => {
                 @input="handleMinInput($event, bracket)"
                 @blur="handleMinBlur($event, bracket)"
                 placeholder="1000"
+                label="Minimum Amount"
+                tooltip="Set the min investment amount for leads in this category."
               >
                 <template #suffix>
                   <div
@@ -279,19 +268,6 @@ onMounted(() => {
               </x-input>
             </div>
             <div>
-              <x-tooltip>
-                <label class="block text-sm font-medium text-gray-700">
-                  <span class="underline decoration-dotted"
-                    >Maximum Amount</span
-                  >
-                  <span class="text-red-500">*</span>
-                </label>
-                <template #tooltip>
-                  <span class="custom-tooltip-content">
-                    Set the max investment amount for leads in this category.
-                  </span>
-                </template>
-              </x-tooltip>
               <x-input
                 v-model="bracket.max"
                 class="!mb-0 mt-1"
@@ -299,6 +275,8 @@ onMounted(() => {
                 @input="handleMaxInput($event, bracket)"
                 @blur="handleMaxBlur($event, bracket)"
                 placeholder="2000"
+                label="Maximum Amount"
+                tooltip="Set the max investment amount for leads in this category."
               >
                 <template #suffix>
                   <div
@@ -393,56 +371,58 @@ onMounted(() => {
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <x-field label="Advisors" required>
-                      <x-select
-                        v-model="profile.advisorIds"
-                        :options="advisorOptions"
-                        placeholder="Select advisors..."
-                        multiple
-                        filterable
-                        class="w-full min-h-[40px]"
+                    <x-select
+                      v-model="profile.advisorIds"
+                      :options="advisorOptions"
+                      placeholder="Select advisors..."
+                      multiple
+                      filterable
+                      class="w-full min-h-[40px]"
+                      label="Advisors"
+                      required
+                      tooltip="Select one or more advisors or managers eligible to receive leads in this profile."
+                    >
+                      <template
+                        #content-footer
+                        v-if="advisorOptions.length > 0"
                       >
-                        <template
-                          #content-footer
-                          v-if="advisorOptions.length > 0"
-                        >
-                          <ui-select-actions
-                            @select-all="
-                              profile.advisorIds = advisorOptions.map(
-                                item => item.value,
-                              )
-                            "
-                            @clear="profile.advisorIds = []"
-                          />
-                        </template>
-                      </x-select>
-                    </x-field>
+                        <ui-select-actions
+                          @select-all="
+                            profile.advisorIds = advisorOptions.map(
+                              item => item.value,
+                            )
+                          "
+                          @clear="profile.advisorIds = []"
+                        />
+                      </template>
+                    </x-select>
                   </div>
                   <div>
-                    <x-field label="Nationalities" required>
-                      <x-select
-                        v-model="profile.nationalityIds"
-                        :options="nationalityOptions"
-                        placeholder="Select nationalities..."
-                        multiple
-                        filterable
-                        class="w-full min-h-[40px]"
+                    <x-select
+                      v-model="profile.nationalityIds"
+                      :options="nationalityOptions"
+                      placeholder="Select nationalities..."
+                      multiple
+                      filterable
+                      class="w-full min-h-[40px]"
+                      label="Nationalities"
+                      required
+                      tooltip="Select the nationalities of customers this profile applies to."
+                    >
+                      <template
+                        #content-footer
+                        v-if="nationalityOptions.length > 0"
                       >
-                        <template
-                          #content-footer
-                          v-if="nationalityOptions.length > 0"
-                        >
-                          <ui-select-actions
-                            @select-all="
-                              profile.nationalityIds = nationalityOptions.map(
-                                item => item.value,
-                              )
-                            "
-                            @clear="profile.nationalityIds = []"
-                          />
-                        </template>
-                      </x-select>
-                    </x-field>
+                        <ui-select-actions
+                          @select-all="
+                            profile.nationalityIds = nationalityOptions.map(
+                              item => item.value,
+                            )
+                          "
+                          @clear="profile.nationalityIds = []"
+                        />
+                      </template>
+                    </x-select>
                   </div>
                 </div>
               </div>
