@@ -238,6 +238,20 @@ onMounted(() => {
 });
 
 const downloadReport = () => {
+  const days = calculateDaysDifference(
+    filters.chat_initiated_at[0],
+    filters.chat_initiated_at[1],
+  );
+
+  if (days > 30) {
+    notification.error({
+      position: 'top',
+      title: 'Export Error:',
+      message: 'Maximum 30 days are allowed.',
+    });
+    return;
+  }
+
   const data = useObjToUrl(useCleanObj({ ...filters, ...serverOptions.value }));
   const url = route('exportChatData');
   window.open(url + '?' + new URLSearchParams(data).toString());
@@ -250,8 +264,23 @@ const exportViaEmail = async () => {
     // Validate required fields
     if (!filters.report) {
       notification.error({
+        position: 'top',
         title: 'Export Error',
         text: 'Please select a report type before exporting.',
+      });
+      return;
+    }
+
+    const days = calculateDaysDifference(
+      filters.chat_initiated_at[0],
+      filters.chat_initiated_at[1],
+    );
+
+    if (days > 30) {
+      notification.error({
+        position: 'top',
+        title: 'Export Error:',
+        message: 'Maximum 30 days are allowed.',
       });
       return;
     }
@@ -269,6 +298,7 @@ const exportViaEmail = async () => {
 
     if (response.data.success !== false) {
       notification.success({
+        position: 'top',
         title: 'Export Initiated',
         text:
           response.data.message ||
@@ -276,6 +306,7 @@ const exportViaEmail = async () => {
       });
     } else {
       notification.error({
+        position: 'top',
         title: 'Export Failed',
         text:
           response.data.message ||
@@ -285,6 +316,7 @@ const exportViaEmail = async () => {
   } catch (error) {
     console.error('Export via email error:', error);
     notification.error({
+      position: 'top',
       title: 'Export Error',
       text:
         error.response?.data?.message ||
