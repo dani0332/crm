@@ -70,6 +70,7 @@ class HealthEmailService extends BaseService
             'workflowType' => $workflowType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
+            'numberOfMembersCovered' => $workflowType == WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA ? $lead->customerMembers->count() : null,
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
     }
@@ -330,10 +331,9 @@ class HealthEmailService extends BaseService
     public function sendSICHealthFollowupsWA($lead)
     {
         try {
-            
-        LoggerService::startQuoteLogging(QuoteTypes::HEALTH->refId($lead->uuid));
-        LoggerService::info('Sending SIC Health Followups WA ');
-        $isFollowupExecuted = isFollowupExecuted($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            LoggerService::info('Sending SIC Health Followups WA ');
+            $isFollowupExecuted = isFollowupExecuted($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            LoggerService::info("SIC Health Followups WA isFollowupExecuted: {$isFollowupExecuted} ");
             if($isFollowupExecuted){
                 LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
                 return;
