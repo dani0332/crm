@@ -13,6 +13,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -44,7 +45,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use PDF;
-use App\Enums\LeadSourceEnum;
 
 class CarQuoteService extends BaseService
 {
@@ -1446,7 +1446,7 @@ class CarQuoteService extends BaseService
             if ($lead->source !== LeadSourceEnum::IMCRM) {
                 $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
             } else {
-                LoggerService::info('Skipping allocation count update for IMCRM source lead: ' . $lead->uuid);
+                LoggerService::info('Skipping allocation count update for IMCRM source lead: '.$lead->uuid);
             }
 
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Car, $userId);
