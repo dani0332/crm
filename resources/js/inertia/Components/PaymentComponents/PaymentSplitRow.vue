@@ -71,6 +71,7 @@ const deleteSplitPayment = () => {
     'delete-split-payment',
     props.splitPayment.id,
     props.splitPayment.payment_status_id,
+    props.splitPayment.code,
   );
 };
 
