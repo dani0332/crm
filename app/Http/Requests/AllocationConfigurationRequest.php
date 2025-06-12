@@ -133,7 +133,6 @@ class AllocationConfigurationRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Validate lumpsum brackets
             if ($this->has('lumpsum_brackets') && ! empty($this->lumpsum_brackets)) {
                 if (! $this->validateBracketStructure($this->lumpsum_brackets)) {
                     $validator->errors()->add('lumpsum_brackets', 'Lumpsum brackets have invalid structure. Please check all required fields are filled correctly.');
@@ -148,7 +147,6 @@ class AllocationConfigurationRequest extends FormRequest
                 }
             }
 
-            // Validate regular brackets
             if ($this->has('regular_brackets') && ! empty($this->regular_brackets)) {
                 if (! $this->validateBracketStructure($this->regular_brackets)) {
                     $validator->errors()->add('regular_brackets', 'Regular brackets have invalid structure. Please check all required fields are filled correctly.');
@@ -163,12 +161,14 @@ class AllocationConfigurationRequest extends FormRequest
                 }
             }
 
-            // Check if at least one bracket type is configured
-            if (empty($this->lumpsum_brackets) && empty($this->regular_brackets)) {
-                $validator->errors()->add('configuration', 'Please configure at least one bracket type (lumpsum or regular) to save the allocation configuration.');
+            if (empty($this->lumpsum_brackets)) {
+                $validator->errors()->add('configuration', 'Please configure at least one lumpsum bracket to save the allocation configuration.');
             }
 
-            // Validate advisor-nationality combinations
+            if (empty($this->regular_brackets)) {
+                $validator->errors()->add('configuration', 'Please configure at least one regular bracket to save the allocation configuration.');
+            }
+
             $this->validateAdvisorNationalityCombinations($validator);
         });
     }
@@ -268,7 +268,6 @@ class AllocationConfigurationRequest extends FormRequest
             }
 
             foreach ($bracket['profiles'] as $profileIndex => $profile) {
-                // Check if advisor IDs and nationality IDs are valid arrays
                 $advisorIds = $profile['advisorIds'] ?? [];
                 $nationalityIds = $profile['nationalityIds'] ?? [];
 
@@ -287,7 +286,6 @@ class AllocationConfigurationRequest extends FormRequest
                 }
             }
 
-            // Check for duplicate nationalities within the same bracket
             $this->checkDuplicateNationalitiesInBracket($bracket['profiles'], $bracketIndex, $validator);
         }
     }
@@ -296,7 +294,7 @@ class AllocationConfigurationRequest extends FormRequest
     {
         $usedNationalities = [];
 
-        foreach ($profiles as $profileIndex => $profile) {
+        foreach ($profiles as $profile) {
             $nationalityIds = $profile['nationalityIds'] ?? [];
 
             foreach ($nationalityIds as $nationalityId) {
