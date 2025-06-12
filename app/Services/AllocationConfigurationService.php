@@ -94,8 +94,7 @@ class AllocationConfigurationService
 
         $profiles = collect($matchingBracket['profiles']);
 
-        $matchingProfile = $profiles
-            ->first(fn ($profile) => in_array($nationalityId, $profile['nationalityIds']));
+        $matchingProfile = $profiles->first(fn ($profile) => in_array($nationalityId, $profile['nationalityIds']));
 
         return $matchingProfile ? ($matchingProfile['advisorIds'] ?? []) : [];
     }
