@@ -12,7 +12,6 @@ class SavingsAllocation extends BaseAllocation
     protected function fetchAdvisor(int $onlineStatus)
     {
         $advisorIds = $this->getApplicableAdvisorIds();
-        dd($advisorIds);
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager])
             ->whereIn('users.id', $advisorIds)

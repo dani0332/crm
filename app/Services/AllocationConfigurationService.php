@@ -72,6 +72,8 @@ class AllocationConfigurationService
             ? $configuration->lumpsum_brackets
             : $configuration->regular_brackets;
 
+        $brackets = collect($brackets);
+
         $matchingBracket = $brackets
             ->where('min', '<=', $amount)
             ->where('max', '>=', $amount)
