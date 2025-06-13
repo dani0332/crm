@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Allocations;
 
+use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -75,14 +76,21 @@ class LeadAllocationController extends Controller
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->where('la.quote_type_id', in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id())
-                ->whereIn('r.name', $this->quoteType->advisorRoles())
-                // subquery to exclude users with any kind of "manager" roles
-                ->whereNotExists(function ($query) use ($managerRoleIds) {
-                    $query->select(DB::raw(1))
-                        ->from('model_has_roles as mr')
-                        ->join('roles as r', 'r.id', '=', 'mr.role_id')
-                        ->whereColumn('mr.model_id', 'users.id')
-                        ->whereIn('r.id', $managerRoleIds);
+                ->where(function ($query) {
+                    $query->whereIn('r.name', $this->quoteType->advisorRoles());
+                    $query->when($this->quoteType == QuoteTypes::SAVINGS, function ($subQuery) {
+                        $subQuery->orWhereIn('r.name', [RolesEnum::SavingsManager]);
+                    });
+                })
+                ->when($this->quoteType !== QuoteTypes::SAVINGS, function ($query) use ($managerRoleIds) {
+                    // subquery to exclude users with any kind of "manager" roles
+                    $query->whereNotExists(function ($query) use ($managerRoleIds) {
+                        $query->select(DB::raw(1))
+                            ->from('model_has_roles as mr')
+                            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+                            ->whereColumn('mr.model_id', 'users.id')
+                            ->whereIn('r.id', $managerRoleIds);
+                    });
                 })
                 ->groupBy('users.name', 'users.id', 'la.id');
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
@@ -129,6 +137,17 @@ class LeadAllocationController extends Controller
             ->count();
     }
 
+    private function getTodaysFrequencyBasedUnAssignedLeadsCount(QuoteTypes $quoteType, InvestmentFrequencyEnum $frequency)
+    {
+        return $this->getQuotesBaseQuery($quoteType)
+            ->whereNull('advisor_id')
+            ->isNonSICLead($quoteType)
+            ->whereHas('savingsQuote.investmentFrequency', function ($query) use ($frequency) {
+                $query->where('code', $frequency->value);
+            })
+            ->count();
+    }
+
     public function index(QuoteTypes $quoteType)
     {
         $totalAssignedLeadCount = 0;
@@ -144,7 +163,7 @@ class LeadAllocationController extends Controller
             $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
         }
 
-        return inertia('LeadAllocation/Index', [
+        $data = [
             'totalAssignedLeadCount' => $totalAssignedLeadCount,
             'availableUsers' => $availableUsers,
             'unAvailableUsers' => $unAvailableUsers,
@@ -153,7 +172,15 @@ class LeadAllocationController extends Controller
             'quoteType' => $quoteType->value,
             'data' => $data,
             'lobSpecificLeadAllocation' => $this->lobSpecificLeadAllocation(),
-        ]);
+            'isSavings' => $quoteType == QuoteTypes::SAVINGS,
+        ];
+
+        if ($quoteType == QuoteTypes::SAVINGS) {
+            $data['todayTotalRegularUnAssignedLeadCount'] = $this->getTodaysFrequencyBasedUnAssignedLeadsCount($quoteType, InvestmentFrequencyEnum::REGULAR);
+            $data['todayTotalLumpsumUnAssignedLeadCount'] = $this->getTodaysFrequencyBasedUnAssignedLeadsCount($quoteType, InvestmentFrequencyEnum::LUMPSUM);
+        }
+
+        return inertia('LeadAllocation/Index', $data);
     }
 
     private function lobSpecificLeadAllocation()

@@ -762,6 +762,12 @@ class HandleInertiaRequests extends Middleware
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
+                                auth()->user()->can(PermissionsEnum::ILA_CONFIG_ALL_LOB),
+                                'Configure ILA',
+                                route('admin.allocation-configuration.index'),
+                                fn ($s) => $s->attributes(['icon' => 'settings'])
+                            )
+                            ->addIf(
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
                                 'Nationality Allocation',
                                 route('admin.nationality-allocation-config.index'),

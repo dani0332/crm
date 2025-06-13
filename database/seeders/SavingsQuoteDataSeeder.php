@@ -37,7 +37,17 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_CONVERSION_REPORT,
             PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
             PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::ILA_CONFIG_ALL_LOB,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
+
+        $this->seedPermissions([
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+        ], [RolesEnum::LeadPool, RolesEnum::SeniorManagement]);
+
+        $this->seedPermissions([
+            PermissionsEnum::ILA_CONFIG_ALL_LOB,
+        ], [RolesEnum::LeadPool]);
+
         $this->product();
 
         $this->seedDocumentTypes();
@@ -84,11 +94,21 @@ class SavingsQuoteDataSeeder extends Seeder
 
     private function product()
     {
-        if (! Team::where('code', 'Savings')->exists()) {
+        if (! Team::where('name', 'Savings')->where('type', TeamTypeEnum::PRODUCT)->exists()) {
             Team::create([
                 'name' => 'Savings',
                 'code' => 'Savings',
                 'type' => TeamTypeEnum::PRODUCT,
+                'is_active' => 1,
+            ]);
+        }
+
+        if (! Team::where('name', 'Savings - Team')->where('type', TeamTypeEnum::TEAM)->exists()) {
+            Team::create([
+                'name' => 'Savings - Team',
+                'code' => 'Savings - Team',
+                'parent_team_id' => Team::where('name', 'Savings')->value('id'),
+                'type' => TeamTypeEnum::TEAM,
                 'is_active' => 1,
             ]);
         }
