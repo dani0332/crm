@@ -647,7 +647,7 @@ class QuoteDocumentService extends BaseService
         $pdf->Output($outputPath, 'F');
         // endregion
 
-        //region Clean up temporary file
+        // region Clean up temporary file
         if (file_exists($tempFilePath)) {
             unlink($tempFilePath);
         }
@@ -659,7 +659,7 @@ class QuoteDocumentService extends BaseService
         if (file_exists($decryptedTempPath)) {
             unlink($decryptedTempPath);
         }
-        //endregion
+        // endregion
 
         // Check if the output file was created successfully
         if (! file_exists($outputPath) || filesize($outputPath) < 100) {
