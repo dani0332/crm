@@ -106,7 +106,7 @@ const isError = ref(false);
 const loader = reactive({
   table: false,
   view: false,
-  emailExport: false,
+  exportLoader: false,
 });
 const showChatLogs = ref(false);
 
@@ -237,31 +237,11 @@ onMounted(() => {
   }
 });
 
-const downloadReport = () => {
-  const days = calculateDaysDifference(
-    filters.chat_initiated_at[0],
-    filters.chat_initiated_at[1],
-  );
-
-  if (days > 30) {
-    notification.error({
-      position: 'top',
-      title: 'Export Error:',
-      message: 'Maximum 30 days are allowed.',
-    });
-    return;
-  }
-
-  const data = useObjToUrl(useCleanObj({ ...filters, ...serverOptions.value }));
-  const url = route('exportChatData');
-  window.open(url + '?' + new URLSearchParams(data).toString());
-};
-
-const exportViaEmail = async () => {
+const exportReport = async (exportType = 'download') => {
   try {
-    loader.emailExport = true;
+    loader.exportLoader = true;
 
-    // Validate required fields
+    // Validate required fields for email export
     if (!filters.report) {
       notification.error({
         position: 'top',
@@ -279,7 +259,7 @@ const exportViaEmail = async () => {
     if (days > 30) {
       notification.error({
         position: 'top',
-        title: 'Export Error:',
+        title: 'Export Error',
         message: 'Maximum 30 days are allowed.',
       });
       return;
@@ -287,34 +267,47 @@ const exportViaEmail = async () => {
 
     const data = {
       ...useCleanObj({ ...filters, ...serverOptions.value }),
-      recipientEmail: page.props.auth.user.email, // Use current user's email
-      report: filters.report, // This is required by the validation
+      ...(exportType === 'email'
+        ? { recipientEmail: page.props.auth.user.email }
+        : {}),
+      report: filters.report,
     };
 
-    const response = await axios.post(
-      route('instant-alfred.export-email'),
-      data,
-    );
+    const payload =
+      exportType === 'download'
+        ? {
+            type: 'instant-alfred-chat',
+            quote_type_id: null,
+            exportType: 'download',
+            url: `${route('exportChatData')}?${new URLSearchParams(useObjToUrl(data)).toString()}`,
+          }
+        : {
+            type: 'instant-alfred-chat',
+            quote_type_id: null,
+            exportType: 'email',
+            url: route('instant-alfred.export-email'),
+            data: data,
+            method: 'post',
+          };
 
-    if (response.data.success !== false) {
+    const result = await logAndExportQuotes(payload);
+
+    if (result.data.success !== false) {
       notification.success({
+        title:
+          exportType === 'download'
+            ? 'Export Initiated'
+            : 'Your export has been queued and will be sent to your email shortly.',
         position: 'top',
-        title: 'Export Initiated',
-        text:
-          response.data.message ||
-          'Your export has been queued and will be sent to your email shortly.',
       });
     } else {
       notification.error({
+        title:
+          result.data.message || 'Failed to initiate export. Please try again.',
         position: 'top',
-        title: 'Export Failed',
-        text:
-          response.data.message ||
-          'Failed to initiate export. Please try again.',
       });
     }
   } catch (error) {
-    console.error('Export via email error:', error);
     notification.error({
       position: 'top',
       title: 'Export Error',
@@ -323,7 +316,7 @@ const exportViaEmail = async () => {
         'An error occurred while initiating the export. Please try again.',
     });
   } finally {
-    loader.emailExport = false;
+    loader.exportLoader = false;
   }
 };
 </script>
@@ -506,12 +499,13 @@ const exportViaEmail = async () => {
           v-else
           size="sm"
           color="emerald"
-          @click.prevent="downloadReport"
+          @click.prevent="exportReport('download')"
+          :loading="loader.exportLoader"
           >Export Excel</x-button
         >
 
         <x-tooltip v-if="reportButtonCon.disable" position="right">
-          <x-button size="sm" color="emerald" :loading="loader.emailExport">
+          <x-button size="sm" color="emerald" :loading="loader.exportLoader">
             Export via Email
           </x-button>
           <template #tooltip v-if="reportButtonCon.msg">
@@ -526,8 +520,8 @@ const exportViaEmail = async () => {
           v-else
           size="sm"
           color="blue"
-          :loading="loader.emailExport"
-          @click.prevent="exportViaEmail"
+          :loading="loader.exportLoader"
+          @click.prevent="exportReport('email')"
           >Export via Email</x-button
         >
       </div>
