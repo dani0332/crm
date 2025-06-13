@@ -138,7 +138,7 @@ class SavingsQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'CDPDR',
+                'code' => 'SDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
                 'is_active' => 1,
@@ -157,7 +157,7 @@ class SavingsQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'CPD',
+                'code' => 'SPD',
                 'text' => 'Payment Proof',
                 'description' => null,
                 'is_active' => 1,
@@ -176,7 +176,7 @@ class SavingsQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'CPDR',
+                'code' => 'SPDR',
                 'text' => 'Receipt',
                 'description' => '',
                 'is_active' => 1,
