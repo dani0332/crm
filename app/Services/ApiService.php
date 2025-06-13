@@ -25,6 +25,9 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use App\Http\Requests\SICWhatsappRequest;
+use App\Enums\QuoteFlowType;
+use App\Jobs\SendHealthSICWAFollowupJob;
 
 class ApiService
 {
@@ -441,5 +444,32 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Travel AIG workflow trigger failed!');
         }
+    }
+
+    public function triggerSICWhatsapp(SICWhatsappRequest $request)
+    {
+        // TODO: Implement triggerSICWhatsapp
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        switch ($quoteType) {
+            case QuoteTypes::HEALTH:
+                $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+                if(!$lead){
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Lead not found!');
+                }
+                if(getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid)){
+                    if(!app(BirdService::class)->isFollowupExecuted( $lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)){
+                        SendHealthSICWAFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(50));
+                    }
+                    else {
+                        LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
+                        return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow already executed for this lead!');
+                    }
+                }
+                break;
+            default:
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+        
+        return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow triggered successfully!');
     }
 }

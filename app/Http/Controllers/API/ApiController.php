@@ -44,6 +44,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\SICWhatsappRequest;
 
 class ApiController extends Controller
 {
@@ -336,5 +337,11 @@ class ApiController extends Controller
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
     {
         return $this->apiService->triggerTravelAIGWorkflow($request);
+    }
+
+    public function triggerSICWhatsapp(SICWhatsappRequest $request)
+    {
+        // TODO: Implement triggerSICWhatsapp
+        return $this->apiService->triggerSICWhatsapp($request);
     }
 }

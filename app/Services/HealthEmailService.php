@@ -332,7 +332,7 @@ class HealthEmailService extends BaseService
     {
         try {
             LoggerService::info('Sending SIC Health Followups WA ');
-            $isFollowupExecuted = isFollowupExecuted($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
             LoggerService::info("SIC Health Followups WA isFollowupExecuted: {$isFollowupExecuted} ");
             if($isFollowupExecuted){
                 LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
@@ -343,7 +343,7 @@ class HealthEmailService extends BaseService
             $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
             $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
 
-            createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
+            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
             
             LoggerService::info("SIC Health Followups WA executed for lead: {$lead->uuid}");
 

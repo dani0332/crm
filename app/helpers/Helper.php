@@ -1630,36 +1630,3 @@ if (! function_exists('userHasProduct')) {
     }
 }
 
-if (! function_exists('isFollowupExecuted')) {
-    function isFollowupExecuted($uuid, $flowType)
-    {
-        return QuoteFlowDetails::where('quote_uuid', $uuid)
-                                        ->where('flow_type', $flowType)
-                                        ->exists();
-                                    
-    }
-}
-if (! function_exists('createQuoteWorkFlowDetails')) {
-function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
-    {
-        try {
-            $runId = collect($response->headers['Run-Id'])->first();
-            if (! empty($runId)) {
-                QuoteFlowDetails::create([
-                    'quote_uuid' => $lead->uuid,
-                    'quote_type_id' =>$quoteTypeId,
-                    'flow_type' => $flowType,
-                    'flow_id' => $runId,
-                    'started_at' => now(),
-                ]);
-                LoggerService::info("- createQuoteWorkFlowDetails  run id created for lead : Ref-ID: {$lead->uuid}");
-            } else {
-                LoggerService::info(" - createQuoteWorkFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} ");
-            }
-        } catch (\Throwable $th) {
-          
-            LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid}");
-
-        }
-    }
-}
