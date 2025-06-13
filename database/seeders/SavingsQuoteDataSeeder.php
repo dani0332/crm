@@ -14,6 +14,7 @@ use App\Models\QuoteType;
 use App\Models\Team;
 use Database\Seeders\Traits\PermissionableSeeder;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class SavingsQuoteDataSeeder extends Seeder
 {
@@ -28,25 +29,8 @@ class SavingsQuoteDataSeeder extends Seeder
         $this->mapQuoteStatuses();
 
         $this->seedRoles([RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager]);
-        $this->seedPermissions([
-            PermissionsEnum::SAVINGS_QUOTES_LIST,
-            PermissionsEnum::SAVINGS_QUOTES_CREATE,
-            PermissionsEnum::SAVINGS_QUOTES_EDIT,
-            PermissionsEnum::SAVINGS_QUOTES_SHOW,
-            PermissionsEnum::SAVINGS_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::SAVINGS_CONVERSION_REPORT,
-            PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
-            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
-            PermissionsEnum::ILA_CONFIG_ALL_LOB,
-        ], [RolesEnum::Engineering, RolesEnum::Admin]);
 
-        $this->seedPermissions([
-            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
-        ], [RolesEnum::LeadPool, RolesEnum::SeniorManagement]);
-
-        $this->seedPermissions([
-            PermissionsEnum::ILA_CONFIG_ALL_LOB,
-        ], [RolesEnum::LeadPool]);
+        $this->seedPermissions();
 
         $this->product();
 
@@ -202,5 +186,57 @@ class SavingsQuoteDataSeeder extends Seeder
                 $document
             );
         }
+    }
+
+    private function seedPermissions()
+    {
+        $this->seedPermissions([
+            PermissionsEnum::SAVINGS_QUOTES_LIST,
+            PermissionsEnum::SAVINGS_QUOTES_CREATE,
+            PermissionsEnum::SAVINGS_QUOTES_EDIT,
+            PermissionsEnum::SAVINGS_QUOTES_SHOW,
+            PermissionsEnum::SAVINGS_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::SAVINGS_CONVERSION_REPORT,
+            PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::ILA_CONFIG_ALL_LOB,
+        ], [RolesEnum::Engineering, RolesEnum::Admin]);
+
+        $this->seedPermissions([
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+        ], [RolesEnum::LeadPool, RolesEnum::SeniorManagement]);
+
+        $this->seedPermissions([
+            PermissionsEnum::ILA_CONFIG_ALL_LOB,
+        ], [RolesEnum::LeadPool]);
+
+        $this->seedPermissions([
+            PermissionsEnum::SAVINGS_QUOTES_LIST,
+            PermissionsEnum::SAVINGS_QUOTES_CREATE,
+            PermissionsEnum::SAVINGS_QUOTES_EDIT,
+            PermissionsEnum::SAVINGS_QUOTES_SHOW,
+        ], [RolesEnum::SavingsManager]);
+
+        $this->seedPermissions([
+            PermissionsEnum::SAVINGS_QUOTES_LIST,
+            PermissionsEnum::SAVINGS_QUOTES_SHOW,
+        ], [RolesEnum::SavingsAdvisor]);
+
+        $this->seedLifePermissionToSavings();
+    }
+
+    private function seedLifePermissionToSavings()
+    {
+        $lifeManagerPermissions = Role::with('permissions')->where('name', RolesEnum::LifeManager)->first();
+
+        $savingManagerRole = Role::where('name', RolesEnum::SavingsManager)->first();
+
+        $this->assignPermissionsToRole($lifeManagerPermissions->permissions, $savingManagerRole);
+
+        $lifeAdvisorRole = Role::with('permissions')->where('name', RolesEnum::LifeAdvisor)->first();
+
+        $savingAdvisorRole = Role::where('name', RolesEnum::SavingsAdvisor)->first();
+
+        $this->assignPermissionsToRole($lifeAdvisorRole->permissions, $savingAdvisorRole);
     }
 }
