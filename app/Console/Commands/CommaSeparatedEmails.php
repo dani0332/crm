@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
+use App\Models\CustomerAdditionalContact;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -49,10 +50,10 @@ class CommaSeparatedEmails extends Command
 
         if (! empty($personalQuotes)) {
             LoggerService::info('Fixing comma-separated emails');
-            foreach ($personalQuotes->toArray() as $quote) {
-                $emails = explode(',', $quote['email']);
-                $primaryEmail = $emails[0];
-                $secondaryEmail = $emails[1] ?? null;
+            foreach ($personalQuotes as $quote) {
+                $emails = explode(',', $quote->email);
+                $primaryEmail = trim($emails[0]);
+                $secondaryEmail = trim($emails[1]) ?? null;
 
                 $customer = Customer::firstOrCreate([
                     'email' => $primaryEmail,
@@ -60,38 +61,38 @@ class CommaSeparatedEmails extends Command
                     'updated_at' => now(),
                 ]);
 
-                $quoteType = QuoteTypes::getName($quote['quote_type_id'])->value;
+                $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
                 $tableName = strtolower($quoteType).'_quote_request';
 
-                DB::table($tableName)->where('uuid', $quote['uuid'])
+                DB::table($tableName)->where('uuid', $quote->uuid)
                     ->update([
-                        'email' => $quote['email'],
-                        'customer_id' => $quote['customer_id'],
-                        'updated_at' => $quote['updated_at'],
+                        'email' => $primaryEmail,
+                        'customer_id' => $customer->id,
+                        'updated_at' => now(),
                     ]);
 
-                DB::table('personal_quotes')->where('uuid', $quote['uuid'])->where('quote_type_id', $quote['quote_type_id'])
+                DB::table('personal_quotes')->where('uuid', $quote->uuid)->where('quote_type_id', $quote->quote_type_id)
                     ->update([
-                        'email' => $quote['email'],
-                        'customer_id' => $quote['customer_id'],
-                        'updated_at' => $quote['updated_at'],
+                        'email' => $primaryEmail,
+                        'customer_id' => $customer->id,
+                        'updated_at' => now(),
                     ]);
 
                 LoggerService::info('Email updated on '.$tableName.' and personal_quotes table.', extra: [
-                    'uuid' => $quote['uuid'],
-                    'email' => $quote['email'],
+                    'uuid' => $quote->uuid,
+                    'email' => $primaryEmail,
                 ]);
 
-                $additionalContact = DB::table('customer_additional_contact')->insertOrIgnore([
+                $additionalContact = CustomerAdditionalContact::firstOrCreate([
                     'customer_id' => $customer->id,
                     'key' => 'email',
                     'value' => $secondaryEmail,
                 ]);
 
-                if ($additionalContact) {
+                if ($additionalContact->wasRecentlyCreated) {
                     LoggerService::info('Inserted '.$secondaryEmail.' email as an additional contact information', extra: [
-                        'quote_uuid' => $quote['uuid'],
-                        'quote_type_id' => $quote['quote_type_id'],
+                        'quote_uuid' => $quote->uuid,
+                        'quote_type_id' => $quote->quote_type_id,
                     ]);
                 }
             }
