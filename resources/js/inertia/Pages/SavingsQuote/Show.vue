@@ -1078,7 +1078,7 @@ const onUpdateIndividualPlan = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">
-                    HAVE YOU CONSUMED ANY PRODUCTS WITH NICOTINE FOR THE PAST 12
+                    HAVE YOU CONSUMED ANY PRODUCTS <br> WITH NICOTINE FOR THE PAST 12
                     MONTHS?
                   </dt>
                   <dd>{{ quote?.savings_quote?.takes_nicotine }}</dd>
