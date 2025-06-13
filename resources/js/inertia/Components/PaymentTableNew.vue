@@ -1020,7 +1020,7 @@ const handlePaymentTypes = count => {
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
     if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
       // need to fix this for payments
-      // isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled; // COMMENTED DUE TO PROD ISSUE, NEED TO CONFIRM IF THIS IS VALID CONDITION
+      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
     }
     const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
