@@ -1,5 +1,6 @@
 <script setup>
 import { ref, nextTick, watch, onMounted } from 'vue';
+import CollapseIcon from './components/CollapseIcon.vue';
 
 const props = defineProps({
   title: {
@@ -206,27 +207,11 @@ onMounted(() => {
     <div class="p-6 bg-white border-b border-gray-200">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center space-x-2">
-          <button
-            type="button"
+          <CollapseIcon
+            :is-expanded="!isModuleCollapsed"
+            size="md"
             @click="toggleModule"
-            class="text-gray-500 hover:text-gray-700 focus:outline-none"
-          >
-            <svg
-              class="h-5 w-5 transform transition-transform duration-200"
-              :class="{ 'rotate-90': !isModuleCollapsed }"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
+          />
           <h3 class="text-lg font-medium text-gray-900">
             {{ title }}
           </h3>
@@ -266,29 +251,11 @@ onMounted(() => {
           >
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center space-x-2">
-                <button
-                  type="button"
+                <CollapseIcon
+                  :is-expanded="!collapsedBrackets.has(bracketIndex)"
+                  size="md"
                   @click="toggleBracket(bracketIndex)"
-                  class="text-gray-500 hover:text-gray-700 focus:outline-none"
-                >
-                  <svg
-                    class="h-5 w-5 transform transition-transform duration-200"
-                    :class="{
-                      'rotate-90': !collapsedBrackets.has(bracketIndex),
-                    }"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="2"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
+                />
                 <h4 class="text-md font-medium text-gray-800">
                   {{ type }} (Bracket {{ bracketIndex + 1 }})
                   <span
@@ -417,31 +384,15 @@ onMounted(() => {
                   >
                     <div class="flex items-center justify-between mb-3">
                       <div class="flex items-center space-x-2">
-                        <button
-                          type="button"
+                        <CollapseIcon
+                          :is-expanded="
+                            !collapsedProfiles.has(
+                              `${bracketIndex}-${profileIndex}`,
+                            )
+                          "
+                          size="sm"
                           @click="toggleProfile(bracketIndex, profileIndex)"
-                          class="text-gray-500 hover:text-gray-700 focus:outline-none"
-                        >
-                          <svg
-                            class="h-4 w-4 transform transition-transform duration-200"
-                            :class="{
-                              'rotate-90': !collapsedProfiles.has(
-                                `${bracketIndex}-${profileIndex}`,
-                              ),
-                            }"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                            stroke="currentColor"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
+                        />
                         <h6 class="text-sm font-medium text-gray-600">
                           Profile {{ profileIndex + 1 }}
                           <span
