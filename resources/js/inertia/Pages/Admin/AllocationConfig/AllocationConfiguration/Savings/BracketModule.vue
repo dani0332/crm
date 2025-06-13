@@ -154,6 +154,7 @@ const createEmptyProfile = () => ({
 });
 
 const addBracket = () => {
+  isModuleCollapsed.value = false;
   emit('add-bracket');
 };
 
