@@ -37,7 +37,7 @@ class CommaSeparatedEmails extends Command
      */
     public function handle()
     {
-        LoggerService::info('Processing comma-separated emails across all LOB tables');
+        /*LoggerService::info('Processing comma-separated emails across all LOB tables');
 
         $personalQuotes = DB::table('personal_quotes')
             ->select('id', 'uuid', 'quote_type_id', 'email', 'customer_id')
@@ -97,7 +97,7 @@ class CommaSeparatedEmails extends Command
                 }
             }
 
-            LoggerService::info('comma-separated emails issue fixed');
+            LoggerService::info('comma-separated emails issue fixed');*/
         }
     }
 }

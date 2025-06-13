@@ -799,16 +799,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     //     return 'Command executed successfully!';
     // });
 
-    Route::get('run-comma-separated-emails', function () {
-        if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-            Artisan::call('run:comma-separated-emails');
-
-            return 'Comma Separated command successfully executed!';
-        }
-
-        return 'Not authorised';
-    });
-
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously
         \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
