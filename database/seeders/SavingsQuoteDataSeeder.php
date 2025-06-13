@@ -48,7 +48,7 @@ class SavingsQuoteDataSeeder extends Seeder
         $quoteType = [
             'short_code' => 'SAV',
             'code' => QuoteTypes::SAVINGS->value,
-            'text' => 'Savings Insurance',
+            'text' => 'Savings',
             'is_active' => 1,
         ];
 

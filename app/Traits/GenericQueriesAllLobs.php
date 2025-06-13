@@ -242,7 +242,7 @@ trait GenericQueriesAllLobs
             QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
             QuoteTypes::PET->value => ['Pet insurance'],
             QuoteTypes::YACHT->value => ['Yacht insurance'],
-            QuoteTypes::SAVINGS->value => ['Savings insurance'],
+            QuoteTypes::SAVINGS->value => ['Savings'],
         ];
     }
 
