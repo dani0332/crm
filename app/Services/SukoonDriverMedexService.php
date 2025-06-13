@@ -43,7 +43,6 @@ class SukoonDriverMedexService
     
     private string $logPrefix = 'Sukoon Medex Service:';
     private array $errorMessages = [];
-    private int $currentStep = 0;
     
     public function __construct(
         private $username = '',
@@ -55,10 +54,8 @@ class SukoonDriverMedexService
     private function viewQuotePolicy($transaction)
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY;
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
             $response = $this->request("/policy/{$transaction->certificate_number}", 'get', headers: $headers)->json();
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY);
 
             return $response;
         } catch (Exception $e) {
@@ -344,7 +341,8 @@ class SukoonDriverMedexService
             $logData = (array) [...$logData, 'response' => $response];
         }
 
-        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$this->currentStep} {$parentFunction}", context: ['message' => $message, 'endPoint' => $endPoint, ...$logData]);
+        $stepNumber = SukoonPurchaseFlowEnum::getStepNumber($parentFunction);
+        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['message' => $message, 'endPoint' => $endPoint, ...$logData]);
     }
     
     /**
@@ -460,7 +458,6 @@ class SukoonDriverMedexService
     public function login()
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::STEP_LOGIN;
 
             $data = [
                 'apiCall' => true,
@@ -474,9 +471,6 @@ class SukoonDriverMedexService
                 throw new Exception('Session id is missing');
 
             $this->sessionId = $response['session_id'] ?? null;
-
-            if($this->currentStep <= SukoonPurchaseFlowEnum::STEP_LOGIN)
-                $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_LOGIN);
 
             return $response;
 
@@ -498,7 +492,6 @@ class SukoonDriverMedexService
     public function submitPlan($data)
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::STEP_SUBMIT_PLAN;
 
             $result = $this->request('/policy/submit/'.$this->productSlug.'/', 'post', $data, [
                 'x-session-id' => $this->sessionId,
@@ -509,7 +502,6 @@ class SukoonDriverMedexService
             if(!empty(array_diff(['policy_number', 'policy_status'], array_keys($result))))
                 throw new Exception('Not found (policy_number, policy_status)');
 
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_SUBMIT_PLAN);
 
             return ['quote_policy' => $result['policy_number'], 'policy_status' => $result['policy_status']];
 
@@ -541,7 +533,6 @@ class SukoonDriverMedexService
     private function submitPersonalDetail($data)
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::STEP_SUBMIT_PERSONAL_DETAIL;
 
             $result = $this->request('/policy/submit/'.$this->productSlug.'/', 'post', $data, [
                 'x-session-id' => $this->sessionId,
@@ -560,7 +551,6 @@ class SukoonDriverMedexService
             if(!empty(array_diff($requiredFields, array_keys($pluckedFieldsValue))))
                 throw new Exception('Not found (payment_plan, amount_disclaimer_text)');
 
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_SUBMIT_PERSONAL_DETAIL);
 
             return [
                 'quote_policy' => $result['policy_number'], 
@@ -622,7 +612,6 @@ class SukoonDriverMedexService
     private function reviewSubmittedData()
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::STEP_REVIEW_SUBMITED_DATA;
 
             $response = $this->request('/policy/'.$this->quoteNumber.'/confirm/', 
                 'get', 
@@ -634,7 +623,6 @@ class SukoonDriverMedexService
             if(!empty(array_diff(['quote_number', 'policy_status'], array_keys($responsePolicyData))))
                 throw new Exception('Not found (quote_number, policy_status)');
 
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_REVIEW_SUBMITED_DATA);
 
             return [
                 'quote_policy' => $responsePolicyData['quote_number'], 
@@ -660,7 +648,6 @@ class SukoonDriverMedexService
                 ['x-session-id' => $this->sessionId]
             );
 
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_CONFIRM_SUBMITED_DATA);
             return true;
         } catch (Exception $e) {
             throw $e;
@@ -676,7 +663,6 @@ class SukoonDriverMedexService
      */
     public function initiatePaymentProcess()
     {
-        $this->currentStep = SukoonPurchaseFlowEnum::STEP_INITIATE_PAYMENT_PROCESS;
         $data = ['policy_number' => $this->quoteNumber, 'gateway' => $this->paymentGateway];
 
         try {
@@ -686,7 +672,6 @@ class SukoonDriverMedexService
                 'Accept' => 'application/json',
             ])->json();
 
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_INITIATE_PAYMENT_PROCESS);
             return ['payment_token' => $result['token']];
 
         } catch (Exception $e) {
@@ -703,7 +688,6 @@ class SukoonDriverMedexService
      */
     public function completeInvoicePayment()
     {
-        $this->currentStep = SukoonPurchaseFlowEnum::STEP_COMPLETE_INVOICE_PAYMENT;
         $data = ['payment_reference' => 'Payment reference here', 'payment_token' => $this->paymentToken];
 
         try {
@@ -714,7 +698,6 @@ class SukoonDriverMedexService
                 'Accept' => 'application/json',
             ])->json();
 
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_COMPLETE_INVOICE_PAYMENT);
             return ['certificate_number' => $result['policy_number']];
 
         } catch (Exception $e) {
@@ -726,9 +709,7 @@ class SukoonDriverMedexService
     public function getPolicyScheduleCoi()
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::STEP_GET_POLICY_SCHEDULE_COI;
             $this->request('/policy/'.$this->policyNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_GET_POLICY_SCHEDULE_COI);
         } catch (Exception $e) {
             throw $e;
         }
@@ -737,9 +718,7 @@ class SukoonDriverMedexService
     public function getCustomerTaxInvoice()
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::STEP_GET_CUSTOMER_TAX_INVOICE;
             $this->request('/payment/'.$this->paymentToken.'/tax-invoice', 'get', headers: ['x-session-id' => $this->sessionId]);
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_GET_CUSTOMER_TAX_INVOICE);
         } catch (Exception $e) {
             throw $e;
         }
@@ -757,9 +736,7 @@ class SukoonDriverMedexService
     public function listGeneratedDocument($quote, $embeddedTransaction)
     {
         try {
-            $this->currentStep = SukoonPurchaseFlowEnum::STEP_LIST_GENERATED_DOCUMENT;
             $result = $this->request('/policy/'.$this->policyNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_LIST_GENERATED_DOCUMENT);
             
             return $result->json();
 

@@ -51,7 +51,7 @@ final class SukoonPurchaseFlowEnum extends Enum
         return self::STEPS_NAME[$stepNumber] ?? "";
     }
 
-    public function getStepNumber(string $stepName): int
+    public static function getStepNumber(string $stepName): int
     {
         return array_search($stepName, self::STEPS_NAME); 
     }
