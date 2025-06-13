@@ -24,7 +24,9 @@ const isRequiredNumber = value => {
   if (!value) return 'This field is required';
   // Remove commas and check if it's a valid number
   const num = Number(value.toString().replace(/,/g, ''));
-  return !isNaN(num) ? true : 'This field must be a number';
+  if (isNaN(num)) return 'This field must be a number';
+  if (num <= 0) return 'This field must be greater than 0';
+  return true;
 };
 
 // Function to change version
@@ -75,6 +77,9 @@ const validateAtLeastOneSum = value => {
       const num = Number(fieldValue.toString().replace(/,/g, ''));
       if (isNaN(num)) {
         return `Sum Insured (${currency}) must be a number`;
+      }
+      if (num <= 0) {
+        return `Sum Insured (${currency}) must be greater than 0`;
       }
     }
   }
@@ -354,6 +359,9 @@ const formatNumber = value => {
 const parseNumber = value => {
   if (!value) return '';
   // Remove commas and return the number as string
+  const num = Number(value.toString().replace(/,/g, ''));
+  if (isNaN(num)) return value;
+  // Return the original value to maintain validation state
   return value.toString().replace(/,/g, '');
 };
 
