@@ -138,7 +138,7 @@ class AlfredChatController extends Controller
 
     public function exportChat(Request $request)
     {
-        $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s').'.xlsx';
+        $fileName = $request->report;
         switch ($request->report) {
             case InstantChatReportsEnum::CONSOLIDATED_REPORT:
                 return (new InstantChatConsolidatedExport)->download($fileName);
