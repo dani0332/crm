@@ -52,7 +52,7 @@ COPY composer.json composer.json
 COPY composer.lock composer.lock
 RUN composer install --optimize-autoloader --no-dev
 
-FROM php:8.4-fpm
+FROM php:8.2-fpm
 COPY --from=dependencies /root/.doppler/.doppler.yaml /root/.doppler/.doppler.yaml
 COPY --from=dependencies /usr/bin/doppler /usr/bin/doppler
 COPY --from=build /app/vendor/ /var/www/vendor
