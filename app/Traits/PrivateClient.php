@@ -55,12 +55,12 @@ trait PrivateClient
             return false;
         }
 
+        LoggerService::warning('Lead PCP criteria.', extra: [
+            'pcp_criteria' => $configs->toArray(),
+        ]);
+
         // Check if lead matches PCP criteria
         if (! $this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
-            LoggerService::warning('Lead not matched PCP criteria.', extra: [
-                'tag_version_criteria' => $configs->toArray(),
-            ]);
-
             return false;
         }
 
