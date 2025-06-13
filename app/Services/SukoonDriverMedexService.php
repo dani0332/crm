@@ -194,8 +194,13 @@ class SukoonDriverMedexService
      */
     private function updateTransaction($transaction, $transactionDetail)
     {
-        $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
-        $commissionVat = $commission_amount * 0.05 ?? 0;
+        // TODO:: get commission_amount from SUKOON Response instead of manually calculate, once it is fixed
+        // $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
+        $paymentData = $transactionDetail['payments'][0];
+        $paymentBreakdown = $paymentData['amount_breakdown'];
+        $policyPrice = floatval($paymentBreakdown['policy_price']) ? (float) $paymentBreakdown['policy_price'] : (int) $paymentBreakdown['policy_price'];
+        $commission_amount = $policyPrice * 0.30 ?? 0; // 30% commission
+        $commissionVat = $commission_amount * 0.05 ?? 0; // 5% commission vat
 
         return $transaction->update([
             'certificate_number' => $this->policyNumber,
@@ -205,8 +210,8 @@ class SukoonDriverMedexService
             'credit_note_buyer_no' => $transactionDetail['additional_data']['credit_note_buyer_document_number'] ?? null,
             'commission_with_vat' => $commission_amount + $commissionVat ?? null,
             'commission_without_vat' => $commission_amount,
-            'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
-            'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
+            'policy_price' => $paymentBreakdown['policy_price'] ?? null,
+            'policy_status' => $paymentData['status'] ?? null,
         ]);
     }
 
