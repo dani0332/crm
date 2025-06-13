@@ -25,6 +25,10 @@ class SavingsAllocation extends BaseAllocation
         $amount = $this->lead?->savingsQuote?->currency?->convertToUSD((float) $this->lead?->savingsQuote?->investment_amount ?? 0);
         $nationalityId = $this->lead?->nationality?->id;
 
+        if (!$nationalityId) {
+            return [];
+        }
+
         return app(AllocationConfigurationService::class)->getEligibleAdvisorIds(QuoteTypes::SAVINGS, $frequency, $amount, $nationalityId);
     }
 }
