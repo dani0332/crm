@@ -573,10 +573,26 @@ class QuoteDocumentService extends BaseService
             // If we can't even use the original file, re-throw the exception
             throw $e;
         } finally {
-            // after everything remove the sourceFile from storage/temp
+            // after everything remove all the temp files from storage/temp
             if (file_exists($sourceFilePath)) {
                 unlink($sourceFilePath);
             }
+
+            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt');
+            if (file_exists($qpdfLogPath)) {
+                unlink($qpdfLogPath);
+            }
+
+            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+            if (file_exists($decryptedTempPath)) {
+                unlink($decryptedTempPath);
+            }
+
+            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+            if (file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
+
         }
     }
 
@@ -659,17 +675,9 @@ class QuoteDocumentService extends BaseService
         // endregion
 
         //region Clean up temporary file
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
-        }
 
-        if (file_exists($qpdfLogPath)) {
-            unlink($qpdfLogPath);
-        }
 
-        if (file_exists($decryptedTempPath)) {
-            unlink($decryptedTempPath);
-        }
+
         //endregion
 
         // Check if the output file was created successfully
