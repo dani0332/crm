@@ -35,6 +35,7 @@ const highlightedBracketIndex = ref(-1);
 const isInitialized = ref(false);
 const previousBracketCount = ref(props.brackets.length);
 const highlightedProfileKey = ref('');
+const collapsedBrackets = ref(new Set());
 
 watch(
   () => props.brackets.length,
@@ -169,6 +170,14 @@ const removeProfile = (bracket, profileIndex) => {
   emit('remove-profile', bracket, profileIndex);
 };
 
+const toggleBracket = index => {
+  if (collapsedBrackets.value.has(index)) {
+    collapsedBrackets.value.delete(index);
+  } else {
+    collapsedBrackets.value.add(index);
+  }
+};
+
 onMounted(() => {
   setTimeout(() => {
     isInitialized.value = true;
@@ -213,15 +222,38 @@ onMounted(() => {
           }"
         >
           <div class="flex items-center justify-between mb-4">
-            <h4 class="text-md font-medium text-gray-800">
-              {{ type }} (Bracket {{ bracketIndex + 1 }})
-              <span
-                v-if="highlightedBracketIndex === bracketIndex"
-                class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+            <div class="flex items-center space-x-2">
+              <button
+                type="button"
+                @click="toggleBracket(bracketIndex)"
+                class="text-gray-500 hover:text-gray-700 focus:outline-none"
               >
-                New!
-              </span>
-            </h4>
+                <svg
+                  class="h-5 w-5 transform transition-transform duration-200"
+                  :class="{ 'rotate-90': !collapsedBrackets.has(bracketIndex) }"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+              <h4 class="text-md font-medium text-gray-800">
+                {{ type }} (Bracket {{ bracketIndex + 1 }})
+                <span
+                  v-if="highlightedBracketIndex === bracketIndex"
+                  class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                >
+                  New!
+                </span>
+              </h4>
+            </div>
             <x-button
               size="sm"
               color="error"
@@ -246,183 +278,185 @@ onMounted(() => {
             </x-button>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <x-input
-                v-model="bracket.min"
-                class="!mb-0 mt-1"
-                required
-                @input="handleMinInput($event, bracket)"
-                @blur="handleMinBlur($event, bracket)"
-                placeholder="1000"
-                label="Minimum Amount"
-                tooltip="Set the min investment amount for leads in this category."
-              >
-                <template #suffix>
-                  <div
-                    class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                  >
-                    <span>USD</span>
-                  </div>
-                </template>
-              </x-input>
-            </div>
-            <div>
-              <x-input
-                v-model="bracket.max"
-                class="!mb-0 mt-1"
-                required
-                @input="handleMaxInput($event, bracket)"
-                @blur="handleMaxBlur($event, bracket)"
-                placeholder="2000"
-                label="Maximum Amount"
-                tooltip="Set the max investment amount for leads in this category."
-              >
-                <template #suffix>
-                  <div
-                    class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                  >
-                    <span>USD</span>
-                  </div>
-                </template>
-              </x-input>
-            </div>
-          </div>
-
-          <div class="border-t pt-4">
-            <div class="flex items-center justify-between mb-4">
-              <h5 class="text-sm font-medium text-gray-700">
-                Advisor Allocation Profiles
-              </h5>
-              <x-tooltip>
-                <x-button
-                  size="sm"
-                  color="#ff5e00"
-                  type="button"
-                  @click="addProfile(bracket)"
+          <div v-show="!collapsedBrackets.has(bracketIndex)" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <x-input
+                  v-model="bracket.min"
+                  class="!mb-0 mt-1"
+                  required
+                  @input="handleMinInput($event, bracket)"
+                  @blur="handleMinBlur($event, bracket)"
+                  placeholder="1000"
+                  label="Minimum Amount"
+                  tooltip="Set the min investment amount for leads in this category."
                 >
-                  Add Profile
-                </x-button>
-                <template #tooltip>
-                  <span class="custom-tooltip-content">
-                    Set who gets the lead – based on amount and customer
-                    nationality.
-                  </span>
-                </template>
-              </x-tooltip>
-            </div>
-
-            <div
-              v-if="bracket.profiles.length === 0"
-              class="text-center py-4 text-gray-400 text-sm"
-            >
-              No advisor profiles configured for this bracket.
-            </div>
-
-            <div v-else class="space-y-4">
-              <div
-                v-for="(profile, profileIndex) in bracket.profiles"
-                :key="`profile-${bracketIndex}-${profileIndex}`"
-                :data-profile-key="`${type.toLowerCase()}-${bracketIndex}-${profileIndex}`"
-                class="bg-gray-50 p-4 rounded-md"
-                :class="{
-                  'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
-                    highlightedProfileKey ===
-                    `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
-                  'shadow-lg':
-                    highlightedProfileKey ===
-                    `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
-                }"
-              >
-                <div class="flex items-center justify-between mb-3">
-                  <h6 class="text-sm font-medium text-gray-600">
-                    Profile {{ profileIndex + 1 }}
-                    <span
-                      v-if="
-                        highlightedProfileKey ===
-                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
-                      "
-                      class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                  <template #suffix>
+                    <div
+                      class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
                     >
-                      New!
-                    </span>
-                  </h6>
-                  <button
+                      <span>USD</span>
+                    </div>
+                  </template>
+                </x-input>
+              </div>
+              <div>
+                <x-input
+                  v-model="bracket.max"
+                  class="!mb-0 mt-1"
+                  required
+                  @input="handleMaxInput($event, bracket)"
+                  @blur="handleMaxBlur($event, bracket)"
+                  placeholder="2000"
+                  label="Maximum Amount"
+                  tooltip="Set the max investment amount for leads in this category."
+                >
+                  <template #suffix>
+                    <div
+                      class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                    >
+                      <span>USD</span>
+                    </div>
+                  </template>
+                </x-input>
+              </div>
+            </div>
+
+            <div class="border-t pt-4">
+              <div class="flex items-center justify-between mb-4">
+                <h5 class="text-sm font-medium text-gray-700">
+                  Advisor Allocation Profiles
+                </h5>
+                <x-tooltip>
+                  <x-button
+                    size="sm"
+                    color="#ff5e00"
                     type="button"
-                    @click="removeProfile(bracket, profileIndex)"
-                    class="text-red-600 hover:text-red-800"
+                    @click="addProfile(bracket)"
                   >
-                    <svg
-                      class="h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    Add Profile
+                  </x-button>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">
+                      Set who gets the lead – based on amount and customer
+                      nationality.
+                    </span>
+                  </template>
+                </x-tooltip>
+              </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <x-select
-                      v-model="profile.advisorIds"
-                      :options="advisorOptions"
-                      placeholder="Select advisors..."
-                      multiple
-                      filterable
-                      class="w-full min-h-[40px]"
-                      label="Advisors"
-                      required
-                      tooltip="Select one or more advisors or managers eligible to receive leads in this profile."
-                    >
-                      <template
-                        #content-footer
-                        v-if="advisorOptions.length > 0"
+              <div
+                v-if="bracket.profiles.length === 0"
+                class="text-center py-4 text-gray-400 text-sm"
+              >
+                No advisor profiles configured for this bracket.
+              </div>
+
+              <div v-else class="space-y-4">
+                <div
+                  v-for="(profile, profileIndex) in bracket.profiles"
+                  :key="`profile-${bracketIndex}-${profileIndex}`"
+                  :data-profile-key="`${type.toLowerCase()}-${bracketIndex}-${profileIndex}`"
+                  class="bg-gray-50 p-4 rounded-md"
+                  :class="{
+                    'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+                      highlightedProfileKey ===
+                      `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                    'shadow-lg':
+                      highlightedProfileKey ===
+                      `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                  }"
+                >
+                  <div class="flex items-center justify-between mb-3">
+                    <h6 class="text-sm font-medium text-gray-600">
+                      Profile {{ profileIndex + 1 }}
+                      <span
+                        v-if="
+                          highlightedProfileKey ===
+                          `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
+                        "
+                        class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
                       >
-                        <ui-select-actions
-                          @select-all="
-                            profile.advisorIds = advisorOptions.map(
-                              item => item.value,
-                            )
-                          "
-                          @clear="profile.advisorIds = []"
+                        New!
+                      </span>
+                    </h6>
+                    <button
+                      type="button"
+                      @click="removeProfile(bracket, profileIndex)"
+                      class="text-red-600 hover:text-red-800"
+                    >
+                      <svg
+                        class="h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
                         />
-                      </template>
-                    </x-select>
+                      </svg>
+                    </button>
                   </div>
-                  <div>
-                    <x-select
-                      v-model="profile.nationalityIds"
-                      :options="nationalityOptions"
-                      placeholder="Select nationalities..."
-                      multiple
-                      filterable
-                      class="w-full min-h-[40px]"
-                      label="Nationalities"
-                      required
-                      tooltip="Select the nationalities of customers this profile applies to."
-                    >
-                      <template
-                        #content-footer
-                        v-if="nationalityOptions.length > 0"
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <x-select
+                        v-model="profile.advisorIds"
+                        :options="advisorOptions"
+                        placeholder="Select advisors..."
+                        multiple
+                        filterable
+                        class="w-full min-h-[40px]"
+                        label="Advisors"
+                        required
+                        tooltip="Select one or more advisors or managers eligible to receive leads in this profile."
                       >
-                        <ui-select-actions
-                          @select-all="
-                            profile.nationalityIds = nationalityOptions.map(
-                              item => item.value,
-                            )
-                          "
-                          @clear="profile.nationalityIds = []"
-                        />
-                      </template>
-                    </x-select>
+                        <template
+                          #content-footer
+                          v-if="advisorOptions.length > 0"
+                        >
+                          <ui-select-actions
+                            @select-all="
+                              profile.advisorIds = advisorOptions.map(
+                                item => item.value,
+                              )
+                            "
+                            @clear="profile.advisorIds = []"
+                          />
+                        </template>
+                      </x-select>
+                    </div>
+                    <div>
+                      <x-select
+                        v-model="profile.nationalityIds"
+                        :options="nationalityOptions"
+                        placeholder="Select nationalities..."
+                        multiple
+                        filterable
+                        class="w-full min-h-[40px]"
+                        label="Nationalities"
+                        required
+                        tooltip="Select the nationalities of customers this profile applies to."
+                      >
+                        <template
+                          #content-footer
+                          v-if="nationalityOptions.length > 0"
+                        >
+                          <ui-select-actions
+                            @select-all="
+                              profile.nationalityIds = nationalityOptions.map(
+                                item => item.value,
+                              )
+                            "
+                            @clear="profile.nationalityIds = []"
+                          />
+                        </template>
+                      </x-select>
+                    </div>
                   </div>
                 </div>
               </div>
