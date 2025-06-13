@@ -763,7 +763,7 @@ class HandleInertiaRequests extends Middleware
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::ILA_CONFIG_ALL_LOB),
-                                'Configure ILA',
+                                'ILA Configuration',
                                 route('admin.allocation-configuration.index'),
                                 fn ($s) => $s->attributes(['icon' => 'settings'])
                             )

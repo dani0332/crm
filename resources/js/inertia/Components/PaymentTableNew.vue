@@ -212,7 +212,7 @@ const familyEmployeDiscount = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.Travel,
-  quoteTypeCodeEnum.Savings,
+  quoteTypeCodeEnum.SAVINGS,
 ];
 // Array of quote types to check against
 const quoteTypesToCheck = [

@@ -55,21 +55,19 @@ onMounted(() => {
   <Head title="Allocation Configuration" />
 
   <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
-    Allocation Configuration
+    Config ILA for non-motor and health LOBs
   </h2>
 
   <div class="mx-auto sm:px-6 lg:px-8">
-    <!-- Unified Error Display - Moved to Top -->
-
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 bg-white border-b border-gray-200">
           <div class="max-w-md">
-            <x-field label="Quote Type" required>
+            <x-field label="Line of business" required>
               <x-select
                 v-model="form.quote_type_id"
                 :options="quoteTypeOptions"
-                placeholder="Select Quote Type"
+                placeholder="Select line of business"
                 filterable
                 :rules="[isRequired]"
                 :error="form.errors.quote_type"
@@ -80,7 +78,7 @@ onMounted(() => {
               v-if="!form.quote_type_id && !isQuoteTypeLoading"
               class="mt-2 text-sm text-gray-500"
             >
-              Please select a quote type to begin configuration
+              Please select a line of business to begin configuration
             </div>
 
             <div

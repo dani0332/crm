@@ -645,8 +645,6 @@ const onUpdateIndividualPlan = () => {
     },
   });
 };
-
-
 </script>
 
 <template>
@@ -700,7 +698,7 @@ const onUpdateIndividualPlan = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SavingsQuotesEdit)"
+            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
             :isDisabled="true"
           />
           <template #tooltip
@@ -711,12 +709,12 @@ const onUpdateIndividualPlan = () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SavingsQuotesEdit)"
+            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
           />
         </template>
 
         <Link
-          v-if="can(permissionsEnum.SavingsQuotesList)"
+          v-if="can(permissionsEnum.SAVINGS_QUOTES_LIST)"
           :href="route('savings-quotes-list')"
           preserve-scroll
         >
@@ -1078,8 +1076,8 @@ const onUpdateIndividualPlan = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">
-                    HAVE YOU CONSUMED ANY PRODUCTS <br> WITH NICOTINE FOR THE PAST 12
-                    MONTHS?
+                    HAVE YOU CONSUMED ANY PRODUCTS <br />
+                    WITH NICOTINE FOR THE PAST 12 MONTHS?
                   </dt>
                   <dd>{{ quote?.savings_quote?.takes_nicotine }}</dd>
                 </div>
@@ -1365,7 +1363,6 @@ const onUpdateIndividualPlan = () => {
                   Hide
                 </x-button>
               </x-button-group>
-
 
               <x-button
                 v-if="availablePlansTable.data.length > 0"
@@ -1923,8 +1920,6 @@ const onUpdateIndividualPlan = () => {
       :modelType="'Savings'"
       :code="$page.props.quote.code"
     ></lead-raw-data>
-
-
   </div>
 </template>
 

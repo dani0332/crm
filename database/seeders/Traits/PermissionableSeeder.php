@@ -4,6 +4,7 @@ namespace Database\Seeders\Traits;
 
 use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Database\Eloquent\Collection;
 use Spatie\Permission\Models\Permission as ModelsPermission;
 use Spatie\Permission\Models\Role as ModelsRole;
 
@@ -48,6 +49,19 @@ trait PermissionableSeeder
 
         if (! $role->hasPermissionTo($permission)) {
             $role->givePermissionTo($permission);
+        }
+    }
+
+    private function assignPermissionsToRole(Collection $permissions, Role|ModelsRole|null $role = null)
+    {
+        if (! $role || ! $permissions) {
+            return;
+        }
+
+        foreach ($permissions as $permission) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
         }
     }
 }

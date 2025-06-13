@@ -5,13 +5,13 @@ namespace App\Jobs;
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
+use App\Services\EmailServices\SavingsEmailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\EmailServices\SavingsEmailService;
 
 class SendSavingsOCBIntroEmailJob implements ShouldQueue
 {
