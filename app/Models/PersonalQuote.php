@@ -360,8 +360,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(SavingsQuote::class);
     }
 
-
-
     public function age(): Attribute
     {
         return Attribute::make(
