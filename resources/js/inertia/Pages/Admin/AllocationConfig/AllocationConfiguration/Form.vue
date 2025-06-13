@@ -80,7 +80,7 @@ onMounted(() => {
               v-if="!form.quote_type_id && !isQuoteTypeLoading"
               class="mt-2 text-sm text-gray-500"
             >
-              Please select a LOB to begin configuration
+              Please select an LOB to begin configuration
             </div>
 
             <div
