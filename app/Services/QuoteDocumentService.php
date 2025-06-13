@@ -674,12 +674,6 @@ class QuoteDocumentService extends BaseService
         $pdf->Output($outputPath, 'F');
         // endregion
 
-        //region Clean up temporary file
-
-
-
-        //endregion
-
         // Check if the output file was created successfully
         if (! file_exists($outputPath) || filesize($outputPath) < 100) {
             LoggerService::error("FPDI watermarking failed for UUID: $uuid");
