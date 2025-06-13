@@ -55,9 +55,11 @@ class SukoonDriverMedexService
     private function viewQuotePolicy($transaction)
     {
         try {
+            $this->currentStep = SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY;
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
             $response = $this->request("/policy/{$transaction->certificate_number}", 'get', headers: $headers)->json();
-            
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY);
+
             return $response;
         } catch (Exception $e) {
             throw $e;
@@ -147,7 +149,7 @@ class SukoonDriverMedexService
             $this->confirmSubmittedData();
 
             // STEP #9 listPaymentGateways | Skiped
-            
+
             // STEP #10 initiatePaymentProcess
             $initPaymentResponse = $this->initiatePaymentProcess();
             $this->syncSukoonData($transaction, $initPaymentResponse);
@@ -342,8 +344,7 @@ class SukoonDriverMedexService
             $logData = (array) [...$logData, 'response' => $response];
         }
 
-        $stepPrefix = $parentFunction == SukoonPurchaseFlowEnum::getName(SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY) ? '' : "Step: #{$this->currentStep} ";
-        LoggerService::info("{$this->logPrefix} API {$status} {$stepPrefix}{$parentFunction}", extra: $extraLog, context: ['message' => $message, 'endPoint' => $endPoint, ...$logData]);
+        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$this->currentStep} {$parentFunction}", context: ['message' => $message, 'endPoint' => $endPoint, ...$logData]);
     }
     
     /**

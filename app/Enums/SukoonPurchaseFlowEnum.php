@@ -40,7 +40,7 @@ final class SukoonPurchaseFlowEnum extends Enum
     const STEP_GET_CUSTOMER_TAX_INVOICE = 13;
     const STEP_LIST_GENERATED_DOCUMENT = 14;
     const STEP_DOWNLOAD_DOCUMENT = 15;
-    const GET_VIEW_QUOTE_POLICY = 30;
+    const GET_VIEW_QUOTE_POLICY = 16;
     // const STEP_GET_FORM = 3; // GET, Skiped
     // const STEP_PRE_REVIEW_SUBMITED_DATA = 5; // GET, Skiped
     // const STEP_LIST_PAYMENT_GATEWAYS = 9; // GET, Skiped
