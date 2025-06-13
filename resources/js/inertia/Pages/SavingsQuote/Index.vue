@@ -91,7 +91,7 @@ const tableHeader = ref([
     is_active: true,
   },
   {
-    text: 'Investment Amount',
+    text: 'Minimum Investment',
     value: 'savings_quote.investment_amount',
     is_active: true,
   },
