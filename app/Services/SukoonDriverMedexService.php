@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SukoonPurchaseFlowEnum;
@@ -170,11 +171,11 @@ class SukoonDriverMedexService
             $quotePolicyResponse = $this->viewQuotePolicy($transaction);
             $this->updateTransaction($transaction, $quotePolicyResponse);
 
-            // EmbeddedProductRepository::sendDocument([
-            //     'epId' => $transaction->product->embeddedProduct->id,
-            //     'modelType' => QuoteTypes::getName($this->quoteTypeId),
-            //     'quoteId' => $quote->id,
-            // ]);
+            EmbeddedProductRepository::sendDocument([
+                'epId' => $transaction->product->embeddedProduct->id,
+                'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
+                'quoteId' => $quote->id,
+            ]);
 
         } catch (Exception $e) {
             $this->logFailure('Sukoon Purchase Flow Failed', $e->getMessage(), [
@@ -774,9 +775,9 @@ class SukoonDriverMedexService
 
                 $docNamePrefix = explode('-', $docName)[0];
                 $docCode = match ($docNamePrefix) {
-                    'TaxInvoice' => 'CTI', // Tax Invoice (TaxInvoice)
-                    'PolicyContract' => 'CPS', // Policy Schedule (PolicyContract)
-                    'TaxInvoiceBuyer' => 'CTIRBB', // Tax Invoice (TaxInvoiceBuyer)
+                    'TaxInvoice' => QuoteDocumentsEnum::CAR_TAX_INVOICE, // Tax Invoice (TaxInvoice)
+                    'PolicyContract' => QuoteDocumentsEnum::POLICY_SCHEDULE, // Policy Schedule (PolicyContract)
+                    'TaxInvoiceBuyer' => QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, // Tax Invoice (TaxInvoiceBuyer)
                     default => null
                 };
 
