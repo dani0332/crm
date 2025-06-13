@@ -120,18 +120,14 @@ class SukoonDriverMedexService
 
             $this->validateCustomerDetails($quote);
 
-            // STEP #1 init | Skiped
+            // Skipable Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
 
             // STEP #2 login
             $this->initiatePurchaseFlow($transaction);
 
-            // STEP #3 getForm | Skiped
-
             // STEP #4 submitPersonalDetail
             $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($quote));
             $this->syncSukoonData($transaction, $profileDetailResponse);
-
-            // STEP #5 preReviewSubmittedData | Skiped
 
             // STEP #6 submitPlan
             $submitPlanResponse = $this->submitPlan($this->prepareAdditionalData());
@@ -144,8 +140,6 @@ class SukoonDriverMedexService
 
             // STEP #8 confirmSubmittedData
             $this->confirmSubmittedData();
-
-            // STEP #9 listPaymentGateways | Skiped
 
             // STEP #10 initiatePaymentProcess
             $initPaymentResponse = $this->initiatePaymentProcess();
