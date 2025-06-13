@@ -25,7 +25,7 @@ class SavingsAllocation extends BaseAllocation
         $amount = $this->lead?->savingsQuote?->currency?->convertToUSD((float) $this->lead?->savingsQuote?->investment_amount ?? 0);
         $nationalityId = $this->lead?->nationality?->id;
 
-        if (!$nationalityId) {
+        if (! $nationalityId) {
             return [];
         }
 
