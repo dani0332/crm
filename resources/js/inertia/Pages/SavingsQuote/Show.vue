@@ -698,7 +698,7 @@ const onUpdateIndividualPlan = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SavingsQuotesEdit)"
+            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
             :isDisabled="true"
           />
           <template #tooltip
@@ -709,12 +709,12 @@ const onUpdateIndividualPlan = () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SavingsQuotesEdit)"
+            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
           />
         </template>
 
         <Link
-          v-if="can(permissionsEnum.SavingsQuotesList)"
+          v-if="can(permissionsEnum.SAVINGS_QUOTES_LIST)"
           :href="route('savings-quotes-list')"
           preserve-scroll
         >
