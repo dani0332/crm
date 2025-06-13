@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -55,7 +56,7 @@ trait PrivateClient
         }
 
         // Check if lead matches PCP criteria
-        if (! $this->doesLeadMatchPcpCriteria($model, $configs, $modelClass)) {
+        if (! $this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
             LoggerService::warning('Lead not matched PCP criteria.', extra: [
                 'tag_version_criteria' => $configs->toArray(),
             ]);
@@ -86,14 +87,54 @@ trait PrivateClient
         return $model;
     }
 
-    private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass): bool
+    /**
+     * Apply quote type specific conditions to the query
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyQuoteTypeSpecificConditions($query, int $quoteTypeId)
+    {
+        $conditions = $this->getQuoteTypeConditions($quoteTypeId);
+
+        foreach ($conditions as $condition) {
+            $query->where($condition['column'], $condition['operator'], $condition['value']);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get conditions specific to quote type
+     */
+    private function getQuoteTypeConditions(int $quoteTypeId): array
+    {
+        $conditions = [];
+
+        switch ($quoteTypeId) {
+            case QuoteTypeId::Car:
+                $conditions[] = [
+                    'column' => 'registration_type',
+                    'operator' => '=',
+                    'value' => CarRegistrationType::PERSONAL,
+                ];
+                break;
+        }
+
+        return $conditions;
+    }
+
+    private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass, int $quoteTypeId): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
 
-        return (new $modelClass)->where('uuid', $model->uuid)
-            ->where($whereClause)
-            ->exists();
+        $query = (new $modelClass)->where('uuid', $model->uuid)
+            ->where($whereClause);
+
+        $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
+
+        return $query->exists();
     }
 
     /**
