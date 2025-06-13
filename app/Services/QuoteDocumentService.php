@@ -592,9 +592,20 @@ class QuoteDocumentService extends BaseService
 
         shell_exec($decryptCommand);
 
-        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+        if (!file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
             $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
-            throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+
+            if (strpos($logOutput, 'invalid password') !== false) {
+                /** PDF has password, falling back to original document*/
+
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+
+            } else {
+                throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+            }
         }
 
         // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
