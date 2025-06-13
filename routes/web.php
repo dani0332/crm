@@ -121,6 +121,21 @@ if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
     });
 }
 
+// TODO: Remove this route after testing
+Route::get('/clear-cache', function () {
+    if (request()->has('info')) {
+        return phpinfo();
+    }
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    Artisan::call('config:clear');
+    Artisan::call('view:clear');
+    Artisan::call('permission:cache-reset');
+    Artisan::call('schedule:clear-cache');
+
+    return '<h1>All cache cleared. LARAVEL Version=' . app()->version() . '</h1>';
+});
+
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
