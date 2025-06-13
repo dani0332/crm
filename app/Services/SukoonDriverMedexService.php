@@ -6,12 +6,14 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SukoonPurchaseFlowEnum;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use DateTime;
@@ -54,13 +56,8 @@ class SukoonDriverMedexService
         try {
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
             $response = $this->request("/policy/{$transaction->certificate_number}", 'get', headers: $headers)->json();
-
-            return [
-                'quote_policy' => $response['quote_number'],
-                'certificate_number' => $response['policy_number'],
-                'payment_token' => $response['payments'][0]['payment_token'] ?? null,
-            ];
-
+            
+            return $response;
         } catch (Exception $e) {
             throw $e;
         }
@@ -158,9 +155,6 @@ class SukoonDriverMedexService
             $invoicePaymentResponse = $this->completeInvoicePayment($transaction);
             $this->syncSukoonData($transaction, $invoicePaymentResponse);
 
-            $viewQuotePolicyResponse = $this->viewQuotePolicy($transaction);
-            $this->syncSukoonData($transaction, $viewQuotePolicyResponse);
-
             // STEP #12 getPolicyScheduleCoi 
             $this->getPolicyScheduleCoi();
 
@@ -172,6 +166,15 @@ class SukoonDriverMedexService
 
             // STEP #15 downloadDocument
             $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $quote, $transaction);
+            
+            $quotePolicyResponse = $this->viewQuotePolicy($transaction);
+            $this->updateTransaction($transaction, $quotePolicyResponse);
+
+            // EmbeddedProductRepository::sendDocument([
+            //     'epId' => $transaction->product->embeddedProduct->id,
+            //     'modelType' => QuoteTypes::getName($this->quoteTypeId),
+            //     'quoteId' => $quote->id,
+            // ]);
 
         } catch (Exception $e) {
             $this->logFailure('Sukoon Purchase Flow Failed', $e->getMessage(), [
@@ -179,6 +182,31 @@ class SukoonDriverMedexService
                 'error_messages' => $this->errorMessages
             ]);
         }
+    }
+
+    /**
+     * Updates the transaction with the given transaction details.
+     *
+     * @param  mixed  $transaction  The transaction object.
+     * @param  array  $transactionDetail  The transaction details array.
+     * @return void
+     */
+    private function updateTransaction($transaction, $transactionDetail)
+    {
+        $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
+        $commissionVat = $commission_amount * 0.05 ?? 0;
+
+        return $transaction->update([
+            'certificate_number' => $this->policyNumber,
+            'tax_invoice_no' => $transactionDetail['additional_data']['tax_invoice_document_number'] ?? null,
+            'tax_invoice_buyer_no' => $transactionDetail['additional_data']['tax_invoice_buyer_document_number'] ?? null,
+            'credit_note_no' => $transactionDetail['additional_data']['credit_note_document_number'] ?? null,
+            'credit_note_buyer_no' => $transactionDetail['additional_data']['credit_note_buyer_document_number'] ?? null,
+            'commission_with_vat' => $commission_amount + $commissionVat ?? null,
+            'commission_without_vat' => $commission_amount,
+            'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
+            'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
+        ]);
     }
 
     /**
@@ -308,8 +336,8 @@ class SukoonDriverMedexService
             $logData = (array) [...$logData, 'response' => $response];
         }
 
-        $prefixStep = $parentFunction == SukoonPurchaseFlowEnum::getName(SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY) ? 'Pre-' : '';
-        LoggerService::info("{$this->logPrefix} API {$status} {$prefixStep}Step: #{$this->currentStep} {$parentFunction}", extra: $extraLog, context: ['message' => $message, 'endPoint' => $endPoint, ...$logData]);
+        $stepPrefix = $parentFunction == SukoonPurchaseFlowEnum::getName(SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY) ? '' : "Step: #{$this->currentStep} ";
+        LoggerService::info("{$this->logPrefix} API {$status} {$stepPrefix}{$parentFunction}", extra: $extraLog, context: ['message' => $message, 'endPoint' => $endPoint, ...$logData]);
     }
     
     /**
