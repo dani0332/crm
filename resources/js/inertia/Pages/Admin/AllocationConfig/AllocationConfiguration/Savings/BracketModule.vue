@@ -37,6 +37,7 @@ const previousBracketCount = ref(props.brackets.length);
 const highlightedProfileKey = ref('');
 const collapsedBrackets = ref(new Set());
 const isModuleCollapsed = ref(false);
+const collapsedProfiles = ref(new Set());
 
 watch(
   () => props.brackets.length,
@@ -182,6 +183,15 @@ const toggleBracket = index => {
 
 const toggleModule = () => {
   isModuleCollapsed.value = !isModuleCollapsed.value;
+};
+
+const toggleProfile = (bracketIndex, profileIndex) => {
+  const profileKey = `${bracketIndex}-${profileIndex}`;
+  if (collapsedProfiles.value.has(profileKey)) {
+    collapsedProfiles.value.delete(profileKey);
+  } else {
+    collapsedProfiles.value.add(profileKey);
+  }
 };
 
 onMounted(() => {
@@ -406,18 +416,45 @@ onMounted(() => {
                     }"
                   >
                     <div class="flex items-center justify-between mb-3">
-                      <h6 class="text-sm font-medium text-gray-600">
-                        Profile {{ profileIndex + 1 }}
-                        <span
-                          v-if="
-                            highlightedProfileKey ===
-                            `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
-                          "
-                          class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                      <div class="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          @click="toggleProfile(bracketIndex, profileIndex)"
+                          class="text-gray-500 hover:text-gray-700 focus:outline-none"
                         >
-                          New!
-                        </span>
-                      </h6>
+                          <svg
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="{
+                              'rotate-90': !collapsedProfiles.has(
+                                `${bracketIndex}-${profileIndex}`,
+                              ),
+                            }"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </button>
+                        <h6 class="text-sm font-medium text-gray-600">
+                          Profile {{ profileIndex + 1 }}
+                          <span
+                            v-if="
+                              highlightedProfileKey ===
+                              `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
+                            "
+                            class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                          >
+                            New!
+                          </span>
+                        </h6>
+                      </div>
                       <button
                         type="button"
                         @click="removeProfile(bracket, profileIndex)"
@@ -440,7 +477,14 @@ onMounted(() => {
                       </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div
+                      v-show="
+                        !collapsedProfiles.has(
+                          `${bracketIndex}-${profileIndex}`,
+                        )
+                      "
+                      class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
                       <div>
                         <x-select
                           v-model="profile.advisorIds"
