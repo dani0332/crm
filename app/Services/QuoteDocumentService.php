@@ -608,7 +608,7 @@ class QuoteDocumentService extends BaseService
 
         shell_exec($decryptCommand);
 
-        if (!file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
             $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
 
             if (strpos($logOutput, 'invalid password') !== false) {
