@@ -55,7 +55,7 @@ onMounted(() => {
   <Head title="Allocation Configuration" />
 
   <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
-    Allocation Configuration
+    ILA configuration for non-motor and health LOB
   </h2>
 
   <div class="mx-auto sm:px-6 lg:px-8">
@@ -65,11 +65,11 @@ onMounted(() => {
       <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 bg-white border-b border-gray-200">
           <div class="max-w-md">
-            <x-field label="Quote Type" required>
+            <x-field label="Filter LOB" required>
               <x-select
                 v-model="form.quote_type_id"
                 :options="quoteTypeOptions"
-                placeholder="Select Quote Type"
+                placeholder="Select LOB"
                 filterable
                 :rules="[isRequired]"
                 :error="form.errors.quote_type"
@@ -80,7 +80,7 @@ onMounted(() => {
               v-if="!form.quote_type_id && !isQuoteTypeLoading"
               class="mt-2 text-sm text-gray-500"
             >
-              Please select a quote type to begin configuration
+              Please select a LOB to begin configuration
             </div>
 
             <div
