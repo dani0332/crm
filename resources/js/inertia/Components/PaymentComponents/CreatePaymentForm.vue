@@ -1666,22 +1666,26 @@
 		});
 	};
 
+	/**
+	 * Opens the image gallery modal to display a specific file
+	 *
+	 * @param {number} fileId - ID of the file to display initially
+	 */
 	const openInnerModal = fileId => {
-		//filesTest.value = fileUploadModels.value.flat();
+		// Prepare the files array for the gallery modal by combining files from different sources
 		filesTest.value = [
 			...fileUploadModels.value.flat(),
 			...approvedDocumentModel.value.flat(),
 			...discountDocumentModel.value.flat(),
 		];
+
+		// Find the index of the file to display in the combined array
 		currentFileIndex.value = filesTest.value.findIndex(
 			item => item.id === fileId,
 		);
+
+		// Open the modal
 		isGalleryModelOpen.value = true;
-		setTimeout(() => {
-			if (modal2Ref.value) {
-				modal2Ref.value.focus();
-			}
-		}, 0);
 	};
 
 	const deleteDocument = (docName, count, doc_id, doc_uuid) => {
