@@ -50,7 +50,7 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-  selectedCustomerPlans: Array,
+  // selectedCustomerPlans: Array,
 });
 
 const page = usePage();
@@ -365,20 +365,20 @@ const selectedProviderPlan = ref({
   premium: page.props?.quote?.plans?.premium,
 });
 
-const displayPlans = computed(() => {
-  const plans = [...(props.selectedCustomerPlans || [])];
+// const displayPlans = computed(() => {
+//   const plans = [...(props.selectedCustomerPlans || [])];
 
-  // Always ensure we have exactly 3 rows (max 3 plans possible)
-  while (plans.length < 3) {
-    plans.push({
-      id: null,
-      provider_name: null,
-      plan_name: null,
-    });
-  }
+//   // Always ensure we have exactly 3 rows (max 3 plans possible)
+//   while (plans.length < 3) {
+//     plans.push({
+//       id: null,
+//       provider_name: null,
+//       plan_name: null,
+//     });
+//   }
 
-  return plans;
-});
+//   return plans;
+// });
 
 const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id;
@@ -917,7 +917,7 @@ const onUpdateIndividualPlan = () => {
             </dl>
           </div>
 
-          <div class="mt-6">
+          <!-- <div class="mt-6">
             <h3 class="font-semibold text-primary-800">Selected Plans</h3>
             <x-divider class="mb-4 mt-1" />
           </div>
@@ -955,7 +955,7 @@ const onUpdateIndividualPlan = () => {
                 </tr>
               </tbody>
             </table>
-          </div>
+          </div> -->
         </template>
       </Collapsible>
     </div>

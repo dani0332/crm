@@ -215,7 +215,7 @@ class SavingsQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
-            'selectedCustomerPlans' => $this->getSelectedCustomerPlans($uuid),
+            // 'selectedCustomerPlans' => $this->getSelectedCustomerPlans($uuid),
             ...$data,
         ];
     }
