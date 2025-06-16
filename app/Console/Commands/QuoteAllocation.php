@@ -288,7 +288,6 @@ class QuoteAllocation extends Command
                 $q->where('quote_type_id', $quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->leadAllocationFailed()
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
@@ -299,6 +298,7 @@ class QuoteAllocation extends Command
             $processedRecords++;
             info("Processed record for Quote Allocation Quote Type: {$quoteType->value}");
         }
+
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
 }
