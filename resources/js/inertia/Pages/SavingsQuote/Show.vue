@@ -1624,8 +1624,7 @@ const onUpdateIndividualPlan = () => {
                             Investment Frequency
                           </dt>
                           <dd class="text-gray-900">
-                            {{ planDetails.investmentFrequency }} / Additional
-                            Single Premiums
+                            {{ planDetails.investmentFrequency }}
                           </dd>
                         </div>
                         <div class="grid sm:grid-cols-2"></div>
