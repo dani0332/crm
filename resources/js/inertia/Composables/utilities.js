@@ -364,6 +364,25 @@ export const calculateDaysDifference = (start_date, end_date) => {
   return 0;
 };
 
+export const calculateMonthsDifference = (start_date, end_date) => {
+  if (start_date && end_date) {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+
+    // Calculate year and month difference
+    const yearDiff = end.getFullYear() - start.getFullYear();
+    const monthDiff = end.getMonth() - start.getMonth();
+
+    // Total months difference
+    const totalMonths = yearDiff * 12 + monthDiff;
+
+    // Add 1 if we're including both start and end months
+    // (e.g., March 1 to May 31 = 3 months: March, April, May)
+    return Math.abs(totalMonths) + 1;
+  }
+  return 0;
+};
+
 // Function to get the quote type ID based on quote type name
 export const getQuoteTypeId = (quoteTypes, quoteType) => {
   return quoteTypes.filter(item => item.name === quoteType)[0]?.id;

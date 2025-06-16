@@ -339,16 +339,27 @@ const onDataExport = (exportType = 'download') => {
   let copyFilters = JSON.parse(JSON.stringify(cleanObj(filters)));
 
   if (copyFilters.created_at_start && copyFilters.created_at_end) {
-    let diff = calculateDaysDifference(
-      copyFilters.created_at_start ?? copyFilters.booking_date[0],
-      copyFilters.created_at_end ?? copyFilters.booking_date[1],
-    );
+    let diff, maxLimit, maxPeriod;
 
-    // Allow 90 days for email export, 31 days for download export
-    const maxDays = exportType === 'email' ? 90 : 31;
-    const maxPeriod = exportType === 'email' ? '3 months' : '31 days';
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        copyFilters.created_at_start ?? copyFilters.booking_date[0],
+        copyFilters.created_at_end ?? copyFilters.booking_date[1],
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        copyFilters.created_at_start ?? copyFilters.booking_date[0],
+        copyFilters.created_at_end ?? copyFilters.booking_date[1],
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
 
-    if (diff > maxDays) {
+    if (diff > maxLimit) {
       notification.error({
         message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
         position: 'top',

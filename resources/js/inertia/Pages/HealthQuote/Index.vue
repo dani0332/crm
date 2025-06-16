@@ -398,16 +398,27 @@ const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
     // Check date range restriction
-    let diff = calculateDaysDifference(
-      filters.created_at_start,
-      filters.created_at_end,
-    );
+    let diff, maxLimit, maxPeriod;
 
-    // Allow 90 days for email export, 31 days for download export
-    const maxDays = exportType === 'email' ? 90 : 31;
-    const maxPeriod = exportType === 'email' ? '3 months' : '31 days';
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
 
-    if (diff > maxDays) {
+    if (diff > maxLimit) {
       notification.error({
         message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
         position: 'top',
@@ -483,16 +494,16 @@ const onDataExport = (exportType = 'download') => {
 
 const exportRmLeads = () => {
   let filtersCleaned = { ...cleanObj(filters) };
-  let maxdays = calculateDaysDifference(
+  let maxMonths = calculateMonthsDifference(
     filtersCleaned.transaction_approved_dates[0],
     filtersCleaned.transaction_approved_dates[1],
   );
 
-  // Allow 90 days for email export, 31 days for download export
-  const maxAllowedDays = 90; // Since this is RM leads export, allow 3 months
+  // Allow 3 months for RM leads export (months-based validation)
+  const maxAllowedMonths = 3;
   const maxPeriod = '3 months';
 
-  if (maxdays > maxAllowedDays) {
+  if (maxMonths > maxAllowedMonths) {
     notification.error({
       message: `Maximum of ${maxPeriod} (Transaction Approved date) are allowed to be exported.`,
       position: 'top',
