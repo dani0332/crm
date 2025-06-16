@@ -402,13 +402,9 @@ class ApiController extends Controller
 
                 LoggerService::info('private client tag marking activity has been started on customer', extra: $customerData);
 
-                if (QuoteTypes::getName($quote->quote_type_id)) {
-                    LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                    $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
-                    LoggerService::endLogging();
-                } else {
-                    LoggerService::info('quote_type_id is not valid', extra: $quote->quote_type_id);
-                }
+                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
+                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
+                LoggerService::endLogging();
 
                 LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
             }
