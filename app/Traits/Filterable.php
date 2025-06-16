@@ -124,6 +124,9 @@ trait Filterable
 
     public function applyByFilters($query, string $filterName, string $operator, ?string $column = null, bool $ignoreAll = false, bool $isBool = false, array $requestParams = [])
     {
+        // Handle parameter name variations for lead status
+        $requestParams = $this->mapParameterVariations($requestParams);
+
         $filterValue = $this->getFilterValue($filterName, $requestParams) ?: ($operator === 'in' ? [] : '');
 
         $hasFilter = $this->hasFilterValue($filterName, $requestParams);
@@ -179,6 +182,9 @@ trait Filterable
 
     public function scopeFilterByDateRange($query, $filterName, $column = null, array $requestParams = [])
     {
+        // Handle parameter name variations for lead status
+        $requestParams = $this->mapParameterVariations($requestParams);
+
         $column = $this->resolveColumn($filterName, $column);
         $hasFilter = $this->hasFilterValue($filterName, $requestParams);
 
@@ -200,6 +206,9 @@ trait Filterable
 
     public function scopeFilterByDate($query, $filterName, $column = null, $isStartOfDay = true, array $requestParams = [])
     {
+        // Handle parameter name variations for lead status
+        $requestParams = $this->mapParameterVariations($requestParams);
+
         $column = $this->resolveColumn($filterName, $column);
         $hasFilter = $this->hasFilterValue($filterName, $requestParams);
 
@@ -213,4 +222,5 @@ trait Filterable
     {
         $query->whereDate($column, today());
     }
+
 }

@@ -92,22 +92,4 @@ trait FilterCriteria
         return $query;
     }
 
-    /**
-     * Map common parameter name variations to expected filter names
-     */
-    private function mapParameterVariations(array $filters): array
-    {
-        // Map lead status parameter variations to quote_status_id
-        $leadStatusVariations = ['leadStatus', 'lead_status', 'status', 'quote_status'];
-
-        foreach ($leadStatusVariations as $variation) {
-            if (isset($filters[$variation]) && ! isset($filters['quote_status_id'])) {
-                $filters['quote_status_id'] = $filters[$variation];
-                unset($filters[$variation]); // Remove the original to avoid confusion
-            }
-        }
-
-        return $filters;
-    }
-
 }
