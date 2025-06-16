@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\Tier;
 use App\Services\BikeAllocationService;
 use App\Services\Logger\LoggerService;
@@ -52,7 +53,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             info('--------------- ReAssignment processing ---------------');
 
@@ -70,7 +71,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
             // If a valid tier is found
             if ($tier) {
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
+                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);
@@ -115,7 +116,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
         return $this->bikeAllocationService->fetchLeadsForReAssignment($this->advisorId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->bikeAllocationService->findTier($lead);
@@ -124,9 +125,9 @@ class ReAssignBikeLeadsJob implements ShouldQueue
         return $this->bikeAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource)
+    protected function findAvailableUsers($tierId, $leadSource, $lead)
     {
-        return $this->bikeAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource, null);
+        return $this->bikeAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource, $lead);
     }
 
     protected function findRules($lead)

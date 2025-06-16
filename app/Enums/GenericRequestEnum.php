@@ -51,4 +51,5 @@ final class GenericRequestEnum extends Enum
     const FAILED = 'failed';
     const TYPE_LEAD = 'lead';
     const TYPE_ENDORSEMENT = 'endorsement';
+    const DEFAULT_NATIONALITY = 56;
 }

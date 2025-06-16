@@ -4,15 +4,19 @@ namespace App\Traits;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\CarQuotePlanDetail;
 use App\Models\Payment;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
@@ -23,7 +27,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, QuoteAllocatable;
+    use Filterable, Logable, QuoteAllocatable;
 
     /**
      * @return mixed|void
@@ -40,7 +44,6 @@ trait QuoteModelTrait
         }
 
         if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
-
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }
     }
@@ -79,7 +82,7 @@ trait QuoteModelTrait
     public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId)
     {
         $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
+        if ($user && $user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
             $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -93,19 +96,37 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL_PAID,
                 ])->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
+                // Exclude leads with SIC tag
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+                })
+                // Also exclude leads with AIG tag
+                    ->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                        $query->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                            ->where('quote_tags.quote_type_id', $quoteTypeId);
+                    })
+                    ->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
                 $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
                 ]);
+            })->when($segmentFilter === QuoteSegmentEnum::AIG->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
             });
         }
     }
@@ -143,6 +164,19 @@ trait QuoteModelTrait
         $q->isSICLead($quoteType, true);
     }
 
+    public function scopeIsSIC($q, QuoteTypes $quoteType)
+    {
+        $subQuery = function ($query) use ($quoteType) {
+            $query->distinct()
+                ->select('quote_uuid')
+                ->from('quote_tags')
+                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        };
+
+        $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery);
+    }
+
     public function isSIC(QuoteTypes $quoteType): bool
     {
         return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
@@ -162,10 +196,10 @@ trait QuoteModelTrait
     {
         if ($isSIC) {
             return (! $this->isStale() && ! $this->isPaid()) &&
-            (request('isRequestedForAnAdvisor', false) ||
-            $this->sic_advisor_requested == 1 ||
-            $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
+                (request('isRequestedForAnAdvisor', false) ||
+                    $this->sic_advisor_requested == 1 ||
+                    $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
+                    $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
         }
 
         // If lead is not stale and not paid, or previously lead is bought lead or reassigned as bought lead
@@ -183,7 +217,7 @@ trait QuoteModelTrait
 
     public static function applyRequestTableJoins($query, $request): void
     {
-        $applicableFilters = ['member_first_name', 'member_last_name', 'company_name'];
+        $applicableFilters = ['member_first_name', 'member_last_name'/* , 'company_name' */];
         $quoteTypes = [
             QuoteTypeId::Car => 'car_quote_request',
             QuoteTypeId::Home => 'home_quote_request',
@@ -245,5 +279,109 @@ trait QuoteModelTrait
     public function isPaymentLinkRequested(): bool
     {
         return $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    public function isPUA(): bool
+    {
+        if (empty($this->plan_id)) {
+            return false;
+        }
+
+        return CarQuotePlanDetail::where('quote_uuid', $this->uuid)
+            ->whereIn('pua_type', PuaEnum::TAGS)
+            ->where('plan_id', $this->plan_id)
+            ->exists();
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
+
+    public function customerType(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $exists = QuoteRequestEntityMapping::where('quote_type_id', QuoteTypeId::Health)
+                    ->where('quote_request_id', $this->id)
+                    ->exists();
+
+                return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+            }
+        );
+    }
+
+    public function hasOneOfPaidStatus(): bool
+    {
+        return $this->payments && $this->payments->count() > 0 &&
+               $this->payments->contains(function (Payment $payment) {
+                   return $payment->hasOneOfPaidStatus();
+               });
+    }
+
+    public function getSegments($lead, $quoteTypeId)
+    {
+        $requestData = request()->all();
+        $segmentFilter = $requestData['segment_filter'] ?? null;
+
+        $segment = QuoteSegmentEnum::tryFrom($segmentFilter);
+
+        // Handle specific segment filter case
+        if ($segmentFilter && $segmentFilter !== strtolower(QuoteSegmentEnum::ALL->label())) {
+            return $segment->label();
+        }
+
+        // Fetch all relevant tags in one query
+        $tagNames = QuoteTag::where('quote_uuid', $lead->uuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->pluck('name')
+            ->map(fn ($name) => strtolower($name))
+            ->toArray();
+
+        $leadSource = $lead->source;
+
+        $isProduction = config('constants.APP_ENV') == EnvEnum::PRODUCTION;
+        $marketSource = $isProduction ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE;
+
+        // This section handles both "ALL" filter and export case (no filter)
+        // Priority: AIG check first
+        if (in_array(strtolower(QuoteSegmentEnum::AIG->tag()), $tagNames)) {
+            return QuoteSegmentEnum::AIG->label();
+        }
+
+        $matchedSegments = [];
+
+        // Check SIC
+        if (
+            in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
+            ! in_array($leadSource, [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+            ]) &&
+            str_contains($leadSource, $marketSource)
+        ) {
+            $matchedSegments[] = QuoteSegmentEnum::SIC->label();
+        }
+
+        // Check NON-SIC - ensure it's neither SIC nor AIG and has the right source
+        if (
+            ! in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
+            ! in_array(strtolower(QuoteSegmentEnum::AIG->tag()), $tagNames) &&
+            str_contains($leadSource, $marketSource)
+        ) {
+            $matchedSegments[] = QuoteSegmentEnum::NON_SIC->label();
+        }
+
+        // Check SIC-REVIVAL
+        if (in_array($leadSource, [
+            LeadSourceEnum::REVIVAL,
+            LeadSourceEnum::REVIVAL_REPLIED,
+            LeadSourceEnum::REVIVAL_PAID,
+        ])) {
+            $matchedSegments[] = QuoteSegmentEnum::SIC_REVIVAL->label();
+        }
+
+        return implode(', ', $matchedSegments);
     }
 }

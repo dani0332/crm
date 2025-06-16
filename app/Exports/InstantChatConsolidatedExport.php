@@ -41,6 +41,7 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
             'PAID DATE',
             'AUTHORISED DATE',
             'ADVISOR ASSIGNED DATE',
+            'LEAD ASSIGNMENT TRIGGER',
             // 'PAID AT',
             // 'EP PURCHASED',
         ];
@@ -73,6 +74,7 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
             $chat->payment_paid_at ?? 'N/A',
             $chat->paid_at ?? 'N/A',
             $chat->advisor_assigned_date ?? 'N/A',
+            $chat->lead_assignment_trigger_text ?? 'N/A', // 'LEAD ASSIGNMENT TRIGGER'
             // $chat->display_name ?? 'N/A', // 'EP PURCHASED'
         ];
     }
@@ -86,6 +88,8 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
         $channels = array_filter($channel, function ($item) {
             return is_string($item) && ! empty($item);
         });
+
+        sort($channels); // Sort channels alphabetically
 
         return implode(', ', $channels);
 

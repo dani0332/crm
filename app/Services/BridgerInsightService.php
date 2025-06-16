@@ -6,9 +6,11 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Models\CustomerMembers;
 use App\Models\KycLog;
 use App\Models\ManualAMLLog;
 use App\Models\QuoteType;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -34,6 +36,8 @@ class BridgerInsightService
 
     public function getJWTToken()
     {
+        LoggerService::info('fn:getJWTToken - BridgerInsightService - Token Generation started');
+
         $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
         $bridgerClient = new \GuzzleHttp\Client;
@@ -53,20 +57,20 @@ class BridgerInsightService
             if ($tokenRequest->getStatusCode() == 200) {
                 $getDecodeContents = json_decode($tokenRequest->getBody());
                 $_return['response'] = $getDecodeContents->access_token;
-                info('Bridger Insight Service - JWT Token Generated');
+                LoggerService::info('Bridger Insight Service - JWT Token Generated');
 
                 return $_return;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $_return['status'] = false;
             $responseErrorCode = $e->getResponse()->getStatusCode();
-            logger()->error('Bridger Insight Service - JWT Token Error: '.$responseErrorCode);
+            LoggerService::error('Bridger Insight Service - JWT Token Error: '.$responseErrorCode);
         }
 
         return $_return;
     }
 
-    public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteDetails, $quoteTypeId, $customerType, $loginCustomerEmail)
+    public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteDetails, $quoteTypeId, $customerType, $loginCustomerEmail, $isAutomation = false)
     {
         if ($bridgerAPIToken['status']) {
             $quoteId = $quoteDetails->id;
@@ -92,7 +96,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' Triggered By: '.$loginCustomerEmail);
+            LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' Triggered By: '.$loginCustomerEmail);
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -130,7 +134,7 @@ class BridgerInsightService
                         $amlDataForEmail .= '<pre>';
                     }
 
-                    info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Error Email Send to Engineering Team');
+                    LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Error Email Send to Engineering Team');
                     AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
                 } else {
                     if ($getDecodeContents) {
@@ -167,7 +171,7 @@ class BridgerInsightService
                                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
                             }
                             KycLog::insert($kycLogDetails);
-                            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Potential Matches inserted into kyc_logs table. Total Matches: '.$amlResultCount);
+                            LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Potential Matches inserted into kyc_logs table. Total Matches: '.$amlResultCount);
 
                             // Notes:: This will update the manual AML Clearance lead to "done" as the AML screening has been executed for this quote.
                             ManualAMLLog::where([
@@ -176,14 +180,20 @@ class BridgerInsightService
                             ])->update(['is_executed' => 1]);
 
                             if (isset($getDecodeContents->Records)) {
-                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail);
-                                info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
+                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail, isAutomation: $isAutomation);
+                                LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
+                            }
+
+                            if (isset($memberUboDetails['customer_entity_id']) && is_null($memberUboDetails['updated_at'])) {
+                                $customerMember = CustomerMembers::where('id', $memberUboDetails['id'])->first();
+                                $customerMember->updated_at = Carbon::now();
+                                $customerMember->save();
                             }
                         }
                     }
                 }
             } catch (Exception $exception) {
-                logger()->error('Bridger Insight Service - Failed - Ref-ID: '.$quoteDetails->code.' - Error : '.$exception->getMessage());
+                LoggerService::error('Bridger Insight Service - Failed - Ref-ID: '.$quoteDetails->code.' - Error : '.$exception->getMessage());
             }
         }
     }
@@ -294,7 +304,7 @@ class BridgerInsightService
 
         ];
 
-        // info('Bridger Insight Service - Bridger Decision update API Call - Quote Ref-ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Bridger Alert ID: '.($request->result_id ?? '-').' - Decision Update API Payload : '.json_encode($amlUpdateData).' - Triggered by: '.auth()->user()->email);
+        // LoggerService::info('Bridger Insight Service - Bridger Decision update API Call - Quote Ref-ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Bridger Alert ID: '.($request->result_id ?? '-').' - Decision Update API Payload : '.json_encode($amlUpdateData).' - Triggered by: '.auth()->user()->email);
 
         try {
             $bridgerRequest = $bridgerClient->post(
@@ -312,7 +322,7 @@ class BridgerInsightService
             );
 
             $getContents = $bridgerRequest->getBody();
-            info('Bridger Insight Service - Bridger Decision Updated -  Response: '.json_encode($getContents));
+            LoggerService::info('Bridger Insight Service - Bridger Decision Updated -  Response: '.json_encode($getContents));
 
             $response['status'] = 'success';
             $response['message'] = 'Bridger Decision';
@@ -323,7 +333,7 @@ class BridgerInsightService
             if (str_contains($exception->getMessage(), 'The record was locked')) {
                 $response['message'] = str_replace(['}', '"', ']', '\n'], '', explode('{"Message":', $exception->getMessage())[1]) ?? 'The record was locked';
             } else {
-                logger()->error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
+                LoggerService::error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
             }
         }
 

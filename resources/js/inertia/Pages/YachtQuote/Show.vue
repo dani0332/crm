@@ -1,10 +1,10 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -742,12 +742,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -765,28 +765,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
                       placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
+                      v-model="customerProfileForm.entity_type_code"
                       placeholder="SELECT ENTITY TYPE"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -1044,11 +1044,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
+      :expanded="sectionExpanded"
+    />
+
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
 
     <lead-raw-data
       :modelType="'Yacht'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

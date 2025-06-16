@@ -19,6 +19,10 @@ const page = usePage();
 const dataTableRef = ref();
 const isMounted = ref(false);
 const isDirty = ref(false);
+const { maxSelections } = useRules();
+
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 const advisorOptions = ref(
   Object.keys(page.props.filterOptions.advisors).map(key => ({
@@ -110,6 +114,8 @@ const filters = reactive({
   advisors: [],
   teams: [],
   page: 1,
+  registration_type: '',
+  vehicle_use: '',
 });
 
 function onSubmit(isValid) {
@@ -568,6 +574,35 @@ watch(
   },
   { deep: true, immediate: false },
 );
+
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
+watch(
+  () => filters.registration_type,
+  newValue => {
+    if (newValue != carRegistrationTypeEnum.COMPANY) {
+      filters.vehicle_use = '';
+    }
+  },
+);
 </script>
 <template>
   <div>
@@ -587,7 +622,7 @@ watch(
           model-type="yyyy-MM-dd"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.batchNo"
           label="Batch Number"
           placeholder="Search by Batch Number"
@@ -597,10 +632,38 @@ watch(
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="15"
+          multiple
+          truncate
+          filterable
+          :rules="[maxSelections(15)]"
+          filterPlaceholder="Filter Batches...."
+          helper="You can select up to 15 batches"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.batchNo = filterOptions.batches.map(
+                  batch => batch.value,
+                )
+              "
+              @clear="filters.batchNo = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
         />
-
-        <ComboBox
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -619,9 +682,20 @@ watch(
             }))
           "
           @update:model-value="onTeamChange"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -634,9 +708,22 @@ watch(
           placeholder="Search by Sub Team"
           class="w-full"
           :options="subTeamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Sub Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.subTeams = subTeamsOptions.map(subTeam => subTeam.value)
+              "
+              @clear="filters.subTeams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -650,7 +737,20 @@ watch(
           placeholder="Search by Advisors"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
 
         <x-select
           v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager])"

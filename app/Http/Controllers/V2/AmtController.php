@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
@@ -218,6 +218,13 @@ class AmtController extends Controller
             $data->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request->advisor_assigned_date;
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+
         $this->adjustQueryByDateFilters($data, 'bqr');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -338,7 +345,13 @@ class AmtController extends Controller
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])->latest()->first();
+        $latestKycLog = KycLog::withTrashed()
+            ->where('quote_request_id', $record->id)
+            ->where('quote_type_id', QuoteTypes::BUSINESS->id())
+            ->where(function ($aml) {
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->orWhereNull('screening_type');
+            })->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 

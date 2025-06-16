@@ -12,8 +12,6 @@ use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
-use App\Models\HomeQuote;
-use App\Models\HomeQuoteRequestDetail;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\Payment;
@@ -34,8 +32,6 @@ use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
 use App\Observers\HealthQuoteDetailObserver;
 use App\Observers\HealthQuoteObserver;
-use App\Observers\HomeQuoteDetailObserver;
-use App\Observers\HomeQuoteObserver;
 use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
 use App\Observers\PaymentObserver;
@@ -46,10 +42,10 @@ use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use App\Services\LeadsCountService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -60,14 +56,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind(CarAllocationService::class, function ($app) {
-            return new CarAllocationService;
-        });
-
-        $this->app->bind(HealthAllocationService::class, function ($app) {
-            return new HealthAllocationService;
-        });
-
         $this->app->singletonIf(LeadsCountService::class, function ($app) {
             return new LeadsCountService;
         });
@@ -82,13 +70,11 @@ class AppServiceProvider extends ServiceProvider
     {
         CarQuote::observe(CarQuoteObserver::class);
         HealthQuote::observe(HealthQuoteObserver::class);
-        HomeQuote::observe(HomeQuoteObserver::class);
         LifeQuote::observe(LifeQuoteObserver::class);
         TravelQuote::observe(TravelQuoteObserver::class);
         BusinessQuote::observe(BusinessQuoteObserver::class);
         CarQuoteRequestDetail::observe(CarQuoteDetailObserver::class);
         HealthQuoteRequestDetail::observe(HealthQuoteDetailObserver::class);
-        HomeQuoteRequestDetail::observe(HomeQuoteDetailObserver::class);
         LifeQuoteRequestDetail::observe(LifeQuoteDetailObserver::class);
         TravelQuoteRequestDetail::observe(TravelQuoteDetailObserver::class);
         BusinessQuoteRequestDetail::observe(BusinessQuoteDetailObserver::class);
@@ -109,5 +95,12 @@ class AppServiceProvider extends ServiceProvider
         //         $query->time
         //     );
         // });
+
+        if ($this->app->runningInConsole()) {
+            Log::withContext([
+                'trace_id' => (string) Str::uuid(),
+                'is_console_command' => true,
+            ]);
+        }
     }
 }

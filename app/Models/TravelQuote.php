@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
@@ -45,6 +47,9 @@ class TravelQuote extends Model implements AuditableContract
         'insurer_api_status',
         'api_issuance_status',
         'insurer_api_email_action',
+        'insurer_aml_status_text',
+        'previous_policy_expiry_date_formatted',
+        'dob_formatted',
     ];
 
     protected static function booted()
@@ -98,6 +103,11 @@ class TravelQuote extends Model implements AuditableContract
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function amlAutomation()
+    {
+        return $this->belongsTo(AmlAutomation::class, 'code', 'code');
     }
 
     public function payments()
@@ -229,7 +239,7 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 
-    public function TravelDestinations()
+    public function travelDestinations()
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
     }
@@ -317,5 +327,20 @@ class TravelQuote extends Model implements AuditableContract
     public function isSenior()
     {
         return $this->customerMembers->where('age', '>=', 65)->count() > 0;
+    }
+
+    public function renewalBatch()
+    {
+        return $this->belongsTo(renewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
+
+    public function isPaymentAuthorizedOrPaymentLinkRequested()
+    {
+        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 }

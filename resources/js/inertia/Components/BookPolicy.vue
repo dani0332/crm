@@ -57,6 +57,8 @@ const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
+const policyIssuanceEnum = page.props.policyIssuanceEnum;
+
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -379,9 +381,9 @@ let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
   let toolTip = null;
-  if (bpForm.isCommissionDisabled) {
+  /*if (bpForm.isCommissionDisabled) {
     return bpForm.disabledCommissionTooltip;
-  }
+  }*/
   if (bpForm.commission_vat_applicable > 0) {
     if (isLifeLead) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
@@ -404,9 +406,9 @@ const commissionVatNotApplicableTooltip = computed(() => {
 });
 const commissionVatApplicableTooltip = computed(() => {
   let toolTip = null;
-  if (bpForm.isCommissionDisabled) {
+  /*if (bpForm.isCommissionDisabled) {
     return bpForm.disabledCommissionTooltip;
-  }
+  }*/
   if (bpForm.commission_vat_not_applicable > 0) {
     if (isLifeLead) {
       toolTip =
@@ -576,7 +578,6 @@ const isTravelQuoteAndAMLNotCleared = () => {
     bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
   const isPolicyAMLScreeningCleared = props.isAmlClearedForQuote;
-  console.log('isPolicyAMLScreeningCleared', isPolicyAMLScreeningCleared);
   if (
     isQuoteTypeTravel &&
     !isPolicyAMLScreeningCleared &&
@@ -596,6 +597,44 @@ const isTravelQuoteAndAMLNotCleared = () => {
     }
 
     isAMLNotClearedForTravelQuote.value = true;
+  }
+};
+
+const checkMissingTravelAmlRequirement = () => {
+  const isPolicyIssuanceStatusIsYes =
+    page.props.quote.api_issuance_status_id ==
+    policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID;
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+  const isAmlScreeningCleared = props.isAmlClearedForQuote;
+
+  if (
+    isQuoteTypeTravel &&
+    isPolicyIssuanceStatusIsYes &&
+    !isAmlScreeningCleared
+  ) {
+    const response = axios
+      .get(route('check-missing-travelAml-requirement'), {
+        params: {
+          quoteRequestId: props.quote.id,
+          quoteType: props.quoteType,
+        },
+      })
+      .then(response => {
+        if (response.data?.status == false) {
+          notification.error({
+            title: response.data?.message,
+            position: 'top',
+            timeout: 5000,
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: err.response.data?.message ?? 'Something went wrong',
+          position: 'top',
+          timeout: 5000,
+        });
+      });
   }
 };
 
@@ -657,6 +696,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
 onBeforeMount(() => {
   showBookingFailedAlert();
   isTravelQuoteAndAMLNotCleared();
+  checkMissingTravelAmlRequirement();
 });
 const readOnlyMode = reactive({
   isDisable: true,
@@ -695,7 +735,9 @@ const isDisabledSendPCB = computed(() => {
     if (
       payment.collection_type == 'insurer' &&
       ccPayments.length > 0 &&
-      props.bookPolicyDetails?.text == sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT
+      props.bookPolicyDetails?.text ==
+        sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT &&
+      props.bookPolicyDetails?.isCommissionDisabled
     ) {
       return true;
     }
@@ -964,10 +1006,7 @@ const isDisabledSendPCB = computed(() => {
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
                         class="w-full"
-                        :disabled="
-                          disableCommissionVatNotApplicable ||
-                          bpForm.isCommissionDisabled
-                        "
+                        :disabled="disableCommissionVatNotApplicable"
                       />
                       <div
                         v-if="

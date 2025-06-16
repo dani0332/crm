@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
@@ -26,26 +27,60 @@ class PersonalQuotesExport
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::HOME->value,
         ];
     }
 
-    public function collection()
+    public function collection($requestParams)
     {
         switch (ucfirst($this->quoteType)) {
             case QuoteTypes::BIKE->value:
-                return BikeQuoteRepository::getData(true);
+                return BikeQuoteRepository::getData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::YACHT->value:
-                return YachtQuoteRepository::getData(true);
+                return YachtQuoteRepository::getData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::PET->value:
-                return PetQuoteRepository::getData(true);
+                return PetQuoteRepository::getData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::CYCLE->value:
-                return CycleQuoteRepository::getData(true);
+                return CycleQuoteRepository::getData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::JETSKI->value:
-                return JetskiQuoteRepository::getData(true);
+                return JetskiQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            case QuoteTypes::HOME->value:
+                return HomeQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            default:
+                return abort(404);
+        }
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
+        switch (ucfirst($this->quoteType)) {
+            case QuoteTypes::BIKE->value:
+                return BikeQuoteRepository::getData(true, requestParams: $requestParams);
+
+            case QuoteTypes::YACHT->value:
+                return YachtQuoteRepository::getData(true, requestParams: $requestParams);
+
+            case QuoteTypes::PET->value:
+                return PetQuoteRepository::getData(true, requestParams: $requestParams);
+
+            case QuoteTypes::CYCLE->value:
+                return CycleQuoteRepository::getData(true, requestParams: $requestParams);
+
+            case QuoteTypes::JETSKI->value:
+                return JetskiQuoteRepository::getData(true, requestParams: $requestParams);
+
+            case QuoteTypes::HOME->value:
+                return HomeQuoteRepository::getData(true, requestParams: $requestParams);
 
             default:
                 return abort(404);
@@ -74,6 +109,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -95,6 +131,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -117,6 +154,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'TRANSAPP CODE',
                     'SOURCE',
@@ -150,6 +188,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -161,6 +200,26 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
+                ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'TRANSAPP CODE',
+                    'SOURCE',
+                    'LOST REASON',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                    'RENEWAL BATCH',
+                    'PREVIOUS POLICY EXPIRY DATE',
+                    'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
                 ];
         }
     }
@@ -186,8 +245,9 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
@@ -207,8 +267,9 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
@@ -229,11 +290,12 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     optional($quote->quoteDetail)->transapp_code,
                     $quote->source,
                     optional($quote->petQuoteRequestDetail)->lostReason?->text,
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     optional($quote->petQuote)->petType?->text,
                     optional($quote->petQuote)->breed_of_pet1,
@@ -262,8 +324,9 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     $quote->source,
                     $quote->is_ecommerce ? 'Yes' : 'No',
@@ -273,6 +336,26 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    $quote?->quoteStatus?->text,
+                    $quote?->advisor?->name,
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->transapp_code,
+                    $quote->source,
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->lostReason?->text,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
+                    $quote->policy_number,
+                    $quote->renewal_batch,
+                    $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                    $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                    $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                 ];
         }
     }

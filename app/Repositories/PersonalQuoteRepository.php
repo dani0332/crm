@@ -16,6 +16,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -104,6 +105,8 @@ class PersonalQuoteRepository extends BaseRepository
 
             if (request()->is_send_update) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+                LoggerService::startQuoteLogging($quote);
+                LoggerService::info('fn: fetchUploadDocument start for Send Update Log');
                 [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
             } else {
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
@@ -146,14 +149,16 @@ class PersonalQuoteRepository extends BaseRepository
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
                     if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
+                        LoggerService::info('Tax Invoice and Tax Invoice Raised Buyer documents found for Send Update Log');
                         if ($insuranceProviderId) {
+                            LoggerService::info('insuranceProviderId: '.$insuranceProviderId.' found for Send Update Log');
                             $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($quote->id, SendUpdateLogStatusEnum::UPDATE_ISSUED);
                             if ($checkTransactionApprovedInSUStatusLogs) {
                                 app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($quote);
                             } else {
                                 app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
                                 $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
-                                info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                                LoggerService::info('Send Update status updated to UPDATE_ISSUED');
                             }
 
                         }
@@ -167,12 +172,10 @@ class PersonalQuoteRepository extends BaseRepository
                     WatermarkDocumentsJob::dispatch(
                         $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     )->afterCommit();
-                } else {
-                    info('Watermark job not dispatched - Ref: '.$quote->code);
                 }
 
                 if (! $insuranceProviderId && request()->is_send_update) {
-                    info('Insurance Provider not found - Ref: '.$quote->code);
+                    LoggerService::info('File Uploaded - Insurance Provider is required to generate broker invoice number');
 
                     return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
                 }

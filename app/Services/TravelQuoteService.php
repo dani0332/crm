@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
@@ -28,8 +29,10 @@ use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
 use App\Repositories\CustomerMembersRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -45,9 +48,10 @@ class TravelQuoteService extends BaseService
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
+    use PersonalQuoteSyncTrait;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, protected TravelQuoteQueryBuilder $travelQuoteQueryBuilder)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->query = TravelQuote::as('tqr')->select([
@@ -115,6 +119,7 @@ class TravelQuoteService extends BaseService
             'tqr.renewal_import_code',
             'tqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(tqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
             DB::raw('DATE_FORMAT(tqr.policy_expiry_date, "%d-%m-%Y") as policy_expiry_date'),
             'tqr.device',
             'tqr.previous_quote_policy_premium',
@@ -145,6 +150,7 @@ class TravelQuoteService extends BaseService
             as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
+            'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
@@ -209,9 +215,57 @@ class TravelQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id)', [QuoteTypeId::Travel]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+    }
+
+    public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
+    {
+        $model = $this->getModelObject($quoteType);
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $customerTravelInfo = DB::table('travel_quote_request as tqr')
+            ->leftJoin('customer_members as cm', function ($join) use ($model) {
+                $join->on('cm.quote_id', '=', 'tqr.id')
+                    ->where('cm.quote_type', '=', ltrim($model, '\\'));
+            })
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'cm.gender', 'cm.first_name', 'cm.last_name', 'cm.dob', 'cm.nationality_id', 'cm.passport')
+            ->where('tqr.id', $quoteRequestId)
+            ->first();
+
+        return $customerTravelInfo;
+    }
+
+    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
+    {
+        $message = '';
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id', 'passport']);
+
+        $missingDetails = [];
+        foreach ($requiredProperty as $value) {
+
+            if (empty($travelQuoteRequest[$value])) {
+                $propertyName = match ($value) {
+                    'dob' => 'date of birth',
+                    'nationality_id' => 'nationality',
+                    default => str_replace(['-', '_'], ' ', $value)
+                };
+                array_push($missingDetails, ucwords($propertyName));
+            }
+        }
+
+        $missingDetailCount = count($missingDetails);
+        if ($missingDetailCount) {
+            $message = 'Missing Info: '.implode(', ', $missingDetails);
+        }
+
+        return ['status' => $missingDetailCount ? false : true, 'message' => $message];
     }
 
     public function saveTravelQuote(Request $request)
@@ -232,7 +286,7 @@ class TravelQuoteService extends BaseService
             'departureCountryId' => $request->departure_country_id ?? null,
         ];
 
-        info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
+        LoggerService::info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
 
             foreach ($request->members as $member) {
@@ -267,7 +321,9 @@ class TravelQuoteService extends BaseService
         } else {
             $travelQuote['hasArrivedDestination'] = $request->has_arrived_destination;
             if ($request->has_arrived_destination == '0') {
-                $travelQuote['regionCoverForId'] = $request->region_cover_for_id;
+                if ($request->has('region_cover_for_id')) {
+                    $travelQuote['regionCoverForId'] = (int) $request->region_cover_for_id;
+                }
             }
         }
 
@@ -286,15 +342,17 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-        // info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
+        // LoggerService::info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-        // info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
+        // LoggerService::info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
 
+            $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
+
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
-            info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
+            LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
         }
 
         return $response;
@@ -336,7 +394,17 @@ class TravelQuoteService extends BaseService
         return TravelQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function getGridData($model, $request)
+    public function getGridData($model = null, $requestParams = [])
+    {
+        $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
+        $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams);
+
+        return $query;
+
+    }
+
+    public function getGridDataOld($model, $request)
     {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
@@ -384,6 +452,7 @@ class TravelQuoteService extends BaseService
         if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start)
         && ! isset($request->payment_due_date) && ! isset($request->booking_date)
     && ! isset($request->renewal_batches) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number) && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)) {
+
             $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if ($request->transaction_approved_dates) {
@@ -649,6 +718,7 @@ class TravelQuoteService extends BaseService
         return TravelQuote::where('id', $id)->with([
             'child',
             'parent',
+            'plan',
             'payments' => function ($payment) {
                 $payment->with([
                     'paymentSplits' => function ($paymentSplit) {
@@ -691,19 +761,83 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
-        $travelQuote->destination = $request->destination;
         $travelQuote->dob = $request->dob;
-        if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id) {
+        if (
+            $travelQuote->days_cover_for != $request->days_cover_for ||
+            $travelQuote->destination_id != $request->destination_id ||
+            $travelQuote->currently_located_in_id != $request->currently_located_in_id ||
+            $travelQuote->travel_cover_for_id != $request->travel_cover_for_id ||
+            $travelQuote->region_cover_for_id != $request->region_cover_for_id ||
+            $travelQuote->departure_country_id != $request->departure_country_id ||
+            $travelQuote->start_date != $request->start_date ||
+            $travelQuote->end_date != $request->end_date ||
+            $travelQuote->direction_code != $request->direction_code
+        ) {
             $travelQuote->quote_updated_at = Carbon::now();
         }
         $travelQuote->days_cover_for = $request->days_cover_for;
-        $travelQuote->destination_id = $request->destination_id;
+
+        // Handle multiple destinations using the existing TravelDestinations relation
+        if (is_array($request->destination_ids) && ! empty($request->destination_ids)) {
+            // Delete existing destinations first
+            $travelQuote->TravelDestinations()->delete();
+
+            // Create new destination records
+            foreach ($request->destination_ids as $destinationId) {
+                $travelQuote->TravelDestinations()->create([
+                    'uuid' => $travelQuote->uuid,
+                    'destination_id' => $destinationId,
+                ]);
+            }
+
+            // Set the primary destination_id to the first one in the array
+            $travelQuote->destination_id = $request->destination_ids[0];
+        }
+
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
-        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
+        (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->policy_start_date = $request->policy_start_date;
+        $travelQuote->start_date = $request->start_date ?? null;
+        $travelQuote->end_date = $request->end_date ?? null;
+        $travelQuote->direction_code = $request->direction_code ?? null;
+        $travelQuote->coverage_code = $request->coverage_code ?? null;
+        $travelQuote->departure_country_id = $request->departure_country_id ?? null;
+
         $travelQuote->details = $request->details;
         $travelQuote->save();
+
+        if (! empty($request->destination_ids)) {
+            $travelQuote->load('travelDestinations');
+
+            $existingIds = $travelQuote->travelDestinations->pluck('destination_id')->toArray();
+            $newIds = $request->destination_ids;
+
+            // Determine which IDs need to be inserted and which to delete
+            $idsToInsert = array_diff($newIds, $existingIds);
+            $idsToDelete = array_diff($existingIds, $newIds);
+
+            // Delete outdated destinations
+            if (! empty($idsToDelete)) {
+                TravelDestination::where([
+                    'uuid' => $id,
+                    'quote_id' => $travelQuote->id,
+                    'customer_id' => $travelQuote->customer_id,
+                ])->whereIn('destination_id', $idsToDelete)->delete();
+            }
+
+            // Insert new destinations
+            if (! empty($idsToInsert)) {
+                $destinationData = array_map(fn ($destinationId) => [
+                    'uuid' => $id,
+                    'quote_id' => $travelQuote->id,
+                    'customer_id' => $travelQuote->customer_id,
+                    'destination_id' => $destinationId,
+                ], $idsToInsert);
+
+                TravelDestination::insert($destinationData);
+            }
+        }
 
         if (isset($request->return_to_view)) {
             return redirect('quote/travel/'.$id)->with('success', 'Travel Quote has been updated');
@@ -746,10 +880,9 @@ class TravelQuoteService extends BaseService
             'previous_quote_policy_premium' => 'input|title',
             'parent_duplicate_quote_id' => 'input|title',
             'policy_start_date' => 'input|date',
-            'members' => 'input|array|required',
             'direction_code' => 'input|text|required',
-            'departure_country_id' => 'select|title|required',
-
+            'departure_country_id' => 'select|title|required_if:direction_code,'.TravelQuoteEnum::TRAVEL_UAE_INBOUND,
+            'region_cover_for_id' => 'select|title|required',
         ];
     }
 
@@ -843,7 +976,7 @@ class TravelQuoteService extends BaseService
     {
         return [
             'create' => 'policy_start_date,previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,policy_expiry_date,policy_number',
-            'list' => 'policy_start_date,previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,next_followup_date,days_cover_for,renewal_batch,renewal_import_code',
+            'list' => 'policy_start_date,previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,travel_cover_for_id,details,nationality_id,next_followup_date,days_cover_for,renewal_batch,renewal_import_code',
             'update' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,policy_expiry_date,policy_number',
             'show' => 'is_renewal,policy_number,policy_expiry_date,premium,source,previous_quote_id,payment_status_id,quote_status_id',
         ];
@@ -1109,12 +1242,18 @@ class TravelQuoteService extends BaseService
     public function createDuplicateLead($leadModal, $quoteStatusId)
     {
         if (! $leadModal) {
+            LoggerService::warning('Cannot create duplicate lead: Lead model is null');
+
             return false; // Add validation to avoid failure if $leadModal is null
         }
+
         $newLeadCode = $leadModal->code.'-1';
+        LoggerService::info("Starting duplicate lead creation process for {$leadModal->code} -> {$newLeadCode}");
         $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
         if ($leadExists) {
             // Lead with the code already exists
+            LoggerService::warning("Duplicate lead creation failed: Lead with code {$newLeadCode} already exists");
+
             return false;
         }
         $duplicateLead = $leadModal->replicate();
@@ -1127,8 +1266,14 @@ class TravelQuoteService extends BaseService
         $duplicateLead->save();
 
         if ($duplicateLead) {
+            LoggerService::info("Successfully created duplicate lead with code: {$duplicateLead->code}");
+            $this->updatePersonalQuote($duplicateLead->uuid, QuoteTypeId::Travel, ['quote_id' => $duplicateLead->id]);
             // update morph relation in payments table
-            $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+            $paymentsCount = $leadModal->payments()->where('code', $newLeadCode)->count();
+            if ($paymentsCount > 0) {
+                LoggerService::info("Updating payment relations: {$paymentsCount} payment(s) found for {$newLeadCode}");
+                $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+            }
 
             // update morph relation in quote_documents table,which are associated with split payments
             Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
@@ -1139,22 +1284,31 @@ class TravelQuoteService extends BaseService
 
             // Update the above 65 age member
             $aboveAgeMemberCount = $this->getAboveAgeMembers($leadModal->id);
-            info("Above age member count for lead code {$leadModal->code}: {$aboveAgeMemberCount}");
+            LoggerService::info("Above age member count for lead code {$leadModal->code}: {$aboveAgeMemberCount}");
             if ($aboveAgeMemberCount > 0) {
-                info("Updating above age members for lead code {$leadModal->code} to duplicate lead code {$duplicateLead->code}");
+                LoggerService::info("Updating above age members for lead code {$leadModal->code} to duplicate lead code {$duplicateLead->code}");
                 $this->updateAboveAgeMember($leadModal->id, $duplicateLead->id);
             }
 
-            info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
+            LoggerService::info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
             // update plan & premium for parent & child lead
             $this->updatePlanAndPremium($leadModal, $duplicateLead);
 
-            $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
-                $duplicateDestination = $destination->replicate();
-                $duplicateDestination->quote_id = $duplicateLead->id;
-                $duplicateDestination->uuid = $duplicateLead->uuid;
-                $duplicateDestination->save();
-            });
+            // Duplicate travel destinations
+            $destinationsCount = $leadModal->TravelDestinations()->count();
+            if ($destinationsCount > 0) {
+                LoggerService::info("Duplicating {$destinationsCount} travel destinations for lead {$duplicateLead->code}");
+                $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
+                    $duplicateDestination = $destination->replicate();
+                    $duplicateDestination->quote_id = $duplicateLead->id;
+                    $duplicateDestination->uuid = $duplicateLead->uuid;
+                    $duplicateDestination->save();
+                });
+            }
+
+            LoggerService::info("Duplicate lead creation completed successfully: {$leadModal->code} -> {$duplicateLead->code}");
+        } else {
+            LoggerService::error("Failed to create duplicate lead for {$leadModal->code}");
         }
 
         return true;
@@ -1169,13 +1323,13 @@ class TravelQuoteService extends BaseService
         $parentLead->plan_id = $parentPayment->plan_id;
         $parentLead->insurance_provider_id = $parentPayment->insurance_provider_id;
         $parentLead->save();
-        info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
+        LoggerService::info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
 
         $childLead->premium = $childPayment->total_price;
         $childLead->plan_id = $childPayment->plan_id;
         $childLead->insurance_provider_id = $childPayment->insurance_provider_id;
         $childLead->save();
-        info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
+        LoggerService::info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
     }
 
     public function getTravelDestinations($id)
@@ -1239,7 +1393,7 @@ class TravelQuoteService extends BaseService
     {
         if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
             if (! $enablePlanValidation->value) {
-                info('plan modification validation is disabled from backend');
+                LoggerService::info('plan modification validation is disabled from backend');
 
                 return true;
             }
@@ -1265,11 +1419,11 @@ class TravelQuoteService extends BaseService
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::TravelAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
                 return true;
             } elseif (auth()->user()->hasRole(RolesEnum::TravelManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                info($logPrefix.' plan modify allowed to travel manager for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed to travel manager for uuid '.$quote->uuid);
 
                 return true;
             }
@@ -1277,13 +1431,13 @@ class TravelQuoteService extends BaseService
 
         if (auth()->user()->hasAnyRole([RolesEnum::TravelManager, RolesEnum::TravelAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
             if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
-                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
                 return true;
             }
         }
 
-        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+        LoggerService::info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
         vAbort('Plan Modification is not allowed');
     }

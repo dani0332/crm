@@ -33,6 +33,8 @@ class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMap
             'INPUT TOKENS USAGE',
             'OUTPUT TOKENS USAGE',
             'TOTAL TOKENS USED',
+            'SEGMENT',
+            'LEAD ASSIGNMENT TRIGGER',
         ];
     }
 
@@ -52,6 +54,8 @@ class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMap
             isset($chat->input_tokens_usage) ? $chat->input_tokens_usage : 'N/A',
             isset($chat->completion_tokens) ? $chat->completion_tokens : 'N/A',
             isset($chat->total_tokens) ? $chat->total_tokens : 'N/A',
+            $chat->segment ?? 'N/A',
+            $chat->lead_assignment_trigger_text ?? 'N/A',
         ];
     }
 

@@ -151,99 +151,94 @@ onMounted(() => {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <x-field label="Search By">
-          <x-select
-            v-model="filters.searchType"
-            placeholder="Search by"
-            :options="[
-              { value: 'cdbID', label: 'TM ID' },
-              { value: 'emailAddress', label: 'Email Address' },
-              { value: 'phoneNumber', label: 'Phone Number' },
-              { value: 'created_at', label: 'Created At' },
-              { value: 'updated_at', label: 'Updated At' },
-              { value: 'next_followup_date', label: 'Next Followup Date' },
-              { value: 'enquiry_date', label: 'Enquiry Date' },
-              { value: 'allocation_date', label: 'Allocation Date' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Search Value">
-          <x-input
-            v-model="filters.searchField"
-            placeholder="Search value"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Lead Status">
-          <x-select
-            v-model="filters.tm_lead_statuses_id"
-            placeholder="Lead status"
-            :options="
-              tmLeadStatuses.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-          />
-        </x-field>
+        <x-select
+          v-model="filters.searchType"
+          placeholder="Search by"
+          label="Search By"
+          :options="[
+            { value: 'cdbID', label: 'TM ID' },
+            { value: 'emailAddress', label: 'Email Address' },
+            { value: 'phoneNumber', label: 'Phone Number' },
+            { value: 'created_at', label: 'Created At' },
+            { value: 'updated_at', label: 'Updated At' },
+            { value: 'next_followup_date', label: 'Next Followup Date' },
+            { value: 'enquiry_date', label: 'Enquiry Date' },
+            { value: 'allocation_date', label: 'Allocation Date' },
+          ]"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.searchField"
+          placeholder="Search value"
+          label="Search Value"
+          class="w-full"
+        />
+        <x-select
+          v-model="filters.tm_lead_statuses_id"
+          placeholder="Lead status"
+          label="Lead Status"
+          :options="
+            tmLeadStatuses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
 
-        <x-field label="Lead Owner" v-if="canAssignLead">
-          <x-select
-            v-model="filters.assigned_to_id"
-            placeholder="Search value"
-            :options="
-              handlersOptions.map(item => ({
-                value: item.id,
-                label: item.name,
-              }))
-            "
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Lead Type">
-          <x-select
-            v-model="filters.tm_lead_types_id"
-            placeholder="Search value"
-            :options="
-              tmLeadTypes.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Insurance Type">
-          <x-select
-            v-model="filters.tm_insurance_types_id"
-            placeholder="Search value"
-            :options="
-              tmInsuranceTypes.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Start Date" v-if="showdates">
-          <DatePicker
-            name="created_at_start"
-            class="w-full"
-            v-model="filters.tmLeadsStartDate"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="End Date" v-if="showdates">
-          <DatePicker
-            name="created_at_end"
-            class="w-full"
-            v-model="filters.tmLeadsEndDate"
-            :rules="[isRequired]"
-          />
-        </x-field>
+        <x-select
+          v-if="canAssignLead"
+          v-model="filters.assigned_to_id"
+          placeholder="Search value"
+          label="Lead Owner"
+          :options="
+            handlersOptions.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))
+          "
+          class="w-full"
+        />
+        <x-select
+          v-model="filters.tm_lead_types_id"
+          placeholder="Search value"
+          label="Lead Type"
+          :options="
+            tmLeadTypes.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+        <x-select
+          v-model="filters.tm_insurance_types_id"
+          placeholder="Search value"
+          label="Insurance Type"
+          :options="
+            tmInsuranceTypes.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+        <DatePicker
+          v-if="showdates"
+          name="created_at_start"
+          class="w-full"
+          v-model="filters.tmLeadsStartDate"
+          :rules="[isRequired]"
+          label="Start Date"
+        />
+        <DatePicker
+          v-if="showdates"
+          name="created_at_end"
+          class="w-full"
+          v-model="filters.tmLeadsEndDate"
+          :rules="[isRequired]"
+          label="End Date"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div class="flex justify-between gap-3">

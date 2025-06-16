@@ -98,8 +98,15 @@ class PetQuoteRepository extends BaseRepository
         });
     }
 
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
@@ -116,8 +123,8 @@ class PetQuoteRepository extends BaseRepository
             'renewalBatchModel',
             'quoteDetail',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
             ->when(! empty(request()->is_renewal), function ($query) {
                 $isRenewal = request()->is_renewal;
@@ -161,7 +168,7 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchGetBy($column, $value)
@@ -183,6 +190,7 @@ class PetQuoteRepository extends BaseRepository
                 'insured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -268,7 +276,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider']
+            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail']
         )->orderBy('created_at', 'desc');
     }
 }

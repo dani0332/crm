@@ -19,6 +19,7 @@ const props = defineProps({
 });
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const { isRequired } = useRules();
 
 const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
@@ -28,6 +29,7 @@ const planDetailsForm = useForm({
     ? useFormatPrice(props.quote.price_with_vat, true)
     : 0,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
+  provider_code: null,
 });
 
 const insuranceProviderOptions = computed(() => {
@@ -78,10 +80,15 @@ const submitPlanDetailsForm = isValid => {
 
   if (!isValid) return;
 
+  let selectedProvider = props?.insuranceProviders?.find(
+    provider => provider.id == planDetailsForm.insurance_provider_id,
+  );
+  if (selectedProvider) {
+    planDetailsForm.provider_code = selectedProvider.code;
+  }
+
   let url = `/personal-quotes/${props.quoteType}/${props.quote?.code}/save-plan-details`;
-
   formProcessing.value = true;
-
   planDetailsForm.post(url, {
     preserveScroll: true,
     onError: errors => {
@@ -199,21 +206,23 @@ watch(
       <x-divider class="mb-4 mt-1" />
     </div>
     <x-form @submit="submitPlanDetailsForm" :auto-focus="false">
-      <div class="flex gap-6 w-full">
-        <div class="w-full md:w-1/5">
-          <ComboBox
-            :single="true"
-            :hasError="isProviderEmpty"
+      <div class="grid grid-cols-4 gap-6 w-full">
+        <div class="w-full">
+          <x-select
             v-model="planDetailsForm.insurance_provider_id"
-            placeholder="Insurance Provider"
-            :options="insuranceProviderOptions"
             label="Insurance Provider"
+            :options="insuranceProviderOptions"
+            placeholder="Select Insurance Provider"
+            :rules="[isRequired]"
+            filterable
+            filterPlaceholder="Filter Insurance Provider...."
+            required
             class="w-full uppercase"
             :disabled="page.props.lockLeadSectionsDetails.plan_details"
           />
         </div>
 
-        <div class="w-full md:w-1/5">
+        <div class="w-full">
           <x-input
             v-model="planDetailsForm.price_vat_applicable"
             :rules="
@@ -238,7 +247,7 @@ watch(
           />
         </div>
 
-        <div class="w-full md:w-1/5">
+        <div class="w-full">
           <x-input
             v-model="planDetailsForm.price_vat_not_applicable"
             :rules="
@@ -265,7 +274,7 @@ watch(
           />
         </div>
 
-        <div class="w-full md:w-1/5">
+        <div class="w-full">
           <x-input
             :disabled="true"
             v-model="planDetailsForm.price_with_vat"
@@ -276,7 +285,7 @@ watch(
           />
         </div>
 
-        <div class="w-full md:w-1/5">
+        <div class="w-full">
           <x-input
             v-model="planDetailsForm.insurer_quote_number"
             :error="planDetailsForm.errors.insurer_quote_number"

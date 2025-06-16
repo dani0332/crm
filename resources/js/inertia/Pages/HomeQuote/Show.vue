@@ -1,6 +1,13 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
+import MemberDetails from '../../Components/MemberDetails.vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+
 const props = defineProps({
   quote: Object,
   quoteType: String,
@@ -39,7 +46,7 @@ const props = defineProps({
   paymentTooltipEnum: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-
+  emailStatuses: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -49,6 +56,7 @@ const props = defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  quoteStatuses: Object,
 });
 
 const page = usePage();
@@ -62,7 +70,9 @@ const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const can = permission => useCan(permission);
-const modelClass = 'App\\Models\\HomeQuote';
+const modelClass = 'App\\Models\\PersonalQuote';
+const modelClassHome = 'App\\Models\\HomeQuote';
+const processingOCBEmailNB = ref(false);
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -73,6 +83,7 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+  sendConfirm: false,
 });
 
 const allowStatusUpdate = computed(() => {
@@ -127,8 +138,8 @@ const confirmDeleteData = reactive({
 
 const contactLoader = ref(false),
   activityActionEdit = ref(false),
-  historyLoading = ref(false);
-
+  historyLoading = ref(false),
+  toggleLoader = ref(false);
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
@@ -369,19 +380,31 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote.insured_first_name || '',
-  insured_last_name: page.props.quote.insured_last_name || '',
+  insured_first_name: page.props.quote?.insured?.first_name || '',
+  insured_last_name: page.props.quote?.insured?.last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
-  emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+  emirates_id_expiry_date:
+    page.props.quote?.customer?.emirates_id_expiry_date || null,
 
-  entity_id: page.props.quote.entity_id ?? null,
-  trade_license_no: page.props.quote.trade_license_no ?? null,
-  company_name: page.props.quote.company_name ?? null,
-  company_address: page.props.quote.company_address ?? null,
-  entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
-  industry_type_code: page.props.quote.industry_type_code ?? null,
+  entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
+  trade_license_no:
+    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
+    null,
+  company_name:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
+    null,
+  company_address:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_address ??
+    null,
+  entity_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity_type_code ??
+    'Parent',
+  industry_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.industry_type_code ?? null,
   emirate_of_registration_id:
-    page.props.quote.emirate_of_registration_id ?? null,
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -447,9 +470,7 @@ const searchByTradeLicense = trigger => {
         });
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 
 const linkEntity = () => {
@@ -482,18 +503,55 @@ const linkEntity = () => {
         entityDetailsFound.value = false;
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
+    // Only check all these conditions if it's a RENEWAL_UPLOAD lead
+    if (
+      page.props.quote.advisor.name &&
+      page.props.quote.advisor.mobile_no &&
+      page.props.quote.email &&
+      page.props.quote.customerAddressData?.floor_number &&
+      page.props.quote.customerAddressData?.building_name &&
+      page.props.quote.customerAddressData?.street &&
+      page.props.quote.home_quote?.sub_area_id &&
+      page.props.quote.home_quote?.possession_type_id &&
+      page.props.quote.home_quote?.accommodation_type_id &&
+      page.props.quote.home_quote?.has_claimed_losses !== undefined &&
+      ((page.props.quote.home_quote?.possession_type_id ==
+        page.props.homePossessionTypeEnum.TENANT &&
+        page.props.quote.home_quote?.owner_occupancy_type_id) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.OWNER_RENTING &&
+          page.props.quote.home_quote?.personal_belongings_value_id &&
+          page.props.quote.home_quote.contents_value_id) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.OWNER_RENTING &&
+          page.props.quote.home_quote.contents_value_id) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.LANDLORD &&
+          page.props.quote.home_quote?.building_value) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.LANDLORD &&
+          page.props.quote.home_quote?.contents_value_id))
+    ) {
+      // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
+      onLoadAvailablePlansData();
+    }
+  } else {
+    // For all non-renewal upload leads, always run onLoadAvailablePlansData
+    onLoadAvailablePlansData();
+  }
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -524,6 +582,538 @@ function capitalizeString(str) {
   if (!str) return 'N/A';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
+
+const availablePlansTable = reactive({
+  data: [],
+  isLoading: false,
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Insurer Quote No',
+      value: 'insurerQuoteNo',
+    },
+    {
+      text: 'Price',
+      value: 'actualPremium',
+    },
+    {
+      text: 'Total Price',
+      value: 'discountPremium',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const homePlansIds = reactive({
+  ids: [],
+});
+const selectedPlans = ref([]);
+const exportLoader = ref(false);
+const selectedPlanIds = computed(() => {
+  return page.props.payments.length > 0
+    ? page.props.payments.map(plan => plan.plan_id)
+    : [];
+});
+
+const availableAllPlans = ref([]);
+
+const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
+  const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
+  const data = {
+    jsonData: true,
+  };
+
+  try {
+    const response = await axios.post(url, data);
+
+    if (response.status === 200) {
+      // Assuming the normal plans are stored in `data` field
+      const homePlans = response.data;
+
+      // If you need to update the table and store the ids
+      availablePlansTable.data = homePlans.quotes.plans;
+      availableAllPlans.value = homePlans.quotes.plans;
+      homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
+    }
+  } catch (error) {
+  } finally {
+    availablePlansTable.isLoading = false;
+  }
+};
+
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post(route('homeManualPlanToggle', { quoteType: 'Home' }), {
+      modelType: 'PersonalQuote',
+      planIds: planIds,
+      personal_quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
+};
+
+const planDetails = ref(null);
+
+const getPlanDetails = async item => {
+  if (!item?.id) {
+    notification.error({
+      title: 'Error',
+      message: 'Invalid plan selected',
+      position: 'top',
+    });
+    return;
+  }
+
+  viewPlanDetailsLoader.value[item.id] = true;
+
+  try {
+    if (!availableAllPlans.value || !Array.isArray(availableAllPlans.value)) {
+      throw new Error('Plans data is not available or invalid');
+    }
+
+    const selectedPlan = availableAllPlans.value.find(
+      plan => plan.id === item.id,
+    );
+    if (!selectedPlan) {
+      throw new Error(`Plan with ID ${item.id} not found`);
+    }
+
+    const {
+      name = '',
+      providerCode = '',
+      providerName = '',
+      actualPremium = '',
+      discountPremium = '',
+      benefits = {},
+      isDisabled = false,
+      isManualPlan = false,
+      vat = '',
+      insurerQuoteNo = '',
+      isRatingAvailable = false,
+      excess = '',
+      policyWordings = [],
+    } = selectedPlan;
+
+    const {
+      building = '',
+      content = '',
+      personalBelonging = '',
+      contentAndPersonalBelonging = '',
+      fineArtAndCollectible = '',
+      jewelleryAndValuable = '',
+      exclusion = [],
+      additionalCover = [],
+    } = benefits;
+
+    const planDetailsData = {
+      listQuotePlanName: name,
+      providerCode,
+      providerName,
+      actualPremium,
+      discountPremium,
+      listQuotePlanBenefitsInclusions: {
+        building: building,
+        contents: content,
+        personalBelongings: personalBelonging,
+        contentsAndPersonalBelongings: contentAndPersonalBelonging,
+        'Fine Art And Collectible(s)': fineArtAndCollectible,
+        'Jewellery And Valuable(s)': jewelleryAndValuable,
+      },
+      listQuotePlanBenefitsExclusions: exclusion,
+      listQuotePlanBenefitsAditionalCovers: additionalCover,
+      is_disabled: isDisabled,
+      is_manual_update: isManualPlan,
+      vat,
+      insurer_quote_no: insurerQuoteNo,
+      isRatingAvailable,
+      excess,
+      id: item.id,
+      listQuotePlanBenefitsPolicyDetails: policyWordings,
+      listQuotePlanBenefitsPolicyDetailLink: policyWordings[0]?.link || '',
+      permissionsEnum: permissionEnum,
+    };
+
+    planDetails.value = planDetailsData;
+    modals.planDetails = true;
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      message: error.message || 'Failed to fetch plan details',
+      position: 'top',
+    });
+  } finally {
+    viewPlanDetailsLoader.value[item.id] = false;
+  }
+};
+
+const { copy, copied } = useClipboard();
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+
+const onExportPlans = () => {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 1 to 5 plans to download PDF.',
+      position: 'top',
+    });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
+  axios
+    .post(
+      '/api/v1/quotes/home/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      // Display error message in a toast notification
+      if (error.response && error.response.data) {
+        // For validation errors (422)
+        if (error.response.status === 422 && error.response.data.errors) {
+          const errorMessages = error.response.data.errors;
+          // Display the first error message we find
+          if (errorMessages.error && errorMessages.error.length > 0) {
+            notification.error({
+              title: errorMessages.error[0],
+              position: 'top',
+            });
+          } else {
+            // Find first error message in the object
+            for (const key in errorMessages) {
+              if (errorMessages[key] && errorMessages[key].length) {
+                notification.error({
+                  title: errorMessages[key][0],
+                  position: 'top',
+                });
+                break;
+              }
+            }
+          }
+        } else if (error.response.data.message) {
+          // For other types of errors with a message
+          notification.error({
+            title: error.response.data.message,
+            position: 'top',
+          });
+        } else {
+          // Generic error if no specific message found
+          notification.error({
+            title: 'Failed to export PDF. Please try again.',
+            position: 'top',
+          });
+        }
+      } else {
+        // Fallback for network errors
+        notification.error({
+          title:
+            'Failed to export PDF. Please check your connection and try again.',
+          position: 'top',
+        });
+      }
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+};
+
+const selectedProviderPlan = ref({
+  id: page.props?.quote?.plan_id,
+  planName: page.props?.quote?.plans?.name,
+  providerName: page.props?.quote?.plans?.providerName,
+  premium: page.props?.quote?.plans?.premium,
+});
+
+const handlePlanSelected = plan => {
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.name;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+  });
+  onLoadAvailablePlansData();
+};
+
+const onMemberUpdated = async () => {
+  await router.reload({
+    preserveScroll: true,
+    only: ['membersDetails'],
+  });
+  page.props.membersDetails = [...page.props.membersDetails];
+};
+
+const copyLink = () => {
+  copy(page.props.planURL);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboardd',
+      position: 'top',
+    });
+};
+
+const getLookupValueText = (lookupKey, id, defaultValue = '') => {
+  const lookUpData = page?.props?.quote?.lookUpData || {};
+  const lookupArray = Array.isArray(lookUpData[lookupKey])
+    ? lookUpData[lookupKey]
+    : [];
+  const matchedValue = lookupArray.find(item => item.id === id);
+  return matchedValue?.text || defaultValue;
+};
+
+const emailTableColumns = reactive({
+  columns: [
+    { text: 'Id', value: 'id' },
+    { text: 'Email Subject', value: 'email_subject' },
+    { text: 'Email Address', value: 'email_address' },
+    { text: 'Status', value: 'email_status' },
+    { text: 'Reason', value: 'reason' },
+    { text: 'Template Id', value: 'template_id' },
+    { text: 'Customer Id', value: 'customer_id' },
+    { text: 'Created At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
+  ],
+});
+
+const fullAddress = computed(() => {
+  const address = page.props?.customerAddressData;
+
+  if (!address) {
+    return null; // Return null if customerAddressData is null or undefined
+  }
+
+  const {
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  } = address;
+
+  const parts = [
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  ];
+
+  // Check if all parts are null or undefined
+  const allPartsAreNull = parts.every(part => part == null);
+
+  if (allPartsAreNull) {
+    return null;
+  }
+
+  // Filter out null or undefined parts and join the rest with comma and space
+  return parts.filter(part => part).join(', ');
+});
+
+const possessionTypeText = computed(() => {
+  const id = page.props?.quote?.home_quote?.possession_type_id;
+
+  if (!id || !page.props?.lookUpData?.possessionType?.length) {
+    return '';
+  }
+
+  const matchedItem = page.props.lookUpData.possessionType.find(
+    item => item.id === id,
+  );
+
+  return matchedItem ? matchedItem.text : '';
+});
+
+const accommodationTypeText = computed(() => {
+  const id = page.props?.quote?.home_quote?.accommodation_type_id;
+
+  if (!id || !page.props?.lookUpData?.accommodationType?.length) {
+    return '';
+  }
+
+  const matchedItem = page.props.lookUpData.accommodationType.find(
+    item => item.id === id,
+  );
+
+  return matchedItem ? matchedItem.text : '';
+});
+
+const ownerOccupancyText = computed(() => {
+  const id = page.props?.quote?.home_quote?.owner_occupancy_type_id;
+
+  if (!id || !page.props?.lookUpData?.ownerOccupancies?.length) {
+    return '';
+  }
+
+  const matchedItem = page.props.lookUpData.ownerOccupancies.find(
+    item => item.id === id,
+  );
+
+  return matchedItem ? matchedItem.text : '';
+});
+
+const confirmSendEmail = () => {
+  processingOCBEmailNB.value = true;
+  axios
+    .post(`/quotes/home/${page.props.quote.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
+    .then(response => {
+      processingOCBEmailNB.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmailNB.value = false;
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
+      modals.sendConfirm = false;
+    });
+};
+
+const viewPlanDetailsLoader = ref({});
+
+const isPlanDetailEnabled = computed(() => {
+  // TODO: Remove this after testing or when taking to Stage after BA confirmation
+  // if (page.props.quote.source == page.props.leadSource.RENEWAL_UPLOAD) {
+  //   return true;
+  // }
+  return false;
+});
+
+// New computed property to check lead date
+const shouldShowPlanDetailsSection = computed(() => {
+  // First check if lead is created before the cutoff date
+  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
+  const str = page.props.quote.created_at;
+
+  const match = str.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
+  if (!match) return false;
+
+  const [_, day, monthStr, year, hour, min, ampm] = match;
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  let h = parseInt(hour, 10);
+  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
+
+  if (createdDate >= cutoffDate) {
+    return false;
+  }
+
+  const homeQuote = page.props.quote?.home_quote;
+  if (!homeQuote) {
+    return true;
+  }
+
+  const hasAccommodationTypeId = !!homeQuote.accommodation_type_id;
+
+  const hasCoverageTypeId = !!homeQuote.possession_type_id;
+
+  const hasRequiredValueFields =
+    !!homeQuote.building_value ||
+    !!homeQuote.contents_value_id ||
+    !!homeQuote.personal_belongings_value_id;
+
+  return !(
+    hasAccommodationTypeId &&
+    hasCoverageTypeId &&
+    hasRequiredValueFields
+  );
+});
 </script>
 
 <template>
@@ -560,12 +1150,15 @@ function capitalizeString(str) {
           Duplicate Lead
         </x-button>
 
-        <Link :href="route('home.index')" preserve-scroll>
+        <Link :href="route('home-quotes-list')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Home List </x-button>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('home.edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled"
+            :href="route('home-quotes-edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
@@ -587,7 +1180,7 @@ function capitalizeString(str) {
         <LeadEditBtnReuseTemplate v-else />
       </template>
     </StickyHeader>
-
+    <x-divider class="my-4" />
     <x-modal
       v-model="modals.duplicate"
       title="Duplicate Lead"
@@ -638,12 +1231,80 @@ function capitalizeString(str) {
         </x-button>
       </template>
     </x-modal>
-    <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
+
+    <!-- Home Ecom Details -->
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2"></div>
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h3 class="text-lg font-semibold text-primary-800">E-COM Detail</h3>
+          </div>
         </template>
         <template #body>
+          <x-divider class="my-4" />
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRICE</dt>
+                <dd>{{ quote?.premium ?? '' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ quote?.paid_at ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote?.payment_status?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT METHOD</dt>
+                <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ quote?.car_plan?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ECOMMERCE</dt>
+                <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">QUOTE LINK</dt>
+                <dd>{{ quote?.quote_link ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ORDER REFERENCE</dt>
+                <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT REFERENCE</dt>
+                <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+    <!-- Home Ecom Details -->
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Home Details</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4 mb-3" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -672,11 +1333,11 @@ function capitalizeString(str) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
-                <dd>{{ quote.home_company_name }}</dd>
+                <dd>{{ quote.company_name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY ADDRESS</dt>
-                <dd>{{ quote.home_company_address }}</dd>
+                <dd>{{ quote.company_address }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -689,7 +1350,7 @@ function capitalizeString(str) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
-                <dd>{{ quote.advisor_id_text }}</dd>
+                <dd>{{ quote.advisor?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -785,44 +1446,72 @@ function capitalizeString(str) {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">I AM</dt>
-                <dd>{{ quote.iam_possesion_type_id_text }}</dd>
+                <dt class="font-medium">OWNERSHIP STATUS</dt>
+                <dd>{{ possessionTypeText }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">I LIVE IN</dt>
-                <dd>{{ quote.ilivein_accommodation_type_id_text }}</dd>
+                <dt class="font-medium">TYPE OF PROPERTY</dt>
+                <dd>{{ accommodationTypeText }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TYPE OF OWNER'S OCCUPANCY</dt>
+                <dd>{{ ownerOccupancyText }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS CONTENTS</dt>
-                <dd>{{ quote.has_contents ? 'Yes' : 'No' }}</dd>
+                <dd>
+                  {{ quote?.home_quote?.contents_value_id ? 'Yes' : 'No' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CONTENTS AED</dt>
-                <dd>{{ quote.contents_aed }}</dd>
+                <dd>
+                  {{
+                    getLookupValueText(
+                      'contentValues',
+                      quote?.home_quote?.contents_value_id,
+                    )
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS BUILDING</dt>
-                <dd>{{ quote.has_building ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote?.home_quote?.building_value ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUILDING AED</dt>
-                <dd>{{ quote.building_aed }}</dd>
+                <dd>{{ quote?.home_quote?.building_value }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
-                <dd>{{ quote.has_personal_belongings ? 'Yes' : 'No' }}</dd>
+                <dd>
+                  {{
+                    quote?.home_quote?.personal_belongings_value_id
+                      ? 'Yes'
+                      : 'No'
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PERSONAL BELONGINGS AED</dt>
-                <dd>{{ quote.personal_belongings_aed }}</dd>
+                <dd>
+                  {{
+                    getLookupValueText(
+                      'personalBelongingValues',
+                      quote?.home_quote?.personal_belongings_value_id,
+                    )
+                  }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CLAIM HISTORY</dt>
+                <dd>
+                  {{ quote?.home_quote?.has_claimed_losses ? 'Yes' : 'No' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
                 <dd>{{ quote.currently_insured_with_id_text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TYPE OF PLAN</dt>
-                <dd>{{ quote.plan_id }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -842,7 +1531,7 @@ function capitalizeString(str) {
       </Collapsible>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -915,7 +1604,7 @@ function capitalizeString(str) {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality_id_text }}</dd>
+                  <dd>{{ quote.nationality?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
@@ -960,7 +1649,27 @@ function capitalizeString(str) {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ADDRESS</dt>
-                  <dd>{{ quote.address }}</dd>
+                  <dd>{{ fullAddress }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LOCATION AREA</dt>
+                  <dd>{{ quote?.home_quote?.subArea?.text }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FLOOR AND VILLA/ APARTMENT NUMBER</dt>
+                  <dd>{{ page?.props?.customerAddressData?.office_number }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">VILLA/ BUILDING NAME</dt>
+                  <dd>{{ page?.props?.customerAddressData?.building_name }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">STREET NAME</dt>
+                  <dd>{{ page?.props?.customerAddressData?.street }}</dd>
                 </div>
 
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
@@ -1014,12 +1723,12 @@ function capitalizeString(str) {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -1037,28 +1746,28 @@ function capitalizeString(str) {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      placeholder="SELECT ENTITY TYPE"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -1177,6 +1886,7 @@ function capitalizeString(str) {
       :nationalities="nationalities"
       :memberRelations="memberRelations"
       :quote_type="modelType"
+      @memberUpdated="onMemberUpdated"
       :expanded="sectionExpanded"
     />
 
@@ -1212,91 +1922,16 @@ function capitalizeString(str) {
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-50">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  :options="leadStatusOptions"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                  placeholder="Lead Status"
-                  class="w-full"
-                  label="Status"
-                  filterable
-                />
-
-                <x-select
-                  v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-                  label="Lost Reason"
-                  v-model="leadStatusForm.lostReason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                />
-                <x-textarea
-                  v-model="leadStatusForm.notes"
-                  type="text"
-                  label="Notes"
-                  placeholder="Lead Notes"
-                  class="w-full"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                />
-              </div>
-            </div>
-          </div>
-          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate || isDisabled"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Change Status
-            </x-button>
-          </StatusUpdateButtonTemplate>
-          <div class="flex justify-end">
-            <x-tooltip
-              v-if="lockLeadSectionsDetails.lead_status"
-              placement="bottom"
-            >
-              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                The lead status cannot be manually updated once it has reached
-                'Transaction Approved'
-              </template>
-            </x-tooltip>
-            <StatusUpdateButtonReuseTemplate v-else />
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+    />
 
     <PlanDetails
+      v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
@@ -1305,6 +1940,262 @@ function capitalizeString(str) {
       :isAddUpdate="isAddUpdate"
     />
 
+    <div v-else class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex mb-4 justify-end">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
+              <x-button-group
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                class="mr-2"
+              >
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
+              <x-button
+                v-if="availablePlansTable.data.length > 0"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                @click.prevent="copyLink"
+              >
+                Copy Link
+              </x-button>
+              <x-button
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
+              >
+                Download PDF
+              </x-button>
+              <x-button
+                @click.prevent="modals.sendConfirm = true"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                :disabled="quote.advisor_id != $page.props.auth.user.id"
+                v-if="
+                  readOnlyMode.isDisable === true &&
+                  quote.source != $page.props.leadSource.RENEWAL_UPLOAD
+                "
+              >
+                Send OCB Email to Customer
+              </x-button>
+            </div>
+          </div>
+
+          <x-modal
+            v-model="modals.sendConfirm"
+            title="Send Email"
+            show-close
+            backdrop
+          >
+            <p>Are you sure send email to customer?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.sendConfirm = false"
+                  :disable="processingOCBEmailNB"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  :loading="processingOCBEmailNB"
+                  @click.prevent="confirmSendEmail"
+                >
+                  Send
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
+
+          <div
+            v-if="
+              availablePlansTable.data &&
+              typeof availablePlansTable.data == 'string'
+            "
+          >
+            <p
+              class="text-center text-primary-600 uppercase"
+              v-if="typeof availablePlansTable.data == 'string'"
+            >
+              {{ availablePlansTable.data }}
+            </p>
+          </div>
+          <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
+            <DataTable
+              v-else
+              v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed"
+              :headers="availablePlansTable.columns"
+              :items="availablePlansTable.data || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="availablePlansTable.data.length < 15"
+              @onLoadAvailablePlansData="onLoadAvailablePlansData"
+            >
+              <template #item-providerName="item">
+                <p class="text-primary-600 uppercase">
+                  {{ item.providerName }}
+                </p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="item.isManualUpdate"
+                    size="xs"
+                    color="primary"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Manual
+                  </x-tag>
+                  <x-tag
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Hidden
+                  </x-tag>
+                  <x-tooltip>
+                    <x-tag
+                      v-if="item.puaType"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      PUA
+                    </x-tag>
+                    <template #tooltip>
+                      <span
+                        >Pending Underwriter Approval (PUA) indicates that this
+                        quote is prepared using our internal rating calculator.
+                        Please contact the client to get the required documents,
+                        to proceed with generating a quote on the insurer portal
+                        and connect with the underwriter to obtain their
+                        approval.</span
+                      >
+                    </template>
+                  </x-tooltip>
+                </div>
+              </template>
+              <template #item-name="item">
+                <span class="text-primary-600 uppercase">{{ item.name }}</span>
+              </template>
+              <template #item-insurerQuoteNo="item">
+                <span class="text-primary-600">{{ item.insurerQuoteNo }}</span>
+              </template>
+              <template #item-actualPremium="item">
+                <span class="text-primary-600">
+                  {{
+                    item.actualPremium
+                      ? parseFloat(item.actualPremium).toFixed(2)
+                      : '0.00'
+                  }}
+                </span>
+              </template>
+              <template #item-discountPremium="item">
+                <span class="text-primary-600">
+                  {{
+                    item.discountPremium + item.vat
+                      ? parseFloat(item.discountPremium + item.vat).toFixed(2)
+                      : '0.00'
+                  }}
+                </span>
+              </template>
+              <template #item-action="item">
+                <div class="flex gap-2">
+                  <x-button
+                    size="xs"
+                    color="primary"
+                    outlined
+                    @click.prevent="getPlanDetails(item)"
+                    :loading="viewPlanDetailsLoader[item.id]"
+                  >
+                    View
+                  </x-button>
+
+                  <span>
+                    <SelectPlan
+                      v-if="selectedProviderPlan.id != item.id"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="'Home'"
+                      :uuid="quote.uuid"
+                      :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
+                    />
+
+                    <x-button
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
+                    </x-button>
+                  </span>
+                </div>
+              </template>
+            </DataTable>
+          </div>
+          <x-modal
+            v-model="modals.planDetails"
+            size="xl"
+            :title="`${planDetails?.providerName}`"
+            show-close
+            backdrop
+          >
+            <LazyAvailablePlan
+              :plan="planDetails"
+              @onLoadAvailablePlansData="
+                () => {
+                  onLoadAvailablePlansData();
+                }
+              "
+            />
+          </x-modal>
+        </template>
+      </Collapsible>
+    </div>
+
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
@@ -1312,19 +2203,21 @@ function capitalizeString(str) {
       :quoteType="quoteType"
       :payments="payments"
     />
+
+    <!-- Payments -->
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       :quoteType="quoteType"
-      :payments="payments"
+      :payments="quote.payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
-        payments.find(
+        quote.payments.find(
           item =>
             item.payment_methods_code ===
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :quoteRequest="quoteRequest"
+      :quoteRequest="quote"
       :paymentStatusEnum="paymentStatusEnum"
       :paymentTooltipEnum="paymentTooltipEnum"
       :paymentMethods="
@@ -1337,18 +2230,20 @@ function capitalizeString(str) {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="true"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
-    <PaymentTable
+
+    <QuotePayments
       v-else
-      :payments="payments"
       :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
+      :payments="quote.payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
     />
+    <!-- Payments -->
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1370,11 +2265,13 @@ function capitalizeString(str) {
 
     <QuoteDocument
       :document-types="documentTypes"
-      :quote-documents="quoteDocuments || []"
+      :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
+      quote-type="Home"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -1407,209 +2304,59 @@ function capitalizeString(str) {
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Activities
-              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
           </div>
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex justify-end mb-4">
-            <x-button
-              size="sm"
-              color="orange"
-              @click.prevent="addActivity"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Add Activity
-            </x-button>
-          </div>
           <DataTable
-            table-class-name="compact"
-            :headers="activityTable"
-            :items="activities"
+            table-class-name="tablefixed compact"
+            :headers="emailTableColumns.columns"
+            :items="emailStatuses || []"
+            show-index
             border-cell
             hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="activities.length < 15"
+            hide-footer
           >
-            <template #item-status="{ status, id }">
-              <x-checkbox
-                color="emerald"
-                size="xl"
-                :modelValue="status === 1"
-                :disabled="status === 1"
-                @change="onActivityStatusUpdate(id)"
-              />
-            </template>
-            <template #item-action="item">
-              <div class="space-x-4">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  :disabled="item.status === 1"
-                  @click.prevent="activityEdit(item)"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  :disabled="item.status === 1"
-                  outlined
-                  @click.prevent="activityDelete(item.id)"
-                  v-if="
-                    readOnlyMode.isDisable === true &&
-                    item.user_id &&
-                    item.user_id != null
-                  "
-                  :key="item.user_id"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
           </DataTable>
         </template>
       </Collapsible>
-      <x-modal
-        v-model="modals.activity"
-        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-        size="lg"
-        show-close
-        backdrop
-        is-form
-        @submit="onActivitySubmit"
-      >
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            label="Title*"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-
-          <x-textarea
-            v-model="activityForm.description"
-            label="Description"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-
-          <x-select
-            v-model="activityForm.assignee_id"
-            label="Assignee*"
-            :options="advisorOptions"
-            :rules="[rules.isRequired]"
-            placeholder="Select Assignee"
-            class="w-full"
-          />
-
-          <DatePicker
-            v-model="activityForm.due_date"
-            withTime
-            :rules="[rules.isRequired]"
-            label="Due Date*"
-          />
-        </div>
-
-        <template #secondary-action>
-          <x-button
-            ghost
-            tabindex="-1"
-            size="sm"
-            @click.prevent="modals.activity = false"
-          >
-            Cancel
-          </x-button>
-        </template>
-        <template #primary-action>
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </template>
-      </x-modal>
-      <x-modal
-        v-model="modals.activityConfirm"
-        title="Delete Activity"
-        show-close
-        backdrop
-      >
-        <p>Are you sure you want to delete this activity?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.activityConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              :loading="activityForm.processing"
-              @click.prevent="activityDeleteConfirmed"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
     </div>
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+
+    <QuoteActivities
+      :can="can"
+      :quote="quote"
+      :activities="activities"
+      :advisors="advisors"
+      :quote-type="quoteType"
+    />
 
     <AuditLogs
-      :type="modelClass"
       :id="$page.props.quote.id"
-      :quoteType="$page.props.modelType"
+      :quote-type="quoteType"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
+    />
+
+    <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
+
+    <LeadHistory :quote="$page.props.quote" />
+
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HOME'"
       :expanded="sectionExpanded"
     />
 
     <lead-raw-data
       :modelType="'Home'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

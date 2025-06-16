@@ -1,9 +1,9 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -66,6 +66,7 @@ defineProps({
   access: Object,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  isAllianceProvider: Boolean,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -741,6 +742,7 @@ const onExportPlans = () => {
 };
 
 const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
   let data = {
     jsonData: true,
   };
@@ -756,6 +758,9 @@ const onLoadAvailablePlansData = async () => {
     })
     .catch(err => {
       console.log(err);
+    })
+    .finally(() => {
+      availablePlansTable.isLoading = false;
     });
 };
 
@@ -764,6 +769,7 @@ const selectedPlanType = ref(null);
 const updateSelectedPlan = async selectedPlanData => {
   let data = {
     plan_id: selectedPlanData.plan.id,
+    code: page.props.quote.code,
   };
 
   data.planType = selectedPlanData.extraDetails?.planType;
@@ -895,6 +901,7 @@ const emailStatusesTableColumns = computed(() => {
 
 const availablePlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -929,6 +936,7 @@ const availablePlansTable = reactive({
 
 const availableSeniorPlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -1141,14 +1149,16 @@ const historyDataTable = [
 // selected tab
 
 const planDetails = ref(null);
-
+const viewButtonLoading = ref(false);
 const getPlanDetails = id => {
+  viewButtonLoading.value = true;
   try {
     axios
       .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
       .then(res => {
         planDetails.value = res.data;
         modals.planDetails = true;
+        viewButtonLoading.value = false;
       })
       .catch(err => {
         notification.error({
@@ -1157,6 +1167,7 @@ const getPlanDetails = id => {
           position: 'top',
         });
         console.log(err);
+        viewButtonLoading.value = false;
       });
   } catch (err) {
     console.log(err);
@@ -1165,6 +1176,7 @@ const getPlanDetails = id => {
       message: 'Something went wrong',
       position: 'top',
     });
+    viewButtonLoading.value = false;
   }
 };
 
@@ -1178,16 +1190,16 @@ const onCopyText = text => {
     });
 };
 
-const getAddonVat = item => {
+const totalPremiumWithVat = (discountPremium, vat, addons) => {
   let addonVat = 0;
-  item.addons.forEach(addon => {
-    addon.addonOptions.forEach(option => {
+  addons.forEach(item => {
+    item.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
-        addonVat += parseInt(option.price) + option.vat;
+        addonVat += useRoundIt(option.price) + useRoundIt(option.vat);
       }
     });
   });
-  return addonVat;
+  return useRoundIt(discountPremium + addonVat + vat);
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -1417,7 +1429,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails', 'quote'],
   });
 };
 
@@ -1669,32 +1681,33 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
-        <x-field label="LOBs" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-        </x-field>
-        <x-field label="Reason" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-        </x-field>
+        <x-select
+          v-model="leadDuplicateForm.lob_team"
+          :options="
+            allowedDuplicateLOB.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+          label="LOBs"
+          required
+        />
+
+        <x-select
+          label="Reason"
+          required
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          :rules="[isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+        />
       </div>
       <template #secondary-action>
         <x-button ghost tabindex="-1" @click="modals.duplicate = false">
@@ -2290,12 +2303,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -2313,28 +2326,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      placeholder="SELECT ENTITY TYPE"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -2599,13 +2612,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
             :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
-          <ComboBox
+
+          <x-select
             v-model="travelerForm.nationality_id"
             label="Nationality"
             :options="nationalityOptions"
             placeholder="Select Nationality"
-            :single="true"
-            :hasError="travelerFieldReq.nationality"
+            filterable
+            class="w-full"
+            :rules="[isRequired]"
           />
           <DatePicker
             v-model="travelerForm.dob"
@@ -2630,15 +2645,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
             label="Passport Number"
             placeholder="Passport Number"
           />
-          <x-field label="Gender*">
-            <x-select
-              v-model="travelerForm.gender"
-              placeholder="Gender"
-              :options="genderList"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </x-field>
+          <x-select
+            v-model="travelerForm.gender"
+            placeholder="Gender"
+            :options="genderList"
+            :rules="[isRequired]"
+            class="w-full"
+            label="Gender"
+            required
+          />
         </div>
         <template #secondary-action>
           <x-button
@@ -2750,53 +2765,49 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="STATUS">
-                  <x-select
-                    v-model="leadStatusForm.leadStatus"
-                    :options="leadStatusOptions"
-                    :disabled="
-                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                    "
-                    placeholder="Lead Status"
-                    class="w-full"
-                    filterable
-                  />
-                </x-field>
-                <x-field label="NOTES">
-                  <x-textarea
-                    v-model="leadStatusForm.notes"
-                    type="text"
-                    placeholder="Lead Notes"
-                    class="w-full"
-                    :disabled="
-                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                    "
-                  />
-                </x-field>
+                <x-select
+                  label="STATUS"
+                  v-model="leadStatusForm.leadStatus"
+                  :options="leadStatusOptions"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
+                  placeholder="Lead Status"
+                  class="w-full"
+                  filterable
+                />
+
+                <x-textarea
+                  label="NOTES"
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  placeholder="Lead Notes"
+                  class="w-full"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
+                />
               </div>
             </div>
             <div class="w-full md:w-2/3">
-              <x-field
+              <x-select
                 label="LOST REASON"
                 v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-              >
-                <x-select
-                  v-model="leadStatusForm.lostReason"
-                  :options="lostReasonsOptions"
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                  :disabled="lockLeadSectionsDetails.lead_status"
-                />
-              </x-field>
-              <x-field label="Transaction Type">
-                <x-input
-                  type="text"
-                  v-model="quote.transaction_type_text"
-                  class="w-full"
-                  :disabled="true"
-                />
-              </x-field>
+                v-model="leadStatusForm.lostReason"
+                :options="lostReasonsOptions"
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+                :disabled="lockLeadSectionsDetails.lead_status"
+              />
+
+              <x-input
+                label="Transaction Type"
+                type="text"
+                v-model="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
             </div>
           </div>
           <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
@@ -3136,7 +3147,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </p>
           </div>
           <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
             <DataTable
+              v-else
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
@@ -3169,9 +3187,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
               <template #item-premiumWithVat="item">
                 {{
-                  parseFloat(
-                    item.discountPremium + item.vat + getAddonVat(item),
-                  ).toFixed(2)
+                  totalPremiumWithVat(
+                    item.discountPremium,
+                    item.vat,
+                    item.addons,
+                  )
                 }}
               </template>
               <template #item-action="item">
@@ -3184,6 +3204,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       selectedPlanType = 'normalPlans';
                       getPlanDetails(item.id);
                     "
+                    :loading="viewButtonLoading"
                   >
                     View
                   </x-button>
@@ -3204,6 +3225,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       }"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :payments="payments"
                     />
                     <x-button
                       v-else
@@ -3227,7 +3250,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </h6>
             </div>
             <div>
+              <div
+                v-if="availableSeniorPlansTable.isLoading"
+                class="flex justify-center my-8"
+              >
+                <x-spinner size="lg" />
+              </div>
               <DataTable
+                v-else
                 v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed"
                 :headers="availableSeniorPlansTable.columns"
@@ -3262,9 +3292,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </template>
                 <template #item-premiumWithVat="item">
                   {{
-                    parseFloat(
-                      item.discountPremium + item.vat + getAddonVat(item),
-                    ).toFixed(2)
+                    totalPremiumWithVat(
+                      item.discountPremium,
+                      item.vat,
+                      item.addons,
+                    )
                   }}
                 </template>
                 <template #item-action="item">
@@ -3277,6 +3309,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         selectedPlanType = 'seniorPlans';
                         getPlanDetails(item.id);
                       "
+                      :loading="viewButtonLoading"
                     >
                       View
                     </x-button>
@@ -3296,6 +3329,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         }"
                         :insuranceProviderId="item.id"
                         :code="quote.code"
+                        :plans="availableSeniorPlansTable.data || []"
+                        :payments="payments"
                       />
                       <x-button
                         v-else
@@ -3371,6 +3406,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
+      :isAllianceProvider="isAllianceProvider"
     />
 
     <PaymentTable
@@ -3553,29 +3589,29 @@ const applyEmiratesIdNumMasking = emiratesId =>
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
-          <x-field label="Title" required>
-            <x-input
-              v-model="activityForm.title"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Description">
-            <x-textarea
-              v-model="activityForm.description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Assignee" required>
-            <x-select
-              v-model="activityForm.assignee_id"
-              :options="advisorOptions"
-              :rules="[isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-          </x-field>
+          <x-input
+            label="Title"
+            required
+            v-model="activityForm.title"
+            :rules="[isRequired]"
+            class="w-full"
+          />
+          <x-textarea
+            label="Description"
+            v-model="activityForm.description"
+            :adjust-to-text="false"
+            class="w-full"
+          />
+
+          <x-select
+            label="Assignee"
+            required
+            v-model="activityForm.assignee_id"
+            :options="advisorOptions"
+            :rules="[isRequired]"
+            placeholder="Select Assignee"
+            class="w-full"
+          />
 
           <DatePicker
             :format="format"
@@ -3688,6 +3724,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured_kyc_id"
+      :expanded="sectionExpanded"
+    />
+
     <ApiLogs
       v-if="can(permissionEnum.API_LOG_VIEW)"
       :type="modelClass"
@@ -3726,7 +3769,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <lead-raw-data
       :modelType="'Travel'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

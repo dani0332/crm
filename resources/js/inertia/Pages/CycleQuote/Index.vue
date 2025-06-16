@@ -95,6 +95,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -233,20 +234,42 @@ const handleSelectedFilters = selectedFilters => {
 };
 
 const exportLoader = ref(false);
-const onDataExport = () => {
+const onDataExport = (exportType = 'download') => {
+  filters.exportType = exportType;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'cycle');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Cycle'),
+    exportType: exportType,
     url: url + '?' + new URLSearchParams(data).toString(),
   };
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    if (result)
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start an export',
+        position: 'top',
+      });
       setTimeout(() => {
         exportLoader.value = false;
       }, 1000);
-  });
+      throw err;
+    });
 };
 
 function setQueryStringFilters() {
@@ -501,125 +524,192 @@ const insurerAMLStatusOption = computed(() => {
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            name="created_at_start"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            name="created_at_end"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Renewal Batch">
-          <ComboBox
-            v-model="filters.renewal_batch_id"
-            placeholder="Search by Renewal Batch"
-            :options="renewalBatchOptions"
-          />
-        </x-field>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
-        <x-field label="Lead Status">
-          <ComboBox
-            v-model="filters.quote_status_id"
-            name="quote_status"
-            placeholder="Search by Lead Status"
-            :options="
-              quoteStatuses.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
-        </x-field>
-        <ComboBox
-          v-model="filters.insurer_aml_status"
-          label="Insurer AML Status"
-          name="insurer_aml_status"
-          :options="insurerAMLStatusOption"
+
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
         />
-        <x-field label="Advisor" v-if="isAllowed">
-          <ComboBox
-            v-model="filters.advisors"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-          />
-        </x-field>
-        <x-field label="Is Ecommerce">
-          <x-select
-            v-model="filters.is_ecommerce"
-            placeholder="Search by Ecommerce"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Renewal">
-          <x-select
-            v-model="filters.previous_quote_policy_number"
-            placeholder="Search by Renewal"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 0, label: 'Yes' },
-              { value: 1, label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
+
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          class="w-full"
+          label="Created Date Start"
+        />
+
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          class="w-full"
+          label="Created Date End"
+        />
+
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
+
+        <x-select
+          v-model="filters.renewal_batch_id"
+          placeholder="Search by Renewal Batch"
+          label="Renewal Batch"
+          :options="renewalBatchOptions"
+          multiple
+          truncate
+          filterable
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batch_id = renewalBatchOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.renewal_batch_id = []"
+            />
+          </template>
+        </x-select>
+
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
+
+        <x-select
+          v-model="filters.quote_status_id"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="
+            quoteStatuses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          filterable
+          label="Lead Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = quoteStatuses.map(item => item.id)
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.insurer_aml_status"
+          name="insurer_aml_status"
+          placeholder="Search by Insurer AML Status"
+          :options="insurerAMLStatusOption"
+          class="w-full"
+          filterable
+          label="Insurer AML Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.advisors"
+          name="advisor_id"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          filterable
+          label="Advisor"
+          multiple
+          truncate
+          v-if="isAllowed"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.is_ecommerce"
+          placeholder="Search by Ecommerce"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          label="Is Ecommerce"
+        />
+
+        <x-select
+          v-model="filters.previous_quote_policy_number"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 0, label: 'Yes' },
+            { value: 1, label: 'No' },
+          ]"
+          class="w-full"
+          label="Renewal"
+        />
+
         <x-input
           v-model="filters.previous_quote_policy_number_text"
           type="text"
@@ -651,14 +741,7 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        <DatePicker
-          v-if="hasRole(rolesEnum.CycleManager)"
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
+
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"
@@ -688,16 +771,31 @@ const insurerAMLStatusOption = computed(() => {
             color="emerald"
             :loading="exportLoader"
             @click.prevent="onDataExport"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+            class="justify-self-start"
+          >
+            Export via email
+          </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

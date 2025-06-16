@@ -401,11 +401,18 @@ const dateFormat = date =>
       :expanded="sectionExpanded"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
+      :expanded="sectionExpanded"
+    />
+
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
 
     <lead-raw-data
       :modelType="'Jetski'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

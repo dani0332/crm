@@ -2,11 +2,13 @@
 
 namespace App\Enums;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
+use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -30,14 +32,12 @@ use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use App\Services\Logger\LoggerService;
-use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
 use App\Strategies\Allocations\CycleAllocation;
+use App\Strategies\Allocations\GroupMedicalAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\HomeAllocation;
 use App\Strategies\Allocations\LifeAllocation;
@@ -117,7 +117,7 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        return self::getId(match (ucfirst($value)) {
+        $quoteTypeEnum = match (ucfirst($value)) {
             'Car' => QuoteTypes::CAR,
             'Home' => QuoteTypes::HOME,
             'Health' => QuoteTypes::HEALTH,
@@ -132,7 +132,9 @@ enum QuoteTypes: string
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             default => null,
-        });
+        };
+
+        return $quoteTypeEnum ? self::getId($quoteTypeEnum) : null;
     }
 
     public function model(): Model
@@ -181,6 +183,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
+            self::HOME => SendHomeOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
@@ -259,26 +262,27 @@ enum QuoteTypes: string
         };
     }
 
-    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
+    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false, bool $sicAdvisorRequested = false)
     {
-        LoggerService::startQuoteLogging($uuid);
+        LoggerService::startQuoteLogging($this->refId($uuid), LoggerFeatureEnum::ALLOCATION);
 
         $allocationService = match ($this) {
-            self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
-            self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
+            self::CAR => new CarAllocation($uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),
+            self::HEALTH => new HealthAllocation($uuid, overrideAdvisorId: $overrideAdvisorId),
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
-            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $this->getTracker(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, $uuid, $teamId), $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::TRAVEL => new TravelAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::PET => new PetAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::LIFE => new LifeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::CORPLINE => new CorplineAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             default => null,
         };
 
         if ($allocationService) {
-            return $allocationService->executeSteps();
+            return $allocationService->execute();
         }
 
         return $allocationService;
@@ -297,6 +301,8 @@ enum QuoteTypes: string
             self::LIFE => [RolesEnum::LifeAdvisor],
             self::CORPLINE => [RolesEnum::CorpLineAdvisor],
             self::HOME => [RolesEnum::HomeAdvisor],
+            self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
+            self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             default => [],
         };
     }

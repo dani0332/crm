@@ -14,10 +14,12 @@ defineProps({
   planURL: String,
   insuranceProviders: Array,
   websiteURL: String,
+  payments: Array,
 });
 const toggleLoader = ref(false);
 const selectedPlans = ref([]);
 const exportLoader = ref(false);
+const isLoadingAvailablePlans = ref(false);
 const selectedPlan = ref({});
 
 const changeInsurerForm = useForm({
@@ -126,6 +128,7 @@ const availablePlansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
+  isLoadingAvailablePlans.value = true;
   let data = {
     jsonData: true,
   };
@@ -137,6 +140,9 @@ const onLoadAvailablePlansData = async () => {
     })
     .catch(err => {
       console.log(err);
+    })
+    .finally(() => {
+      isLoadingAvailablePlans.value = false;
     });
 };
 
@@ -435,7 +441,11 @@ onMounted(() => {
         </x-button>
       </div>
     </div>
+    <div v-if="isLoadingAvailablePlans" class="flex justify-center my-8">
+      <x-spinner size="lg" />
+    </div>
     <DataTable
+      v-else
       table-class-name="compact"
       v-model:items-selected="selectedPlans"
       :headers="availablePlansTable.columns"
@@ -631,6 +641,11 @@ onMounted(() => {
               :uuid="quote.uuid"
               :insuranceProviderId="item.id"
               :code="quote.code"
+              :plans="availablePlansItems || []"
+              :payments="payments"
+              :extraDetails="{
+                selectedPlansIds: [selectedProviderPlan?.id],
+              }"
             />
 
             <x-button v-else size="xs" color="orange" outlined :disabled="true">

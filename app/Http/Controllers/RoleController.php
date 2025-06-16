@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -30,11 +30,18 @@ class RoleController extends Controller
             $query->where('name', 'LIKE', '%'.$request->name.'%');
         }
 
-        $roles = $query->simplePaginate();
+        if ($request->has('permission')) {
+            $query->whereHas('permissions', function ($q) use ($request) {
+                $q->where('id', $request->permission);
+            });
+        }
+
+        $roles = $query->simplePaginate()->withQueryString();
+        $permissions = Permission::orderBy('name')->get();
 
         return inertia('Admin/Roles/Index', [
             'roles' => $roles,
-
+            'permissions' => $permissions,
         ]);
     }
 
