@@ -229,4 +229,10 @@ final class ApplicationStorageEnums extends Enum
     /* Savings OCB */
     public const SAVINGS_OCB = 'SAVINGS_OCB';
     public const SAVINGS_OCB_SWITCH = 'SAVINGS_OCB_SWITCH';
+
+    /* Savings Book Policy Template */
+    public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
+
+    /* Savings Send Policy Template */
+    public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
 }
