@@ -206,6 +206,7 @@ const modal2Ref = ref(null);
 const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
+const selectedPaymentForEdit = ref(null);
 
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
@@ -1020,7 +1021,8 @@ const handlePaymentTypes = count => {
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
     if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
       // need to fix this for payments
-      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+      isMultiPaymentEnabled =
+        selectedPaymentForEdit.value?.isMultiplePaymentsEnabled;
     }
     const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
@@ -1767,6 +1769,7 @@ const editPaymentModal = async (
   capture_approval,
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
+  selectedPaymentForEdit.value = payment;
 
   if (
     sr_no === 0 &&
@@ -3349,7 +3352,7 @@ const isEditPaymentEnabled = payment => {
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
   if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+    isMultiPaymentEnabled = payment?.isMultiplePaymentsEnabled;
   }
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
