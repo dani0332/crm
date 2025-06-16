@@ -1335,7 +1335,7 @@ const onUpdateIndividualPlan = () => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex justify-end items-center flex-wrap gap-2">
+          <!-- <div class="flex justify-end items-center flex-wrap gap-2">
             <div
               class="flex gap-2 mb-4"
               v-if="
@@ -1374,7 +1374,7 @@ const onUpdateIndividualPlan = () => {
                 Copy Link
               </x-button>
             </div>
-          </div>
+          </div> -->
 
           <div
             v-if="
@@ -1538,7 +1538,7 @@ const onUpdateIndividualPlan = () => {
                     <div class="p-6">
                       <!-- Plan Toggle Controls -->
                       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-                        <div class="grid sm:grid-cols-2 mb-3">
+                        <!-- <div class="grid sm:grid-cols-2 mb-3">
                           <x-toggle
                             v-model="planDetails.isDisabled"
                             color="success"
@@ -1546,7 +1546,7 @@ const onUpdateIndividualPlan = () => {
                             @change="onToggleIndividualPlan"
                             :loading="toggleLoader"
                           />
-                        </div>
+                        </div> -->
                         <div class="grid sm:grid-cols-2 mb-3">
                           <ToggleManualButtonTemplate v-slot="{ isDisabled }">
                             <x-toggle
