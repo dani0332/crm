@@ -646,6 +646,24 @@ const onUpdateIndividualPlan = () => {
     },
   });
 };
+
+// Helper function to get tooltip text for eligibility fields
+const getEligibilityTooltip = (fieldText) => {
+  const tooltips = {
+    'Entry age': 'Eligible age to buy the plan',
+    'Policy term (years)': 'Policy duration available for the plan',
+    'Minimum investment': 'Minimum amount of investment required'
+  };
+
+  // Check for exact matches or partial matches
+  for (const [key, value] of Object.entries(tooltips)) {
+    if (fieldText && fieldText.toLowerCase().includes(key.toLowerCase())) {
+      return value;
+    }
+  }
+
+  return null;
+};
 </script>
 
 <template>
@@ -1403,7 +1421,7 @@ const onUpdateIndividualPlan = () => {
             >
               <template #header-providerName>
                 <div class="flex items-center gap-2">
-                  <x-tooltip placement="top">
+                  <x-tooltip placement="bottom">
                     <span class="underline decoration-dotted decoration-primary-700">Provider Name</span>
                     <template #tooltip>Insurance provider</template>
                   </x-tooltip>
@@ -1411,31 +1429,31 @@ const onUpdateIndividualPlan = () => {
                 </div>
               </template>
               <template #header-name>
-                <x-tooltip placement="top">
+                <x-tooltip placement="bottom">
                   <span class="underline decoration-dotted decoration-primary-700">Plans</span>
                   <template #tooltip>Plan name</template>
                 </x-tooltip>
               </template>
               <template #header-investmentFrequency>
-                <x-tooltip placement="top">
+                <x-tooltip placement="bottom">
                   <span class="underline decoration-dotted decoration-primary-700">Investment Frequency</span>
                   <template #tooltip>How often you plan to invest</template>
                 </x-tooltip>
               </template>
               <template #header-minimumInvestment>
-                <x-tooltip placement="top">
+                <x-tooltip placement="bottom">
                   <span class="underline decoration-dotted decoration-primary-700">Minimum Investment</span>
                   <template #tooltip>Minimum amount of investment required</template>
                 </x-tooltip>
               </template>
               <template #header-currency>
-                <x-tooltip placement="top">
+                <x-tooltip placement="bottom">
                   <span class="underline decoration-dotted decoration-primary-700">Currency</span>
                   <template #tooltip>Investment currency</template>
                 </x-tooltip>
               </template>
               <template #header-policyTerm>
-                <x-tooltip placement="top">
+                <x-tooltip placement="bottom">
                   <span class="underline decoration-dotted decoration-primary-700">Policy Term (Years)</span>
                   <template #tooltip>Policy duration available for the plan</template>
                 </x-tooltip>
@@ -1709,8 +1727,17 @@ const onUpdateIndividualPlan = () => {
                           :key="item.id"
                           class="grid grid-cols-2 gap-x-4"
                         >
-                          <div class="text-gray-700 font-medium text-sm">
-                            {{ item.text }}
+                                                    <div class="text-gray-700 font-medium text-sm">
+                            <x-tooltip
+                              placement="bottom"
+                              v-if="getEligibilityTooltip(item.text)"
+                            >
+                              <span class="underline decoration-dotted decoration-primary-700">
+                                {{ item.text }}
+                              </span>
+                              <template #tooltip>{{ getEligibilityTooltip(item.text) }}</template>
+                            </x-tooltip>
+                            <span v-else>{{ item.text }}</span>
                           </div>
                           <div class="text-gray-900 text-sm">
                             {{ item.value }}
