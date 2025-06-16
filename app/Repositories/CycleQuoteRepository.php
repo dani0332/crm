@@ -101,7 +101,7 @@ class CycleQuoteRepository extends BaseRepository
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(false, $forTotalLeadsCount)
+            ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
