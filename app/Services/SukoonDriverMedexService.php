@@ -56,7 +56,6 @@ class SukoonDriverMedexService
         try {
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
             $response = $this->request("/policy/{$transaction->certificate_number}", 'get', headers: $headers)->json();
-
             return $response;
         } catch (Exception $e) {
             throw $e;
@@ -187,13 +186,9 @@ class SukoonDriverMedexService
      */
     private function updateTransaction($transaction, $transactionDetail)
     {
-        // TODO:: get commission_amount from SUKOON Response instead of manually calculate, once it is fixed
-        // $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
         $paymentData = $transactionDetail['payments'][0];
-        $paymentBreakdown = $paymentData['amount_breakdown'];
-        $policyPrice = floatval($paymentBreakdown['policy_price']) ? (float) $paymentBreakdown['policy_price'] : (int) $paymentBreakdown['policy_price'];
-        $commission_amount = $policyPrice * 0.30 ?? 0; // 30% commission
-        $commissionVat = $commission_amount * 0.05 ?? 0; // 5% commission vat
+        $commissionAmount = floatval($transactionDetail['additional_data']['broker_commission_amount'] ?? 0) ? (float) ($transactionDetail['additional_data']['broker_commission_amount'] ?? 0) : (int) ($transactionDetail['additional_data']['broker_commission_amount'] ?? 0);
+        $commissionVat = floatval($transactionDetail['additional_data']['broker_commission_vat_amount'] ?? 0) ? (float) ($transactionDetail['additional_data']['broker_commission_vat_amount'] ?? 0) : (int) ($transactionDetail['additional_data']['broker_commission_vat_amount'] ?? 0);
 
         return $transaction->update([
             'certificate_number' => $this->policyNumber,
@@ -201,9 +196,9 @@ class SukoonDriverMedexService
             'tax_invoice_buyer_no' => $transactionDetail['additional_data']['tax_invoice_buyer_document_number'] ?? null,
             'credit_note_no' => $transactionDetail['additional_data']['credit_note_document_number'] ?? null,
             'credit_note_buyer_no' => $transactionDetail['additional_data']['credit_note_buyer_document_number'] ?? null,
-            'commission_with_vat' => $commission_amount + $commissionVat ?? null,
-            'commission_without_vat' => $commission_amount,
-            'policy_price' => $paymentBreakdown['policy_price'] ?? null,
+            'commission_with_vat' => $commissionAmount + $commissionVat ?? null,
+            'commission_without_vat' => $commissionAmount,
+            'policy_price' => $paymentData['amount_breakdown']['policy_price'] ?? null,
             'policy_status' => $paymentData['status'] ?? null,
         ]);
     }
