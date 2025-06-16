@@ -355,6 +355,7 @@ const planDetailsTabs = ref([
   { index: 1, label: 'Eligibility' },
   { index: 2, label: 'Included Benefits' },
   { index: 3, label: 'Key Features Document' },
+  { index: 4, label: 'Policy Wordings' },
 ]);
 
 const selectedProviderPlan = ref({
@@ -1783,6 +1784,23 @@ const onUpdateIndividualPlan = () => {
                         No key feature documents available
                       </div>
                     </div>
+                  </TabPanel>
+
+                  <!-- Policy Wordings Tab -->
+                  <TabPanel>
+                    <dl class="grid md:grid-cols-2 gap-5 p-4">
+                      <div
+                        v-for="data in planDetails.policyWordings || []"
+                        :key="data"
+                      >
+                        <a
+                          :href="data.link"
+                          class="font-medium mb-1"
+                          target="_blank"
+                          >{{ data.text }}</a
+                        >
+                      </div>
+                    </dl>
                   </TabPanel>
                 </TabPanels>
               </TabGroup>
