@@ -20,6 +20,7 @@ const props = defineProps({
 
 const page = usePage();
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 const isPlanSelectionEnable = ref(false);
@@ -135,6 +136,19 @@ const validatePayments = selectedPlanObj => {
 
 const checkAndUpdateSelectedPlan = async () => {
   isLoading.value = true;
+
+  // Validation for Savings quotes only
+  if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+    if (!props.plan.insurerQuoteNo || !props.plan.actualPremium || props.plan.actualPremium <= 0) {
+      notification.error({
+        title: "Please manually add 'Insurer Quote No.' & 'Price' of the finalized plan in 'View' section",
+        position: 'top',
+      });
+      isLoading.value = false;
+      return;
+    }
+  }
+
   let data = {
     plan_id: props.plan.id,
     provider_code: props.plan?.providerCode ?? null,
