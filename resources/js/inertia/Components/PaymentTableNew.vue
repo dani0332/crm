@@ -6,6 +6,14 @@ import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
+import {
+  ImageGalleryModal,
+  AmlApprovalModal,
+  RetryPaymentModal,
+  DeleteSplitPaymentModal,
+  DeleteParentPaymentModal,
+  VoidPaymentModal,
+} from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
 import { usePayment } from '../Composables/usePayment';
@@ -19,7 +27,7 @@ import {
 } from './PaymentComponents/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
-const components = { PaymentTableHeader };
+const components = { PaymentTableHeader, ImageGalleryModal };
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -190,12 +198,12 @@ const isSplitAmountInvalidError = ref([]);
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
+const deleteSplitPaymentCode = ref('');
 const isCollectedByEnabled = ref(false);
 const isTransactionCaptureButtonEnabled = ref(true);
 const premiumToCapture = ref(0);
 const capturePaymentValidationInProcess = ref(false);
 const capturePaymentValidationErrorMessage = ref('');
-const modal2Ref = ref(null);
 const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
@@ -397,40 +405,15 @@ const onCopyPaymentLink = (paymentLink, paymentStatus) => {
 const openModal = () => {
   isGalleryModelOpen.value = true;
 };
-const nextFile = () => {
-  if (currentFileIndex.value < filesTest.value.length - 1) {
-    currentFileIndex.value++;
-    zoomLevel.value = 1;
-  }
+
+/**
+ * Closes the image gallery modal without affecting the parent payment modal
+ * Used by the ImageGalleryModal component through event binding
+ */
+const closeInnerModal = () => {
+  // Just close the gallery modal, not the payment modal
+  isGalleryModelOpen.value = false;
 };
-
-const zoomIn = () => {
-  zoomLevel.value = Math.min(zoomLevel.value + 0.25, 3);
-};
-
-const zoomOut = () => {
-  zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.25);
-};
-
-const previousFile = () => {
-  if (currentFileIndex.value > 0) {
-    currentFileIndex.value--;
-    zoomLevel.value = 1;
-  }
-};
-
-const handleKeyDown = event => {
-  if (event.key === 'ArrowLeft' && hasPreviousFile) {
-    previousFile();
-  } else if (event.key === 'ArrowRight' && hasNextFile) {
-    nextFile();
-  }
-};
-
-const currentFile = computed(() => {
-  return filesTest.value[currentFileIndex.value];
-});
-
 // Define a computed property to calculate the initial total price without VAT
 const initialTotalPriceWithoutVat = computed(() => {
   if (props.quoteType === quoteTypeCodeEnum.Health) {
@@ -447,14 +430,7 @@ const toggleExpand = index => {
   expandedPaymentRows.value[index] = !expandedPaymentRows.value[index];
 };
 
-const closeInnerModal = () => {
-  zoomLevel.value = 1;
-  isGalleryModelOpen.value = false;
-  isGalleryModelOpen.value = false;
-  isApproveConfirmed.value = false;
-  isApproveNotChecked.value = true;
-};
-
+// Close confirmation modal function remains unchanged
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
@@ -464,14 +440,6 @@ const closeConfirmModal = () => {
 const closeAmlConfirmModal = () => {
   isAmlApprovalRequired.value = false;
 };
-
-const hasNextFile = computed(() => {
-  return currentFileIndex.value < filesTest.value.length - 1;
-});
-
-const hasPreviousFile = computed(() => {
-  return currentFileIndex.value > 0;
-});
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -946,25 +914,10 @@ const closeRetryModal = () => {
   isRetryModalOpen.value = false;
 };
 
-const handleRetryPayment = async () => {
-  let retryData = {
-    payment_process_job_id: retryProcessJobId.value,
-    model_type: props.quoteType,
-    quote_id: props.quoteRequest.id,
-  };
-  retryForm
-    .transform(data => retryData)
-    .post('/payments/' + props.quoteType + '/retry-payment', {
-      preserveScroll: true,
-      onSuccess: () => {
-        isRetryModalOpen.value = false;
-      },
-    });
-};
-
-const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
+const deleteSplitPaymentModal = (payment_split_id, payment_status_id, code) => {
   deleteSplitPaymentId.value = payment_split_id;
   deleteSplitPaymentStatus.value = payment_status_id;
+  deleteSplitPaymentCode.value = code;
   isDeleteModalOpen.value = true;
 };
 
@@ -972,33 +925,16 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
-const handleDeletePayment = async () => {
-  let retryData = {
-    payment_split_id: deleteSplitPaymentId.value,
-    payment_status_id: deleteSplitPaymentStatus.value,
-    model_type: props.quoteType,
-    quote_id: props.quoteRequest.id,
-  };
-  deleteForm
-    .transform(data => retryData)
-    .post('/payments/' + props.quoteType + '/delete-split-payment', {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Split Payment has been deleted',
-          position: 'top',
-        });
-        isDeleteModalOpen.value = false;
-      },
-      onError: () => {
-        notification.error({
-          title: 'Payment delete failed',
-          position: 'top',
-        });
-      },
-    });
-};
-
+/**
+ * Opens the payment modal for editing a payment
+ * Loads payment data, initializes form, and sets appropriate view/edit state
+ *
+ * @param {Object} payment - Payment data object
+ * @param {number} split_payment_id - ID of the split payment to edit
+ * @param {number} sr_no - Serial number of the payment split
+ * @param {number} capture_approval - Flag to indicate if this is a capture approval operation
+ * @returns {boolean|void} False if edit not allowed, otherwise void
+ */
 const editPaymentModal = async (
   payment,
   split_payment_id,
@@ -1041,7 +977,8 @@ const editPaymentModal = async (
     payment?.insurance_provider?.code == 'AXA' &&
     (props.quoteType === quoteTypeCodeEnum.Bike ||
       props.quoteType === quoteTypeCodeEnum.Car ||
-      props.quoteType === quoteTypeCodeEnum.Home)
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel)
   ) {
     capturePaymentValidationInProcess.value = true;
     isTransactionCaptureButtonEnabled.value = false;
@@ -1134,14 +1071,6 @@ const validatePaymentAmount = isValid => {
   }
   return false;
 };
-
-const retryForm = useForm({
-  payment_process_job_id: null,
-});
-
-const deleteForm = useForm({
-  payment_process_job_id: null,
-});
 
 const alertCapture = payment => {
   let errorMsg = 'Pending payment';
@@ -1496,12 +1425,15 @@ const isEditPaymentEnabled = payment => {
 };
 
 let voidPaymentObject = {};
-const voidPaymentProcess = ref(false);
 const voidPaymentModelPopup = ref(false);
 const voidPaymentModel = payment => {
   voidPaymentModelPopup.value = true;
   voidPaymentObject = payment;
 };
+
+/**
+ * Void payment functionality is now handled in the VoidPaymentModal component
+ */
 
 let deletePaymentObject = {};
 const deletePaymentProcess = ref(false);
@@ -1509,54 +1441,6 @@ const deletePaymentModelPopup = ref(false);
 const deletePaymentModel = payment => {
   deletePaymentModelPopup.value = true;
   deletePaymentObject = payment;
-};
-
-const voidPayment = () => {
-  voidPaymentProcess.value = true;
-  let data = {
-    quote_type_id: page.props.quoteTypeId,
-    quote_id: props.quoteRequest.id,
-    quote_uuid: props.quoteRequest.uuid,
-    payment_id: voidPaymentObject.id,
-    payment_code: voidPaymentObject.code,
-    send_update_log_id: props.sendUpdate?.id ?? null,
-  };
-
-  axios
-    .post(`/payments/${props.quoteType}/void-payment`, data)
-    .then(res => {
-      voidPaymentProcess.value = false;
-      voidPaymentModelPopup.value = false;
-      if (res.data.status === false) {
-        notification.error({
-          title: res.data.message,
-          position: 'top',
-        });
-        return;
-      }
-      notification.success({
-        title: 'Processed',
-        position: 'top',
-      });
-
-      router.reload({
-        only: ['payments'],
-      });
-    })
-    .catch(err => {
-      voidPaymentProcess.value = false;
-      if (err.response.data) {
-        notification.error({
-          title: err.response.data[0],
-          position: 'top',
-        });
-      } else {
-        notification.error({
-          title: 'Void authorized payment process failed',
-          position: 'top',
-        });
-      }
-    });
 };
 
 const deletePayment = () => {
@@ -1668,6 +1552,10 @@ const triggerPostPrepayment = async splitPayment => {
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
+
+const closeVoidPaymentModal = () => {
+  voidPaymentModelPopup.value = false;
+};
 </script>
 
 <template>
@@ -1767,8 +1655,8 @@ onBeforeMount(() => {
                           generateCCLink(code, srNo, statusId)
                       "
                       @delete-split-payment="
-                        (splitId, statusId) =>
-                          deleteSplitPaymentModal(splitId, statusId)
+                        (splitId, statusId, code) =>
+                          deleteSplitPaymentModal(splitId, statusId, code)
                       "
                       @retry-split-payment="
                         (jobId, message) =>
@@ -1921,401 +1809,72 @@ onBeforeMount(() => {
               @update-from-insurer-payment-link="(e, f, g) => updateFromInsurerPaymentLink(e, f, g)"
             />
 
-          <div
-            class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center"
-            v-if="isGalleryModelOpen"
-          >
-            <div
-              class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-              tabindex="0"
-              ref="modal2Ref"
-              @keydown="handleKeyDown"
-            >
-              <div class="modal-header text-base text-white bg-gray-800">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center space-x-2">
-                    {{ currentFile.original_name }}
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <span
-                      @click="closeInnerModal"
-                      class="text-gray-300 font-bold cursor-pointer pr-1"
-                    >
-                      <!-- SVG for Close Modal -->
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        tabindex="0"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        class="w-4 h-4"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        ></path>
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between">
-                  <div
-                    class="flex items-center space-x-2 cursor-pointer"
-                    @click="previousFile"
-                    :class="{
-                      'opacity-50 cursor-not-allowed': !hasPreviousFile,
-                    }"
-                  >
-                    <!-- SVG for Previous -->
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-6 h-6 text-gray-300"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 19l-7-7 7-7"
-                      ></path>
-                    </svg>
-                    Previous
-                  </div>
-                  <div
-                    class="flex items-center space-x-2"
-                    v-if="currentFile.doc_mime_type != 'application/pdf'"
-                  >
-                    <div
-                      class="flex items-center space-x-2 cursor-pointer"
-                      @click="zoomOut"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        class="h-6 w-6 text-gray-300"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M20 12H4"
-                        />
-                      </svg>
-                    </div>
-                    <div class="flex flex-initial w-24 justify-center">
-                      <span class="text-gray-300 font-bold"
-                        >{{ zoomLevel * 100 }}%</span
-                      >
-                    </div>
-                    <div
-                      class="flex items-center space-x-2 cursor-pointer"
-                      @click="zoomIn"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        class="h-6 w-6 text-gray-300"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div
-                    class="flex items-center space-x-2 cursor-pointer"
-                    @click="nextFile"
-                    :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }"
-                  >
-                    <!-- SVG for Next -->
-                    Next
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-6 h-6 text-gray-300"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 5l7 7-7 7"
-                      ></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div class="modal-body w-full h-full mt-2">
-                <div
-                  v-if="
-                    currentFile.doc_mime_type === 'image/jpeg' ||
-                    currentFile.doc_mime_type === 'image/png'
-                  "
-                  class="flex items-center justify-center"
-                >
-                  <div class="overflow-auto items-center justify-center">
-                    <img
-                      :src="storageUrl + currentFile.doc_url"
-                      :style="{ transform: `scale(${zoomLevel})` }"
-                      class="max-w-full max-h-full"
-                    />
-                  </div>
-                </div>
-                <div
-                  v-else-if="currentFile.doc_mime_type === 'application/pdf'"
-                  class="w-full h-80vh"
-                >
-                  <embed
-                    :src="storageUrl + currentFile.doc_url"
-                    type="application/pdf"
-                    class="w-full h-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Image Gallery Modal -->
+          <ImageGalleryModal
+            v-model="isGalleryModelOpen"
+            :files="filesTest"
+            :initial-index="currentFileIndex"
+            :storage-url="storageUrl"
+            @update:model-value="val => val === false && closeInnerModal()"
+            class="max-w-6xl mx-auto"
+          />
         </x-modal>
 
         <!--  Clear AML KYC Screening         -->
-        <x-modal v-model="isAmlApprovalRequired" size="lg">
-          <div class="flex items-center justify-end space-x-2">
-            <span
-              @click="closeAmlConfirmModal"
-              class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-            >
-              <!-- Cross icon -->
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                tabindex="0"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                class="w-4 h-4 text-gray-800"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
-            </span>
-          </div>
-          <x-form :auto-focus="false">
-            <div class="text-lg text-center">
-              <span>Please complete the AML screening to proceed.</span>
-            </div>
-            <div class="mt-2 text-center">
-              <Link
-                :href="`/kyc/aml/${
-                  page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
-                }/details/${props.quoteRequest.id}`"
-              >
-                <x-tooltip>
-                  <x-button
-                    v-if="can(permissionEnum.AMLList)"
-                    size="lg"
-                    color="orange"
-                    class="px-4 py-4 mt-4"
-                    :loading="paymentMethodsForm.processing"
-                  >
-                    <span>Go to AML & KYC page</span></x-button
-                  >
-                  <template #tooltip>
-                    <span>{{ paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE }}</span>
-                  </template>
-                </x-tooltip>
-              </Link>
-            </div>
-          </x-form>
-        </x-modal>
+        <AmlApprovalModal
+          v-model="isAmlApprovalRequired"
+          :quote-type-id="
+            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+          "
+          :quote-request-id="props.quoteRequest.id"
+          :is-processing="paymentMethodsForm.processing"
+          @update:model-value="closeAmlConfirmModal"
+        />
 
-        <!--  Clear AML KYC Screening         -->
+        <!-- Retry Payment Modal -->
+        <RetryPaymentModal
+          v-model="isRetryModalOpen"
+          :error-message="retryPaymentErrorMessage"
+          :payment-process-job-id="retryProcessJobId"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
+          @update:model-value="closeRetryModal"
+        />
 
-        <div
-          class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-          v-if="isRetryModalOpen"
-        >
-          <div
-            class="modal-retry-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-          >
-            <div class="modal-confirm-header text-base text-white bg-white">
-              <div
-                class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
-              >
-                <div class="flex items-center space-x-2">
-                  Retry Payment Verification
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span
-                    @click="closeRetryModal"
-                    class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-4 h-4 text-gray-800"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      ></path>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <x-form @submit="handleRetryPayment" :auto-focus="false">
-              <div class="w-full h-full mt-2 flex flex-col">
-                <div
-                  class="text-lg px-6 py-4 border-b flex justify-between items-start"
-                >
-                  <div class="text-left">
-                    <span> {{ retryPaymentErrorMessage }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w-full h-full mt-2 flex flex-col items-center">
-                <x-button
-                  size="lg"
-                  type="submit"
-                  color="orange"
-                  class="px-4 py-2 mt-4 mb-4"
-                  :loading="retryForm.processing"
-                >
-                  <span>Retry</span></x-button
-                >
-              </div>
-            </x-form>
-          </div>
-        </div>
+        <!-- Delete Split Payment Modal -->
+        <DeleteSplitPaymentModal
+          v-model="isDeleteModalOpen"
+          :payment-split-id="deleteSplitPaymentId"
+          :payment-status-id="deleteSplitPaymentStatus"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
+          :code="deleteSplitPaymentCode"
+          @update:model-value="closeDeleteModal"
+        />
 
-        <div
-          class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-          v-if="isDeleteModalOpen"
-        >
-          <div
-            class="modal-retry-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-          >
-            <div class="modal-confirm-header text-base text-white bg-white">
-              <div
-                class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
-              >
-                <div class="flex items-center space-x-2">
-                  Delete Split Payment
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span
-                    @click="closeDeleteModal"
-                    class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-4 h-4 text-gray-800"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      ></path>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <x-form @submit="handleDeletePayment" :auto-focus="false">
-              <div class="w-full h-full mt-2 flex flex-col">
-                <div
-                  class="text-lg px-6 py-4 border-b flex justify-between items-start"
-                >
-                  <div class="text-left">
-                    <span> Are you sure to delete this payment?</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w-full h-full mt-2 flex flex-col items-center">
-                <x-button
-                  size="lg"
-                  type="submit"
-                  color="orange"
-                  class="px-4 py-2 mt-4 mb-4"
-                  :loading="deleteForm.processing"
-                >
-                  <span>Delete</span></x-button
-                >
-              </div>
-            </x-form>
-          </div>
-        </div>
-
-        <x-modal
-          v-model="voidPaymentModelPopup"
-          size="lg"
-          title="Void Authorized Payment"
-          show-close
-          backdrop
-        >
-          <x-form :auto-focus="false">
-            <div class="text-lg text-center">
-              <span> Are you sure to void this payment?</span>
-            </div>
-            <div class="mt-2 text-center">
-              <x-button
-                size="sm"
-                color="orange"
-                class="mt-4 text-center"
-                :loading="voidPaymentProcess"
-                @click="voidPayment"
-              >
-                <span>Confirm</span>
-              </x-button>
-            </div>
-          </x-form>
-        </x-modal>
-        <x-modal
+        <!-- Delete Parent Payment Modal -->
+        <DeleteParentPaymentModal
           v-model="deletePaymentModelPopup"
-          size="lg"
-          title="Delete Payment"
-          show-close
-          backdrop
-        >
-          <x-form :auto-focus="false">
-            <div class="text-lg text-center">
-              <span> Are you sure to Delete this payment?</span>
-            </div>
-            <div class="mt-2 text-center">
-              <x-button
-                size="sm"
-                color="orange"
-                class="mt-4 text-center"
-                :loading="deletePaymentProcess"
-                @click="deletePayment"
-              >
-                <span>Delete</span>
-              </x-button>
-            </div>
-          </x-form>
-        </x-modal>
+          :payment-id="deletePaymentObject?.id"
+          :payment-code="deletePaymentObject?.code"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
+        />
+
+        <!-- Void Payment Modal -->
+        <VoidPaymentModal
+          v-model="voidPaymentModelPopup"
+          :payment-id="voidPaymentObject.id"
+          :payment-code="voidPaymentObject.code"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
+          :quote-uuid="props.quoteRequest.uuid"
+          :quote-type-id="
+            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+          "
+          :send-update-id="props.sendUpdate?.id"
+          @update:model-value="closeVoidPaymentModal"
+        />
       </template>
     </Collapsible>
   </div>
