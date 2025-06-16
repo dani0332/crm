@@ -87,9 +87,9 @@ class ExportValidationRequest extends FormRequest
         // Total months difference
         $totalMonths = $yearDiff * 12 + $monthDiff;
 
-        // Add 1 if we're including both start and end months
-        // (e.g., March 1 to May 31 = 3 months: March, April, May)
-        return abs($totalMonths) + 1;
+        // Return absolute difference in months
+        // (e.g., March 31 to April 1 = 1 month, March 15 to March 20 = 0 months)
+        return abs($totalMonths);
     }
 
     public function withValidator($validator)

@@ -376,9 +376,9 @@ export const calculateMonthsDifference = (start_date, end_date) => {
     // Total months difference
     const totalMonths = yearDiff * 12 + monthDiff;
 
-    // Add 1 if we're including both start and end months
-    // (e.g., March 1 to May 31 = 3 months: March, April, May)
-    return Math.abs(totalMonths) + 1;
+    // Return absolute difference in months
+    // (e.g., March 31 to April 1 = 1 month, March 15 to March 20 = 0 months)
+    return Math.abs(totalMonths);
   }
   return 0;
 };
