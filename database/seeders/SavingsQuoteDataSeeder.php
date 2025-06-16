@@ -30,11 +30,11 @@ class SavingsQuoteDataSeeder extends Seeder
 
         $this->seedRoles([RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager]);
 
-        $this->seedPermissions();
-
         $this->product();
 
         $this->seedDocumentTypes();
+
+        $this->seedSavingsPermissions();
     }
 
     private function upsertQuoteType()
@@ -476,7 +476,7 @@ class SavingsQuoteDataSeeder extends Seeder
         }
     }
 
-    private function seedPermissions()
+    private function seedSavingsPermissions()
     {
         $this->seedPermissions([
             PermissionsEnum::SAVINGS_QUOTES_LIST,
