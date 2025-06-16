@@ -1006,8 +1006,9 @@ const handlePaymentTypes = count => {
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
     if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-      isMultiPaymentEnabled =
-        selectedPaymentForEdit.value ? selectedPaymentForEdit.value?.isMultiplePaymentsEnabled : isMultiPaymentEnabled;
+      isMultiPaymentEnabled = selectedPaymentForEdit.value
+        ? selectedPaymentForEdit.value?.isMultiplePaymentsEnabled
+        : isMultiPaymentEnabled;
     }
     const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
