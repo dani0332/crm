@@ -2,12 +2,12 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
-use App\Enums\QuoteTypes;
 
 class LifeAllocation extends BaseAllocation
 {

@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\LifeEmailService;
 use App\Services\Logger\LoggerService;
@@ -13,7 +13,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Enums\QuoteTypeId;
 
 class SendFICEmailForLife implements ShouldQueue
 {
@@ -34,8 +33,8 @@ class SendFICEmailForLife implements ShouldQueue
      */
     public function handle(): void
     {
-        $lifeFICSwitch = getAppStorageValueByKey(ApplicationStorageEnums::FIC_LIFE_EMAIL_SWITCH,useCache:true);
-        $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid,'quote_type_id',QuoteTypeId::Life)->first();
+        $lifeFICSwitch = getAppStorageValueByKey(ApplicationStorageEnums::FIC_LIFE_EMAIL_SWITCH, useCache: true);
+        $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid, 'quote_type_id', QuoteTypeId::Life)->first();
         LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($personalQuote->uuid));
         if ($lifeFICSwitch && $lifeFICSwitch == 1) {
             app(LifeEmailService::class)->sendFICEmail($personalQuote);

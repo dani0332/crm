@@ -260,7 +260,7 @@ trait QuoteAllocatable
     public function isFIC(QuoteTypes $quoteType): bool
     {
         return QuoteTag::where('quote_uuid', $this->uuid)
-               ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
-               ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+            ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+            ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
     }
 }

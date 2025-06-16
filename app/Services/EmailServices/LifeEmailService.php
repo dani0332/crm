@@ -16,7 +16,7 @@ class LifeEmailService extends BaseService
 {
     public function sendFICEmail(PersonalQuote $personalQuote)
     {
-      
+
         $lifeFICEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::FIC_LIFE_EMAIL)->first();
 
         LoggerService::info('| sendFICEmail - Initiating process');

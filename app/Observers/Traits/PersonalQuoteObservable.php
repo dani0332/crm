@@ -15,12 +15,10 @@ use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\SendEmailCustomerService;
+use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Enums\QuoteTagEnums;
-use App\Models\QuoteTag;
-use App\Traits\QuoteTraits\QuoteAllocatable;
 
 trait PersonalQuoteObservable
 {
@@ -177,7 +175,5 @@ trait PersonalQuoteObservable
 
         }
     }
-  
+
 }
-    
-    
