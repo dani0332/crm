@@ -56,6 +56,10 @@ final class SageEnum extends Enum
     const SRT_RTP_PP_REC = 'RTP_PP_REC';
     const SRT_POST_PP_REC = 'POST_PP_REC';
 
+    const EP_SRT_CREATE_PP_REC = 'EP_SRT_CREATE_PP_REC';
+    const EP_SRT_RTP_PP_REC = 'EP_SRT_RTP_PP_REC';
+    const EP_SRT_POST_PP_REC = 'EP_SRT_POST_PP_REC';
+
     // AR Invoices - Upfront
     const SRT_CREATE_AR_PREM_COMM_INV = 'CREATE_AR_PREM_COMM_INV';
     const SRT_RTP_AR_PREM_COMM_INV = 'RTP_AR_PREM_COMM_INV';

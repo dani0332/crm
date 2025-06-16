@@ -2002,7 +2002,7 @@ class SageApiService
         return $returnMessage;
     }
 
-    private function logErrorAndReturn($logDataArray, $storeSageApiLog = true): array
+    public function logErrorAndReturn($logDataArray, $storeSageApiLog = true): array
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $logDataArray = array_pad($logDataArray, 9, null);
