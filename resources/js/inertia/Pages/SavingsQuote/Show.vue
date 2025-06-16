@@ -664,6 +664,24 @@ const getEligibilityTooltip = (fieldText) => {
 
   return null;
 };
+
+// Helper function to get tooltip text for included benefits fields
+const getIncludedBenefitsTooltip = (fieldText) => {
+  const tooltips = {
+    'Flexible premium payments': 'Monthly, quarterly, semi-annual, or annual options',
+    'Added life insurance coverage': 'Financial security for loved ones',
+    'Investment options': 'Wide range of investment funds managed by experts'
+  };
+
+  // Check for exact matches or partial matches
+  for (const [key, value] of Object.entries(tooltips)) {
+    if (fieldText && fieldText.toLowerCase().includes(key.toLowerCase())) {
+      return value;
+    }
+  }
+
+  return null;
+};
 </script>
 
 <template>
@@ -1766,7 +1784,16 @@ const getEligibilityTooltip = (fieldText) => {
                           class="grid grid-cols-2 gap-x-4"
                         >
                           <div class="text-gray-700 font-medium text-sm">
-                            {{ item.text }}
+                            <x-tooltip
+                              placement="bottom"
+                              v-if="getIncludedBenefitsTooltip(item.text)"
+                            >
+                              <span class="underline decoration-dotted decoration-primary-700">
+                                {{ item.text }}
+                              </span>
+                              <template #tooltip>{{ getIncludedBenefitsTooltip(item.text) }}</template>
+                            </x-tooltip>
+                            <span v-else>{{ item.text }}</span>
                           </div>
                           <div class="text-gray-900 text-sm">
                             {{ item.value }}
