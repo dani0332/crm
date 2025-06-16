@@ -27,7 +27,6 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
-use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -359,32 +358,30 @@ class ApiController extends Controller
             $batchSize = $request->input('batch_size');
             $cursor = $request->input('cursor');
 
-            $customers = Customer::whereHas('personalQuote', function ($query) {
-                $query->whereNull('pc_qualified')
-                    ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                    ->whereNotNull('policy_expiry_date')
-                    ->where('policy_expiry_date', '>', now())
-                    ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
-            })->whereNull('pcp_tag');
+            $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
+                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+                ->whereNotNull('policy_expiry_date')
+                ->where('policy_expiry_date', '>', now())
+                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
 
             if ($cursor) {
-                $customers->where('id', '>', $cursor);
+                $quotes->where('id', '>', $cursor);
             }
 
-            $customers = $customers->limit($batchSize)->orderBy('created_at', 'asc')->get();
+            $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
 
-            if ($customers->isEmpty()) {
-                LoggerService::info('No customers found without PCP tag.');
+            if ($quotes->isEmpty()) {
+                LoggerService::info('No quotes found without PCP tag.');
 
                 return apiResponse(
                     null,
                     Response::HTTP_OK,
-                    'No customers found without PCP tag.'
+                    'No quotes found without PCP tag.'
                 );
             }
 
-            $nextCursor = $customers->last()->id;
-            $hasMore = $customers->count() === $batchSize;
+            $nextCursor = $quotes->last()->id;
+            $hasMore = $quotes->count() === $batchSize;
 
             $data = [
                 'data' => [
@@ -395,34 +392,23 @@ class ApiController extends Controller
                 'status' => 'success',
             ];
 
-            foreach ($customers as $customer) {
+            foreach ($quotes as $quote) {
 
                 $customerData = [
-                    'customer_id' => $customer->id,
-                    'customer_name' => $customer->first_name.' '.$customer->last_name,
-                    'email' => $customer->email,
+                    'customer_id' => $quote->customer->id,
+                    'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
+                    'email' => $quote->customer->email,
                 ];
 
                 LoggerService::info('private client tag marking activity has been started on customer', extra: $customerData);
 
-                PersonalQuote::where('customer_id', $customer->id)
-                    ->whereNull('pc_qualified')
-                    ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                    ->whereNotNull('policy_expiry_date')
-                    ->where('policy_expiry_date', '>', now())
-                    ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht])
-                    ->orderBy('id')
-                    ->chunk(50, function ($quotes) {
-                        foreach ($quotes as $value) {
-                            if (QuoteTypes::getName($value->quote_type_id)) {
-                                LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                                $this->applyPcpTag($value->uuid, $value->quote_type_id);
-                                LoggerService::endLogging();
-                            } else {
-                                LoggerService::info('quote_type_id is not valid', extra: $value->quote_type_id);
-                            }
-                        }
-                    });
+                if (QuoteTypes::getName($quote->quote_type_id)) {
+                    LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
+                    $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
+                    LoggerService::endLogging();
+                } else {
+                    LoggerService::info('quote_type_id is not valid', extra: $quote->quote_type_id);
+                }
 
                 LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
             }
