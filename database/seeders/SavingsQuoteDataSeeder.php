@@ -2,19 +2,20 @@
 
 namespace Database\Seeders;
 
-use App\Enums\DocumentTypeCode;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Enums\TeamTypeEnum;
-use App\Models\DocumentType;
-use App\Models\QuoteStatus;
-use App\Models\QuoteStatusMap;
-use App\Models\QuoteType;
 use App\Models\Team;
-use Database\Seeders\Traits\PermissionableSeeder;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
+use App\Enums\TeamTypeEnum;
+use App\Models\QuoteStatus;
+use Illuminate\Support\Str;
+use App\Models\DocumentType;
+use App\Enums\PermissionsEnum;
+use App\Models\QuoteStatusMap;
+use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use Database\Seeders\Traits\PermissionableSeeder;
 
 class SavingsQuoteDataSeeder extends Seeder
 {
@@ -519,12 +520,18 @@ class SavingsQuoteDataSeeder extends Seeder
 
         $savingManagerRole = Role::where('name', RolesEnum::SavingsManager)->first();
 
-        $this->assignPermissionsToRole($lifeManagerPermissions->permissions, $savingManagerRole);
+        $permissions = $lifeManagerPermissions->permissions;
+        $permissions = $permissions->filter(fn($permission) => ! Str::of($permission->name)->startsWith('life'))->values();
+
+        $this->assignPermissionsToRole($permissions, $savingManagerRole);
 
         $lifeAdvisorRole = Role::with('permissions')->where('name', RolesEnum::LifeAdvisor)->first();
 
         $savingAdvisorRole = Role::where('name', RolesEnum::SavingsAdvisor)->first();
 
-        $this->assignPermissionsToRole($lifeAdvisorRole->permissions, $savingAdvisorRole);
+        $permissions = $lifeAdvisorRole->permissions;
+        $permissions = $permissions->filter(fn($permission) => ! Str::of($permission->name)->startsWith('life'))->values();
+
+        $this->assignPermissionsToRole($permissions, $savingAdvisorRole);
     }
 }
