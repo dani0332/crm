@@ -95,7 +95,6 @@ class SavingsQuoteService extends BaseQuoteService
             'quoteTypeId' => (int) $this->quoteType->id(),
             'maritalStatusId' => (int) $data['marital_status_id'],
             'tenureId' => (int) $data['tenure_id'],
-            'nicotineStatus' => (int) $data['nicotine_status'],
             'purposeId' => (int) $data['purpose_id'],
             'currencyId' => (int) $data['currency_id'],
             'investmentAmount' => (float) $data['investment_amount'],

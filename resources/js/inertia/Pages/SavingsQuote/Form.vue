@@ -62,9 +62,6 @@ const quoteForm = useForm({
   gender: props.quote?.gender || '',
   marital_status_id: props.quote?.savings_quote?.marital_status_id || '',
   tenure_id: props.quote?.savings_quote?.tenure_id || '',
-  nicotine_status: props.quote?.savings_quote?.nicotine_status
-    ? props.quote.savings_quote.nicotine_status.toString()
-    : '0',
   purpose_id: props.quote?.savings_quote?.purpose_id || '',
   currency_id: props.quote?.savings_quote?.currency_id || '',
   investment_amount: props.quote?.savings_quote?.investment_amount || '',
@@ -218,22 +215,6 @@ function onSubmit(isValid) {
           placeholder="Select Tenure of Savings"
           required
         />
-
-        <div class="w-full">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Have you used any nicotine-containing products within the past 12
-            months? <span class="text-red-500">*</span>
-          </label>
-          <div class="flex gap-12 mt-2">
-            <x-form-group
-              v-model="quoteForm.nicotine_status"
-              :rules="[isRequired]"
-            >
-              <x-radio value="1" label="Yes" />
-              <x-radio value="0" label="No" />
-            </x-form-group>
-          </div>
-        </div>
 
         <x-select
           v-model="quoteForm.purpose_id"

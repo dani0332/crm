@@ -10,14 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 class SavingsQuote extends Model
 {
     protected $table = 'savings_quote_request';
-    protected $appends = [
-        'takes_nicotine',
-    ];
     protected $fillable = [
         'personal_quote_id',
         'marital_status_id',
         'tenure_id',
-        'nicotine_status',
         'purpose_id',
         'currency_id',
         'investment_amount',
@@ -49,13 +45,6 @@ class SavingsQuote extends Model
     public function tenure()
     {
         return $this->belongsTo(Lookup::class, 'tenure_id', 'id')->where('key', LookupsEnum::SAVINGS_TENURE->value)->where('quote_type_id', QuoteTypeId::Savings);
-    }
-
-    public function takesNicotine(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->nicotine_status ? 'Yes' : 'No',
-        );
     }
 
     public function currency()

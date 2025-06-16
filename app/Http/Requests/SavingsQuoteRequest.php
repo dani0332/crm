@@ -40,7 +40,6 @@ class SavingsQuoteRequest extends FormRequest
             'gender' => ['required', Rule::enum(GenderEnum::class)],
             'marital_status_id' => ['required', Rule::exists(MartialStatus::class, 'id')],
             'tenure_id' => ['required', Rule::exists(Lookup::class, 'id')],
-            'nicotine_status' => ['required', 'integer', Rule::in([0, 1])],
             'purpose_id' => ['required', Rule::exists(Lookup::class, 'id')],
             'currency_id' => ['required', Rule::exists(CurrencyType::class, 'id')],
             'investment_amount' => 'required|numeric|min:1',
