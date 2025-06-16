@@ -593,6 +593,26 @@ watch(
 );
 
 const onExport = (url, isLoading = false, exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff = calculateDaysDifference(
+      filters.created_at_start,
+      filters.created_at_end,
+    );
+
+    // Allow 90 days for email export, 31 days for download export
+    const maxDays = exportType === 'email' ? 90 : 31;
+    const maxPeriod = exportType === 'email' ? '3 months' : '31 days';
+
+    if (diff > maxDays) {
+      notification.error({
+        title: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   exportLoader.value = isLoading;
 
   // Add exportType to URL parameters if it's not already there

@@ -165,6 +165,26 @@ const renewalBatchOptions = computed(() => {
 
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff = calculateDaysDifference(
+      filters.created_at_start,
+      filters.created_at_end,
+    );
+
+    // Allow 90 days for email export, 31 days for download export
+    const maxDays = exportType === 'email' ? 90 : 31;
+    const maxPeriod = exportType === 'email' ? '3 months' : '31 days';
+
+    if (diff > maxDays) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   filters.exportType = exportType;
 
   const data = useObjToUrl(filters);

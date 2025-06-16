@@ -397,6 +397,24 @@ const permissionsEnum = page.props.permissionsEnum;
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
+    // Check date range restriction
+    let diff = calculateDaysDifference(
+      filters.created_at_start,
+      filters.created_at_end,
+    );
+
+    // Allow 90 days for email export, 31 days for download export
+    const maxDays = exportType === 'email' ? 90 : 31;
+    const maxPeriod = exportType === 'email' ? '3 months' : '31 days';
+
+    if (diff > maxDays) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+
     filters.created_at_start = useDateFormat(
       filters.created_at_start,
       'YYYY-MM-DD',
@@ -470,10 +488,13 @@ const exportRmLeads = () => {
     filtersCleaned.transaction_approved_dates[1],
   );
 
-  if (maxdays > 31) {
+  // Allow 90 days for email export, 31 days for download export
+  const maxAllowedDays = 90; // Since this is RM leads export, allow 3 months
+  const maxPeriod = '3 months';
+
+  if (maxdays > maxAllowedDays) {
     notification.error({
-      message:
-        'Maximum of 31 days (Transaction Approved date) are allowed to be exported.',
+      message: `Maximum of ${maxPeriod} (Transaction Approved date) are allowed to be exported.`,
       position: 'top',
     });
     return;

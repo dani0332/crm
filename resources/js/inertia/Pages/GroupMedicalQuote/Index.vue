@@ -231,10 +231,13 @@ const onDataExport = (exportType = 'download') => {
       filters.created_at_end,
     );
 
-    if (diff > 31) {
+    // Allow 90 days for email export, 31 days for download export
+    const maxDays = exportType === 'email' ? 90 : 31;
+    const maxPeriod = exportType === 'email' ? '3 months' : '31 days';
+
+    if (diff > maxDays) {
       notification.error({
-        message:
-          'Maximum of 31 days (created date) are allowed to be exported.',
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
         position: 'top',
       });
       return;
