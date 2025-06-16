@@ -364,6 +364,19 @@ class PersonalQuote extends Model implements AuditableContract
         ->latest('customer_insured.updated_at');
     }
 
+    // TODO use latestInsured relation, this need to removed
+    public function insured(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
+            'id', // insured.id
+            'id', // personal_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        );
+    }
+
     public function homeQuote()
     {
         return $this->hasOne(HomeQuote::class, 'personal_quote_id', 'id');
