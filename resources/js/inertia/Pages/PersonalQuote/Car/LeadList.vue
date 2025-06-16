@@ -608,6 +608,7 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     exportType: exportType,
     url: `${window.location.origin}${url}`,
+    filters: { ...filters },
   };
 
   console.log('onexport', payload);
