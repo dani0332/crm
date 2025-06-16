@@ -1697,7 +1697,7 @@ const closeRetryModal = () => {
   isRetryModalOpen.value = false;
 };
 
-const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
+const deleteSplitPaymentModal = (payment_split_id, payment_status_id, code) => {
   deleteSplitPaymentId.value = payment_split_id;
   deleteSplitPaymentStatus.value = payment_status_id;
   deleteSplitPaymentCode.value = code;
@@ -5701,6 +5701,7 @@ const closeVoidPaymentModal = () => {
           :payment-status-id="deleteSplitPaymentStatus"
           :quote-type="props.quoteType"
           :quote-id="props.quoteRequest.id"
+          :code="deleteSplitPaymentCode"
           @update:model-value="closeDeleteModal"
         />
 
