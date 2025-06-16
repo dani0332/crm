@@ -18,9 +18,13 @@ use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Enums\QuoteTagEnums;
+use App\Models\QuoteTag;
+use App\Traits\QuoteTraits\QuoteAllocatable;
 
 trait PersonalQuoteObservable
 {
+    use QuoteAllocatable;
     protected function handleQuoteStatusChange(PersonalQuote $personalQuote): void
     {
         if (checkPersonalQuotes($personalQuote->quoteType?->code)) {
@@ -63,7 +67,7 @@ trait PersonalQuoteObservable
             }
         }
         if ($personalQuote->isLife()) {
-            if (isLeadFic($personalQuote->uuid)) {
+            if ($personalQuote->isFIC(quoteType: QuoteTypes::LIFE)) {
                 SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             }
         }
@@ -173,4 +177,7 @@ trait PersonalQuoteObservable
 
         }
     }
+  
 }
+    
+    

@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Enums\QuoteTypeId;
 
 class SendFICEmailForLife implements ShouldQueue
 {
@@ -33,10 +34,10 @@ class SendFICEmailForLife implements ShouldQueue
      */
     public function handle(): void
     {
-        $lifeFICSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::FIC_LIFE_EMAIL_SWITCH)->first();
-        $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid)->first();
+        $lifeFICSwitch = getAppStorageValueByKey(ApplicationStorageEnums::FIC_LIFE_EMAIL_SWITCH,useCache:true);
+        $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid,'quote_type_id',QuoteTypeId::Life)->first();
         LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($personalQuote->uuid));
-        if ($lifeFICSwitch && $lifeFICSwitch->value == 1) {
+        if ($lifeFICSwitch && $lifeFICSwitch == 1) {
             app(LifeEmailService::class)->sendFICEmail($personalQuote);
             LoggerService::info(self::class.' - FIC Life Email sent');
         } else {

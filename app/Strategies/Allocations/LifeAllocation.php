@@ -7,6 +7,7 @@ use App\Models\Nationality;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
+use App\Enums\QuoteTypes;
 
 class LifeAllocation extends BaseAllocation
 {
@@ -27,7 +28,7 @@ class LifeAllocation extends BaseAllocation
         $category = $this->evaluateCategory();
         $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
 
-        if (isLeadFic($this->lead->uuid)) {
+        if ($this->lead->isFIC(QuoteTypes::LIFE)) {
             LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');
             $users = $this->getFicRulesUsers();
             LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule  ', ['users_ids' => $users->pluck('id')->toArray()]);
