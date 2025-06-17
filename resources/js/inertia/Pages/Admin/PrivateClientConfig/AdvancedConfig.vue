@@ -59,29 +59,28 @@ const setActiveTab = async tab => {
 
   try {
     await nextTick();
-
     await new Promise(resolve => setTimeout(resolve, 100));
 
     let templateRef = null;
+
     switch (tab) {
       case props.quoteTypeCodeEnum.Car:
-        templateRef = carTemplateRef.value;
+        templateRef = carTemplateRef.value?.[0] || carTemplateRef.value;
         break;
       case props.quoteTypeCodeEnum.Health:
-        templateRef = healthTemplateRef.value;
+        templateRef = healthTemplateRef.value?.[0] || healthTemplateRef.value;
         break;
       case props.quoteTypeCodeEnum.Life:
-        templateRef = lifeTemplateRef.value;
+        templateRef = lifeTemplateRef.value?.[0] || lifeTemplateRef.value;
         break;
       case props.quoteTypeCodeEnum.Home:
-        templateRef = homeTemplateRef.value;
+        templateRef = homeTemplateRef.value?.[0] || homeTemplateRef.value;
         break;
       case props.quoteTypeCodeEnum.Yacht:
-        templateRef = yachtTemplateRef.value;
+        templateRef = yachtTemplateRef.value?.[0] || yachtTemplateRef.value;
         break;
+      default:
     }
-
-    console.log(templateRef, tab);
 
     if (templateRef && templateRef.loadExistingConfig) {
       await templateRef.loadExistingConfig();
