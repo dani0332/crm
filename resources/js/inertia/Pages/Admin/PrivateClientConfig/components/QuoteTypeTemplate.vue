@@ -5,16 +5,8 @@ import axios from 'axios';
 import CollapseIcon from './CollapseIcon.vue';
 
 const props = defineProps({
-  quoteTypeId: {
-    type: Number,
-    required: true,
-  },
-  quoteTypeName: {
-    type: String,
-    required: true,
-  },
-  quoteTypeLabel: {
-    type: String,
+  quoteType: {
+    type: Object,
     required: true,
   },
   fields: {
@@ -41,7 +33,6 @@ const props = defineProps({
 
 const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
-// Reactive state
 const profiles = ref([]);
 const isModuleCollapsed = ref(false);
 const collapsedProfiles = ref(new Set());
@@ -50,25 +41,24 @@ const loader = ref(false);
 const configLoading = ref(false);
 const isInitialized = ref(false);
 
-// Version management
 const currentVersion = ref(null);
 const selectedVersion = ref(null);
 const allVersions = ref([]);
 const isCurrentVersion = ref(true);
 
-// Form for saving
+const quoteTypeCode = computed(() => props.quoteType.code);
+const quoteTypeLabel = computed(() => props.quoteType.text);
+
 const configForm = useForm({
   configurations: [],
 });
 
-// Computed properties
 const isDisabled = computed(() => !isCurrentVersion.value);
 
 const nationalityOptions = computed(() => {
   return props.dropdownData.nationalities || [];
 });
 
-// Profile management methods
 const createBlankProfile = () => {
   const profile = {
     nationalityIds: [],
@@ -93,7 +83,7 @@ const addProfile = () => {
 
   setTimeout(() => {
     const element = document.querySelector(
-      `[data-profile-index="${props.quoteTypeName}-${newIndex}"]`,
+      `[data-profile-index="${quoteTypeCode}-${newIndex}"]`,
     );
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -143,7 +133,7 @@ const loadSpecificVersion = async version => {
       route('admin.private-client-config.latest-by-quote-type'),
       {
         params: {
-          quote_type_id: props.quoteTypeId,
+          quote_type_id: props.quoteType.id,
           version: version,
         },
         headers: {
@@ -216,7 +206,7 @@ const saveConfiguration = () => {
 
     if (validProfiles.length === 0) {
       alert(
-        `No valid ${props.quoteTypeName} profiles to save. Please add at least one profile with nationality and criteria.`,
+        `No valid profiles to save. Please add at least one profile with nationality and criteria.`,
       );
       loader.value = false;
       return;
@@ -225,7 +215,7 @@ const saveConfiguration = () => {
     // Update form data with only this quote type configuration
     configForm.configurations = [
       {
-        quote_type_id: props.quoteTypeId,
+        quote_type_id: props.quoteType.id,
         profiles: validProfiles,
       },
     ];
@@ -241,13 +231,13 @@ const saveConfiguration = () => {
         loader.value = false;
         console.error('Save failed:', errors);
         alert(
-          `Failed to save ${props.quoteTypeName} configuration. Please try again.`,
+          `Failed to save ${quoteTypeCode} configuration. Please try again.`,
         );
       },
     });
   } catch (error) {
     loader.value = false;
-    console.error(`Error saving ${props.quoteTypeName} configuration:`, error);
+    console.error(`Error saving ${quoteTypeCode} configuration:`, error);
     alert('Error occurred while saving. Please try again.');
   }
 };
@@ -406,7 +396,7 @@ onMounted(async () => {
             @click="toggleModule"
           />
           <h3 class="text-lg font-medium text-gray-900">
-            {{ quoteTypeLabel }} Criteria Configuration
+            Criteria Configuration
           </h3>
         </div>
         <x-tooltip>
@@ -417,12 +407,12 @@ onMounted(async () => {
             @click="addProfile"
             :disabled="isDisabled"
           >
-            Add {{ quoteTypeLabel }} Profile
+            Add Profile
           </x-button>
           <template #tooltip>
             <span class="custom-tooltip-content">
-              Add a new {{ quoteTypeName }} profile with nationality and
-              {{ quoteTypeName }}-specific criteria.
+              Add a new profile with nationality and
+              {{ quoteTypeCode }}-specific criteria.
             </span>
           </template>
         </x-tooltip>
@@ -433,15 +423,14 @@ onMounted(async () => {
           v-if="profiles.length === 0"
           class="text-center py-8 text-gray-500"
         >
-          No {{ quoteTypeName }} profiles configured. Click "Add
-          {{ quoteTypeLabel }} Profile" to create one.
+          No profiles configured. Click "Add Profile" to create one.
         </div>
 
         <div v-else class="space-y-6">
           <div
             v-for="(profile, profileIndex) in profiles"
             :key="`profile-${profileIndex}`"
-            :data-profile-index="`${quoteTypeName}-${profileIndex}`"
+            :data-profile-index="`${quoteTypeCode}-${profileIndex}`"
             class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
             :class="{
               'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
@@ -457,7 +446,7 @@ onMounted(async () => {
                   @click="toggleProfile(profileIndex)"
                 />
                 <h4 class="text-md font-medium text-gray-800">
-                  {{ quoteTypeLabel }} Profile {{ profileIndex + 1 }}
+                  Profile {{ profileIndex + 1 }}
                   <span
                     v-if="highlightedProfileIndex === profileIndex"
                     class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
@@ -528,7 +517,7 @@ onMounted(async () => {
               <!-- Single Card for All Fields -->
               <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <h5 class="text-sm font-medium text-gray-700 mb-4">
-                  {{ quoteTypeLabel }} Criteria Fields
+                  Criteria Fields
                 </h5>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -616,7 +605,7 @@ onMounted(async () => {
               </x-button>
               <template #tooltip>
                 <span class="custom-tooltip-content">
-                  Save this {{ quoteTypeName }} configuration and create a new
+                  Save this {{ quoteTypeCode }} configuration and create a new
                   version.
                 </span>
               </template>
