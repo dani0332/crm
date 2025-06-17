@@ -199,7 +199,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
             ->leftJoin('renewal_batches as rb', 'tqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('embedded_transactions as et', 'et.code', 'tqr.code')
@@ -393,7 +393,7 @@ class TravelQuoteService extends BaseService
     {
         $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
         $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
-        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams, useJoin: false);
 
         return $query;
 
@@ -640,6 +640,8 @@ class TravelQuoteService extends BaseService
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
+                } elseif ($item == 'payment_status_id' && ! empty($request[$item])) {
+                    $this->query->where('py.payment_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
                     if (in_array($item, $skipped)) {

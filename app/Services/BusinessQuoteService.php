@@ -118,7 +118,7 @@ class BusinessQuoteService extends BaseService
                 'policy_issuance_date',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
-                'bqr.payment_status_id',
+                'py.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
                 DB::raw('
@@ -132,7 +132,7 @@ class BusinessQuoteService extends BaseService
                 ')
             )
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
@@ -399,8 +399,9 @@ class BusinessQuoteService extends BaseService
         }
 
         // payment_status_id filter
+        // No option in front side for now to filter payments
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('bqr.payment_status_id', $request->payment_status);
+            $this->query->whereIn('py.payment_status_id', $request->payment_status);
         }
 
         // is_cold filter

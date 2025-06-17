@@ -115,6 +115,11 @@ class TravelQuote extends Model implements AuditableContract
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
+    public function paymentSplits()
+    {
+        return $this->hasMany(PaymentSplits::class, 'code', 'code');
+    }
+
     public function plan()
     {
         return $this->belongsTo(TravelPlan::class, 'plan_id');
