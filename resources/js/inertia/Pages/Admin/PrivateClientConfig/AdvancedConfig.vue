@@ -105,6 +105,11 @@ onMounted(async () => {
     await setActiveTab(tabItems.value[0].code);
   }
 });
+
+// Add reactive data for current state
+const isCurrentVersion = ref(true);
+const allVersions = ref([]);
+const selectedVersion = ref(null);
 </script>
 
 <template>
