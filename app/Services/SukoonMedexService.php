@@ -705,7 +705,8 @@ class SukoonMedexService
      */
     public function completeInvoicePayment()
     {
-        $data = ['payment_reference' => 'Payment reference here', 'payment_token' => $this->paymentToken];
+        $paymentReference = $this->transaction->order_reference ?? null;
+        $data = ['payment_reference' => $paymentReference, 'payment_token' => $this->paymentToken];
 
         try {
             $result = $this->request('/payment/complete/'.$this->paymentGateway.'/?token='.$this->paymentToken, 'post', $data, [
