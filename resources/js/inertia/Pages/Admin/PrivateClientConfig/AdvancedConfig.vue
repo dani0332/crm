@@ -21,6 +21,16 @@ const props = defineProps({
 
 const activeTab = ref('car');
 const loader = ref(false);
+const tabLoading = ref(false);
+
+// Per quote-type version tracking
+const quoteTypeVersions = ref({
+  car: null,
+  health: null,
+  life: null,
+  home: null,
+  yacht: null,
+});
 
 // Create refs for each template to access their data
 const carTemplateRef = ref(null);
@@ -73,16 +83,23 @@ const quoteTypes = [
 ];
 
 const setActiveTab = async tab => {
+  if (tabLoading.value) return; // Prevent multiple clicks
+
+  tabLoading.value = true;
   activeTab.value = tab;
 
-  // Load configuration for the selected quote type
-  const quoteType = quoteTypes.find(qt => qt.name === tab);
-  if (
-    quoteType &&
-    quoteType.ref.value &&
-    quoteType.ref.value.loadExistingConfig
-  ) {
-    await quoteType.ref.value.loadExistingConfig();
+  try {
+    // Load configuration for the selected quote type
+    const quoteType = quoteTypes.find(qt => qt.name === tab);
+    if (
+      quoteType &&
+      quoteType.ref.value &&
+      quoteType.ref.value.loadExistingConfig
+    ) {
+      await quoteType.ref.value.loadExistingConfig();
+    }
+  } finally {
+    tabLoading.value = false;
   }
 };
 
@@ -154,6 +171,16 @@ const saveConfiguration = () => {
     alert('Error occurred while preparing data. Please try again.');
   }
 };
+
+// Update quote type version when config is loaded
+const updateQuoteTypeVersion = (quoteTypeName, version) => {
+  quoteTypeVersions.value[quoteTypeName] = version;
+};
+
+// Get current quote type version
+const getCurrentQuoteTypeVersion = () => {
+  return quoteTypeVersions.value[activeTab.value];
+};
 </script>
 
 <template>
@@ -179,34 +206,81 @@ const saveConfiguration = () => {
           v-for="quoteType in quoteTypes"
           :key="quoteType.name"
           @click="setActiveTab(quoteType.name)"
+          :disabled="tabLoading"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2 px-1 border-b-2 font-medium text-sm relative transition-colors',
             activeTab === quoteType.name
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            tabLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
           ]"
         >
           {{ quoteType.label }}
+
+          <!-- Version indicator per tab -->
+          <span
+            v-if="quoteTypeVersions[quoteType.name]"
+            class="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded"
+          >
+            v{{ quoteTypeVersions[quoteType.name] }}
+          </span>
+
+          <!-- Loading indicator -->
+          <div
+            v-if="tabLoading && activeTab === quoteType.name"
+            class="absolute -bottom-2 left-1/2 transform -translate-x-1/2"
+          >
+            <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+          </div>
         </button>
       </nav>
     </div>
 
     <!-- Tab Content -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <template v-for="quoteType in quoteTypes" :key="quoteType.name">
-        <div v-if="activeTab === quoteType.name">
-          <component
-            :is="quoteType.component"
-            :ref="quoteType.ref"
-            :insurers="insurers"
-            :carMakes="carMakes"
-            :locationAreas="locationAreas"
-            :nationalities="nationalities"
-            :currencies="currencies"
-            :disabled="!isCurrentVersion"
-          />
+    <div class="bg-white rounded-lg shadow relative">
+      <!-- Loading overlay -->
+      <div
+        v-if="tabLoading"
+        class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg"
+      >
+        <div class="flex items-center space-x-2">
+          <div
+            class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"
+          ></div>
+          <span class="text-gray-600 font-medium"
+            >Loading configuration...</span
+          >
         </div>
-      </template>
+      </div>
+
+      <div class="p-6">
+        <template v-for="quoteType in quoteTypes" :key="quoteType.name">
+          <div v-if="activeTab === quoteType.name">
+            <!-- Version info for current tab -->
+            <div
+              v-if="getCurrentQuoteTypeVersion()"
+              class="mb-4 p-3 bg-blue-50 rounded-md"
+            >
+              <div class="flex items-center text-sm text-blue-700">
+                <i class="ri-information-line mr-2"></i>
+                <span
+                  >Currently viewing {{ quoteType.label }} configuration version
+                  {{ getCurrentQuoteTypeVersion() }}</span
+                >
+              </div>
+            </div>
+
+            <component
+              :is="quoteType.component"
+              :ref="quoteType.ref"
+              :disabled="!isCurrentVersion"
+              @versionLoaded="
+                version => updateQuoteTypeVersion(quoteType.name, version)
+              "
+            />
+          </div>
+        </template>
+      </div>
     </div>
 
     <!-- Version Info (if not current version) -->

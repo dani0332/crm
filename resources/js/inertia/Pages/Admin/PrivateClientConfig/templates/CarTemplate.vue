@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -11,6 +11,16 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+});
+
+const emit = defineEmits(['versionLoaded']);
+
+// Dynamic dropdown data
+const dropdownData = ref({
+  nationalities: [],
+  currencies: [],
+  carMakes: [],
+  insurers: [],
 });
 
 const carFields = [
@@ -69,13 +79,40 @@ const createBlankProfile = () => {
 
 const profiles = ref([createBlankProfile()]);
 
-const addProfile = () => {
+const addProfile = async () => {
   profiles.value.push(createBlankProfile());
+
+  // Scroll to the new profile with animation
+  await nextTick();
+  const profileElements = document.querySelectorAll('[data-profile-card]');
+  const lastProfile = profileElements[profileElements.length - 1];
+
+  if (lastProfile) {
+    // Add highlight animation
+    lastProfile.classList.add('animate-pulse', 'ring-2', 'ring-blue-400');
+
+    // Scroll to the new profile
+    lastProfile.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+
+    // Remove animation after 2 seconds
+    setTimeout(() => {
+      lastProfile.classList.remove('animate-pulse', 'ring-2', 'ring-blue-400');
+    }, 2000);
+  }
 };
 
 const removeProfile = index => {
-  if (profiles.value.length > 1) {
+  if (profiles.value.length > 0) {
+    // Allow removing any profile
     profiles.value.splice(index, 1);
+
+    // If no profiles left, add one blank profile
+    if (profiles.value.length === 0) {
+      profiles.value.push(createBlankProfile());
+    }
   }
 };
 
@@ -94,6 +131,16 @@ const loadExistingConfig = async () => {
         },
       },
     );
+
+    // Update dropdown data
+    if (response.data.dropdownData) {
+      dropdownData.value = response.data.dropdownData;
+    }
+
+    // Emit version info
+    if (response.data.version) {
+      emit('versionLoaded', response.data.version);
+    }
 
     if (response.data.config && response.data.config.profiles) {
       const loadedProfiles = response.data.config.profiles.map(profile => {
@@ -116,6 +163,9 @@ const loadExistingConfig = async () => {
 
       profiles.value =
         loadedProfiles.length > 0 ? loadedProfiles : [createBlankProfile()];
+    } else {
+      // No config found, reset to blank profile
+      profiles.value = [createBlankProfile()];
     }
   } catch (error) {
     console.error('Error loading existing config:', error);
@@ -185,13 +235,15 @@ defineExpose({
     <div class="space-y-6">
       <!-- Loop through each profile -->
       <template v-for="(profile, profileIndex) in profiles" :key="profileIndex">
-        <div class="bg-gray-50 rounded-lg p-6">
+        <div
+          class="bg-gray-50 rounded-lg p-6 transition-all duration-300"
+          data-profile-card
+        >
           <div class="flex justify-between items-center mb-4">
             <h4 class="text-md font-medium">Profile {{ profileIndex + 1 }}</h4>
             <button
-              v-if="profiles.length > 1"
               @click="removeProfile(profileIndex)"
-              class="text-red-500 hover:text-red-700 text-sm flex items-center"
+              class="text-red-500 hover:text-red-700 text-sm flex items-center transition-colors"
               type="button"
               :disabled="disabled"
             >
@@ -204,7 +256,7 @@ defineExpose({
             <label class="block text-sm font-medium mb-2">Nationalities</label>
             <x-select
               v-model="profile.nationalityIds"
-              :options="props.nationalities"
+              :options="dropdownData.nationalities"
               placeholder="Select nationalities"
               filterable
               multiple
@@ -228,7 +280,7 @@ defineExpose({
                   <template v-if="field.type === 'select_multiple'">
                     <x-select
                       v-model="profile[field.fieldName]"
-                      :options="props[field.options]"
+                      :options="dropdownData[field.options]"
                       :placeholder="`Select ${field.label}`"
                       filterable
                       multiple
@@ -252,7 +304,7 @@ defineExpose({
                       >
                       <x-select
                         v-model="profile[`${field.fieldName}_currency_id`]"
-                        :options="props.currencies"
+                        :options="dropdownData.currencies"
                         placeholder="Select currency"
                         filterable
                         :disabled="disabled"

@@ -6,11 +6,6 @@ import AdvancedConfig from './AdvancedConfig.vue';
 
 const props = defineProps({
   configurations: Array,
-  insurers: Array,
-  carMakes: Array,
-  locationAreas: Array,
-  nationalities: Array,
-  currencies: Array,
   allVersions: Array,
   selectedVersion: Number,
   isCurrentVersion: Boolean,
@@ -51,9 +46,9 @@ const changeVersion = version => {
   >
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-2">
-        <span class="font-medium">Criteria Version:</span>
+        <span class="font-medium">Global Version:</span>
         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">{{
-          selectedVersion
+          selectedVersion || 'None'
         }}</span>
       </div>
       <div class="flex items-center">
@@ -73,11 +68,6 @@ const changeVersion = version => {
   <!-- Advanced Configuration Component -->
   <AdvancedConfig
     :configurations="configurations"
-    :insurers="insurers"
-    :carMakes="carMakes"
-    :locationAreas="locationAreas"
-    :nationalities="props.nationalities"
-    :currencies="props.currencies"
     :allVersions="allVersions"
     :selectedVersion="selectedVersion"
     :isCurrentVersion="isCurrentVersion"
