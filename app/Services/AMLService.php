@@ -1272,15 +1272,15 @@ class AMLService
      */
     private function joinPersonalQuoteTables($query, $quoteTypeIds, $latestKycLogSub, $isArray = false)
     {
-        $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds, $isArray) {
+        $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds) {
             $join->on('pqr.id', '=', 'ci.quote_request_id')
                 ->whereIn('ci.quote_type_id', (array) $quoteTypeIds);
         });
-        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds, $isArray) {
+        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds) {
             $join->on('pqr.id', '=', 'cm.quote_id')
                 ->whereIn('cm.quote_type', (array) $quoteTypeIds);
         });
-        $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds, $isArray) {
+        $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds) {
             $join->on('kl.quote_request_id', '=', 'pqr.id')
                 ->whereIn('kl.quote_type_id', (array) $quoteTypeIds);
         });
@@ -1291,15 +1291,15 @@ class AMLService
      */
     private function joinSyncQuoteTables($query, $quoteTypeIds, $latestKycLogSub, $isArray = false)
     {
-        $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds, $isArray) {
+        $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds) {
             $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
                 ->whereNotIn('ci.quote_type_id', (array) $quoteTypeIds);
         });
-        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds, $isArray) {
+        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds) {
             $join->on('pqr.quote_id', '=', 'cm.quote_id')
                 ->whereNotIn('cm.quote_type', (array) $quoteTypeIds);
         });
-        $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds, $isArray) {
+        $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds) {
             $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
                 ->whereNotIn('kl.quote_type_id', (array) $quoteTypeIds);
         });

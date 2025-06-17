@@ -7,13 +7,13 @@ namespace App\Exports;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\AMLService;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Events\AfterSheet;
-use Carbon\Carbon;
 
 class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, WithMapping
 {
@@ -38,6 +38,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
     {
         // Multi-row headings for title, subtitle, etc.
         $year = Carbon::now()->year;
+
         return [
             ['AFIA Insurance Brokerage Services LLC'],
             ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}"],
