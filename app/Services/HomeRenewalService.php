@@ -435,7 +435,7 @@ class HomeRenewalService extends RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
                 LoggerService::info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                
+
                 // Add delay to jobs
                 $jobs = collect($jobs)->map(function ($job) {
                     return $job->delay(1);
