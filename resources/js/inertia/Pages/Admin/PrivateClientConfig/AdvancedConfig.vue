@@ -39,47 +39,13 @@ const handleVersionLoaded = (quoteTypeName, version) => {
   quoteTypeVersions.value[quoteTypeName] = version;
 };
 
-const quoteTypes = [
-  {
-    id: 1,
-    name: 'car',
-    label: 'Car',
-    quote_type_id: 1,
-    component: CarTemplate,
-    ref: carTemplateRef,
-  },
-  {
-    id: 2,
-    name: 'health',
-    label: 'Health',
-    quote_type_id: 3,
-    component: HealthTemplate,
-    ref: healthTemplateRef,
-  },
-  {
-    id: 3,
-    name: 'life',
-    label: 'Life',
-    quote_type_id: 4,
-    component: LifeTemplate,
-    ref: lifeTemplateRef,
-  },
-  {
-    id: 4,
-    name: 'home',
-    label: 'Home',
-    quote_type_id: 2,
-    component: HomeTemplate,
-    ref: homeTemplateRef,
-  },
-  {
-    id: 5,
-    name: 'yacht',
-    label: 'Yacht',
-    quote_type_id: 7,
-    component: YachtTemplate,
-    ref: yachtTemplateRef,
-  },
+// Tab navigation items for the UI
+const tabItems = [
+  { name: 'car', label: 'Car' },
+  { name: 'health', label: 'Health' },
+  { name: 'life', label: 'Life' },
+  { name: 'home', label: 'Home' },
+  { name: 'yacht', label: 'Yacht' },
 ];
 
 const setActiveTab = async tab => {
@@ -94,15 +60,30 @@ const setActiveTab = async tab => {
     await nextTick();
 
     // Small delay to ensure component is fully rendered
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Load configuration for the selected quote type
-    const quoteType = quoteTypes.find(qt => qt.name === tab);
-    if (quoteType && quoteType.ref.value) {
-      // Force reload configuration for this quote type
-      if (quoteType.ref.value.loadExistingConfig) {
-        await quoteType.ref.value.loadExistingConfig();
-      }
+    // Load configuration for the selected quote type using direct refs
+    let templateRef = null;
+    switch (tab) {
+      case 'car':
+        templateRef = carTemplateRef.value;
+        break;
+      case 'health':
+        templateRef = healthTemplateRef.value;
+        break;
+      case 'life':
+        templateRef = lifeTemplateRef.value;
+        break;
+      case 'home':
+        templateRef = homeTemplateRef.value;
+        break;
+      case 'yacht':
+        templateRef = yachtTemplateRef.value;
+        break;
+    }
+
+    if (templateRef && templateRef.loadExistingConfig) {
+      await templateRef.loadExistingConfig();
     }
   } catch (error) {
     console.error('Error loading tab configuration:', error);
@@ -144,7 +125,7 @@ onMounted(async () => {
         <div class="border-b border-gray-200 mb-6">
           <nav class="-mb-px flex space-x-8">
             <button
-              v-for="quoteType in quoteTypes"
+              v-for="quoteType in tabItems"
               :key="quoteType.name"
               @click="setActiveTab(quoteType.name)"
               :disabled="tabLoading"
@@ -189,11 +170,35 @@ onMounted(async () => {
           </div>
 
           <div class="space-y-6">
-            <template v-for="quoteType in quoteTypes" :key="quoteType.name">
+            <template v-for="quoteType in tabItems" :key="quoteType.name">
               <div v-if="activeTab === quoteType.name">
-                <component
-                  :is="quoteType.component"
-                  :ref="quoteType.ref"
+                <CarTemplate
+                  v-if="quoteType.name === 'car'"
+                  ref="carTemplateRef"
+                  :disabled="!isCurrentVersion"
+                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                />
+                <HealthTemplate
+                  v-else-if="quoteType.name === 'health'"
+                  ref="healthTemplateRef"
+                  :disabled="!isCurrentVersion"
+                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                />
+                <LifeTemplate
+                  v-else-if="quoteType.name === 'life'"
+                  ref="lifeTemplateRef"
+                  :disabled="!isCurrentVersion"
+                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                />
+                <HomeTemplate
+                  v-else-if="quoteType.name === 'home'"
+                  ref="homeTemplateRef"
+                  :disabled="!isCurrentVersion"
+                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                />
+                <YachtTemplate
+                  v-else-if="quoteType.name === 'yacht'"
+                  ref="yachtTemplateRef"
                   :disabled="!isCurrentVersion"
                   @version-loaded="handleVersionLoaded(quoteType.name, $event)"
                 />

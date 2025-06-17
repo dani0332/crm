@@ -192,7 +192,10 @@ const loadExistingConfig = async () => {
       profiles.value = [createBlankProfile()];
     }
   } catch (error) {
-    console.error('Error loading existing config:', error);
+    console.error(
+      `Error loading existing config for ${props.quoteTypeName}:`,
+      error,
+    );
   }
 };
 
