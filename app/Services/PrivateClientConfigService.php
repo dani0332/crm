@@ -62,6 +62,15 @@ class PrivateClientConfigService
      */
     public function getLatestConfigByQuoteType(int $quoteTypeId): array
     {
+        // Get all versions for this quote type
+        $allVersionsForQuoteType = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
+            ->select('version')
+            ->distinct()
+            ->orderBy('version', 'desc')
+            ->pluck('version')
+            ->toArray();
+
+        // Get the latest (current) configuration
         $latestConfig = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
             ->where('active_version', true)
             ->first();
@@ -72,6 +81,8 @@ class PrivateClientConfigService
         $responseData = [
             'config' => null,
             'version' => null,
+            'allVersions' => $allVersionsForQuoteType,
+            'isCurrentVersion' => true, // Always true when getting latest
             'dropdownData' => $dropdownData,
         ];
 
