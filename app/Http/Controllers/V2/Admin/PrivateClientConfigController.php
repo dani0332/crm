@@ -41,24 +41,11 @@ class PrivateClientConfigController extends Controller
             ->get();
     }
 
-    public function show(Request $request)
+    public function show()
     {
-        $selectedVersion = $request->input('version', null);
-        $allVersions = $this->configService->getAllVersions();
-
-        if ($selectedVersion === null && count($allVersions) > 0) {
-            $selectedVersion = $allVersions[0];
-        }
-
-        $configurations = $this->configService->getConfigurationsByVersion($selectedVersion);
-        $isCurrentVersion = $this->configService->isCurrentVersion($selectedVersion, $allVersions);
         $quoteTypes = $this->getQuoteTypes();
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
-            'configurations' => $configurations,
-            'allVersions' => $allVersions,
-            'selectedVersion' => $selectedVersion,
-            'isCurrentVersion' => $isCurrentVersion,
             'quoteTypes' => $quoteTypes
         ]);
     }

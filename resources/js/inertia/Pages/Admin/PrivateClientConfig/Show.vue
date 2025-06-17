@@ -5,10 +5,6 @@ import { Link } from '@inertiajs/vue3';
 import AdvancedConfig from './AdvancedConfig.vue';
 
 const props = defineProps({
-  configurations: Array,
-  allVersions: Array,
-  selectedVersion: Number,
-  isCurrentVersion: Boolean,
   quoteTypes: Array,
   quoteTypeCodeEnum: Object,
 });
@@ -26,17 +22,13 @@ const changeVersion = version => {
 </script>
 
 <template>
-  <Head title="Private Client Configuration - Advanced" />
+  <Head title="Private Client Configuration" />
 
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-xl font-semibold">Private Client Configuration</h2>
   </div>
 
   <AdvancedConfig
-    :configurations="configurations"
-    :allVersions="allVersions"
-    :selectedVersion="selectedVersion"
-    :isCurrentVersion="isCurrentVersion"
     :quoteTypes="quoteTypes"
     :quoteTypeCodeEnum="quoteTypeCodeEnum"
   />
