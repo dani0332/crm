@@ -33,6 +33,9 @@ const yachtFields = [
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
+    currencyId: 1,
+    isRequired: true,
+    hasCheckBox: true,
   },
   {
     fieldName: 'insurance_provider_id',
@@ -41,6 +44,8 @@ const yachtFields = [
     options: 'insurers',
     operator: 'in',
     hasCurrency: false,
+    isRequired: true,
+    hasCheckBox: true,
   },
 ];
 </script>
