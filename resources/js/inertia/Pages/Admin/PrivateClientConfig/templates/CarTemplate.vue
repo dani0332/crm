@@ -26,7 +26,6 @@ const props = defineProps({
 
 const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
-// Car-specific field definitions
 const carFields = [
   {
     fieldName: 'price_with_vat',
@@ -34,6 +33,7 @@ const carFields = [
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
+    isRequired: true,
   },
   {
     fieldName: 'car_value',
@@ -41,6 +41,7 @@ const carFields = [
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
+    isRequired: true,
   },
   {
     fieldName: 'car_make_id',
@@ -49,6 +50,7 @@ const carFields = [
     options: 'carMakes',
     operator: 'in',
     hasCurrency: false,
+    isRequired: true,
   },
   {
     fieldName: 'insurance_provider_id',
@@ -57,6 +59,7 @@ const carFields = [
     options: 'insurers',
     operator: 'in',
     hasCurrency: false,
+    isRequired: true,
   },
 ];
 </script>
