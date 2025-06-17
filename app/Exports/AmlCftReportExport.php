@@ -43,6 +43,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
             ['AFIA Insurance Brokerage Services LLC'],
             ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}"],
             ['Requested By Compliance Dept.'],
+            [],
             [
                 'Customer Full Name',
                 'Ref-ID',
