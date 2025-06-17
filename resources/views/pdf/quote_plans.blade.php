@@ -245,6 +245,12 @@
         } */
         .text-left {text-align: left;}
         .text-right {text-align: right;}
+
+        .cover-page {
+            width: 100%;
+            z-index: 999;
+            height: 100%;
+        }
         .full-page-image {
             width: 100%;
             z-index: 999;
@@ -588,7 +594,7 @@
 
 @endphp
 {{--First Page --}}
-<img src="{{public_path('images/quote_plans_pages/P1-1.jpg')}}" class="full-page-image" />
+<img src="{{public_path('images/quote_plans_pages/personal-car-cover.jpg')}}" class="cover-page" />
 <div style="page-break-after: always;"></div>
 
 {{-- Second Page --}}
