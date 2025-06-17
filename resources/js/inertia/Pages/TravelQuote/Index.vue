@@ -101,7 +101,6 @@ const outboundCoverageCode = [
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
-  { text: 'PC Customer', value: 'customer.pcp_tag_formatted' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at' },
@@ -151,6 +150,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const paymentStatusOptions = computed(() => {

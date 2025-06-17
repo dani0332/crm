@@ -89,7 +89,6 @@ const serverOptions = ref({
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'uuid', is_active: true },
-  { text: 'PC Customer', value: 'customer.pcp_tag_formatted', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
@@ -140,6 +139,7 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted', is_active: true },
 ]);
 
 const quotesSelected = ref([]);

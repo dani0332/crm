@@ -153,7 +153,6 @@ onMounted(() => {
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
-  { text: 'PC Customer', value: 'customer.pcp_tag_formatted' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
@@ -181,6 +180,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const can = permission => useCan(permission);

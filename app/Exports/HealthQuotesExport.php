@@ -73,7 +73,7 @@ class HealthQuotesExport
             'BOOKING DATE',
             'PAYMENT STATUS',
             'ADVISOR CAR TEAM(s)',
-            'PC CUSTOMER',
+            'PRIVATE CLIENT',
         ];
     }
 

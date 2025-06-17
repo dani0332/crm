@@ -35,7 +35,7 @@ class HomeQuoteExport
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
-            'PC CUSTOMER',
+            'PRIVATE CLIENT',
         ];
     }
 

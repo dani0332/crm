@@ -15,7 +15,7 @@ class PersonalQuotesExport
 {
     use ExcelExportable;
 
-    private const PC_CUSTOMER = 'PC CUSTOMER';
+    private const PRIVATE_CLIENT = 'PRIVATE CLIENT';
     private const ADVISOR_ASSIGNED_DATE = 'ADVISOR ASSIGNED DATE';
     private const LAST_MODIFIED_DATE = 'LAST MODIFIED DATE';
     private const RENEWAL_BATCH = 'RENEWAL BATCH';
@@ -127,7 +127,7 @@ class PersonalQuotesExport
                 self::PREVIOUS_POLICY_NUMBER,
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
-                self::PC_CUSTOMER,
+                self::PRIVATE_CLIENT,
             ],
             QuoteTypes::YACHT->value => [
                 self::REF_ID,
@@ -149,7 +149,7 @@ class PersonalQuotesExport
                 self::PREVIOUS_POLICY_NUMBER,
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
-                self::PC_CUSTOMER,
+                self::PRIVATE_CLIENT,
             ],
             QuoteTypes::PET->value => [
                 self::REF_ID,
@@ -182,7 +182,7 @@ class PersonalQuotesExport
                 self::PREVIOUS_POLICY_NUMBER,
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
-                self::PC_CUSTOMER,
+                self::PRIVATE_CLIENT,
             ],
             QuoteTypes::CYCLE->value => [
                 self::REF_ID,
@@ -203,7 +203,7 @@ class PersonalQuotesExport
                 self::PREVIOUS_POLICY_NUMBER,
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
-                self::PC_CUSTOMER,
+                self::PRIVATE_CLIENT,
             ],
             QuoteTypes::HOME->value => [
                 self::REF_ID,
@@ -223,7 +223,7 @@ class PersonalQuotesExport
                 self::PREVIOUS_POLICY_EXPIRY_DATE,
                 self::PREVIOUS_POLICY_PREMIUM,
                 self::PREVIOUS_POLICY_NUMBER,
-                self::PC_CUSTOMER,
+                self::PRIVATE_CLIENT,
             ],
         ];
 

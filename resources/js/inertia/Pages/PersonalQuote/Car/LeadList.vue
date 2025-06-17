@@ -45,7 +45,6 @@ const serverOptions = ref({
 
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
-  { text: 'PC Customer', value: 'customer.pcp_tag_formatted' },
   { text: 'BATCH', value: 'batch.name' },
   { text: 'Vehicle Use', value: 'vehicle_use' },
   { text: 'Company Name', value: 'car_company_name' },
@@ -106,6 +105,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const ecommerceOptions = [

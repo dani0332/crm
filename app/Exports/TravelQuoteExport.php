@@ -69,7 +69,7 @@ class TravelQuoteExport
             'ADVISOR REQUESTED',
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
-            'PC CUSTOMER',
+            'PRIVATE CLIENT',
         ];
     }
 
