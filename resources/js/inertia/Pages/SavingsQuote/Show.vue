@@ -324,9 +324,9 @@ const availablePlansTable = reactive({
   ],
 });
 
-const selectedPlans = ref([]);
+// const selectedPlans = ref([]); // Commented out - checkboxes disabled
 const selectedPlanType = ref(null);
-const toggleLoader = ref(false);
+const toggleLoader = ref(false); // Still needed for individual plan toggles
 const viewButtonLoading = ref(false);
 const planDetails = ref(null);
 
@@ -470,43 +470,44 @@ const getEligibilityValue = (eligibility, code) => {
   return found ? found.value : 'N/A';
 };
 
-const onTogglePlans = toggle => {
-  toggleLoader.value = true;
+// Commented out - bulk actions disabled since checkboxes are hidden
+// const onTogglePlans = toggle => {
+//   toggleLoader.value = true;
 
-  const planIds = useArrayUnique(
-    selectedPlans.value.map(p => {
-      return p.id;
-    }),
-  ).value;
+//   const planIds = useArrayUnique(
+//     selectedPlans.value.map(p => {
+//       return p.id;
+//     }),
+//   ).value;
 
-  axios
-    .post(route('manualPlanToggle', { quoteType: 'savings' }), {
-      modelType: 'Savings',
-      planIds: planIds,
-      quote_uuid: page.props.quote.uuid,
-      toggle: toggle,
-    })
-    .then(response => {
-      notification.success({
-        title: 'Plans has been updated',
-        position: 'top',
-      });
-      onLoadAvailablePlansData();
-      router.reload({
-        preserveScroll: true,
-      });
-    })
-    .catch(error => {
-      notification.error({
-        title: error,
-        position: 'top',
-      });
-    })
-    .finally(() => {
-      toggleLoader.value = false;
-      selectedPlans.value = [];
-    });
-};
+//   axios
+//     .post(route('manualPlanToggle', { quoteType: 'savings' }), {
+//       modelType: 'Savings',
+//       planIds: planIds,
+//       quote_uuid: page.props.quote.uuid,
+//       toggle: toggle,
+//     })
+//     .then(response => {
+//       notification.success({
+//         title: 'Plans has been updated',
+//         position: 'top',
+//       });
+//       onLoadAvailablePlansData();
+//       router.reload({
+//         preserveScroll: true,
+//       });
+//     })
+//     .catch(error => {
+//       notification.error({
+//         title: error,
+//         position: 'top',
+//       });
+//     })
+//     .finally(() => {
+//       toggleLoader.value = false;
+//       selectedPlans.value = [];
+//     });
+// };
 
 const getPlanDetails = id => {
   viewButtonLoading.value = true;
@@ -1362,7 +1363,8 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <!-- <div class="flex justify-end items-center flex-wrap gap-2">
+          <!-- Commented out - bulk actions disabled since checkboxes are hidden
+          <div class="flex justify-end items-center flex-wrap gap-2">
             <div
               class="flex gap-2 mb-4"
               v-if="
@@ -1401,7 +1403,8 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
                 Copy Link
               </x-button>
             </div>
-          </div> -->
+          </div>
+          -->
 
           <div
             v-if="
@@ -1425,7 +1428,6 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
             </div>
             <DataTable
               v-else
-              v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact-rows"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
