@@ -25,6 +25,20 @@ const lifeTemplateRef = ref(null);
 const homeTemplateRef = ref(null);
 const yachtTemplateRef = ref(null);
 
+// Track versions for each quote type
+const quoteTypeVersions = ref({
+  car: null,
+  health: null,
+  life: null,
+  home: null,
+  yacht: null,
+});
+
+// Handle version loaded events
+const handleVersionLoaded = (quoteTypeName, version) => {
+  quoteTypeVersions.value[quoteTypeName] = version;
+};
+
 const quoteTypes = [
   {
     id: 1,
@@ -79,14 +93,16 @@ const setActiveTab = async tab => {
     // Wait for next tick to ensure component is mounted
     await nextTick();
 
+    // Small delay to ensure component is fully rendered
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     // Load configuration for the selected quote type
     const quoteType = quoteTypes.find(qt => qt.name === tab);
-    if (
-      quoteType &&
-      quoteType.ref.value &&
-      quoteType.ref.value.loadExistingConfig
-    ) {
-      await quoteType.ref.value.loadExistingConfig();
+    if (quoteType && quoteType.ref.value) {
+      // Force reload configuration for this quote type
+      if (quoteType.ref.value.loadExistingConfig) {
+        await quoteType.ref.value.loadExistingConfig();
+      }
     }
   } catch (error) {
     console.error('Error loading tab configuration:', error);
@@ -102,6 +118,7 @@ const toggleModule = () => {
 // Initialize first tab on mount
 onMounted(async () => {
   await nextTick();
+  // Load the first tab (car) configuration
   await setActiveTab('car');
 });
 </script>
@@ -178,6 +195,7 @@ onMounted(async () => {
                   :is="quoteType.component"
                   :ref="quoteType.ref"
                   :disabled="!isCurrentVersion"
+                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
                 />
               </div>
             </template>

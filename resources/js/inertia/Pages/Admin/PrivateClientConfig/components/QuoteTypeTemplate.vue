@@ -276,7 +276,9 @@ const getProfiles = () => {
 };
 
 // Initialize after component mount
-onMounted(() => {
+onMounted(async () => {
+  // Only initialize, don't load data automatically
+  // Data will be loaded when tab becomes active
   setTimeout(() => {
     isInitialized.value = true;
   }, 100);
