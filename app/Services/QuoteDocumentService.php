@@ -486,28 +486,28 @@ class QuoteDocumentService extends BaseService
     public function getAppDownloadLink($modelType, $quote)
     {
         $appDownloadLink = '';
-        LoggerService::info('getAppDownloadLink called for quote code: ' . $quote->code);
+        LoggerService::info('getAppDownloadLink called for quote code: '.$quote->code);
         if (ucfirst($modelType) == quoteTypeCode::Health) {
             $plan = $quote->plan;
 
             $healthNetwork = $plan->healthNetwork;
             $code = str_replace(' ', '_', trim($healthNetwork->text)).'_HEALTH_DOC';
-            LoggerService::info('Trying health network doc for quote code: ' . $quote->code . ' with key: ' . $code);
+            LoggerService::info('Trying health network doc for quote code: '.$quote->code.' with key: '.$code);
             $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
-           
+
             // If no document found network provider  will check provider document
             if ($providerHealthDoc == null) {
                 $code = trim($plan->insuranceProvider->code).'_HEALTH_DOC';
-                LoggerService::info('Provider doc for quote code: ' . $quote->code . ' with key: ' . $code);
+                LoggerService::info('Provider doc for quote code: '.$quote->code.' with key: '.$code);
                 $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
             }
             // If these two documents then we send complete url
             if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
-                LoggerService::info('Direct link used for quote code: ' . $quote->code . ' with key: ' . $code);
+                LoggerService::info('Direct link used for quote code: '.$quote->code.' with key: '.$code);
                 $appDownloadLink = $providerHealthDoc;
             } else {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
-                LoggerService::info('Base URL prepended for quote code: ' . $quote->code . ' with key: ' . $code);
+                LoggerService::info('Base URL prepended for quote code: '.$quote->code.' with key: '.$code);
                 $appDownloadLink = $baseUrl.$providerHealthDoc;
             }
         }
