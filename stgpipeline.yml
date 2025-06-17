@@ -2,7 +2,7 @@ trigger:
   - develop
 # pool:
 #   vmImage: 'staging-rill'
-pool: 'Rill Server SH Agent'
+pool: 'STG Migrations'
 variables:
   - group: stg
   - name: imageName
@@ -28,7 +28,7 @@ steps:
   #     sudo apt-get update && sudo apt-get install doppler
   - script: |
       sed -i "s/imcrmdev/imcrmstage/g" "$(System.DefaultWorkingDirectory)/docker/nginx.conf"
-      doppler --token $(IMCRM_TOKEN) run -- sh -c 'sudo DOCKER_BUILDKIT=1 docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .'
+      doppler --token $(IMCRM_TOKEN) run -- sh -c 'sudo docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .'
        if [ $? -ne 0 ]; then
         curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
          --header 'Content-Type: application/json' \

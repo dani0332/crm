@@ -1298,6 +1298,7 @@ function capitalizeString(str) {
       :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
       :websiteURL="websiteURL"
       :linkedQuoteDetails="linkedQuoteDetails"
+      :payments="payments"
       @plan-selected="fetchUpdatedQuote"
     />
 
@@ -1405,6 +1406,12 @@ function capitalizeString(str) {
       :id="$page.props.quote.id"
       :quote-type="quoteType"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
     />
 
     <ApiLogs :type="modelClass" :id="$page.props.quote.id" />

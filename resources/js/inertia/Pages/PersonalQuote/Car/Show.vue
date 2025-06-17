@@ -2062,7 +2062,7 @@ const isCommercialVehicle = computed(() => {
               <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">Name</dt>
-                  <dd>{{ record.first_name }} {{ record.last_name }}</dd>
+                  <dd>{{ record.driver_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -2348,13 +2348,11 @@ const isCommercialVehicle = computed(() => {
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
-                  <dd v-if="isPrivateCar">{{ record.customer_first_name }}</dd>
-                  <dd v-else>{{ record.first_name }}</dd>
+                  <dd>{{ record.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">LAST NAME</dt>
-                  <dd v-if="isPrivateCar">{{ record.customer_last_name }}</dd>
-                  <dd v-else>{{ record.last_name }}</dd>
+                  <dd>{{ record.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MOBILE NUMBER</dt>
@@ -2957,7 +2955,6 @@ const isCommercialVehicle = computed(() => {
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                >
                 <x-select
                   label="IS VEHICLE MODIFIED?"
                   required
@@ -3477,9 +3474,14 @@ const isCommercialVehicle = computed(() => {
                       :has-child-lead="
                         page.props.linkedQuoteDetails.childLeadsCount > 0
                       "
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
                       :uuid="quote.uuid"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansItems || []"
+                      :payments="payments"
                     />
 
                     <x-button
@@ -4191,6 +4193,14 @@ const isCommercialVehicle = computed(() => {
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
+
+  <AuditLogs
+    :title="'KYC Audit Logs'"
+    :type="'App\\Models\\InsuredKyc'"
+    :id="record?.insured_kyc_id"
+    :expanded="sectionExpanded"
+  />
+
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"

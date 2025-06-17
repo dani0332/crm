@@ -2155,6 +2155,11 @@ const shouldShowPlanDetailsSection = computed(() => {
                       :quoteType="'Home'"
                       :uuid="quote.uuid"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
                     />
 
                     <x-button
@@ -2330,6 +2335,12 @@ const shouldShowPlanDetailsSection = computed(() => {
       :id="$page.props.quote.id"
       :quote-type="quoteType"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
     />
 
     <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
