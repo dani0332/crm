@@ -25,8 +25,10 @@ use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Models\SubArea;
 use App\Services\Logger\LoggerService;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Throwable;
 
 class HomeRenewalService extends RenewalsUploadService
 {
@@ -48,23 +50,26 @@ class HomeRenewalService extends RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                Haystack::build()
-                    ->onQueue('renewals')
-                    ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalsUploadLead) {
+                // Add delay to jobs
+                $jobs = collect($jobs)->map(function ($job) {
+                    return $job->delay(2);
+                })->toArray();
+
+                Bus::batch($jobs)
+                    ->then(function (Batch $batch) use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
-                    ->catch(function () use ($logPrefix, $renewalsUploadLead) {
-                        // Haystack failed
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
+                        // Bus batch failed
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
+                    ->finally(function (Batch $batch) use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(2)
+                    ->onQueue('renewals')
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' jobs dispatched');
@@ -253,10 +258,13 @@ class HomeRenewalService extends RenewalsUploadService
             if (! empty($jobs)) {
                 LoggerService::info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
-                Haystack::build()
-                    ->onQueue('renewals')
-                    ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
+                // Add delay to jobs
+                $jobs = collect($jobs)->map(function ($job) {
+                    return $job->delay(1);
+                })->toArray();
+
+                Bus::batch($jobs)
+                    ->then(function (Batch $busBatch) use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
 
@@ -264,15 +272,15 @@ class HomeRenewalService extends RenewalsUploadService
                             app(self::class)->scheduleHomeRenewalsOcbEmails($batch, $userId);
                         })->onQueue('renewals');
                     })
-                    ->catch(function () use ($logPrefix, $renewalStatusProcess) {
+                    ->catch(function (Batch $busBatch, Throwable $e) use ($logPrefix, $renewalStatusProcess) {
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function ($batch) use ($logPrefix) {
+                    ->finally(function (Batch $busBatch) use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(1)
+                    ->onQueue('renewals')
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' all jobs are scheduled');
@@ -427,23 +435,27 @@ class HomeRenewalService extends RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
                 LoggerService::info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                Haystack::build()
-                    ->onQueue('renewals')
-                    ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalsBatchEmail) {
+                
+                // Add delay to jobs
+                $jobs = collect($jobs)->map(function ($job) {
+                    return $job->delay(1);
+                })->toArray();
+
+                Bus::batch($jobs)
+                    ->then(function (Batch $batch) use ($logPrefix, $renewalsBatchEmail) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
 
                     })
-                    ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsBatchEmail) {
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
+                    ->finally(function (Batch $batch) use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(1)
+                    ->onQueue('renewals')
                     ->dispatch();
             } else {
                 LoggerService::info($logPrefix.' No leads to schedule OCB email');
