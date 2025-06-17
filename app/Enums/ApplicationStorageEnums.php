@@ -226,10 +226,6 @@ final class ApplicationStorageEnums extends Enum
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
 
-    /* Savings OCB */
-    public const SAVINGS_OCB = 'SAVINGS_OCB';
-    public const SAVINGS_OCB_SWITCH = 'SAVINGS_OCB_SWITCH';
-
     /* Savings Book Policy Template */
     public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
 
