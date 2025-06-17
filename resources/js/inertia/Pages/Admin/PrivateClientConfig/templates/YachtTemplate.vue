@@ -2,8 +2,8 @@
 import QuoteTypeTemplate from '../components/QuoteTypeTemplate.vue';
 
 const props = defineProps({
-  quoteTypeId: {
-    type: Number,
+  quoteType: {
+    type: Object,
     required: true,
   },
   initialConfig: {
@@ -26,7 +26,6 @@ const props = defineProps({
 
 const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
-// Yacht-specific field definitions
 const yachtFields = [
   {
     fieldName: 'price_with_vat',
@@ -48,9 +47,7 @@ const yachtFields = [
 
 <template>
   <QuoteTypeTemplate
-    :quote-type-id="quoteTypeId"
-    quote-type-name="yacht"
-    quote-type-label="Yacht"
+    :quote-type="quoteType"
     :fields="yachtFields"
     :initial-config="initialConfig"
     :dropdown-data="dropdownData"

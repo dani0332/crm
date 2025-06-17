@@ -2,8 +2,8 @@
 import QuoteTypeTemplate from '../components/QuoteTypeTemplate.vue';
 
 const props = defineProps({
-  quoteTypeId: {
-    type: Number,
+  quoteType: {
+    type: Object,
     required: true,
   },
   initialConfig: {
@@ -48,9 +48,7 @@ const lifeFields = [
 
 <template>
   <QuoteTypeTemplate
-    :quote-type-id="quoteTypeId"
-    quote-type-name="life"
-    quote-type-label="Life"
+    :quote-type="quoteType"
     :fields="lifeFields"
     :initial-config="initialConfig"
     :dropdown-data="dropdownData"

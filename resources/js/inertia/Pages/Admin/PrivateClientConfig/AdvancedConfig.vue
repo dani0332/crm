@@ -159,10 +159,9 @@ onMounted(async () => {
           <div v-else class="space-y-6">
             <CarTemplate
               v-if="activeTab === quoteTypeCodeEnum.Car"
-              :quote-type-id="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Car)?.id
+              :quote-type="
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Car)
               "
-              :quoteTypeCode="quoteTypeCodeEnum.Car"
               :initial-config="configurations[quoteTypeCodeEnum.Car]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Car]"
               :version-data="versionData[quoteTypeCodeEnum.Car]"
@@ -176,10 +175,9 @@ onMounted(async () => {
 
             <HealthTemplate
               v-if="activeTab === quoteTypeCodeEnum.Health"
-              :quote-type-id="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Health)?.id
+              :quote-type="
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Health)
               "
-              :quoteTypeCode="quoteTypeCodeEnum.Health"
               :initial-config="configurations[quoteTypeCodeEnum.Health]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Health]"
               :version-data="versionData[quoteTypeCodeEnum.Health]"
@@ -193,10 +191,9 @@ onMounted(async () => {
 
             <LifeTemplate
               v-if="activeTab === quoteTypeCodeEnum.Life"
-              :quote-type-id="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Life)?.id
+              :quote-type="
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Life)
               "
-              :quoteTypeCode="quoteTypeCodeEnum.Life"
               :initial-config="configurations[quoteTypeCodeEnum.Life]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Life]"
               :version-data="versionData[quoteTypeCodeEnum.Life]"
@@ -210,10 +207,9 @@ onMounted(async () => {
 
             <HomeTemplate
               v-if="activeTab === quoteTypeCodeEnum.Home"
-              :quote-type-id="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Home)?.id
+              :quote-type="
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Home)
               "
-              :quoteTypeCode="quoteTypeCodeEnum.Home"
               :initial-config="configurations[quoteTypeCodeEnum.Home]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Home]"
               :version-data="versionData[quoteTypeCodeEnum.Home]"
@@ -227,10 +223,9 @@ onMounted(async () => {
 
             <YachtTemplate
               v-if="activeTab === quoteTypeCodeEnum.Yacht"
-              :quote-type-id="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Yacht)?.id
+              :quote-type="
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Yacht)
               "
-              :quoteTypeCode="quoteTypeCodeEnum.Yacht"
               :initial-config="configurations[quoteTypeCodeEnum.Yacht]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Yacht]"
               :version-data="versionData[quoteTypeCodeEnum.Yacht]"
