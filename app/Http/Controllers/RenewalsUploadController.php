@@ -65,7 +65,6 @@ class RenewalsUploadController extends Controller
      */
     public function renewalsUploadUpdate(RenewalsUploadRequest $request)
     {
-        LoggerService::info('------------------RenewalsUploadController: renewalsUploadUpdate------------------'); 
         return $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
     }
 
@@ -473,12 +472,11 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
-        switch ($renewaUploadLead->quote_type) {
-            case QuoteTypeShortCode::HOM:
-                return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
-            default:
-                return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        if($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+            return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
         }
+
+        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }
 
     public function validationPassed($id)

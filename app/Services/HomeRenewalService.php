@@ -53,16 +53,16 @@ class HomeRenewalService extends RenewalsUploadService
 
                 Bus::batch($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' all quotes updated successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
                     ->catch(function (Throwable $e) use ($logPrefix, $renewalsUploadLead) {
                         // Bus batch failed
-                        LoggerService::info($logPrefix.' one of batch is failed. '.$e->getMessage());
+                        LoggerService::info($logPrefix.' batch failed for updateQuotes . '.$e->getMessage());
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.'  everything done on updating quotes');
                     })
                     ->allowFailures()
                     ->onQueue('renewals')
@@ -74,7 +74,7 @@ class HomeRenewalService extends RenewalsUploadService
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
-            LoggerService::error('BATCH: one of batch is failed. Exception', exception: $exception);
+            LoggerService::error('BATCH: failed for updateQuotes. Exception', exception: $exception);
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
@@ -125,9 +125,7 @@ class HomeRenewalService extends RenewalsUploadService
 
             $assignmentType = null;
             if ($advisorId) {
-                $assignmentType = $isReAssignment 
-                    ? AssignmentTypeEnum::SYSTEM_REASSIGNED 
-                    : AssignmentTypeEnum::SYSTEM_ASSIGNED;
+                $assignmentType = $isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
             }
 
             $quoteData = [
@@ -263,7 +261,7 @@ class HomeRenewalService extends RenewalsUploadService
 
                 Bus::batch($jobs)
                     ->then(function () use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' all Renewal Plans Fetched successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
 
                         dispatch(function () use ($batch, $userId) {
@@ -271,11 +269,11 @@ class HomeRenewalService extends RenewalsUploadService
                         })->onQueue('renewals');
                     })
                     ->catch(function (Throwable $e) use ($logPrefix, $renewalStatusProcess) {
-                        LoggerService::info($logPrefix.' one of batch is failed. '.$e->getMessage());
+                        LoggerService::info($logPrefix.' batch failed for fetchRenewalPlans. '.$e->getMessage());
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.' everything done on fetching plans');
                     })
                     ->allowFailures()
                     ->onQueue('renewals')
@@ -436,16 +434,16 @@ class HomeRenewalService extends RenewalsUploadService
 
                 Bus::batch($jobs)
                     ->then(function () use ($logPrefix, $renewalsBatchEmail) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' all OCB Emails Sent successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
 
                     })
                     ->catch(function (Throwable $e) use ($logPrefix, $renewalsBatchEmail) {
-                        LoggerService::info($logPrefix.' one of batch is failed. '.$e->getMessage());
+                        LoggerService::info($logPrefix.' batch failed for scheduleHomeOCB. '.$e->getMessage());
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.' everything done on sending OCB emails');
                     })
                     ->allowFailures()
                     ->onQueue('renewals')
@@ -455,7 +453,7 @@ class HomeRenewalService extends RenewalsUploadService
                 $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
-            LoggerService::error($logPrefix.' one of batch is failed. Exception : '.$exception->getMessage());
+            LoggerService::error($logPrefix.' batch failed for scheduleHomeOCB. Exception : '.$exception->getMessage());
             $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
         }
     }

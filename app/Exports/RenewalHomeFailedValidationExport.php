@@ -12,8 +12,11 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
 {
     private $renewaUploadLead;
 
+    private $insuranceProvider; 
+
     public function __construct($renewalUploadLead)
     {
+        $this->insuranceProvider = 'Insurance Provider';
         $this->renewaUploadLead = $renewalUploadLead;
     }
 
@@ -85,7 +88,7 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
     private function getCreateLeadsSpecificHeaders(): array
     {
         return [
-            'insurer' => 'Insurance Provider',
+            'insurer' => $this->insuranceProvider,
             'product' => 'Product',
             'product_type' => 'Product Type',
             'batch' => 'Batch',
@@ -105,7 +108,7 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
     private function getUpdateLeadsSpecificHeaders(): array
     {
         return [
-            'current_insurance_provider' => 'Insurance Provider',
+            'current_insurance_provider' => $this->insuranceProvider,
             'you_are_a' => 'You are a',
             'i_live_in_a' => 'I live in a (Type of Property)',
             'occupancy_status_for_owners' => 'Occupancy Status for Owners',
@@ -114,7 +117,7 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
             'contents' => 'Contents',
             'personal_belongings' => 'Personal Belongings',
             'building' => 'Building',
-            'insurance_provider' => 'Insurance Provider',
+            'insurance_provider' => $this->insuranceProvider,
             'plan_name' => 'Plan Name',
             'claims_history' => 'Claims History',
             'premium' => 'Premium',
