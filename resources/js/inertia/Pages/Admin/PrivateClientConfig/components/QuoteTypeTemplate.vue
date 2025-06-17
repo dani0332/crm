@@ -134,18 +134,11 @@ const loadSpecificVersion = async version => {
       {
         params: {
           quote_type_id: props.quoteType.id,
-          version: version,
-        },
-        headers: {
-          'X-CSRF-TOKEN':
-            document
-              .querySelector('meta[name="csrf-token"]')
-              ?.getAttribute('content') || '',
+          version,
         },
       },
     );
 
-    // Update version information
     if (response.data.allVersions) {
       allVersions.value = response.data.allVersions;
     }
@@ -191,13 +184,11 @@ const loadSpecificVersion = async version => {
   }
 };
 
-// Method to change version
 const changeVersion = newVersion => {
   if (newVersion === selectedVersion.value) return;
   loadSpecificVersion(newVersion);
 };
 
-// Save configuration for this quote type only
 const saveConfiguration = () => {
   loader.value = true;
 
@@ -212,7 +203,6 @@ const saveConfiguration = () => {
       return;
     }
 
-    // Update form data with only this quote type configuration
     configForm.configurations = [
       {
         quote_type_id: props.quoteType.id,
@@ -220,11 +210,10 @@ const saveConfiguration = () => {
       },
     ];
 
-    // Send to backend
     configForm.post(route('admin.private-client-config.upsert'), {
       onSuccess: () => {
         loader.value = false;
-        // Emit event to parent to reload configuration
+
         emit('configurationSaved');
       },
       onError: errors => {
@@ -242,7 +231,6 @@ const saveConfiguration = () => {
   }
 };
 
-// Get valid profiles
 const getProfiles = () => {
   return profiles.value
     .filter(profile => {
@@ -276,7 +264,6 @@ const getProfiles = () => {
     });
 };
 
-// Initialize profiles from props
 const initializeProfiles = () => {
   if (
     props.initialConfig &&
@@ -307,7 +294,6 @@ const initializeProfiles = () => {
   }
 };
 
-// Initialize version data
 const initializeVersionData = () => {
   if (props.versionData) {
     allVersions.value = props.versionData.allVersions || [];
@@ -321,7 +307,6 @@ const initializeVersionData = () => {
   }
 };
 
-// Watch for prop changes
 watch(
   () => props.initialConfig,
   () => {
@@ -338,7 +323,6 @@ watch(
   { deep: true, immediate: true },
 );
 
-// Initialize after component mount
 onMounted(async () => {
   setTimeout(() => {
     isInitialized.value = true;
@@ -349,7 +333,6 @@ onMounted(async () => {
 <template>
   <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
-      <!-- Version Info Header -->
       <div
         v-if="currentVersion"
         class="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200"
@@ -369,7 +352,6 @@ onMounted(async () => {
             </span>
           </div>
 
-          <!-- Version Selector -->
           <div
             v-if="allVersions.length > 0"
             class="flex items-center space-x-2"
