@@ -12,14 +12,12 @@ use App\Enums\RolesEnum;
 use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Exports\RenewalHomeFailedValidationExport;
-use App\Http\Requests\RenewalsUploadNonMotorRequest;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchHomeRenewalsPlansJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
-use App\Jobs\ScheduleHomeRenewalOcbEmails;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
 use App\Models\HomeQuote;
@@ -129,7 +127,7 @@ class RenewalsUploadController extends Controller
             ]);
 
             // Dispatch the job based on the quote type
-            if($quoteType == QuoteTypeShortCode::HOM) {
+            if ($quoteType == QuoteTypeShortCode::HOM) {
                 FetchHomeRenewalsPlansJob::dispatch($renewalStatusProcess, $batch, $quoteType);
             }
 

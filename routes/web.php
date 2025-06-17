@@ -269,11 +269,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
         Route::post('non-motor/upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update-non-motor')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
         Route::get('non-motor-batches', [RenewalsUploadController::class, 'listRenewalBatchesNonMotor'])->name('renewals-batches-nonmotor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
-        
+
         // plan processes page non motor
         Route::get('batches-non-motor/{id}/{quoteType}/plans-processes', [RenewalsUploadController::class, 'plansProcessesNonMotor'])->name('batch-plans-processes.non.motor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
         Route::get('batches-non-motor/{id}/{quoteType}/fetch-plans', [RenewalsUploadController::class, 'fetchPlansNonMotor'])->name('batch-fetch-plans.non.motor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
-    
+
     });
 
     Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
