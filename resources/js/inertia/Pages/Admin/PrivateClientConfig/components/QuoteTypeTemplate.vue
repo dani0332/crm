@@ -69,7 +69,7 @@ const createBlankProfile = () => {
   props.fields.forEach(field => {
     profile[field.fieldName] = field.type === 'select_multiple' ? [] : '';
     if (field.hasCurrency) {
-      profile[`${field.fieldName}_currency_id`] = 1;
+      profile[`${field.fieldName}_currency_id`] = field.currencyId || 1;
     }
     if (field.hasCheckBox) {
       profile[`${field.fieldName}_isEnabled`] = false;
