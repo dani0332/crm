@@ -43,13 +43,11 @@ const tableHeader = [
     hide-rows-per-page
     hide-footer
   >
-  
-  <template #item-batch="{ batch, renewal_batch }">
+    <template #item-batch="{ batch, renewal_batch }">
       {{ batch ? batch : renewal_batch?.name }}
-  </template>
-    
-  
-  <template #item-renewal_upload_lead="{ renewal_upload_lead }">
+    </template>
+
+    <template #item-renewal_upload_lead="{ renewal_upload_lead }">
       {{ renewal_upload_lead.file_name }}
     </template>
 

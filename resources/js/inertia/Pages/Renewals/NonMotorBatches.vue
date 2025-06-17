@@ -209,7 +209,7 @@ onMounted(() => {
       <template #item-renewal_batch="{ renewal_batch }">
         {{ renewal_batch?.name || batch }}
       </template>
-    
+
       <template #item-action="{ renewal_batch, quote_type, renewal_batch_id }">
         <x-button
           :href="`/renewals/batches-non-motor/${renewal_batch_id}/${quote_type}/plans-processes`"
