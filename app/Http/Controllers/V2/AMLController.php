@@ -21,6 +21,8 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\AmlCftReportExport;
+use App\Exports\KycLogs;
 use App\Exports\KycLogsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
@@ -923,5 +925,18 @@ class AMLController extends Controller
         $skipBrigerAMLResponse = app(AMLService::class)->tempSkipBridgerAML($skipBridgerScreeningRequest);
 
         return response()->json(['response' => $skipBrigerAMLResponse['status'], 'message' => $skipBrigerAMLResponse['response']]);
+    }
+
+    /**
+     * Export AML CTF Report
+     *
+     * @param  Request  $request
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public function amlCtfReportExport()
+    {
+        $fileName = 'AML_CTF_Report_'.now()->format('Ymd_His').'.xlsx';
+
+        return (new AmlCftReportExport)->download($fileName);
     }
 }
