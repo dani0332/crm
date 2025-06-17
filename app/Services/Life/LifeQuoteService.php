@@ -713,9 +713,7 @@ class LifeQuoteService extends BaseService
 
     public function getRiderDetails($planId)
     {
-        $riderDetails = LifePlanRider::inActive()->
-        with(['riderOption'])->where('plan_id', $planId)->get();
-
+        $riderDetails = LifePlanRider::with(['riderOption'])->where('plan_id', $planId)->get();
         return $riderDetails;
     }
 
