@@ -40,6 +40,8 @@ const highlightedProfileIndex = ref(-1);
 const loader = ref(false);
 const configLoading = ref(false);
 const isInitialized = ref(false);
+const validationErrors = ref({});
+const showValidationSummary = ref(false);
 
 const currentVersion = ref(null);
 const selectedVersion = ref(null);
@@ -78,6 +80,8 @@ const addProfile = () => {
   const newProfile = createBlankProfile();
   profiles.value.push(newProfile);
 
+  clearValidationErrors();
+
   const newIndex = profiles.value.length - 1;
   highlightedProfileIndex.value = newIndex;
 
@@ -102,6 +106,8 @@ const removeProfile = profileIndex => {
     profiles.value.splice(profileIndex, 1);
   }
   collapsedProfiles.value.delete(profileIndex);
+
+  clearValidationErrors();
 };
 
 const toggleModule = () => {
@@ -116,7 +122,6 @@ const toggleProfile = profileIndex => {
   }
 };
 
-// Helper methods
 const getCurrencySymbol = currencyId => {
   const currency = props.dropdownData.currencies?.find(
     c => c.value === currencyId,
@@ -124,7 +129,6 @@ const getCurrencySymbol = currencyId => {
   return currency?.symbol || 'AED';
 };
 
-// Load specific version
 const loadSpecificVersion = async version => {
   configLoading.value = true;
 
@@ -189,16 +193,115 @@ const changeVersion = newVersion => {
   loadSpecificVersion(newVersion);
 };
 
+const validateProfiles = () => {
+  const errors = {};
+  const usedNationalities = new Set();
+
+  profiles.value.forEach((profile, profileIndex) => {
+    const profileErrors = {};
+
+    // Validate nationalities are selected
+    if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
+      profileErrors.nationalityIds = 'Please select at least one nationality';
+    } else {
+      // Check for duplicate nationalities across profiles
+      const duplicateNationalities = profile.nationalityIds.filter(
+        nationalityId => usedNationalities.has(nationalityId),
+      );
+
+      if (duplicateNationalities.length > 0) {
+        const duplicateNames = duplicateNationalities
+          .map(id => {
+            const nationality = nationalityOptions.value.find(
+              n => n.value === id,
+            );
+            return nationality ? nationality.label : `ID: ${id}`;
+          })
+          .join(', ');
+
+        profileErrors.nationalityIds = `These nationalities are already used in another profile: ${duplicateNames}`;
+      } else {
+        // Add nationalities to used set
+        profile.nationalityIds.forEach(id => usedNationalities.add(id));
+      }
+    }
+
+    // Validate required fields
+    props.fields.forEach(field => {
+      if (field.isRequired) {
+        const value = profile[field.fieldName];
+
+        if (field.type === 'select_multiple') {
+          if (!Array.isArray(value) || value.length === 0) {
+            profileErrors[field.fieldName] = `${field.label} is required`;
+          }
+        } else {
+          if (!value || value.toString().trim() === '') {
+            profileErrors[field.fieldName] = `${field.label} is required`;
+          }
+        }
+      }
+    });
+
+    // If there are errors for this profile, add them
+    if (Object.keys(profileErrors).length > 0) {
+      errors[profileIndex] = profileErrors;
+    }
+  });
+
+  validationErrors.value = errors;
+  return Object.keys(errors).length === 0;
+};
+
+const clearValidationErrors = () => {
+  validationErrors.value = {};
+  showValidationSummary.value = false;
+};
+
+const getFieldError = (profileIndex, fieldName) => {
+  return validationErrors.value[profileIndex]?.[fieldName] || '';
+};
+
+const hasProfileErrors = profileIndex => {
+  return (
+    validationErrors.value[profileIndex] &&
+    Object.keys(validationErrors.value[profileIndex]).length > 0
+  );
+};
+
 const saveConfiguration = () => {
+  // Clear previous validation errors
+  clearValidationErrors();
+
+  // Validate profiles first
+  if (!validateProfiles()) {
+    // Show validation summary
+    showValidationSummary.value = true;
+
+    // Scroll to first error
+    const firstErrorProfileIndex = Object.keys(validationErrors.value)[0];
+    if (firstErrorProfileIndex !== undefined) {
+      const element = document.querySelector(
+        `[data-profile-index="${quoteTypeCode.value}-${firstErrorProfileIndex}"]`,
+      );
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // Expand the profile with errors
+      collapsedProfiles.value.delete(parseInt(firstErrorProfileIndex));
+    }
+
+    return;
+  }
+
   loader.value = true;
 
   try {
     const validProfiles = getProfiles();
 
     if (validProfiles.length === 0) {
-      alert(
-        `No valid profiles to save. Please add at least one profile with nationality and criteria.`,
-      );
+      showValidationSummary.value = true;
       loader.value = false;
       return;
     }
@@ -213,21 +316,17 @@ const saveConfiguration = () => {
     configForm.post(route('admin.private-client-config.upsert'), {
       onSuccess: () => {
         loader.value = false;
-
+        clearValidationErrors();
         emit('configurationSaved');
       },
       onError: errors => {
         loader.value = false;
         console.error('Save failed:', errors);
-        alert(
-          `Failed to save ${quoteTypeCode.value} configuration. Please try again.`,
-        );
       },
     });
   } catch (error) {
     loader.value = false;
     console.error(`Error saving ${quoteTypeCode.value} configuration:`, error);
-    alert('Error occurred while saving. Please try again.');
   }
 };
 
@@ -323,6 +422,49 @@ watch(
   { deep: true, immediate: true },
 );
 
+// Clear field-specific validation errors when user modifies fields
+const clearFieldError = (profileIndex, fieldName) => {
+  if (validationErrors.value[profileIndex]) {
+    delete validationErrors.value[profileIndex][fieldName];
+
+    // If no errors left for this profile, remove the profile from errors
+    if (Object.keys(validationErrors.value[profileIndex]).length === 0) {
+      delete validationErrors.value[profileIndex];
+    }
+  }
+};
+
+// Watch for changes in profile fields to clear errors
+watch(
+  profiles,
+  (newProfiles, oldProfiles) => {
+    if (oldProfiles && newProfiles) {
+      newProfiles.forEach((profile, profileIndex) => {
+        // Check nationality changes
+        if (
+          oldProfiles[profileIndex] &&
+          JSON.stringify(profile.nationalityIds) !==
+            JSON.stringify(oldProfiles[profileIndex].nationalityIds)
+        ) {
+          clearFieldError(profileIndex, 'nationalityIds');
+        }
+
+        // Check field changes
+        props.fields.forEach(field => {
+          if (
+            oldProfiles[profileIndex] &&
+            profile[field.fieldName] !==
+              oldProfiles[profileIndex][field.fieldName]
+          ) {
+            clearFieldError(profileIndex, field.fieldName);
+          }
+        });
+      });
+    }
+  },
+  { deep: true },
+);
+
 onMounted(async () => {
   setTimeout(() => {
     isInitialized.value = true;
@@ -401,6 +543,59 @@ onMounted(async () => {
       </div>
 
       <div v-show="!isModuleCollapsed">
+        <!-- Validation Summary -->
+        <div
+          v-if="showValidationSummary"
+          class="mb-6 p-4 bg-red-50 border border-red-200 rounded-md"
+        >
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <i class="ri-error-warning-line text-red-400 text-lg"></i>
+            </div>
+            <div class="ml-3 flex-1">
+              <h3 class="text-sm font-medium text-red-800">
+                Please fix the following validation errors:
+              </h3>
+              <div class="mt-2 text-sm text-red-700">
+                <ul class="list-disc pl-5 space-y-1">
+                  <template
+                    v-for="(profileErrors, profileIndex) in validationErrors"
+                    :key="profileIndex"
+                  >
+                    <li class="font-medium">
+                      Profile {{ parseInt(profileIndex) + 1 }}:
+                    </li>
+                    <ul class="list-disc pl-5 space-y-1">
+                      <li
+                        v-for="(error, fieldName) in profileErrors"
+                        :key="fieldName"
+                      >
+                        {{ error }}
+                      </li>
+                    </ul>
+                  </template>
+                  <li v-if="Object.keys(validationErrors).length === 0">
+                    No valid profiles to save. Please add at least one profile
+                    with nationality and criteria.
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="ml-auto pl-3">
+              <div class="-mx-1.5 -my-1.5">
+                <button
+                  type="button"
+                  class="inline-flex bg-red-50 rounded-md p-1.5 text-red-400 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                  @click="showValidationSummary = false"
+                >
+                  <span class="sr-only">Dismiss</span>
+                  <i class="ri-close-line text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div
           v-if="profiles.length === 0"
           class="text-center py-8 text-gray-500"
@@ -413,11 +608,13 @@ onMounted(async () => {
             v-for="(profile, profileIndex) in profiles"
             :key="`profile-${profileIndex}`"
             :data-profile-index="`${quoteTypeCode}-${profileIndex}`"
-            class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
+            class="border rounded-lg p-4 transition-all duration-500"
             :class="{
               'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
                 highlightedProfileIndex === profileIndex,
               'shadow-lg': highlightedProfileIndex === profileIndex,
+              'border-red-300 bg-red-50': hasProfileErrors(profileIndex),
+              'border-gray-200': !hasProfileErrors(profileIndex),
             }"
           >
             <div class="flex items-center justify-between mb-4">
@@ -434,6 +631,13 @@ onMounted(async () => {
                     class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
                   >
                     New!
+                  </span>
+                  <span
+                    v-if="hasProfileErrors(profileIndex)"
+                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                  >
+                    <i class="ri-error-warning-line mr-1"></i>
+                    Has Errors
                   </span>
                 </h4>
               </div>
@@ -475,6 +679,12 @@ onMounted(async () => {
                   multiple
                   filterable
                   class="w-full min-h-[40px]"
+                  :class="{
+                    'border-red-300': getFieldError(
+                      profileIndex,
+                      'nationalityIds',
+                    ),
+                  }"
                   label="Nationalities"
                   required
                   tooltip="Select the nationalities of customers this profile applies to."
@@ -494,6 +704,12 @@ onMounted(async () => {
                     />
                   </template>
                 </x-select>
+                <div
+                  v-if="getFieldError(profileIndex, 'nationalityIds')"
+                  class="mt-1 text-sm text-red-600"
+                >
+                  {{ getFieldError(profileIndex, 'nationalityIds') }}
+                </div>
               </div>
 
               <!-- Single Card for All Fields -->
@@ -507,6 +723,9 @@ onMounted(async () => {
                     <div class="space-y-2">
                       <label class="block text-sm font-medium text-gray-700">
                         {{ field.label }}
+                        <span v-if="field.isRequired" class="text-red-500"
+                          >*</span
+                        >
                         <span v-if="field.operator === '>='"> (≥)</span>
                         <span v-if="field.operator === 'in'">
                           (Multiple selection)</span
@@ -522,6 +741,12 @@ onMounted(async () => {
                           multiple
                           filterable
                           class="w-full min-h-[40px]"
+                          :class="{
+                            'border-red-300': getFieldError(
+                              profileIndex,
+                              field.fieldName,
+                            ),
+                          }"
                           :disabled="isDisabled"
                           :tooltip="`Select ${field.label.toLowerCase()} options for this profile.`"
                         >
@@ -546,6 +771,12 @@ onMounted(async () => {
                           :placeholder="`Enter ${field.label.toLowerCase()}`"
                           type="text"
                           class="!mb-0"
+                          :class="{
+                            'border-red-300': getFieldError(
+                              profileIndex,
+                              field.fieldName,
+                            ),
+                          }"
                           :disabled="isDisabled"
                           :tooltip="`Set the minimum ${field.label.toLowerCase()} for this profile.`"
                         >
@@ -563,6 +794,14 @@ onMounted(async () => {
                           </template>
                         </x-input>
                       </template>
+
+                      <!-- Error message for this field -->
+                      <div
+                        v-if="getFieldError(profileIndex, field.fieldName)"
+                        class="text-sm text-red-600"
+                      >
+                        {{ getFieldError(profileIndex, field.fieldName) }}
+                      </div>
                     </div>
                   </template>
                 </div>
