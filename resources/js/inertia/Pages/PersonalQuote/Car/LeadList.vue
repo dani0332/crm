@@ -593,6 +593,37 @@ watch(
 );
 
 const onExport = (url, isLoading = false, exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        title: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   exportLoader.value = isLoading;
 
   // Add exportType to URL parameters if it's not already there
@@ -608,9 +639,10 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     exportType: exportType,
     url: `${window.location.origin}${url}`,
+    filters: { ...filters },
   };
 
-  console.log('onexport', payload);
+  // console.log('onexport', payload);
   logAndExportQuotes(payload)
     .then(result => {
       if (result.data.message) {
