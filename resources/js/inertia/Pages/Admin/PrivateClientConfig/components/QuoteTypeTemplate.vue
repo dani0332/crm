@@ -47,6 +47,11 @@ const currentVersion = ref(null);
 const loader = ref(false);
 const configLoading = ref(false);
 
+// Version management
+const allVersions = ref([]);
+const isCurrentVersion = ref(true);
+const selectedVersion = ref(null);
+
 // Form for saving
 const configForm = useForm({
   configurations: [],
@@ -56,6 +61,9 @@ const configForm = useForm({
 const nationalityOptions = computed(
   () => dropdownData.value.nationalities || [],
 );
+
+// Combined disabled state - disabled if prop is true OR if viewing historical version
+const isDisabled = computed(() => props.disabled || !isCurrentVersion.value);
 
 const createBlankProfile = () => {
   const profile = {
@@ -141,14 +149,19 @@ const getCurrencySymbol = currencyId => {
 };
 
 // Load existing configuration when component mounts
-const loadExistingConfig = async () => {
+const loadExistingConfig = async (version = null) => {
   configLoading.value = true;
 
   try {
     const routeUrl = route('admin.private-client-config.latest-by-quote-type');
+    const params = { quote_type_id: props.quoteTypeId };
+
+    if (version) {
+      params.version = version;
+    }
 
     const response = await axios.get(routeUrl, {
-      params: { quote_type_id: props.quoteTypeId },
+      params,
       headers: {
         'X-CSRF-TOKEN':
           document
@@ -157,15 +170,24 @@ const loadExistingConfig = async () => {
       },
     });
 
+    // Update version information
+    if (response.data.allVersions) {
+      allVersions.value = response.data.allVersions;
+    }
+
+    if (response.data.version !== undefined) {
+      currentVersion.value = response.data.version;
+      selectedVersion.value = response.data.version;
+      emit('versionLoaded', response.data.version);
+    }
+
+    if (response.data.isCurrentVersion !== undefined) {
+      isCurrentVersion.value = response.data.isCurrentVersion;
+    }
+
     // Update dropdown data
     if (response.data.dropdownData) {
       dropdownData.value = response.data.dropdownData;
-    }
-
-    // Set current version
-    if (response.data.version) {
-      currentVersion.value = response.data.version;
-      emit('versionLoaded', response.data.version);
     }
 
     if (response.data.config && response.data.config.profiles) {
@@ -201,6 +223,17 @@ const loadExistingConfig = async () => {
   } finally {
     configLoading.value = false;
   }
+};
+
+// Load specific version
+const loadSpecificVersion = async version => {
+  await loadExistingConfig(version);
+};
+
+// Method to change version
+const changeVersion = newVersion => {
+  if (newVersion === selectedVersion.value) return;
+  loadSpecificVersion(newVersion);
 };
 
 // Save configuration for this quote type only
@@ -295,6 +328,8 @@ onMounted(async () => {
 defineExpose({
   getProfiles,
   loadExistingConfig,
+  loadSpecificVersion,
+  changeVersion,
 });
 </script>
 
@@ -313,6 +348,29 @@ defineExpose({
               >Currently viewing {{ quoteTypeLabel }} configuration version
               {{ currentVersion }}</span
             >
+            <span
+              v-if="!isCurrentVersion"
+              class="ml-2 text-amber-600 font-medium"
+            >
+              (Historical Version)
+            </span>
+          </div>
+
+          <!-- Version Selector -->
+          <div
+            v-if="allVersions.length > 0"
+            class="flex items-center space-x-2"
+          >
+            <span class="text-sm text-gray-600">Version:</span>
+            <x-select
+              :modelValue="selectedVersion"
+              :options="
+                allVersions.map(v => ({ value: v, label: `Version ${v}` }))
+              "
+              @update:modelValue="changeVersion"
+              class="w-32"
+              :disabled="configLoading"
+            />
           </div>
         </div>
       </div>
@@ -334,7 +392,7 @@ defineExpose({
             color="#ff5e00"
             type="button"
             @click="addProfile"
-            :disabled="disabled"
+            :disabled="isDisabled"
           >
             Add {{ quoteTypeLabel }} Profile
           </x-button>
@@ -390,7 +448,7 @@ defineExpose({
                 color="error"
                 outlined
                 type="button"
-                :disabled="disabled"
+                :disabled="isDisabled"
                 @click="removeProfile(profileIndex)"
               >
                 <svg
@@ -426,7 +484,7 @@ defineExpose({
                   label="Nationalities"
                   required
                   tooltip="Select the nationalities of customers this profile applies to."
-                  :disabled="disabled"
+                  :disabled="isDisabled"
                 >
                   <template
                     #content-footer
@@ -470,7 +528,7 @@ defineExpose({
                           multiple
                           filterable
                           class="w-full min-h-[40px]"
-                          :disabled="disabled"
+                          :disabled="isDisabled"
                           :tooltip="`Select ${field.label.toLowerCase()} options for this profile.`"
                         >
                           <template
@@ -494,7 +552,7 @@ defineExpose({
                           :placeholder="`Enter ${field.label.toLowerCase()}`"
                           type="text"
                           class="!mb-0"
-                          :disabled="disabled"
+                          :disabled="isDisabled"
                           :tooltip="`Set the minimum ${field.label.toLowerCase()} for this profile.`"
                         >
                           <!-- Currency suffix for fields with currency -->
@@ -528,7 +586,7 @@ defineExpose({
                 color="#059669"
                 @click="saveConfiguration"
                 :loading="loader"
-                :disabled="loader || disabled"
+                :disabled="loader || isDisabled"
               >
                 <i class="ri-save-line mr-1"></i> Save
                 {{ quoteTypeLabel }} Configuration
@@ -545,14 +603,16 @@ defineExpose({
 
         <!-- Read-only notice -->
         <div
-          v-if="disabled"
+          v-if="isDisabled"
           class="flex items-center text-amber-600 mt-4 p-3 bg-amber-50 rounded-md border border-amber-200"
         >
           <i class="ri-error-warning-line mr-2"></i>
-          <span
-            >You are viewing a historical version. Configuration is
-            read-only.</span
-          >
+          <span v-if="!isCurrentVersion">
+            You are viewing a historical version. Configuration is read-only.
+          </span>
+          <span v-else-if="props.disabled">
+            Configuration is currently read-only.
+          </span>
         </div>
       </div>
     </div>
