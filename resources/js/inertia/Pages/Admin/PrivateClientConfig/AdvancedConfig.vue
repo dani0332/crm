@@ -8,10 +8,6 @@ import HomeTemplate from './templates/HomeTemplate.vue';
 import YachtTemplate from './templates/YachtTemplate.vue';
 
 const props = defineProps({
-  configurations: Array,
-  allVersions: Array,
-  selectedVersion: Number,
-  isCurrentVersion: Boolean,
   quoteTypes: Array,
   quoteTypeCodeEnum: Object,
 });
