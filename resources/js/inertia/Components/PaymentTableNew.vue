@@ -292,14 +292,7 @@ const closeInnerModal = () => {
   // Just close the gallery modal, not the payment modal
   isGalleryModelOpen.value = false;
 };
-// Define a computed property to calculate the initial total price without VAT
-const initialTotalPriceWithoutVat = computed(() => {
-  if (props.quoteType === quoteTypeCodeEnum.Health) {
-    return props.eCommercePriceWithLP; // premium with loading price,excluding vat
-  }
-  const vatRate = vatValue ? vatValue / 100 : 0;
-  return totalPrice.value / (1 + vatRate);
-});
+
 
 // Add state for expanded rows
 const expandedPaymentRows = ref({});
@@ -311,30 +304,6 @@ const toggleExpand = index => {
 const closeAmlConfirmModal = () => {
   isAmlApprovalRequired.value = false;
 };
-
-const totalPayments = ref([{ value: '1', label: '1' }]);
-
-const paymentTypes = ref(
-  props.paymentMethods.filter(
-    item =>
-      ![
-        page.props.paymentMethodsEnum?.GMApproval,
-        page.props.paymentMethodsEnum?.CMOApproval,
-        page.props.paymentMethodsEnum?.COOApproval,
-        page.props.paymentMethodsEnum?.Credit,
-      ].includes(item.value),
-  ),
-);
-paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
-
-// Define frequency types
-const frequencyTypes = ref(
-  paymentLookups.paymentFrequencyTypes.map(item => ({
-    value: item.code,
-    label: item.text,
-    tooltip: item.description,
-  })),
-);
 
 // Define payment decline reasons
 const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
@@ -361,13 +330,6 @@ const discountReasons = paymentLookups.paymentDiscountReasons.map(item => ({
   tooltip: item.description,
 }));
 discountReasons.unshift({ value: '', label: 'Select a reason' });
-
-const resetTotalPayments = () => {
-  totalPayments.value = [];
-  for (let i = 1; i <= 20; i++) {
-    totalPayments.value.push({ value: i.toString(), label: i.toString() });
-  }
-};
 
 const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
   if (paymentStatus == paymentStatusEnum.PAID) {
@@ -520,8 +482,7 @@ const addPaymentModal = () => {
   paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
   paymentFormUpdateData.discount = '';
   paymentFormUpdateData.credit_approval = '';
-  totalPayments.value = [];
-  totalPayments.value.push({ value: '1', label: '1' });
+  createPaymentFormRef.value.updateTotalPayments([{ value: '1', label: '1' }]);
   paymentFormUpdateData.payment_no = '1';
   createPaymentFormRef.value.updatePaymentForm(paymentFormUpdateData);
   createPaymentFormRef.value.handleCollectionTypeChange();
@@ -1004,7 +965,7 @@ const closeVoidPaymentModal = () => {
 watch(
   () => createPaymentFormRef.value?.paymentMethodsForm,
   (newVal) => {
-    console.clear();
+    // console.clear();
     console.log(' newVal : ', newVal);
     paymentMethodsFormReplicated.value = newVal ?? {};
   }
@@ -1180,8 +1141,6 @@ watch(
             <CreatePaymentForm
               ref="createPaymentFormRef"
               :totalPrice="totalPrice"
-              :frequencyTypes="frequencyTypes"
-              :totalPayments="totalPayments"
               :creditApprovalReasons="creditApprovalReasons"
               :discountTypes="discountTypes"
               :discountReasons="discountReasons"
@@ -1191,7 +1150,6 @@ watch(
               :isVerifiedEnabled="isVerifiedEnabled"
               :isPaidEditable="isPaidEditable"
               :paymentProofDocument="paymentProofDocument"
-              :paymentTypes="paymentTypes"
               :isMultiPaymentsEnabled="isMultiPaymentsEnabled"
               :quoteType="quoteType"
               :sendUpdate="sendUpdate"
@@ -1208,6 +1166,8 @@ watch(
               :quoteTypesToCheck="quoteTypesToCheck"
               :insuranceProviders="insuranceProviders"
               :createPaymentModal="createPaymentModal"
+              :paymentMethods="paymentMethods"
+              :eCommercePriceWithLP="eCommercePriceWithLP"
               @handle-declined-reason-change="handleDeclinedReasonChange"
               @handle-collection-type-change="handleCollectionTypeChange"
               @handle-frequency-change="handleFrequencyChange"
@@ -1220,7 +1180,6 @@ watch(
               @upload-document="uploadDocument"
               @open-inner-modal="openInnerModal"
               @delete-document="deleteDocument"
-              @calculate-total-amount="calculateTotalAmount"
               @cancel="handleCancelChanges"
               @decline="handleDeclinedChange"
               @cancel-modal="createPaymentModal = !createPaymentModal"

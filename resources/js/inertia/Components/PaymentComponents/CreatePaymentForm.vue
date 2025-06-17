@@ -14,10 +14,15 @@
 	const page = usePage();
 	const can = permission => useCan(permission);
 
+	const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+	const permissionEnum = page.props.permissionsEnum;
+	const paymentLookups = page.props.paymentLookups;
+	const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
+
+	const notification = useNotifications('toast');
+
 	const props = defineProps({
 		totalPrice: Number,
-		frequencyTypes: Array,
-		totalPayments: Array,
 		creditApprovalReasons: Array,
 		discountReasons: Array,
 		discountTypes: Array,
@@ -37,7 +42,6 @@
 		isCreditCardView: Boolean,
 		isCheckDetailsEnabled: Boolean,
 		paymentProofDocument: Object,
-		paymentTypes: Object,
 		isMultiPaymentsEnabled: Boolean,
 		quoteType: String,
 		sendUpdate: Object,
@@ -55,6 +59,8 @@
 		permissionEnum: Object,
 		paymentMethodsEnum: Object,
 		createPaymentModal: Boolean,
+		paymentMethods: Array,
+		eCommercePriceWithLP: Number,
 	});
 
 	const fileUploadModels = ref([]);
@@ -131,13 +137,27 @@
 	const insurerPaymentLinkChanged = ref(false);
 	const confirmModalClose = ref(false);
 	const insurerPaymentComponent = ref(null);
-
-	const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-	const permissionEnum = page.props.permissionsEnum;
-	const paymentLookups = page.props.paymentLookups;
-	const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
-
-	const notification = useNotifications('toast');
+	const totalPayments = ref([{ value: '1', label: '1' }]);
+	const paymentTypes = ref(
+		props.paymentMethods.filter(
+			item =>
+				![
+					page.props.paymentMethodsEnum?.GMApproval,
+					page.props.paymentMethodsEnum?.CMOApproval,
+					page.props.paymentMethodsEnum?.COOApproval,
+					page.props.paymentMethodsEnum?.Credit,
+				].includes(item.value),
+		),
+	);
+	paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
+	// Define frequency types
+	const frequencyTypes = ref(
+		paymentLookups.paymentFrequencyTypes.map(item => ({
+			value: item.code,
+			label: item.text,
+			tooltip: item.description,
+		})),
+	);
 
 	const emit = defineEmits([
 		'handle-collection-type-change',
@@ -256,6 +276,15 @@
 			return true;
 		}
 		return false;
+	});
+
+	// Define a computed property to calculate the initial total price without VAT
+	const initialTotalPriceWithoutVat = computed(() => {
+		if (props.quoteType === quoteTypeCodeEnum.Health) {
+			return props.eCommercePriceWithLP; // premium with loading price,excluding vat
+		}
+		const vatRate = vatValue ? vatValue / 100 : 0;
+		return totalPrice.value / (1 + vatRate);
 	});
 
 	const rules = {
@@ -2224,8 +2253,17 @@
 		return false;
 	};
 
+	const resetTotalPayments = () => {
+		totalPayments.value = [];
+		for (let i = 1; i <= 20; i++) {
+			totalPayments.value.push({ value: i.toString(), label: i.toString() });
+		}
+	};
+
 	const getPlanName = computed(() => {
 		const plan = props.planDetail?.value;
+		console.clear();
+		console.log("PLAN", props.quoteTypesToCheck.includes(props.quoteType) && plan, plan)
 		if (props.quoteType === quoteTypeCodeEnum.Bike) {
 			return plan ? props.quoteRequest.car_plan.text : 'Not Available';
 		}
@@ -2294,6 +2332,10 @@
 
 	const resetIsDiscountDocumentNotUploaded = () => {
 		isDiscountDocumentNotUploaded.value = false;
+	}
+
+	const updateTotalPayments = (value) => {
+		totalPayments.value = value;
 	}
 
 	// Define payment discount types
@@ -2458,7 +2500,7 @@
 		@upload-document="(doc, files, count) => emit('upload-document', doc, files, count)"
 		@open-inner-modal="(fileId) => emit('open-inner-modal', fileId)"
 		@delete-document="(docName, count, docId) => emit('delete-document', docName, count, docId)"
-		@calculate-total-amount="emit('calculate-total-amount')"
+		@calculate-total-amount="calculateTotalAmount"
 		@handle-discount-value-change="(value) => discountValue = value"
 		@validate-insurer-payment-link="emit('validate-insurer-payment-link')"
 	/>
