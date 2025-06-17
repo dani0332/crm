@@ -87,25 +87,10 @@ class PrivateClientConfigController extends Controller
                             })
                             ->get();
 
-        $carMakes = CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-
-        $insurers = InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-
-        $locationAreas = SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get();
-
-        $nationalities = Nationality::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-
-        $currencies = CurrencyType::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-
         $isCurrentVersion = count($allVersions) === 0 || (int) $selectedVersion === (int) $allVersions[0];
 
         return Inertia::render('Admin/PrivateClientConfig/Advanced', [
             'configurations' => $configurations,
-            'carMakes' => $carMakes,
-            'insurers' => $insurers,
-            'locationAreas' => $locationAreas,
-            'nationalities' => $nationalities,
-            'currencies' => $currencies,
             'allVersions' => $allVersions,
             'selectedVersion' => $selectedVersion,
             'isCurrentVersion' => $isCurrentVersion,
@@ -124,16 +109,54 @@ class PrivateClientConfigController extends Controller
             ->where('active_version', true)
             ->first();
 
-        if (!$latestConfig) {
-            return response()->json(['config' => null]);
+        // Get specific dropdown data based on quote type
+        $dropdownData = $this->getDropdownDataByQuoteType($quoteTypeId);
+
+        $responseData = [
+            'config' => null,
+            'version' => null,
+            'dropdownData' => $dropdownData,
+        ];
+
+        if ($latestConfig) {
+            $configData = json_decode($latestConfig->config, true);
+            $responseData['config'] = $configData;
+            $responseData['version'] = $latestConfig->version;
         }
 
-        $configData = json_decode($latestConfig->config, true);
+        return response()->json($responseData);
+    }
 
-        return response()->json([
-            'config' => $configData,
-            'version' => $latestConfig->version,
-        ]);
+    private function getDropdownDataByQuoteType($quoteTypeId)
+    {
+        $baseData = [
+            'nationalities' => Nationality::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
+            'currencies' => CurrencyType::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
+        ];
+
+        switch ($quoteTypeId) {
+            case 1: // Car
+                return array_merge($baseData, [
+                    'carMakes' => CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
+                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
+                ]);
+
+            case 2: // Home
+                return array_merge($baseData, [
+                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
+                    'locationAreas' => SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get(),
+                ]);
+
+            case 3: // Health
+            case 4: // Life
+            case 7: // Yacht
+                return array_merge($baseData, [
+                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
+                ]);
+
+            default:
+                return $baseData;
+        }
     }
 
     public function upsert(Request $request)
