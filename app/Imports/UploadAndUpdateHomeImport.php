@@ -100,7 +100,7 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
      */
     public function getColumns()
     {
-        $columns = [
+        return [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
             'mobile_no' => ['index' => 2, 'title' => 'Customer Number', 'rules' => 'nullable|max:100'],
@@ -134,8 +134,6 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
             'previous_advisor_email' => ['index' => 22, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'notes' => ['index' => 23, 'title' => 'Notes', 'rules' => 'nullable|max:100'],
         ];
-
-        return $columns;
     }
 
     /**
@@ -147,7 +145,7 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
     {
         return [
 
-            AfterImport::class => function (AfterImport $event) {
+            AfterImport::class => function () {
                 $failed = [];
                 foreach ($this->failures() as $failure) {
                     if (! isset($failed[$failure->row()])) {

@@ -166,9 +166,15 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
-            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
-            'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, uuid: $lead->uuid),
         ];
+
+        $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);
+
+        if (! empty($tempUrlPDF)) {
+            $data['tempUrlPDF'] = $tempUrlPDF;
+        }
+
+        return (object) $data;
     }
 
     private function mapDataForRenewalOCBEmail($lead, $advisor, $workflowType)
@@ -332,6 +338,8 @@ class HomeEmailService extends BaseService
                 break;
             case Carbon::SUNDAY:
                 $ocbDate->addDay(); // Move to Monday
+                break;
+            default:
                 break;
         }
 

@@ -52,16 +52,16 @@ class HomeRenewalService extends RenewalsUploadService
             if ($jobs != null && count($jobs)) {
 
                 Bus::batch($jobs)
-                    ->then(function (Batch $batch) use ($logPrefix, $renewalsUploadLead) {
+                    ->then(function () use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
-                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
+                    ->catch(function (Throwable $e) use ($logPrefix, $renewalsUploadLead) {
                         // Bus batch failed
                         LoggerService::info($logPrefix.' one of batch is failed. '.$e->getMessage());
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function (Batch $batch) use ($logPrefix) {
+                    ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
@@ -123,10 +123,17 @@ class HomeRenewalService extends RenewalsUploadService
 
             $isReAssignment = $quote->advisor_id != $advisorId;
 
+            $assignmentType = null;
+            if ($advisorId) {
+                $assignmentType = $isReAssignment 
+                    ? AssignmentTypeEnum::SYSTEM_REASSIGNED 
+                    : AssignmentTypeEnum::SYSTEM_ASSIGNED;
+            }
+
             $quoteData = [
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'advisor_id' => $advisorId,
-                'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
+                'assignment_type' => $assignmentType,
                 'renewal_batch_id' => $renewalQuoteProcess->renewal_batch_id,
                 'notes' => $data['notes'],
                 'insurer_quote_number' => (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null,
@@ -255,7 +262,7 @@ class HomeRenewalService extends RenewalsUploadService
                 LoggerService::info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
                 Bus::batch($jobs)
-                    ->then(function (Batch $busBatch) use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
+                    ->then(function () use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
 
@@ -263,11 +270,11 @@ class HomeRenewalService extends RenewalsUploadService
                             app(self::class)->scheduleHomeRenewalsOcbEmails($batch, $userId);
                         })->onQueue('renewals');
                     })
-                    ->catch(function (Batch $busBatch, Throwable $e) use ($logPrefix, $renewalStatusProcess) {
-                        LoggerService::info($logPrefix.' one of batch is failed. ');
+                    ->catch(function (Throwable $e) use ($logPrefix, $renewalStatusProcess) {
+                        LoggerService::info($logPrefix.' one of batch is failed. '.$e->getMessage());
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function (Batch $busBatch) use ($logPrefix) {
+                    ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
@@ -428,16 +435,16 @@ class HomeRenewalService extends RenewalsUploadService
                 LoggerService::info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
 
                 Bus::batch($jobs)
-                    ->then(function (Batch $batch) use ($logPrefix, $renewalsBatchEmail) {
+                    ->then(function () use ($logPrefix, $renewalsBatchEmail) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
 
                     })
-                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsBatchEmail) {
-                        LoggerService::info($logPrefix.' one of batch is failed. ');
+                    ->catch(function (Throwable $e) use ($logPrefix, $renewalsBatchEmail) {
+                        LoggerService::info($logPrefix.' one of batch is failed. '.$e->getMessage());
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function (Batch $batch) use ($logPrefix) {
+                    ->finally(function () use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
@@ -470,7 +477,7 @@ class HomeRenewalService extends RenewalsUploadService
         $quoteData['has_claimed_losses'] = (! empty($data['claims_history']) && $data['claims_history'] == 'Yes') ? 1 : 0;
         $quoteData['renewal_upload_renewal_premium'] = (! empty($data['premium'])) ? $data['premium'] : null;
         $quoteData['insurer_quote_number'] = (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null;
-        $quoteData['previous_advisor_id'] = (! empty($data['previous_advisor_email'])) ? $this->renewalsAddonService->getUserInfo($data['previous_advisor_email']) : null;
+        $quoteData['previous_advisor_id'] = (! empty($data['previous_advisor_email'])) ? app(RenewalsAddonServices::class)->getUserInfo($data['previous_advisor_email']) : null;
         $quoteData['additional_notes'] = $data['notes'];
 
         return $quoteData;

@@ -45,14 +45,13 @@ const permissionsEnum = page.props.permissionsEnum;
           color="#ff5e00"
           :href="route('renewals-batches-nonmotor')"
           class="btn-2"
-          >Batches List</x-button
-        >
+          >Batches List</x-button>
+
         <x-button
           color="primary"
           onclick="return confirm('Do you want to fetch Plans?');"
-          :href="`/renewals/batches/${batch}/${page.props.quoteType}/fetch-plans`"
-          >Fetch Plans</x-button
-        >
+          :href="route('batch-fetch-plans.non.motor', { id: batch, quoteType: quoteType })"
+          >Fetch Plans</x-button>
       </div>
     </div>
     <x-divider class="my-4" />

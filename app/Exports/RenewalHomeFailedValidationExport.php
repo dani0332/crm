@@ -22,61 +22,17 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
      */
     public function collection()
     {
-        $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
+        $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)
+            ->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])
+            ->get();
+        
         $exportLeads = collect();
-        if ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::CREATE_LEADS) {
-            $firstRow = (object) [];
-            $firstRow->customer_name = 'Customer Name';
-            $firstRow->email = 'Customer e-mail';
-            $firstRow->mobile_no = 'Customer Mobile';
-            $firstRow->quote_type = 'Insurance Type';
-            $firstRow->insurer = 'Insurance Provider';
-            $firstRow->product = 'Product';
-            $firstRow->product_type = 'Product Type';
-            $firstRow->advisor = 'Advisor Email';
-            $firstRow->policy_number = 'Policy Number';
-            $firstRow->start_date = 'Policy Start Date';
-            $firstRow->end_date = 'Policy End date';
-            $firstRow->batch = 'Batch';
-            $firstRow->make = 'Car Make';
-            $firstRow->model = 'Car Model';
-            $firstRow->year = 'Model Year';
-            $firstRow->previous_advisor = 'Previous Advisor Email';
-            $firstRow->object = 'Object';
-            $firstRow->previous_quote_policy_premium = 'Gross Premium';
-            $firstRow->source = 'Sales channel';
-            $firstRow->notes = 'Notes';
-            $firstRow->errors = 'Errors';
-            $exportLeads->push($firstRow);
-        } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
-            $firstRow = (object) [];
-            $firstRow->customer_name = 'Customer Name';
-            $firstRow->email = 'Customer e-mail';
-            $firstRow->mobile_no = 'Customer Mobile';
-            $firstRow->quote_type = 'Insurance Type';
-            $firstRow->current_insurance_provider = 'Insurance Provider';
-            $firstRow->advisor = 'Advisor Email';
-            $firstRow->policy_number = 'Policy Number';
-            $firstRow->start_date = 'Policy Start Date';
-            $firstRow->end_date = 'Policy End date';
-            $firstRow->you_are_a = 'You are a';
-            $firstRow->i_live_in_a = 'I live in a (Type of Property)';
-            $firstRow->occupancy_status_for_owners = 'Occupancy Status for Owners';
-            $firstRow->location_area = 'Location Area';
-            $firstRow->cover_required = 'Cover Required';
-            $firstRow->contents = 'Contents';
-            $firstRow->personal_belongings = 'Personal Belongings';
-            $firstRow->building = 'Building';
-            $firstRow->insurance_provider = 'Insurance Provider';
-            $firstRow->plan_name = 'Plan Name';
-            $firstRow->claims_history = 'Claims History';
-            $firstRow->premium = 'Premium';
-            $firstRow->insurer_quote_no = 'Insurer Quote No.';
-            $firstRow->previous_advisor_email = 'Previous Advisor Email';
-            $firstRow->notes = 'Notes';
-            $firstRow->errors = 'Errors';
-            $exportLeads->push($firstRow);
-        }
+        
+        // Add header row based on renewal import type
+        $headerRow = $this->createHeaderRow();
+        $exportLeads->push($headerRow);
+        
+        // Add failed leads data
         foreach ($failedLeads as $lead) {
             if ($lead->data) {
                 $leadData = $lead->data;
@@ -86,5 +42,84 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
         }
 
         return $exportLeads;
+    }
+
+    /**
+     * Create header row based on renewal import type
+     */
+    private function createHeaderRow(): object
+    {
+        $headerRow = (object) $this->getCommonHeaders();
+
+        if ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::CREATE_LEADS) {
+            return (object) array_merge((array) $headerRow, $this->getCreateLeadsSpecificHeaders());
+        } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            return (object) array_merge((array) $headerRow, $this->getUpdateLeadsSpecificHeaders());
+        }
+
+        return $headerRow;
+    }
+
+    /**
+     * Get common headers used by both import types
+     */
+    private function getCommonHeaders(): array
+    {
+        return [
+            'customer_name' => 'Customer Name',
+            'email' => 'Customer e-mail',
+            'mobile_no' => 'Customer Mobile',
+            'quote_type' => 'Insurance Type',
+            'advisor' => 'Advisor Email',
+            'policy_number' => 'Policy Number',
+            'start_date' => 'Policy Start Date',
+            'end_date' => 'Policy End date',
+            'notes' => 'Notes',
+            'errors' => 'Errors',
+        ];
+    }
+
+    /**
+     * Get headers specific to CREATE_LEADS import type
+     */
+    private function getCreateLeadsSpecificHeaders(): array
+    {
+        return [
+            'insurer' => 'Insurance Provider',
+            'product' => 'Product',
+            'product_type' => 'Product Type',
+            'batch' => 'Batch',
+            'make' => 'Car Make',
+            'model' => 'Car Model',
+            'year' => 'Model Year',
+            'previous_advisor' => 'Previous Advisor Email',
+            'object' => 'Object',
+            'previous_quote_policy_premium' => 'Gross Premium',
+            'source' => 'Sales channel',
+        ];
+    }
+
+    /**
+     * Get headers specific to UPDATE_LEADS import type
+     */
+    private function getUpdateLeadsSpecificHeaders(): array
+    {
+        return [
+            'current_insurance_provider' => 'Insurance Provider',
+            'you_are_a' => 'You are a',
+            'i_live_in_a' => 'I live in a (Type of Property)',
+            'occupancy_status_for_owners' => 'Occupancy Status for Owners',
+            'location_area' => 'Location Area',
+            'cover_required' => 'Cover Required',
+            'contents' => 'Contents',
+            'personal_belongings' => 'Personal Belongings',
+            'building' => 'Building',
+            'insurance_provider' => 'Insurance Provider',
+            'plan_name' => 'Plan Name',
+            'claims_history' => 'Claims History',
+            'premium' => 'Premium',
+            'insurer_quote_no' => 'Insurer Quote No.',
+            'previous_advisor_email' => 'Previous Advisor Email',
+        ];
     }
 }
