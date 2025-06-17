@@ -38,8 +38,8 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
         // Multi-row headings for title, subtitle, etc.
         return [
             ['AFIA Insurance Brokerage Services LLC'],
-            ['AML/CFT Monitoring purpose Customer Risk Profile based Quarterly Report for Q4-2024'],
-            ['Quarter - Q4-2024'],
+            ['AML/CFT Monitoring purpose Customer Risk Profile based Quarterly Report for Q1-2025'],
+            ['Quarter - Q1-2025'],
             ['Requested By Compliance Dept.'],
             [
                 'Customer Full Name',
