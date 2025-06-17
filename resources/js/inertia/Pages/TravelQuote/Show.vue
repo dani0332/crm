@@ -3225,6 +3225,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       }"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :payments="payments"
                     />
                     <x-button
                       v-else
@@ -3327,6 +3329,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         }"
                         :insuranceProviderId="item.id"
                         :code="quote.code"
+                        :plans="availableSeniorPlansTable.data || []"
+                        :payments="payments"
                       />
                       <x-button
                         v-else
@@ -3717,6 +3721,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :quoteType="$page.props.modelType"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured_kyc_id"
       :expanded="sectionExpanded"
     />
 

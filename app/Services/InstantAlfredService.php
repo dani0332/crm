@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InstantChatReportsEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -22,6 +23,19 @@ class InstantAlfredService extends BaseService
     private function buildQueryByModel($quoteTypeId)
     {
         $aliases = [];
+
+        // Define segment constants for better maintainability
+        $SEGMENT_NON_SIC = 'NON-SIC';
+        $SEGMENT_SIC_REVIVAL = 'SIC-REVIVAL';
+        $SEGMENT_AIG = 'AIG';
+        $SEGMENT_SIC = 'SIC';
+
+        // Define revival sources for better maintainability
+        $REVIVAL_SOURCES = [
+            LeadSourceEnum::REVIVAL,
+            LeadSourceEnum::REVIVAL_REPLIED,
+            LeadSourceEnum::REVIVAL_PAID,
+        ];
 
         $subQuery = DB::table('quote_tags as qt')
             ->select(
@@ -43,6 +57,12 @@ class InstantAlfredService extends BaseService
                 'pqr.quote_batch_id',
                 'pqr.insurance_provider_id',
                 'pqr.premium as total_price',
+                DB::raw('CASE 
+                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Car.' THEN cqr.lead_assignment_trigger
+                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Health.' THEN hqr.lead_assignment_trigger
+                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Travel.' THEN tqr.lead_assignment_trigger
+                    ELSE pqr.lead_assignment_trigger
+                END as lead_assignment_trigger'),
                 'pqrd.chat_initiated_at',
                 'qs.text AS quote_status_id_text',
                 'qb.name as quote_batch_id_text',
@@ -53,20 +73,29 @@ class InstantAlfredService extends BaseService
                 DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 DB::raw("
                     CASE 
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' 
-                        AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
-                    THEN 'SIC-REVIVAL'
-
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC_REVIVAL->tag()."%'
-                        AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
-                    THEN 'SIC-REVIVAL'
-
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN 'AIG'
-                    
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN 'SIC'
-                    
-                    WHEN qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN 'NON-SIC'
-                    ELSE 'N/A'
+                        -- Handle NULL tags first (most common case)
+                        WHEN qt.tags IS NULL THEN '{$SEGMENT_NON_SIC}'
+                        
+                        -- Handle AIG cases first (most specific tag)
+                        WHEN qt.tags LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN '{$SEGMENT_AIG}'
+                        
+                        -- Handle SIC-REVIVAL cases (requires both tag and source match)
+                        WHEN (
+                            (qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' OR qt.tags LIKE '%".QuoteSegmentEnum::SIC_REVIVAL->tag()."%')
+                            AND pqr.source IN ('".implode("','", $REVIVAL_SOURCES)."')
+                        ) THEN '{$SEGMENT_SIC_REVIVAL}'
+                        
+                        -- Handle SIC cases (excluding SIC-REVIVAL)
+                        WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN '{$SEGMENT_SIC}'
+                        
+                        -- Handle NON-SIC cases explicitly (tags exist but don't contain SIC or AIG)
+                        WHEN (
+                            qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' 
+                            AND qt.tags NOT LIKE '%".QuoteSegmentEnum::AIG->tag()."%'
+                        ) THEN '{$SEGMENT_NON_SIC}'
+                        
+                        -- Default case (any other unexpected cases)
+                        ELSE '{$SEGMENT_NON_SIC}'
                     END as segment
                 "),
             )
@@ -83,6 +112,9 @@ class InstantAlfredService extends BaseService
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
+            ->leftJoin('car_quote_request as cqr', 'cqr.uuid', '=', 'pqr.uuid')
+            ->leftJoin('health_quote_request as hqr', 'hqr.uuid', '=', 'pqr.uuid')
+            ->leftJoin('travel_quote_request as tqr', 'tqr.uuid', '=', 'pqr.uuid')
             ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) use ($quoteTypeId) {
                 $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
                     $join->on('cp.id', '=', 'pqr.plan_id')
@@ -161,22 +193,22 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($quoteId) && $quoteId != '') {
-            $partialQuery->where("{$alias}.uuid", $quoteId);
+            $partialQuery->where('pqr.uuid', $quoteId);
         }
 
         if (isset($request->email) && $request->email != '') {
-            $partialQuery->where('email', $request->email);
+            $partialQuery->where('pqr.email', $request->email);
         }
 
         if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $partialQuery->where('mobile_no', $request->mobile_no);
+            $partialQuery->where('pqr.mobile_no', $request->mobile_no);
         }
 
         if (! empty($request->chat_initiated_at) && $request->email == null && $request->mobile_no == null && $quoteId == null) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
 
-            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            $partialQuery->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
         }
 
         if ($request->email == null && $request->mobile_no == null && $quoteId == null && empty($request->chat_initiated_at)) {
@@ -184,35 +216,35 @@ class InstantAlfredService extends BaseService
             $dateFrom = now()->startOfDay();
             $dateTo = now()->endOfDay();
 
-            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            $partialQuery->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
-            $partialQuery->whereIn('transaction_type_id', $request->transaction_type_id);
+            $partialQuery->whereIn('pqr.transaction_type_id', $request->transaction_type_id);
         }
 
         if (isset($request->quote_batch_id) && ! empty($request->quote_batch_id)) {
-            $partialQuery->whereIn('quote_batch_id', $request->quote_batch_id);
+            $partialQuery->whereIn('pqr.quote_batch_id', $request->quote_batch_id);
         }
 
         if (isset($request->quote_status_id) && is_array($request->quote_status_id) && count($request->quote_status_id) > 0) {
-            $partialQuery->whereIn('quote_status_id', $request->quote_status_id);
+            $partialQuery->whereIn('pqr.quote_status_id', $request->quote_status_id);
         }
 
         if (isset($request->payment_status_id) && $request->payment_status_id != '') {
-            $partialQuery->whereIn("{$alias}.payment_status_id", $request->payment_status_id);
+            $partialQuery->whereIn('pqr.payment_status_id', $request->payment_status_id);
         }
 
         if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != '') {
-            $partialQuery->where('assignment_type', $request->assigment_type);
+            $partialQuery->where('pqr.assignment_type', $request->assigment_type);
         }
 
         if (isset($request->sale_leads) && $request->sale_leads != '') {
             if ($request->sale_leads == quoteTypeCode::yesText) {
-                $partialQuery->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
+                $partialQuery->whereIn('pqr.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
             }
             if ($request->sale_leads == quoteTypeCode::noText) {
-                $partialQuery->whereNotNull('quote_status_id');
+                $partialQuery->whereNotNull('pqr.quote_status_id');
             }
         }
 
@@ -221,6 +253,48 @@ class InstantAlfredService extends BaseService
         }
 
         return $partialQuery;
+    }
+
+    /**
+     * Get the base query builder for consolidated chat reports (chunked processing)
+     * This method returns a query builder instead of executing it, allowing for chunked processing
+     */
+    public function getChatConsolidateReportQuery(array $requestParams = [])
+    {
+        // Create a request instance from parameters if not available
+        $request = $this->createRequestFromParams($requestParams);
+
+        return $this->processSqlChatFilters($request);
+    }
+
+    /**
+     * Get the base query builder for detailed chat reports (chunked processing)
+     * Returns the same SQL query as consolidated reports since the base data comes from SQL
+     */
+    public function getChatDetailedReportQuery(array $requestParams = [])
+    {
+        // Create a request instance from parameters if not available
+        $request = $this->createRequestFromParams($requestParams);
+
+        return $this->processSqlChatFilters($request);
+    }
+
+    /**
+     * Create a request instance from parameters array
+     * This helps support both request() and parameter-based processing
+     */
+    private function createRequestFromParams(array $requestParams = [])
+    {
+        $currentRequest = request();
+
+        // If we have parameters, merge them with current request
+        if (! empty($requestParams)) {
+            // Create new request instance with merged data
+            $mergedData = array_merge($currentRequest->all(), $requestParams);
+            $currentRequest->merge($mergedData);
+        }
+
+        return $currentRequest;
     }
 
     public function generateChatConsolidateReport()
@@ -243,6 +317,10 @@ class InstantAlfredService extends BaseService
                 $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
 
                 $sqlRecord->quote_type = $request->quoteType;
+                $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger)
+                    : 'N/A';
+
                 if ($relatedMongoRecord) {
                     $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'];
                     $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'];
@@ -256,6 +334,142 @@ class InstantAlfredService extends BaseService
         });
 
         return $data;
+    }
+
+    /**
+     * Process a chunk of consolidated chat data (used by chunked CSV export)
+     * This method processes MongoDB data for a chunk of SQL records
+     */
+    public function processConsolidatedChunk($sqlRecords, array $requestParams = [])
+    {
+        $request = $this->createRequestFromParams($requestParams);
+
+        // Extract UUIDs from the chunk
+        $uuids = collect($sqlRecords)->pluck('uuid')->toArray();
+
+        if (empty($uuids)) {
+            return collect($sqlRecords);
+        }
+
+        // Create MongoDB pipeline for this chunk
+        $mongoPipeline = $this->createPipeline($request, $uuids, $request->report ?? 'consolidated');
+
+        try {
+            // Get MongoDB results for this chunk
+            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
+            $mongoResultsCollection = collect($mongoResults);
+
+            // Merge SQL and MongoDB data
+            foreach ($sqlRecords as $sqlRecord) {
+                $relatedMongoRecord = $mongoResultsCollection->firstWhere('_id', $sqlRecord->uuid);
+
+                // Set quote type
+                $sqlRecord->quote_type = $request->quoteType ?? explode('-', $sqlRecord->code ?? '')[0] ?? 'N/A';
+
+                // Set lead assignment trigger text
+                $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger)
+                    : 'N/A';
+
+                // Merge MongoDB data if available
+                if ($relatedMongoRecord) {
+                    $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'] ?? [];
+                    $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'] ?? 0;
+                    $sqlRecord->ai_interactions = $relatedMongoRecord['ai_interactions'] ?? 0;
+                    $sqlRecord->total_ai_interactions = $relatedMongoRecord['total_ai_interactions'] ?? 0;
+                    $sqlRecord->fallbacks = $relatedMongoRecord['fallbacks'] ?? 0;
+                    $sqlRecord->date_of_first_interaction = $relatedMongoRecord['date_of_first_interaction'] ?? 'N/A';
+                } else {
+                    // Set default values if no MongoDB data found
+                    $sqlRecord->communication_channels = [];
+                    $sqlRecord->customer_interactions = 0;
+                    $sqlRecord->ai_interactions = 0;
+                    $sqlRecord->total_ai_interactions = 0;
+                    $sqlRecord->fallbacks = 0;
+                    $sqlRecord->date_of_first_interaction = 'N/A';
+                }
+            }
+        } catch (\Exception $e) {
+            // Log error but continue processing with default values
+            \Illuminate\Support\Facades\Log::error('MongoDB processing failed for consolidated chunk', [
+                'uuids_count' => count($uuids),
+                'error' => $e->getMessage(),
+            ]);
+
+            // Set default values for all records in chunk
+            foreach ($sqlRecords as $sqlRecord) {
+                $sqlRecord->quote_type = $request->quoteType ?? 'N/A';
+                $sqlRecord->lead_assignment_trigger_text = 'N/A';
+                $sqlRecord->communication_channels = [];
+                $sqlRecord->customer_interactions = 0;
+                $sqlRecord->ai_interactions = 0;
+                $sqlRecord->total_ai_interactions = 0;
+                $sqlRecord->fallbacks = 0;
+                $sqlRecord->date_of_first_interaction = 'N/A';
+            }
+        }
+
+        return collect($sqlRecords);
+    }
+
+    /**
+     * Process a chunk of detailed chat data (used by chunked CSV export)
+     * This method processes MongoDB data for a chunk of SQL records to get detailed chat messages
+     */
+    public function processDetailedChunk($sqlRecords, array $requestParams = [])
+    {
+        $request = $this->createRequestFromParams($requestParams);
+
+        // Ensure report type is set for detailed processing
+        if (! isset($request->report)) {
+            $request->merge(['report' => InstantChatReportsEnum::DETAILED_REPORT]);
+        }
+
+        // Extract UUIDs from the chunk
+        $uuids = collect($sqlRecords)->pluck('uuid')->toArray();
+
+        if (empty($uuids)) {
+            return collect();
+        }
+
+        try {
+            // Create MongoDB pipeline for detailed reports
+            $mongoPipeline = $this->createPipeline($request, $uuids, InstantChatReportsEnum::DETAILED_REPORT);
+
+            // Get MongoDB results for this chunk
+            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
+
+            // Create mappings for SQL data to merge with MongoDB results
+            $sqlData = collect($sqlRecords)->keyBy('uuid');
+
+            // Process MongoDB results and merge with SQL data
+            $processedResults = collect($mongoResults)->map(function ($record) use ($sqlData) {
+                $quoteId = $record['quote_id'] ?? null;
+                if ($quoteId && isset($sqlData[$quoteId])) {
+                    // Add segment from SQL data
+                    $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
+
+                    // Add lead_assignment_trigger and its text representation
+                    $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
+                    $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger
+                        ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlData[$quoteId]->lead_assignment_trigger)
+                        : 'N/A';
+                }
+
+                return $record;
+            });
+
+            return $processedResults;
+
+        } catch (\Exception $e) {
+            // Log error but continue processing with empty collection
+            \Illuminate\Support\Facades\Log::error('MongoDB processing failed for detailed chunk', [
+                'uuids_count' => count($uuids),
+                'error' => $e->getMessage(),
+            ]);
+
+            return collect();
+        }
     }
 
     public function generateChatDetailedReport()
@@ -280,6 +494,26 @@ class InstantAlfredService extends BaseService
 
             $mongoResults = $mongoResults->merge(collect($chunkResults));
         }
+
+        // Create mappings for SQL data to merge with MongoDB results
+        $sqlData = $data->keyBy('uuid');
+
+        // Add SQL data to mongo results
+        $mongoResults = $mongoResults->map(function ($record) use ($sqlData) {
+            $quoteId = $record['quote_id'] ?? null;
+            if ($quoteId && isset($sqlData[$quoteId])) {
+                // Add segment
+                $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
+
+                // Add lead_assignment_trigger and its text representation
+                $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
+                $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlData[$quoteId]->lead_assignment_trigger)
+                    : 'N/A';
+            }
+
+            return $record;
+        });
 
         return $mongoResults;
     }

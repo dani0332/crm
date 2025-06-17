@@ -13,4 +13,9 @@ class Insured extends Model
     {
         return $this->belongsTo(Nationality::class);
     }
+
+    public function insuredKyc()
+    {
+        return $this->hasOne(InsuredKyc::class, 'insured_id', 'id');
+    }
 }

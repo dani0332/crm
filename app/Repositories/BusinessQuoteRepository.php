@@ -67,9 +67,9 @@ class BusinessQuoteRepository extends BaseRepository
         )), function ($query) {
             $query->where('advisor_id', auth()->id());
         })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(! $forExport, $forTotalLeadsCount, $requestParams)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-        $this->adjustQueryByDateFilters($query, 'business_quote_request');
+        $this->adjustQueryByDateFilters($query, 'business_quote_request', $requestParams);
         $query->orderBy('business_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
@@ -84,6 +84,7 @@ class BusinessQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($queryWhere)
     {
+        $quoteTypeId = QuoteTypes::BUSINESS->id();
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
@@ -92,6 +93,10 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
+                'insured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
