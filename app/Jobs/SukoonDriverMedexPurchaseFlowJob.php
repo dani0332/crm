@@ -2,10 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Enums\QuoteTypeId;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonDriverMedexService;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -28,9 +26,9 @@ class SukoonDriverMedexPurchaseFlowJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($lead, $quoteTypeId, $transaction)
+    public function __construct($quoteObject, $quoteTypeId, $transaction)
     {
-        $this->quoteObject = $lead;
+        $this->quoteObject = $quoteObject;
         $this->quoteTypeId = $quoteTypeId;
         $this->transaction = $transaction;
     }
@@ -40,11 +38,10 @@ class SukoonDriverMedexPurchaseFlowJob implements ShouldQueue
      */
     public function handle(): void
     {
-        if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
-            throw new Exception('Only (Car / Bike) LOB are eligible');
-        }
-
-        app(SukoonDriverMedexService::class)->processPurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
+        $sukoonMedexService = app(SukoonDriverMedexService::class);
+        $sukoonMedexService->validateCustomerDetails($this->quoteObject);
+        $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
+        $sukoonMedexService->processPurchaseFlow();
     }
 
     /**

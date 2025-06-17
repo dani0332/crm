@@ -17,6 +17,7 @@ use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -37,6 +38,7 @@ class SukoonDriverMedexService
     private $policyStatus;
     private $paymentGateway;
     private $paymentToken;
+    private $transaction;
 
     private $paymentPlan;
     private $amountDisclaimerText;
@@ -44,30 +46,35 @@ class SukoonDriverMedexService
     private string $logPrefix = 'Sukoon Medex Service:';
     private array $errorMessages = [];
     
-    public function __construct(
-        private $username = '',
-        private $password = '',
-    ) {
+    public function __construct() {
         $this->sukoonRequestUrl = config('constants.SUKOON_API_URL')."/api/v".config('constants.SUKOON_API_VERSION');
     }
 
-    private function viewQuotePolicy($transaction)
+    private function viewQuotePolicy()
     {
         try {
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
-            $response = $this->request("/policy/{$transaction->certificate_number}", 'get', headers: $headers)->json();
+            $response = $this->request("/policy/{$this->policyNumber}", 'get', headers: $headers)->json();
             return $response;
         } catch (Exception $e) {
             throw $e;
         }
     }
 
-    private function initiatePurchaseFlow($transaction)
+    public function initiatePurchaseFlow($quote, $quoteTypeId, $transaction)
     {
         try {
-            $this->username = config('constants.SUKOON_USERNAME');
-            $this->password = config('constants.SUKOON_PASSWORD');
-            $this->login();
+            $this->currentQuote = $quote;
+            $this->quoteTypeId = $quoteTypeId;
+            $this->transaction = $transaction;
+
+            if (!in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike]))
+                throw new Exception('Only (Car / Bike) LOB are eligible');
+
+            LoggerService::startQuoteLogging($this->currentQuote);
+
+            if(empty($this->sessionId))
+                $this->login();
 
             $this->quoteNumber = $transaction->quote_policy ?? null;
             $this->policyNumber = $transaction->certificate_number ?? null;
@@ -106,47 +113,34 @@ class SukoonDriverMedexService
      * @param  mixed  $transaction  The transaction object.
      * @return void
      */
-    public function processPurchaseFlow($quote, $quoteTypeId, $transaction)
+    public function processPurchaseFlow()
     {
         try {
-            $this->currentQuote = $quote;
-            $this->quoteTypeId = $quoteTypeId;
-    
-            LoggerService::startQuoteLogging($this->currentQuote);
-
-            if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike]))
-                throw new Exception('Only (Car / Bike) LOB are eligible');
-
-            $this->validateCustomerDetails($quote);
-
             // Skipable Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
-
-            // STEP #2 login
-            $this->initiatePurchaseFlow($transaction);
+            // STEP #2 login (trigger by initiatePurchaseFlow)
 
             // STEP #4 submitPersonalDetail
-            $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($quote));
-            $this->syncSukoonData($transaction, $profileDetailResponse);
+            $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($this->currentQuote));
+            $this->syncSukoonData($this->transaction, $profileDetailResponse);
 
             // STEP #6 submitPlan
             $submitPlanResponse = $this->submitPlan($this->prepareAdditionalData());
-            $this->syncSukoonData($transaction, $submitPlanResponse);
-
+            $this->syncSukoonData($this->transaction, $submitPlanResponse);
 
             // STEP #7 reviewSubmittedData
             $reviewSubmittedDataResponse = $this->reviewSubmittedData();
-            $this->syncSukoonData($transaction, $reviewSubmittedDataResponse);
+            $this->syncSukoonData($this->transaction, $reviewSubmittedDataResponse);
 
             // STEP #8 confirmSubmittedData
             $this->confirmSubmittedData();
 
             // STEP #10 initiatePaymentProcess
             $initPaymentResponse = $this->initiatePaymentProcess();
-            $this->syncSukoonData($transaction, $initPaymentResponse);
+            $this->syncSukoonData($this->transaction, $initPaymentResponse);
 
             // STEP #11 completeInvoicePayment
-            $invoicePaymentResponse = $this->completeInvoicePayment($transaction);
-            $this->syncSukoonData($transaction, $invoicePaymentResponse);
+            $invoicePaymentResponse = $this->completeInvoicePayment($this->transaction);
+            $this->syncSukoonData($this->transaction, $invoicePaymentResponse);
 
             // STEP #12 getPolicyScheduleCoi 
             $this->getPolicyScheduleCoi();
@@ -155,24 +149,40 @@ class SukoonDriverMedexService
             $this->getCustomerTaxInvoice();
 
             // STEP #14 listGeneratedDocument
-            $listGeneratedDocumentResponse = $this->listGeneratedDocument($quote, $transaction);
+            $listGeneratedDocumentResponse = $this->listGeneratedDocument();
 
             // STEP #15 downloadDocument
-            $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $quote, $transaction);
+            $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
             
-            $quotePolicyResponse = $this->viewQuotePolicy($transaction);
-            $this->updateTransaction($transaction, $quotePolicyResponse);
+            $quotePolicyResponse = $this->viewQuotePolicy();
+            $this->updateTransaction($this->transaction, $quotePolicyResponse);
 
             EmbeddedProductRepository::sendDocument([
-                'epId' => $transaction->product->embeddedProduct->id,
+                'epId' => $this->transaction->product->embeddedProduct->id ?? null,
                 'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
-                'quoteId' => $quote->id,
+                'quoteId' => $this->currentQuote->id,
             ]);
 
         } catch (Exception $e) {
-            $this->logFailure('Sukoon Purchase Flow Failed', $e->getMessage(), [
-                'quote_uuid' => $quote->uuid ?? null,
+            $this->logFailure("{$this->logPrefix} Purchase Flow Failed", $e->getMessage(), [
+                'quote_uuid' => $this->currentQuote->uuid ?? null,
                 'error_messages' => $this->errorMessages
+            ]);
+        }
+    }
+
+    public function syncDocumentsFromSukoon()
+    {
+        try {
+            // STEP #14 listGeneratedDocument
+            $listGeneratedDocumentResponse = $this->listGeneratedDocument();
+
+            // STEP #15 downloadDocument
+            $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
+        } catch (Exception $e) {
+            $this->logFailure("{$this->logPrefix} Sync Documents Failed", $e->getMessage(), [
+                'quote_uuid' => $this->currentQuote->uuid ?? null,
+                'error_messages' => !empty($this->errorMessages) ? $this->errorMessages : $e->getMessage()
             ]);
         }
     }
@@ -331,9 +341,9 @@ class SukoonDriverMedexService
         }
 
         $stepNumber = SukoonPurchaseFlowEnum::getStepNumber($parentFunction);
-        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['message' => $message, 'endPoint' => $endPoint, ...$logData]);
+        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['message' => $message, 'endPoint' => Str::limit($endPoint ?? '', 50), ...$logData]);
     }
-    
+
     /**
      * Logs the failure of a process with the given message and data.
      *
@@ -351,7 +361,6 @@ class SukoonDriverMedexService
         ]);
     }
 
-    
     /**
      * Validates the customer details for the given quote.
      *
@@ -360,7 +369,7 @@ class SukoonDriverMedexService
      *
      * @throws Exception If validation fails.
      */
-    private function validateCustomerDetails($quote)
+    public function validateCustomerDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
         $insuredKyc = $latestInsuredData?->insuredKyc;
@@ -447,11 +456,10 @@ class SukoonDriverMedexService
     public function login()
     {
         try {
-
             $data = [
                 'apiCall' => true,
-                'username' => $this->username,
-                'password' => $this->password,
+                'username' => config('constants.SUKOON_USERNAME'),
+                'password' => config('constants.SUKOON_PASSWORD'),
             ];
             $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
             $response = $this->request('/login/', 'post', $data, $headers)->json();
@@ -722,7 +730,7 @@ class SukoonDriverMedexService
      *
      * @throws Exception If document retrieval fails.
      */
-    public function listGeneratedDocument($quote, $embeddedTransaction)
+    public function listGeneratedDocument()
     {
         try {
             $result = $this->request('/policy/'.$this->policyNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
@@ -737,7 +745,8 @@ class SukoonDriverMedexService
     public function saveGeneratedDocuments($documents, $quote, $embeddedTransaction)
     {
         try {
-            $uploadedDocumentCount = 0;
+            $updatedDocCount = $createdDocCount = $skippedDocCount = 0;
+
             foreach(($documents ?? []) as $document) {
 
                 $docId = $document['doc_id'] ?? '';
@@ -754,23 +763,33 @@ class SukoonDriverMedexService
                 };
 
                 if(empty($docCode)){
+                    $skippedDocCount++;
+                    LoggerService::info("Document skipped: {$docName}, unmatched docCode");
                     continue;
                 }
-                
+
                 $document = $embeddedTransaction->documents()->where('document_type_code', $docCode)->first();
                 if(!empty($document)) {
                     $docNameParts = explode('-', $document->doc_name);
                     $existedDocTimestamp = reset($docNameParts);
                     if($existedDocTimestamp >= $fileCreatedTimestamp) {
+                        $skippedDocCount++;
+                        LoggerService::info("Document skipped: {$docName}, updated one already exists");
                         continue;
                     }
                 }
 
-                $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp) && $uploadedDocumentCount++;
+                $downloadResult = $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp);
+                if($downloadResult !== false)
+                    $downloadResult ? $updatedDocCount++ : $createdDocCount++;
+                else
+                    $skippedDocCount++;
             }
 
-            $generatedDocumentCounts = count($documents ?? []);
-            LoggerService::info("Documents saved: {$uploadedDocumentCount} out of {$generatedDocumentCounts}");
+            $generatedDocCount = count($documents ?? []);
+            LoggerService::info("Documents saved: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
+                "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}");
+
         } catch (Exception $e) {
             throw $e;
         }
@@ -834,12 +853,14 @@ class SukoonDriverMedexService
                     'created_by_id' => null,
                 ];
 
+                $isUpdated = 0;
                 if (isset($document)) {
-                    $document->update($documentData);
+                    $isUpdated = $document->update($documentData);
                 } else {
                     $embeddedTransaction->documents()->create($documentData);
                 }
-                return true;
+
+                return $isUpdated;
             } else {
                 $message = 'Unable to determine filename from the response headers.';
                 $this->logFailure($message.' doc_code : '.$docCode, $message, ['ref_id' => $quote->code, 'embeddedTransaction' => $embeddedTransaction]);
