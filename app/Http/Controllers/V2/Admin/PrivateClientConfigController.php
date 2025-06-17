@@ -54,7 +54,7 @@ class PrivateClientConfigController extends Controller
         $isCurrentVersion = $this->configService->isCurrentVersion($selectedVersion, $allVersions);
         $quoteTypes = $this->getQuoteTypes();
 
-        return Inertia::render('Admin/PrivateClientConfig/Advanced', [
+        return Inertia::render('Admin/PrivateClientConfig/Show', [
             'configurations' => $configurations,
             'allVersions' => $allVersions,
             'selectedVersion' => $selectedVersion,
