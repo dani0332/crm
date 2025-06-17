@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -30,14 +31,14 @@ class PrivateClientConfigController extends Controller
     private function getQuoteTypes()
     {
         return QuoteType::where('is_active', 1)
-            ->whereIn('short_code', [
-                QuoteTypeShortCode::CAR,
-                QuoteTypeShortCode::HEA,
-                QuoteTypeShortCode::LIF,
-                QuoteTypeShortCode::HOM,
-                QuoteTypeShortCode::YAC,
+            ->whereIn('code', [
+                quoteTypeCode::Car,
+                quoteTypeCode::Health,
+                quoteTypeCode::Life,
+                quoteTypeCode::Home,
+                quoteTypeCode::Yacht,
             ])
-            ->select('id', 'text', 'short_code')
+            ->select('id', 'text', 'code')
             ->get();
     }
 

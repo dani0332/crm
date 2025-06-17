@@ -12,18 +12,16 @@ const props = defineProps({
   quoteTypeCodeEnum: Object,
 });
 
-const activeTab = ref('car');
+const activeTab = ref(null);
 const tabLoading = ref(false);
 const isModuleCollapsed = ref(false);
 
-// Create refs for each template to access their data
 const carTemplateRef = ref(null);
 const healthTemplateRef = ref(null);
 const lifeTemplateRef = ref(null);
 const homeTemplateRef = ref(null);
 const yachtTemplateRef = ref(null);
 
-// Track versions for each quote type
 const quoteTypeVersions = ref({
   car: null,
   health: null,
@@ -32,32 +30,17 @@ const quoteTypeVersions = ref({
   yacht: null,
 });
 
-// Handle version loaded events
 const handleVersionLoaded = (quoteTypeName, version) => {
   quoteTypeVersions.value[quoteTypeName] = version;
 };
 
-// Create dynamic tab items based on backend quoteTypes
 const tabItems = computed(() => {
   if (!props.quoteTypes || !props.quoteTypeCodeEnum) return [];
 
   return props.quoteTypes
     .map(quoteType => {
-      let templateName = '';
+      let templateName = quoteType.code;
       let templateLabel = quoteType.text;
-
-      // Map quote type short codes to our template names using enum
-      if (quoteType.short_code === props.quoteTypeCodeEnum.CAR) {
-        templateName = 'car';
-      } else if (quoteType.short_code === props.quoteTypeCodeEnum.HEALTH) {
-        templateName = 'health';
-      } else if (quoteType.short_code === props.quoteTypeCodeEnum.LIFE) {
-        templateName = 'life';
-      } else if (quoteType.short_code === props.quoteTypeCodeEnum.HOME) {
-        templateName = 'home';
-      } else if (quoteType.short_code === props.quoteTypeCodeEnum.YACHT) {
-        templateName = 'yacht';
-      }
 
       return {
         name: templateName,
@@ -85,19 +68,19 @@ const setActiveTab = async tab => {
     // Load configuration for the selected quote type using direct refs
     let templateRef = null;
     switch (tab) {
-      case 'car':
+      case quoteTypeCodeEnum.Car:
         templateRef = carTemplateRef.value;
         break;
-      case 'health':
+      case quoteTypeCodeEnum.Health:
         templateRef = healthTemplateRef.value;
         break;
-      case 'life':
+      case quoteTypeCodeEnum.Life:
         templateRef = lifeTemplateRef.value;
         break;
-      case 'home':
+      case quoteTypeCodeEnum.Home:
         templateRef = homeTemplateRef.value;
         break;
-      case 'yacht':
+      case quoteTypeCodeEnum.Yacht:
         templateRef = yachtTemplateRef.value;
         break;
     }
@@ -148,12 +131,12 @@ onMounted(async () => {
           <nav class="-mb-px flex space-x-8">
             <button
               v-for="quoteType in tabItems"
-              :key="quoteType.name"
-              @click="setActiveTab(quoteType.name)"
+              :key="quoteType.code"
+              @click="setActiveTab(quoteType.code)"
               :disabled="tabLoading"
               :class="[
                 'py-2 px-1 border-b-2 font-medium text-sm relative transition-colors flex items-center space-x-2',
-                activeTab === quoteType.name
+                activeTab === quoteType.code
                   ? 'border-orange-500 text-orange-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
                 tabLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
@@ -163,7 +146,7 @@ onMounted(async () => {
 
               <!-- Loading indicator -->
               <div
-                v-if="tabLoading && activeTab === quoteType.name"
+                v-if="tabLoading && activeTab === quoteType.code"
                 class="absolute -bottom-2 left-1/2 transform -translate-x-1/2"
               >
                 <div
@@ -192,42 +175,42 @@ onMounted(async () => {
           </div>
 
           <div class="space-y-6">
-            <template v-for="quoteType in tabItems" :key="quoteType.name">
-              <div v-if="activeTab === quoteType.name">
+            <template v-for="quoteType in tabItems" :key="quoteType.code">
+              <div v-if="activeTab === quoteType.code">
                 <CarTemplate
-                  v-if="quoteType.name === 'car'"
+                  v-if="quoteType.code === quoteTypeCodeEnum.Car"
                   ref="carTemplateRef"
                   :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
                 />
                 <HealthTemplate
-                  v-else-if="quoteType.name === 'health'"
+                  v-else-if="quoteType.code === quoteTypeCodeEnum.Health"
                   ref="healthTemplateRef"
                   :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
                 />
                 <LifeTemplate
-                  v-else-if="quoteType.name === 'life'"
+                  v-else-if="quoteType.code === quoteTypeCodeEnum.Life"
                   ref="lifeTemplateRef"
                   :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
                 />
                 <HomeTemplate
-                  v-else-if="quoteType.name === 'home'"
+                  v-else-if="quoteType.code === quoteTypeCodeEnum.Home"
                   ref="homeTemplateRef"
                   :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
                 />
                 <YachtTemplate
-                  v-else-if="quoteType.name === 'yacht'"
+                  v-else-if="quoteType.code === quoteTypeCodeEnum.Yacht"
                   ref="yachtTemplateRef"
                   :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.name, $event)"
+                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
                 />
               </div>
             </template>
