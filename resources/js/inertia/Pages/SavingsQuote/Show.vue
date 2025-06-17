@@ -1575,7 +1575,7 @@ const getIncludedBenefitsTooltip = (fieldText) => {
                 <TabList
                   class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
                 >
-                  <Tab
+                                    <Tab
                     v-for="{ index, label } in planDetailsTabs"
                     as="template"
                     :key="index"
@@ -1838,9 +1838,12 @@ const getIncludedBenefitsTooltip = (fieldText) => {
 
                           <!-- Document Name -->
                           <div class="flex-shrink-0">
-                            <span class="text-blue-600 font-medium">{{
-                              doc.text
-                            }}</span>
+                            <x-tooltip placement="bottom">
+                              <span class="text-blue-600 font-medium underline decoration-dotted decoration-primary-700">{{
+                                doc.text
+                              }}</span>
+                              <template #tooltip>Summary of plan benefits and features</template>
+                            </x-tooltip>
                           </div>
 
                           <!-- Download Icon -->
@@ -1880,12 +1883,15 @@ const getIncludedBenefitsTooltip = (fieldText) => {
                         v-for="data in planDetails.policyWordings || []"
                         :key="data"
                       >
-                        <a
-                          :href="data.link"
-                          class="font-medium mb-1"
-                          target="_blank"
-                          >{{ data.text }}</a
-                        >
+                        <x-tooltip placement="bottom">
+                          <a
+                            :href="data.link"
+                            class="font-medium mb-1 underline decoration-dotted decoration-primary-700"
+                            target="_blank"
+                            >{{ data.text }}</a
+                          >
+                          <template #tooltip>Policy wordings for this savings plan</template>
+                        </x-tooltip>
                       </div>
                     </dl>
                   </TabPanel>
