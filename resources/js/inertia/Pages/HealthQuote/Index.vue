@@ -147,7 +147,11 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
-  { text: 'Private Client', value: 'customer.pcp_tag_formatted', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ]);
 
 const filteredTableHeader = computed(() => {

@@ -204,7 +204,11 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model' },
-  { text: 'Private Client', value: 'customer.pcp_tag_formatted', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ];
 
 const exportLoader = ref(false);
