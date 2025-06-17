@@ -50,6 +50,7 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  emailStatuses: Array,
   // selectedCustomerPlans: Array,
 });
 
@@ -653,13 +654,14 @@ const PLAN_TOOLTIP_MAPPINGS = {
   eligibility: {
     'Entry age': 'Eligible age to buy the plan',
     'Policy term (years)': 'Policy duration available for the plan',
-    'Minimum investment': 'Minimum amount of investment required'
+    'Minimum investment': 'Minimum amount of investment required',
   },
   includedBenefits: {
-    'Flexible premium payments': 'Monthly, quarterly, semi-annual, or annual options',
+    'Flexible premium payments':
+      'Monthly, quarterly, semi-annual, or annual options',
     'Added life insurance coverage': 'Financial security for loved ones',
-    'Investment options': 'Wide range of investment funds managed by experts'
-  }
+    'Investment options': 'Wide range of investment funds managed by experts',
+  },
 };
 
 // Generic helper function to get tooltip text for plan detail fields
@@ -678,8 +680,10 @@ const getPlanDetailTooltip = (fieldText, section) => {
 };
 
 // Convenience functions for backward compatibility and clarity
-const getEligibilityTooltip = (fieldText) => getPlanDetailTooltip(fieldText, 'eligibility');
-const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText, 'includedBenefits');
+const getEligibilityTooltip = fieldText =>
+  getPlanDetailTooltip(fieldText, 'eligibility');
+const getIncludedBenefitsTooltip = fieldText =>
+  getPlanDetailTooltip(fieldText, 'includedBenefits');
 </script>
 
 <template>
@@ -1439,7 +1443,10 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
               <template #header-providerName>
                 <div class="flex items-center gap-2">
                   <x-tooltip placement="bottom">
-                    <span class="underline decoration-dotted decoration-primary-700">Provider Name</span>
+                    <span
+                      class="underline decoration-dotted decoration-primary-700"
+                      >Provider Name</span
+                    >
                     <template #tooltip>Insurance provider</template>
                   </x-tooltip>
                   <span class="diamond-icon"></span>
@@ -1447,32 +1454,51 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
               </template>
               <template #header-name>
                 <x-tooltip placement="bottom">
-                  <span class="underline decoration-dotted decoration-primary-700">Plans</span>
+                  <span
+                    class="underline decoration-dotted decoration-primary-700"
+                    >Plans</span
+                  >
                   <template #tooltip>Plan name</template>
                 </x-tooltip>
               </template>
               <template #header-investmentFrequency>
                 <x-tooltip placement="bottom">
-                  <span class="underline decoration-dotted decoration-primary-700">Investment Frequency</span>
+                  <span
+                    class="underline decoration-dotted decoration-primary-700"
+                    >Investment Frequency</span
+                  >
                   <template #tooltip>How often you plan to invest</template>
                 </x-tooltip>
               </template>
               <template #header-minimumInvestment>
                 <x-tooltip placement="bottom">
-                  <span class="underline decoration-dotted decoration-primary-700">Minimum Investment</span>
-                  <template #tooltip>Minimum amount of investment required</template>
+                  <span
+                    class="underline decoration-dotted decoration-primary-700"
+                    >Minimum Investment</span
+                  >
+                  <template #tooltip
+                    >Minimum amount of investment required</template
+                  >
                 </x-tooltip>
               </template>
               <template #header-currency>
                 <x-tooltip placement="bottom">
-                  <span class="underline decoration-dotted decoration-primary-700">Currency</span>
+                  <span
+                    class="underline decoration-dotted decoration-primary-700"
+                    >Currency</span
+                  >
                   <template #tooltip>Investment currency</template>
                 </x-tooltip>
               </template>
               <template #header-policyTerm>
                 <x-tooltip placement="bottom">
-                  <span class="underline decoration-dotted decoration-primary-700">Policy Term (Years)</span>
-                  <template #tooltip>Policy duration available for the plan</template>
+                  <span
+                    class="underline decoration-dotted decoration-primary-700"
+                    >Policy Term (Years)</span
+                  >
+                  <template #tooltip
+                    >Policy duration available for the plan</template
+                  >
                 </x-tooltip>
               </template>
               <template #item-providerName="item">
@@ -1574,7 +1600,7 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
                 <TabList
                   class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
                 >
-                                    <Tab
+                  <Tab
                     v-for="{ index, label } in planDetailsTabs"
                     as="template"
                     :key="index"
@@ -1744,15 +1770,19 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
                           :key="item.id"
                           class="grid grid-cols-2 gap-x-4"
                         >
-                                                    <div class="text-gray-700 font-medium text-sm">
+                          <div class="text-gray-700 font-medium text-sm">
                             <x-tooltip
                               placement="bottom"
                               v-if="getEligibilityTooltip(item.text)"
                             >
-                              <span class="underline decoration-dotted decoration-primary-700">
+                              <span
+                                class="underline decoration-dotted decoration-primary-700"
+                              >
                                 {{ item.text }}
                               </span>
-                              <template #tooltip>{{ getEligibilityTooltip(item.text) }}</template>
+                              <template #tooltip>{{
+                                getEligibilityTooltip(item.text)
+                              }}</template>
                             </x-tooltip>
                             <span v-else>{{ item.text }}</span>
                           </div>
@@ -1787,10 +1817,14 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
                               placement="bottom"
                               v-if="getIncludedBenefitsTooltip(item.text)"
                             >
-                              <span class="underline decoration-dotted decoration-primary-700">
+                              <span
+                                class="underline decoration-dotted decoration-primary-700"
+                              >
                                 {{ item.text }}
                               </span>
-                              <template #tooltip>{{ getIncludedBenefitsTooltip(item.text) }}</template>
+                              <template #tooltip>{{
+                                getIncludedBenefitsTooltip(item.text)
+                              }}</template>
                             </x-tooltip>
                             <span v-else>{{ item.text }}</span>
                           </div>
@@ -1838,10 +1872,13 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
                           <!-- Document Name -->
                           <div class="flex-shrink-0">
                             <x-tooltip placement="bottom">
-                              <span class="text-blue-600 font-medium underline decoration-dotted decoration-primary-700">{{
-                                doc.text
-                              }}</span>
-                              <template #tooltip>Summary of plan benefits and features</template>
+                              <span
+                                class="text-blue-600 font-medium underline decoration-dotted decoration-primary-700"
+                                >{{ doc.text }}</span
+                              >
+                              <template #tooltip
+                                >Summary of plan benefits and features</template
+                              >
                             </x-tooltip>
                           </div>
 
@@ -1889,7 +1926,9 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
                             target="_blank"
                             >{{ data.text }}</a
                           >
-                          <template #tooltip>Policy wordings for this savings plan</template>
+                          <template #tooltip
+                            >Policy wordings for this savings plan</template
+                          >
                         </x-tooltip>
                       </div>
                     </dl>
@@ -1997,6 +2036,8 @@ const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText
       :data="sendUpdateLogs"
       @onAddUpdate="onAddUpdate"
     />
+
+    <EmailStatus :emailStatuses="emailStatuses" />
 
     <QuoteActivities
       :can="can"
