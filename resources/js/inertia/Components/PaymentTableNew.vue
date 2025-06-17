@@ -1719,20 +1719,27 @@ const closeInsurerReceiptNumberExistsModal = () => {
 };
 
 const checkInsurerReceiptNumber = () => {
-  if(showInsurerReceiptNumberInputField.value && paymentMethodsForm.insurer_receipt_number) {
+  if (
+    showInsurerReceiptNumberInputField.value &&
+    paymentMethodsForm.insurer_receipt_number
+  ) {
     insurerReceiptNumberCheckInProcess.value = true;
     axios
-      .post(`/payments/${props.quoteType}/check-insurer-receipt-number`,{insurer_receipt_number: paymentMethodsForm.insurer_receipt_number})
+      .post(`/payments/${props.quoteType}/check-insurer-receipt-number`, {
+        insurer_receipt_number: paymentMethodsForm.insurer_receipt_number,
+      })
       .then(res => {
-      if(res.data.status) {
-        paymentForm.value?.$el?.requestSubmit();
+        if (res.data.status) {
+          paymentForm.value?.$el?.requestSubmit();
         } else {
           isInsurerReceiptNumberExistsModalOpen.value = true;
         }
       })
       .catch(err => {
         notification.error({
-          title: err?.response?.data?.message || 'Insurer receipt number check failed',
+          title:
+            err?.response?.data?.message ||
+            'Insurer receipt number check failed',
           position: 'top',
         });
       })
@@ -1742,7 +1749,7 @@ const checkInsurerReceiptNumber = () => {
   } else {
     paymentForm.value?.$el?.requestSubmit();
   }
-}
+};
 
 /**
  * Opens the payment modal for editing a payment
@@ -5578,7 +5585,8 @@ const closeVoidPaymentModal = () => {
                         tabindex="0"
                         :loading="paymentMethodsForm.processing"
                         :disabled="
-                          isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                          isApproveConfirmed ||
+                          !isTransactionCaptureButtonEnabled
                         "
                       >
                         Capture
@@ -5590,9 +5598,13 @@ const closeVoidPaymentModal = () => {
                         color="#ff5e00"
                         @click="checkInsurerReceiptNumber"
                         tabindex="0"
-                        :loading="paymentMethodsForm.processing || insurerReceiptNumberCheckInProcess"
+                        :loading="
+                          paymentMethodsForm.processing ||
+                          insurerReceiptNumberCheckInProcess
+                        "
                         :disabled="
-                          isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                          isApproveConfirmed ||
+                          !isTransactionCaptureButtonEnabled
                         "
                       >
                         Approve
@@ -5798,10 +5810,10 @@ const closeVoidPaymentModal = () => {
                   >
                     <div class="text-left text-md">
                       <span class="text-sm">
-                        The insurer receipt number you entered already exists in the system.
-                        Do you want to proceed with using the same receipt number again?
-                      </span
-                      >
+                        The insurer receipt number you entered already exists in
+                        the system. Do you want to proceed with using the same
+                        receipt number again?
+                      </span>
                     </div>
                   </div>
                   <div class="w-full mt-4 flex justify-center gap-4">
