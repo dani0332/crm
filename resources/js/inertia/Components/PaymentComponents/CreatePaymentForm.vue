@@ -11,38 +11,19 @@
 		PaymentFormFooter 
 	} from './PaymentFormComps/index.js';
 
+	const page = usePage();
+	const can = permission => useCan(permission);
+
 	const props = defineProps({
-		isFieldReadonly: Boolean,
-		paymentMethodsForm: Object,
-		rules: Object,
 		totalPrice: Number,
-		collectionTypes: Array,
-		isCollectedByEnabled: Boolean,
 		frequencyTypes: Array,
-		isPaymentFrequencyNotSelected: Boolean,
-		getPlanName: String,
-		isPaymentNoEnabled: Boolean,
 		totalPayments: Array,
-		masterPaymentStatus: String,
 		creditApprovalReasons: Array,
-		isCreditApprovalAllowed: Boolean,
-		isPaymentLocked: Boolean,
-		isTotalPriceUpdated: Boolean,
-		isCustomReasonEnabled: Boolean,
-		showDiscountOptions: Boolean,
-		isDiscountAllowed: Boolean,
-		discountTypeLabel: String,
-		isDiscountReasonEnabled: Boolean,
 		discountReasons: Array,
 		discountTypes: Array,
-		isDiscountReasonError: Boolean,
-		isCustomDiscountReasonEnabled: Boolean,
-		isDiscountEnabled: Boolean,
 		paymentDocument: Array,
 		isDiscountDocumentNotUploaded: Boolean,
 		discountDocumentModel: Array,
-		isDiscountError: Boolean,
-		discountValue: Number,
 		discountError: String,
 		totalAmount: Number,
 		documentForm: Object,
@@ -50,37 +31,13 @@
 		quoteTypesToCheck: Array,
 		insuranceProviders: Array,
 
-		isDowngradeFrequencyError: Boolean,
-		isPaymentCalculationError: Boolean,
-		fileErrorMessage: String,
-
-		isViewEnabled: Boolean,
 		isCreditApprovalView: Boolean,
 		isVerifiedEnabled: Boolean,
-		isPaymentMethodEnabled: Boolean,
 		isPaidEditable: Boolean,
 		isCreditCardView: Boolean,
-		splitPaymentNo: Number,
-		splitPaymentRecord: Object,
-		paymentMethodsModels: Object,
-		checkDetailModels: Object,
-		splitAmountModels: Object,
-		dueDateModels: Object,
-		collectionAmountModels: Object,
-		fileUploadModels: Object,
-		readOnlyPayments: Object,
-		isPaymentMetodNotSelected: Boolean,
-		isSplitAmountInvalid: Boolean,
-		isSplitAmountInvalidError: Boolean,
-		isDocumentNotUploaded: Boolean,
-		isCreditPaymentInvalid: Boolean,
-		isCreditPaymentInvalidError: Boolean,
 		isCheckDetailsEnabled: Boolean,
-		authorizedPayments: Object,
 		paymentProofDocument: Object,
-		capturePaymentValidationErrorMessage: String,
 		paymentTypes: Object,
-		paymentTypesFiltered: Array,
 		isMultiPaymentsEnabled: Boolean,
 		quoteType: String,
 		sendUpdate: Object,
@@ -89,32 +46,96 @@
 		quoteRequest: Object,
 		sendUpdateStatusEnum: Object,
 
-		isDeclineClicked: Boolean,
-		isDeclinedReasonError: Boolean,
 		declinedReasons: Array,
-		isDeclineCustomReason: Boolean,
 
-
-		isApproveClicked: Boolean,
-		isApprovePaymentError: Boolean,
 		approveErrorMessage: String,
 		approveProofDocument: Object,
-		isApprovedDocumentNotUploaded: Boolean,
-		approvedDocumentModel: Object,
 
 		paymentStatusEnum: Object,
 		permissionEnum: Object,
 		paymentMethodsEnum: Object,
-		isVerificationAllowed: Boolean,
-		isProformaPaymentRequest: Boolean,
-		isTransactionCaptureButtonEnabled: Boolean,
-		isApproveConfirmed: Boolean,
-		processing: Boolean,
-		formStatus: String,
-		insurerPaymentLinkIndex: Number,
+		createPaymentModal: Boolean,
 	});
 
+	const fileUploadModels = ref([]);
+	const isApproveConfirmed = ref(false);
+	const paymentMethodsModels = ref([]);
+	const splitPaymentNo = ref(0);
+	const isFieldReadonly = ref(false);
+	const isViewEnabled = ref(false);
+	const isPaymentCalculationError = ref(false);
+	const isDowngradeFrequencyError = ref(false);
+	const isApproveClicked = ref(false);
+	const isFileError = ref(false);
+	const isApprovePaymentError = ref(false);
+	const paidAmountSum = ref(0);
+	const totalPaidAmount = ref(0);
+	const masterPaymentStatus = ref('NEW');
+	const isDeclineClicked = ref(false);
+	const isPaymentNoEnabled = ref(false);
+	const isCustomReasonEnabled = ref(false);
+	const isResetCreditApproval = ref(false);
+	const isCustomDiscountReasonEnabled = ref(false);
+	const isDiscountEnabled = ref(false);
+	const isDiscountReasonEnabled = ref(false);
+	const isCheckDetailsEnabled = ref([]);
+	const isUploading = ref(false);
+	const fileErrorMessage = ref('');
+	const isApproveConfirm = ref(false);
+	const isDeclinedReasonError = ref(false);
+	const isDeclineCustomReason = ref(false);
+	const showDiscountOptions = ref(true);
+	const isApprovedDocumentNotUploaded = ref(false);
+	const isMultipleDocumentEnabled = ref(true);
+	const approvedDocument = ref('');
+	const resetDiscountReason = ref('');
+	const approveErrorMessage = ref('');
+	const discountValue = ref(0); // Initial discount value
+	const calculatedDiscount = ref('');
+	const discountDocumentModel = ref([]);
+	const isDiscountDocumentNotUploaded = ref(false);
+	const paymentTypesFiltered = ref([]);
+	const approvedDocumentModel = ref([]);
+	const isPaymentMetodNotSelected = ref([]);
+	const isDocumentNotUploaded = ref([]);
+	const splitAmountModels = ref([]);
+	const dueDateModels = ref([]);
+	const collectionAmountModels = ref([]);
+	const checkDetailModels = ref([]);
+	const readOnlyPayments = ref([]);
+	const authorizedPayments = ref([]);
+	const splitPaymentRecord = ref([]);
+	const filesTest = ref([]);
+	const isCreditPaymentInvalid = ref([]);
+	const isCreditPaymentInvalidError = ref([]);
+	const currentFileIndex = ref(0);
+	const oldTotalPayments = ref(0);
+	const isDiscountReasonError = ref(false);
+	const isCreditApprovalView = ref(false);
+	const isCreditCardView = ref(false);
+	const isDiscountError = ref(false);
+	const discountError = ref('');
+	const isTotalPriceUpdated = ref(false);
+	const trashedFilesModal = ref([]);
+	const isApproveNotChecked = ref(true);
+	const isCreditApprovalAllowed = ref(true);
+	const isVerificationAllowed = ref(true);
+	const isPaymentFrequencyNotSelected = ref(false);
+	const isDiscountAllowed = ref(true);
+	const isSplitAmountInvalid = ref([]);
+	const isSplitAmountInvalidError = ref([]);
+	const isCollectedByEnabled = ref(false);
+	const isTransactionCaptureButtonEnabled = ref(true);
+	const premiumToCapture = ref(0);
+	const capturePaymentValidationErrorMessage = ref('');
+	const insurerPaymentLinkChanged = ref(false);
+	const confirmModalClose = ref(false);
+	const insurerPaymentComponent = ref(null);
+
 	const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+	const permissionEnum = page.props.permissionsEnum;
+	const paymentLookups = page.props.paymentLookups;
+	const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 
 	const notification = useNotifications('toast');
 
@@ -138,7 +159,15 @@
 		'approve',
 		'cancel-modal',
 		'aml-verification',
+		'update-plan-detail',
 	])
+
+	const familyEmployeDiscount = [
+		quoteTypeCodeEnum.Car,
+		quoteTypeCodeEnum.Health,
+		quoteTypeCodeEnum.Home,
+		quoteTypeCodeEnum.Travel,
+	];
 
 	const documentForm = useForm({
 		quote_id: props.quoteRequest.id || null,
@@ -147,6 +176,264 @@
 		document_type_code: null,
 		file: null,
 	});
+
+	const paymentMethodsForm = useForm({
+		payment_method: '',
+		collection_type: '',
+		amount: '',
+		payment_reference: '',
+		paymentCode: '',
+		status: 'create',
+		approvalModal: '',
+		insurerPaymentLink: '',
+		insurerPaymentLinkError: '',
+		payment_no: '0',
+	});
+
+	const insurerPaymentLinkIndex = computed(() => {
+		var insurerPaymentIndex = paymentMethodsModels.value.findIndex(item => {
+			return item === page.props.paymentMethodsEnum?.InsurerPaymentLink;
+		});
+		return insurerPaymentIndex;
+	});
+
+	// Here we define the computed properties
+	const isisUpfrontFrequency = computed(
+		() => paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT,
+	);
+
+	const isPaymentMethodEnabled = computed(() => {
+		return (
+			isCreditApprovalApplied.value &&
+			isCustomFrequency.value &&
+			isSinglePayment.value
+		);
+	});
+
+	const isCustomFrequency = computed(
+		() => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM,
+	);
+	const isSinglePayment = computed(() => paymentMethodsForm.payment_no == 1);
+
+	const isCreditApprovalApplied = computed(
+		() => paymentMethodsForm.credit_approval !== '',
+	);
+
+	// verify if verify option is enabled
+	const isVerifiedEnabled = computed(() => {
+		if (
+			paymentMethodsModels.value[splitPaymentNo.value] === 'CC' ||
+			paymentMethodsModels.value[splitPaymentNo.value] === 'CA' ||
+			paymentMethodsModels.value[splitPaymentNo.value] === 'PPR'
+		) {
+			return false;
+		}
+		return true;
+	});
+
+	// Define a computed property to deduct insure now pay later
+	const isInsureNowPayLaterAllowed = computed(() => {
+		//handle edit scenario for insure now pay later
+		if (
+			paymentMethodsForm.status == 'edit' &&
+			paymentMethodsForm.collection_type === 'broker'
+		) {
+			if (props.payments.length > 0) {
+				let inureNowPayLaterExists = props.payments[0].payment_splits.find(
+					item =>
+						item.payment_method.code ===
+						page.props.paymentMethodsEnum?.InsureNowPayLater,
+				);
+				if (inureNowPayLaterExists) {
+					return true;
+				}
+			}
+		}
+		if (
+			paymentMethodsForm.collection_type === 'broker' &&
+			can(permissionEnum.INPL_USER)
+		) {
+			return true;
+		}
+		return false;
+	});
+
+	const rules = {
+		isRequired: v => !!v || 'This field is required',
+		isBankReferenceRequird: v => {
+			if (
+				paymentMethodsForm.collection_type === 'insurer' &&
+				paymentMethodsModels.value[splitPaymentNo.value] ===
+					page.props.paymentMethodsEnum?.Cheque &&
+				paymentMethodsForm.credit_approval != ''
+			) {
+				return true;
+			} else {
+				return !!v || 'This field is required';
+			}
+			return true;
+		},
+		reference: v => {
+			if (
+				paymentMethodsForm.payment_method !==
+				page.props.paymentMethodsEnum?.CreditCard
+			) {
+				return !!v || 'This field is required';
+			}
+			return true;
+		},
+		amount: v => {
+			const regex = /^\d+(\.\d{1,2})?$/;
+			if (regex.test(v)) {
+				return true;
+			}
+			return 'Amount must be a valid number';
+		},
+		notEmptyOrZero: v => {
+			if (v !== '') {
+				return true;
+			}
+			return 'Value cannot be empty';
+		},
+		isValidUrl: v => {
+			if (!v) return true; // Allow empty value
+			try {
+				const url = new URL(v);
+				return (
+					url.protocol === 'http:' ||
+					url.protocol === 'https:' ||
+					'Please enter a valid URL starting with http:// or https://'
+				);
+			} catch {
+				return 'Please enter a valid URL';
+			}
+		},
+	};
+
+	const isPaymentLocked = computed(() => {
+		const { status } = paymentMethodsForm;
+		const { quote_status_id } = props.quoteRequest;
+		const { quoteStatusEnum } = page.props;
+		const lockedStatuses = new Set([
+			quoteStatusEnum.CancellationPending,
+			quoteStatusEnum.PolicyCancelled,
+			quoteStatusEnum.PolicyBooked,
+			quoteStatusEnum.PolicyCancelledReissued,
+			quoteStatusEnum.POLICY_BOOKING_QUEUED,
+		]);
+
+		if (status === 'edit') {
+			if (props.sendUpdate && can(permissionEnum.BOOKING_FAILED_EDIT)) {
+				return false;
+			}
+			if (
+				!props.sendUpdate &&
+				(lockedStatuses.has(quote_status_id) ||
+					(quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED &&
+						!can(permissionEnum.BOOKING_FAILED_EDIT)))
+			) {
+				return true;
+			}
+		}
+		return false;
+	});
+
+	// Define payment collection types
+	const collectionTypes = computed(() => {
+		if (paymentMethodsForm.status != 'view' && !isBrokerHavePermission()) {
+			return paymentLookups.paymentCollectionTypes
+				.filter(item => item.code !== 'broker')
+				.map(item => ({
+					value: item.code,
+					label: item.text,
+					tooltip: item.description,
+				}));
+		}
+		return paymentLookups.paymentCollectionTypes.map(item => ({
+			value: item.code,
+			label: item.text,
+			tooltip: item.description,
+		}));
+	});
+
+	const isProformaPaymentRequest = computed(() => {
+		return (
+			paymentMethodsForm.payment_method ===
+			page.props.paymentMethodsEnum?.ProformaPaymentRequest
+		);
+	});
+
+
+	const discountTypeLabel = computed(() => {
+		let systemAplliedDiscount = '';
+		if (
+			paymentMethodsForm.status === 'view' &&
+			(paymentMethodsForm.discount === 'system_adjusted_discount' ||
+				paymentMethodsForm.system_adjusted_discount > 0)
+		) {
+			systemAplliedDiscount = 'System adjusted discount';
+		}
+		let discountType = discountTypes.find(
+			item => item.value === paymentMethodsForm.discount,
+		);
+		if (discountType) {
+			if (systemAplliedDiscount !== '') {
+				if (discountType.label == systemAplliedDiscount) {
+					return discountType.label;
+				}
+				return discountType.label + ' + ' + systemAplliedDiscount;
+			} else {
+				return discountType.label;
+			}
+		} else if (systemAplliedDiscount !== '') {
+			return systemAplliedDiscount;
+		} else {
+			return 'N/A';
+		}
+	});
+
+	const transactionActionText = computed(() => {
+		if (paymentMethodsForm.approvalModal === 'child') {
+			return 'PAYMENT VERIFICATION';
+		} else if (isCreditApprovalView.value && isCreditCardView.value) {
+			return 'CAPTURE TRANSACTION';
+		} else {
+			return 'APPROVE TRANSACTION';
+		}
+	});
+
+	// Function to verify if the broker has permission to add payment
+	const isBrokerHavePermission = () => {
+		const hasPermissionToBroker = can(
+			permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD,
+		);
+		const hasPermissionToTermFrequencies = can(
+			permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD,
+		);
+		if (!hasPermissionToBroker && !hasPermissionToTermFrequencies) {
+			return false;
+		}
+		return true;
+	};
+
+	const handleCreditApproval = () => {
+		if (paymentMethodsForm.credit_approval !== '') {
+			if (paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT) {
+				paymentMethodsForm.frequency = paymentFrequencyEnum.CUSTOM;
+			}
+			if (paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM) {
+				if (
+					paymentMethodsForm.status === 'edit' &&
+					isAnyPaid(props.payments[0])
+				) {
+					return;
+				}
+				resetTotalPayments();
+				isPaymentNoEnabled.value = true;
+				paymentMethodsForm.payment_no = '1';
+			}
+		}
+	};
 
 	const addPayment = isValid => {
 		if (
@@ -215,7 +502,7 @@
 			code: paymentMethodsForm.payment_method,
 			modelType: props.quoteType,
 			quote_id: props.quoteRequest.id,
-			plan_id: planDetail?.value?.id ?? null, // handling null exception when plan is not found
+			plan_id: props.planDetail?.value?.id ?? null, // handling null exception when plan is not found
 			captured_amount: paymentMethodsForm.amount,
 			insurance_provider_id: providerId.value,
 			sendFTCEmail: insurerPaymentLinkChanged?.value ?? false,
@@ -272,7 +559,7 @@
 			let viewData = {
 			modelType: props.quoteType,
 			quote_id: props.quoteRequest.id,
-			plan_id: planDetail?.value?.id || 0,
+			plan_id: props.planDetail?.value?.id || 0,
 			customer_id: props.quoteRequest.customer_id,
 			payment_code: paymentMethodsForm.paymentCode,
 			collection_amount: collectionAmountModels.value,
@@ -289,7 +576,8 @@
 			.post('/payments/' + props.quoteType + '/split-payments-approve', {
 				preserveScroll: true,
 				onSuccess: res => {
-				createPaymentModal.value = false;
+				// createPaymentModal.value = false;
+				emit('update-create-payment-modal', false);
 				setTimeout(() => {
 					location.reload();
 				}, 500);
@@ -310,7 +598,7 @@
 			let viewData = {
 			modelType: props.quoteType,
 			quote_id: props.quoteRequest.id,
-			plan_id: planDetail?.value?.id || 0,
+			plan_id: props.planDetail?.value?.id || 0,
 			customer_id: props.quoteRequest.customer_id,
 			collection_amount: paymentMethodsForm.collection_amount,
 			bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -328,7 +616,8 @@
 			.post('/payments/' + props.quoteType + '/split-update', {
 				preserveScroll: true,
 				onSuccess: () => {
-				createPaymentModal.value = false;
+				// createPaymentModal.value = false;
+				emit('update-create-payment-modal', false);
 				isApproveConfirmed.value = false;
 				if (props.sendUpdate) {
 					location.reload();
@@ -372,7 +661,8 @@
 			.post('/payments/' + props.quoteType + '/update-new', {
 				preserveScroll: true,
 				onSuccess: () => {
-				createPaymentModal.value = false;
+				// createPaymentModal.value = false;
+				emit('update-create-payment-modal', false);
 				},
 				onError: errors => {
 				Object.keys(errors).forEach(function (key) {
@@ -402,7 +692,8 @@
 			.post('/payments/' + props.quoteType + '/store-new', {
 			preserveScroll: true,
 			onSuccess: () => {
-				createPaymentModal.value = false;
+				// createPaymentModal.value = false;
+				emit('update-create-payment-modal', false);
 			},
 			onError: errors => {
 				Object.keys(errors).forEach(function (key) {
@@ -446,7 +737,7 @@
 		if (props.quoteType == quoteTypeCodeEnum.Home) {
 			return props.quoteRequest.insurance_provider?.text || 'Not Available';
 		}
-		const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
+		const ecomQuoteType = [...props.quoteTypesToCheck, quoteTypeCodeEnum.Bike];
 		if (props.sendUpdate) {
 			let provider = props?.insuranceProviders?.find(
 				provider => provider.id === providerId.value,
@@ -716,11 +1007,13 @@
 		trashedFilesModal.value = [];
 		isDiscountEnabled.value = false;
 		isTotalPriceUpdated.value = false;
-		isGalleryModelOpen.value = false;
+		// isGalleryModelOpen.value = false;
+		emit('update-gallery-model-open', false);
 		authorizedPayments.value = [];
 		isApproveConfirmed.value = false;
 		isApproveNotChecked.value = true;
-		isAmlApprovalRequired.value = false;
+		// isAmlApprovalRequired.value = false;
+		emit('update-is-aml-approval-required', false);
 	};
 
 	const initializePaymentForm = (
@@ -1351,16 +1644,17 @@
 				props.quoteType === quoteTypeCodeEnum.Travel &&
 				['edit', 'view'].includes(paymentMethodsForm.status)
 			) {
-				planDetail.value =
+				let planDetailValue =
 					payment?.travel_plan ??
 					props.sendUpdate?.travel_plan ??
 					props.quoteRequest?.plan ??
 					null;
 				if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-					planDetail.value['insurance_provider'] =
+					planDetailValue.value['insurance_provider'] =
 						payment?.travel_plan?.insurance_provider ??
 						props.sendUpdate?.insurance_provider;
 				}
+				emit('update-plan-detail', planDetailValue);
 			}
 		};
 
@@ -1389,7 +1683,8 @@
 		handleTravelQuoteType();
 		handleCaptureApproval();
 
-		createPaymentModal.value = true;
+		// createPaymentModal.value = true;
+		emit('update-create-payment-modal', true);
 	};
 
 	const setFrequencyTypes = () => {
@@ -1624,7 +1919,7 @@
 						reject(errors);
 					},
 					onSuccess: data => {
-						let quoteTypes = quoteTypesToCheck.filter(
+						let quoteTypes = props.quoteTypesToCheck.filter(
 							quoteType => quoteType !== quoteTypeCodeEnum.Home,
 						);
 						let quoteDocuments =
@@ -1685,7 +1980,8 @@
 		);
 
 		// Open the modal
-		isGalleryModelOpen.value = true;
+		// isGalleryModelOpen.value = true;
+		emit('update-gallery-model-open', true);
 	};
 
 	const deleteDocument = (docName, count, doc_id, doc_uuid) => {
@@ -1820,6 +2116,292 @@
 		}
 		return false;
 	};
+
+	// use in insurer payment link
+	const updateFromInsurerPaymentLink = (
+		closePaymentModal = false,
+		paymentLinkChanged = false,
+		closeModal = false,
+	) => {
+		closePaymentModal == true &&
+			(emit('update-create-payment-modal', !createPaymentModal.value));
+		confirmModalClose.value = closeModal;
+		insurerPaymentLinkChanged.value = paymentLinkChanged;
+	};
+
+	const notPaidDates = serialNo => {
+		if (
+			readOnlyPayments.value[serialNo] != undefined &&
+			readOnlyPayments.value[serialNo] === true
+		) {
+			return false;
+		}
+		return true;
+	};
+
+	const calculateDueDates = () => {
+		if (notPaidDates(1)) {
+			dueDateModels.value[1] = paymentMethodsForm.collection_date;
+		}
+		if (
+			paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS ||
+			paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT
+		) {
+			//dueDateModels.value[1] = new Date();
+			for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+				if (notPaidDates(i)) {
+					dueDateModels.value[i] = paymentMethodsForm.collection_date;
+				}
+			}
+		} else if (paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM) {
+			for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
+				if (i > 12) continue;
+				const currentDueDate = dueDateModels.value[i - 1];
+				const nextDueDate = new Date(currentDueDate);
+				// Set the month to the next month
+				nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+				// Update the due date model
+				if (notPaidDates(i)) {
+					dueDateModels.value[i] = nextDueDate;
+				}
+			}
+		} else if (paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY) {
+			dueDateModels.value[1] = paymentMethodsForm.collection_date;
+			for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
+				const nextDueDate = new Date(dueDateModels.value[i - 1]);
+				nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+				nextDueDate.setDate(1); // Set the day to 1st of the month
+				if (notPaidDates(i)) {
+					dueDateModels.value[i] = nextDueDate;
+				}
+			}
+		} else if (paymentMethodsForm.frequency === paymentFrequencyEnum.QUARTERLY) {
+			if (notPaidDates(1)) {
+				dueDateModels.value[1] = paymentMethodsForm.collection_date;
+			}
+			for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
+				const nextDueDate = new Date(paymentMethodsForm.collection_date);
+				if (i === 2) {
+					nextDueDate.setDate(nextDueDate.getDate() + 90);
+				} else if (i === 3) {
+					nextDueDate.setDate(nextDueDate.getDate() + 180);
+				} else if (i === 4) {
+					nextDueDate.setDate(nextDueDate.getDate() + 270);
+				}
+				if (notPaidDates(i)) {
+					dueDateModels.value[i] = nextDueDate;
+				}
+			}
+		} else if (
+			paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
+		) {
+			if (notPaidDates(1)) {
+				dueDateModels.value[1] = paymentMethodsForm.collection_date;
+			}
+			const nextDueDate = new Date(dueDateModels.value[1]);
+			nextDueDate.setDate(nextDueDate.getDate() + 180);
+			if (notPaidDates(2)) {
+				dueDateModels.value[2] = nextDueDate;
+			}
+		}
+	};
+
+	const validatePaymentAmount = isValid => {
+		for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+			isSplitAmountInvalid.value[i] = false;
+			if (
+				parseFloat(splitAmountModels.value[i]) >
+				parseFloat(collectionAmountModels.value[i])
+			) {
+				isSplitAmountInvalid.value[i] = true;
+				isSplitAmountInvalidError.value[i] =
+					'Amount should not exceed ' + collectionAmountModels.value[i] + ' AED';
+			}
+		}
+		if (isSplitAmountInvalid.value.includes(true)) {
+			return true;
+		}
+		return false;
+	};
+
+	const getPlanName = computed(() => {
+		const plan = props.planDetail?.value;
+		if (props.quoteType === quoteTypeCodeEnum.Bike) {
+			return plan ? props.quoteRequest.car_plan.text : 'Not Available';
+		}
+		if (props.sendUpdate) {
+			return planText.value || 'Not Available';
+		}
+
+		if (props.quoteType === quoteTypeCodeEnum.Home) {
+			if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+				homePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+			}
+			return homePlanText.value || 'Not Available';
+		}
+
+		return props.quoteTypesToCheck.includes(props.quoteType) && plan
+			? plan.text
+			: 'Not Available';
+	});
+
+	// Close confirmation modal function remains unchanged
+	const closeConfirmModal = () => {
+		isApproveConfirmed.value = false;
+		isApproveNotChecked.value = true;
+		isApproveConfirm.value = false;
+	};
+
+	const updatePaymentForm = (updates = {}) => {
+		Object.entries(updates).forEach(([key, value]) => {
+			if (key in paymentMethodsForm) {
+				paymentMethodsForm[key] = value;
+			}
+		});
+	}
+
+	const resetPaymentMethodsForm = () => {
+		paymentMethodsForm.reset();
+	}
+
+	const resetPaymentMethodsModal = () => {
+		paymentMethodsModels.value = [];
+	}
+
+	const resetFileUploadModals = () => {
+		fileUploadModels.value = [];
+	}
+
+	const resetIsPaymentCalculationError = () => {
+		isPaymentCalculationError.value = false;
+	}
+
+	const resetIsDiscountEnabled = () => {
+		isDiscountEnabled.value = false;
+	}
+
+	const resetIsDiscountReasonEnabled = () => {
+		isDiscountReasonEnabled.value = false;
+	}
+
+	const resetShowDiscountOptions = () => {
+		showDiscountOptions.value = true;
+	}
+
+	const resetDiscountDocumentModel = () => {
+		discountDocumentModel.value = [];
+	}
+
+	const resetIsDiscountDocumentNotUploaded = () => {
+		isDiscountDocumentNotUploaded.value = false;
+	}
+
+	// Define payment discount types
+	let discountTypes = paymentLookups.paymentDispountTypes.map(item => ({
+		value: item.code,
+		label: item.text,
+		tooltip: item.description,
+	}));
+	discountTypes.unshift({ value: '', label: 'Discount Type' });
+	if (!familyEmployeDiscount.includes(props.quoteType)) {
+		discountTypes = discountTypes.filter(
+			type =>
+				type.value !== 'employee_discount' &&
+				type.value !== 'family_employee_discount',
+		);
+	}
+
+	const resetIsPaymentMetodNotSelected = () => {
+		isPaymentMetodNotSelected.value[1] = false;
+	}
+
+	const resetIsDocumentNotUploaded = () => {
+		isDocumentNotUploaded.value = [];
+	}
+
+	const resetSplitAmountModels = () => {
+		splitAmountModels.value = [];
+	}
+
+	const resetDueDateModels = () => {
+		dueDateModels.value = [];
+	}
+
+	const resetCheckDetailModels = () => {
+		checkDetailModels.value = [];
+	}
+
+	const resetIsDiscountReasonError = () => {
+		isDiscountReasonError.value = false;
+	}
+
+	const resetIsDiscountError = () => {
+		isDiscountError.value = false;
+	}
+
+	const resetDiscountError = () => {
+		discountError.value = '';
+	}
+
+	const updateIsTransactionCaptureButtonEnabled = (value) => {
+		isTransactionCaptureButtonEnabled.value = value;
+	}
+
+	const updatePremiumToCapture = (value) => {
+		premiumToCapture.value = value;
+	}
+
+	const updateCapturePaymentValidationErrorMessage = (value) => {
+		capturePaymentValidationErrorMessage.value = value;
+	}
+
+	// Expose functions and properties
+	defineExpose({ resetPaymentMethodsForm, resetPaymentForm, handleCollectionTypeChange, calculatePaymentBreakup, 
+	applyPermissions, initializePaymentForm, handleCollectionTypeChange, handleFrequencyChange, handleApprovalReasonChange,
+	handleDiscountChange, handleDeclinedReasonChange, calculateTotalAmount, applyPermissions, processPaymentSplits, finalizePaymentForm, setFrequencyTypes,
+	paymentMethodsForm, isApproveConfirmed, isViewEnabled, filesTest, currentFileIndex, isCreditApprovalView, isCreditCardView, updateIsTransactionCaptureButtonEnabled });
+	
+	// Watch for changes in paymentMethodsForm.collection_date
+	watch(
+		() => paymentMethodsForm.collection_date,
+		(newValue, oldValue) => {
+			if (newValue && oldValue) {
+				// Get the date part without the time from the newValue and oldValue
+				const newDate = new Date(newValue).toISOString().split('T')[0];
+				const oldDate = new Date(oldValue).toISOString().split('T')[0];
+				// Compare the dates
+				if (newDate !== oldDate) {
+					calculateDueDates();
+				}
+			}
+		},
+	);
+	// Watch for changes in the modal's state
+	watch(props.createPaymentModal, async (newVal, oldVal) => {
+		if (oldVal === true && newVal === false) {
+			// Modal is closing
+			const checkInsurerPaymentLink =
+				paymentMethodsModels.value[1] ===
+				page.props.paymentMethodsEnum?.InsurerPaymentLink;
+			if (
+				insurerPaymentLinkChanged.value &&
+				paymentMethodsForm.collection_type === 'insurer' &&
+				checkInsurerPaymentLink
+			) {
+				// Prevent the close event from triggering
+				if (confirmModalClose.value == false) {
+					await nextTick();
+					createPaymentModal.value = true;
+					emit('update-create-payment-modal', true)
+					await nextTick();
+					if (insurerPaymentComponent.value) {
+						insurerPaymentComponent.value.closeNotification();
+					}
+				}
+				return;
+			}
+		}
+	});
 </script>
 
 
@@ -1877,7 +2459,7 @@
 		@open-inner-modal="(fileId) => emit('open-inner-modal', fileId)"
 		@delete-document="(docName, count, docId) => emit('delete-document', docName, count, docId)"
 		@calculate-total-amount="emit('calculate-total-amount')"
-		@handle-discount-value-change="(value) => emit('handle-discount-value-change', value)"
+		@handle-discount-value-change="(value) => discountValue = value"
 		@validate-insurer-payment-link="emit('validate-insurer-payment-link')"
 	/>
 
@@ -2011,10 +2593,10 @@
 		:paymentMethodsForm="paymentMethodsForm"
 		@cancel="emit('cancel')"
 		@decline="emit('decline')"
-		@approve="emit('approve')"
+		@approve="isApproveClicked = !isApproveClicked"
 		@cancel-modal="emit('cancel-modal')"
 		@aml-verification="emit('aml-verification')"
-		@update-from-insurer-payment-link="(e, f, g) => emit('update-from-insurer-payment-link', e, f, g)"
+		@update-from-insurer-payment-link="(e, f, g) => updateFromInsurerPaymentLink(e, f, g)"
 	/>
 	<div
 		class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
