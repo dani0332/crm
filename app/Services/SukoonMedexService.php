@@ -8,7 +8,6 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\SukoonPurchaseFlowEnum;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
@@ -22,6 +21,7 @@ use DateTime;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\SukoonMedexEnum;
 
 class SukoonMedexService
 {
@@ -220,8 +220,8 @@ class SukoonMedexService
             $this->policyStatus = $data['policy_status'] = Str::slug($paymentData['status'], '_'); // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
 
         // Make sure no any required documents are missing & policyStatus is payment_succeeded
-        if(empty($this->checkMissingReqDocTypes()) && $this->policyStatus == SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED)
-            $this->policyStatus = $data['policy_status'] = SukoonPurchaseFlowEnum::STATUS_BOOKED;
+        if(empty($this->checkMissingReqDocTypes()) && $this->policyStatus == SukoonMedexEnum::STATUS_PAYMENT_SUCCEED)
+            $this->policyStatus = $data['policy_status'] = SukoonMedexEnum::STATUS_BOOKED;
 
         return $transaction->update($data);
     }
@@ -360,7 +360,7 @@ class SukoonMedexService
             $logData = (array) [...$logData, 'response' => $response];
         }
 
-        $stepNumber = SukoonPurchaseFlowEnum::getStepNumber($parentFunction);
+        $stepNumber = SukoonMedexEnum::getStepNumber($parentFunction);
         LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['message' => $message, 'endPoint' => Str::limit($endPoint ?? '', 50), ...$logData]);
     }
 
@@ -718,7 +718,7 @@ class SukoonMedexService
             if(empty($result['policy_number']))
                 throw new Exception('Policy number is missing');
 
-            return ['certificate_number' => $result['policy_number'], 'policy_status' => SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED];
+            return ['certificate_number' => $result['policy_number'], 'policy_status' => SukoonMedexEnum::STATUS_PAYMENT_SUCCEED];
 
         } catch (Exception $e) {
             throw $e;

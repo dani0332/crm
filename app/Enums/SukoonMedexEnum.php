@@ -6,7 +6,7 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-final class SukoonPurchaseFlowEnum extends Enum
+final class SukoonMedexEnum extends Enum
 {
     /* SukoonMedex Status Enums */
     const STATUS_NEW_POLICY = 'new_policy';
