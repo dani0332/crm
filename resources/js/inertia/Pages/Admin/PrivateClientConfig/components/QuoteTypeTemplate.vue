@@ -71,6 +71,9 @@ const createBlankProfile = () => {
     if (field.hasCurrency) {
       profile[`${field.fieldName}_currency_id`] = 1;
     }
+    if (field.hasCheckBox) {
+      profile[`${field.fieldName}_isEnabled`] = false;
+    }
   });
 
   return profile;
@@ -171,6 +174,10 @@ const loadSpecificVersion = async version => {
             formattedProfile[`${field.fieldName}_currency_id`] =
               profile[`${field.fieldName}_currency_id`] || 1;
           }
+          if (field.hasCheckBox) {
+            formattedProfile[`${field.fieldName}_isEnabled`] =
+              profile[`${field.fieldName}_isEnabled`] || false;
+          }
         });
 
         return formattedProfile;
@@ -226,9 +233,13 @@ const validateProfiles = () => {
       }
     }
 
-    // Validate required fields
+    // Validate required fields (only if enabled when hasCheckBox is true)
     props.fields.forEach(field => {
-      if (field.isRequired) {
+      const isFieldEnabled = field.hasCheckBox
+        ? profile[`${field.fieldName}_isEnabled`]
+        : true;
+
+      if (field.isRequired && isFieldEnabled) {
         const value = profile[field.fieldName];
 
         if (field.type === 'select_multiple') {
@@ -357,6 +368,10 @@ const getProfiles = () => {
           cleanProfile[`${field.fieldName}_currency_id`] =
             profile[`${field.fieldName}_currency_id`];
         }
+        if (field.hasCheckBox) {
+          cleanProfile[`${field.fieldName}_isEnabled`] =
+            profile[`${field.fieldName}_isEnabled`];
+        }
       });
 
       return cleanProfile;
@@ -381,6 +396,10 @@ const initializeProfiles = () => {
         if (field.hasCurrency) {
           formattedProfile[`${field.fieldName}_currency_id`] =
             profile[`${field.fieldName}_currency_id`] || 1;
+        }
+        if (field.hasCheckBox) {
+          formattedProfile[`${field.fieldName}_isEnabled`] =
+            profile[`${field.fieldName}_isEnabled`] || false;
         }
       });
 
@@ -721,16 +740,40 @@ onMounted(async () => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <template v-for="field in fields" :key="field.fieldName">
                     <div class="space-y-2">
-                      <label class="block text-sm font-medium text-gray-700">
-                        {{ field.label }}
-                        <span v-if="field.isRequired" class="text-red-500"
-                          >*</span
+                      <div class="flex items-center space-x-2">
+                        <x-checkbox
+                          v-if="field.hasCheckBox"
+                          v-model="profile[`${field.fieldName}_isEnabled`]"
+                          :disabled="isDisabled"
+                          class="flex-shrink-0"
+                        />
+                        <label
+                          class="block text-sm font-medium"
+                          :class="{
+                            'text-gray-700':
+                              !field.hasCheckBox ||
+                              profile[`${field.fieldName}_isEnabled`],
+                            'text-gray-400':
+                              field.hasCheckBox &&
+                              !profile[`${field.fieldName}_isEnabled`],
+                          }"
                         >
-                        <span v-if="field.operator === '>='"> (≥)</span>
-                        <span v-if="field.operator === 'in'">
-                          (Multiple selection)</span
-                        >
-                      </label>
+                          {{ field.label }}
+                          <span
+                            v-if="
+                              field.isRequired &&
+                              (!field.hasCheckBox ||
+                                profile[`${field.fieldName}_isEnabled`])
+                            "
+                            class="text-red-500"
+                            >*</span
+                          >
+                          <span v-if="field.operator === '>='"> (≥)</span>
+                          <span v-if="field.operator === 'in'">
+                            (Multiple selection)</span
+                          >
+                        </label>
+                      </div>
 
                       <!-- Field Value -->
                       <template v-if="field.type === 'select_multiple'">
@@ -746,8 +789,15 @@ onMounted(async () => {
                               profileIndex,
                               field.fieldName,
                             ),
+                            'opacity-50':
+                              field.hasCheckBox &&
+                              !profile[`${field.fieldName}_isEnabled`],
                           }"
-                          :disabled="isDisabled"
+                          :disabled="
+                            isDisabled ||
+                            (field.hasCheckBox &&
+                              !profile[`${field.fieldName}_isEnabled`])
+                          "
                           :tooltip="`Select ${field.label.toLowerCase()} options for this profile.`"
                         >
                           <template
@@ -776,8 +826,15 @@ onMounted(async () => {
                               profileIndex,
                               field.fieldName,
                             ),
+                            'opacity-50':
+                              field.hasCheckBox &&
+                              !profile[`${field.fieldName}_isEnabled`],
                           }"
-                          :disabled="isDisabled"
+                          :disabled="
+                            isDisabled ||
+                            (field.hasCheckBox &&
+                              !profile[`${field.fieldName}_isEnabled`])
+                          "
                           :tooltip="`Set the minimum ${field.label.toLowerCase()} for this profile.`"
                         >
                           <!-- Currency suffix for fields with currency -->

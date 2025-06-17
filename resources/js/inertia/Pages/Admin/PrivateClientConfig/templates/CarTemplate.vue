@@ -34,6 +34,7 @@ const carFields = [
     operator: '>=',
     hasCurrency: true,
     isRequired: true,
+    hasCheckBox: true,
   },
   {
     fieldName: 'car_value',
@@ -42,6 +43,7 @@ const carFields = [
     operator: '>=',
     hasCurrency: true,
     isRequired: true,
+    hasCheckBox: true,
   },
   {
     fieldName: 'car_make_id',
@@ -51,6 +53,7 @@ const carFields = [
     operator: 'in',
     hasCurrency: false,
     isRequired: true,
+    hasCheckBox: true,
   },
   {
     fieldName: 'insurance_provider_id',
@@ -60,6 +63,7 @@ const carFields = [
     operator: 'in',
     hasCurrency: false,
     isRequired: true,
+    hasCheckBox: true,
   },
 ];
 </script>
