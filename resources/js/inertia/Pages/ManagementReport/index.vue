@@ -728,7 +728,7 @@ watch(
         </x-select>
       </div>
       <x-field
-        label="Private Clients"
+        label="Private Client"
         v-if="
           [
             'Transaction',
