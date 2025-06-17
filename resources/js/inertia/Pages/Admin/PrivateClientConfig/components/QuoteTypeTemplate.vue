@@ -68,9 +68,6 @@ const createBlankProfile = () => {
 
   props.fields.forEach(field => {
     profile[field.fieldName] = field.type === 'select_multiple' ? [] : '';
-    if (field.hasCurrency) {
-      profile[`${field.fieldName}_currency_id`] = field.currencyId || 1;
-    }
     if (field.hasCheckBox) {
       profile[`${field.fieldName}_isEnabled`] = false;
     }
@@ -129,7 +126,8 @@ const getCurrencySymbol = currencyId => {
   const currency = props.dropdownData.currencies?.find(
     c => c.value === currencyId,
   );
-  return currency?.symbol || 'AED';
+
+  return currency?.label || 'AED';
 };
 
 const loadSpecificVersion = async version => {
@@ -170,10 +168,6 @@ const loadSpecificVersion = async version => {
           formattedProfile[field.fieldName] =
             profile[field.fieldName] ||
             (field.type === 'select_multiple' ? [] : '');
-          if (field.hasCurrency) {
-            formattedProfile[`${field.fieldName}_currency_id`] =
-              profile[`${field.fieldName}_currency_id`] || 1;
-          }
           if (field.hasCheckBox) {
             formattedProfile[`${field.fieldName}_isEnabled`] =
               profile[`${field.fieldName}_isEnabled`] || false;
@@ -364,10 +358,6 @@ const getProfiles = () => {
 
       props.fields.forEach(field => {
         cleanProfile[field.fieldName] = profile[field.fieldName];
-        if (field.hasCurrency) {
-          cleanProfile[`${field.fieldName}_currency_id`] =
-            profile[`${field.fieldName}_currency_id`];
-        }
         if (field.hasCheckBox) {
           cleanProfile[`${field.fieldName}_isEnabled`] =
             profile[`${field.fieldName}_isEnabled`];
@@ -393,10 +383,6 @@ const initializeProfiles = () => {
         formattedProfile[field.fieldName] =
           profile[field.fieldName] ||
           (field.type === 'select_multiple' ? [] : '');
-        if (field.hasCurrency) {
-          formattedProfile[`${field.fieldName}_currency_id`] =
-            profile[`${field.fieldName}_currency_id`] || 1;
-        }
         if (field.hasCheckBox) {
           formattedProfile[`${field.fieldName}_isEnabled`] =
             profile[`${field.fieldName}_isEnabled`] || false;
@@ -872,9 +858,7 @@ onMounted(async () => {
                               class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
                             >
                               <span>{{
-                                getCurrencySymbol(
-                                  profile[`${field.fieldName}_currency_id`],
-                                )
+                                getCurrencySymbol(field.currencyId)
                               }}</span>
                             </div>
                           </template>
