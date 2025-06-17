@@ -93,13 +93,11 @@ const addProfile = async () => {
 };
 
 const removeProfile = index => {
-  if (profiles.value.length > 0) {
-    profiles.value.splice(index, 1);
+  profiles.value.splice(index, 1);
 
-    // If no profiles left, add one blank profile
-    if (profiles.value.length === 0) {
-      profiles.value.push(createBlankProfile());
-    }
+  // If no profiles left, add one blank profile
+  if (profiles.value.length === 0) {
+    profiles.value.push(createBlankProfile());
   }
 };
 
@@ -150,10 +148,6 @@ const loadExistingConfig = async () => {
     console.error('Error loading existing config:', error);
   }
 };
-
-onMounted(() => {
-  loadExistingConfig();
-});
 
 const getProfiles = () => {
   return profiles.value

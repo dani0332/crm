@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import CarTemplate from './templates/CarTemplate.vue';
 import HealthTemplate from './templates/HealthTemplate.vue';
@@ -89,6 +89,9 @@ const setActiveTab = async tab => {
   activeTab.value = tab;
 
   try {
+    // Wait for next tick to ensure component is mounted
+    await nextTick();
+
     // Load configuration for the selected quote type
     const quoteType = quoteTypes.find(qt => qt.name === tab);
     if (
@@ -98,10 +101,18 @@ const setActiveTab = async tab => {
     ) {
       await quoteType.ref.value.loadExistingConfig();
     }
+  } catch (error) {
+    console.error('Error loading tab configuration:', error);
   } finally {
     tabLoading.value = false;
   }
 };
+
+// Initialize first tab on mount
+onMounted(async () => {
+  await nextTick();
+  await setActiveTab('car');
+});
 
 const configForm = useForm({
   configurations: [],

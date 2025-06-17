@@ -10,6 +10,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PrivateClientConfig;
 use App\Models\SubArea;
+use App\Services\PrivateClientConfigService;
 use App\Traits\PrivateClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -23,38 +24,29 @@ class PrivateClientConfigController extends Controller
     private const LABEL_TEXT = 'text as label';
     private const VALUE_TEXT = 'id as value';
 
-    public function __construct()
+    protected PrivateClientConfigService $configService;
+
+    public function __construct(PrivateClientConfigService $configService)
     {
+        $this->configService = $configService;
         $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show', 'advanced']]);
     }
 
     public function show(Request $request)
     {
         $selectedVersion = $request->input('version', null);
-
-        $allVersions = PrivateClientConfig::select('version')
-            ->distinct()
-            ->orderBy('version', 'desc')
-            ->pluck('version')
-            ->toArray();
+        $allVersions = $this->configService->getAllVersions();
 
         if ($selectedVersion === null && count($allVersions) > 0) {
             $selectedVersion = $allVersions[0];
         }
 
-        $configurations = PrivateClientConfig::query()
-                            ->when($selectedVersion, function ($query) use ($selectedVersion) {
-                                return $query->where('version', $selectedVersion);
-                            })
-                            ->get();
+        $configurations = $this->configService->getConfigurationsByVersion($selectedVersion);
+        $isCurrentVersion = $this->configService->isCurrentVersion($selectedVersion, $allVersions);
 
         $carMakes = CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-
         $insurers = InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-
         $locationAreas = SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get();
-
-        $isCurrentVersion = count($allVersions) === 0 || (int) $selectedVersion === (int) $allVersions[0];
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
             'configurations' => $configurations,
@@ -70,24 +62,14 @@ class PrivateClientConfigController extends Controller
     public function advanced(Request $request)
     {
         $selectedVersion = $request->input('version', null);
-
-        $allVersions = PrivateClientConfig::select('version')
-            ->distinct()
-            ->orderBy('version', 'desc')
-            ->pluck('version')
-            ->toArray();
+        $allVersions = $this->configService->getAllVersions();
 
         if ($selectedVersion === null && count($allVersions) > 0) {
             $selectedVersion = $allVersions[0];
         }
 
-        $configurations = PrivateClientConfig::query()
-                            ->when($selectedVersion, function ($query) use ($selectedVersion) {
-                                return $query->where('version', $selectedVersion);
-                            })
-                            ->get();
-
-        $isCurrentVersion = count($allVersions) === 0 || (int) $selectedVersion === (int) $allVersions[0];
+        $configurations = $this->configService->getConfigurationsByVersion($selectedVersion);
+        $isCurrentVersion = $this->configService->isCurrentVersion($selectedVersion, $allVersions);
 
         return Inertia::render('Admin/PrivateClientConfig/Advanced', [
             'configurations' => $configurations,
@@ -105,95 +87,26 @@ class PrivateClientConfigController extends Controller
             return response()->json(['error' => 'Quote type ID is required'], 400);
         }
 
-        $latestConfig = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
-            ->where('active_version', true)
-            ->first();
-
-        // Get specific dropdown data based on quote type
-        $dropdownData = $this->getDropdownDataByQuoteType($quoteTypeId);
-
-        $responseData = [
-            'config' => null,
-            'version' => null,
-            'dropdownData' => $dropdownData,
-        ];
-
-        if ($latestConfig) {
-            $configData = json_decode($latestConfig->config, true);
-            $responseData['config'] = $configData;
-            $responseData['version'] = $latestConfig->version;
-        }
-
-        return response()->json($responseData);
-    }
-
-    private function getDropdownDataByQuoteType($quoteTypeId)
-    {
-        $baseData = [
-            'nationalities' => Nationality::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
-            'currencies' => CurrencyType::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
-        ];
-
-        switch ($quoteTypeId) {
-            case 1: // Car
-                return array_merge($baseData, [
-                    'carMakes' => CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
-                ]);
-
-            case 2: // Home
-                return array_merge($baseData, [
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
-                    'locationAreas' => SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get(),
-                ]);
-
-            case 3: // Health
-            case 4: // Life
-            case 7: // Yacht
-                return array_merge($baseData, [
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get(),
-                ]);
-
-            default:
-                return $baseData;
+        try {
+            $responseData = $this->configService->getLatestConfigByQuoteType($quoteTypeId);
+            return response()->json($responseData);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load configuration'], 500);
         }
     }
 
     public function upsert(Request $request)
     {
         try {
-            // Validate incoming request
+            // Basic validation
             $validated = $request->validate([
                 'configurations' => 'required|array',
                 'configurations.*.quote_type_id' => 'integer',
                 'configurations.*.profiles' => 'required|array',
-                'configurations.*.profiles.*.fieldName' => 'required|string',
-                'configurations.*.profiles.*.operator' => 'required|string',
-                'configurations.*.profiles.*.value' => 'nullable',
-                'configurations.*.profiles.*.currencyTypeId' => 'nullable|integer',
-                'configurations.*.profiles.*.nationalityIds' => 'nullable|array',
             ]);
 
-            DB::beginTransaction();
-
-            // Set active_version=false for all existing configurations
-            PrivateClientConfig::where('active_version', true)->update(['active_version' => false]);
-
-            $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
-            $newVersion = $existingVersion ? $existingVersion->version + 1 : 1;
-
-            foreach ($validated['configurations'] as $config) {
-                // Create new config with new version
-                PrivateClientConfig::create([
-                    'quote_type_id' => $config['quote_type_id'],
-                    'config' => json_encode(['profiles' => $config['profiles']]),
-                    'version' => $newVersion,
-                    'status' => 1,
-                    'active_version' => true,
-                ]);
-            }
-
-            DB::commit();
+            // Create new configuration version using service
+            $this->configService->createNewConfigurationVersion($validated['configurations']);
 
             // Check if request came from advanced page
             $redirectRoute = $request->header('referer') && str_contains($request->header('referer'), 'advanced')
@@ -202,11 +115,10 @@ class PrivateClientConfigController extends Controller
 
             return redirect()->route($redirectRoute)
                 ->with('message', 'Private Client Configuration updated successfully.');
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return redirect()->back()->with('error', 'An error occurred while updating the configuration: '.$e->getMessage());
         }
     }
