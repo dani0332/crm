@@ -28,7 +28,7 @@ final class EmbeddedProductEnum extends Enum
         ];
     }
 
-    public static function getSukoonDriverMedexCodes(): array
+    public static function getSukoonMedexCodes(): array
     {
         return [
             self::MDX,

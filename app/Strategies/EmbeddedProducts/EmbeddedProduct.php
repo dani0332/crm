@@ -245,11 +245,11 @@ class EmbeddedProduct
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
     
-    public static function checkSukoonDriverMedex($product)
+    public static function checkSukoonMedex($product)
     {
         $product = strtoupper(trim($product));
 
-        return in_array($product, EmbeddedProductEnum::getSukoonDriverMedexCodes());
+        return in_array($product, EmbeddedProductEnum::getSukoonMedexCodes());
     }
 
     public function getDocumentList($ep, $transaction)

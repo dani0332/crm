@@ -21,7 +21,7 @@ use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
-use App\Jobs\SukoonDriverMedexPurchaseFlowJob;
+use App\Jobs\SukoonMedexPurchaseFlowJob;
 use App\Models\ApplicationStorage;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
@@ -35,7 +35,7 @@ use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SukoonDriverMedexService;
+use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
@@ -350,14 +350,14 @@ class EmbeddedProductRepository extends BaseRepository
                     SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
 
                 } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
-                    && EmbeddedProductStrategy::checkSukoonDriverMedex($item->product->embeddedProduct->short_code ?? '')) {
+                    && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
 
                     // Sukoon Medex Purchase Flow
-                    LoggerService::info("SukoonDriverMedexPurchaseFlowJob dispatch, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
-                    SukoonDriverMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item);
+                    LoggerService::info("SukoonMedexPurchaseFlowJob dispatch, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
+                    SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item);
                 }
             }
         }
@@ -383,7 +383,7 @@ class EmbeddedProductRepository extends BaseRepository
         if(EmbeddedProductStrategy::checkAlfredProtect($shortCode)) {
             ProcessSyncAlfredProtect::dispatch($quoteObject);
         }
-        else if(EmbeddedProductStrategy::checkSukoonDriverMedex($shortCode)) {
+        else if(EmbeddedProductStrategy::checkSukoonMedex($shortCode)) {
 
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $quoteObject->load('embeddedTransactions.product.embeddedProduct');
@@ -392,7 +392,7 @@ class EmbeddedProductRepository extends BaseRepository
             if (empty($transaction))
                 LoggerService::info("No transaction found with certificate-number, ref_id: {$quoteObject->code}");
 
-            $sukoonMedexService = app(SukoonDriverMedexService::class);
+            $sukoonMedexService = app(SukoonMedexService::class);
             $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
             $sukoonMedexService->syncDocumentsFromSukoon($transaction);
         }
@@ -507,7 +507,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $transactions = $transactions->where(function ($transact) {
             if (isset($transact->product) && isset($transact->product->embeddedProduct)) {
-                return EmbeddedProductStrategy::checkSukoonDriverMedex($transact->product->embeddedProduct->short_code);
+                return EmbeddedProductStrategy::checkSukoonMedex($transact->product->embeddedProduct->short_code);
             }
             return false;
         });

@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\Logger\LoggerService;
-use App\Services\SukoonDriverMedexService;
+use App\Services\SukoonMedexService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -11,7 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
-class SukoonDriverMedexPurchaseFlowJob implements ShouldQueue
+class SukoonMedexPurchaseFlowJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -38,7 +38,7 @@ class SukoonDriverMedexPurchaseFlowJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $sukoonMedexService = app(SukoonDriverMedexService::class);
+        $sukoonMedexService = app(SukoonMedexService::class);
         $sukoonMedexService->validateCustomerDetails($this->quoteObject);
         $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
         $sukoonMedexService->processPurchaseFlow();

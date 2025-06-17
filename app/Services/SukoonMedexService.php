@@ -23,7 +23,7 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
-class SukoonDriverMedexService
+class SukoonMedexService
 {
     /**
      * Create a new class instance.
@@ -107,7 +107,7 @@ class SukoonDriverMedexService
     }
 
     /**
-     * Processes the SukoonDriverMedex Purchase Flow for the given quote and transaction.
+     * Processes the SukoonMedex Purchase Flow for the given quote and transaction.
      *
      * @param  mixed  $quote  The quote object.
      * @param  mixed  $transaction  The transaction object.
@@ -286,7 +286,7 @@ class SukoonDriverMedexService
         // Check if the response exceeds the maximum length
         if (strlen($response) > $maxTextLength) {
             // Save the large response to a file
-            $responseFilePath = storage_path('logs/response_sukoon_driver_medex_'.uniqid().'.json');
+            $responseFilePath = storage_path('logs/response_sukoon_medex_'.uniqid().'.json');
             file_put_contents($responseFilePath, $response);
             $response = 'Response too large, saved to: '.$responseFilePath;
         }
@@ -447,7 +447,7 @@ class SukoonDriverMedexService
     }
 
     /**
-     * Logs into the SukoonDriverMedex system and sets the session ID.
+     * Logs into the SukoonMedex system and sets the session ID.
      *
      * @return void
      *
