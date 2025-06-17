@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentChargesEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -37,6 +38,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
@@ -75,7 +77,6 @@ class SendUpdateLogService
             'payment_status_id',
             'payment_status_date',
             'payment_gateway',
-            'previous_policy_expiry_date',
             'previous_quote_policy_premium',
             'price_vat_applicable',
             'paid_at',
@@ -116,6 +117,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -133,6 +135,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -150,6 +153,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -167,6 +171,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -184,6 +189,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -201,6 +207,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                         'travelDestinations' => [],
@@ -282,6 +289,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -344,6 +352,7 @@ class SendUpdateLogService
                         $customerMemberCode = generateQuoteMemberCode($morphRelation->customer_type, $morphRelation->customer_entity_id);
                         $fillColumns = array_merge($fillColumns, [
                             'code' => $customerMemberCode,
+                            'updated_at' => null,
                         ]);
                     }
                     $newMorphRelation = $morphRelation->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
@@ -422,6 +431,25 @@ class SendUpdateLogService
                 $updateReplicateDetails['parent_id'] = null;
             }
 
+            if ($replicateObject->previous_policy_expiry_date) {
+                // If it's an INSLY or RENEWAL_UPLOAD quote, always copy previous_policy_expiry_date
+                if ($replicateObject->insly_migrated || in_array($replicateObject->source, [LeadSourceEnum::INSLY, LeadSourceEnum::RENEWAL_UPLOAD])) {
+                    $shouldCopyPreviousPolicyExpiry = true;
+                } else {
+                    // Otherwise check if insly_id exists in appropriate relation
+                    if (checkPersonalQuotes($quoteTypeCode)) {
+                        $shouldCopyPreviousPolicyExpiry = isset($replicateObject->quoteDetail) && ! empty($replicateObject?->quoteDetail->insly_id);
+                    } else {
+                        $relationName = strtolower($quoteTypeCode).'QuoteRequestDetail';
+                        $shouldCopyPreviousPolicyExpiry = isset($replicateObject->$relationName) && ! empty($replicateObject?->$relationName->insly_id);
+                    }
+                }
+                // Set previous_policy_expiry_date based on conditions
+                $updateReplicateDetails['previous_policy_expiry_date'] = $shouldCopyPreviousPolicyExpiry ?
+                    Carbon::parse($replicateObject->previous_policy_expiry_date)->format(config('constants.DB_DATE_FORMAT_MATCH')) :
+                    null;
+            }
+
             $replicateObject->fill($updateReplicateDetails)->save();
 
             foreach ($getRelations as $relation => $relationObject) {
@@ -434,6 +462,7 @@ class SendUpdateLogService
             }
 
             $childLeadDetails = array_merge($childLeadDetails, [
+                'id' => $replicateObject->id,
                 'uuid' => $replicateObject->uuid,
                 'ref_id' => $replicateObject->code,
                 'quote_type_code' => $quoteTypeCode,
@@ -952,6 +981,7 @@ class SendUpdateLogService
             'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
             'code' => $sendUpdateRequest->quoteCode,
+            'send_update_log_id' => $sendUpdateLog?->id,
         ];
 
         // Handle TapPay insurer payment against credit card and if payment available in Send update then create Receipt
@@ -1135,15 +1165,30 @@ class SendUpdateLogService
 
                 // Cases for Cancel Inception and Cancel Inception Reissue Start
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
+                    $oldLeadStatus = $quote->quote_status_id;
+                    $newLeadStatus = QuoteStatusEnum::PolicyCancelledReissued;
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
-                        // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled, // Below code overrides status, it should be PolicyCancelledReissued not PolicyCancelled
+                        'quote_status_id' => $newLeadStatus,
                         'quote_batch_id' => null,
+                    ]);
+                    QuoteStatusLog::create([
+                        'quote_type_id' => $sendUpdateLog->quote_type_id,
+                        'quote_request_id' => $quote->id,
+                        'current_quote_status_id' => $newLeadStatus,
+                        'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                     (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
+                    $oldLeadStatus = $quote->quote_status_id;
+                    $newLeadStatus = QuoteStatusEnum::PolicyCancelled;
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_status_id' => $newLeadStatus,
+                    ]);
+                    QuoteStatusLog::create([
+                        'quote_type_id' => $sendUpdateLog->quote_type_id,
+                        'quote_request_id' => $quote->id,
+                        'current_quote_status_id' => $newLeadStatus,
+                        'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                 }
                 // Cases for Cancel Inception and Cancel Inception Reissue End
@@ -1683,6 +1728,7 @@ class SendUpdateLogService
         }
 
         if (isTapEnabled()) {
+            $btnText = $this->getUpdateButtonStatus($sendUpdateLog);
             $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
                 app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED]);
             $payment = $payment[0] ?? null;
@@ -1691,7 +1737,7 @@ class SendUpdateLogService
                     return $split->payment_method == PaymentMethodsEnum::CreditCard;
                 });
 
-                if (! $sendUpdateLog->is_booking_filled && $hasCCPayment) {
+                if ((! $sendUpdateLog->is_booking_filled && $hasCCPayment) && ($btnText != SendUpdateLogStatusEnum::SUC)) {
                     return 'Please Update the booking details.';
                 }
 

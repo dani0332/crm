@@ -27,6 +27,7 @@ class RolePermissionSeeder extends Seeder
         $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
         // $this->addPolicyDetailsAddVatPermission();
+        $this->addNationalityAllocationConfigPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -212,6 +213,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::POLICY_DETAILS_ADD_VAT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addNationalityAllocationConfigPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

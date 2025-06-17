@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QuoteTypes;
+use App\Traits\Logable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -10,7 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class LeadAllocation extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, Logable;
 
     protected $table = 'lead_allocation';
     protected $fillable = ['is_hardstop'];

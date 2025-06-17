@@ -400,13 +400,6 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchEndorsementsByPersonalQuoteId($personalQuoteId)
-    {
-        return $this->where('personal_quote_id', $personalQuoteId)->where(function ($q) {
-            $q->where('code', 'like', '%EF%')->orWhere('code', 'like', '%EN%');
-        })->orderBy('id', 'desc')->get();
-    }
-
     public function autoFillPolicyDetails($quote, $quoteTypeId, $insuranceProviderId, $category, $planId = null): array
     {
         if ($quoteTypeId == QuoteTypeId::Travel) { // policy_expiry_date format is different in TravelQuoteService file.

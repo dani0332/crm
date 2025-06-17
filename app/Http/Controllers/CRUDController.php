@@ -19,6 +19,7 @@ use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -2146,6 +2147,7 @@ class CRUDController extends Controller
 
     public function storePayment(StorePaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CREATE_PAYMENT);
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);
@@ -2198,6 +2200,7 @@ class CRUDController extends Controller
 
     public function updatePayment(Request $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_PAYMENT);
         $paymentInformation = [
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
@@ -2229,6 +2232,14 @@ class CRUDController extends Controller
             $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
         }
 
+        // check if advisor belongs to PCP or not
+        $isPCPTeamAdvisor = ! empty($carQuote->advisor_id) ? $this->carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+        LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
+        if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+            app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        }
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
 

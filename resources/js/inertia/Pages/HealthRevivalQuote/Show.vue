@@ -2307,6 +2307,11 @@ const updateProfileDetails = isValid => {
                   :uuid="quote.uuid"
                   :insuranceProviderId="item.id"
                   :code="quote.code"
+                  :plans="listQuotePlansFiltered || []"
+                  :extraDetails="{
+                    selectedPlansIds: [selectedProviderPlan?.id],
+                  }"
+                  :payments="payments"
                 />
 
                 <x-button

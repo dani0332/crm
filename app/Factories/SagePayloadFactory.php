@@ -17,8 +17,8 @@ use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\SendUpdateLog;
 use App\Models\User;
-use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
 use stdClass;
 
@@ -112,16 +112,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
-                    'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
+                    'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => roundNumber($request->totalPrice),
-                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
+                            'DistributedAmount' => roundNumber($request->premiumWithTax),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->premiumWithTax),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -199,8 +199,8 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
-                    'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
+                    'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'Terms' => self::getTermsCode(count($paymentSplits)),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
@@ -208,8 +208,8 @@ class SagePayloadFactory
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => roundNumber($request->totalPrice),
-                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
+                            'DistributedAmount' => roundNumber($request->premiumWithTax),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->premiumWithTax),
                         ],
                     ],
                     'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits, $invoicePaymentSchedulesDueDate),
@@ -522,8 +522,8 @@ class SagePayloadFactory
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => roundNumber($request->totalPrice),
-                            'ExtendedAmountWithoutTIP' => roundNumber($request->totalPrice),
+                            'ExtendedAmountWithTIP' => roundNumber($request->premiumWithTax),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->premiumWithTax),
                         ],
                     ],
 
@@ -1296,8 +1296,8 @@ class SagePayloadFactory
         $latestEndorsementNumber = null;
         $endorsementSubType = '';
 
-        if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
-            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
+        if ($quote?->personal_quote_id && $quote?->send_update_log_id) {
+            $latestEndorsement = SendUpdateLog::where('id', $quote->send_update_log_id)->first();
             $latestEndorsementCode = $latestEndorsement?->code;
             $latestEndorsementNumber = $latestEndorsement?->endorsement_number;
 
@@ -1329,7 +1329,7 @@ class SagePayloadFactory
         //        TODO:: Need to check with Ali Array to Std
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_expiry_date));
+        $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
         $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
         if (! empty($paymentSplits)) {

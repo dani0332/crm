@@ -32,6 +32,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -47,6 +48,7 @@ class TravelQuoteService extends BaseService
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
+    use PersonalQuoteSyncTrait;
     use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService, protected TravelQuoteQueryBuilder $travelQuoteQueryBuilder)
@@ -148,6 +150,7 @@ class TravelQuoteService extends BaseService
             as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
+            'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
@@ -201,7 +204,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
             ->leftJoin('renewal_batches as rb', 'tqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('embedded_transactions as et', 'et.code', 'tqr.code')
@@ -212,8 +215,10 @@ class TravelQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id)', [QuoteTypeId::Travel]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -393,7 +398,7 @@ class TravelQuoteService extends BaseService
     {
         $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
         $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
-        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams, useJoin: false);
 
         return $query;
 
@@ -640,6 +645,8 @@ class TravelQuoteService extends BaseService
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
+                } elseif ($item == 'payment_status_id' && ! empty($request[$item])) {
+                    $this->query->where('py.payment_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
                     if (in_array($item, $skipped)) {
@@ -1235,12 +1242,18 @@ class TravelQuoteService extends BaseService
     public function createDuplicateLead($leadModal, $quoteStatusId)
     {
         if (! $leadModal) {
+            LoggerService::warning('Cannot create duplicate lead: Lead model is null');
+
             return false; // Add validation to avoid failure if $leadModal is null
         }
+
         $newLeadCode = $leadModal->code.'-1';
+        LoggerService::info("Starting duplicate lead creation process for {$leadModal->code} -> {$newLeadCode}");
         $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
         if ($leadExists) {
             // Lead with the code already exists
+            LoggerService::warning("Duplicate lead creation failed: Lead with code {$newLeadCode} already exists");
+
             return false;
         }
         $duplicateLead = $leadModal->replicate();
@@ -1253,8 +1266,14 @@ class TravelQuoteService extends BaseService
         $duplicateLead->save();
 
         if ($duplicateLead) {
+            LoggerService::info("Successfully created duplicate lead with code: {$duplicateLead->code}");
+            $this->updatePersonalQuote($duplicateLead->uuid, QuoteTypeId::Travel, ['quote_id' => $duplicateLead->id]);
             // update morph relation in payments table
-            $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+            $paymentsCount = $leadModal->payments()->where('code', $newLeadCode)->count();
+            if ($paymentsCount > 0) {
+                LoggerService::info("Updating payment relations: {$paymentsCount} payment(s) found for {$newLeadCode}");
+                $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+            }
 
             // update morph relation in quote_documents table,which are associated with split payments
             Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
@@ -1275,12 +1294,21 @@ class TravelQuoteService extends BaseService
             // update plan & premium for parent & child lead
             $this->updatePlanAndPremium($leadModal, $duplicateLead);
 
-            $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
-                $duplicateDestination = $destination->replicate();
-                $duplicateDestination->quote_id = $duplicateLead->id;
-                $duplicateDestination->uuid = $duplicateLead->uuid;
-                $duplicateDestination->save();
-            });
+            // Duplicate travel destinations
+            $destinationsCount = $leadModal->TravelDestinations()->count();
+            if ($destinationsCount > 0) {
+                LoggerService::info("Duplicating {$destinationsCount} travel destinations for lead {$duplicateLead->code}");
+                $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
+                    $duplicateDestination = $destination->replicate();
+                    $duplicateDestination->quote_id = $duplicateLead->id;
+                    $duplicateDestination->uuid = $duplicateLead->uuid;
+                    $duplicateDestination->save();
+                });
+            }
+
+            LoggerService::info("Duplicate lead creation completed successfully: {$leadModal->code} -> {$duplicateLead->code}");
+        } else {
+            LoggerService::error("Failed to create duplicate lead for {$leadModal->code}");
         }
 
         return true;

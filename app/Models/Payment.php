@@ -284,4 +284,14 @@ class Payment extends Model implements Auditable
     {
         return $this->belongsTo(PersonalPlan::class, 'plan_id');
     }
+
+    public function hasOneOfPaidStatus()
+    {
+        return in_array($this->payment_status_id, [
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
+        ]);
+    }
 }

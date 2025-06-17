@@ -10,6 +10,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\PaymentGatewayEnum;
@@ -158,6 +159,7 @@ class HealthQuoteService extends BaseService
             as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
+            'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
@@ -225,7 +227,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
-            ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
+            ->leftjoin('payment_status', 'py.payment_status_id', 'payment_status.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
             ->leftJoin('renewal_batches as rb', 'hqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
@@ -235,9 +237,11 @@ class HealthQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id)', [QuoteTypeId::Health]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id');
     }
 
     public function getEntity($id)
@@ -346,7 +350,7 @@ class HealthQuoteService extends BaseService
     {
         $query = $this->healthQuoteQueryBuilder->processGridData($requestParams);
         $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
-        $this->adjustQueryByDateFilters($query, 'health_quote_request', requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
         return $query;
     }
@@ -1311,6 +1315,14 @@ class HealthQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+
+            LoggerService::info(self::class.' - processManualLeadAssignment: Checking lead_assignment_trigger', extra: [
+                'current_value' => $lead->lead_assignment_trigger ?? 'null',
+            ]);
+            if (empty($lead->lead_assignment_trigger)) {
+                LoggerService::info(self::class.' - processManualLeadAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+                $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+            }
             // will update the car quote request detail entity about assignment
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId);
 
@@ -1341,6 +1353,13 @@ class HealthQuoteService extends BaseService
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
             LoggerService::error('Lead or new advisor ID is null, unable to update allocation counts');
+
+            return;
+        }
+
+        // Skip allocation count updates for IMCRM source leads
+        if ($lead->source === LeadSourceEnum::IMCRM) {
+            LoggerService::info('Skipping allocation count update for IMCRM source lead: '.$lead->uuid);
 
             return;
         }
@@ -1979,8 +1998,9 @@ class HealthQuoteService extends BaseService
                       ) AS HealthTeams"),
                 DB::raw("GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ') AS AdvisorTeamName"),
             ])
+            ->leftJoin('payments as py', 'py.code', '=', 'q.code')
             ->leftJoin('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
-            ->leftJoin('payment_status as ps', 'q.payment_status_id', '=', 'ps.id')
+            ->leftJoin('payment_status as ps', 'py.payment_status_id', '=', 'ps.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->leftJoin('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
