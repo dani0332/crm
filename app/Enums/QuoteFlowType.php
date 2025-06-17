@@ -14,7 +14,6 @@ enum QuoteFlowType: int
     case HOME_AUTOMATED_FOLLOWUPS = 8;
     case MOTOR_PCP_FOLLOWUPS = 9;
 
-
     public function label(): string
     {
         return match ($this) {
