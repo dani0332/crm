@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Events\AfterSheet;
+use Carbon\Carbon;
 
 class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, WithMapping
 {
@@ -36,10 +37,10 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
     public function headings(): array
     {
         // Multi-row headings for title, subtitle, etc.
+        $year = Carbon::now()->year;
         return [
             ['AFIA Insurance Brokerage Services LLC'],
-            ['AML/CFT Monitoring purpose Customer Risk Profile based Quarterly Report for Q1-2025'],
-            ['Quarter - Q1-2025'],
+            ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}"],
             ['Requested By Compliance Dept.'],
             [
                 'Customer Full Name',
