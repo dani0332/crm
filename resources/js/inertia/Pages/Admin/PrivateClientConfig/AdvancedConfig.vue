@@ -72,8 +72,18 @@ const quoteTypes = [
   },
 ];
 
-const setActiveTab = tab => {
+const setActiveTab = async tab => {
   activeTab.value = tab;
+
+  // Load configuration for the selected quote type
+  const quoteType = quoteTypes.find(qt => qt.name === tab);
+  if (
+    quoteType &&
+    quoteType.ref.value &&
+    quoteType.ref.value.loadExistingConfig
+  ) {
+    await quoteType.ref.value.loadExistingConfig();
+  }
 };
 
 const configForm = useForm({
@@ -93,13 +103,7 @@ const collectAllProfiles = () => {
       if (profiles.length > 0) {
         const configItem = {
           quote_type_id: quoteType.quote_type_id,
-          profiles: profiles.map(profile => ({
-            fieldName: profile.fieldName,
-            operator: profile.operator,
-            value: profile.value,
-            currencyTypeId: profile.currencyTypeId,
-            nationalityIds: profile.nationalityIds,
-          })),
+          profiles: profiles,
         };
 
         allConfigurations.push(configItem);

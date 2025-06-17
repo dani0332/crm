@@ -42,20 +42,19 @@ class PrivateClientConfigController extends Controller
             $selectedVersion = $allVersions[0];
         }
 
-        $configurations = new PrivateClientConfig;
+        $configurations = PrivateClientConfig::query()
+                            ->when($selectedVersion, function ($query) use ($selectedVersion) {
+                                return $query->where('version', $selectedVersion);
+                            })
+                            ->get();
 
-        if ($selectedVersion) {
-            $configurations = $configurations->where('version', $selectedVersion);
-        }
-        $configurations = $configurations->get();
+        $carMakes = CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
 
-        $carMakes = CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get()->toArray();
+        $insurers = InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
 
-        $insurers = InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get()->toArray();
+        $locationAreas = SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get();
 
-        $locationAreas = SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get()->toArray();
-
-        $isCurrentVersion = (int) $selectedVersion === (int) $allVersions[0];
+        $isCurrentVersion = count($allVersions) === 0 || (int) $selectedVersion === (int) $allVersions[0];
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
             'configurations' => $configurations,
@@ -98,7 +97,7 @@ class PrivateClientConfigController extends Controller
 
         $currencies = CurrencyType::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
 
-        $isCurrentVersion = (int) $selectedVersion === (int) $allVersions[0];
+        $isCurrentVersion = count($allVersions) === 0 || (int) $selectedVersion === (int) $allVersions[0];
 
         return Inertia::render('Admin/PrivateClientConfig/Advanced', [
             'configurations' => $configurations,
@@ -110,6 +109,30 @@ class PrivateClientConfigController extends Controller
             'allVersions' => $allVersions,
             'selectedVersion' => $selectedVersion,
             'isCurrentVersion' => $isCurrentVersion,
+        ]);
+    }
+
+    public function getLatestConfigByQuoteType(Request $request)
+    {
+        $quoteTypeId = $request->input('quote_type_id');
+
+        if (!$quoteTypeId) {
+            return response()->json(['error' => 'Quote type ID is required'], 400);
+        }
+
+        $latestConfig = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
+            ->where('active_version', true)
+            ->first();
+
+        if (!$latestConfig) {
+            return response()->json(['config' => null]);
+        }
+
+        $configData = json_decode($latestConfig->config, true);
+
+        return response()->json([
+            'config' => $configData,
+            'version' => $latestConfig->version,
         ]);
     }
 

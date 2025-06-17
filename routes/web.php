@@ -502,6 +502,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::prefix('private-client-config')->group(function () {
             Route::get('show', [PrivateClientConfigController::class, 'show'])->name('admin.private-client-config.show');
             Route::get('advanced', [PrivateClientConfigController::class, 'advanced'])->name('admin.private-client-config.advanced');
+            Route::get('latest-by-quote-type', [PrivateClientConfigController::class, 'getLatestConfigByQuoteType'])->name('admin.private-client-config.latest-by-quote-type');
             Route::post('upsert', [PrivateClientConfigController::class, 'upsert'])->name('admin.private-client-config.upsert');
         });
 
