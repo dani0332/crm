@@ -134,8 +134,8 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
             'claims_history' => ['index' => 19, 'title' => 'Claims History', 'rules' => 'required|max:10'],
             'premium' => ['index' => 20, 'title' => 'Premium', 'rules' => 'nullable|max:20'],
             'insurer_quote_no' => ['index' => 21, 'title' => 'Insurer Quote No', 'rules' => 'nullable|max:20'],
-            'previous_advisor_email' => ['index' => 22, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
-            'notes' => ['index' => 23, 'title' => 'Notes', 'rules' => 'nullable|max:100'],
+            'previous_advisor_email' => ['index' => 22, 'title' => 'Previous Advisor Email', 'rules' => $nullableMaxLength],
+            'notes' => ['index' => 23, 'title' => 'Notes', 'rules' => $nullableMaxLength],
         ];
     }
 

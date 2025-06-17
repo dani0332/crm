@@ -108,7 +108,7 @@ class HomeRenewalService extends RenewalsUploadService
                     'batch' => $renewalQuoteProcess->batch,
                 ]);
 
-                return;
+                return null;
             }
 
             LoggerService::info($logPrefix.' quote found to update');
