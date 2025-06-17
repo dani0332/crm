@@ -1,5 +1,6 @@
 <script setup>
 	import { defineProps, defineEmits } from 'vue';
+	import moment from 'moment';
   import { 
 		PaymentFormFields, 
 		PaymentFormAlerts, 
@@ -18,6 +19,10 @@
 	const permissionEnum = page.props.permissionsEnum;
 	const paymentLookups = page.props.paymentLookups;
 	const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
+	const paymentStatusEnum = page.props.paymentStatusEnum;
+	const paymentTooltipEnum = page.props.paymentTooltipEnum;
+	const vatValue = page.props.vatValue;
+	const paymentMethodsEnum = page.props.paymentMethodsEnum;
 
 	const notification = useNotifications('toast');
 
@@ -50,14 +55,9 @@
 		quoteRequest: Object,
 		sendUpdateStatusEnum: Object,
 
-		declinedReasons: Array,
-
 		approveErrorMessage: String,
 		approveProofDocument: Object,
 
-		paymentStatusEnum: Object,
-		permissionEnum: Object,
-		paymentMethodsEnum: Object,
 		createPaymentModal: Boolean,
 		paymentMethods: Array,
 		eCommercePriceWithLP: Number,
@@ -284,8 +284,15 @@
 			return props.eCommercePriceWithLP; // premium with loading price,excluding vat
 		}
 		const vatRate = vatValue ? vatValue / 100 : 0;
-		return totalPrice.value / (1 + vatRate);
+		return props.totalPrice / (1 + vatRate);
 	});
+
+	// Define payment decline reasons
+	const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
+		value: item.id,
+		label: item.text,
+	}));
+	declinedReasons.unshift({ value: '', label: 'Select Reason' });
 
 	const rules = {
 		isRequired: v => !!v || 'This field is required',
@@ -494,7 +501,7 @@
 			if (validateViewPayment(isValid)) return;
 		} else if (paymentMethodsForm.status !== 'view') {
 			if (validatePaymentOption()) return;
-			if (isPaidEditable.value === true) {
+			if (props.isPaidEditable === true) {
 			if (validatePaymentAmount()) return;
 			}
 		}
@@ -553,8 +560,8 @@
 			discount_custom_reason: paymentMethodsForm.discount_custom_reason,
 			collection_date: paymentMethodsForm.collection_date,
 			notes: paymentMethodsForm.notes,
-			total_amount: totalAmount.value, // after discount calculation
-			total_price: totalPrice.value,
+			total_amount: props.totalAmount, // after discount calculation
+			total_price: props.totalPrice,
 			discount_value: discountValue.value, // discount amount
 		};
 		let splitPayments = [];
@@ -669,7 +676,7 @@
 			if (
 			totalPaidAmount.value == paymentMethodsForm.payment_no &&
 			isPolicyIssuanceDiscount.value === false &&
-			isPaidEditable.value === false
+			props.isPaidEditable === false
 			) {
 			notification.error({
 				title: 'No further actions allowed to paid payments',
@@ -683,7 +690,7 @@
 			trashedFilesModal: trashedFilesModal.value,
 			isPaymentLocked: isPaymentLocked.value,
 			isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
-			isPaidEditable: isPaidEditable.value,
+			isPaidEditable: props.isPaidEditable,
 			};
 			paymentMethodsForm
 			.transform(data => editData)
@@ -855,7 +862,7 @@
 		if (isPolicyIssuanceDiscount.value === true) {
 			if (
 				totalSplitAmount.toFixed(2) ===
-					parseFloat(totalAmount.value).toFixed(2) ||
+					parseFloat(props.totalAmount).toFixed(2) ||
 				discountValue.value > 0
 			) {
 				isPaymentCalculationError.value = false;
@@ -864,7 +871,7 @@
 				issueFound = true;
 			}
 		} else if (
-			totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)
+			totalSplitAmount.toFixed(2) !== parseFloat(props.totalAmount).toFixed(2)
 		) {
 			isPaymentCalculationError.value = true;
 			issueFound = true;
@@ -947,10 +954,11 @@
 				isDiscountError.value = true;
 				discountError.value = 'Discount must be a valid number';
 			}
-			if (parseFloat(discountValue.value) > parseFloat(totalPrice.value)) {
+			if (parseFloat(discountValue.value) > parseFloat(props.totalPrice)) {
 				issueFound = true;
 				isDiscountError.value = true;
-				totalAmount.value = totalPrice.value;
+				// totalAmount.value = totalPrice.value;
+				emit('update-total-amount', props.totalPrice);
 				calculatePaymentBreakup();
 				discountError.value = 'Discount should not exceed total amount';
 			}
@@ -1443,9 +1451,11 @@
 			discount > 50 &&
 			paymentMethodsForm.discount_reason === 'refer_a_friend'
 		) {
-			totalAmount.value = totalPrice.value;
+			// totalAmount.value = totalPrice.value;
+			emit('update-total-amount', props.totalPrice);
 		} else {
-			totalAmount.value = totalPrice.value - discount;
+			// totalAmount.value = totalPrice.value - discount;
+			emit('update-total-amount', props.totalPrice - discount);
 		}
 		calculatePaymentBreakup(false);
 	};
@@ -1611,8 +1621,10 @@
 
 	const finalizePaymentForm = (payment, capture_approval) => {
 		const updateTotalValues = () => {
-			totalPrice.value = payment.total_price;
-			totalAmount.value = payment.total_price - payment.discount_value;
+			// totalPrice.value = payment.total_price;
+			emit('update-total-price', payment.total_price);
+			// totalAmount.value = payment.total_price - payment.discount_value;
+			emit('update-total-amount', payment.total_price - payment.discount_value);
 		};
 
 		const handleEditStatus = () => {
@@ -1679,7 +1691,7 @@
 					props.quoteRequest?.plan ??
 					null;
 				if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-					planDetailValue.value['insurance_provider'] =
+					planDetailValue['insurance_provider'] =
 						payment?.travel_plan?.insurance_provider ??
 						props.sendUpdate?.insurance_provider;
 				}
@@ -1764,7 +1776,8 @@
 		isDiscountEnabled.value = false;
 		isDiscountReasonEnabled.value = false;
 		paymentMethodsForm.discount = '';
-		totalAmount.value = totalPrice.value;
+		// totalAmount.value = totalPrice.value;
+		emit('update-total-amount', props.totalPrice);
 		discountValue.value = 0;
 		paymentMethodsForm.discount_reason = '';
 		if (callDiscountChang) {
@@ -1800,7 +1813,7 @@
 		isDowngradeFrequencyError.value = false;
 		var perInstallmentPrice = parseFloat(
 			(
-				(totalAmount.value - paidAmountSum.value) /
+				(props.totalAmount - paidAmountSum.value) /
 				(paymentMethodsForm.payment_no - totalPaidAmount.value)
 			).toFixed(2),
 		);
@@ -2261,9 +2274,9 @@
 	};
 
 	const getPlanName = computed(() => {
-		const plan = props.planDetail?.value;
+		const plan = props.planDetail;
 		console.clear();
-		console.log("PLAN", props.quoteTypesToCheck.includes(props.quoteType) && plan, plan)
+		console.log("PLAN", props.quoteTypesToCheck, props.quoteTypesToCheck.includes(props.quoteType) && plan, plan, props.planDetail)
 		if (props.quoteType === quoteTypeCodeEnum.Bike) {
 			return plan ? props.quoteRequest.car_plan.text : 'Not Available';
 		}
@@ -2283,6 +2296,41 @@
 			: 'Not Available';
 	});
 
+
+	const getCustomReasonIndex = value => {
+		const index = declinedReasons.findIndex(reason => reason.value === value);
+		return index !== -1 ? index : null;
+	};
+
+	const isAnyPaid = payment => {
+		const paidStatusIds = [
+			paymentStatusEnum.PAID,
+			paymentStatusEnum.PARTIALLY_PAID,
+			paymentStatusEnum.AUTHORISED,
+			paymentStatusEnum.CAPTURED,
+			paymentStatusEnum.PARTIAL_CAPTURED,
+		];
+
+		return payment.payment_splits.some(split =>
+			paidStatusIds.includes(split.payment_status_id),
+		);
+	};
+
+	const isPolicyIssuanceDiscount = computed(() => {
+		if (
+			can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
+			(props.quoteRequest.quote_status_id ===
+				page.props.quoteStatusEnum.TransactionApproved ||
+				props.quoteRequest.quote_status_id ===
+					page.props.quoteStatusEnum.PolicyIssued ||
+				props.quoteRequest.quote_status_id ===
+					page.props.quoteStatusEnum.PolicySentToCustomer)
+		) {
+			return true;
+		}
+		return false;
+	});
+
 	// Close confirmation modal function remains unchanged
 	const closeConfirmModal = () => {
 		isApproveConfirmed.value = false;
@@ -2292,10 +2340,9 @@
 
 	const updatePaymentForm = (updates = {}) => {
 		Object.entries(updates).forEach(([key, value]) => {
-			if (key in paymentMethodsForm) {
-				paymentMethodsForm[key] = value;
-			}
+			paymentMethodsForm[key] = value;
 		});
+		console.log("-----paymentMethodsForm", paymentMethodsForm)
 	}
 
 	const resetPaymentMethodsForm = () => {
@@ -2401,7 +2448,10 @@
 	defineExpose({ resetPaymentMethodsForm, resetPaymentForm, handleCollectionTypeChange, calculatePaymentBreakup, 
 	applyPermissions, initializePaymentForm, handleCollectionTypeChange, handleFrequencyChange, handleApprovalReasonChange,
 	handleDiscountChange, handleDeclinedReasonChange, calculateTotalAmount, applyPermissions, processPaymentSplits, finalizePaymentForm, setFrequencyTypes,
-	paymentMethodsForm, isApproveConfirmed, isViewEnabled, filesTest, currentFileIndex, isCreditApprovalView, isCreditCardView, updateIsTransactionCaptureButtonEnabled });
+	paymentMethodsForm, isApproveConfirmed, isViewEnabled, filesTest, currentFileIndex, isCreditApprovalView, isCreditCardView, updateIsTransactionCaptureButtonEnabled,
+	resetPaymentMethodsModal, resetSplitAmountModels, resetDueDateModels, resetFileUploadModals, resetCheckDetailModels, resetIsDiscountReasonEnabled, resetIsDiscountEnabled,
+	resetIsPaymentCalculationError, resetShowDiscountOptions, resetIsDiscountReasonError, resetIsPaymentMetodNotSelected, resetIsDocumentNotUploaded, resetIsDiscountError, resetDiscountError,
+	resetIsDiscountDocumentNotUploaded, resetDiscountDocumentModel, isBrokerHavePermission, updateTotalPayments, updatePaymentForm });
 	
 	// Watch for changes in paymentMethodsForm.collection_date
 	watch(
@@ -2489,20 +2539,20 @@
 		:paymentMethodsModels="paymentMethodsModels"
 		:payments="payments"
 		:paymentStatusEnum="paymentStatusEnum"
-		@handle-collection-type-change="emit('handle-collection-type-change')"
-		@handle-frequency-change="emit('handle-frequency-change')"
-		@calculate-payment-breakup="emit('calculate-payment-breakup')"
-		@reset-credit-approval="emit('reset-credit-approval')"
-		@handle-approval-reason-change="emit('handle-approval-reason-change')"
-		@reset-discount="emit('reset-discount')"
-		@handle-discount-change="emit('handle-discount-change')"
-		@handle-discount-reason-change="emit('handle-discount-reason-change')"
-		@upload-document="(doc, files, count) => emit('upload-document', doc, files, count)"
-		@open-inner-modal="(fileId) => emit('open-inner-modal', fileId)"
-		@delete-document="(docName, count, docId) => emit('delete-document', docName, count, docId)"
+		@handle-collection-type-change="handleCollectionTypeChange"
+		@handle-frequency-change="handleFrequencyChange"
+		@calculate-payment-breakup="calculatePaymentBreakup"
+		@reset-credit-approval="resetCreditApproval"
+		@handle-approval-reason-change="handleApprovalReasonChange"
+		@reset-discount="resetDiscount"
+		@handle-discount-change="handleDiscountChange"
+		@handle-discount-reason-change="handleDiscountReasonChange"
+		@upload-document="uploadDocument"
+		@open-inner-modal="openInnerModal"
+		@delete-document="deleteDocument"
 		@calculate-total-amount="calculateTotalAmount"
 		@handle-discount-value-change="(value) => discountValue = value"
-		@validate-insurer-payment-link="emit('validate-insurer-payment-link')"
+		@validate-insurer-payment-link="validateInsurerPaymentLink"
 	/>
 
 	<x-divider class="mb-4 mt-10" />
@@ -2555,10 +2605,10 @@
 		:isCCEnabled="isCCEnabled"
 		:quoteRequest="quoteRequest"
 		:sendUpdateStatusEnum="sendUpdateStatusEnum"
-		@upload-document="(doc, files, count) => emit('upload-document', doc, files, count)"
-		@delete-document="(docName, count, docId) => emit('delete-document', docName, count, docId)"
-		@open-inner-modal="(fileId) => emit('open-inner-modal', fileId)"
-		@handle-payment-options="(count) => emit('handle-payment-options', count)"
+		@upload-document="uploadDocument"
+		@delete-document="deleteDocument"
+		@open-inner-modal="openInnerModal"
+		@handle-payment-options="handlePaymentOptions"
 	/>
 
 	<x-divider class="mb-4 mt-1" />
@@ -2586,7 +2636,7 @@
 		:isDeclinedReasonError="isDeclinedReasonError"
 		:declinedReasons="declinedReasons"
 		:isDeclineCustomReason="isDeclineCustomReason"
-		@handle-declined-reason-change="emit('handle-declined-reason-change')"
+		@handle-declined-reason-change="handleDeclinedReasonChange"
 	/>
 
 	<PaymentFormVerification
@@ -2603,9 +2653,9 @@
 		:approvedDocumentModel="approvedDocumentModel"
 		:readOnlyPayments="readOnlyPayments"
 		:rules="rules"
-		@upload-document="(doc, files, count) => emit('upload-document', doc, files, count)"
-		@open-inner-modal="(fileId) => emit('open-inner-modal', fileId)"
-		@delete-document="(docName, count, docId) => emit('delete-document', docName, count, docId)"
+		@upload-document="uploadDocument"
+		@open-inner-modal="openInnerModal"
+		@delete-document="deleteDocument"
 	/>
 
 	<x-divider class="mb-4 mt-1" />
@@ -2633,8 +2683,8 @@
 		:payments="props.payments"
 		:insurerPaymentLinkIndex="insurerPaymentLinkIndex"
 		:paymentMethodsForm="paymentMethodsForm"
-		@cancel="emit('cancel')"
-		@decline="emit('decline')"
+		@cancel="handleCancelChanges"
+		@decline="handleDeclinedChange"
 		@approve="isApproveClicked = !isApproveClicked"
 		@cancel-modal="emit('cancel-modal')"
 		@aml-verification="emit('aml-verification')"
@@ -2735,3 +2785,121 @@
 	</div>
 </x-form>
 </template>
+<style scoped>
+/* Apply cursor: not-allowed when select is disabled */
+.disabled-select {
+  cursor: not-allowed;
+}
+
+.h-80vh {
+  height: 85vh;
+}
+.tooltip-display {
+  display: inherit;
+}
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+/* Modal container */
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background-color: hsl(0, 4%, 9%);
+  border-radius: 4px;
+  padding: 5px;
+  z-index: 1050;
+}
+/* Modal header */
+.modal-header {
+  background-color: hsl(0, 4%, 9%);
+}
+/* Modal body */
+.modal-body {
+  padding: 10px 0;
+}
+
+.modal-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #33333333;
+  z-index: 1040;
+}
+.modal-confirm-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75%;
+  height: 37%;
+  background-color: hsla(0, 0%, 100%, 0.99);
+  border-radius: 8px; /* Adjust the radius for desired roundness */
+  padding: 2px;
+  z-index: 1050;
+  border: 1px solid #ccc; /* Grey color for the border */
+}
+
+.modal-retry-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 45%;
+  background-color: hsla(0, 0%, 100%, 0.99);
+  border-radius: 8px; /* Adjust the radius for desired roundness */
+  padding: 2px;
+  z-index: 1050;
+  border: 1px solid #ccc; /* Grey color for the border */
+}
+/* Modal header */
+.modal-confirm-header {
+  color: #000;
+}
+.inner-th-class {
+  min-width: 160px;
+}
+/* Add your custom styling here */
+.delete-pointer {
+  cursor: pointer;
+  padding-left: 5px;
+  font-weight: bold;
+  font-size: 12px;
+}
+.expand-pointer {
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  color: #1d83bc;
+}
+.custom-tooltip-content {
+  max-width: 200px; /* Adjust the max-width as needed */
+  white-space: normal; /* Allow the text to wrap */
+  z-index: 999;
+  position: relative;
+  font-size: 12px;
+  text-transform: none;
+}
+.custom-height {
+  min-height: 185px;
+}
+.manage-payment-table-parent-div {
+  overflow-y: hidden;
+}
+.manage-payment-table-parent-div::-webkit-scrollbar {
+  width: 6px;
+  background-color: #c1c1c1;
+}
+</style>

@@ -1,10 +1,8 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
 import { onMounted, reactive, ref, nextTick } from 'vue';
-import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
-import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
 import {
   ImageGalleryModal,
@@ -34,16 +32,12 @@ const page = usePage();
 
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
-const permissionEnum = page.props.permissionsEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
-const vatValue = page.props.vatValue;
-const documentTypeEnum = page.props.documentTypeEnum;
+
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
-const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
-const paymentAllocationStatus = page.props.paymentAllocationStatus;
-const paymentMethodsEnums = page.props.paymentMethodsEnum;
+
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
@@ -243,26 +237,6 @@ if (
 
 let planDetail = ref(initalPlanDetails);
 
-const getCustomReasonIndex = value => {
-  const index = declinedReasons.findIndex(reason => reason.value === value);
-  return index !== -1 ? index : null;
-};
-
-const isPolicyIssuanceDiscount = computed(() => {
-  if (
-    can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
-    (props.quoteRequest.quote_status_id ===
-      page.props.quoteStatusEnum.TransactionApproved ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyIssued ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicySentToCustomer)
-  ) {
-    return true;
-  }
-  return false;
-});
-
 const { copy, copied } = useClipboard();
 const onCopyPaymentLink = (paymentLink, paymentStatus) => {
   if (paymentStatus == paymentStatusEnum.PAID) {
@@ -304,13 +278,6 @@ const toggleExpand = index => {
 const closeAmlConfirmModal = () => {
   isAmlApprovalRequired.value = false;
 };
-
-// Define payment decline reasons
-const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
-  value: item.id,
-  label: item.text,
-}));
-declinedReasons.unshift({ value: '', label: 'Select Reason' });
 
 // Define payment approval reasons
 const creditApprovalReasons = paymentLookups.paymentCreditApprovalReasons.map(
@@ -390,7 +357,7 @@ const isCPD = computed(() => {
   );
 });
 
-const addPaymentModal = () => {
+const addPaymentModal = async () => {
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
@@ -414,25 +381,7 @@ const addPaymentModal = () => {
     });
     return;
   }
-  createPaymentFormRef.value.resetPaymentMethodsForm();
-  const paymentFormUpdateData = {};
-  paymentFormUpdateData.payment_method = 'CHQ';
-  createPaymentFormRef.value.resetPaymentMethodsModal();
-  createPaymentFormRef.value.resetSplitAmountModels();
-  createPaymentFormRef.value.resetDueDateModels();
-  createPaymentFormRef.value.resetFileUploadModals();
-  createPaymentFormRef.value.resetCheckDetailModels();
-  createPaymentFormRef.value.resetIsDiscountReasonEnabled();
-  createPaymentFormRef.value.resetIsDiscountEnabled();
-  createPaymentFormRef.value.resetIsPaymentCalculationError();
-  createPaymentFormRef.value.resetShowDiscountOptions();
-  createPaymentFormRef.value.resetIsDiscountReasonError();
-  createPaymentFormRef.value.resetIsPaymentMetodNotSelected();
-  createPaymentFormRef.value.resetIsDocumentNotUploaded();
-  createPaymentFormRef.value.resetIsDiscountError();
-  createPaymentFormRef.value.resetDiscountError();
-  createPaymentFormRef.value.resetIsDiscountDocumentNotUploaded();
-  createPaymentFormRef.value.resetDiscountDocumentModel();
+ 
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -449,6 +398,32 @@ const addPaymentModal = () => {
     });
     return;
   }
+
+   // DONE TEMPORARY SOLUTION AS REF NOT WORKING
+    createPaymentModal.value = true;
+    // console.log("---createPaymentFormRef.value", createPaymentFormRef.value);
+    // wait for 0.5 second
+    await new Promise(resolve => setTimeout(resolve, 10));
+    // console.log("---AFTER -createPaymentFormRef.value", createPaymentFormRef.value);
+    createPaymentFormRef.value.resetPaymentMethodsForm();
+    const paymentFormUpdateData = {};
+    paymentFormUpdateData.payment_method = 'CHQ';
+    createPaymentFormRef.value.resetPaymentMethodsModal();
+    createPaymentFormRef.value.resetSplitAmountModels();
+    createPaymentFormRef.value.resetDueDateModels();
+    createPaymentFormRef.value.resetFileUploadModals();
+    createPaymentFormRef.value.resetCheckDetailModels();
+    createPaymentFormRef.value.resetIsDiscountReasonEnabled();
+    createPaymentFormRef.value.resetIsDiscountEnabled();
+    createPaymentFormRef.value.resetIsPaymentCalculationError();
+    createPaymentFormRef.value.resetShowDiscountOptions();
+    createPaymentFormRef.value.resetIsDiscountReasonError();
+    createPaymentFormRef.value.resetIsPaymentMetodNotSelected();
+    createPaymentFormRef.value.resetIsDocumentNotUploaded();
+    createPaymentFormRef.value.resetIsDiscountError();
+    createPaymentFormRef.value.resetDiscountError();
+    createPaymentFormRef.value.resetIsDiscountDocumentNotUploaded();
+    createPaymentFormRef.value.resetDiscountDocumentModel();
 
   const quoteCollectedBy = [
     quoteTypeCodeEnum.Business,
@@ -474,7 +449,6 @@ const addPaymentModal = () => {
   paymentFormUpdateData.payment_reference = '';
   paymentFormUpdateData.paymentCode = '';
 
-  paymentMethodsForm;
   paymentFormUpdateData.status = 'create';
   paymentFormUpdateData.collection_date = new Date();
   createPaymentModal.value = true;
@@ -558,10 +532,10 @@ const editPaymentModal = async (
 
   // DONE TEMPORARY SOLUTION AS REF NOT WORKING
   createPaymentModal.value = true;
-  console.log("---createPaymentFormRef.value", createPaymentFormRef.value);
+  // console.log("---createPaymentFormRef.value", createPaymentFormRef.value);
   // wait for 0.5 second
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  console.log("---AFTER -createPaymentFormRef.value", createPaymentFormRef.value);
+  await new Promise(resolve => setTimeout(resolve, 10));
+  // console.log("---AFTER -createPaymentFormRef.value", createPaymentFormRef.value);
   // Payment Capture Validation for GIG
   if (
     capture_approval == 1 &&
@@ -617,20 +591,6 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     .finally(() => {
       capturePaymentValidationInProcess.value = false;
     });
-};
-
-const isAnyPaid = payment => {
-  const paidStatusIds = [
-    paymentStatusEnum.PAID,
-    paymentStatusEnum.PARTIALLY_PAID,
-    paymentStatusEnum.AUTHORISED,
-    paymentStatusEnum.CAPTURED,
-    paymentStatusEnum.PARTIAL_CAPTURED,
-  ];
-
-  return payment.payment_splits.some(split =>
-    paidStatusIds.includes(split.payment_status_id),
-  );
 };
 
 const alertCapture = payment => {
@@ -1120,7 +1080,7 @@ watch(
             </table>
           </div>
         </div>
---{{createPaymentModal}}--
+
         <x-modal
           v-model="createPaymentModal"
           size="xl"
@@ -1157,39 +1117,23 @@ watch(
               :isCCEnabled="isCCEnabled"
               :quoteRequest="quoteRequest"
               :sendUpdateStatusEnum="sendUpdateStatusEnum"
-              :declinedReasons="declinedReasons"
               :approveProofDocument="approveProofDocument"
               :paymentStatusEnum="paymentStatusEnum"
-              :permissionEnum="permissionEnum"
-              :paymentMethodsEnum="paymentMethodsEnums"
               :planDetail="planDetail"
               :quoteTypesToCheck="quoteTypesToCheck"
               :insuranceProviders="insuranceProviders"
               :createPaymentModal="createPaymentModal"
               :paymentMethods="paymentMethods"
               :eCommercePriceWithLP="eCommercePriceWithLP"
-              @handle-declined-reason-change="handleDeclinedReasonChange"
-              @handle-collection-type-change="handleCollectionTypeChange"
-              @handle-frequency-change="handleFrequencyChange"
-              @calculate-payment-breakup="calculatePaymentBreakup"
-              @reset-credit-approval="resetCreditApproval"
-              @handle-approval-reason-change="handleApprovalReasonChange"
-              @reset-discount="resetDiscount"
-              @handle-discount-change="handleDiscountChange"
-              @handle-discount-reason-change="handleDiscountReasonChange"
-              @upload-document="uploadDocument"
-              @open-inner-modal="openInnerModal"
-              @delete-document="deleteDocument"
-              @cancel="handleCancelChanges"
-              @decline="handleDeclinedChange"
+              
               @cancel-modal="createPaymentModal = !createPaymentModal"
               @aml-verification="openAmlVerificationModal"
-              @handle-payment-options="handlePaymentOptions"
-              @validate-insurer-payment-link="validateInsurerPaymentLink"
               @update-plan-detail="updatePlanDetail"
               @update-gallery-model-open="(value) => isGalleryModelOpen = value"
               @update-is-aml-approval-required="(value) => isAmlApprovalRequired = value"
               @update-create-payment-modal="(value) => createPaymentModal = value"
+              @update-total-amount="(value) => totalAmount = value"
+              @update-total-price="(value) => totalPrice = value"
             />
 
           <!-- Image Gallery Modal -->
