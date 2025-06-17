@@ -32,6 +32,7 @@ use App\Repositories\UserRepository;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\EmailStatusService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -146,6 +147,8 @@ abstract class BaseQuoteService extends BaseService
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus($quoteType->id(), $quote->id);
+
         return [
             'quote' => $quote,
             'quoteType' => $quoteType,
@@ -190,6 +193,7 @@ abstract class BaseQuoteService extends BaseService
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'emailStatuses' => $emailStatuses,
         ];
     }
 
