@@ -8,7 +8,14 @@ use BenSampo\Enum\Enum;
 
 final class SukoonPurchaseFlowEnum extends Enum
 {
+    /* SukoonMedex Status Enums */
+    const STATUS_NEW_POLICY = 'new_policy';
+    const STATUS_QUOTED = 'quoted';
+    const STATUS_PAYMENT_SUCCEED = 'payment_succeeded';
+    const STATUS_BOOKED = 'booked';
 
+
+    /* SukoonMedex Step-Name Enums */
     const STEPS_NAME = [
         self::STEP_INIT => 'init',
         self::STEP_LOGIN => 'login',
@@ -28,6 +35,7 @@ final class SukoonPurchaseFlowEnum extends Enum
         // self::STEP_LIST_PAYMENT_GATEWAYS => 'listPaymentGateways', // GET, Skiped
     ];
 
+    /* SukoonMedex Step-Number Enums */
     const STEP_INIT = 1;
     const STEP_LOGIN = 2;
     const STEP_SUBMIT_PERSONAL_DETAIL = 4;

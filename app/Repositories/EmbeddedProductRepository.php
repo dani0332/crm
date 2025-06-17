@@ -15,6 +15,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Enums\SukoonPurchaseFlowEnum;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
@@ -232,7 +233,9 @@ class EmbeddedProductRepository extends BaseRepository
                     $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
                     $item->sync_document_button = $documentCount < 5;
                 }
-
+            }
+            else if (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && auth()->user()->hasRole(RolesEnum::Engineering)) {
+                $item->sync_document_button = $transaction[0]->policy_status != SukoonPurchaseFlowEnum::STATUS_BOOKED;
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);

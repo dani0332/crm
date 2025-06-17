@@ -90,14 +90,16 @@ class SukoonMedexService
 
     private function syncSukoonData($transaction, $data)
     {
-        $onlyFields = ['quote_policy', 'certificate_number', 'policy_status']; // TODO:: payment_plan, amount_disclaimer_text, payment_token
+        $onlyFields = ['quote_policy', 'certificate_number']; // TODO:: payment_plan, amount_disclaimer_text, payment_token
         $updateableData = collect($data)->only(...$onlyFields)->toArray();
+
+        if(!empty($data['policy_status'] ?? null))
+            $this->policyStatus = $updateableData['policy_status'] = Str::slug($data['policy_status'], '_');
 
         $transaction->update($updateableData);
 
         !empty($updateableData['quote_policy'] ?? null) && $this->quoteNumber = $updateableData['quote_policy'] ?? null;
         !empty($updateableData['certificate_number'] ?? null) && $this->policyNumber = $updateableData['certificate_number'] ?? null;
-        !empty($updateableData['policy_status'] ?? null) && $this->policyStatus = $updateableData['policy_status'] ?? null;
 
         !empty($data['payment_plan'] ?? null) && $this->paymentPlan = $data['payment_plan'] ?? null;
         !empty($data['amount_disclaimer_text'] ?? null) && $this->amountDisclaimerText = $data['amount_disclaimer_text'] ?? null;
@@ -154,6 +156,7 @@ class SukoonMedexService
             // STEP #15 downloadDocument
             $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
             
+            // STEP #16 viewQuotePolicy
             $quotePolicyResponse = $this->viewQuotePolicy();
             $this->updateTransaction($this->transaction, $quotePolicyResponse);
 
@@ -198,20 +201,36 @@ class SukoonMedexService
     private function updateTransaction($transaction, $transactionDetail)
     {
         $paymentData = $transactionDetail['payments'][0];
-        $commissionAmount = floatval($transactionDetail['additional_data']['broker_commission_amount'] ?? 0) ? (float) ($transactionDetail['additional_data']['broker_commission_amount'] ?? 0) : (int) ($transactionDetail['additional_data']['broker_commission_amount'] ?? 0);
-        $commissionVat = floatval($transactionDetail['additional_data']['broker_commission_vat_amount'] ?? 0) ? (float) ($transactionDetail['additional_data']['broker_commission_vat_amount'] ?? 0) : (int) ($transactionDetail['additional_data']['broker_commission_vat_amount'] ?? 0);
+        $additionalData = $transactionDetail['additional_data'];
+        $commissionAmount = floatval($additionalData['broker_commission_amount'] ?? 0) ? (float) ($additionalData['broker_commission_amount'] ?? 0) : (int) ($additionalData['broker_commission_amount'] ?? 0);
+        $commissionVat = floatval($additionalData['broker_commission_vat_amount'] ?? 0) ? (float) ($additionalData['broker_commission_vat_amount'] ?? 0) : (int) ($additionalData['broker_commission_vat_amount'] ?? 0);
 
-        return $transaction->update([
+        $data = [
             'certificate_number' => $this->policyNumber,
-            'tax_invoice_no' => $transactionDetail['additional_data']['tax_invoice_document_number'] ?? null,
-            'tax_invoice_buyer_no' => $transactionDetail['additional_data']['tax_invoice_buyer_document_number'] ?? null,
-            'credit_note_no' => $transactionDetail['additional_data']['credit_note_document_number'] ?? null,
-            'credit_note_buyer_no' => $transactionDetail['additional_data']['credit_note_buyer_document_number'] ?? null,
+            'tax_invoice_no' => $additionalData['tax_invoice_document_number'] ?? null,
+            'tax_invoice_buyer_no' => $additionalData['tax_invoice_buyer_document_number'] ?? null,
+            'credit_note_no' => $additionalData['credit_note_document_number'] ?? null,
+            'credit_note_buyer_no' => $additionalData['credit_note_buyer_document_number'] ?? null,
             'commission_with_vat' => $commissionAmount + $commissionVat ?? null,
             'commission_without_vat' => $commissionAmount,
             'policy_price' => $paymentData['amount_breakdown']['policy_price'] ?? null,
-            'policy_status' => $paymentData['status'] ?? null,
-        ]);
+        ];
+
+        if(!empty($paymentData['status']))
+            $this->policyStatus = $data['policy_status'] = Str::slug($paymentData['status'], '_'); // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
+
+        // Make sure no any required documents are missing & policyStatus is payment_succeeded
+        if(empty($this->checkMissingReqDocTypes()) && $this->policyStatus == SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED)
+            $this->policyStatus = $data['policy_status'] = SukoonPurchaseFlowEnum::STATUS_BOOKED;
+
+        return $transaction->update($data);
+    }
+
+    // Check missing required documents types
+    public function checkMissingReqDocTypes()
+    {
+        $medexRequiredDocumentTypeCodes = [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE, QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER];
+        return array_diff($medexRequiredDocumentTypeCodes, $this->transaction->documents->pluck('document_type')->toArray());
     }
 
     /**
@@ -500,7 +519,7 @@ class SukoonMedexService
             if(!empty(array_diff(['policy_number', 'policy_status'], array_keys($result))))
                 throw new Exception('Not found (policy_number, policy_status)');
 
-
+            // policy_status => SukoonPurchaseFlowEnum::STATUS_QUOTED
             return ['quote_policy' => $result['policy_number'], 'policy_status' => $result['policy_status']];
 
         } catch (Exception $e) {
@@ -546,13 +565,13 @@ class SukoonMedexService
             $requiredFields = ['payment_plan', 'amount_disclaimer_text'];
             $pluckedFieldsValue = $this->pluckFieldsValue($fields, $requiredFields);
 
+            // check required fields are present
             if(!empty(array_diff($requiredFields, array_keys($pluckedFieldsValue))))
                 throw new Exception('Not found (payment_plan, amount_disclaimer_text)');
 
-
             return [
                 'quote_policy' => $result['policy_number'], 
-                'policy_status' => $result['policy_status'],
+                'policy_status' => $result['policy_status'], // SukoonPurchaseFlowEnum::STATUS_NEW_POLICY
                 'payment_plan' => $pluckedFieldsValue['payment_plan'], 
                 'amount_disclaimer_text' => $pluckedFieldsValue['amount_disclaimer_text']
             ];
@@ -624,7 +643,7 @@ class SukoonMedexService
 
             return [
                 'quote_policy' => $responsePolicyData['quote_number'], 
-                'policy_status' => $responsePolicyData['policy_status']
+                'policy_status' => $responsePolicyData['policy_status'] // SukoonPurchaseFlowEnum::STATUS_QUOTED
             ];
 
         } catch (Exception $e) {
@@ -696,7 +715,10 @@ class SukoonMedexService
                 'Accept' => 'application/json',
             ])->json();
 
-            return ['certificate_number' => $result['policy_number']];
+            if(empty($result['policy_number']))
+                throw new Exception('Policy number is missing');
+
+            return ['certificate_number' => $result['policy_number'], 'policy_status' => SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED];
 
         } catch (Exception $e) {
             throw $e;
