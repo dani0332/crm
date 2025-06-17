@@ -22,7 +22,6 @@ use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\AmlCftReportExport;
-use App\Exports\KycLogs;
 use App\Exports\KycLogsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;

@@ -1459,7 +1459,7 @@ class AMLService
             }
         }
     }
-    
+
     public function generateAmlCftReport()
     {
         LoggerService::info('fn:amlCtfReportExport - AMLController');
