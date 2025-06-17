@@ -70,9 +70,6 @@ const quoteForm = useForm({
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
 });
 
-console.log('quoteForm', quoteForm.data());
-console.log('props.quote', props.quote);
-
 const { isRequired, isEmail, isMobileNo } = useRules();
 
 const editMode = computed(() => {
@@ -155,7 +152,7 @@ function onSubmit(isValid) {
           label="Phone Number"
           required
           :disabled="editMode"
-          :rules="[isRequired, isMobileNo]"
+          :rules="[isRequired, ...(editMode ? [] : [isMobileNo])]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
         />

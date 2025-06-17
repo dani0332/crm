@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class SavingsQuote extends Model

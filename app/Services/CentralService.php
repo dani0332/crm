@@ -79,6 +79,7 @@ class CentralService extends BaseService
             quoteTypeCode::Car,
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
+            quoteTypeCode::SAVINGS,
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -161,13 +162,19 @@ class CentralService extends BaseService
                     }
                 }
 
-                $repository = $this->getRepositoryObject(ucfirst($lob));
+                if (in_array($lob, [
+                    quoteTypeCode::SAVINGS,
+                ])) {
+                    $response = PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob));
+                } else {
+                    $repository = $this->getRepositoryObject(ucfirst($lob));
 
-                if (! class_exists($repository)) {
-                    return false;
+                    if (! class_exists($repository)) {
+                        return false;
+                    }
+
+                    $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
                 }
-
-                $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
