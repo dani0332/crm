@@ -16,6 +16,7 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
+use App\Enums\HealthPlanTypeEnum;
 
 class HealthEmailService extends BaseService
 {
@@ -330,6 +331,30 @@ class HealthEmailService extends BaseService
 
     public function sendSICHealthFollowupsWA($lead)
     {
+        $response = Ken::request('/get-health-cheapest-plans', 'post', [
+            'quoteUID' => $lead->uuid,
+            "isRequestForPlansWithExtendedData" =>false,
+            'isPlanTypes' => true,
+        ]);
+
+        if(empty($response['plans'])){
+            LoggerService::info("SIC Health Followups WA not executed for lead: {$lead->uuid} because no plans found");
+            return;
+        }
+        if(empty($response['planTypes'])){
+            LoggerService::info("SIC Health Followups WA not executed for lead: {$lead->uuid} because no plan types found");
+            return;
+        }
+        $planTypes = collect($response['planTypes'])->map(function($planType) {
+            return [
+                $this->setPlanTypePremium($planType['text']) => $planType['calculatedDiscountPremium']
+            ];
+        });
+    
+
+        LoggerService::info("Plan types mapped for lead: {$lead->uuid}", ['planTypes' => $planTypes]);
+
+
         try {
             LoggerService::info('Sending SIC Health Followups WA ');
             $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
@@ -338,8 +363,11 @@ class HealthEmailService extends BaseService
                 LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
                 return;
             }
+            
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA);
+            $emailData->planTypes = $planTypes;
+           
             $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
             $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
 
@@ -351,5 +379,16 @@ class HealthEmailService extends BaseService
             LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);
         }
 
+    }
+
+    public function setPlanTypePremium( $planType)
+    {
+
+       return match ($planType) {
+           HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::ENTRY_LEVEL->value) => 'entryLevelPremium',
+           HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::GOOD->value) => 'goodPremium', 
+           HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::BEST->value) => 'bestPremium',
+           default => null
+       };
     }
 }
