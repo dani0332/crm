@@ -594,7 +594,7 @@ class SukoonMedexService
     {
         return [
             'form_name' => 'plan_picker',
-            'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles',
+            'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles', // TODO need to confirm, is post-slug static?
             "payment_plan" => $this->paymentPlan,
             "amount_disclaimer_text" => $this->amountDisclaimerText,
             'policy_number' => $this->quoteNumber
