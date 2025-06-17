@@ -83,7 +83,7 @@ const addProfile = () => {
 
   setTimeout(() => {
     const element = document.querySelector(
-      `[data-profile-index="${quoteTypeCode}-${newIndex}"]`,
+      `[data-profile-index="${quoteTypeCode.value}-${newIndex}"]`,
     );
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -231,13 +231,13 @@ const saveConfiguration = () => {
         loader.value = false;
         console.error('Save failed:', errors);
         alert(
-          `Failed to save ${quoteTypeCode} configuration. Please try again.`,
+          `Failed to save ${quoteTypeCode.value} configuration. Please try again.`,
         );
       },
     });
   } catch (error) {
     loader.value = false;
-    console.error(`Error saving ${quoteTypeCode} configuration:`, error);
+    console.error(`Error saving ${quoteTypeCode.value} configuration:`, error);
     alert('Error occurred while saving. Please try again.');
   }
 };
