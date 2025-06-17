@@ -21,7 +21,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Exports\KycLogs;
+use App\Exports\KycLogsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -92,8 +92,6 @@ class AMLController extends Controller
      */
     public function index(AMLRequest $request)
     {
-        LoggerService::info('fn:index - AMLController');
-
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
         $quotes = [];
@@ -180,8 +178,6 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
-        LoggerService::info('fn:export - AMLController');
-
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
         $request->merge([
@@ -191,10 +187,10 @@ class AMLController extends Controller
         ]);
 
         if ($request->exportType == 'email') {
-            return app(KycLogs::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
+            return app(KycLogsExport::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
         }
 
-        return app(KycLogs::class)->download("AML Logs {$reportDateRange}");
+        return app(KycLogsExport::class)->download("AML Logs {$reportDateRange}");
     }
 
     /**
@@ -204,8 +200,6 @@ class AMLController extends Controller
      */
     public function show(AML $aml, $insuredId = null, $customerId = null)
     {
-        LoggerService::info('fn:show - AMLController');
-
         $amlResults = collect(json_decode($aml->results))->first() ?? [];
         $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
         $aml->quote_type_text = $aml->quotetype->text;
