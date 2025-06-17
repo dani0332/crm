@@ -411,6 +411,7 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_CONVERSION_REPORT = 'savings-conversion-report';
     public const SAVINGS_DISTRIBUTION_REPORT = 'savings-distribution-report';
     public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
+    public const SAVINGS_AS_AT_REPORT_MANAGER = 'savings-as-at-report-manager';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
     public const PERMISSION_LIST = 'permission-list';

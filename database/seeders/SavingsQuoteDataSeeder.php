@@ -487,8 +487,10 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_COMPREHENSIVE_DASHBOARD,
             PermissionsEnum::SAVINGS_CONVERSION_REPORT,
             PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
+            PermissionsEnum::SAVINGS_AS_AT_REPORT_MANAGER,
             PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::ILA_CONFIG_ALL_LOB,
+            PermissionsEnum::SAVINGS_LEADPOOL,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
 
         $this->seedPermissions([
@@ -504,11 +506,21 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_QUOTES_CREATE,
             PermissionsEnum::SAVINGS_QUOTES_EDIT,
             PermissionsEnum::SAVINGS_QUOTES_SHOW,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::SAVINGS_CONVERSION_REPORT,
+            PermissionsEnum::SAVINGS_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
+            PermissionsEnum::SAVINGS_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::SAVINGS_LEADPOOL,
         ], [RolesEnum::SavingsManager]);
 
         $this->seedPermissions([
             PermissionsEnum::SAVINGS_QUOTES_LIST,
             PermissionsEnum::SAVINGS_QUOTES_SHOW,
+            PermissionsEnum::SAVINGS_QUOTES_CREATE,
+            PermissionsEnum::SAVINGS_QUOTES_EDIT,
+            PermissionsEnum::SAVINGS_CONVERSION_REPORT,
+            PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
         ], [RolesEnum::SavingsAdvisor]);
 
         $this->seedLifePermissionToSavings();
