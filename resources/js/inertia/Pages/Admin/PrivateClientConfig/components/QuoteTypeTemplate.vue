@@ -45,6 +45,7 @@ const collapsedProfiles = ref(new Set());
 const isModuleCollapsed = ref(false);
 const currentVersion = ref(null);
 const loader = ref(false);
+const configLoading = ref(false);
 
 // Form for saving
 const configForm = useForm({
@@ -141,29 +142,40 @@ const getCurrencySymbol = currencyId => {
 
 // Load existing configuration when component mounts
 const loadExistingConfig = async () => {
+  console.log(`Starting loadExistingConfig for ${props.quoteTypeName}`);
+  configLoading.value = true;
+
   try {
-    const response = await axios.get(
-      route('admin.private-client-config.latest-by-quote-type'),
-      {
-        params: { quote_type_id: props.quoteTypeId },
-        headers: {
-          'X-CSRF-TOKEN':
-            document
-              .querySelector('meta[name="csrf-token"]')
-              ?.getAttribute('content') || '',
-        },
+    const routeUrl = route('admin.private-client-config.latest-by-quote-type');
+    console.log('Route URL:', routeUrl);
+
+    const response = await axios.get(routeUrl, {
+      params: { quote_type_id: props.quoteTypeId },
+      headers: {
+        'X-CSRF-TOKEN':
+          document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute('content') || '',
       },
-    );
+    });
+
+    console.log(`API response for ${props.quoteTypeName}:`, response.data);
 
     // Update dropdown data
     if (response.data.dropdownData) {
       dropdownData.value = response.data.dropdownData;
+      console.log('Dropdown data updated');
     }
 
     // Set current version
     if (response.data.version) {
+      console.log(
+        `Setting version to ${response.data.version} for ${props.quoteTypeName}`,
+      );
       currentVersion.value = response.data.version;
       emit('versionLoaded', response.data.version);
+    } else {
+      console.log(`No version found in response for ${props.quoteTypeName}`);
     }
 
     if (response.data.config && response.data.config.profiles) {
@@ -187,15 +199,21 @@ const loadExistingConfig = async () => {
 
       profiles.value =
         loadedProfiles.length > 0 ? loadedProfiles : [createBlankProfile()];
+      console.log(`Loaded ${loadedProfiles.length} profiles`);
     } else {
       // No config found, reset to blank profile
       profiles.value = [createBlankProfile()];
+      console.log('No config found, using blank profile');
     }
   } catch (error) {
     console.error(
       `Error loading existing config for ${props.quoteTypeName}:`,
       error,
     );
+    console.error('Error details:', error.response?.data);
+  } finally {
+    configLoading.value = false;
+    console.log(`Finished loadExistingConfig for ${props.quoteTypeName}`);
   }
 };
 
@@ -311,6 +329,23 @@ defineExpose({
             >
           </div>
         </div>
+      </div>
+
+      <!-- Debug info - temporary -->
+      <div class="mb-4 p-3 bg-yellow-50 rounded-md border border-yellow-200">
+        <div class="text-sm text-yellow-800">
+          Debug: currentVersion = {{ currentVersion || 'null' }}, quoteTypeId =
+          {{ quoteTypeId }}, quoteTypeName = {{ quoteTypeName }}, configLoading
+          = {{ configLoading }}, profiles count = {{ profiles.length }},
+          dropdownData =
+          {{ Object.keys(dropdownData).length > 0 ? 'loaded' : 'empty' }}
+        </div>
+        <button
+          @click="loadExistingConfig"
+          class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs"
+        >
+          Manually Load Config
+        </button>
       </div>
 
       <div class="flex items-center justify-between mb-4">

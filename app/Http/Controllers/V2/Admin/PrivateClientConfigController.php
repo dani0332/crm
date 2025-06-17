@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
-use App\Enums\RolesEnum;
-use App\Http\Controllers\Controller;
-use App\Models\CarMake;
-use App\Models\CurrencyType;
-use App\Models\InsuranceProvider;
-use App\Models\Nationality;
-use App\Models\PrivateClientConfig;
-use App\Models\SubArea;
-use App\Services\PrivateClientConfigService;
-use App\Traits\PrivateClient;
-use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Models\CarMake;
+use App\Models\SubArea;
+use App\Enums\RolesEnum;
+use App\Models\QuoteType;
+use App\Models\Nationality;
+use Illuminate\Support\Arr;
+use App\Models\CurrencyType;
+use Illuminate\Http\Request;
+use App\Traits\PrivateClient;
+use App\Models\InsuranceProvider;
+use Illuminate\Support\Facades\DB;
+use App\Models\PrivateClientConfig;
+use App\Http\Controllers\Controller;
+use App\Services\PrivateClientConfigService;
 
 class PrivateClientConfigController extends Controller
 {
@@ -30,6 +31,11 @@ class PrivateClientConfigController extends Controller
     {
         $this->configService = $configService;
         $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show', 'advanced']]);
+    }
+
+    private function getQuoteTypes()
+    {
+        return QuoteType::where('is_active', 1)->whereIn('short_code', ['CAR', 'HEALTH', 'LIFE', 'HOME', 'YACHT'])->get();
     }
 
     public function show(Request $request)
@@ -70,12 +76,14 @@ class PrivateClientConfigController extends Controller
 
         $configurations = $this->configService->getConfigurationsByVersion($selectedVersion);
         $isCurrentVersion = $this->configService->isCurrentVersion($selectedVersion, $allVersions);
+        $quoteTypes = $this->getQuoteTypes();
 
         return Inertia::render('Admin/PrivateClientConfig/Advanced', [
             'configurations' => $configurations,
             'allVersions' => $allVersions,
             'selectedVersion' => $selectedVersion,
             'isCurrentVersion' => $isCurrentVersion,
+            'quoteTypes' => $quoteTypes,
         ]);
     }
 

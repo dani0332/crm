@@ -9,6 +9,8 @@ const props = defineProps({
   allVersions: Array,
   selectedVersion: Number,
   isCurrentVersion: Boolean,
+  quoteTypes: Array,
+  quoteTypeCodeEnum: Object,
 });
 
 const page = usePage();
