@@ -21,20 +21,8 @@ const dropdownData = ref({});
 const versionData = ref({});
 const currentVersions = ref({});
 
-const tabItems = computed(() => {
-  if (!props.quoteTypes || !props.quoteTypeCodeEnum) return [];
-
-  return props.quoteTypes.map(quoteType => {
-    return {
-      label: quoteType.text,
-      code: quoteType.code,
-      quoteTypeId: quoteType.id,
-    };
-  });
-});
-
 const loadConfigurationForTab = async quoteTypeCode => {
-  const quoteType = tabItems.value.find(t => t.code === quoteTypeCode);
+  const quoteType = props.quoteTypes.find(t => t.code === quoteTypeCode);
   if (!quoteType) return;
 
   tabLoading.value = true;
@@ -43,7 +31,7 @@ const loadConfigurationForTab = async quoteTypeCode => {
     const response = await axios.get(
       route('admin.private-client-config.latest-by-quote-type'),
       {
-        params: { quote_type_id: quoteType.quoteTypeId },
+        params: { quote_type_id: quoteType.id },
       },
     );
 
@@ -89,8 +77,8 @@ const handleConfigurationSaved = async quoteTypeCode => {
 
 onMounted(async () => {
   await nextTick();
-  if (tabItems.value.length > 0) {
-    await setActiveTab(tabItems.value[0].code);
+  if (props.quoteTypes.length > 0) {
+    await setActiveTab(props.quoteTypes[0].code);
   }
 });
 </script>
@@ -102,7 +90,7 @@ onMounted(async () => {
         <div class="border-b border-gray-200 mb-6">
           <nav class="-mb-px flex space-x-8">
             <button
-              v-for="quoteType in tabItems"
+              v-for="quoteType in quoteTypes"
               :key="quoteType.code"
               @click="setActiveTab(quoteType.code)"
               :disabled="tabLoading"
@@ -114,7 +102,7 @@ onMounted(async () => {
                 tabLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
               ]"
             >
-              <span>{{ quoteType.label }}</span>
+              <span>{{ quoteType.text }}</span>
 
               <div
                 v-if="tabLoading && activeTab === quoteType.code"
@@ -159,7 +147,7 @@ onMounted(async () => {
                   <p class="mt-2 text-sm text-gray-600">
                     Loading
                     {{
-                      tabItems.find(t => t.code === activeTab)?.label ||
+                      quoteTypes.find(t => t.code === activeTab)?.text ||
                       'configuration'
                     }}...
                   </p>
@@ -172,9 +160,9 @@ onMounted(async () => {
             <CarTemplate
               v-if="activeTab === quoteTypeCodeEnum.Car"
               :quote-type-id="
-                tabItems.find(t => t.code === quoteTypeCodeEnum.Car)
-                  ?.quoteTypeId
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Car)?.id
               "
+              :quoteTypeCode="quoteTypeCodeEnum.Car"
               :initial-config="configurations[quoteTypeCodeEnum.Car]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Car]"
               :version-data="versionData[quoteTypeCodeEnum.Car]"
@@ -189,9 +177,9 @@ onMounted(async () => {
             <HealthTemplate
               v-if="activeTab === quoteTypeCodeEnum.Health"
               :quote-type-id="
-                tabItems.find(t => t.code === quoteTypeCodeEnum.Health)
-                  ?.quoteTypeId
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Health)?.id
               "
+              :quoteTypeCode="quoteTypeCodeEnum.Health"
               :initial-config="configurations[quoteTypeCodeEnum.Health]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Health]"
               :version-data="versionData[quoteTypeCodeEnum.Health]"
@@ -206,9 +194,9 @@ onMounted(async () => {
             <LifeTemplate
               v-if="activeTab === quoteTypeCodeEnum.Life"
               :quote-type-id="
-                tabItems.find(t => t.code === quoteTypeCodeEnum.Life)
-                  ?.quoteTypeId
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Life)?.id
               "
+              :quoteTypeCode="quoteTypeCodeEnum.Life"
               :initial-config="configurations[quoteTypeCodeEnum.Life]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Life]"
               :version-data="versionData[quoteTypeCodeEnum.Life]"
@@ -223,9 +211,9 @@ onMounted(async () => {
             <HomeTemplate
               v-if="activeTab === quoteTypeCodeEnum.Home"
               :quote-type-id="
-                tabItems.find(t => t.code === quoteTypeCodeEnum.Home)
-                  ?.quoteTypeId
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Home)?.id
               "
+              :quoteTypeCode="quoteTypeCodeEnum.Home"
               :initial-config="configurations[quoteTypeCodeEnum.Home]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Home]"
               :version-data="versionData[quoteTypeCodeEnum.Home]"
@@ -240,9 +228,9 @@ onMounted(async () => {
             <YachtTemplate
               v-if="activeTab === quoteTypeCodeEnum.Yacht"
               :quote-type-id="
-                tabItems.find(t => t.code === quoteTypeCodeEnum.Yacht)
-                  ?.quoteTypeId
+                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Yacht)?.id
               "
+              :quoteTypeCode="quoteTypeCodeEnum.Yacht"
               :initial-config="configurations[quoteTypeCodeEnum.Yacht]"
               :dropdown-data="dropdownData[quoteTypeCodeEnum.Yacht]"
               :version-data="versionData[quoteTypeCodeEnum.Yacht]"
