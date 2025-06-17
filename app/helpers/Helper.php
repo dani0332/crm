@@ -666,9 +666,10 @@ if (! function_exists('checkModifiedRecord')) {
 if (! function_exists('dateQueryFilter')) {
     function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
     {
-        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
-        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
-        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        $dateFormat = config('constants.DATE_FORMAT_ONLY') ?: 'Y-m-d';
+        $firstDate = date($dateFormat.' 00:00:00', strtotime($firstDate));
+        $secondDate = date($dateFormat.' 23:59:59', strtotime($secondDate));
+        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH') ?: 'Y-m-d H:i:s');
 
         if ($clauseTypeBetween) {
             return [$firstDate, $secondDate];

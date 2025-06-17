@@ -2,29 +2,36 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\TravelQuoteService;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class TravelQuoteExport
+class TravelQuoteExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    public function collection($requestParams = [])
+    public function __construct(
+        private TravelQuoteService $travelQuoteService
+    ) {}
+
+    public function collection(array $requestParams = []): Collection
     {
-        return app(TravelQuoteService::class)->getGridData(requestParams: $requestParams)->get();
+        return $this->travelQuoteService->getGridData(requestParams: $requestParams)->get();
     }
 
     /**
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
-        return app(TravelQuoteService::class)->getGridData(requestParams: $requestParams);
+        return $this->travelQuoteService->getGridData(requestParams: $requestParams);
     }
 
     public function headings(): array
@@ -114,6 +121,21 @@ class TravelQuoteExport
             (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
             $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
+        ];
+    }
+
+    /**
+     * Get export metadata with travel-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 8, // QuoteTypeId::Travel
+            'exportType' => 'travel_quotes',
         ];
     }
 }
