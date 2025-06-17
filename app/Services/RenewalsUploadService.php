@@ -1344,6 +1344,7 @@ class RenewalsUploadService
                 QuoteStatusEnum::POLICY_BOOKING_QUEUED,
             ])) {
                 LoggerService::info('Quote status is not eligible for OCB email as quote status id: '.$carQuote->quote_status_id);
+                RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
 
                 return;
             }
@@ -1907,7 +1908,8 @@ class RenewalsUploadService
                             }
                             if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
                                 if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
-                                    if (isset($leadData->business_activity) && empty($leadData->business_activity)) {
+
+                                    if (empty($leadData->business_activity)) {
                                         $leadValidationErrors->push('Business Activity is required');
                                     }
                                     if (! empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {
