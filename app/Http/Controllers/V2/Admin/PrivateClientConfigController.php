@@ -53,7 +53,7 @@ class PrivateClientConfigController extends Controller
 
         $locationAreas = SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get()->toArray();
 
-        $isCurrentVersion = (int) $selectedVersion === (int) $allVersions[0];
+        $isCurrentVersion = ! empty($allVersions) && (int) $selectedVersion === (int) $allVersions[0];
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
             'configurations' => $configurations,
