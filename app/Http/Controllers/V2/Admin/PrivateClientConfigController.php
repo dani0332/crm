@@ -47,20 +47,34 @@ class PrivateClientConfigController extends Controller
         $quoteTypes = $this->getQuoteTypes();
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
-            'quoteTypes' => $quoteTypes
+            'quoteTypes' => $quoteTypes,
+            'quoteTypeCodeEnum' => [
+                'Car' => quoteTypeCode::Car,
+                'Health' => quoteTypeCode::Health,
+                'Life' => quoteTypeCode::Life,
+                'Home' => quoteTypeCode::Home,
+                'Yacht' => quoteTypeCode::Yacht,
+            ],
         ]);
     }
 
     public function getLatestConfigByQuoteType(Request $request)
     {
         $quoteTypeId = $request->input('quote_type_id');
+        $version = $request->input('version');
 
         if (! $quoteTypeId) {
             return response()->json(['error' => 'Quote type ID is required'], 400);
         }
 
         try {
-            $responseData = $this->configService->getLatestConfigByQuoteType($quoteTypeId);
+            if ($version) {
+                // Get specific version
+                $responseData = $this->configService->getConfigByVersionAndQuoteType($quoteTypeId, $version);
+            } else {
+                // Get latest version
+                $responseData = $this->configService->getLatestConfigByQuoteType($quoteTypeId);
+            }
 
             return response()->json($responseData);
         } catch (\Exception $e) {
