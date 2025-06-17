@@ -39,32 +39,6 @@ const changeVersion = version => {
     </Link>
   </div>
 
-  <!-- Version selector -->
-  <div
-    v-if="hasAnyRole([rolesEnum.Engineering])"
-    class="bg-gray-50 p-4 rounded-md my-4"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="font-medium">Global Version:</span>
-        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">{{
-          selectedVersion || 'None'
-        }}</span>
-      </div>
-      <div class="flex items-center">
-        <span class="mr-2">Select Version:</span>
-        <x-select
-          :modelValue="selectedVersion"
-          :options="allVersions.map(v => ({ value: v, label: `Version ${v}` }))"
-          @update:modelValue="changeVersion"
-          class="w-40"
-        />
-      </div>
-    </div>
-  </div>
-
-  <x-divider class="my-4" />
-
   <!-- Advanced Configuration Component -->
   <AdvancedConfig
     :configurations="configurations"
