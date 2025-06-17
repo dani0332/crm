@@ -23,15 +23,15 @@ const homeTemplateRef = ref(null);
 const yachtTemplateRef = ref(null);
 
 const quoteTypeVersions = ref({
-  car: null,
-  health: null,
-  life: null,
-  home: null,
-  yacht: null,
+  [props.quoteTypeCodeEnum.Car]: null,
+  [props.quoteTypeCodeEnum.Health]: null,
+  [props.quoteTypeCodeEnum.Life]: null,
+  [props.quoteTypeCodeEnum.Home]: null,
+  [props.quoteTypeCodeEnum.Yacht]: null,
 });
 
-const handleVersionLoaded = (quoteTypeName, version) => {
-  quoteTypeVersions.value[quoteTypeName] = version;
+const handleVersionLoaded = (quoteTypeCode, version) => {
+  quoteTypeVersions.value[quoteTypeCode] = version;
 };
 
 const tabItems = computed(() => {
@@ -39,51 +39,49 @@ const tabItems = computed(() => {
 
   return props.quoteTypes
     .map(quoteType => {
-      let templateName = quoteType.code;
       let templateLabel = quoteType.text;
 
       return {
-        name: templateName,
         label: templateLabel,
+        code: quoteType.code,
         quoteTypeId: quoteType.id,
       };
     })
-    .filter(item => item.name); // Only include mapped templates
+    .filter(item => item.code);
 });
 
 const setActiveTab = async tab => {
-  if (tabLoading.value) return; // Prevent multiple clicks
+  if (tabLoading.value) return;
 
   tabLoading.value = true;
   activeTab.value = tab;
-  isModuleCollapsed.value = false; // Expand when switching tabs
+  isModuleCollapsed.value = false;
 
   try {
-    // Wait for next tick to ensure component is mounted
     await nextTick();
 
-    // Small delay to ensure component is fully rendered
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Load configuration for the selected quote type using direct refs
     let templateRef = null;
     switch (tab) {
-      case quoteTypeCodeEnum.Car:
+      case props.quoteTypeCodeEnum.Car:
         templateRef = carTemplateRef.value;
         break;
-      case quoteTypeCodeEnum.Health:
+      case props.quoteTypeCodeEnum.Health:
         templateRef = healthTemplateRef.value;
         break;
-      case quoteTypeCodeEnum.Life:
+      case props.quoteTypeCodeEnum.Life:
         templateRef = lifeTemplateRef.value;
         break;
-      case quoteTypeCodeEnum.Home:
+      case props.quoteTypeCodeEnum.Home:
         templateRef = homeTemplateRef.value;
         break;
-      case quoteTypeCodeEnum.Yacht:
+      case props.quoteTypeCodeEnum.Yacht:
         templateRef = yachtTemplateRef.value;
         break;
     }
+
+    console.log(templateRef, tab);
 
     if (templateRef && templateRef.loadExistingConfig) {
       await templateRef.loadExistingConfig();
@@ -104,7 +102,7 @@ onMounted(async () => {
   await nextTick();
   // Load the first available tab from dynamic data
   if (tabItems.value.length > 0) {
-    await setActiveTab(tabItems.value[0].name);
+    await setActiveTab(tabItems.value[0].code);
   }
 });
 </script>
@@ -112,21 +110,7 @@ onMounted(async () => {
 <template>
   <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center space-x-2">
-          <CollapseIcon
-            :isExpanded="!isModuleCollapsed"
-            size="md"
-            @click="toggleModule"
-          />
-          <h2 class="text-xl font-medium text-gray-900">
-            Private Client Configuration (Advanced)
-          </h2>
-        </div>
-      </div>
-
       <div v-show="!isModuleCollapsed">
-        <!-- Tab Navigation -->
         <div class="border-b border-gray-200 mb-6">
           <nav class="-mb-px flex space-x-8">
             <button
@@ -144,7 +128,6 @@ onMounted(async () => {
             >
               <span>{{ quoteType.label }}</span>
 
-              <!-- Loading indicator -->
               <div
                 v-if="tabLoading && activeTab === quoteType.code"
                 class="absolute -bottom-2 left-1/2 transform -translate-x-1/2"
