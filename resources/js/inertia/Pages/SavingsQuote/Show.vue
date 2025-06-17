@@ -647,41 +647,38 @@ const onUpdateIndividualPlan = () => {
   });
 };
 
-// Helper function to get tooltip text for eligibility fields
-const getEligibilityTooltip = (fieldText) => {
-  const tooltips = {
+// Centralized tooltip mappings for plan details
+const PLAN_TOOLTIP_MAPPINGS = {
+  eligibility: {
     'Entry age': 'Eligible age to buy the plan',
     'Policy term (years)': 'Policy duration available for the plan',
     'Minimum investment': 'Minimum amount of investment required'
-  };
-
-  // Check for exact matches or partial matches
-  for (const [key, value] of Object.entries(tooltips)) {
-    if (fieldText && fieldText.toLowerCase().includes(key.toLowerCase())) {
-      return value;
-    }
-  }
-
-  return null;
-};
-
-// Helper function to get tooltip text for included benefits fields
-const getIncludedBenefitsTooltip = (fieldText) => {
-  const tooltips = {
+  },
+  includedBenefits: {
     'Flexible premium payments': 'Monthly, quarterly, semi-annual, or annual options',
     'Added life insurance coverage': 'Financial security for loved ones',
     'Investment options': 'Wide range of investment funds managed by experts'
-  };
+  }
+};
+
+// Generic helper function to get tooltip text for plan detail fields
+const getPlanDetailTooltip = (fieldText, section) => {
+  const tooltips = PLAN_TOOLTIP_MAPPINGS[section];
+  if (!tooltips || !fieldText) return null;
 
   // Check for exact matches or partial matches
   for (const [key, value] of Object.entries(tooltips)) {
-    if (fieldText && fieldText.toLowerCase().includes(key.toLowerCase())) {
+    if (fieldText.toLowerCase().includes(key.toLowerCase())) {
       return value;
     }
   }
 
   return null;
 };
+
+// Convenience functions for backward compatibility and clarity
+const getEligibilityTooltip = (fieldText) => getPlanDetailTooltip(fieldText, 'eligibility');
+const getIncludedBenefitsTooltip = (fieldText) => getPlanDetailTooltip(fieldText, 'includedBenefits');
 </script>
 
 <template>
