@@ -207,7 +207,7 @@ const getCurrentQuoteTypeVersion = () => {
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center space-x-2">
           <CollapseIcon
-            :is-expanded="!isModuleCollapsed"
+            :isExpanded="!isModuleCollapsed"
             size="md"
             @click="toggleModule"
           />

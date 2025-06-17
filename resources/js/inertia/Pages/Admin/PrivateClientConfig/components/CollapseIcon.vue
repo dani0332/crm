@@ -9,6 +9,8 @@ defineProps({
     default: 'md', // sm, md, lg
   },
 });
+
+defineEmits(['click']);
 </script>
 
 <template>

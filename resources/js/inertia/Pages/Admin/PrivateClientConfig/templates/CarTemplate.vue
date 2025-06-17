@@ -248,7 +248,7 @@ defineExpose({
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center space-x-2">
           <CollapseIcon
-            :is-expanded="!isModuleCollapsed"
+            :isExpanded="!isModuleCollapsed"
             size="md"
             @click="toggleModule"
           />
@@ -297,7 +297,7 @@ defineExpose({
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center space-x-2">
                 <CollapseIcon
-                  :is-expanded="!collapsedProfiles.has(profileIndex)"
+                  :isExpanded="!collapsedProfiles.has(profileIndex)"
                   size="md"
                   @click="toggleProfile(profileIndex)"
                 />
