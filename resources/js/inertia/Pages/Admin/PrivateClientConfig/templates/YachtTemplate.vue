@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from 'vue';
 import QuoteTypeTemplate from '../components/QuoteTypeTemplate.vue';
 
 const props = defineProps({
@@ -7,13 +6,25 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-  disabled: {
-    type: Boolean,
-    default: false,
+  initialConfig: {
+    type: Object,
+    default: () => ({ profiles: [] }),
+  },
+  dropdownData: {
+    type: Object,
+    default: () => ({}),
+  },
+  versionData: {
+    type: Object,
+    default: () => ({
+      allVersions: [],
+      currentVersion: null,
+      isCurrentVersion: true,
+    }),
   },
 });
 
-const emit = defineEmits(['versionLoaded']);
+const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
 // Yacht-specific field definitions
 const yachtFields = [
@@ -33,35 +44,18 @@ const yachtFields = [
     hasCurrency: false,
   },
 ];
-
-// Template reference for parent access
-const templateRef = ref(null);
-
-// Expose methods to parent
-const getProfiles = () => {
-  return templateRef.value?.getProfiles() || [];
-};
-
-const loadExistingConfig = async () => {
-  if (templateRef.value?.loadExistingConfig) {
-    await templateRef.value.loadExistingConfig();
-  }
-};
-
-defineExpose({
-  getProfiles,
-  loadExistingConfig,
-});
 </script>
 
 <template>
   <QuoteTypeTemplate
-    ref="templateRef"
     :quote-type-id="quoteTypeId"
     quote-type-name="yacht"
     quote-type-label="Yacht"
     :fields="yachtFields"
-    :disabled="disabled"
+    :initial-config="initialConfig"
+    :dropdown-data="dropdownData"
+    :version-data="versionData"
     @version-loaded="$emit('versionLoaded', $event)"
+    @configuration-saved="$emit('configurationSaved')"
   />
 </template>

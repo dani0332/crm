@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick, computed } from 'vue';
+import axios from 'axios';
 import CollapseIcon from './components/CollapseIcon.vue';
 import CarTemplate from './templates/CarTemplate.vue';
 import HealthTemplate from './templates/HealthTemplate.vue';
@@ -16,23 +17,11 @@ const activeTab = ref(null);
 const tabLoading = ref(false);
 const isModuleCollapsed = ref(false);
 
-const carTemplateRef = ref(null);
-const healthTemplateRef = ref(null);
-const lifeTemplateRef = ref(null);
-const homeTemplateRef = ref(null);
-const yachtTemplateRef = ref(null);
-
-const quoteTypeVersions = ref({
-  [props.quoteTypeCodeEnum.Car]: null,
-  [props.quoteTypeCodeEnum.Health]: null,
-  [props.quoteTypeCodeEnum.Life]: null,
-  [props.quoteTypeCodeEnum.Home]: null,
-  [props.quoteTypeCodeEnum.Yacht]: null,
-});
-
-const handleVersionLoaded = (quoteTypeCode, version) => {
-  quoteTypeVersions.value[quoteTypeCode] = version;
-};
+// Configuration state
+const configurations = ref({});
+const dropdownData = ref({});
+const versionData = ref({});
+const currentVersions = ref({});
 
 const tabItems = computed(() => {
   if (!props.quoteTypes || !props.quoteTypeCodeEnum) return [];
@@ -50,46 +39,70 @@ const tabItems = computed(() => {
     .filter(item => item.code);
 });
 
-const setActiveTab = async tab => {
-  if (tabLoading.value) return;
+// Load configuration for a specific quote type
+const loadConfigurationForTab = async quoteTypeCode => {
+  const quoteType = tabItems.value.find(t => t.code === quoteTypeCode);
+  if (!quoteType) return;
 
   tabLoading.value = true;
-  activeTab.value = tab;
-  isModuleCollapsed.value = false;
 
   try {
-    await nextTick();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    const response = await axios.get(
+      route('admin.private-client-config.latest-by-quote-type'),
+      {
+        params: { quote_type_id: quoteType.quoteTypeId },
+        headers: {
+          'X-CSRF-TOKEN':
+            document
+              .querySelector('meta[name="csrf-token"]')
+              ?.getAttribute('content') || '',
+        },
+      },
+    );
 
-    let templateRef = null;
-
-    switch (tab) {
-      case props.quoteTypeCodeEnum.Car:
-        templateRef = carTemplateRef.value?.[0] || carTemplateRef.value;
-        break;
-      case props.quoteTypeCodeEnum.Health:
-        templateRef = healthTemplateRef.value?.[0] || healthTemplateRef.value;
-        break;
-      case props.quoteTypeCodeEnum.Life:
-        templateRef = lifeTemplateRef.value?.[0] || lifeTemplateRef.value;
-        break;
-      case props.quoteTypeCodeEnum.Home:
-        templateRef = homeTemplateRef.value?.[0] || homeTemplateRef.value;
-        break;
-      case props.quoteTypeCodeEnum.Yacht:
-        templateRef = yachtTemplateRef.value?.[0] || yachtTemplateRef.value;
-        break;
-      default:
-    }
-
-    if (templateRef && templateRef.loadExistingConfig) {
-      await templateRef.loadExistingConfig();
-    }
+    // Store configuration data
+    configurations.value[quoteTypeCode] = response.data.config || {
+      profiles: [],
+    };
+    dropdownData.value[quoteTypeCode] = response.data.dropdownData || {};
+    versionData.value[quoteTypeCode] = {
+      allVersions: response.data.allVersions || [],
+      currentVersion: response.data.version,
+      isCurrentVersion: response.data.isCurrentVersion !== false,
+    };
+    currentVersions.value[quoteTypeCode] = response.data.version;
   } catch (error) {
-    console.error('Error loading tab configuration:', error);
+    console.error('Error loading configuration:', error);
+    // Set empty defaults on error
+    configurations.value[quoteTypeCode] = { profiles: [] };
+    dropdownData.value[quoteTypeCode] = {};
+    versionData.value[quoteTypeCode] = {
+      allVersions: [],
+      currentVersion: null,
+      isCurrentVersion: true,
+    };
   } finally {
     tabLoading.value = false;
   }
+};
+
+const setActiveTab = async tab => {
+  if (tabLoading.value) return;
+
+  activeTab.value = tab;
+  isModuleCollapsed.value = false;
+
+  // Always load fresh configuration data on tab change
+  await loadConfigurationForTab(tab);
+};
+
+const handleVersionLoaded = (quoteTypeCode, version) => {
+  currentVersions.value[quoteTypeCode] = version;
+};
+
+const handleConfigurationSaved = async quoteTypeCode => {
+  // Reload configuration after save
+  await loadConfigurationForTab(quoteTypeCode);
 };
 
 const toggleModule = () => {
@@ -99,16 +112,10 @@ const toggleModule = () => {
 // Initialize first tab on mount
 onMounted(async () => {
   await nextTick();
-  // Load the first available tab from dynamic data
   if (tabItems.value.length > 0) {
     await setActiveTab(tabItems.value[0].code);
   }
 });
-
-// Add reactive data for current state
-const isCurrentVersion = ref(true);
-const allVersions = ref([]);
-const selectedVersion = ref(null);
 </script>
 
 <template>
@@ -188,45 +195,90 @@ const selectedVersion = ref(null);
 
           <!-- Tab Content -->
           <div v-else class="space-y-6">
-            <template v-for="quoteType in tabItems" :key="quoteType.code">
-              <div v-if="activeTab === quoteType.code">
-                <CarTemplate
-                  v-if="quoteType.code === quoteTypeCodeEnum.Car"
-                  ref="carTemplateRef"
-                  :quote-type-id="quoteType.quoteTypeId"
-                  :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
-                />
-                <HealthTemplate
-                  v-else-if="quoteType.code === quoteTypeCodeEnum.Health"
-                  ref="healthTemplateRef"
-                  :quote-type-id="quoteType.quoteTypeId"
-                  :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
-                />
-                <LifeTemplate
-                  v-else-if="quoteType.code === quoteTypeCodeEnum.Life"
-                  ref="lifeTemplateRef"
-                  :quote-type-id="quoteType.quoteTypeId"
-                  :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
-                />
-                <HomeTemplate
-                  v-else-if="quoteType.code === quoteTypeCodeEnum.Home"
-                  ref="homeTemplateRef"
-                  :quote-type-id="quoteType.quoteTypeId"
-                  :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
-                />
-                <YachtTemplate
-                  v-else-if="quoteType.code === quoteTypeCodeEnum.Yacht"
-                  ref="yachtTemplateRef"
-                  :quote-type-id="quoteType.quoteTypeId"
-                  :disabled="!isCurrentVersion"
-                  @version-loaded="handleVersionLoaded(quoteType.code, $event)"
-                />
-              </div>
-            </template>
+            <CarTemplate
+              v-if="activeTab === quoteTypeCodeEnum.Car"
+              :quote-type-id="
+                tabItems.find(t => t.code === quoteTypeCodeEnum.Car)
+                  ?.quoteTypeId
+              "
+              :initial-config="configurations[quoteTypeCodeEnum.Car]"
+              :dropdown-data="dropdownData[quoteTypeCodeEnum.Car]"
+              :version-data="versionData[quoteTypeCodeEnum.Car]"
+              @configuration-saved="
+                handleConfigurationSaved(quoteTypeCodeEnum.Car)
+              "
+              @version-loaded="
+                handleVersionLoaded(quoteTypeCodeEnum.Car, $event)
+              "
+            />
+
+            <HealthTemplate
+              v-if="activeTab === quoteTypeCodeEnum.Health"
+              :quote-type-id="
+                tabItems.find(t => t.code === quoteTypeCodeEnum.Health)
+                  ?.quoteTypeId
+              "
+              :initial-config="configurations[quoteTypeCodeEnum.Health]"
+              :dropdown-data="dropdownData[quoteTypeCodeEnum.Health]"
+              :version-data="versionData[quoteTypeCodeEnum.Health]"
+              @configuration-saved="
+                handleConfigurationSaved(quoteTypeCodeEnum.Health)
+              "
+              @version-loaded="
+                handleVersionLoaded(quoteTypeCodeEnum.Health, $event)
+              "
+            />
+
+            <LifeTemplate
+              v-if="activeTab === quoteTypeCodeEnum.Life"
+              :quote-type-id="
+                tabItems.find(t => t.code === quoteTypeCodeEnum.Life)
+                  ?.quoteTypeId
+              "
+              :initial-config="configurations[quoteTypeCodeEnum.Life]"
+              :dropdown-data="dropdownData[quoteTypeCodeEnum.Life]"
+              :version-data="versionData[quoteTypeCodeEnum.Life]"
+              @configuration-saved="
+                handleConfigurationSaved(quoteTypeCodeEnum.Life)
+              "
+              @version-loaded="
+                handleVersionLoaded(quoteTypeCodeEnum.Life, $event)
+              "
+            />
+
+            <HomeTemplate
+              v-if="activeTab === quoteTypeCodeEnum.Home"
+              :quote-type-id="
+                tabItems.find(t => t.code === quoteTypeCodeEnum.Home)
+                  ?.quoteTypeId
+              "
+              :initial-config="configurations[quoteTypeCodeEnum.Home]"
+              :dropdown-data="dropdownData[quoteTypeCodeEnum.Home]"
+              :version-data="versionData[quoteTypeCodeEnum.Home]"
+              @configuration-saved="
+                handleConfigurationSaved(quoteTypeCodeEnum.Home)
+              "
+              @version-loaded="
+                handleVersionLoaded(quoteTypeCodeEnum.Home, $event)
+              "
+            />
+
+            <YachtTemplate
+              v-if="activeTab === quoteTypeCodeEnum.Yacht"
+              :quote-type-id="
+                tabItems.find(t => t.code === quoteTypeCodeEnum.Yacht)
+                  ?.quoteTypeId
+              "
+              :initial-config="configurations[quoteTypeCodeEnum.Yacht]"
+              :dropdown-data="dropdownData[quoteTypeCodeEnum.Yacht]"
+              :version-data="versionData[quoteTypeCodeEnum.Yacht]"
+              @configuration-saved="
+                handleConfigurationSaved(quoteTypeCodeEnum.Yacht)
+              "
+              @version-loaded="
+                handleVersionLoaded(quoteTypeCodeEnum.Yacht, $event)
+              "
+            />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, watch, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import CollapseIcon from './CollapseIcon.vue';
@@ -21,36 +21,40 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  disabled: {
-    type: Boolean,
-    default: false,
+  initialConfig: {
+    type: Object,
+    default: () => ({ profiles: [] }),
+  },
+  dropdownData: {
+    type: Object,
+    default: () => ({}),
+  },
+  versionData: {
+    type: Object,
+    default: () => ({
+      allVersions: [],
+      currentVersion: null,
+      isCurrentVersion: true,
+    }),
   },
 });
 
-const emit = defineEmits(['versionLoaded']);
+const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
-// Dynamic dropdown data
-const dropdownData = ref({
-  nationalities: [],
-  currencies: [],
-  carMakes: [],
-  insurers: [],
-  locationAreas: [],
-});
-
-// UI state management
-const highlightedProfileIndex = ref(-1);
-const isInitialized = ref(false);
-const collapsedProfiles = ref(new Set());
+// Reactive state
+const profiles = ref([]);
 const isModuleCollapsed = ref(false);
-const currentVersion = ref(null);
+const collapsedProfiles = ref(new Set());
+const highlightedProfileIndex = ref(-1);
 const loader = ref(false);
 const configLoading = ref(false);
+const isInitialized = ref(false);
 
 // Version management
+const currentVersion = ref(null);
+const selectedVersion = ref(null);
 const allVersions = ref([]);
 const isCurrentVersion = ref(true);
-const selectedVersion = ref(null);
 
 // Form for saving
 const configForm = useForm({
@@ -58,74 +62,60 @@ const configForm = useForm({
 });
 
 // Computed properties
-const nationalityOptions = computed(
-  () => dropdownData.value.nationalities || [],
-);
+const isDisabled = computed(() => !isCurrentVersion.value);
 
-// Combined disabled state - disabled if prop is true OR if viewing historical version
-const isDisabled = computed(() => props.disabled || !isCurrentVersion.value);
+const nationalityOptions = computed(() => {
+  return props.dropdownData.nationalities || [];
+});
 
+// Profile management methods
 const createBlankProfile = () => {
   const profile = {
     nationalityIds: [],
   };
 
-  // Add all fields to the profile
   props.fields.forEach(field => {
-    if (field.type === 'select_multiple') {
-      profile[field.fieldName] = [];
-    } else {
-      profile[field.fieldName] = '';
-    }
-
+    profile[field.fieldName] = field.type === 'select_multiple' ? [] : '';
     if (field.hasCurrency) {
-      profile[`${field.fieldName}_currency_id`] = 1; // Default to first currency
+      profile[`${field.fieldName}_currency_id`] = 1;
     }
   });
 
   return profile;
 };
 
-const profiles = ref([createBlankProfile()]);
+const addProfile = () => {
+  const newProfile = createBlankProfile();
+  profiles.value.push(newProfile);
 
-// Watch for profile additions to trigger animations
-watch(
-  () => profiles.value.length,
-  (newLength, oldLength) => {
-    if (isInitialized.value && newLength > oldLength) {
-      highlightedProfileIndex.value = newLength - 1;
-      isModuleCollapsed.value = false; // Expand module when adding profiles
+  const newIndex = profiles.value.length - 1;
+  highlightedProfileIndex.value = newIndex;
 
-      nextTick(() => {
-        const newProfileElement = document.querySelector(
-          `[data-profile-index="${props.quoteTypeName}-${newLength - 1}"]`,
-        );
-        if (newProfileElement) {
-          newProfileElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-          });
-        }
-      });
-
-      setTimeout(() => {
-        highlightedProfileIndex.value = -1;
-      }, 2000);
+  setTimeout(() => {
+    const element = document.querySelector(
+      `[data-profile-index="${props.quoteTypeName}-${newIndex}"]`,
+    );
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  },
-);
+  }, 100);
 
-const addProfile = async () => {
-  profiles.value.push(createBlankProfile());
+  setTimeout(() => {
+    highlightedProfileIndex.value = -1;
+  }, 3000);
 };
 
-const removeProfile = index => {
-  profiles.value.splice(index, 1);
-
-  // If no profiles left, add one blank profile
-  if (profiles.value.length === 0) {
-    profiles.value.push(createBlankProfile());
+const removeProfile = profileIndex => {
+  if (profiles.value.length === 1) {
+    profiles.value = [createBlankProfile()];
+  } else {
+    profiles.value.splice(profileIndex, 1);
   }
+  collapsedProfiles.value.delete(profileIndex);
+};
+
+const toggleModule = () => {
+  isModuleCollapsed.value = !isModuleCollapsed.value;
 };
 
 const toggleProfile = profileIndex => {
@@ -136,39 +126,34 @@ const toggleProfile = profileIndex => {
   }
 };
 
-const toggleModule = () => {
-  isModuleCollapsed.value = !isModuleCollapsed.value;
-};
-
-// Get currency symbol by ID
+// Helper methods
 const getCurrencySymbol = currencyId => {
-  const currency = dropdownData.value.currencies?.find(
+  const currency = props.dropdownData.currencies?.find(
     c => c.value === currencyId,
   );
   return currency?.symbol || 'AED';
 };
 
-// Load existing configuration when component mounts
-const loadExistingConfig = async (version = null) => {
+// Load specific version
+const loadSpecificVersion = async version => {
   configLoading.value = true;
 
   try {
-    const routeUrl = route('admin.private-client-config.latest-by-quote-type');
-    const params = { quote_type_id: props.quoteTypeId };
-
-    if (version) {
-      params.version = version;
-    }
-
-    const response = await axios.get(routeUrl, {
-      params,
-      headers: {
-        'X-CSRF-TOKEN':
-          document
-            .querySelector('meta[name="csrf-token"]')
-            ?.getAttribute('content') || '',
+    const response = await axios.get(
+      route('admin.private-client-config.latest-by-quote-type'),
+      {
+        params: {
+          quote_type_id: props.quoteTypeId,
+          version: version,
+        },
+        headers: {
+          'X-CSRF-TOKEN':
+            document
+              .querySelector('meta[name="csrf-token"]')
+              ?.getAttribute('content') || '',
+        },
       },
-    });
+    );
 
     // Update version information
     if (response.data.allVersions) {
@@ -183,11 +168,6 @@ const loadExistingConfig = async (version = null) => {
 
     if (response.data.isCurrentVersion !== undefined) {
       isCurrentVersion.value = response.data.isCurrentVersion;
-    }
-
-    // Update dropdown data
-    if (response.data.dropdownData) {
-      dropdownData.value = response.data.dropdownData;
     }
 
     if (response.data.config && response.data.config.profiles) {
@@ -212,7 +192,6 @@ const loadExistingConfig = async (version = null) => {
       profiles.value =
         loadedProfiles.length > 0 ? loadedProfiles : [createBlankProfile()];
     } else {
-      // No config found, reset to blank profile
       profiles.value = [createBlankProfile()];
     }
   } catch (error) {
@@ -220,11 +199,6 @@ const loadExistingConfig = async (version = null) => {
   } finally {
     configLoading.value = false;
   }
-};
-
-// Load specific version
-const loadSpecificVersion = async version => {
-  await loadExistingConfig(version);
 };
 
 // Method to change version
@@ -260,8 +234,8 @@ const saveConfiguration = () => {
     configForm.post(route('admin.private-client-config.upsert'), {
       onSuccess: () => {
         loader.value = false;
-        // Reload the configuration to get the new version
-        loadExistingConfig();
+        // Emit event to parent to reload configuration
+        emit('configurationSaved');
       },
       onError: errors => {
         loader.value = false;
@@ -278,7 +252,7 @@ const saveConfiguration = () => {
   }
 };
 
-// Expose method to parent component
+// Get valid profiles
 const getProfiles = () => {
   return profiles.value
     .filter(profile => {
@@ -312,21 +286,73 @@ const getProfiles = () => {
     });
 };
 
+// Initialize profiles from props
+const initializeProfiles = () => {
+  if (
+    props.initialConfig &&
+    props.initialConfig.profiles &&
+    props.initialConfig.profiles.length > 0
+  ) {
+    const loadedProfiles = props.initialConfig.profiles.map(profile => {
+      const formattedProfile = {
+        nationalityIds: profile.nationalityIds || [],
+      };
+
+      props.fields.forEach(field => {
+        formattedProfile[field.fieldName] =
+          profile[field.fieldName] ||
+          (field.type === 'select_multiple' ? [] : '');
+        if (field.hasCurrency) {
+          formattedProfile[`${field.fieldName}_currency_id`] =
+            profile[`${field.fieldName}_currency_id`] || 1;
+        }
+      });
+
+      return formattedProfile;
+    });
+
+    profiles.value = loadedProfiles;
+  } else {
+    profiles.value = [createBlankProfile()];
+  }
+};
+
+// Initialize version data
+const initializeVersionData = () => {
+  if (props.versionData) {
+    allVersions.value = props.versionData.allVersions || [];
+    currentVersion.value = props.versionData.currentVersion;
+    selectedVersion.value = props.versionData.currentVersion;
+    isCurrentVersion.value = props.versionData.isCurrentVersion !== false;
+
+    if (props.versionData.currentVersion) {
+      emit('versionLoaded', props.versionData.currentVersion);
+    }
+  }
+};
+
+// Watch for prop changes
+watch(
+  () => props.initialConfig,
+  () => {
+    initializeProfiles();
+  },
+  { deep: true, immediate: true },
+);
+
+watch(
+  () => props.versionData,
+  () => {
+    initializeVersionData();
+  },
+  { deep: true, immediate: true },
+);
+
 // Initialize after component mount
 onMounted(async () => {
-  // Only initialize, don't load data automatically
-  // Data will be loaded when tab becomes active
   setTimeout(() => {
     isInitialized.value = true;
   }, 100);
-});
-
-// Expose the method to parent
-defineExpose({
-  getProfiles,
-  loadExistingConfig,
-  loadSpecificVersion,
-  changeVersion,
 });
 </script>
 
