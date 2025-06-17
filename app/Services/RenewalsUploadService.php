@@ -2558,7 +2558,6 @@ class RenewalsUploadService
     {
         return [
             quoteTypeCode::Home => QuoteTypeShortCode::HOM,
-            quoteTypeCode::Health => QuoteTypeShortCode::HEA,
         ];
     }
 
