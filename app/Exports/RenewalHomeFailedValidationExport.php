@@ -11,8 +11,7 @@ use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNullComparison
 {
     private $renewaUploadLead;
-
-    private $insuranceProvider; 
+    private $insuranceProvider;
 
     public function __construct($renewalUploadLead)
     {

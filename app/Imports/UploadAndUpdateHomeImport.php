@@ -102,6 +102,7 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
     {
         $requiredMaxLength = 'required|max:100';
         $nullableMaxLength = 'nullable|max:100';
+
         return [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => $requiredMaxLength],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => $nullableMaxLength],
