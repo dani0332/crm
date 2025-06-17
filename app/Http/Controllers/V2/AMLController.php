@@ -21,7 +21,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Exports\KycLogs;
+use App\Exports\KycLogsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -62,7 +62,6 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
-use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -93,8 +92,6 @@ class AMLController extends Controller
      */
     public function index(AMLRequest $request)
     {
-        LoggerService::info('fn:index - AMLController');
-
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
         $quotes = [];
@@ -181,8 +178,6 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
-        LoggerService::info('fn:export - AMLController');
-
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
         $request->merge([
@@ -192,10 +187,10 @@ class AMLController extends Controller
         ]);
 
         if ($request->exportType == 'email') {
-            return app(KycLogs::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
+            return app(KycLogsExport::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
         }
 
-        return app(KycLogs::class)->download("AML Logs {$reportDateRange}");
+        return app(KycLogsExport::class)->download("AML Logs {$reportDateRange}");
     }
 
     /**
@@ -203,15 +198,14 @@ class AMLController extends Controller
      *
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function show(AML $aml)
+    public function show(AML $aml, $insuredId = null, $customerId = null)
     {
-        LoggerService::info('fn:show - AMLController');
-
         $amlResults = collect(json_decode($aml->results))->first() ?? [];
         $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
         $aml->quote_type_text = $aml->quotetype->text;
         $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $aml->quote_request_id);
+        $insured = Insured::where('id', $insuredId)->with('insuredKyc')->first() ?? null;
 
         if (isset($amlResults->Watchlist)) {
             $amlResults = collect($amlResults->Watchlist->Matches)->filter(function ($value) use ($manualStatusUpdateIM) {
@@ -229,6 +223,9 @@ class AMLController extends Controller
             'quoteStatusCode' => quoteStatusCode::asArray(),
             'amlDecisionStatusCode' => AMLDecisionStatusEnum::asArray(),
             'quoteObject' => $quoteObject,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'insured' => $insured ?? null,
+            'customerId' => $customerId ?? null,
         ]);
     }
 
@@ -244,6 +241,10 @@ class AMLController extends Controller
             '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
 
         $kycLogs = app(AMLService::class)->getKYCLogs($quoteTypeId, $quoteRequestId);
+        $isAnyEscalated = $kycLogs->isNotEmpty() ? count($kycLogs->filter(function ($log) {
+            return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
+        })) : 0;
+
         $lookups = app(AMLService::class)->getAMLLookups();
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
         $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
@@ -291,6 +292,7 @@ class AMLController extends Controller
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
+            'isAnyEscalated' => $isAnyEscalated,
         ], $businessPayload ?? []));
     }
 
@@ -306,20 +308,18 @@ class AMLController extends Controller
             request()->merge(['ref_id' => $quoteObject->code]);
             $response = AMLService::updateAMLDecisionLexisNexis(request());
             if ($response['status'] == 'success') {
-                $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
-
-                $responseMessage = ['status' => 'success', 'message' => 'Quote Status Updated'];
-                $quoteStatusText = $updateQuoteStatusResp['quote_status_text'];
-                $quoteCdbId = $updateQuoteStatusResp['quote_ref_id'];
-                $quoteTypeText = $updateQuoteStatusResp['quote_type_text'];
-                $quotePaID = $updateQuoteStatusResp['pa_id'];
-                $clientFullName = $updateQuoteStatusResp['client_name'];
+                $clientFullName = $quoteObject->first_name.' '.$quoteObject->last_name;
+                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(request()->toArray(), $quoteObject);
+                $responseMessage = ['status' => 'success', 'message' => 'AML Status Updated'];
 
                 if (
                     auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
-                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
+                    if (! empty(request()->complianceComponent)) {
+                        app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
+                    }
                 }
 
                 $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
@@ -395,8 +395,22 @@ class AMLController extends Controller
                 return $this->handleResponse(false, 'First Name missing', $isAutomation);
             }
 
-            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($value) use ($getLastScreening) {
-                return $value->updated_at >= ($getLastScreening->created_at ?? '');
+            // Filter members that need screening based on their updated_at date
+            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($member) use ($getLastScreening) {
+                $lastScreeningDate = $getLastScreening->created_at ?? '';
+
+                // Include members with null updated_at (replicated members that need screening)
+                if (is_null($member->updated_at)) {
+                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
+                        'member_id' => $member->id ?? 'unknown',
+                        'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
+                    ]);
+
+                    return true;
+                }
+
+                // Include members that were updated after the last screening
+                return $member->updated_at >= $lastScreeningDate;
             });
         }
 

@@ -53,26 +53,26 @@ const fetchLatestSageError = async () => {
     modelClass === 'App\\Models\\SendUpdateLog'
       ? record?.status === sendUpdateLogStatusEnum.UPDATE_BOOKING_FAILED
       : record?.quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED;
-
-  NProgress.start();
-  const response = await axios.get(
-    route('sage-api-logs-latest-error', [record.id]),
-    {
-      params: {
-        modelClass: modelClass,
+  if (isPolicyOrEndorsementBookingFailed) {
+    NProgress.start();
+    const response = await axios.get(
+      route('sage-api-logs-latest-error', [record.id]),
+      {
+        params: {
+          modelClass: modelClass,
+        },
       },
-    },
-  );
-  NProgress.done();
-  if (response.data?.success)
-    console.log('fetchLatestSageError:', response.data);
-  if (response?.data?.error && isPolicyOrEndorsementBookingFailed) {
-    notification.error({
-      title: 'Sage API Error',
-      message: response?.data?.error,
-      position: 'top',
-      timeout: 30000,
-    });
+    );
+    NProgress.done();
+    if (response?.data?.error) {
+      notification.error({
+        title: 'Sage API Error',
+        message: response?.data?.error,
+        position: 'top',
+        timeout: 30000,
+      });
+    }
+    return;
   }
 };
 

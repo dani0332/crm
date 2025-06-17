@@ -89,12 +89,12 @@ class CycleQuoteRepository extends BaseRepository
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
-                $advisors = request()->advisors;
+            ->when($this->hasFilterValue('advisors', $requestParams) && ! empty($this->getFilterValue('advisors', $requestParams)), function ($query) use ($requestParams) {
+                $advisors = $this->getFilterValue('advisors', $requestParams);
                 $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             })
-            ->when(! empty(request()->advisor_assigned_date), function ($query) {
-                $dateArray = request()->advisor_assigned_date;
+            ->when(! empty($this->getFilterValue('advisor_assigned_date', $requestParams)), function ($query) use ($requestParams) {
+                $dateArray = $this->getFilterValue('advisor_assigned_date', $requestParams);
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
@@ -119,7 +119,7 @@ class CycleQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+        $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         if ($forTotalLeadsCount) {
             // PD Revert
@@ -128,6 +128,36 @@ class CycleQuoteRepository extends BaseRepository
         }
 
         return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
     public function fetchExport()
@@ -206,6 +236,7 @@ class CycleQuoteRepository extends BaseRepository
                 'insured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentSplits' => function ($query) {

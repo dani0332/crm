@@ -56,6 +56,9 @@ const onAddUpdate = () => {
 };
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
+// Define record for SendUpdates component
+const record = computed(() => page.props.quote);
 </script>
 
 <template>
@@ -236,7 +239,7 @@ const dateFormat = date =>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Year of manufacture</dt>
-                <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
+                <dd>{{ quote?.jetski_quote?.year_of_manufacture }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -398,6 +401,13 @@ const dateFormat = date =>
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 

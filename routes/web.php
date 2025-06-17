@@ -3,6 +3,7 @@
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\ActivitesController;
+use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
+use App\Http\Controllers\NationalityAllocationConfigurationController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QuoteDocumentController;
@@ -143,6 +145,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::post('instant-alfred/chats', [AlfredChatController::class, 'chats']);
     Route::get('instant-alfred/export', [AlfredChatController::class, 'exportChat'])->name('exportChatData');
+    Route::post('instant-alfred/export-email', [AlfredChatController::class, 'exportChatToEmail'])->name('instant-alfred.export-email');
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
@@ -156,6 +159,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-advisors-by-department', [ReportsController::class, 'fetchAdvisorListByDepartment']);
     Route::post('/reports/fetch-advisor-by-sub-team', [ReportsController::class, 'fetchAdvisorListBySubTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
+    Route::post('/advisors/by-quote-type', [AdvisorController::class, 'getAdvisorsByQuoteType'])->name('advisors.by-quote-type');
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
 
@@ -307,8 +311,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('can-post-premium-prepayment')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
-    Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
-    Route::post('/payments/{quoteType}/split-payments-approve', [CentralController::class, 'splitPaymentsApprove'])->name('approve-payments')->middleware('check_route_access');
+    // Child payment approve
+    Route::post('/payments/{quoteType}/split-payment-approve-decline', [CentralController::class, 'splitPaymentApproveDecline'])->name('approve-payments')->middleware('check_route_access');
+    // Master payment approve
+    Route::post('/payments/{quoteType}/master-payment-approve-capture', [CentralController::class, 'masterPaymentApproveCapture'])->name('approve-payments')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/migrate-payment', [CentralController::class, 'migratePayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/update-total-price', [CentralController::class, 'updateTotalPrice'])->name('temp-update-totalprice')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store-new', [CentralController::class, 'storeNewPayment'])->name('payment-create')->middleware('check_route_access');
@@ -317,7 +323,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/void-payment', [CentralController::class, 'voidPayment'])->name('payments-void')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/remove-insurer-payment-link', [CentralController::class, 'removeInsurerPaymentLink'])->name('payments-remove-insurer-payment-link');
-
     Route::post('/payments/{quoteType}/payments-capture-validation', [CentralController::class, 'paymentsCaptureValidtion'])->name('capture-validation');
     Route::post('/payments/{quoteType}/delete-payment', [CentralController::class, 'deletePayment'])->name('payments-delete');
 
@@ -641,7 +646,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails'])->name('amlQuoteDetails');
+        Route::get('aml/{aml}/{insuredId?}/{customerId?}', [AMLController::class, 'show'])->name('aml.show');
         Route::post('send-bridger-response', [AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
         Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
@@ -657,8 +663,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::controller(SendUpdateLogController::class)->prefix('send-update')->name('send-update.')->group(function () {
         Route::post('get-options', 'getOptions')->name('get-options');
-        Route::get('/', 'index')->name('index');
-        Route::post('/', 'store')->name('store');
+        Route::post('/store', 'store')->name('store');
         Route::get('/{uuid}', 'show')->name('show');
         Route::patch('/update/{id}', 'update')->name('update');
         Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
@@ -767,12 +772,43 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
-});
 
-Route::get('/add-batch-number', function () {
-    $addBtchNuimber = new AddBatchForNonMotors;
-    $addBtchNuimber->handle();
-    echo 'Done';
+    Route::resource('nationality-allocation-config', NationalityAllocationConfigurationController::class)->names([
+        'index' => 'admin.nationality-allocation-config.index',
+        'create' => 'admin.nationality-allocation-config.create',
+        'store' => 'admin.nationality-allocation-config.store',
+        'show' => 'admin.nationality-allocation-config.show',
+        'edit' => 'admin.nationality-allocation-config.edit',
+        'update' => 'admin.nationality-allocation-config.update',
+        'destroy' => 'admin.nationality-allocation-config.destroy',
+    ]);
+
+    Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
+        [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
+        ->name('admin.nationality-allocation-config.audit-logs');
+
+    Route::get('/add-batch-number', function () {
+        $addBtchNuimber = new AddBatchForNonMotors;
+        $addBtchNuimber->handle();
+        echo 'Done';
+    });
+
+    // Command to bulk send policy documents
+    // Route::get('/run-policy-bulk-send', function () {
+    //     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+
+    //     return 'Command executed successfully!';
+    // });
+
+    Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
+        // Dispatch job to background queue instead of running synchronously
+        \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
+
+        return response()->json([
+            'message' => "Handbook documents check for {$quoteType} has been queued for background processing",
+            'status' => 'dispatched',
+        ]);
+    });
 });
 
 // Migration Not Required For Now 21 Nov 24
