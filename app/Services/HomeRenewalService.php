@@ -125,8 +125,8 @@ class HomeRenewalService extends RenewalsUploadService
 
             $assignmentType = null;
             if ($advisorId) {
-                $assignmentType = $isReAssignment 
-                    ? AssignmentTypeEnum::SYSTEM_REASSIGNED 
+                $assignmentType = $isReAssignment
+                    ? AssignmentTypeEnum::SYSTEM_REASSIGNED
                     : AssignmentTypeEnum::SYSTEM_ASSIGNED;
             }
 

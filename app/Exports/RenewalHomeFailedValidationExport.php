@@ -25,13 +25,13 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
         $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)
             ->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])
             ->get();
-        
+
         $exportLeads = collect();
-        
+
         // Add header row based on renewal import type
         $headerRow = $this->createHeaderRow();
         $exportLeads->push($headerRow);
-        
+
         // Add failed leads data
         foreach ($failedLeads as $lead) {
             if ($lead->data) {
