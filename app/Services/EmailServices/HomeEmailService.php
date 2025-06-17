@@ -217,7 +217,7 @@ class HomeEmailService extends BaseService
             'whatsappConsent' => $whatsappConsent,
         ];
 
-        $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);
+        $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid, 64800);
 
         if (! empty($tempUrlPDF)) {
             $data->tempUrlPDF = $tempUrlPDF;
@@ -233,7 +233,7 @@ class HomeEmailService extends BaseService
             ->first();
     }
 
-    public function attachHomeOCBPDFToEmail($quoteUID)
+    public function attachHomeOCBPDFToEmail($quoteUID, int $pdfExpiry = 120)
     {
         try {
             LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Generating PDF');
@@ -271,7 +271,7 @@ class HomeEmailService extends BaseService
             // Generate a public URL
             $publicUrl = Storage::disk('azureIM')->temporaryUrl(
                 $tempFilePath,
-                now()->addMinutes(120)
+                now()->addMinutes($pdfExpiry)
             );
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
