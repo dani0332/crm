@@ -74,6 +74,7 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
             $firstRow->insurer_quote_no = 'Insurer Quote No.';
             $firstRow->previous_advisor_email = 'Previous Advisor Email';
             $firstRow->notes = 'Notes';
+            $firstRow->errors = 'Errors';
             $exportLeads->push($firstRow);
         }
         foreach ($failedLeads as $lead) {
