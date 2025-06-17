@@ -471,7 +471,7 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
-        if($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
             return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
         }
 

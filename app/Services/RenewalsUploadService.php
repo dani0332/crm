@@ -2549,6 +2549,7 @@ class RenewalsUploadService
     public function getMonths(): array
     {
         $monthNames = array_map(fn ($m) => date('F', mktime(0, 0, 0, $m, 1)), range(1, 12));
+
         return array_combine($monthNames, range(1, 12));
     }
 
@@ -2570,11 +2571,12 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ]);
 
-        if($quoteType == QuoteTypeShortCode::HOM) {
+        if ($quoteType == QuoteTypeShortCode::HOM) {
             $query->whereHas('personalQuote', function ($q) {
                 $q->whereNull('paid_at');
             });
         }
+
         return $query->groupBy('quote_id');
     }
 
