@@ -20,17 +20,26 @@ trait QueryBuildable
         }
     }
 
-    protected function shouldApplyDatesFilter()
+    protected function shouldApplyDatesFilter($requestParams = [])
     {
-        return empty(request('email')) &&
-                empty(request('mobile_no')) &&
-                empty(request('code')) &&
-                empty(request('renewal_batch')) &&
-                empty(request('quote_batch_id')) &&
-                empty(request('payment_due_date')) &&
-                empty(request('booking_date')) &&
-                empty(request('previous_quote_policy_number')) &&
-                empty(request('insurer_tax_invoice_number')) &&
-                empty(request('insurer_commission_tax_invoice_number'));
+        // Helper method to get filter value from requestParams or request object
+        $getFilterValue = function ($filterName) use ($requestParams) {
+            if (! empty($requestParams) && isset($requestParams[$filterName])) {
+                return $requestParams[$filterName];
+            }
+
+            return request($filterName);
+        };
+
+        return empty($getFilterValue('email')) &&
+                empty($getFilterValue('mobile_no')) &&
+                empty($getFilterValue('code')) &&
+                empty($getFilterValue('renewal_batch')) &&
+                empty($getFilterValue('quote_batch_id')) &&
+                empty($getFilterValue('payment_due_date')) &&
+                empty($getFilterValue('booking_date')) &&
+                empty($getFilterValue('previous_quote_policy_number')) &&
+                empty($getFilterValue('insurer_tax_invoice_number')) &&
+                empty($getFilterValue('insurer_commission_tax_invoice_number'));
     }
 }

@@ -1086,15 +1086,25 @@ class AMLService
 
     public function getAMLData($requestParams = [])
     {
+        // This method is kept for backward compatibility
+        $query = $this->getAMLQueryBuilder($requestParams);
+
+        return $this->processAMLDataFromQuery($query);
+    }
+
+    public function getAMLQueryBuilder($requestParams = [])
+    {
         if (! Auth::check()) {
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
-            Auth::login($user);
+            if ($user) {
+                Auth::login($user);
+            }
             DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 
-        $query = AML::select([
+        return AML::select([
             'id',
             'quote_request_id',
             'quote_type_id',
@@ -1107,11 +1117,10 @@ class AMLService
         ])
             ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
             ->whereBetween('created_at', dateQueryFilter(request('amlCreatedStartDate'), request('amlCreatedEndDate')));
+    }
 
-        if (isset($requestParams['exportType']) && $requestParams['exportType'] == 'email') {
-            return $query;
-        }
-
+    public function processAMLDataFromQuery($query)
+    {
         $data = collect();
 
         $query->chunk(1000, function ($chunk) use (&$data) {
