@@ -48,33 +48,6 @@ class PrivateClientConfigController extends Controller
 
         $configurations = $this->configService->getConfigurationsByVersion($selectedVersion);
         $isCurrentVersion = $this->configService->isCurrentVersion($selectedVersion, $allVersions);
-
-        $carMakes = CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-        $insurers = InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get();
-        $locationAreas = SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get();
-
-        return Inertia::render('Admin/PrivateClientConfig/Show', [
-            'configurations' => $configurations,
-            'carMakes' => $carMakes,
-            'insurers' => $insurers,
-            'locationAreas' => $locationAreas,
-            'allVersions' => $allVersions,
-            'selectedVersion' => $selectedVersion,
-            'isCurrentVersion' => $isCurrentVersion,
-        ]);
-    }
-
-    public function advanced(Request $request)
-    {
-        $selectedVersion = $request->input('version', null);
-        $allVersions = $this->configService->getAllVersions();
-
-        if ($selectedVersion === null && count($allVersions) > 0) {
-            $selectedVersion = $allVersions[0];
-        }
-
-        $configurations = $this->configService->getConfigurationsByVersion($selectedVersion);
-        $isCurrentVersion = $this->configService->isCurrentVersion($selectedVersion, $allVersions);
         $quoteTypes = $this->getQuoteTypes();
 
         return Inertia::render('Admin/PrivateClientConfig/Advanced', [
