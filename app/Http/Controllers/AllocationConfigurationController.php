@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Models\QuoteType;
@@ -23,7 +24,7 @@ class AllocationConfigurationController extends Controller
 
     private function getQuoteTypes()
     {
-        return QuoteType::where('is_active', 1)->whereIn('short_code', ['SAV'])->get();
+        return QuoteType::where('is_active', 1)->whereIn('short_code', [QuoteTypeShortCode::SAV])->get();
     }
 
     public function index(Request $request): Response
