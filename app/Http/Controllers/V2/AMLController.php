@@ -92,8 +92,6 @@ class AMLController extends Controller
      */
     public function index(AMLRequest $request)
     {
-        LoggerService::info('fn:index - AMLController');
-
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
         $quotes = [];
@@ -180,8 +178,6 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
-        LoggerService::info('fn:export - AMLController');
-
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
         $request->merge([
@@ -204,8 +200,6 @@ class AMLController extends Controller
      */
     public function show(AML $aml, $insuredId = null, $customerId = null)
     {
-        LoggerService::info('fn:show - AMLController');
-
         $amlResults = collect(json_decode($aml->results))->first() ?? [];
         $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
         $aml->quote_type_text = $aml->quotetype->text;

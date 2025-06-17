@@ -2,15 +2,18 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class BusinessQuoteExport
+class BusinessQuoteExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    public function collection($requestParams = [])
+    public function collection(array $requestParams = []): Collection
     {
         return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams)->get();
     }
@@ -19,7 +22,7 @@ class BusinessQuoteExport
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
         return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams);
     }
@@ -79,6 +82,21 @@ class BusinessQuoteExport
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+        ];
+    }
+
+    /**
+     * Get export metadata with business-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 5, // QuoteTypeId::Business
+            'exportType' => 'business_quotes',
         ];
     }
 }

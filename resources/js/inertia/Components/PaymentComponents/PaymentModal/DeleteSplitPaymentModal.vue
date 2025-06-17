@@ -23,6 +23,10 @@ const props = defineProps({
     type: [Number],
     required: true,
   },
+  code: {
+    type: String,
+    required: true,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -48,6 +52,7 @@ const handleDeletePayment = async () => {
     payment_status_id: props.paymentStatusId,
     model_type: props.quoteType,
     quote_id: props.quoteId,
+    code: props.code,
   };
 
   deleteForm

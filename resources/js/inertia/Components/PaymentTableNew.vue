@@ -213,6 +213,7 @@ const capturePaymentValidationErrorMessage = ref('');
 const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
+const selectedPaymentForEdit = ref(null);
 
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
@@ -1005,8 +1006,9 @@ const handlePaymentTypes = count => {
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
     if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-      // need to fix this for payments
-      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+      isMultiPaymentEnabled = selectedPaymentForEdit.value
+        ? selectedPaymentForEdit.value?.isMultiplePaymentsEnabled
+        : isMultiPaymentEnabled;
     }
     const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
@@ -1697,7 +1699,7 @@ const closeRetryModal = () => {
   isRetryModalOpen.value = false;
 };
 
-const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
+const deleteSplitPaymentModal = (payment_split_id, payment_status_id, code) => {
   deleteSplitPaymentId.value = payment_split_id;
   deleteSplitPaymentStatus.value = payment_status_id;
   deleteSplitPaymentCode.value = code;
@@ -1725,6 +1727,7 @@ const editPaymentModal = async (
   capture_approval,
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
+  selectedPaymentForEdit.value = payment;
 
   if (
     sr_no === 0 &&
@@ -3307,7 +3310,7 @@ const isEditPaymentEnabled = payment => {
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
   if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+    isMultiPaymentEnabled = payment?.isMultiplePaymentsEnabled;
   }
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
@@ -5701,6 +5704,7 @@ const closeVoidPaymentModal = () => {
           :payment-status-id="deleteSplitPaymentStatus"
           :quote-type="props.quoteType"
           :quote-id="props.quoteRequest.id"
+          :code="deleteSplitPaymentCode"
           @update:model-value="closeDeleteModal"
         />
 

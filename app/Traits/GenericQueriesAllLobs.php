@@ -648,11 +648,24 @@ trait GenericQueriesAllLobs
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 
-    public function adjustQueryByDateFilters($query, $tablePrefix, $requestParams = [])
+    public function adjustQueryByDateFilters($query, $tablePrefix, $requestParams = [], $useJoin = true)
     {
         $request = $requestParams ? collect($requestParams) : request();
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
+        if (! empty($request->get('payment_due_date')) && ! $useJoin) {
+            $startDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][0])->startOfDay() : $defaultDate;
+            $endDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][1])->endOfDay() : $defaultDate;
+
+            $query->whereHas('paymentSplits', function ($q) use ($startDate, $endDate, $dateFormat) {
+                $q->whereBetween('due_date', [
+                    $startDate->format($dateFormat),
+                    $endDate->format($dateFormat),
+                ]);
+            });
+
+            return;
+        }
         if (! empty($request->get('payment_due_date'))) {
             $query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
             $columnName = 'pays.due_date';
