@@ -53,6 +53,7 @@ class PrivateClientConfigService
     public function getLatestVersion(): ?int
     {
         $allVersions = $this->getAllVersions();
+
         return count($allVersions) > 0 ? $allVersions[0] : null;
     }
 

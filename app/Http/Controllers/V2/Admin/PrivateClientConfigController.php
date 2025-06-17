@@ -2,22 +2,17 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
-use Inertia\Inertia;
-use App\Models\CarMake;
-use App\Models\SubArea;
 use App\Enums\RolesEnum;
-use App\Models\QuoteType;
-use App\Models\Nationality;
-use Illuminate\Support\Arr;
-use App\Models\CurrencyType;
-use Illuminate\Http\Request;
-use App\Traits\PrivateClient;
-use App\Models\InsuranceProvider;
-use Illuminate\Support\Facades\DB;
-use App\Models\PrivateClientConfig;
 use App\Http\Controllers\Controller;
+use App\Models\CarMake;
+use App\Models\InsuranceProvider;
+use App\Models\QuoteType;
+use App\Models\SubArea;
 use App\Services\PrivateClientConfigService;
-use App\Enums\quoteTypeCode;
+use App\Traits\PrivateClient;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Inertia\Inertia;
 
 class PrivateClientConfigController extends Controller
 {
@@ -102,12 +97,13 @@ class PrivateClientConfigController extends Controller
     {
         $quoteTypeId = $request->input('quote_type_id');
 
-        if (!$quoteTypeId) {
+        if (! $quoteTypeId) {
             return response()->json(['error' => 'Quote type ID is required'], 400);
         }
 
         try {
             $responseData = $this->configService->getLatestConfigByQuoteType($quoteTypeId);
+
             return response()->json($responseData);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to load configuration'], 500);
