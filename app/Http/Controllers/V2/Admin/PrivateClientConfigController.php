@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\PrivateClientConfig;
 use App\Http\Controllers\Controller;
 use App\Services\PrivateClientConfigService;
+use App\Enums\quoteTypeCode;
 
 class PrivateClientConfigController extends Controller
 {
@@ -35,7 +36,10 @@ class PrivateClientConfigController extends Controller
 
     private function getQuoteTypes()
     {
-        return QuoteType::where('is_active', 1)->whereIn('short_code', ['CAR', 'HEALTH', 'LIFE', 'HOME', 'YACHT'])->get();
+        return QuoteType::where('is_active', 1)
+            ->whereIn('short_code', ['CAR', 'HEALTH', 'LIFE', 'HOME', 'YACHT'])
+            ->select('id', 'text', 'short_code')
+            ->get();
     }
 
     public function show(Request $request)
@@ -84,6 +88,13 @@ class PrivateClientConfigController extends Controller
             'selectedVersion' => $selectedVersion,
             'isCurrentVersion' => $isCurrentVersion,
             'quoteTypes' => $quoteTypes,
+            'quoteTypeCodeEnum' => [
+                'CAR' => 'CAR',
+                'HEALTH' => 'HEALTH',
+                'LIFE' => 'LIFE',
+                'HOME' => 'HOME',
+                'YACHT' => 'YACHT',
+            ],
         ]);
     }
 

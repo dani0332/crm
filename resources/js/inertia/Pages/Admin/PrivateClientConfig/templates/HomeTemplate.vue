@@ -3,6 +3,10 @@ import { ref } from 'vue';
 import QuoteTypeTemplate from '../components/QuoteTypeTemplate.vue';
 
 const props = defineProps({
+  quoteTypeId: {
+    type: Number,
+    required: true,
+  },
   disabled: {
     type: Boolean,
     default: false,
@@ -61,7 +65,7 @@ defineExpose({
 <template>
   <QuoteTypeTemplate
     ref="templateRef"
-    :quote-type-id="2"
+    :quote-type-id="quoteTypeId"
     quote-type-name="home"
     quote-type-label="Home"
     :fields="homeFields"

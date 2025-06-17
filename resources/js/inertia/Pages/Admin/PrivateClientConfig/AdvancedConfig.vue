@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, computed } from 'vue';
 import CollapseIcon from './components/CollapseIcon.vue';
 import CarTemplate from './templates/CarTemplate.vue';
 import HealthTemplate from './templates/HealthTemplate.vue';
@@ -12,6 +12,8 @@ const props = defineProps({
   allVersions: Array,
   selectedVersion: Number,
   isCurrentVersion: Boolean,
+  quoteTypes: Array,
+  quoteTypeCodeEnum: Object,
 });
 
 const activeTab = ref('car');
@@ -39,14 +41,36 @@ const handleVersionLoaded = (quoteTypeName, version) => {
   quoteTypeVersions.value[quoteTypeName] = version;
 };
 
-// Tab navigation items for the UI
-const tabItems = [
-  { name: 'car', label: 'Car' },
-  { name: 'health', label: 'Health' },
-  { name: 'life', label: 'Life' },
-  { name: 'home', label: 'Home' },
-  { name: 'yacht', label: 'Yacht' },
-];
+// Create dynamic tab items based on backend quoteTypes
+const tabItems = computed(() => {
+  if (!props.quoteTypes || !props.quoteTypeCodeEnum) return [];
+
+  return props.quoteTypes
+    .map(quoteType => {
+      let templateName = '';
+      let templateLabel = quoteType.text;
+
+      // Map quote type short codes to our template names using enum
+      if (quoteType.short_code === props.quoteTypeCodeEnum.CAR) {
+        templateName = 'car';
+      } else if (quoteType.short_code === props.quoteTypeCodeEnum.HEALTH) {
+        templateName = 'health';
+      } else if (quoteType.short_code === props.quoteTypeCodeEnum.LIFE) {
+        templateName = 'life';
+      } else if (quoteType.short_code === props.quoteTypeCodeEnum.HOME) {
+        templateName = 'home';
+      } else if (quoteType.short_code === props.quoteTypeCodeEnum.YACHT) {
+        templateName = 'yacht';
+      }
+
+      return {
+        name: templateName,
+        label: templateLabel,
+        quoteTypeId: quoteType.id,
+      };
+    })
+    .filter(item => item.name); // Only include mapped templates
+});
 
 const setActiveTab = async tab => {
   if (tabLoading.value) return; // Prevent multiple clicks
@@ -99,8 +123,10 @@ const toggleModule = () => {
 // Initialize first tab on mount
 onMounted(async () => {
   await nextTick();
-  // Load the first tab (car) configuration
-  await setActiveTab('car');
+  // Load the first available tab from dynamic data
+  if (tabItems.value.length > 0) {
+    await setActiveTab(tabItems.value[0].name);
+  }
 });
 </script>
 
@@ -175,30 +201,35 @@ onMounted(async () => {
                 <CarTemplate
                   v-if="quoteType.name === 'car'"
                   ref="carTemplateRef"
+                  :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
                   @version-loaded="handleVersionLoaded(quoteType.name, $event)"
                 />
                 <HealthTemplate
                   v-else-if="quoteType.name === 'health'"
                   ref="healthTemplateRef"
+                  :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
                   @version-loaded="handleVersionLoaded(quoteType.name, $event)"
                 />
                 <LifeTemplate
                   v-else-if="quoteType.name === 'life'"
                   ref="lifeTemplateRef"
+                  :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
                   @version-loaded="handleVersionLoaded(quoteType.name, $event)"
                 />
                 <HomeTemplate
                   v-else-if="quoteType.name === 'home'"
                   ref="homeTemplateRef"
+                  :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
                   @version-loaded="handleVersionLoaded(quoteType.name, $event)"
                 />
                 <YachtTemplate
                   v-else-if="quoteType.name === 'yacht'"
                   ref="yachtTemplateRef"
+                  :quote-type-id="quoteType.quoteTypeId"
                   :disabled="!isCurrentVersion"
                   @version-loaded="handleVersionLoaded(quoteType.name, $event)"
                 />
