@@ -6,6 +6,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalsUploadLeads;
 use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,12 +14,11 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Bus\Batchable;
 use Throwable;
 
 class HomeUpdateRenewalQuotesJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels,Batchable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable,SerializesModels;
 
     public $timeout = 60;
     public $backoff = 10;

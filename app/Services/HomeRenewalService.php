@@ -58,7 +58,7 @@ class HomeRenewalService extends RenewalsUploadService
                     })
                     ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
                         // Bus batch failed
-                        LoggerService::info($logPrefix.' one of batch is failed. '. $e->getMessage());
+                        LoggerService::info($logPrefix.' one of batch is failed. '.$e->getMessage());
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function (Batch $batch) use ($logPrefix) {
@@ -254,7 +254,6 @@ class HomeRenewalService extends RenewalsUploadService
             if (! empty($jobs)) {
                 LoggerService::info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
-
                 Bus::batch($jobs)
                     ->then(function (Batch $busBatch) use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
@@ -427,7 +426,7 @@ class HomeRenewalService extends RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
                 LoggerService::info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                
+
                 Bus::batch($jobs)
                     ->then(function (Batch $batch) use ($logPrefix, $renewalsBatchEmail) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
