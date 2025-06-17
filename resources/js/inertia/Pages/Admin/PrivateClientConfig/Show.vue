@@ -423,6 +423,13 @@ const onSubmit = isValid => {
   <Head title="Private client tag configuration" />
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Private Client Configuration</h2>
+    <Link
+      :href="route('admin.private-client-config.advanced')"
+      class="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+    >
+      <i class="ri-settings-3-line mr-1"></i>
+      Advanced Configuration →
+    </Link>
   </div>
 
   <!-- Version selector -->
