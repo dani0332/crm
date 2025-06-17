@@ -202,4 +202,37 @@ class PrivateClientConfigService
 
         return $rules;
     }
+
+    public function getConfigByVersionAndQuoteType(int $quoteTypeId, int $version): array
+    {
+        $allVersionsForQuoteType = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
+            ->select('version')
+            ->distinct()
+            ->orderBy('version', 'desc')
+            ->pluck('version')
+            ->toArray();
+
+        $latestVersion = count($allVersionsForQuoteType) > 0 ? $allVersionsForQuoteType[0] : null;
+
+        $versionConfig = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
+            ->where('version', $version)
+            ->first();
+
+        $dropdownData = $this->getDropdownDataByQuoteType($quoteTypeId);
+
+        $responseData = [
+            'config' => null,
+            'version' => $version,
+            'allVersions' => $allVersionsForQuoteType,
+            'isCurrentVersion' => $version === $latestVersion,
+            'dropdownData' => $dropdownData,
+        ];
+
+        if ($versionConfig) {
+            $configData = json_decode($versionConfig->config, true);
+            $responseData['config'] = $configData;
+        }
+
+        return $responseData;
+    }
 }
