@@ -68,10 +68,10 @@ class SukoonMedexService
             $this->quoteTypeId = $quoteTypeId;
             $this->transaction = $transaction;
 
+            LoggerService::startQuoteLogging($this->currentQuote);
+
             if (!in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike]))
                 throw new Exception('Only (Car / Bike) LOB are eligible');
-
-            LoggerService::startQuoteLogging($this->currentQuote);
 
             if(empty($this->sessionId))
                 $this->login();
@@ -164,23 +164,24 @@ class SukoonMedexService
             ]);
 
         } catch (Exception $e) {
-            $this->logFailure("{$this->logPrefix} Purchase Flow Failed", $e->getMessage(), [
+            $this->logFailure("{$this->logPrefix} processPurchaseFlow Failed", $e->getMessage(), [
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
                 'error_messages' => $this->errorMessages
             ]);
         }
     }
 
-    public function syncDocumentsFromSukoon()
+    public function syncSukoonDocuments()
     {
         try {
+            LoggerService::info("{$this->logPrefix} syncSukoonDocuments");
             // STEP #14 listGeneratedDocument
             $listGeneratedDocumentResponse = $this->listGeneratedDocument();
 
             // STEP #15 downloadDocument
             $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
         } catch (Exception $e) {
-            $this->logFailure("{$this->logPrefix} Sync Documents Failed", $e->getMessage(), [
+            $this->logFailure("{$this->logPrefix} syncSukoonDocuments Failed", $e->getMessage(), [
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
                 'error_messages' => !empty($this->errorMessages) ? $this->errorMessages : $e->getMessage()
             ]);
@@ -764,7 +765,7 @@ class SukoonMedexService
 
                 if(empty($docCode)){
                     $skippedDocCount++;
-                    LoggerService::info("Document skipped: {$docName}, unmatched docCode");
+                    LoggerService::info("{$this->logPrefix} Document skipped: {$docName}, unmatched docCode");
                     continue;
                 }
 
@@ -774,7 +775,7 @@ class SukoonMedexService
                     $existedDocTimestamp = reset($docNameParts);
                     if($existedDocTimestamp >= $fileCreatedTimestamp) {
                         $skippedDocCount++;
-                        LoggerService::info("Document skipped: {$docName}, updated one already exists");
+                        LoggerService::info("{$this->logPrefix} Document skipped: {$docName}, updated one already exists");
                         continue;
                     }
                 }
@@ -787,7 +788,7 @@ class SukoonMedexService
             }
 
             $generatedDocCount = count($documents ?? []);
-            LoggerService::info("Documents saved: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
+            LoggerService::info("{$this->logPrefix} Documents saved: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
                 "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}");
 
         } catch (Exception $e) {

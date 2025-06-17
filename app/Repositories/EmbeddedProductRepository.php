@@ -394,7 +394,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             $sukoonMedexService = app(SukoonMedexService::class);
             $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
-            $sukoonMedexService->syncDocumentsFromSukoon($transaction);
+            $sukoonMedexService->syncSukoonDocuments($transaction);
         }
     }
 
