@@ -400,6 +400,35 @@ const permissionsEnum = page.props.permissionsEnum;
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
+    // Check date range restriction
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+
     filters.created_at_start = useDateFormat(
       filters.created_at_start,
       'YYYY-MM-DD',
@@ -468,15 +497,18 @@ const onDataExport = (exportType = 'download') => {
 
 const exportRmLeads = () => {
   let filtersCleaned = { ...cleanObj(filters) };
-  let maxdays = calculateDaysDifference(
+  let maxMonths = calculateMonthsDifference(
     filtersCleaned.transaction_approved_dates[0],
     filtersCleaned.transaction_approved_dates[1],
   );
 
-  if (maxdays > 31) {
+  // Allow 3 months for RM leads export (months-based validation)
+  const maxAllowedMonths = 3;
+  const maxPeriod = '3 months';
+
+  if (maxMonths > maxAllowedMonths) {
     notification.error({
-      message:
-        'Maximum of 31 days (Transaction Approved date) are allowed to be exported.',
+      message: `Maximum of ${maxPeriod} (Transaction Approved date) are allowed to be exported.`,
       position: 'top',
     });
     return;

@@ -84,7 +84,7 @@ class PetQuoteRepository extends BaseRepository
             $quote->update($quoteData);
 
             $quote->petQuote()->updateOrCreate(
-                ['personal_quote_id' => $quote->id],
+                ['personal_quote_id' => $quote->id, 'uuid' => $quote->uuid, 'code' => $quote->code],
                 Arr::only($data, (new PetQuote)->allowedColumns())
             );
 
@@ -127,16 +127,16 @@ class PetQuoteRepository extends BaseRepository
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(! empty(request()->is_renewal), function ($query) {
-                $isRenewal = request()->is_renewal;
+            ->when(! empty($this->getFilterValue('is_renewal', $requestParams)), function ($query) use ($requestParams) {
+                $isRenewal = $this->getFilterValue('is_renewal', $requestParams);
                 if ($isRenewal == quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
                 } elseif ($isRenewal == quoteTypeCode::noText) {
                     $query->whereNull('previous_quote_policy_number');
                 }
             })
-            ->when(! empty(request()->advisor_assigned_date), function ($query) {
-                $dateArray = request()->advisor_assigned_date;
+            ->when(! empty($this->getFilterValue('advisor_assigned_date', $requestParams)), function ($query) use ($requestParams) {
+                $dateArray = $this->getFilterValue('advisor_assigned_date', $requestParams);
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
@@ -162,7 +162,7 @@ class PetQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+        $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         if ($forTotalLeadsCount) {
             // PD Revert
@@ -171,6 +171,36 @@ class PetQuoteRepository extends BaseRepository
         }
 
         return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
     public function fetchGetBy($column, $value)
@@ -192,6 +222,7 @@ class PetQuoteRepository extends BaseRepository
                 'insured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',

@@ -4108,6 +4108,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quoteCode="$page.props.quote.code"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="props.quote?.insured_kyc_id"
+    />
+
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
