@@ -47,6 +47,8 @@ const changeVersion = version => {
     :allVersions="allVersions"
     :selectedVersion="selectedVersion"
     :isCurrentVersion="isCurrentVersion"
+    :quoteTypes="quoteTypes"
+    :quoteTypeCodeEnum="quoteTypeCodeEnum"
   />
 </template>
 
