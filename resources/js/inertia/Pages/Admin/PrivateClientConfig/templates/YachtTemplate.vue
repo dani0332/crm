@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick, watch } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import CollapseIcon from '../components/CollapseIcon.vue';
 
@@ -24,6 +25,13 @@ const highlightedProfileIndex = ref(-1);
 const isInitialized = ref(false);
 const collapsedProfiles = ref(new Set());
 const isModuleCollapsed = ref(false);
+const currentVersion = ref(null);
+const loader = ref(false);
+
+// Form for saving
+const configForm = useForm({
+  configurations: [],
+});
 
 const yachtFields = [
   {

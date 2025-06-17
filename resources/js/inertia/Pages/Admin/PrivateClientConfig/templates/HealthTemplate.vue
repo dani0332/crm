@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick, watch } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import CollapseIcon from '../components/CollapseIcon.vue';
 
@@ -24,6 +25,13 @@ const highlightedProfileIndex = ref(-1);
 const isInitialized = ref(false);
 const collapsedProfiles = ref(new Set());
 const isModuleCollapsed = ref(false);
+const currentVersion = ref(null);
+const loader = ref(false);
+
+// Form for saving
+const configForm = useForm({
+  configurations: [],
+});
 
 const healthFields = [
   {
@@ -133,8 +141,9 @@ const loadExistingConfig = async () => {
       dropdownData.value = response.data.dropdownData;
     }
 
-    // Emit version info
+    // Set current version
     if (response.data.version) {
+      currentVersion.value = response.data.version;
       emit('versionLoaded', response.data.version);
     }
 
@@ -164,6 +173,49 @@ const loadExistingConfig = async () => {
     }
   } catch (error) {
     console.error('Error loading existing config:', error);
+  }
+};
+
+// Save configuration for this quote type only
+const saveConfiguration = () => {
+  loader.value = true;
+
+  try {
+    const validProfiles = getProfiles();
+
+    if (validProfiles.length === 0) {
+      alert(
+        'No valid health profiles to save. Please add at least one profile with nationality and criteria.',
+      );
+      loader.value = false;
+      return;
+    }
+
+    // Update form data with only health configuration
+    configForm.configurations = [
+      {
+        quote_type_id: 3, // Health quote type ID
+        profiles: validProfiles,
+      },
+    ];
+
+    // Send to backend
+    configForm.post(route('admin.private-client-config.upsert'), {
+      onSuccess: () => {
+        loader.value = false;
+        // Reload the configuration to get the new version
+        loadExistingConfig();
+      },
+      onError: errors => {
+        loader.value = false;
+        console.error('Save failed:', errors);
+        alert('Failed to save health configuration. Please try again.');
+      },
+    });
+  } catch (error) {
+    loader.value = false;
+    console.error('Error saving health configuration:', error);
+    alert('Error occurred while saving. Please try again.');
   }
 };
 
@@ -218,6 +270,22 @@ defineExpose({
 <template>
   <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
+      <!-- Version Info Header -->
+      <div
+        v-if="currentVersion"
+        class="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center text-sm text-blue-700">
+            <i class="ri-information-line mr-2"></i>
+            <span
+              >Currently viewing Health configuration version
+              {{ currentVersion }}</span
+            >
+          </div>
+        </div>
+      </div>
+
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center space-x-2">
           <CollapseIcon
@@ -433,6 +501,40 @@ defineExpose({
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Save Button Section -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+          <div class="flex justify-end">
+            <x-tooltip>
+              <x-button
+                size="md"
+                color="#059669"
+                @click="saveConfiguration"
+                :loading="loader"
+                :disabled="loader || disabled"
+              >
+                <i class="ri-save-line mr-1"></i> Save Health Configuration
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  Save this health configuration and create a new version.
+                </span>
+              </template>
+            </x-tooltip>
+          </div>
+        </div>
+
+        <!-- Read-only notice -->
+        <div
+          v-if="disabled"
+          class="flex items-center text-amber-600 mt-4 p-3 bg-amber-50 rounded-md border border-amber-200"
+        >
+          <i class="ri-error-warning-line mr-2"></i>
+          <span
+            >You are viewing a historical version. Configuration is
+            read-only.</span
+          >
         </div>
       </div>
     </div>
