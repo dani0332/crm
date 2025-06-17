@@ -15,9 +15,7 @@ const props = defineProps({
 
 const activeTab = ref(null);
 const tabLoading = ref(false);
-const isModuleCollapsed = ref(false);
 
-// Configuration state
 const configurations = ref({});
 const dropdownData = ref({});
 const versionData = ref({});
@@ -26,20 +24,15 @@ const currentVersions = ref({});
 const tabItems = computed(() => {
   if (!props.quoteTypes || !props.quoteTypeCodeEnum) return [];
 
-  return props.quoteTypes
-    .map(quoteType => {
-      let templateLabel = quoteType.text;
-
-      return {
-        label: templateLabel,
-        code: quoteType.code,
-        quoteTypeId: quoteType.id,
-      };
-    })
-    .filter(item => item.code);
+  return props.quoteTypes.map(quoteType => {
+    return {
+      label: quoteType.text,
+      code: quoteType.code,
+      quoteTypeId: quoteType.id,
+    };
+  });
 });
 
-// Load configuration for a specific quote type
 const loadConfigurationForTab = async quoteTypeCode => {
   const quoteType = tabItems.value.find(t => t.code === quoteTypeCode);
   if (!quoteType) return;
@@ -51,16 +44,9 @@ const loadConfigurationForTab = async quoteTypeCode => {
       route('admin.private-client-config.latest-by-quote-type'),
       {
         params: { quote_type_id: quoteType.quoteTypeId },
-        headers: {
-          'X-CSRF-TOKEN':
-            document
-              .querySelector('meta[name="csrf-token"]')
-              ?.getAttribute('content') || '',
-        },
       },
     );
 
-    // Store configuration data
     configurations.value[quoteTypeCode] = response.data.config || {
       profiles: [],
     };
@@ -73,7 +59,6 @@ const loadConfigurationForTab = async quoteTypeCode => {
     currentVersions.value[quoteTypeCode] = response.data.version;
   } catch (error) {
     console.error('Error loading configuration:', error);
-    // Set empty defaults on error
     configurations.value[quoteTypeCode] = { profiles: [] };
     dropdownData.value[quoteTypeCode] = {};
     versionData.value[quoteTypeCode] = {
@@ -90,9 +75,7 @@ const setActiveTab = async tab => {
   if (tabLoading.value) return;
 
   activeTab.value = tab;
-  isModuleCollapsed.value = false;
 
-  // Always load fresh configuration data on tab change
   await loadConfigurationForTab(tab);
 };
 
@@ -101,15 +84,9 @@ const handleVersionLoaded = (quoteTypeCode, version) => {
 };
 
 const handleConfigurationSaved = async quoteTypeCode => {
-  // Reload configuration after save
   await loadConfigurationForTab(quoteTypeCode);
 };
 
-const toggleModule = () => {
-  isModuleCollapsed.value = !isModuleCollapsed.value;
-};
-
-// Initialize first tab on mount
 onMounted(async () => {
   await nextTick();
   if (tabItems.value.length > 0) {
@@ -121,7 +98,7 @@ onMounted(async () => {
 <template>
   <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
-      <div v-show="!isModuleCollapsed">
+      <div>
         <div class="border-b border-gray-200 mb-6">
           <nav class="-mb-px flex space-x-8">
             <button
@@ -151,9 +128,7 @@ onMounted(async () => {
           </nav>
         </div>
 
-        <!-- Tab Content -->
         <div class="relative">
-          <!-- Loading Card -->
           <div
             v-if="tabLoading"
             class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
@@ -193,7 +168,6 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- Tab Content -->
           <div v-else class="space-y-6">
             <CarTemplate
               v-if="activeTab === quoteTypeCodeEnum.Car"
