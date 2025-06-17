@@ -146,22 +146,48 @@ const selectedVersion = ref(null);
 
         <!-- Tab Content -->
         <div class="relative">
-          <!-- Loading overlay -->
+          <!-- Loading Card -->
           <div
             v-if="tabLoading"
-            class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg"
+            class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
           >
-            <div class="flex items-center space-x-2">
-              <div
-                class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"
-              ></div>
-              <span class="text-gray-600 font-medium"
-                >Loading configuration...</span
-              >
+            <div class="p-6 bg-white border-b border-gray-200">
+              <div class="flex items-center justify-center py-8">
+                <div class="text-center">
+                  <svg
+                    class="animate-spin mx-auto h-8 w-8 text-blue-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <p class="mt-2 text-sm text-gray-600">
+                    Loading
+                    {{
+                      tabItems.find(t => t.code === activeTab)?.label ||
+                      'configuration'
+                    }}...
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="space-y-6">
+          <!-- Tab Content -->
+          <div v-else class="space-y-6">
             <template v-for="quoteType in tabItems" :key="quoteType.code">
               <div v-if="activeTab === quoteType.code">
                 <CarTemplate
