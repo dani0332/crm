@@ -741,38 +741,67 @@ onMounted(async () => {
                   <template v-for="field in fields" :key="field.fieldName">
                     <div class="space-y-2">
                       <div class="flex items-center space-x-2">
-                        <x-checkbox
-                          v-if="field.hasCheckBox"
-                          v-model="profile[`${field.fieldName}_isEnabled`]"
-                          :disabled="isDisabled"
-                          class="flex-shrink-0"
-                        />
-                        <label
-                          class="block text-sm font-medium"
-                          :class="{
-                            'text-gray-700':
-                              !field.hasCheckBox ||
-                              profile[`${field.fieldName}_isEnabled`],
-                            'text-gray-400':
-                              field.hasCheckBox &&
-                              !profile[`${field.fieldName}_isEnabled`],
-                          }"
-                        >
-                          {{ field.label }}
-                          <span
-                            v-if="
-                              field.isRequired &&
-                              (!field.hasCheckBox ||
-                                profile[`${field.fieldName}_isEnabled`])
-                            "
-                            class="text-red-500"
-                            >*</span
+                        <template v-if="field.hasCheckBox">
+                          <label
+                            class="flex items-center space-x-2 cursor-pointer"
+                            :class="{
+                              'cursor-not-allowed': isDisabled,
+                            }"
                           >
-                          <span v-if="field.operator === '>='"> (≥)</span>
-                          <span v-if="field.operator === 'in'">
-                            (Multiple selection)</span
+                            <x-checkbox
+                              v-model="profile[`${field.fieldName}_isEnabled`]"
+                              :disabled="isDisabled"
+                              class="flex-shrink-0"
+                            />
+                            <span
+                              class="text-sm font-medium select-none"
+                              :class="{
+                                'text-gray-700':
+                                  profile[`${field.fieldName}_isEnabled`],
+                                'text-gray-400':
+                                  !profile[`${field.fieldName}_isEnabled`],
+                              }"
+                            >
+                              {{ field.label }}
+                              <span
+                                v-if="
+                                  field.isRequired &&
+                                  profile[`${field.fieldName}_isEnabled`]
+                                "
+                                class="text-red-500"
+                                >*</span
+                              >
+                              <span v-if="field.operator === '>='">
+                                (Greater than or equal to)</span
+                              >
+                              <span v-if="field.operator === '<='">
+                                (Less than or equal to)</span
+                              >
+                              <span v-if="field.operator === 'in'">
+                                (Multiple selection)</span
+                              >
+                            </span>
+                          </label>
+                        </template>
+                        <template v-else>
+                          <label
+                            class="block text-sm font-medium text-gray-700"
                           >
-                        </label>
+                            {{ field.label }}
+                            <span v-if="field.isRequired" class="text-red-500"
+                              >*</span
+                            >
+                            <span v-if="field.operator === '>='">
+                              (Greater than or equal to)</span
+                            >
+                            <span v-if="field.operator === '<='">
+                              (Less than or equal to)</span
+                            >
+                            <span v-if="field.operator === 'in'"
+                              >(Multiple selection)</span
+                            >
+                          </label>
+                        </template>
                       </div>
 
                       <!-- Field Value -->
