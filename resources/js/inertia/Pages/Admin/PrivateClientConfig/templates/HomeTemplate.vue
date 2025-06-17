@@ -34,6 +34,9 @@ const homeFields = [
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
+    currencyId: 1,
+    isRequired: true,
+    hasCheckBox: true,
   },
   {
     fieldName: 'insurance_provider_id',
@@ -42,6 +45,8 @@ const homeFields = [
     options: 'insurers',
     operator: 'in',
     hasCurrency: false,
+    isRequired: true,
+    hasCheckBox: true,
   },
   {
     fieldName: 'sub_area_id',
@@ -50,6 +55,8 @@ const homeFields = [
     options: 'locationAreas',
     operator: 'in',
     hasCurrency: false,
+    isRequired: true,
+    hasCheckBox: true,
   },
 ];
 </script>
