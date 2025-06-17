@@ -510,44 +510,7 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
-
-  if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
-    // Only check all these conditions if it's a RENEWAL_UPLOAD lead
-    if (
-      page.props.quote.advisor.name &&
-      page.props.quote.advisor.mobile_no &&
-      page.props.quote.email &&
-      page.props.quote.customerAddressData?.floor_number &&
-      page.props.quote.customerAddressData?.building_name &&
-      page.props.quote.customerAddressData?.street &&
-      page.props.quote.home_quote?.sub_area_id &&
-      page.props.quote.home_quote?.possession_type_id &&
-      page.props.quote.home_quote?.accommodation_type_id &&
-      page.props.quote.home_quote?.has_claimed_losses !== undefined &&
-      ((page.props.quote.home_quote?.possession_type_id ==
-        page.props.homePossessionTypeEnum.TENANT &&
-        page.props.quote.home_quote?.owner_occupancy_type_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.OWNER_RENTING &&
-          page.props.quote.home_quote?.personal_belongings_value_id &&
-          page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.OWNER_RENTING &&
-          page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.LANDLORD &&
-          page.props.quote.home_quote?.building_value) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.LANDLORD &&
-          page.props.quote.home_quote?.contents_value_id))
-    ) {
-      // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
-      onLoadAvailablePlansData();
-    }
-  } else {
-    // For all non-renewal upload leads, always run onLoadAvailablePlansData
-    onLoadAvailablePlansData();
-  }
+  onLoadAvailablePlansData();
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -1435,6 +1398,10 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote.additional_notes }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -2089,6 +2056,16 @@ const shouldShowPlanDetailsSection = computed(() => {
                   >
                     Hidden
                   </x-tag>
+
+                  <x-tag
+                    v-if="item.isRenewal"
+                    size="xs"
+                    color="success"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Renewal Plan
+                  </x-tag>
+
                   <x-tooltip>
                     <x-tag
                       v-if="item.puaType"
