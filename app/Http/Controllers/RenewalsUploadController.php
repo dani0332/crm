@@ -336,11 +336,12 @@ class RenewalsUploadController extends Controller
         $query = RenewalQuoteProcess::query()
             ->with('renewalBatch')
             ->whereHas('renewalBatch', callback: function ($query) use ($year, $month, $batch) {
-                $query->where('year', $year)
-                    ->where('month', $month)
-                    ->when(! empty($batch), function ($query) use ($batch) {
-                        return $query->where('name', $batch);
-                    });
+                $query->when(! empty($batch), function ($query) use ($batch) {
+                    return $query->where('name', $batch);
+                }, function ($query) use ($year, $month) {
+                    return $query->where('year', $year)
+                        ->where('month', $month);
+                });
             })
             ->where([
                 'renewal_quote_processes.quote_type' => $lob,
