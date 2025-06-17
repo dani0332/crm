@@ -59,14 +59,7 @@ class PrivateClientConfigController extends Controller
             'allVersions' => $allVersions,
             'selectedVersion' => $selectedVersion,
             'isCurrentVersion' => $isCurrentVersion,
-            'quoteTypes' => $quoteTypes,
-            'quoteTypeCodeEnum' => [
-                'CAR' => 'CAR',
-                'HEALTH' => 'HEALTH',
-                'LIFE' => 'LIFE',
-                'HOME' => 'HOME',
-                'YACHT' => 'YACHT',
-            ],
+            'quoteTypes' => $quoteTypes
         ]);
     }
 

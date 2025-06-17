@@ -18,9 +18,8 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
-// Function to change version
 const changeVersion = version => {
-  window.location.href = route('admin.private-client-config.advanced', {
+  window.location.href = route('admin.private-client-config.show', {
     version,
   });
 };
@@ -30,18 +29,9 @@ const changeVersion = version => {
   <Head title="Private Client Configuration - Advanced" />
 
   <div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-semibold">
-      Private Client Configuration - Advanced
-    </h2>
-    <Link
-      :href="route('admin.private-client-config.show')"
-      class="text-blue-600 hover:text-blue-800 text-sm"
-    >
-      ← Back to Simple View
-    </Link>
+    <h2 class="text-xl font-semibold">Private Client Configuration</h2>
   </div>
 
-  <!-- Advanced Configuration Component -->
   <AdvancedConfig
     :configurations="configurations"
     :allVersions="allVersions"
@@ -51,7 +41,3 @@ const changeVersion = version => {
     :quoteTypeCodeEnum="quoteTypeCodeEnum"
   />
 </template>
-
-<style scoped>
-/* Add any additional styling if needed */
-</style>
