@@ -67,8 +67,8 @@ use App\Models\CurrentlyLocatedIn;
 use App\Models\Customer;
 use App\Models\CustomerMembers;
 use App\Models\Emirate;
-use App\Models\FtcEmailLog;
 use App\Models\Entity;
+use App\Models\FtcEmailLog;
 use App\Models\HealthPlan;
 use App\Models\HealthPlanCoPayment;
 use App\Models\HealthQuote;
@@ -3095,7 +3095,7 @@ class RenewalsUploadService
     {
         return ! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY;
     }
-    
+
     public function incrementBatchEmailSent($renewalsBatchEmailId, $renewalQuoteProcessId)
     {
         RenewalsBatchEmails::where('id', $renewalsBatchEmailId)->update(['total_sent' => DB::raw('total_sent+1')]);
