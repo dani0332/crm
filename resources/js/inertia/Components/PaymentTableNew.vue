@@ -401,10 +401,7 @@ const addPaymentModal = async () => {
 
    // DONE TEMPORARY SOLUTION AS REF NOT WORKING
     createPaymentModal.value = true;
-    // console.log("---createPaymentFormRef.value", createPaymentFormRef.value);
-    // wait for 0.5 second
     await new Promise(resolve => setTimeout(resolve, 10));
-    // console.log("---AFTER -createPaymentFormRef.value", createPaymentFormRef.value);
     createPaymentFormRef.value.resetPaymentMethodsForm();
     const paymentFormUpdateData = {};
     paymentFormUpdateData.payment_method = 'CHQ';
@@ -530,12 +527,8 @@ const editPaymentModal = async (
     return false;
   }
 
-  // DONE TEMPORARY SOLUTION AS REF NOT WORKING
   createPaymentModal.value = true;
-  // console.log("---createPaymentFormRef.value", createPaymentFormRef.value);
-  // wait for 0.5 second
   await new Promise(resolve => setTimeout(resolve, 10));
-  // console.log("---AFTER -createPaymentFormRef.value", createPaymentFormRef.value);
   // Payment Capture Validation for GIG
   if (
     capture_approval == 1 &&
@@ -549,7 +542,6 @@ const editPaymentModal = async (
     createPaymentFormRef.value.updateIsTransactionCaptureButtonEnabled(false);
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
-console.log("====createPaymentFormRef", createPaymentFormRef.value, createPaymentFormRef.isApproveConfirmed);
   createPaymentFormRef.value.resetPaymentForm();
   createPaymentFormRef.value.updateIsTransactionCaptureButtonEnabled(true);
   createPaymentFormRef.value.initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
@@ -1121,6 +1113,7 @@ watch(
               :eCommercePriceWithLP="eCommercePriceWithLP"
               :isPlanDetailSectionEnabled="isPlanDetailSectionEnabled"
               :quoteSubType="quoteSubType"
+              :isLackingPayment="is_lacking_payment"
               
               @cancel-modal="createPaymentModal = !createPaymentModal"
               @aml-verification="openAmlVerificationModal"

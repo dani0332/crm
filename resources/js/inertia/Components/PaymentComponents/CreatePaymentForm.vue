@@ -53,6 +53,7 @@
 		eCommercePriceWithLP: Number,
 		isPlanDetailSectionEnabled: Boolean,
 		quoteSubType: String,
+		isLackingPayment: Boolean,
 	});
 
 	const fileUploadModels = ref([]);
@@ -1614,7 +1615,7 @@
 				payment.total_price <= payment.total_amount + payment.discount_value
 			) {
 				isFieldReadonly.value = true;
-				isTotalPriceUpdated.value = is_lacking_payment.value;
+				isTotalPriceUpdated.value = props?.isLackingPayment;
 			} else {
 				isFieldReadonly.value = false;
 			}
