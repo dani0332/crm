@@ -325,7 +325,7 @@ class CarQuoteService extends BaseService
                 (isset($request->dob) && $oldFormattedDate != $request->dob) ||
                 (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
             ) {
-                Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
+                Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id, 'quoteTypeId' => QuoteTypeId::Car]);
             }
 
             if (isset($request->return_to_view)) {
