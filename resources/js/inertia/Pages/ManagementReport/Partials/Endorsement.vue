@@ -25,10 +25,6 @@ const tableHeader = reactive([
     tooltip: 'Ref ID of the lead/policy',
   },
   {
-    text: 'Private Client',
-    value: 'pcp_tag_formatted',
-  },
-  {
     text: 'Department',
     value: 'department',
     tooltip: 'The department of the advisor assigned to this lead',
@@ -237,6 +233,10 @@ const tableHeader = reactive([
     text: 'Sage Receipt ID',
     value: 'sage_reciept_id',
     tooltip: 'Sage Receipt ID',
+  },
+  {
+    text: 'Private Client',
+    value: 'pcp_tag_formatted',
   },
 ]);
 const isIntegerColumn = key => {
