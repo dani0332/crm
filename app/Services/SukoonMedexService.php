@@ -194,7 +194,7 @@ class SukoonMedexService
             $quotePolicyResponse = $this->viewQuotePolicy();
             $this->updateTransaction($this->transaction, $quotePolicyResponse);
 
-            if(!$this->transaction->is_document_sent) {
+            if(SukoonMedexEnum::checkPolicyStatusPassed($this->policyStatus, SukoonMedexEnum::STATUS_BOOKED) && !$this->transaction->is_document_sent) {
                 EmbeddedProductRepository::sendDocument([
                     'epId' => $this->transaction->product->embeddedProduct->id ?? null,
                     'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
