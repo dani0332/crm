@@ -753,12 +753,11 @@ class SageApiService
 
         LoggerService::info('################################## EP Booking : Start Sage booking for : '.$quote->code.' ##################################');
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
-        $sukoonMedXTransaction = $this->getSukoonMedXTransaction([$quote]); 
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction([$quote]);
         if ($isLobAllowedForEmbeddedProductBooking && $sukoonMedXTransaction) {
-            (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $payment ,$sageRequest, $request, $sukoonMedXTransaction]);
+            (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $payment, $sageRequest, $request, $sukoonMedXTransaction]);
         }
         LoggerService::info('################################## EP Booking : End Sage booking for : '.$quote->code.' ##################################');
-
 
         $skipBookPolicyDocumentJob = false;
         if ($quoteTypeId === QuoteTypeId::Travel) {
@@ -2543,12 +2542,13 @@ class SageApiService
     public function isLobAllowedForEmbeddedProductBooking($quoteTypeId)
     {
         $lobAllowedForEmbeddedProductBooking = [QuoteTypeId::Car, QuoteTypeId::Bike];
+
         return in_array($quoteTypeId, $lobAllowedForEmbeddedProductBooking);
     }
 
     public function getSukoonMedXTransaction($quote)
     {
-        return $quote->embeddedTransactions() 
+        return $quote->embeddedTransactions()
             ->where('is_selected', 1)
             ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
             ->first();
