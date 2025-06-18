@@ -84,7 +84,7 @@ class SukoonMedexService
             if(empty($this->sessionId))
                 $this->login();
 
-            $this->productSlug = 'afia_driver_medex'; // ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PRODUCT_SLUG)->value('value'); TODO::
+            $this->productSlug = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG)->value('value') ?? 'afia_driver_medex'; // afia_driver_medex DONE_TODO
             $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
 
         } catch (Exception $e) {
@@ -157,16 +157,20 @@ class SukoonMedexService
                 $this->syncSukoonData($this->transaction, $invoicePaymentResponse);
                 $this->transaction->documents()->whereIn('document_type_code', $this->sukoonReqDocTypeCodes)->delete();
                 $this->transaction->load('documents');
-
-                // STEP #12 getPolicyScheduleCoi 
-                // if(in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $missingReqDocTypes))
-                $this->getPolicyScheduleCoi();
-    
-                // STEP #13 getCustomerTaxInvoice
-                $this->getCustomerTaxInvoice();
             }
 
             $missingReqDocTypes = $this->getMissingReqDocTypes();
+
+            // STEP #12 getPolicyScheduleCoi 
+            if(in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $missingReqDocTypes))
+                $this->getPolicyScheduleCoi();
+
+            // STEP #13 getCustomerTaxInvoice
+            if(in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $missingReqDocTypes)) {
+                empty($this->paymentToken) && $this->fetchPaymentToken();
+                $this->getCustomerTaxInvoice();
+            }
+
             if(!empty($missingReqDocTypes)) {
                 // STEP #14 listGeneratedDocument
                 $listGeneratedDocumentResponse = $this->listGeneratedDocument();
@@ -195,6 +199,17 @@ class SukoonMedexService
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
                 'error_messages' => $this->errorMessages
             ]);
+        }
+    }
+
+    public function fetchPaymentToken()
+    {
+        try {
+            // STEP #16 viewQuotePolicy
+            $viewQuotePolicyResponse = $this->viewQuotePolicy();
+            return $this->paymentToken = $viewQuotePolicyResponse['payments'][0]['token'] ?? null;
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 
@@ -364,7 +379,7 @@ class SukoonMedexService
             'execution_method' => $parentFunction,
             'quote_uuid' => $this->currentQuote->uuid,
             'call_type' => 'EmbeddedProduct',
-            'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'), // TODO::
+            'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'),
         ];
 
         $extraLog = [
@@ -638,7 +653,7 @@ class SukoonMedexService
     {
         return [
             'form_name' => 'plan_picker',
-            'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles', // TODO need to confirm, is post-slug static?
+            'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles',
             "payment_plan" => $this->paymentPlan,
             "amount_disclaimer_text" => $this->amountDisclaimerText,
             'policy_number' => $this->quoteNumber
