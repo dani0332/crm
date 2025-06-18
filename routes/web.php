@@ -795,7 +795,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Command to bulk send policy documents
     Route::get('/run-policy-bulk-send', function () {
-        
+
         // Check if user has admin role
         if (!\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
             return response()->json(['error' => 'Not authorized'], 403);
@@ -803,7 +803,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // Use cache lock to prevent multiple servers from executing simultaneously
         $lockKey = 'policy_bulk_send_lock';
-        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 300); // 10 minutes lock
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 600); // 10 minutes lock
 
         if (!$lock->get()) {
             return response()->json([
