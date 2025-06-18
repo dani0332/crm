@@ -407,7 +407,7 @@ const record = computed(() => page.props.quote);
     <AuditLogs
       :title="'KYC Audit Logs'"
       :type="'App\\Models\\InsuredKyc'"
-      :id="quote?.insured?.insured_kyc?.id"
+      :id="quote?.latest_insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 
