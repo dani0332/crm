@@ -175,10 +175,20 @@ class SukoonMedexService
                 $listGeneratedDocumentResponse = $this->listGeneratedDocument();
 
                 // STEP #15 downloadDocument
-                if(count($listGeneratedDocumentResponse['documents']) > 0)
-                    $savedDocsResponse = $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
-                    if(($savedDocsResponse['created'] + $savedDocsResponse['updated']) > 0)
+                $generatedDocCount = count($listGeneratedDocumentResponse['documents'] ?? []);
+                if($generatedDocCount > 0) {
+                    $savedDocs = $this->syncGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
+
+                    $skippedDocCount = count($savedDocs['skipped'] ?? []);
+                    $createdDocCount = count($savedDocs['created'] ?? []);
+                    $updatedDocCount = count($savedDocs['updated'] ?? []);
+
+                    LoggerService::info("{$this->logPrefix} Sync & Saved Documents: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
+                        "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", context: ['skipped_docs' => $savedDocs['skipped']]);
+
+                    if(($createdDocCount + $updatedDocCount) > 0)
                         $this->transaction->load('documents');
+                }
             }
 
             // STEP #16 viewQuotePolicy
@@ -220,7 +230,7 @@ class SukoonMedexService
             $listGeneratedDocumentResponse = $this->listGeneratedDocument();
 
             // STEP #15 downloadDocument
-            $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
+            $this->syncGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
         } catch (Exception $e) {
             $this->logFailure("{$this->logPrefix} syncSukoonDocuments Failed", $e->getMessage(), [
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
@@ -809,16 +819,15 @@ class SukoonMedexService
         return Str::match('/-(\d{14})\.[^.]+$/', $docName);
     }
 
-    public function saveGeneratedDocuments($documents, $quote, $embeddedTransaction)
+    public function syncGeneratedDocuments($documents, $quote, $embeddedTransaction)
     {
         try {
-            $updatedDocCount = $createdDocCount = $skippedDocCount = 0;
+            $docStatus = ['created' => [], 'updated' => [], 'skipped' => []];
 
             foreach(($documents ?? []) as $document) {
 
                 $docId = $document['doc_id'] ?? '';
                 $docName = $document['name'] ?? '';
-                $docCreatedTimestamp = $this->getDocumentCreatedTimestamp($docName);
 
                 $docNamePrefix = explode('-', $docName)[0];
                 $docCode = match ($docNamePrefix) {
@@ -829,44 +838,51 @@ class SukoonMedexService
                 };
 
                 if(empty($docCode)){
-                    $skippedDocCount++;
-                    LoggerService::info("{$this->logPrefix} Document skipped: {$docName}, unmatched docCode");
+                    $docStatus['skipped'][] = $docName;
                     continue;
                 }
 
                 $document = $embeddedTransaction->documents()->where('document_type_code', $docCode)->first();
                 if(!empty($document)) {
                     $existedDocTimestamp = $this->getDocumentCreatedTimestamp($document->doc_name);
+                    $docCreatedTimestamp = $this->getDocumentCreatedTimestamp($docName);
                     if($existedDocTimestamp >= $docCreatedTimestamp) {
-                        $skippedDocCount++;
-                        LoggerService::info("{$this->logPrefix} Document skipped: {$docName}, updated one already exists");
+                        $docStatus['skipped'][] = $docName;
                         continue;
                     }
                 }
 
-                $downloadResult = $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode);
-                if($downloadResult !== false)
-                    $downloadResult ? $updatedDocCount++ : $createdDocCount++;
-                else
-                    $skippedDocCount++;
-            }
+                $downloadResult = $this->saveDocument($quote, $embeddedTransaction, $docId, $docCode);
+                if(!empty($downloadResult)) {
+                    $createdOrUpdated = array_keys($downloadResult)[0];
+                    array_push($docStatus[$createdOrUpdated], $downloadResult[$createdOrUpdated]);
+                } else {
+                    $docStatus['skipped'][] = $docName;
+                }
+            } 
 
-            $generatedDocCount = count($documents ?? []);
-            LoggerService::info("{$this->logPrefix} Documents saved: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
-                "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}");
-
-            return [
-                'created' => $createdDocCount,
-                'updated' => $updatedDocCount,
-                'skipped' => $skippedDocCount,
-            ];
+            return $docStatus;
 
         } catch (Exception $e) {
             throw $e;
         }
     }
 
-    public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode)
+
+    /**
+     * Download, upload & save the document
+     *  - Download from sukoon-api
+     *  - Upload document to azure
+     *  - Save into database
+     *
+     * @param  mixed  $quote  The quote object
+     * @param  mixed  $embeddedTransaction  The embedded transaction object
+     * @param  string  $docId  The document ID
+     * @param  string  $docCode  The document code
+     * @return array|bool The result of the document save operation
+     * @throws Exception If the document save operation fails
+     */
+    public function saveDocument($quote, $embeddedTransaction, $docId, $docCode)
     {
         try {
             $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', $this->quoteTypeId)->first();
@@ -924,14 +940,16 @@ class SukoonMedexService
                     'created_by_id' => null,
                 ];
 
-                $isUpdated = 0;
+                $result = false;
                 if (isset($document)) {
-                    $isUpdated = $document->update($documentData);
+                    $document->update($documentData);
+                    $result = ['updated' => $uploadedDocument->doc_name];
                 } else {
                     $embeddedTransaction->documents()->create($documentData);
+                    $result = ['created' => $uploadedDocument->doc_name];
                 }
 
-                return $isUpdated;
+                return $result;
             } else {
                 $message = 'Unable to determine filename from the response headers.';
                 $this->logFailure($message.' doc_code : '.$docCode, $message, ['ref_id' => $quote->code, 'embeddedTransaction' => $embeddedTransaction]);
@@ -954,7 +972,6 @@ class SukoonMedexService
                 throw new Exception('failed to upload document, doc_name: ' .$docName. ' doc_url: '. $docUrl);
             }
 
-            LoggerService::info("{$this->logPrefix} upload document doc_name: {$docName}");
             return response()->json(['success' => $filePathAzure, 'doc_name' => $docName, 'doc_url' => $docUrl]);
 
         } catch (Exception $e) {
