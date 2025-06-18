@@ -215,23 +215,37 @@ const loadSpecificVersion = async version => {
               ? `${field.fieldName}_${field.currencyId}`
               : field.fieldName;
 
-          formattedProfile[fieldKey] =
-            profile[fieldKey] ||
-            profile[field.fieldName] ||
-            (field.type === 'select_multiple' ? [] : '');
+          // Handle both new nested structure and legacy flat structure for loading
+          if (
+            profile[field.fieldName] &&
+            typeof profile[field.fieldName] === 'object'
+          ) {
+            // New nested structure - extract values to flat structure for form binding
+            formattedProfile[fieldKey] =
+              profile[field.fieldName].value ||
+              (field.type === 'select_multiple' ? [] : '');
 
-          if (field.hasCheckBox) {
-            formattedProfile[`${fieldKey}_isEnabled`] =
-              profile[`${fieldKey}_isEnabled`] !== undefined
-                ? profile[`${fieldKey}_isEnabled`]
-                : profile[`${field.fieldName}_isEnabled`] !== undefined
-                  ? profile[`${field.fieldName}_isEnabled`]
-                  : true; // Default to enabled if not specified
-          }
+            if (field.hasCheckBox) {
+              formattedProfile[`${fieldKey}_isEnabled`] =
+                profile[field.fieldName].isEnabled !== undefined
+                  ? profile[field.fieldName].isEnabled
+                  : true;
+            }
+          } else {
+            // Legacy flat structure or direct field access
+            formattedProfile[fieldKey] =
+              profile[fieldKey] ||
+              profile[field.fieldName] ||
+              (field.type === 'select_multiple' ? [] : '');
 
-          if (field.hasCurrency && profile[`${field.fieldName}_currencyId`]) {
-            // Currency info is stored but we don't need to put it in the profile
-            // as it's already in the field definition
+            if (field.hasCheckBox) {
+              formattedProfile[`${fieldKey}_isEnabled`] =
+                profile[`${fieldKey}_isEnabled`] !== undefined
+                  ? profile[`${fieldKey}_isEnabled`]
+                  : profile[`${field.fieldName}_isEnabled`] !== undefined
+                    ? profile[`${field.fieldName}_isEnabled`]
+                    : true;
+            }
           }
         });
 
@@ -275,24 +289,37 @@ const initializeProfiles = () => {
             ? `${field.fieldName}_${field.currencyId}`
             : field.fieldName;
 
-        formattedProfile[fieldKey] =
-          profile[fieldKey] ||
-          profile[field.fieldName] ||
-          (field.type === 'select_multiple' ? [] : '');
+        // Handle both new nested structure and legacy flat structure for loading
+        if (
+          profile[field.fieldName] &&
+          typeof profile[field.fieldName] === 'object'
+        ) {
+          // New nested structure - extract values to flat structure for form binding
+          formattedProfile[fieldKey] =
+            profile[field.fieldName].value ||
+            (field.type === 'select_multiple' ? [] : '');
 
-        if (field.hasCheckBox) {
-          formattedProfile[`${fieldKey}_isEnabled`] =
-            profile[`${fieldKey}_isEnabled`] !== undefined
-              ? profile[`${fieldKey}_isEnabled`]
-              : profile[`${field.fieldName}_isEnabled`] !== undefined
-                ? profile[`${field.fieldName}_isEnabled`]
-                : true; // Default to enabled if not specified
-        }
+          if (field.hasCheckBox) {
+            formattedProfile[`${fieldKey}_isEnabled`] =
+              profile[field.fieldName].isEnabled !== undefined
+                ? profile[field.fieldName].isEnabled
+                : true;
+          }
+        } else {
+          // Legacy flat structure or direct field access
+          formattedProfile[fieldKey] =
+            profile[fieldKey] ||
+            profile[field.fieldName] ||
+            (field.type === 'select_multiple' ? [] : '');
 
-        // Handle currency information if present in saved data
-        if (field.hasCurrency && profile[`${field.fieldName}_currencyId`]) {
-          // Currency info is stored but we don't need to put it in the profile
-          // as it's already in the field definition
+          if (field.hasCheckBox) {
+            formattedProfile[`${fieldKey}_isEnabled`] =
+              profile[`${fieldKey}_isEnabled`] !== undefined
+                ? profile[`${fieldKey}_isEnabled`]
+                : profile[`${field.fieldName}_isEnabled`] !== undefined
+                  ? profile[`${field.fieldName}_isEnabled`]
+                  : true;
+          }
         }
       });
 
@@ -529,16 +556,22 @@ const getProfiles = () => {
 
       props.fields.forEach(field => {
         const fieldKey = getFieldKey(field);
-        cleanProfile[field.fieldName] = profile[fieldKey]; // Map from internal key to field name
+        const fieldValue = profile[fieldKey];
 
-        // Include currency information for fields that have currency
+        // Create nested object for each field with its properties
+        cleanProfile[field.fieldName] = {
+          value: fieldValue,
+        };
+
+        // Add currency information if field has currency
         if (field.hasCurrency && field.currencyId) {
-          cleanProfile[`${field.fieldName}_currencyId`] = field.currencyId;
+          cleanProfile[field.fieldName].currencyId = field.currencyId;
         }
 
+        // Add enabled state if field has checkbox
         if (field.hasCheckBox) {
-          cleanProfile[`${field.fieldName}_isEnabled`] =
-            profile[`${fieldKey}_isEnabled`]; // Use fieldKey for checkbox too
+          cleanProfile[field.fieldName].isEnabled =
+            profile[`${fieldKey}_isEnabled`];
         }
       });
 
