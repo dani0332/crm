@@ -31,13 +31,9 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
+    public function __construct()
     {
-        LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: inside constructor', extra: [
-            'renewalQuoteProcessId' => $renewalQuoteProcess->id,
-        ]);
-        $this->renewalQuoteProcess = $renewalQuoteProcess;
-        $this->renewalStatusProcess = $renewalStatusProcess;
+        LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: inside constructor');
     }
 
     /**
@@ -45,13 +41,13 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle(HomeRenewalService $homeRenewalService)
+    public function handle(HomeRenewalService $homeRenewalService, RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
         LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: job being started', extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
-            'policy_number' => $this->renewalQuoteProcess->policy_number,
+            'renewalQuoteProcessId' => $renewalQuoteProcess->id,
+            'policy_number' => $renewalQuoteProcess->policy_number,
         ]);
-        $homeRenewalService->fetchPlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
+        $homeRenewalService->fetchPlans($renewalQuoteProcess, $renewalStatusProcess);
     }
 
     /**
@@ -59,7 +55,7 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
+        // return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
     }
 
     /**
@@ -69,9 +65,9 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
     {
 
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. '.$exception->getMessage().' Line: '.$exception->getLine(), extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            // 'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
             'exception' => $exception->getMessage(),
         ]);
-        RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+        // RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }
