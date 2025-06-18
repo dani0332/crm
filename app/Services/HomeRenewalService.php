@@ -468,6 +468,7 @@ class HomeRenewalService extends RenewalsUploadService
             ]);
 
             $this->updateTotalFailed($renewalStatusProcess);
+
             return false;
         }
 
@@ -559,7 +560,8 @@ class HomeRenewalService extends RenewalsUploadService
         return $homeBuildingAed;
     }
 
-    private function updateTotalFailed(RenewalStatusProcess $renewalStatusProcess){
+    private function updateTotalFailed(RenewalStatusProcess $renewalStatusProcess)
+    {
         return RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 
