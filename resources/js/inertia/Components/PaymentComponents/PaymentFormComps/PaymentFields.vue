@@ -98,9 +98,9 @@
 
 	const localDiscountValue = ref(props.discountValue);
 
-	const discountValueChanged = () => {
-		emit('handle-discount-value-change', localDiscountValue.value);
-	}
+	watch(localDiscountValue, (newVal, oldVal) => {
+		emit('handle-discount-value-change', newVal);
+	});
 
 	const isMasterPaymentPaid = computed(() => {
 		if (
@@ -705,7 +705,6 @@
 						:class="{ 'custom-select-error': isDiscountError }"
 						v-model="localDiscountValue"
 						name="discount_value"
-						@change="discountValueChanged()"
 						@keyup="emit('calculate-total-amount')"
 					/>
 					<sup
