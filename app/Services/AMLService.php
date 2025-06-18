@@ -1601,7 +1601,7 @@ class AMLService
             $join->on('pqr.id', '=', 'ci.quote_request_id');
             if (isset($quoteTypeId) && $quoteTypeId != null) {
                 $join->where('ci.quote_type_id', $quoteTypeId);
-            } 
+            }
         });
         $query->leftJoin('customer_members as cm', function ($join) use ($modelType) {
             $join->on('pqr.id', '=', 'cm.quote_id');
@@ -1632,7 +1632,7 @@ class AMLService
             $join->on('pqr.quote_id', '=', 'cm.quote_id');
             if (isset($modelType) && $modelType != null) {
                 $join->where('cm.quote_type', $modelType);
-            } 
+            }
         });
         $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
             $join->on('kl.quote_request_id', '=', 'pqr.quote_id');
