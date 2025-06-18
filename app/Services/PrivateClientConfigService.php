@@ -246,6 +246,8 @@ class PrivateClientConfigService
 
         return match ($quoteType) {
             QuoteTypes::CAR => $this->getCarConfiguration($config, $profile),
+            QuoteTypes::HOME => $this->getHomeConfiguration($config, $profile),
+            QuoteTypes::LIFE => $this->getLifeConfiguration($config, $profile),
             default => null,
         };
     }
@@ -258,6 +260,27 @@ class PrivateClientConfigService
         $configuration->push($this->buildEntity($config, $profile, 'car_make_id'));
         $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
         $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
+
+        return $configuration;
+    }
+
+    private function getHomeConfiguration(PrivateClientConfig $config, array $profile)
+    {
+        $configuration = collect([]);
+
+        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
+        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
+        $configuration->push($this->buildEntity($config, $profile, 'sub_area_id'));
+
+        return $configuration;
+    }
+
+    private function getLifeConfiguration(PrivateClientConfig $config, array $profile)
+    {
+        $configuration = collect([]);
+
+        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value'));
+        $configuration->push($this->buildEntity($config, $profile, 'insurer'));
 
         return $configuration;
     }
