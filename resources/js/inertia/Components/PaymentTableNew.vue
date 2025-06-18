@@ -136,6 +136,8 @@ const filesTestReplicated = ref([]);
 const currentFileIndexReplicated = ref(0);
 const isCreditApprovalViewReplicated = ref(false);
 const isCreditCardViewReplicated = ref(false);
+const isTransactionCaptureButtonEnabled = ref(true);
+const capturePaymentValidationErrorMessage = ref('');
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -527,8 +529,8 @@ const editPaymentModal = async (
     return false;
   }
 
-  createPaymentModal.value = true;
-  await new Promise(resolve => setTimeout(resolve, 10));
+  isTransactionCaptureButtonEnabled.value = true;
+  
   // Payment Capture Validation for GIG
   if (
     capture_approval == 1 &&
@@ -539,11 +541,12 @@ const editPaymentModal = async (
       props.quoteType === quoteTypeCodeEnum.Travel)
   ) {
     capturePaymentValidationInProcess.value = true;
-    createPaymentFormRef.value.updateIsTransactionCaptureButtonEnabled(false);
+    isTransactionCaptureButtonEnabled.value = false;
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
+  createPaymentModal.value = true;
+  await new Promise(resolve => setTimeout(resolve, 10));
   createPaymentFormRef.value.resetPaymentForm();
-  createPaymentFormRef.value.updateIsTransactionCaptureButtonEnabled(true);
   createPaymentFormRef.value.initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
   createPaymentFormRef.value.handleCollectionTypeChange();
   createPaymentFormRef.value.handleFrequencyChange(false);
@@ -571,14 +574,14 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     .then(res => {
       if (res?.data?.response?.status == paymentCaptureValidationEnum.SUCCESS) {
         createPaymentFormRef.value.updatePremiumToCapture(res?.data?.response?.premiumAmount);
-        createPaymentFormRef.value.updateIsTransactionCaptureButtonEnabled(true);
+        isTransactionCaptureButtonEnabled.value = true;
       } else {
-        createPaymentFormRef.value.updateIsTransactionCaptureButtonEnabled(false);
-        createPaymentFormRef.value.updateCapturePaymentValidationErrorMessage(res?.data?.response?.message);
+        isTransactionCaptureButtonEnabled.value = false;
+        capturePaymentValidationErrorMessage.value = res?.data?.response?.message;
       }
     })
     .catch(err => {
-      createPaymentFormRef.value.updateIsTransactionCaptureButtonEnabled(false);
+      isTransactionCaptureButtonEnabled.value = false;
     })
     .finally(() => {
       capturePaymentValidationInProcess.value = false;
@@ -597,7 +600,6 @@ const alertCapture = payment => {
 };
 
 const planText = ref();
-const homePlanText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
@@ -1115,6 +1117,8 @@ watch(
               :isPlanDetailSectionEnabled="isPlanDetailSectionEnabled"
               :quoteSubType="quoteSubType"
               :isLackingPayment="is_lacking_payment"
+              :planText="planText"
+              :capturePaymentValidationErrorMessage="capturePaymentValidationErrorMessage"
               
               @cancel-modal="createPaymentModal = !createPaymentModal"
               @aml-verification="openAmlVerificationModal"

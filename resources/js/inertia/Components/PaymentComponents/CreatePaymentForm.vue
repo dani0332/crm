@@ -54,6 +54,9 @@
 		isPlanDetailSectionEnabled: Boolean,
 		quoteSubType: String,
 		isLackingPayment: Boolean,
+		planText: String,
+		isTransactionCaptureButtonEnabled: Boolean,
+		capturePaymentValidationErrorMessage: String,
 	});
 
 	const fileUploadModels = ref([]);
@@ -124,12 +127,11 @@
 	const isSplitAmountInvalid = ref([]);
 	const isSplitAmountInvalidError = ref([]);
 	const isCollectedByEnabled = ref(false);
-	const isTransactionCaptureButtonEnabled = ref(true);
 	const premiumToCapture = ref(0);
-	const capturePaymentValidationErrorMessage = ref('');
 	const insurerPaymentLinkChanged = ref(false);
 	const confirmModalClose = ref(false);
 	const insurerPaymentComponent = ref(null);
+	const homePlanText = ref();
 	const totalPayments = ref([{ value: '1', label: '1' }]);
 	const paymentTypes = ref(
 		props.paymentMethods.filter(
@@ -2251,13 +2253,13 @@
 
 	const getPlanName = computed(() => {
 		const plan = props.planDetail;
-		console.clear();
-		console.log("PLAN", props.quoteTypesToCheck, props.quoteTypesToCheck.includes(props.quoteType) && plan, plan, props.planDetail)
+		// console.clear();
+		// console.log("PLAN", props.quoteTypesToCheck, props.quoteTypesToCheck.includes(props.quoteType) && plan, plan, props.planDetail)
 		if (props.quoteType === quoteTypeCodeEnum.Bike) {
 			return plan ? props.quoteRequest.car_plan.text : 'Not Available';
 		}
 		if (props.sendUpdate) {
-			return planText.value || 'Not Available';
+			return props.planText || 'Not Available';
 		}
 
 		if (props.quoteType === quoteTypeCodeEnum.Home) {
@@ -2408,23 +2410,15 @@
 		discountError.value = '';
 	}
 
-	const updateIsTransactionCaptureButtonEnabled = (value) => {
-		isTransactionCaptureButtonEnabled.value = value;
-	}
-
 	const updatePremiumToCapture = (value) => {
 		premiumToCapture.value = value;
-	}
-
-	const updateCapturePaymentValidationErrorMessage = (value) => {
-		capturePaymentValidationErrorMessage.value = value;
 	}
 
 	// Expose functions and properties
 	defineExpose({ resetPaymentMethodsForm, resetPaymentForm, handleCollectionTypeChange, calculatePaymentBreakup, 
 	applyPermissions, initializePaymentForm, handleCollectionTypeChange, handleFrequencyChange, handleApprovalReasonChange,
 	handleDiscountChange, handleDeclinedReasonChange, calculateTotalAmount, applyPermissions, processPaymentSplits, finalizePaymentForm, setFrequencyTypes,
-	paymentMethodsForm, isApproveConfirmed, isViewEnabled, filesTest, currentFileIndex, isCreditApprovalView, isCreditCardView, updateIsTransactionCaptureButtonEnabled,
+	paymentMethodsForm, isApproveConfirmed, isViewEnabled, filesTest, currentFileIndex, isCreditApprovalView, isCreditCardView,
 	resetPaymentMethodsModal, resetSplitAmountModels, resetDueDateModels, resetFileUploadModals, resetCheckDetailModels, resetIsDiscountReasonEnabled, resetIsDiscountEnabled,
 	resetIsPaymentCalculationError, resetShowDiscountOptions, resetIsDiscountReasonError, resetIsPaymentMetodNotSelected, resetIsDocumentNotUploaded, resetIsDiscountError, resetDiscountError,
 	resetIsDiscountDocumentNotUploaded, resetDiscountDocumentModel, isBrokerHavePermission, updateTotalPayments, updatePaymentForm });
