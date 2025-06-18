@@ -81,29 +81,18 @@ class PrivateClientConfigController extends Controller
             return response()->json(['error' => 'Failed to load configuration'], 500);
         }
     }
-
     public function upsert(Request $request)
     {
         try {
-            dd($request->all());
-            // Basic validation
             $validated = $request->validate([
-                'configurations' => 'required|array',
-                'configurations.*.quote_type_id' => 'integer',
-                'configurations.*.profiles' => 'required|array',
+                'quote_type_id' => 'required|integer',
+                'config' => 'required|array',
+                'quote_type' => 'required|string',
+                'version' => 'required|integer',
             ]);
+            $this->configService->createNewConfigurationVersion($validated);
 
-            dd($validated);
-
-            // Create new configuration version using service
-            $this->configService->createNewConfigurationVersion($validated['configurations']);
-
-            // Check if request came from advanced page
-            $redirectRoute = $request->header('referer') && str_contains($request->header('referer'), 'advanced')
-                ? 'admin.private-client-config.advanced'
-                : 'admin.private-client-config.show';
-
-            return redirect()->route($redirectRoute)
+            return redirect()->route('admin.private-client-config.show')
                 ->with('message', 'Private Client Configuration updated successfully.');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
