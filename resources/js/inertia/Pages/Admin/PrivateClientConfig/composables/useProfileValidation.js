@@ -73,6 +73,43 @@ export function useProfileValidation() {
   const validateFieldGroups = (profile, fields) => {
     const errors = {};
 
+    // Helper function to validate numeric fields
+    const validateNumericField = (field, value) => {
+      const stringValue = value.toString().trim();
+
+      // Check if value is numeric
+      if (!/^\d*\.?\d+$/.test(stringValue)) {
+        return `${field.label} must be a valid number`;
+      }
+
+      const numericValue = parseFloat(stringValue);
+
+      // Check if number is valid
+      if (isNaN(numericValue)) {
+        return `${field.label} must be a valid number`;
+      }
+
+      // Check for non-negative values
+      if (numericValue < 0) {
+        return `${field.label} must be a non-negative value`;
+      }
+
+      // Check for reasonable maximum values (to prevent extremely large numbers)
+      if (numericValue > 999999999) {
+        return `${field.label} must be less than 1 billion`;
+      }
+
+      // Check for too many decimal places (max 2 for currency fields)
+      if (field.hasCurrency) {
+        const decimalPart = stringValue.split('.')[1];
+        if (decimalPart && decimalPart.length > 2) {
+          return `${field.label} can have at most 2 decimal places`;
+        }
+      }
+
+      return null; // No validation errors
+    };
+
     // Helper function to get field key (same as component)
     const getFieldKey = field => {
       if (
@@ -116,6 +153,23 @@ export function useProfileValidation() {
           return value && value.toString().trim() !== '';
         });
 
+        // Validate numeric fields in the group
+        enabledFields.forEach(field => {
+          const fieldKey = getFieldKey(field);
+          const value = profile[fieldKey];
+
+          if (
+            value &&
+            value.toString().trim() !== '' &&
+            (field.hasCurrency || field.type === 'number')
+          ) {
+            const numericValidationError = validateNumericField(field, value);
+            if (numericValidationError) {
+              errors[fieldKey] = numericValidationError;
+            }
+          }
+        });
+
         // If group is required and no enabled fields are filled
         if (
           isAnyFieldRequired &&
@@ -144,8 +198,32 @@ export function useProfileValidation() {
               errors[fieldKey] = `${field.label} is required`;
             }
           } else {
+            // Check if field is empty (required validation)
             if (!value || value.toString().trim() === '') {
               errors[fieldKey] = `${field.label} is required`;
+            } else {
+              // Additional validation for numeric fields
+              if (field.hasCurrency || field.type === 'number') {
+                const numericValidationError = validateNumericField(
+                  field,
+                  value,
+                );
+                if (numericValidationError) {
+                  errors[fieldKey] = numericValidationError;
+                }
+              }
+            }
+          }
+        } else if (
+          isFieldEnabled &&
+          (field.hasCurrency || field.type === 'number')
+        ) {
+          // Validate numeric fields even if not required (when they have values)
+          const value = profile[fieldKey];
+          if (value && value.toString().trim() !== '') {
+            const numericValidationError = validateNumericField(field, value);
+            if (numericValidationError) {
+              errors[fieldKey] = numericValidationError;
             }
           }
         }
