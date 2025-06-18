@@ -100,14 +100,17 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
      */
     public function getColumns()
     {
-        $columns = [
-            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
+        $requiredMaxLength = 'required|max:100';
+        $nullableMaxLength = 'nullable|max:100';
+
+        return [
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => $requiredMaxLength],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
-            'mobile_no' => ['index' => 2, 'title' => 'Customer Number', 'rules' => 'nullable|max:100'],
+            'mobile_no' => ['index' => 2, 'title' => 'Customer Number', 'rules' => $nullableMaxLength],
             'insurance_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|max:10'],
-            'current_insurance_provider' => ['index' => 4, 'title' => 'Current Insurance Provider', 'rules' => 'required|max:20'],
-            'advisor' => ['index' => 5, 'title' => 'Advisor Email', 'rules' => 'required|max:100'],
-            'policy_number' => ['index' => 6, 'title' => 'Policy Number', 'rules' => 'required|max:100'],
+            'current_insurance_provider' => ['index' => 4, 'title' => 'Current Insurance Provider', 'rules' => $requiredMaxLength],
+            'advisor' => ['index' => 5, 'title' => 'Advisor Email', 'rules' => $requiredMaxLength],
+            'policy_number' => ['index' => 6, 'title' => 'Policy Number', 'rules' => $requiredMaxLength],
             'start_date' => ['index' => 7, 'title' => 'Policy Start Date', 'rules' => ['nullable', 'max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
                     $onFailure('Invalid value provided for '.$attribute);
@@ -121,21 +124,19 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
             'you_are_a' => ['index' => 9, 'title' => 'You are a', 'rules' => 'required|max:150'],
             'i_live_in_a' => ['index' => 10, 'title' => 'I live in a (Type of Property)', 'rules' => 'required|max:25'],
             'occupancy_status_for_owners' => ['index' => 11, 'title' => 'Occupancy Status for Owners', 'rules' => 'nullable|max:150'],
-            'location_area' => ['index' => 12, 'title' => 'Location Area', 'rules' => 'required|max:100'],
+            'location_area' => ['index' => 12, 'title' => 'Location Area', 'rules' => $requiredMaxLength],
             'cover_required' => ['index' => 13, 'title' => 'Cover Required', 'rules' => 'required|max:50'],
             'contents' => ['index' => 14, 'title' => 'Contents', 'rules' => 'nullable|max:50'],
             'personal_belongings' => ['index' => 15, 'title' => 'Personal Belongings', 'rules' => 'nullable|max:25'],
             'building' => ['index' => 16, 'title' => 'Building', 'rules' => 'nullable|max:25'],
-            'insurance_provider' => ['index' => 17, 'title' => 'Insurance Provider', 'rules' => 'nullable|max:100'],
-            'plan_name' => ['index' => 18, 'title' => 'Plan Name', 'rules' => 'nullable|max:100'],
+            'insurance_provider' => ['index' => 17, 'title' => 'Insurance Provider', 'rules' => $nullableMaxLength],
+            'plan_name' => ['index' => 18, 'title' => 'Plan Name', 'rules' => $nullableMaxLength],
             'claims_history' => ['index' => 19, 'title' => 'Claims History', 'rules' => 'required|max:10'],
             'premium' => ['index' => 20, 'title' => 'Premium', 'rules' => 'nullable|max:20'],
             'insurer_quote_no' => ['index' => 21, 'title' => 'Insurer Quote No', 'rules' => 'nullable|max:20'],
-            'previous_advisor_email' => ['index' => 22, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
-            'notes' => ['index' => 23, 'title' => 'Notes', 'rules' => 'nullable|max:100'],
+            'previous_advisor_email' => ['index' => 22, 'title' => 'Previous Advisor Email', 'rules' => $nullableMaxLength],
+            'notes' => ['index' => 23, 'title' => 'Notes', 'rules' => $nullableMaxLength],
         ];
-
-        return $columns;
     }
 
     /**
@@ -147,7 +148,7 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
     {
         return [
 
-            AfterImport::class => function (AfterImport $event) {
+            AfterImport::class => function () {
                 $failed = [];
                 foreach ($this->failures() as $failure) {
                     if (! isset($failed[$failure->row()])) {

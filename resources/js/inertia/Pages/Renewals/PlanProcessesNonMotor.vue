@@ -37,6 +37,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
 <template>
   <div>
+    <title>Plans Processes</title>
     <Head title="Plans Processes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Plans Processes</h2>
@@ -47,10 +48,16 @@ const permissionsEnum = page.props.permissionsEnum;
           class="btn-2"
           >Batches List</x-button
         >
+
         <x-button
           color="primary"
           onclick="return confirm('Do you want to fetch Plans?');"
-          :href="`/renewals/batches/${batch}/${page.props.quoteType}/fetch-plans`"
+          :href="
+            route('batch-fetch-plans.non.motor', {
+              id: batch,
+              quoteType: quoteType,
+            })
+          "
           >Fetch Plans</x-button
         >
       </div>
