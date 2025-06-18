@@ -646,7 +646,7 @@ const onSubmit = isValid => {
                         `${insuranceType.name}_${field.uiName || field.name}_enabled`
                       ]
                         ? [isRequired, isRequiredNumber]
-                        : []
+                        : configForm[`${insuranceType.name}_${field.uiName || field.name}`] ? [isRequiredNumber] : []
                     "
                     :disabled="!isCurrentVersion"
                   >
@@ -689,11 +689,8 @@ const onSubmit = isValid => {
                       configForm[
                         `${insuranceType.name}_${field.uiName || field.name}_enabled`
                       ]
-                        ? [
-                            v =>
-                              v && v.length ? true : 'This field is required',
-                          ]
-                        : []
+                        ? [v => v && v.length ? true : 'This field is required']
+                        : configForm[`${insuranceType.name}_${field.uiName || field.name}`] && configForm[`${insuranceType.name}_${field.uiName || field.name}`].length ? [v => v && v.length ? true : 'This field is required'] : []
                     "
                     :disabled="!isCurrentVersion"
                   >
