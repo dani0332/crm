@@ -500,7 +500,11 @@ const onSubmit = isValid => {
                         parseNumber(val))
                   "
                   class="!mb-0"
-                  :rules="[validateAtLeastOneSum]"
+                  :rules="
+                    sumAssuredEnabled
+                      ? [validateAtLeastOneSum, isRequiredNumber]
+                      : configForm['life_sum_insured_value_usd'] ? [isRequiredNumber] : []
+                  "
                   :disabled="!isCurrentVersion"
                 >
                   <template #suffix>
@@ -523,7 +527,11 @@ const onSubmit = isValid => {
                         parseNumber(val))
                   "
                   class="!mb-0"
-                  :rules="[validateAtLeastOneSum]"
+                  :rules="
+                    sumAssuredEnabled
+                      ? [validateAtLeastOneSum, isRequiredNumber]
+                      : configForm['life_sum_insured_value_aed'] ? [isRequiredNumber] : []
+                  "
                   :disabled="!isCurrentVersion"
                 >
                   <template #suffix>
@@ -546,7 +554,11 @@ const onSubmit = isValid => {
                         parseNumber(val))
                   "
                   class="!mb-0"
-                  :rules="[validateAtLeastOneSum]"
+                  :rules="
+                    sumAssuredEnabled
+                      ? [validateAtLeastOneSum, isRequiredNumber]
+                      : configForm['life_sum_insured_value_gbp'] ? [isRequiredNumber] : []
+                  "
                   :disabled="!isCurrentVersion"
                 >
                   <template #suffix>
@@ -569,7 +581,11 @@ const onSubmit = isValid => {
                         parseNumber(val))
                   "
                   class="!mb-0"
-                  :rules="[validateAtLeastOneSum]"
+                  :rules="
+                    sumAssuredEnabled
+                      ? [validateAtLeastOneSum, isRequiredNumber]
+                      : configForm['life_sum_insured_value_eur'] ? [isRequiredNumber] : []
+                  "
                   :disabled="!isCurrentVersion"
                 >
                   <template #suffix>
