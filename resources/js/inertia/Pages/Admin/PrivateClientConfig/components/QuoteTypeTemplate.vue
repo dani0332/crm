@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import CollapseIcon from './CollapseIcon.vue';
+import { useProfileValidation } from '../composables/useProfileValidation.js';
 
 const props = defineProps({
   quoteType: {
@@ -33,6 +34,18 @@ const props = defineProps({
 
 const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
+// Use validation composable
+const {
+  validationErrors,
+  showValidationSummary,
+  validateProfiles,
+  clearValidationErrors,
+  getFieldError,
+  hasProfileErrors,
+  clearFieldError,
+  showValidationErrors,
+} = useProfileValidation();
+
 const profiles = ref([]);
 const isModuleCollapsed = ref(false);
 const collapsedProfiles = ref(new Set());
@@ -40,9 +53,6 @@ const highlightedProfileIndex = ref(-1);
 const loader = ref(false);
 const configLoading = ref(false);
 const isInitialized = ref(false);
-const validationErrors = ref({});
-const showValidationSummary = ref(false);
-
 const currentVersion = ref(null);
 const selectedVersion = ref(null);
 const allVersions = ref([]);
@@ -64,10 +74,10 @@ const nationalityOptions = computed(() => {
 const createBlankProfile = () => {
   const profile = {
     nationalityIds: [],
+    isDefaultCriteria: false,
   };
 
   props.fields.forEach(field => {
-    // For fields with multiple currencies, use unique key
     const fieldKey =
       field.hasCurrency &&
       props.fields.filter(f => f.fieldName === field.fieldName).length > 1
@@ -170,6 +180,7 @@ const loadSpecificVersion = async version => {
       const loadedProfiles = response.data.config.profiles.map(profile => {
         const formattedProfile = {
           nationalityIds: profile.nationalityIds || [],
+          isDefaultCriteria: profile.isDefaultCriteria || false,
         };
 
         props.fields.forEach(field => {
@@ -202,230 +213,6 @@ const changeVersion = newVersion => {
   loadSpecificVersion(newVersion);
 };
 
-const validateProfiles = () => {
-  const errors = {};
-  const usedNationalities = new Set();
-
-  profiles.value.forEach((profile, profileIndex) => {
-    const profileErrors = {};
-
-    // Validate nationalities are selected
-    if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
-      profileErrors.nationalityIds = 'Please select at least one nationality';
-    } else {
-      // Check for duplicate nationalities across profiles
-      const duplicateNationalities = profile.nationalityIds.filter(
-        nationalityId => usedNationalities.has(nationalityId),
-      );
-
-      if (duplicateNationalities.length > 0) {
-        const duplicateNames = duplicateNationalities
-          .map(id => {
-            const nationality = nationalityOptions.value.find(
-              n => n.value === id,
-            );
-            return nationality ? nationality.label : `ID: ${id}`;
-          })
-          .join(', ');
-
-        profileErrors.nationalityIds = `These nationalities are already used in another profile: ${duplicateNames}`;
-      } else {
-        // Add nationalities to used set
-        profile.nationalityIds.forEach(id => usedNationalities.add(id));
-      }
-    }
-
-    // Group fields by fieldName for validation
-    const fieldGroups = {};
-    props.fields.forEach((field, fieldIndex) => {
-      if (!fieldGroups[field.fieldName]) {
-        fieldGroups[field.fieldName] = [];
-      }
-      fieldGroups[field.fieldName].push({
-        ...field,
-        originalIndex: fieldIndex,
-      });
-    });
-
-    // Validate each field group
-    Object.entries(fieldGroups).forEach(([fieldName, fieldsInGroup]) => {
-      const isAnyFieldRequired = fieldsInGroup.some(field => field.isRequired);
-
-      if (fieldsInGroup.length > 1) {
-        // Multiple fields with same fieldName - validate as group
-        const enabledFields = fieldsInGroup.filter(
-          field =>
-            !field.hasCheckBox ||
-            profile[`${field.fieldName}_${field.currencyId}_isEnabled`],
-        );
-
-        const filledFields = enabledFields.filter(field => {
-          const value = profile[`${field.fieldName}_${field.currencyId}`];
-          if (field.type === 'select_multiple') {
-            return Array.isArray(value) && value.length > 0;
-          }
-          return value && value.toString().trim() !== '';
-        });
-
-        // If group is required and no enabled fields are filled
-        if (
-          isAnyFieldRequired &&
-          enabledFields.length > 0 &&
-          filledFields.length === 0
-        ) {
-          // Add error to the first enabled field in the group
-          const firstEnabledField = enabledFields[0];
-          const errorKey = `${firstEnabledField.fieldName}_${firstEnabledField.currencyId}`;
-          profileErrors[errorKey] =
-            `At least one ${firstEnabledField.label} field is required`;
-        }
-      } else {
-        // Single field - validate normally
-        const field = fieldsInGroup[0];
-        const isFieldEnabled = field.hasCheckBox
-          ? profile[`${field.fieldName}_isEnabled`]
-          : true;
-        const fieldKey =
-          field.hasCurrency && fieldsInGroup.length > 1
-            ? `${field.fieldName}_${field.currencyId}`
-            : field.fieldName;
-
-        if (field.isRequired && isFieldEnabled) {
-          const value = profile[fieldKey];
-
-          if (field.type === 'select_multiple') {
-            if (!Array.isArray(value) || value.length === 0) {
-              profileErrors[fieldKey] = `${field.label} is required`;
-            }
-          } else {
-            if (!value || value.toString().trim() === '') {
-              profileErrors[fieldKey] = `${field.label} is required`;
-            }
-          }
-        }
-      }
-    });
-
-    // If there are errors for this profile, add them
-    if (Object.keys(profileErrors).length > 0) {
-      errors[profileIndex] = profileErrors;
-    }
-  });
-
-  validationErrors.value = errors;
-  return Object.keys(errors).length === 0;
-};
-
-const clearValidationErrors = () => {
-  validationErrors.value = {};
-  showValidationSummary.value = false;
-};
-
-const getFieldError = (profileIndex, fieldName) => {
-  return validationErrors.value[profileIndex]?.[fieldName] || '';
-};
-
-const hasProfileErrors = profileIndex => {
-  return (
-    validationErrors.value[profileIndex] &&
-    Object.keys(validationErrors.value[profileIndex]).length > 0
-  );
-};
-
-const saveConfiguration = () => {
-  // Clear previous validation errors
-  clearValidationErrors();
-
-  // Validate profiles first
-  if (!validateProfiles()) {
-    // Show validation summary
-    showValidationSummary.value = true;
-
-    // Scroll to first error
-    const firstErrorProfileIndex = Object.keys(validationErrors.value)[0];
-    if (firstErrorProfileIndex !== undefined) {
-      const element = document.querySelector(
-        `[data-profile-index="${quoteTypeCode.value}-${firstErrorProfileIndex}"]`,
-      );
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-
-      // Expand the profile with errors
-      collapsedProfiles.value.delete(parseInt(firstErrorProfileIndex));
-    }
-
-    return;
-  }
-
-  loader.value = true;
-
-  try {
-    const validProfiles = getProfiles();
-
-    if (validProfiles.length === 0) {
-      showValidationSummary.value = true;
-      loader.value = false;
-      return;
-    }
-
-    configForm.configurations = [
-      {
-        quote_type_id: props.quoteType.id,
-        profiles: validProfiles,
-      },
-    ];
-
-    configForm.post(route('admin.private-client-config.upsert'), {
-      onSuccess: () => {
-        loader.value = false;
-        clearValidationErrors();
-        emit('configurationSaved');
-      },
-      onError: errors => {
-        loader.value = false;
-        console.error('Save failed:', errors);
-      },
-    });
-  } catch (error) {
-    loader.value = false;
-    console.error(`Error saving ${quoteTypeCode.value} configuration:`, error);
-  }
-};
-
-const getProfiles = () => {
-  return profiles.value
-    .filter(profile => {
-      // Check if profile has nationality and at least one field filled
-      if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
-        return false;
-      }
-
-      return props.fields.some(field => {
-        const value = profile[field.fieldName];
-        if (Array.isArray(value)) {
-          return value.length > 0;
-        }
-        return value && value.toString().trim() !== '';
-      });
-    })
-    .map(profile => {
-      const cleanProfile = {
-        nationalityIds: profile.nationalityIds,
-      };
-
-      props.fields.forEach(field => {
-        cleanProfile[field.fieldName] = profile[field.fieldName];
-        if (field.hasCheckBox) {
-          cleanProfile[`${field.fieldName}_isEnabled`] =
-            profile[`${field.fieldName}_isEnabled`];
-        }
-      });
-
-      return cleanProfile;
-    });
-};
-
 const initializeProfiles = () => {
   if (
     props.initialConfig &&
@@ -435,6 +222,7 @@ const initializeProfiles = () => {
     const loadedProfiles = props.initialConfig.profiles.map(profile => {
       const formattedProfile = {
         nationalityIds: profile.nationalityIds || [],
+        isDefaultCriteria: profile.isDefaultCriteria || false,
       };
 
       props.fields.forEach(field => {
@@ -485,16 +273,37 @@ watch(
   { deep: true, immediate: true },
 );
 
-// Clear field-specific validation errors when user modifies fields
-const clearFieldError = (profileIndex, fieldName) => {
-  if (validationErrors.value[profileIndex]) {
-    delete validationErrors.value[profileIndex][fieldName];
+onMounted(async () => {
+  setTimeout(() => {
+    isInitialized.value = true;
+  }, 100);
+});
 
-    // If no errors left for this profile, remove the profile from errors
-    if (Object.keys(validationErrors.value[profileIndex]).length === 0) {
-      delete validationErrors.value[profileIndex];
-    }
+const toggleDefaultCriteria = (profileIndex, newValue) => {
+  const profile = profiles.value[profileIndex];
+
+  if (newValue) {
+    // If setting this profile as default, unmark all other defaults first
+    profiles.value.forEach((otherProfile, otherIndex) => {
+      if (otherIndex !== profileIndex && otherProfile.isDefaultCriteria) {
+        otherProfile.isDefaultCriteria = false;
+        // Clear validation errors for the previously default profile
+        clearFieldError(otherIndex, 'isDefaultCriteria');
+        clearFieldError(otherIndex, 'nationalityIds');
+      }
+    });
+
+    // Set this profile as default and clear its nationalities
+    profile.isDefaultCriteria = true;
+    profile.nationalityIds = [];
+  } else {
+    // Simply unmark this profile as default
+    profile.isDefaultCriteria = false;
   }
+
+  // Clear validation errors for the current profile
+  clearFieldError(profileIndex, 'isDefaultCriteria');
+  clearFieldError(profileIndex, 'nationalityIds');
 };
 
 // Watch for changes in profile fields to clear errors
@@ -514,12 +323,12 @@ watch(
 
         // Check field changes
         props.fields.forEach(field => {
+          const fieldKey = getFieldKey(field);
           if (
             oldProfiles[profileIndex] &&
-            profile[field.fieldName] !==
-              oldProfiles[profileIndex][field.fieldName]
+            profile[fieldKey] !== oldProfiles[profileIndex][fieldKey]
           ) {
-            clearFieldError(profileIndex, field.fieldName);
+            clearFieldError(profileIndex, fieldKey);
           }
         });
       });
@@ -528,17 +337,108 @@ watch(
   { deep: true },
 );
 
-onMounted(async () => {
-  setTimeout(() => {
-    isInitialized.value = true;
-  }, 100);
-});
-
 const getFieldKey = field => {
   if (field.hasCurrency && field.currencyId) {
     return `${field.fieldName}_${field.currencyId}`;
   }
   return field.fieldName;
+};
+
+const saveConfiguration = () => {
+  // Clear previous validation errors
+  clearValidationErrors();
+
+  // Validate profiles using the validation utility
+  if (
+    !validateProfiles(profiles.value, props.fields, nationalityOptions.value)
+  ) {
+    // Show validation summary
+    showValidationErrors();
+
+    // Scroll to first error
+    const firstErrorProfileIndex = Object.keys(validationErrors.value)[0];
+    if (firstErrorProfileIndex !== undefined) {
+      const element = document.querySelector(
+        `[data-profile-index="${quoteTypeCode.value}-${firstErrorProfileIndex}"]`,
+      );
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // Expand the profile with errors
+      collapsedProfiles.value.delete(parseInt(firstErrorProfileIndex));
+    }
+
+    return;
+  }
+
+  loader.value = true;
+
+  try {
+    const validProfiles = getProfiles();
+
+    if (validProfiles.length === 0) {
+      showValidationErrors();
+      loader.value = false;
+      return;
+    }
+
+    configForm.configurations = [
+      {
+        quote_type_id: props.quoteType.id,
+        profiles: validProfiles,
+      },
+    ];
+
+    configForm.post(route('admin.private-client-config.upsert'), {
+      onSuccess: () => {
+        loader.value = false;
+        clearValidationErrors();
+        emit('configurationSaved');
+      },
+      onError: errors => {
+        loader.value = false;
+        console.error('Save failed:', errors);
+      },
+    });
+  } catch (error) {
+    loader.value = false;
+    console.error(`Error saving ${quoteTypeCode.value} configuration:`, error);
+  }
+};
+
+const getProfiles = () => {
+  return profiles.value
+    .filter(profile => {
+      // Check if profile has nationality and at least one field filled
+      if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
+        return false;
+      }
+
+      return props.fields.some(field => {
+        const value = profile[field.fieldName];
+        if (Array.isArray(value)) {
+          return value.length > 0;
+        }
+        return value && value.toString().trim() !== '';
+      });
+    })
+    .map(profile => {
+      const cleanProfile = {
+        nationalityIds: profile.nationalityIds,
+        isDefaultCriteria: profile.isDefaultCriteria || false,
+      };
+
+      props.fields.forEach(field => {
+        cleanProfile[field.fieldName] = profile[field.fieldName];
+        if (field.hasCheckBox) {
+          cleanProfile[`${field.fieldName}_isEnabled`] =
+            profile[`${field.fieldName}_isEnabled`];
+        }
+      });
+
+      return cleanProfile;
+    });
 };
 </script>
 
@@ -697,6 +597,13 @@ const getFieldKey = field => {
                 <h4 class="text-md font-medium text-gray-800">
                   Profile {{ profileIndex + 1 }}
                   <span
+                    v-if="profile.isDefaultCriteria"
+                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    <i class="ri-star-line mr-1"></i>
+                    Default Criteria
+                  </span>
+                  <span
                     v-if="highlightedProfileIndex === profileIndex"
                     class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
                   >
@@ -740,8 +647,37 @@ const getFieldKey = field => {
               v-show="!collapsedProfiles.has(profileIndex)"
               class="space-y-6"
             >
-              <!-- Nationalities Section -->
-              <div>
+              <!-- Default Criteria Toggle -->
+              <div class="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <x-checkbox
+                    :modelValue="profile.isDefaultCriteria"
+                    @update:modelValue="
+                      toggleDefaultCriteria(profileIndex, $event)
+                    "
+                    :disabled="isDisabled"
+                    class="flex-shrink-0"
+                  />
+                  <div class="flex-1">
+                    <span class="text-sm font-medium text-blue-800">
+                      Set as Default Criteria
+                    </span>
+                    <p class="text-xs text-blue-600 mt-1">
+                      Default criteria will be used when no specific nationality
+                      match is found. Only one default criteria is allowed per
+                      quote type.
+                    </p>
+                  </div>
+                </label>
+                <div
+                  v-if="getFieldError(profileIndex, 'isDefaultCriteria')"
+                  class="mt-2 text-sm text-red-600"
+                >
+                  {{ getFieldError(profileIndex, 'isDefaultCriteria') }}
+                </div>
+              </div>
+
+              <div v-if="!profile.isDefaultCriteria">
                 <x-select
                   v-model="profile.nationalityIds"
                   :options="nationalityOptions"
@@ -779,6 +715,19 @@ const getFieldKey = field => {
                   class="mt-1 text-sm text-red-600"
                 >
                   {{ getFieldError(profileIndex, 'nationalityIds') }}
+                </div>
+              </div>
+
+              <div
+                v-else
+                class="p-3 bg-amber-50 border border-amber-200 rounded-md"
+              >
+                <div class="flex items-center">
+                  <i class="ri-information-line text-amber-600 mr-2"></i>
+                  <span class="text-sm text-amber-800">
+                    This profile will be used as default criteria for all
+                    nationalities not covered by specific profiles.
+                  </span>
                 </div>
               </div>
 
