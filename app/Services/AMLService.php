@@ -1599,28 +1599,28 @@ class AMLService
             $join->on('pqr.id', '=', 'ci.quote_request_id')
                 ->orderBy('ci.updated_at', 'desc')
                 ->limit(1);
-            if (isset($quoteTypeId) && $quoteTypeId != null && !is_array($quoteTypeId)) {
+            if (isset($quoteTypeId) && $quoteTypeId != null && ! is_array($quoteTypeId)) {
                 $join->where('ci.quote_type_id', $quoteTypeId);
             }
-            if(is_array($quoteTypeId)){
+            if (is_array($quoteTypeId)) {
                 $join->whereIn('ci.quote_type_id', $quoteTypeId);
             }
         });
         $query->leftJoin('customer_members as cm', function ($join) use ($modelType) {
             $join->on('pqr.id', '=', 'cm.quote_id');
-            if (isset($modelType) && $modelType != null && !is_array($modelType)) {
+            if (isset($modelType) && $modelType != null && ! is_array($modelType)) {
                 $join->where('cm.quote_type', $modelType);
             }
-            if(is_array($modelType)){
+            if (is_array($modelType)) {
                 $join->whereIn('cm.quote_type', $modelType);
             }
         });
         $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
             $join->on('kl.quote_request_id', '=', 'pqr.id');
-            if (isset($quoteTypeId) && $quoteTypeId != null && !is_array($quoteTypeId)) {
+            if (isset($quoteTypeId) && $quoteTypeId != null && ! is_array($quoteTypeId)) {
                 $join->where('kl.quote_type_id', $quoteTypeId);
             }
-            if(is_array($quoteTypeId)){
+            if (is_array($quoteTypeId)) {
                 $join->whereIn('kl.quote_type_id', $quoteTypeId);
             }
         });
@@ -1633,30 +1633,30 @@ class AMLService
     {
         $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeId) {
             $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-            ->orderBy('ci.updated_at', 'desc')
-            ->limit(1);
-            if (isset($quoteTypeId) && $quoteTypeId != null && !is_array($quoteTypeId)) {
+                ->orderBy('ci.updated_at', 'desc')
+                ->limit(1);
+            if (isset($quoteTypeId) && $quoteTypeId != null && ! is_array($quoteTypeId)) {
                 $join->where('ci.quote_type_id', $quoteTypeId);
             }
-            if(is_array($quoteTypeId)){
+            if (is_array($quoteTypeId)) {
                 $join->whereNotIn('ci.quote_type_id', $quoteTypeId);
             }
         });
         $query->leftJoin('customer_members as cm', function ($join) use ($modelType) {
             $join->on('pqr.quote_id', '=', 'cm.quote_id');
-            if (isset($modelType) && $modelType != null && !is_array($modelType)) {
+            if (isset($modelType) && $modelType != null && ! is_array($modelType)) {
                 $join->where('cm.quote_type', $modelType);
             }
-            if(is_array($modelType)){
+            if (is_array($modelType)) {
                 $join->whereNotIn('cm.quote_type', $modelType);
             }
         });
         $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
             $join->on('kl.quote_request_id', '=', 'pqr.quote_id');
-            if (isset($quoteTypeId) && $quoteTypeId != null && !is_array($quoteTypeId)) {
+            if (isset($quoteTypeId) && $quoteTypeId != null && ! is_array($quoteTypeId)) {
                 $join->where('kl.quote_type_id', $quoteTypeId);
             }
-            if(is_array($quoteTypeId)){
+            if (is_array($quoteTypeId)) {
                 $join->whereNotIn('kl.quote_type_id', $quoteTypeId);
             }
         });
@@ -1726,7 +1726,7 @@ class AMLService
 
     /**
      * Get the model class name(s) based on QuoteTypes id(s).
-     * @param int|array $quoteTypeIds
+     *
      * @return string|array
      */
     public static function getModelTypeByQuoteTypeId(int|array $quoteTypeIds)
@@ -1734,16 +1734,18 @@ class AMLService
         $nameSpace = 'App\\Models\\';
         $resolveModel = function ($id) use ($nameSpace) {
             $quoteType = QuoteTypes::getName($id);
-            if (!$quoteType) {
+            if (! $quoteType) {
                 throw new \InvalidArgumentException("Invalid QuoteTypeId: $id");
             }
+
             return checkPersonalQuotes(ucwords($quoteType->value))
-                ? $nameSpace . 'PersonalQuote'
-                : $nameSpace . ucwords($quoteType->value) . 'Quote';
+                ? $nameSpace.'PersonalQuote'
+                : $nameSpace.ucwords($quoteType->value).'Quote';
         };
         if (is_array($quoteTypeIds)) {
             return array_map($resolveModel, $quoteTypeIds);
         }
+
         return $resolveModel($quoteTypeIds);
     }
 }
