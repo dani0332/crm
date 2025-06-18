@@ -114,12 +114,7 @@ class HomeQuoteService extends BaseService
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',
-            DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
@@ -177,7 +172,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id)', [QuoteTypeId::Home]);
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id ORDER BY customer_insured.updated_at DESC LIMIT 1)', [QuoteTypeId::Home]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')

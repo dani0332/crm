@@ -31,6 +31,7 @@ class MDX extends EmbeddedProduct
         $customerInsured = $quoteObject->customer?->customerInsured
             ->where('quote_request_id', $quoteObject->id)
             ->where('quote_type_id', $quoteTypeId)
+            ->latest('updated_at')
             ->first() ?? null;
 
         if (! empty($quoteObject->quoteRequestEntityMapping)) {
