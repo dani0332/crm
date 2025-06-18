@@ -170,6 +170,7 @@ class PrivateClientConfigService
 
             PrivateClientConfig::create([
                 'quote_type_id' => $data['quote_type_id'],
+                'quote_type' => $data['quote_type'],
                 'config' => $configData,
                 'version' => $newVersion,
                 'status' => 1,
