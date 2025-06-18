@@ -272,7 +272,7 @@ class HomeRenewalService extends RenewalsUploadService
                     'quoteUID' => $quote->uuid,
                 ]);
 
-                $this->createManualPlan($quote, $renewalStatusProcess, $renewalQuoteProcess, $leadData);
+                $this->createManualPlan($quote, $renewalStatusProcess, $renewalQuoteProcess);
 
             }
 
