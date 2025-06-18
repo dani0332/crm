@@ -810,6 +810,9 @@ class CRUDController extends Controller
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
             $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
 
+            // Fetch BOR logs for this lead
+            $borLogs = \App\Models\BorLog::where('lead_id', $record->id)->orderBy('created_at', 'desc')->get();
+
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',
                 'sendUpdateOptions',
@@ -902,6 +905,7 @@ class CRUDController extends Controller
                 'paymentGatewayEnum',
                 'isFuncsEnabled',
                 'businessActivities',
+                'borLogs',
             ]));
         }
 

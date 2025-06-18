@@ -94,6 +94,7 @@ use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -807,6 +808,26 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             'message' => "Handbook documents check for {$quoteType} has been queued for background processing",
             'status' => 'dispatched',
         ]);
+    });
+
+    // BOR (Broker on Record) Routes
+    Route::group(['prefix' => 'bor'], function () {
+        // BOR Request Management
+        Route::post('requests', [BorController::class, 'createBorRequest'])->name('bor.requests.store');
+        Route::get('logs/{leadId}', [BorController::class, 'getBorLogs'])->name('bor.logs.index');
+        
+        // BOR Status and Action Management (CRM Interface)
+        Route::put('logs/{id}/status', [BorController::class, 'updateStatus'])->name('bor.logs.update-status');
+        Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.logs.cancel');
+        Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.logs.mark-done');
+        Route::get('logs/{id}/document', [BorController::class, 'viewDocument'])->name('bor.logs.view-document');
+        
+        // Document Management
+        Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
+        Route::get('documents/{token}', [BorController::class, 'getByToken'])->name('bor.documents.view');
+        
+        // Customer Portal (for external access)
+        Route::post('signature/{token}', [BorController::class, 'submitSignature'])->name('bor.signature.submit');
     });
 });
 

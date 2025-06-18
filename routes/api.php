@@ -7,6 +7,7 @@ use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\BorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -75,6 +76,28 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
+
+    // BOR (Broker on Record) API Routes
+    Route::prefix('bor')->group(function () {
+        // Lead-specific BOR routes
+        Route::post('leads/{id}/requests', [BorController::class, 'createBorRequest'])->name('bor.create-request');
+        Route::get('leads/{id}/logs', [BorController::class, 'getBorLogs'])->name('bor.get-logs');
+        
+        // BOR log management routes
+        Route::put('logs/{id}/status', [BorController::class, 'updateStatus'])->name('bor.update-status');
+        Route::post('logs/{id}/upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
+        
+        // BOR action routes
+        Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.cancel');
+        Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.mark-done');
+        Route::get('logs/{id}/document', [BorController::class, 'viewDocument'])->name('bor.view-document');
+        
+        // Customer portal routes (for Next.js integration)
+        Route::get('{token}', [BorController::class, 'getByToken'])->name('bor.get-by-token');
+        Route::get('{token}/preview-pdf', [BorController::class, 'generatePreviewPdf'])->name('bor.preview-pdf');
+        Route::post('{token}/validate-signature', [BorController::class, 'validateSignature'])->name('bor.validate-signature');
+        Route::post('{token}/sign', [BorController::class, 'submitSignature'])->name('bor.submit-signature');
+    });
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 

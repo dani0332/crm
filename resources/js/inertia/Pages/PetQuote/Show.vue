@@ -6,6 +6,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 const props = defineProps({
   quote: Object,
@@ -52,6 +53,7 @@ const props = defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  borLogs: Array,
 });
 
 const page = usePage();
@@ -976,6 +978,24 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quote="quote"
       :quote-type="quoteType"
       :expanded="sectionExpanded"
+    />
+
+    <!-- BOR (Broker on Record) Section -->
+    <BorLogsSection
+      :leadId="quote.id"
+      :borLogs="borLogs"
+      :lob="'pet'"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: null
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <LastYearPolicyDetail

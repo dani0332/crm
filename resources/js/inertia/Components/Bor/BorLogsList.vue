@@ -1,0 +1,373 @@
+<script setup>
+import { ref, computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+import BorCancelModal from './BorCancelModal.vue'
+import BorDoneModal from './BorDoneModal.vue'
+import BorViewDocumentModal from './BorViewDocumentModal.vue'
+
+const props = defineProps({
+  logs: {
+    type: Array,
+    required: true
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['upload-document', 'update-status', 'cancel-bor', 'mark-done', 'view-document', 'refresh'])
+
+// Permission management
+const page = usePage()
+const can = permission => useCan(permission)
+const permissionsEnum = page.props.permissionsEnum
+
+// Modal state management
+const showCancelModal = ref(false)
+const showDoneModal = ref(false)
+const showViewDocumentModal = ref(false)
+const selectedLog = ref(null)
+
+// DataTable configuration
+const tableHeaders = ref([
+  { text: 'Customer Type', value: 'customer_type', sortable: true },
+  { text: 'Policy Number', value: 'policy_number', sortable: true },
+  { text: 'Insurer Name', value: 'insurer_name', sortable: true },
+  { text: 'Date Created', value: 'date_created', sortable: true },
+  { text: 'Status', value: 'status', sortable: true },
+  { text: 'Email Sent', value: 'email_sent', sortable: true },
+  { text: 'Actions', value: 'actions', sortable: false }
+])
+
+// Format data for DataTable
+const tableItems = computed(() => {
+  return props.logs.map(log => ({
+    ...log,
+    date_created: new Date(log.date_created).toLocaleDateString(),
+    email_sent: log.email_sent ? 'Yes' : 'No',
+    status_badge: getStatusBadge(log.status),
+    actions: log // Pass full log object for actions
+  }))
+})
+
+// Status badge configuration
+const getStatusBadge = (status) => {
+  const statusConfig = {
+    // Legacy statuses
+    'pending': { class: 'bg-yellow-100 text-yellow-800', text: 'Pending' },
+    'sent': { class: 'bg-blue-100 text-blue-800', text: 'Sent' },
+    'completed': { class: 'bg-green-100 text-green-800', text: 'Completed' },
+    'failed': { class: 'bg-red-100 text-red-800', text: 'Failed' },
+    'cancelled': { class: 'bg-gray-100 text-gray-800', text: 'Cancelled' },
+    
+    // New BorStatusEnum statuses
+    'SIGNATURE_REQUESTED': { class: 'bg-yellow-100 text-yellow-800', text: 'Signature Requested' },
+    'SENT_TO_INSURER': { class: 'bg-blue-100 text-blue-800', text: 'Sent to Insurer' },
+    'DOCUMENT_SIGNED': { class: 'bg-indigo-100 text-indigo-800', text: 'Document Signed' },
+    'DOCUMENT_UPLOADED': { class: 'bg-purple-100 text-purple-800', text: 'Document Uploaded' },
+    'CANCELLED': { class: 'bg-gray-100 text-gray-800', text: 'Cancelled' },
+    'COMPLETED': { class: 'bg-green-100 text-green-800', text: 'Completed' },
+    'PENDING_BOR_REQUEST': { class: 'bg-yellow-100 text-yellow-800', text: 'Pending BOR Request' }
+  }
+  return statusConfig[status] || { class: 'bg-gray-100 text-gray-800', text: status }
+}
+
+// Action handlers
+const handleUploadDocument = (log) => {
+  emit('upload-document', log)
+}
+
+const handleUpdateStatus = (log, newStatus) => {
+  emit('update-status', log.id, newStatus)
+}
+
+const handleCancelBor = (log) => {
+  selectedLog.value = log
+  showCancelModal.value = true
+}
+
+const handleMarkDone = (log) => {
+  selectedLog.value = log
+  showDoneModal.value = true
+}
+
+const handleViewDocument = (log) => {
+  selectedLog.value = log
+  showViewDocumentModal.value = true
+}
+
+// Modal event handlers
+const onCancelModalClose = () => {
+  showCancelModal.value = false
+  selectedLog.value = null
+}
+
+const onDoneModalClose = () => {
+  showDoneModal.value = false
+  selectedLog.value = null
+}
+
+const onViewDocumentModalClose = () => {
+  showViewDocumentModal.value = false
+  selectedLog.value = null
+}
+
+const onCancelConfirmed = () => {
+  onCancelModalClose()
+  // The modal will handle the API call, but we might want to refresh the list
+  emit('refresh')
+}
+
+const onDoneConfirmed = () => {
+  onDoneModalClose()
+  // The modal will handle the API call, but we might want to refresh the list
+  emit('refresh')
+}
+
+const handleRefresh = () => {
+  emit('refresh')
+}
+
+// Status options for dropdown (supporting both legacy and new statuses)
+const statusOptions = [
+  // Legacy statuses
+  { value: 'pending', label: 'Pending' },
+  { value: 'sent', label: 'Sent' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  
+  // New BorStatusEnum statuses
+  { value: 'SIGNATURE_REQUESTED', label: 'Signature Requested' },
+  { value: 'SENT_TO_INSURER', label: 'Sent to Insurer' },
+  { value: 'DOCUMENT_SIGNED', label: 'Document Signed' },
+  { value: 'DOCUMENT_UPLOADED', label: 'Document Uploaded' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'PENDING_BOR_REQUEST', label: 'Pending BOR Request' }
+]
+
+// Helper function to check if an action is allowed based on log data
+const canPerformAction = (log, action) => {
+  // If log has available_actions from backend, use that
+  if (log.available_actions && Array.isArray(log.available_actions)) {
+    return log.available_actions.some(a => a.action === action)
+  }
+  
+  // Fallback logic for determining action availability
+  const status = log.status?.toUpperCase()
+  
+  switch (action) {
+    case 'edit':
+      return ['SIGNATURE_REQUESTED', 'DOCUMENT_SIGNED'].includes(status)
+    case 'upload':
+      return ['DOCUMENT_SIGNED'].includes(status) && can(permissionsEnum.BOR_DOCUMENT_UPLOAD)
+    case 'cancel':
+      return !['CANCELLED', 'COMPLETED'].includes(status)
+    case 'done':
+      return ['DOCUMENT_UPLOADED'].includes(status)
+    case 'view_document':
+      return log.signed_pdf_path || log.document_path
+    case 'copy_link':
+      return ['SIGNATURE_REQUESTED', 'SENT_TO_INSURER'].includes(status)
+    default:
+      return false
+  }
+}
+</script>
+
+<template>
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+      <div>
+        <h3 class="text-lg font-medium text-gray-900">BOR Logs</h3>
+        <p class="text-sm text-gray-500 mt-1">
+          Manage Broker on Record requests and documentation
+        </p>
+      </div>
+      <x-button 
+        color="primary" 
+        size="sm" 
+        @click="handleRefresh"
+        :disabled="loading"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </x-button>
+    </div>
+
+    <!-- DataTable -->
+    <div class="p-6">
+      <DataTable
+        v-if="!loading && logs.length > 0"
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="logs.length < 15"
+        :headers="tableHeaders"
+        :items="tableItems"
+        :loading="loading"
+        table-class-name="min-w-full"
+        header-text-direction="center"
+        body-text-direction="center"
+        border-cell
+        alternating
+      >
+        <!-- Status Column -->
+        <template #item-status="{ status }">
+          <span 
+            :class="getStatusBadge(status).class"
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+          >
+            {{ getStatusBadge(status).text }}
+          </span>
+        </template>
+
+        <!-- Email Sent Column -->
+        <template #item-email_sent="{ email_sent }">
+          <span class="inline-flex items-center">
+            <svg 
+              v-if="email_sent === 'Yes'" 
+              class="w-4 h-4 text-green-500 mr-1" 
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <svg 
+              v-else 
+              class="w-4 h-4 text-red-500 mr-1" 
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            {{ email_sent }}
+          </span>
+        </template>
+
+        <!-- Actions Column -->
+        <template #item-actions="{ actions }">
+          <div class="flex items-center space-x-1 flex-wrap">
+            <!-- Upload Document Button -->
+            <x-button
+              v-if="canPerformAction(actions, 'upload')"
+              color="orange"
+              size="xs"
+              @click="handleUploadDocument(actions)"
+              title="Upload signed document"
+            >
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Upload
+            </x-button>
+
+            <!-- Cancel Button -->
+            <x-button
+              v-if="canPerformAction(actions, 'cancel')"
+              color="error"
+              size="xs"
+              @click="handleCancelBor(actions)"
+              title="Cancel BOR request"
+            >
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel
+            </x-button>
+
+            <!-- Mark Done Button -->
+            <x-button
+              v-if="canPerformAction(actions, 'done')"
+              color="success"
+              size="xs"
+              @click="handleMarkDone(actions)"
+              title="Mark as complete"
+            >
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Done
+            </x-button>
+
+            <!-- View Document Button -->
+            <x-button
+              v-if="canPerformAction(actions, 'view_document')"
+              color="primary"
+              size="xs"
+              @click="handleViewDocument(actions)"
+              title="View documents"
+            >
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              View
+            </x-button>
+
+            <!-- Status Update Dropdown (for manual override) -->
+            <select
+              :value="actions.status"
+              @change="handleUpdateStatus(actions, $event.target.value)"
+              class="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              title="Update status manually"
+            >
+              <option 
+                v-for="option in statusOptions" 
+                :key="option.value" 
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </template>
+      </DataTable>
+
+      <!-- Loading State -->
+      <div v-else-if="loading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <span class="ml-3 text-gray-600">Loading BOR logs...</span>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No BOR logs found</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          Get started by creating a new BOR request.
+        </p>
+      </div>
+    </div>
+
+    <!-- Modal Components -->
+    <BorCancelModal
+      v-if="selectedLog"
+      :show="showCancelModal"
+      :bor-log="selectedLog"
+      @close="onCancelModalClose"
+      @confirmed="onCancelConfirmed"
+    />
+
+    <BorDoneModal
+      v-if="selectedLog"
+      :show="showDoneModal"
+      :bor-log="selectedLog"
+      @close="onDoneModalClose"
+      @confirmed="onDoneConfirmed"
+    />
+
+    <BorViewDocumentModal
+      v-if="selectedLog"
+      :show="showViewDocumentModal"
+      :bor-log="selectedLog"
+      @close="onViewDocumentModalClose"
+    />
+  </div>
+</template> 
