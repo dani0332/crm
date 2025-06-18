@@ -1,6 +1,5 @@
 <?php
 
-use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\ActivitesController;

@@ -45,20 +45,20 @@ class PolicyBulkSendDocuments extends Command
         $carCodes = [
             'CAR-BRDVRA2K', 'CAR-FS2A38AN', 'CAR-GMAYKRW6',
             'CAR-HVCSRFT8', 'CAR-KSJS4YJ5', 'CAR-RUMR9GWQ',
-            'CAR-TK4TEPX4'
+            'CAR-TK4TEPX4',
         ];
         $healthCodes = [
             'HEA-CTMVEMR6',
-            'HEA-H36X57PD'
+            'HEA-H36X57PD',
         ];
         $travelCodes = [
-            'TRA-YAC8UESV'
+            'TRA-YAC8UESV',
         ];
         $codes = [
-            ...$businessCodes,  
+            ...$businessCodes,
             ...$carCodes,
             ...$healthCodes,
-            ...$travelCodes
+            ...$travelCodes,
         ];
 
         if (empty($codes)) {
@@ -73,6 +73,7 @@ class PolicyBulkSendDocuments extends Command
         foreach ($codes as $code) {
             if (! $code) {
                 LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
+
                 continue;
             }
 
@@ -96,6 +97,7 @@ class PolicyBulkSendDocuments extends Command
             if (! $quoteObject) {
                 $notFound[] = $code;
                 LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
+
                 continue;
             }
             $payload = (object) [
