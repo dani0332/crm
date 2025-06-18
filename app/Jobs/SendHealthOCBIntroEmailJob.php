@@ -61,8 +61,6 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
                 return;
             }
 
-           
-
             if ($lead->sic_flow_enabled) {
                 info("SendHealthOCBIntroEmailJob - SIC workflow is already enabled for UUID: {$this->quoteUuid}");
 

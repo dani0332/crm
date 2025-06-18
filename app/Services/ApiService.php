@@ -457,7 +457,7 @@ class ApiService
                     return apiResponse(null, Response::HTTP_NOT_FOUND, 'Lead not found!');
                 }
                 if(getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid)){
-                    if(!app(BirdService::class)->isFollowupExecuted( $lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)){
+                    if(!app(BirdService::class)->isFollowupExecuted( $lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)){
                         SendHealthSICWAFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(50));
                     }
                     else {

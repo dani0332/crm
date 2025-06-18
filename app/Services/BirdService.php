@@ -66,11 +66,12 @@ class BirdService extends BaseService
         return $this->triggerWebHookRequest($cancelFlowRunUrl, ['action' => 'cancel', 'ids' => [$workflow->flow_id]], 'patch', true);
     }
 
-    public function isFollowupExecuted($uuid, $flowType)
+    public function isFollowupExecuted($quoteUuid, $quoteTypeId, $flowType)
     {
-        return QuoteFlowDetails::where('quote_uuid', $uuid)
-                                        ->where('flow_type', $flowType)
-                                        ->exists();
+        return QuoteFlowDetails::where('quote_uuid', $quoteUuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('flow_type', $flowType)
+            ->exists();
                                     
     }
     public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)

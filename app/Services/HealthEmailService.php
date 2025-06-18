@@ -357,7 +357,7 @@ class HealthEmailService extends BaseService
 
         try {
             LoggerService::info('Sending SIC Health Followups WA ');
-            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
             LoggerService::info("SIC Health Followups WA isFollowupExecuted: {$isFollowupExecuted} ");
             if($isFollowupExecuted){
                 LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");

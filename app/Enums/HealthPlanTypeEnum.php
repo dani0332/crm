@@ -27,7 +27,6 @@ enum HealthPlanTypeEnum: int
             self::GOOD->value => 'Good',
             self::BEST->value => 'Best',
             self::MULTI_CATEGORIES->value => 'Multi Categories',
-            default => throw new \ValueError("Invalid health plan type: {$type}")
         };
     }
 
