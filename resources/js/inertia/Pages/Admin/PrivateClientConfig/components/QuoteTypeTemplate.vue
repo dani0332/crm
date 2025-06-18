@@ -59,10 +59,17 @@ const {
   profiles,
   highlightedProfileIndex,
   isUserEditing,
+  deletingProfileIndex,
+  showDeleteConfirmation,
+  profileToDelete,
+  isLastProfileDeletion,
   getFieldKey,
   createBlankProfile,
   addProfile,
   removeProfile,
+  requestProfileDeletion,
+  confirmProfileDeletion,
+  cancelProfileDeletion,
   toggleDefaultCriteria,
   initializeProfiles,
   getProfiles,
@@ -162,7 +169,7 @@ const handleAddProfile = () => {
 };
 
 const handleRemoveProfile = profileIndex => {
-  removeProfile(profileIndex, collapsedProfiles);
+  requestProfileDeletion(profileIndex);
 };
 
 const handleChangeVersion = newVersion => {
@@ -182,6 +189,11 @@ const handleNationalityChange = (profileIndex, newNationalities) => {
   setTimeout(() => {
     isUserEditing.value = false;
   }, 100);
+};
+
+// Handler for profile deletion confirmation
+const handleConfirmProfileDeletion = () => {
+  confirmProfileDeletion(collapsedProfiles);
 };
 </script>
 
@@ -510,6 +522,8 @@ const handleNationalityChange = (profileIndex, newNationalities) => {
                 'shadow-lg': highlightedProfileIndex === profileIndex,
                 'border-red-300 bg-red-50': hasProfileErrors(profileIndex),
                 'border-gray-200': !hasProfileErrors(profileIndex),
+                'opacity-50 scale-95 pointer-events-none':
+                  deletingProfileIndex === profileIndex,
               }"
             >
               <div class="flex items-center justify-between mb-4">
@@ -541,6 +555,13 @@ const handleNationalityChange = (profileIndex, newNationalities) => {
                       <i class="ri-error-warning-line mr-1"></i>
                       Has Errors
                     </span>
+                    <span
+                      v-if="profiles.length === 1"
+                      class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
+                    >
+                      <i class="ri-information-line mr-1"></i>
+                      Required
+                    </span>
                   </h4>
                 </div>
                 <x-button
@@ -548,23 +569,31 @@ const handleNationalityChange = (profileIndex, newNationalities) => {
                   color="error"
                   outlined
                   type="button"
-                  :disabled="isDisabled"
+                  :disabled="
+                    isDisabled || deletingProfileIndex === profileIndex
+                  "
+                  :loading="deletingProfileIndex === profileIndex"
                   @click="handleRemoveProfile(profileIndex)"
                 >
-                  <svg
-                    class="h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                    />
-                  </svg>
+                  <template v-if="deletingProfileIndex !== profileIndex">
+                    <svg
+                      class="h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                      />
+                    </svg>
+                  </template>
+                  <template v-else>
+                    <span class="text-xs">Deleting...</span>
+                  </template>
                 </x-button>
               </div>
 
@@ -902,6 +931,106 @@ const handleNationalityChange = (profileIndex, newNationalities) => {
                 Switch to Latest Version
               </x-button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      v-if="showDeleteConfirmation"
+      class="fixed inset-0 z-50 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <!-- Background overlay -->
+        <div
+          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          @click="cancelProfileDeletion"
+        ></div>
+
+        <!-- Modal panel -->
+        <div
+          class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6"
+        >
+          <div class="sm:flex sm:items-start">
+            <div
+              class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10"
+            >
+              <svg
+                class="h-6 w-6 text-red-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3
+                class="text-lg leading-6 font-medium text-gray-900"
+                id="modal-title"
+              >
+                <span v-if="isLastProfileDeletion">Clear Profile</span>
+                <span v-else>Delete Profile</span>
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  <span v-if="isLastProfileDeletion">
+                    This will clear all data from Profile
+                    {{ profileToDelete + 1 }} and reset it to a blank profile.
+                    <span class="block mt-1 text-blue-600 font-medium">
+                      ℹ️ At least one profile must always exist.
+                    </span>
+                  </span>
+                  <span v-else>
+                    Are you sure you want to delete Profile
+                    {{ profileToDelete + 1 }}? This action cannot be undone.
+                  </span>
+                  <span
+                    v-if="profiles[profileToDelete]?.isDefaultCriteria"
+                    class="block mt-1 text-red-600 font-medium"
+                  >
+                    ⚠️ This is a default criteria profile.
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+            <x-button
+              size="sm"
+              color="error"
+              @click="handleConfirmProfileDeletion"
+              class="w-full sm:w-auto sm:ml-3"
+            >
+              <i
+                class="ri-delete-bin-line mr-1"
+                v-if="!isLastProfileDeletion"
+              ></i>
+              <i class="ri-refresh-line mr-1" v-if="isLastProfileDeletion"></i>
+              <span v-if="isLastProfileDeletion">Clear Profile</span>
+              <span v-else>Delete Profile</span>
+            </x-button>
+            <x-button
+              size="sm"
+              color="secondary"
+              outlined
+              @click="cancelProfileDeletion"
+              class="mt-3 w-full sm:mt-0 sm:w-auto"
+            >
+              Cancel
+            </x-button>
           </div>
         </div>
       </div>

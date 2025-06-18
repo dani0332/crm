@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 export function useProfileManagement(
   props,
@@ -8,6 +8,14 @@ export function useProfileManagement(
   const profiles = ref([]);
   const highlightedProfileIndex = ref(-1);
   const isUserEditing = ref(false); // Flag to track user editing state
+  const deletingProfileIndex = ref(-1); // Track which profile is being deleted
+  const showDeleteConfirmation = ref(false); // Show/hide delete confirmation dialog
+  const profileToDelete = ref(-1); // Store profile index to delete
+
+  // Computed property to check if we're deleting the last profile
+  const isLastProfileDeletion = computed(() => {
+    return profiles.value.length === 1 && profileToDelete.value === 0;
+  });
 
   const getFieldKey = field => {
     if (
@@ -61,14 +69,76 @@ export function useProfileManagement(
   };
 
   const removeProfile = (profileIndex, collapsedProfiles) => {
-    if (profiles.value.length === 1) {
+    const isLastProfile = profiles.value.length === 1;
+
+    if (isLastProfile) {
+      // When deleting the last profile, replace it with a blank one
       profiles.value = [createBlankProfile()];
     } else {
+      // When there are multiple profiles, actually remove the selected one
       profiles.value.splice(profileIndex, 1);
     }
-    collapsedProfiles.value.delete(profileIndex);
+
+    // Safety check for collapsedProfiles and clean up indices
+    if (
+      collapsedProfiles &&
+      collapsedProfiles.value &&
+      typeof collapsedProfiles.value.delete === 'function'
+    ) {
+      // Remove the deleted profile index
+      collapsedProfiles.value.delete(profileIndex);
+
+      // Only update indices if we actually removed a profile (not replaced)
+      if (!isLastProfile) {
+        // Update indices for profiles that come after the deleted one
+        const newCollapsedProfiles = new Set();
+        for (const index of collapsedProfiles.value) {
+          if (index > profileIndex) {
+            newCollapsedProfiles.add(index - 1);
+          } else if (index < profileIndex) {
+            newCollapsedProfiles.add(index);
+          }
+          // Skip the deleted index
+        }
+        collapsedProfiles.value = newCollapsedProfiles;
+      }
+    }
 
     clearValidationErrors();
+
+    // Return information about what happened for better UX feedback
+    return {
+      wasLastProfile: isLastProfile,
+      profileIndex: profileIndex,
+    };
+  };
+
+  // Enhanced deletion functions for better UX
+  const requestProfileDeletion = profileIndex => {
+    profileToDelete.value = profileIndex;
+    showDeleteConfirmation.value = true;
+  };
+
+  const confirmProfileDeletion = async collapsedProfiles => {
+    if (profileToDelete.value === -1) return;
+
+    deletingProfileIndex.value = profileToDelete.value;
+    showDeleteConfirmation.value = false;
+
+    // Add animation delay
+    setTimeout(() => {
+      const result = removeProfile(profileToDelete.value, collapsedProfiles);
+      deletingProfileIndex.value = -1;
+      profileToDelete.value = -1;
+
+      // Could emit an event here for additional feedback if needed
+      // emit('profileDeleted', result);
+    }, 300);
+  };
+
+  const cancelProfileDeletion = () => {
+    showDeleteConfirmation.value = false;
+    profileToDelete.value = -1;
   };
 
   const toggleDefaultCriteria = (profileIndex, newValue) => {
@@ -292,10 +362,17 @@ export function useProfileManagement(
     profiles,
     highlightedProfileIndex,
     isUserEditing,
+    deletingProfileIndex,
+    showDeleteConfirmation,
+    profileToDelete,
+    isLastProfileDeletion,
     getFieldKey,
     createBlankProfile,
     addProfile,
     removeProfile,
+    requestProfileDeletion,
+    confirmProfileDeletion,
+    cancelProfileDeletion,
     toggleDefaultCriteria,
     initializeProfiles,
     getProfiles,
