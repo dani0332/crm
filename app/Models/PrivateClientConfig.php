@@ -17,7 +17,6 @@ class PrivateClientConfig extends Model implements AuditableContract
         'quote_type',
         'config',
         'version',
-        'status',
         'active_version',
     ];
     protected $casts = [
@@ -34,5 +33,15 @@ class PrivateClientConfig extends Model implements AuditableContract
     public function scopeActiveVersion($query)
     {
         $query->where('active_version', true);
+    }
+
+    public function scopeByQuoteTypeId($query, int $quoteTypeId)
+    {
+        $query->where('quote_type_id', $quoteTypeId);
+    }
+
+    public static function getLatestVersion(int $quoteTypeId)
+    {
+        return self::byQuoteTypeId($quoteTypeId)->activeVersion()->first();
     }
 }
