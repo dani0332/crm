@@ -750,6 +750,16 @@ class SageApiService
         } else {
             LoggerService::info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
+
+        LoggerService::info('################################## EP Booking : Start Sage booking for : '.$quote->code.' ##################################');
+        $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction([$quote]); 
+        if ($isLobAllowedForEmbeddedProductBooking && $sukoonMedXTransaction) {
+            (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $payment ,$sageRequest, $request, $sukoonMedXTransaction]);
+        }
+        LoggerService::info('################################## EP Booking : End Sage booking for : '.$quote->code.' ##################################');
+
+
         $skipBookPolicyDocumentJob = false;
         if ($quoteTypeId === QuoteTypeId::Travel) {
             $quote->load('policyIssuance');
@@ -2528,6 +2538,20 @@ class SageApiService
         $postedReceiptStatus['message'] = 'Error found: Prepayment receipt is not ready to be post - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no;
 
         return $postedReceiptStatus;
+    }
+
+    public function isLobAllowedForEmbeddedProductBooking($quoteTypeId)
+    {
+        $lobAllowedForEmbeddedProductBooking = [QuoteTypeId::Car, QuoteTypeId::Bike];
+        return in_array($quoteTypeId, $lobAllowedForEmbeddedProductBooking);
+    }
+
+    public function getSukoonMedXTransaction($quote)
+    {
+        return $quote->embeddedTransactions() 
+            ->where('is_selected', 1)
+            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            ->first();
     }
 
 }
