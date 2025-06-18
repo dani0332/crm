@@ -1493,8 +1493,6 @@ class RenewalsUploadService
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
         LoggerService::info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
 
-        info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
-
         if (isset($carQuote->advisor_id)) {
             $advisor = $this->userService->getUserById($carQuote->advisor_id);
         } else {
@@ -1574,7 +1572,7 @@ class RenewalsUploadService
     private function sendEmail($carQuote, $emailTemplateId, $emailData)
     {
         LoggerService::info('Renewals OCB Email sending email to email: '.$carQuote->email);
-        LoggerService::info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
+        LoggerService::info('fn: sendEmail - Renewals OCB Email email template id: '.$emailTemplateId);
         LoggerService::info('Renewals OCB Email check email data: '.json_encode($emailData));
 
         if (isset($carQuote->advisor_id)) {

@@ -105,7 +105,7 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
 
         return [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => $requiredMaxLength],
-            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => $nullableMaxLength],
+            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
             'mobile_no' => ['index' => 2, 'title' => 'Customer Number', 'rules' => $nullableMaxLength],
             'insurance_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|max:10'],
             'current_insurance_provider' => ['index' => 4, 'title' => 'Current Insurance Provider', 'rules' => $requiredMaxLength],

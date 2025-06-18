@@ -289,11 +289,11 @@ class HomeRenewalService extends RenewalsUploadService
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
             } else {
                 LoggerService::info('Non Motors FetchPlans FN: fetchHomeQuotePlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
-                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+                $this->updateTotalFailed($renewalStatusProcess);
             }
         } else {
             LoggerService::info('Non Motors FetchPlans FN: fetchHomeQuotePlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
-            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+            $this->updateTotalFailed($renewalStatusProcess);
         }
     }
 
@@ -467,8 +467,7 @@ class HomeRenewalService extends RenewalsUploadService
                 'statusCode' => $createManualPlan,
             ]);
 
-            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-
+            $this->updateTotalFailed($renewalStatusProcess);
             return false;
         }
 
@@ -558,6 +557,10 @@ class HomeRenewalService extends RenewalsUploadService
         LoggerService::info('fn: getBuildingAed - building: '.$homeBuildingAed);
 
         return $homeBuildingAed;
+    }
+
+    private function updateTotalFailed(RenewalStatusProcess $renewalStatusProcess){
+        return RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 
 }
