@@ -315,6 +315,10 @@ const availablePlansTable = reactive({
       value: 'policyTerm',
     },
     {
+      text: 'Price',
+      value: 'price',
+    },
+    {
       text: 'Action',
       value: 'action',
     },
@@ -1488,6 +1492,15 @@ const getIncludedBenefitsTooltip = fieldText =>
                   >
                 </x-tooltip>
               </template>
+              <template #header-price>
+                <x-tooltip placement="bottom">
+                  <span
+                    class="underline decoration-dotted decoration-primary-700"
+                    >Price</span
+                  >
+                  <template #tooltip>Price of the plan</template>
+                </x-tooltip>
+              </template>
               <template #item-providerName="item">
                 <p class="text-primary-600 uppercase">
                   {{ item.providerName }}
@@ -1529,6 +1542,11 @@ const getIncludedBenefitsTooltip = fieldText =>
               </template>
               <template #item-policyTerm="item">
                 <span class="text-primary-600">{{ item.policyTerm }}</span>
+              </template>
+              <template #item-price="item">
+                <span class="text-primary-600">
+                  {{ item.actualPremium ? item.actualPremium : '' }}
+                </span>
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
