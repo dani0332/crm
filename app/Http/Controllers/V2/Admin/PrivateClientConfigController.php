@@ -2,30 +2,26 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
-use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
-use App\Http\Controllers\Controller;
-use App\Models\PrivateClientConfig;
-use App\Models\QuoteType;
-use App\Services\PrivateClientConfigService;
-use App\Traits\PrivateClient;
-use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Inertia\Inertia;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
+use Illuminate\Support\Arr;
+use App\Enums\quoteTypeCode;
+use Illuminate\Http\Request;
+use App\Traits\PrivateClient;
+use Illuminate\Validation\Rule;
+use App\Models\PrivateClientConfig;
+use App\Http\Controllers\Controller;
+use App\Services\PrivateClientConfigService;
 
 class PrivateClientConfigController extends Controller
 {
     use PrivateClient;
 
-    private const LABEL_TEXT = 'text as label';
-    private const VALUE_TEXT = 'id as value';
-
-    protected PrivateClientConfigService $configService;
-
-    public function __construct(PrivateClientConfigService $configService)
+    public function __construct(protected PrivateClientConfigService $configService)
     {
-        $this->configService = $configService;
-        $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show', 'advanced']]);
+        $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show', 'upsert']]);
     }
 
     private function getQuoteTypes()
@@ -47,14 +43,7 @@ class PrivateClientConfigController extends Controller
         $quoteTypes = $this->getQuoteTypes();
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
-            'quoteTypes' => $quoteTypes,
-            'quoteTypeCodeEnum' => [
-                'Car' => quoteTypeCode::Car,
-                'Health' => quoteTypeCode::Health,
-                'Life' => quoteTypeCode::Life,
-                'Home' => quoteTypeCode::Home,
-                'Yacht' => quoteTypeCode::Yacht,
-            ],
+            'quoteTypes' => $quoteTypes
         ]);
     }
 
@@ -81,7 +70,7 @@ class PrivateClientConfigController extends Controller
             $validated = $request->validate([
                 'quote_type_id' => 'required|integer',
                 'config' => 'required|array',
-                'quote_type' => 'required|string',
+                'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
                 'version' => 'required|integer',
             ]);
 
