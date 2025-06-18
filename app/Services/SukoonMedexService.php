@@ -183,7 +183,7 @@ class SukoonMedexService
                     $updatedDocCount = count($savedDocs['updated'] ?? []);
 
                     LoggerService::info("{$this->logPrefix} Sync & Saved Documents: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
-                        "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", context: ['docs' => $savedDocs]);
+                        "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", extra: ['docs' => $savedDocs]);
 
                     if(($createdDocCount + $updatedDocCount) > 0)
                         $this->transaction->load('documents');
