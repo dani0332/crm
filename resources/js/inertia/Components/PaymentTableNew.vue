@@ -1661,6 +1661,7 @@ const addPaymentModal = () => {
     quoteTypeCodeEnum.Pet,
     quoteTypeCodeEnum.Cycle,
     quoteTypeCodeEnum.Yacht,
+    quoteTypeCodeEnum.SAVINGS,
   ];
 
   if (
