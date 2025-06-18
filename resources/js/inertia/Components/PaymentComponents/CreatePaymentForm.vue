@@ -30,22 +30,13 @@
 		totalPrice: Number,
 		creditApprovalReasons: Array,
 		discountReasons: Array,
-		discountTypes: Array,
 		paymentDocument: Array,
-		isDiscountDocumentNotUploaded: Boolean,
-		discountDocumentModel: Array,
-		discountError: String,
 		totalAmount: Number,
-		documentForm: Object,
 		planDetail: Object,
 		quoteTypesToCheck: Array,
 		insuranceProviders: Array,
 
-		isCreditApprovalView: Boolean,
-		isVerifiedEnabled: Boolean,
 		isPaidEditable: Boolean,
-		isCreditCardView: Boolean,
-		isCheckDetailsEnabled: Boolean,
 		paymentProofDocument: Object,
 		isMultiPaymentsEnabled: Boolean,
 		quoteType: String,
@@ -55,12 +46,13 @@
 		quoteRequest: Object,
 		sendUpdateStatusEnum: Object,
 
-		approveErrorMessage: String,
 		approveProofDocument: Object,
 
 		createPaymentModal: Boolean,
 		paymentMethods: Array,
 		eCommercePriceWithLP: Number,
+		isPlanDetailSectionEnabled: Boolean,
+		quoteSubType: String,
 	});
 
 	const fileUploadModels = ref([]);
@@ -160,23 +152,6 @@
 	);
 
 	const emit = defineEmits([
-		'handle-collection-type-change',
-		'handle-frequency-change',
-		'calculate-payment-breakup',
-		'reset-credit-approval',
-		'handle-approval-reason-change',
-		'reset-discount',
-		'handle-discount-change',
-		'handle-discount-reason-change',
-		'upload-document',
-		'open-inner-modal',
-		'delete-document',
-		'calculate-total-amount',
-		'handle-payment-options',
-		'handle-declined-reason-change',
-		'cancel',
-		'decline',
-		'approve',
 		'cancel-modal',
 		'aml-verification',
 		'update-plan-detail',
@@ -538,7 +513,7 @@
 			code: paymentMethodsForm.payment_method,
 			modelType: props.quoteType,
 			quote_id: props.quoteRequest.id,
-			plan_id: props.planDetail?.value?.id ?? null, // handling null exception when plan is not found
+			plan_id: props.planDetail?.id ?? null, // handling null exception when plan is not found
 			captured_amount: paymentMethodsForm.amount,
 			insurance_provider_id: providerId.value,
 			sendFTCEmail: insurerPaymentLinkChanged?.value ?? false,
@@ -595,7 +570,7 @@
 			let viewData = {
 			modelType: props.quoteType,
 			quote_id: props.quoteRequest.id,
-			plan_id: props.planDetail?.value?.id || 0,
+			plan_id: props.planDetail?.id || 0,
 			customer_id: props.quoteRequest.customer_id,
 			payment_code: paymentMethodsForm.paymentCode,
 			collection_amount: collectionAmountModels.value,
@@ -609,7 +584,7 @@
 			};
 			paymentMethodsForm
 			.transform(data => viewData)
-			.post('/payments/' + props.quoteType + '/split-payments-approve', {
+			.post('/payments/' + props.quoteType + '/master-payment-approve-capture', {
 				preserveScroll: true,
 				onSuccess: res => {
 				// createPaymentModal.value = false;
@@ -634,7 +609,7 @@
 			let viewData = {
 			modelType: props.quoteType,
 			quote_id: props.quoteRequest.id,
-			plan_id: props.planDetail?.value?.id || 0,
+			plan_id: props.planDetail?.id || 0,
 			customer_id: props.quoteRequest.customer_id,
 			collection_amount: paymentMethodsForm.collection_amount,
 			bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -649,7 +624,7 @@
 			};
 			paymentMethodsForm
 			.transform(data => viewData)
-			.post('/payments/' + props.quoteType + '/split-update', {
+			.post('/payments/' + props.quoteType + '/split-payment-approve-decline', {
 				preserveScroll: true,
 				onSuccess: () => {
 				// createPaymentModal.value = false;
