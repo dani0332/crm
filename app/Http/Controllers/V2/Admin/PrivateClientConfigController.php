@@ -68,13 +68,7 @@ class PrivateClientConfigController extends Controller
         }
 
         try {
-            if ($version) {
-                // Get specific version
-                $responseData = $this->configService->getConfigByVersionAndQuoteType($quoteTypeId, $version);
-            } else {
-                // Get latest version
-                $responseData = $this->configService->getLatestConfigByQuoteType($quoteTypeId);
-            }
+            $responseData = $this->configService->getLatestConfigByQuoteType($quoteTypeId, $version);
 
             return response()->json($responseData);
         } catch (\Exception $e) {
