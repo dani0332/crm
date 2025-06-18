@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
-use Inertia\Inertia;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
-use Illuminate\Support\Arr;
 use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use App\Traits\PrivateClient;
-use Illuminate\Validation\Rule;
-use App\Models\PrivateClientConfig;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V2\Admin\PrivateClientConfigRequest;
+use App\Models\PrivateClientConfig;
+use App\Models\QuoteType;
 use App\Services\PrivateClientConfigService;
+use App\Traits\PrivateClient;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Inertia\Inertia;
 
 class PrivateClientConfigController extends Controller
 {
@@ -64,27 +63,17 @@ class PrivateClientConfigController extends Controller
             return response()->json(['error' => 'Failed to load configuration'], 500);
         }
     }
-    public function upsert(Request $request)
+    public function upsert(PrivateClientConfigRequest $request)
     {
         try {
-            $validated = $request->validate([
-                'quote_type_id' => 'required|integer',
-                'config' => 'required|array',
-                'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
-                'version' => 'required|integer',
-            ]);
+            $validated = $request->validated();
 
-            $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
-            $newVersion = $existingVersion ? $existingVersion->version + 1 : 1;
-
-            $this->configService->createNewConfigurationVersion($validated);
+            $config = $this->configService->createNewConfigurationVersion($validated);
 
             return redirect()->route('admin.private-client-config.show')
                 ->with('message', 'Private Client Configuration updated successfully.')
-                ->with('version', $newVersion);
+                ->with('version', $config->version);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'An error occurred while updating the configuration: '.$e->getMessage());
         }

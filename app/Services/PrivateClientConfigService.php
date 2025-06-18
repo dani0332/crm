@@ -101,7 +101,7 @@ class PrivateClientConfigService
         }
     }
 
-    public function createNewConfigurationVersion(array $data): void
+    public function createNewConfigurationVersion(array $data): ?PrivateClientConfig
     {
         DB::beginTransaction();
 
@@ -116,7 +116,7 @@ class PrivateClientConfigService
                 ? ['profiles' => $data['config']]
                 : $data['config'];
 
-            PrivateClientConfig::create([
+            $config = PrivateClientConfig::create([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
                 'config' => $configData,
@@ -125,8 +125,11 @@ class PrivateClientConfigService
             ]);
 
             DB::commit();
+
+            return $config;
         } catch (\Exception $e) {
             DB::rollBack();
+
             throw $e;
         }
     }
