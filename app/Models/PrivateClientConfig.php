@@ -18,6 +18,7 @@ class PrivateClientConfig extends Model implements AuditableContract
         'config',
         'version',
         'status',
+        'active_version',
     ];
 
     protected $casts = [
