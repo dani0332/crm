@@ -176,7 +176,12 @@ const loadSpecificVersion = async version => {
       isCurrentVersion.value = response.data.isCurrentVersion;
     }
 
-    if (response.data.config && response.data.config.profiles) {
+    // Load configuration data
+    if (
+      response.data.config &&
+      response.data.config.profiles &&
+      response.data.config.profiles.length > 0
+    ) {
       const loadedProfiles = response.data.config.profiles.map(profile => {
         const formattedProfile = {
           nationalityIds: profile.nationalityIds || [],
@@ -184,25 +189,33 @@ const loadSpecificVersion = async version => {
         };
 
         props.fields.forEach(field => {
-          formattedProfile[field.fieldName] =
-            profile[field.fieldName] ||
-            (field.type === 'select_multiple' ? [] : '');
+          const fieldKey =
+            field.hasCurrency &&
+            props.fields.filter(f => f.fieldName === field.fieldName).length > 1
+              ? `${field.fieldName}_${field.currencyId}`
+              : field.fieldName;
+
+          formattedProfile[fieldKey] =
+            profile[fieldKey] || (field.type === 'select_multiple' ? [] : '');
+
           if (field.hasCheckBox) {
-            formattedProfile[`${field.fieldName}_isEnabled`] =
-              profile[`${field.fieldName}_isEnabled`] || false;
+            formattedProfile[`${fieldKey}_isEnabled`] =
+              profile[`${fieldKey}_isEnabled`] !== undefined
+                ? profile[`${fieldKey}_isEnabled`]
+                : true; // Default to enabled if not specified
           }
         });
 
         return formattedProfile;
       });
 
-      profiles.value =
-        loadedProfiles.length > 0 ? loadedProfiles : [createBlankProfile()];
+      profiles.value = loadedProfiles;
     } else {
       profiles.value = [createBlankProfile()];
     }
   } catch (error) {
-    console.error(error);
+    console.error('Error loading configuration:', error);
+    profiles.value = [createBlankProfile()];
   } finally {
     configLoading.value = false;
   }
@@ -226,12 +239,20 @@ const initializeProfiles = () => {
       };
 
       props.fields.forEach(field => {
-        formattedProfile[field.fieldName] =
-          profile[field.fieldName] ||
-          (field.type === 'select_multiple' ? [] : '');
+        const fieldKey =
+          field.hasCurrency &&
+          props.fields.filter(f => f.fieldName === field.fieldName).length > 1
+            ? `${field.fieldName}_${field.currencyId}`
+            : field.fieldName;
+
+        formattedProfile[fieldKey] =
+          profile[fieldKey] || (field.type === 'select_multiple' ? [] : '');
+
         if (field.hasCheckBox) {
-          formattedProfile[`${field.fieldName}_isEnabled`] =
-            profile[`${field.fieldName}_isEnabled`] || false;
+          formattedProfile[`${fieldKey}_isEnabled`] =
+            profile[`${fieldKey}_isEnabled`] !== undefined
+              ? profile[`${fieldKey}_isEnabled`]
+              : true; // Default to enabled if not specified
         }
       });
 
@@ -383,27 +404,62 @@ const saveConfiguration = () => {
       return;
     }
 
-    configForm.configurations = [
-      {
-        quote_type_id: props.quoteType.id,
+    // Prepare the configuration object
+    const configurationData = {
+      quote_type_id: props.quoteType.id,
+      config: {
         profiles: validProfiles,
+        version: currentVersion.value ? currentVersion.value + 1 : 1,
+        created_at: new Date().toISOString(),
+        quote_type: props.quoteType.code,
       },
-    ];
+      create_new_version: true, // Signal backend to create new version
+      set_as_active: true, // Signal backend to set as active version
+    };
+
+    configForm.reset();
+    Object.assign(configForm, configurationData);
 
     configForm.post(route('admin.private-client-config.upsert'), {
-      onSuccess: () => {
+      onSuccess: response => {
         loader.value = false;
         clearValidationErrors();
+
+        // Update version information from response
+        if (response.props?.flash?.version) {
+          currentVersion.value = response.props.flash.version;
+          selectedVersion.value = response.props.flash.version;
+          isCurrentVersion.value = true;
+
+          // Update versions list
+          if (!allVersions.value.includes(response.props.flash.version)) {
+            allVersions.value.push(response.props.flash.version);
+            allVersions.value.sort((a, b) => b - a); // Sort descending (newest first)
+          }
+
+          emit('versionLoaded', response.props.flash.version);
+        }
+
         emit('configurationSaved');
       },
       onError: errors => {
         loader.value = false;
         console.error('Save failed:', errors);
+
+        // Show user-friendly error message
+        if (errors.config) {
+          alert(
+            `Configuration save failed: ${errors.config[0] || 'Unknown error'}`,
+          );
+        } else {
+          alert('Failed to save configuration. Please try again.');
+        }
       },
     });
   } catch (error) {
     loader.value = false;
     console.error(`Error saving ${quoteTypeCode.value} configuration:`, error);
+    alert('An unexpected error occurred while saving. Please try again.');
   }
 };
 
@@ -447,20 +503,35 @@ const getProfiles = () => {
     <div class="p-6 bg-white border-b border-gray-200">
       <div
         v-if="currentVersion"
-        class="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200"
+        class="mb-4 p-3 rounded-md border"
+        :class="{
+          'bg-blue-50 border-blue-200': isCurrentVersion,
+          'bg-amber-50 border-amber-200': !isCurrentVersion,
+        }"
       >
         <div class="flex items-center justify-between">
-          <div class="flex items-center text-sm text-blue-700">
-            <i class="ri-information-line mr-2"></i>
+          <div class="flex items-center text-sm">
+            <i
+              class="ri-information-line mr-2"
+              :class="{
+                'text-blue-700': isCurrentVersion,
+                'text-amber-700': !isCurrentVersion,
+              }"
+            ></i>
             <span
-              >Currently viewing {{ quoteTypeLabel }} configuration version
-              {{ currentVersion }}</span
+              :class="{
+                'text-blue-700': isCurrentVersion,
+                'text-amber-700': !isCurrentVersion,
+              }"
             >
-            <span
-              v-if="!isCurrentVersion"
-              class="ml-2 text-amber-600 font-medium"
-            >
-              (Historical Version)
+              <span v-if="isCurrentVersion">
+                Currently viewing {{ quoteTypeLabel }} configuration version
+                {{ currentVersion }} (Active Version)
+              </span>
+              <span v-else>
+                Viewing {{ quoteTypeLabel }} configuration version
+                {{ currentVersion }} (Historical Version - Read Only)
+              </span>
             </span>
           </div>
 
@@ -472,13 +543,23 @@ const getProfiles = () => {
             <x-select
               :modelValue="selectedVersion"
               :options="
-                allVersions.map(v => ({ value: v, label: `Version ${v}` }))
+                allVersions.map(v => ({
+                  value: v,
+                  label: `Version ${v}${v === Math.max(...allVersions) ? ' (Latest)' : ''}`,
+                }))
               "
               @update:modelValue="changeVersion"
-              class="w-32"
+              class="w-40"
               :disabled="configLoading"
             />
           </div>
+        </div>
+
+        <!-- Version History Info -->
+        <div v-if="!isCurrentVersion" class="mt-2 text-xs text-amber-600">
+          <i class="ri-lock-line mr-1"></i>
+          This is a historical version and cannot be modified. Switch to the
+          latest version to make changes.
         </div>
       </div>
 
@@ -935,15 +1016,34 @@ const getProfiles = () => {
         <!-- Read-only notice -->
         <div
           v-if="isDisabled"
-          class="flex items-center text-amber-600 mt-4 p-3 bg-amber-50 rounded-md border border-amber-200"
+          class="flex items-center justify-between mt-4 p-4 bg-amber-50 rounded-md border border-amber-200"
         >
-          <i class="ri-error-warning-line mr-2"></i>
-          <span v-if="!isCurrentVersion">
-            You are viewing a historical version. Configuration is read-only.
-          </span>
-          <span v-else-if="props.disabled">
-            Configuration is currently read-only.
-          </span>
+          <div class="flex items-center text-amber-700">
+            <i class="ri-lock-line mr-2"></i>
+            <div>
+              <div class="font-medium">Configuration is Read-Only</div>
+              <div class="text-sm mt-1">
+                <span v-if="!isCurrentVersion">
+                  You are viewing version {{ currentVersion }}. Only the latest
+                  version can be modified.
+                </span>
+                <span v-else-if="props.disabled">
+                  This configuration is currently locked for editing.
+                </span>
+              </div>
+            </div>
+          </div>
+          <div v-if="!isCurrentVersion && allVersions.length > 0">
+            <x-button
+              size="sm"
+              color="#059669"
+              @click="changeVersion(Math.max(...allVersions))"
+              :disabled="configLoading"
+            >
+              <i class="ri-edit-line mr-1"></i>
+              Switch to Latest Version
+            </x-button>
+          </div>
         </div>
       </div>
     </div>
