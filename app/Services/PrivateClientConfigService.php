@@ -87,7 +87,13 @@ class PrivateClientConfigService
         ];
 
         if ($latestConfig) {
-            $configData = json_decode($latestConfig->config, true);
+            $configData = $latestConfig->config;
+
+            // Ensure config data has the expected profiles structure
+            if (is_array($configData) && !isset($configData['profiles'])) {
+                $configData = ['profiles' => $configData];
+            }
+
             $responseData['config'] = $configData;
             $responseData['version'] = $latestConfig->version;
         }
@@ -156,9 +162,14 @@ class PrivateClientConfigService
             $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
             $newVersion = $existingVersion ? $existingVersion->version + 1 : 1;
 
+            // Ensure config data is properly structured with profiles key
+            $configData = is_array($data['config']) && !isset($data['config']['profiles'])
+                ? ['profiles' => $data['config']]
+                : $data['config'];
+
             PrivateClientConfig::create([
                 'quote_type_id' => $data['quote_type_id'],
-                'config' => $data['config'],
+                'config' => $configData,
                 'version' => $newVersion,
                 'status' => 1,
                 'active_version' => true,
@@ -197,7 +208,13 @@ class PrivateClientConfigService
         ];
 
         if ($versionConfig) {
-            $configData = json_decode($versionConfig->config, true);
+            $configData = $versionConfig->config;
+
+            // Ensure config data has the expected profiles structure
+            if (is_array($configData) && !isset($configData['profiles'])) {
+                $configData = ['profiles' => $configData];
+            }
+
             $responseData['config'] = $configData;
         }
 
