@@ -345,11 +345,14 @@ class HealthEmailService extends BaseService
             LoggerService::info("SIC Health Followups WA not executed for lead: {$lead->uuid} because no plan types found");
             return;
         }
-        $planTypes = collect($response['planTypes'])->map(function($planType) {
-            return [
-                $this->setPlanTypePremium($planType['text']) => $planType['calculatedDiscountPremium']
-            ];
-        });
+        $planTypes = collect($response['planTypes'])
+            ->mapWithKeys(function($planType) {
+                $key = $this->setPlanTypePremium($planType['text']);
+                if ($key !== null) {
+                    return [$key => $planType['calculatedDiscountPremium']];
+                }
+                return [];
+            });
     
 
         LoggerService::info("Plan types mapped for lead: {$lead->uuid}", ['planTypes' => $planTypes]);
