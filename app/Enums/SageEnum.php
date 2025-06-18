@@ -55,7 +55,6 @@ final class SageEnum extends Enum
     const SRT_CREATE_PP_REC = 'CREATE_PP_REC';
     const SRT_RTP_PP_REC = 'RTP_PP_REC';
     const SRT_POST_PP_REC = 'POST_PP_REC';
-
     const EP_SRT_CREATE_PP_REC = 'EP_SRT_CREATE_PP_REC';
     const EP_SRT_RTP_PP_REC = 'EP_SRT_RTP_PP_REC';
     const EP_SRT_POST_PP_REC = 'EP_SRT_POST_PP_REC';
