@@ -245,32 +245,45 @@ class PrivateClientConfigService
         }
 
         return match ($quoteType) {
-            QuoteTypes::CAR => $this->getCarConfiguration($profile),
+            QuoteTypes::CAR => $this->getCarConfiguration($config, $profile),
             default => null,
         };
     }
 
-    private function getCarConfiguration(array $profile)
+    private function getCarConfiguration(PrivateClientConfig $config, array $profile)
     {
-        $configuration = [];
+        $configuration = collect([]);
 
-        $configuration['car_value'] = $this->resolveValue($profile, 'car_value');
-
-        $configuration['car_make_id'] = $this->resolveValue($profile, 'car_make_id');
-
-        $configuration['insurance_provider_id'] = $this->resolveValue($profile, 'insurance_provider_id');
-
-        $configuration['price_with_vat'] = $this->resolveValue($profile, 'price_with_vat');
+        $configuration->push($this->buildEntity($config, $profile, 'car_value'));
+        $configuration->push($this->buildEntity($config, $profile, 'car_make_id'));
+        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
+        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
 
         return $configuration;
     }
 
-    private function resolveValue(array $profile, string $key)
+    private function buildEntity(PrivateClientConfig $config, array $profile, string $key)
     {
-        if (isset($profile[$key]) && $profile[$key]['isEnabled'] && ! empty($profile[$key]['value'])) {
-            return $profile[$key]['value'];
+        $profileData = $profile[$key] ?? null;
+
+        $data = [
+            'version' => $config->version,
+            'field_name' => $key,
+            'operator' => null,
+            'value' => null,
+            'currency_type_id' => null,
+        ];
+
+        if ($profileData && $profileData['isEnabled']) {
+            $data['operator'] = $profileData['operator'] ?? null;
+            $data['value'] = $profileData['value'] ?? null;
+            $data['currency_type_id'] = $profileData['currencyId'] ?? null;
         }
 
-        return null;
+        if ($data['operator'] === 'in') {
+            $data['value'] = implode(',', $data['value'] ?? []);
+        }
+
+        return (object) $data;
     }
 }
