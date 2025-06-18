@@ -26,12 +26,4 @@ class PrivateClientConfig extends Model implements AuditableContract
             'auditable_type' => self::class,
         ];
     }
-
-    public static function getCurrentVersion(int $quoteTypeId): ?self
-    {
-        return self::where('quote_type_id', $quoteTypeId)
-            ->where('status', true)
-            ->latest('version')
-            ->first();
-    }
 }
