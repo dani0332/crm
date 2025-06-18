@@ -32,8 +32,8 @@ class SukoonMedexService
     private $currentQuote;
     private $quoteTypeId;
     private $productSlug;
-    private $quoteNumber;
-    private $policyNumber;
+    private $quotePolicy;
+    private $certificateNumber;
     private $policyStatus;
     private $paymentGateway;
     private $paymentToken;
@@ -55,7 +55,7 @@ class SukoonMedexService
     {
         try {
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
-            $response = $this->request("/policy/{$this->policyNumber}", 'get', headers: $headers)->json();
+            $response = $this->request("/policy/{$this->certificateNumber}", 'get', headers: $headers)->json();
             return $response;
         } catch (Exception $e) {
             throw $e;
@@ -70,8 +70,8 @@ class SukoonMedexService
             $this->transaction = $transaction;
 
             $this->policyStatus = $transaction->policy_status ?? '';
-            $this->quoteNumber = $transaction->quote_policy ?? null;
-            $this->policyNumber = $transaction->certificate_number ?? null;
+            $this->quotePolicy = $transaction->quote_policy ?? null;
+            $this->certificateNumber = $transaction->certificate_number ?? null;
 
             LoggerService::startQuoteLogging($this->currentQuote);
 
@@ -93,16 +93,15 @@ class SukoonMedexService
 
     private function syncSukoonData($transaction, $data)
     {
-        $onlyFields = ['quote_policy', 'certificate_number']; // TODO:: payment_plan, amount_disclaimer_text, payment_token
-        $updateableData = collect($data)->only(...$onlyFields)->toArray();
+        $updateableData = collect($data)->only('quote_policy', 'certificate_number');
 
         if(!empty($data['policy_status'] ?? null))
             $this->policyStatus = $updateableData['policy_status'] = Str::slug($data['policy_status'], '_');
 
-        $transaction->update($updateableData);
+        $transaction->update($updateableData->toArray());
 
-        !empty($updateableData['quote_policy'] ?? null) && $this->quoteNumber = $updateableData['quote_policy'] ?? null;
-        !empty($updateableData['certificate_number'] ?? null) && $this->policyNumber = $updateableData['certificate_number'] ?? null;
+        !empty($updateableData['quote_policy'] ?? null) && $this->quotePolicy = $updateableData['quote_policy'] ?? null;
+        !empty($updateableData['certificate_number'] ?? null) && $this->certificateNumber = $updateableData['certificate_number'] ?? null;
 
         !empty($data['payment_plan'] ?? null) && $this->paymentPlan = $data['payment_plan'] ?? null;
         !empty($data['amount_disclaimer_text'] ?? null) && $this->amountDisclaimerText = $data['amount_disclaimer_text'] ?? null;
@@ -184,7 +183,7 @@ class SukoonMedexService
                     $updatedDocCount = count($savedDocs['updated'] ?? []);
 
                     LoggerService::info("{$this->logPrefix} Sync & Saved Documents: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
-                        "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", context: ['skipped_docs' => $savedDocs['skipped']]);
+                        "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", context: ['docs' => $savedDocs]);
 
                     if(($createdDocCount + $updatedDocCount) > 0)
                         $this->transaction->load('documents');
@@ -254,7 +253,7 @@ class SukoonMedexService
         $commissionVat = floatval($additionalData['broker_commission_vat_amount'] ?? 0) ? (float) ($additionalData['broker_commission_vat_amount'] ?? 0) : (int) ($additionalData['broker_commission_vat_amount'] ?? 0);
 
         $data = [
-            'certificate_number' => $this->policyNumber,
+            'certificate_number' => $this->certificateNumber,
             'tax_invoice_no' => $additionalData['tax_invoice_document_number'] ?? null,
             'tax_invoice_buyer_no' => $additionalData['tax_invoice_buyer_document_number'] ?? null,
             'credit_note_no' => $additionalData['credit_note_document_number'] ?? null,
@@ -665,7 +664,7 @@ class SukoonMedexService
             'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles',
             "payment_plan" => $this->paymentPlan,
             "amount_disclaimer_text" => $this->amountDisclaimerText,
-            'policy_number' => $this->quoteNumber
+            'policy_number' => $this->quotePolicy
         ];
     }
 
@@ -678,7 +677,7 @@ class SukoonMedexService
     {
         try {
 
-            $response = $this->request('/policy/'.$this->quoteNumber.'/confirm/', 
+            $response = $this->request('/policy/'.$this->quotePolicy.'/confirm/', 
                 'get', 
                 ['confirm' => 'true'], 
                 ['x-session-id' => $this->sessionId]
@@ -707,7 +706,7 @@ class SukoonMedexService
     private function confirmSubmittedData()
     {
         try {
-            $response = $this->request('/policy/'.$this->quoteNumber.'/confirm/', 
+            $response = $this->request('/policy/'.$this->quotePolicy.'/confirm/', 
                 'post', 
                 ['confirm' => 'true'], 
                 ['x-session-id' => $this->sessionId]
@@ -728,7 +727,7 @@ class SukoonMedexService
      */
     public function initiatePaymentProcess()
     {
-        $data = ['policy_number' => $this->quoteNumber, 'gateway' => $this->paymentGateway];
+        $data = ['policy_number' => $this->quotePolicy, 'gateway' => $this->paymentGateway];
 
         try {
             $result = $this->request('/payment/initiate/', 'post', $data, [
@@ -778,7 +777,7 @@ class SukoonMedexService
     public function getPolicyScheduleCoi()
     {
         try {
-            $this->request('/policy/'.$this->policyNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $this->request('/policy/'.$this->certificateNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
         } catch (Exception $e) {
             throw $e;
         }
@@ -805,7 +804,7 @@ class SukoonMedexService
     public function listGeneratedDocument()
     {
         try {
-            $result = $this->request('/policy/'.$this->policyNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $result = $this->request('/policy/'.$this->certificateNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
             
             return $result->json();
 
@@ -852,7 +851,7 @@ class SukoonMedexService
                     }
                 }
 
-                $downloadResult = $this->saveDocument($quote, $embeddedTransaction, $docId, $docCode);
+                $downloadResult = $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode);
                 if(!empty($downloadResult)) {
                     $createdOrUpdated = array_keys($downloadResult)[0];
                     array_push($docStatus[$createdOrUpdated], $downloadResult[$createdOrUpdated]);
@@ -882,7 +881,7 @@ class SukoonMedexService
      * @return array|bool The result of the document save operation
      * @throws Exception If the document save operation fails
      */
-    public function saveDocument($quote, $embeddedTransaction, $docId, $docCode)
+    public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode)
     {
         try {
             $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', $this->quoteTypeId)->first();
@@ -943,10 +942,10 @@ class SukoonMedexService
                 $result = false;
                 if (isset($document)) {
                     $document->update($documentData);
-                    $result = ['updated' => $uploadedDocument->doc_name];
+                    $result = ['updated' => $originalName];
                 } else {
                     $embeddedTransaction->documents()->create($documentData);
-                    $result = ['created' => $uploadedDocument->doc_name];
+                    $result = ['created' => $originalName];
                 }
 
                 return $result;
