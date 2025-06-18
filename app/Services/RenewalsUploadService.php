@@ -497,7 +497,7 @@ class RenewalsUploadService
                 $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
 
                 if (is_int($planResponse) && $planResponse == 200) {
-                    LoggerService::info($logPrefix.' plan created successfully', extra:[
+                    LoggerService::info($logPrefix.' plan created successfully', extra: [
                         'UUID' => $quote->uuid,
                     ]);
                 } else {
@@ -507,7 +507,7 @@ class RenewalsUploadService
                         $error = 'Error: '.$planResponse->message;
                     }
 
-                    LoggerService::info($logPrefix.' plan creation failed. API Response ('.$error.')', extra:[
+                    LoggerService::info($logPrefix.' plan creation failed. API Response ('.$error.')', extra: [
                         'UUID' => $quote->uuid,
                     ]);
                     RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
@@ -518,7 +518,7 @@ class RenewalsUploadService
 
             $plansResponse = $this->getPlans($quote->uuid);
             if ($plansResponse === true) {
-                LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra:[
+                LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
                     'UUID' => $quote->uuid,
                 ]);
                 // update status to plans fetched
