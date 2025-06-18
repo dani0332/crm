@@ -197,7 +197,7 @@ class HomeRenewalService extends RenewalsUploadService
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
 
-                        $jobs[] = new FetchPlansForHomeRenewalsQuoteJob($lead, $renewalStatusProcess);
+                        $jobs[] = new FetchPlansForHomeRenewalsQuoteJob($lead->id, $renewalStatusProcess->id);
 
                     } else {
                         LoggerService::info($logPrefix.' skipping fetch plans for uuid : '.$lead->personalQuote->uuid);
