@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Models\PrivateClientConfig;
 use App\Services\Logger\LoggerService;
+use App\Services\PrivateClientConfigService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -30,16 +31,6 @@ trait PrivateClient
      */
     public function applyPcpTag(string $leadUuid, int $quoteTypeId): bool
     {
-        // Early validation
-        $configs = $this->getActivePcpConfigs($quoteTypeId);
-        if ($configs->isEmpty()) {
-            LoggerService::warning('No active PCP configurations found.', extra: [
-                'quoteTypeId' => $quoteTypeId,
-            ]);
-
-            return false;
-        }
-
         $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
         if (! class_exists($modelClass)) {
             LoggerService::warning('Model class not found.', extra: [
@@ -55,6 +46,10 @@ trait PrivateClient
             return false;
         }
 
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+
+        $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $model->nationality_id);
+
         // Check if lead matches PCP criteria
         if (! $this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
             LoggerService::warning('Lead not matched PCP criteria.', extra: [
@@ -64,8 +59,10 @@ trait PrivateClient
             return false;
         }
 
+        $version = $configs->first()->version;
+
         // Apply PCP tags
-        return $this->applyPcpTagsToLeadAndCustomer($model, $configs);
+        return $this->applyPcpTagsToLeadAndCustomer($model, $version);
     }
 
     private function findLeadModel(string $modelClass, string $leadUuid, int $quoteTypeId)
@@ -181,15 +178,14 @@ trait PrivateClient
             });
     }
 
-    private function applyPcpTagsToLeadAndCustomer($model, $configs): bool
+    private function applyPcpTagsToLeadAndCustomer($model, $pcpTagVersion): bool
     {
         try {
-            return DB::transaction(function () use ($configs, $model) {
-                $pcpTagVersion = $configs->first()->version;
+            return DB::transaction(function () use ($pcpTagVersion, $model) {
                 $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
                 $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
 
-                $this->logUpdateResults($updateResults, $customerUpdateResult, $configs);
+                $this->logUpdateResults($updateResults, $customerUpdateResult);
 
                 return true;
             });
@@ -244,7 +240,7 @@ trait PrivateClient
         ];
     }
 
-    private function logUpdateResults(array $leadResult, array $customerResult, $configs): void
+    private function logUpdateResults(array $leadResult, array $customerResult): void
     {
         if (! $leadResult['wasUpdated']) {
             LoggerService::warning('PC qualified tag already applied on lead.', extra: [
