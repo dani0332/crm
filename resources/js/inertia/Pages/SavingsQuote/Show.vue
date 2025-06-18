@@ -311,10 +311,6 @@ const availablePlansTable = reactive({
       value: 'minimumInvestment',
     },
     {
-      text: 'Currency',
-      value: 'currency',
-    },
-    {
       text: 'Policy Term (Years)',
       value: 'policyTerm',
     },
@@ -1479,15 +1475,6 @@ const getIncludedBenefitsTooltip = fieldText =>
                   <template #tooltip
                     >Minimum amount of investment required</template
                   >
-                </x-tooltip>
-              </template>
-              <template #header-currency>
-                <x-tooltip placement="bottom">
-                  <span
-                    class="underline decoration-dotted decoration-primary-700"
-                    >Currency</span
-                  >
-                  <template #tooltip>Investment currency</template>
                 </x-tooltip>
               </template>
               <template #header-policyTerm>
