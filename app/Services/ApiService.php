@@ -448,7 +448,7 @@ class ApiService
 
     public function triggerSICWhatsapp(SICWhatsappRequest $request)
     {
-        // TODO: Implement triggerSICWhatsapp
+        //  Implement triggerSICWhatsapp
         $quoteType = QuoteTypes::getName($request->quoteTypeId);
         switch ($quoteType) {
             case QuoteTypes::HEALTH:
@@ -464,6 +464,8 @@ class ApiService
                         LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
                         return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow already executed for this lead!');
                     }
+                } else {
+                    return apiResponse(null, Response::HTTP_FORBIDDEN, 'WhatsApp consent not given for this lead!');
                 }
                 break;
             default:
