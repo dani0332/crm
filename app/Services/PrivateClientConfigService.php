@@ -16,86 +16,29 @@ class PrivateClientConfigService
     private const LABEL_TEXT = 'text as label';
     private const VALUE_TEXT = 'id as value';
 
-    /**
-     * Get all distinct versions ordered by newest first
-     */
-    public function getAllVersions(): array
-    {
-        return PrivateClientConfig::select('version')
-            ->distinct()
-            ->orderBy('version', 'desc')
-            ->pluck('version')
-            ->toArray();
-    }
-
-    /**
-     * Get configurations for a specific version
-     */
-    public function getConfigurationsByVersion(?int $selectedVersion)
-    {
-        return PrivateClientConfig::query()
-            ->when($selectedVersion, function ($query) use ($selectedVersion) {
-                return $query->where('version', $selectedVersion);
-            })
-            ->get();
-    }
-
-    /**
-     * Check if the selected version is the current (latest) version
-     */
-    public function isCurrentVersion(?int $selectedVersion, array $allVersions): bool
-    {
-        return count($allVersions) === 0 || (int) $selectedVersion === (int) $allVersions[0];
-    }
-
-    /**
-     * Get the latest version number, or return null if no versions exist
-     */
-    public function getLatestVersion(): ?int
-    {
-        $allVersions = $this->getAllVersions();
-
-        return count($allVersions) > 0 ? $allVersions[0] : null;
-    }
-
-    /**
-     * Get latest configuration by quote type ID
-     */
     public function getLatestConfigByQuoteType(int $quoteTypeId): array
     {
-        // Get all versions for this quote type
-        $allVersionsForQuoteType = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
+        $allVersionsForQuoteType = PrivateClientConfig::byQuoteTypeId($quoteTypeId)
             ->select('version')
             ->distinct()
             ->orderBy('version', 'desc')
             ->pluck('version')
             ->toArray();
 
-        // Get the latest (current) configuration
-        $latestConfig = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
-            ->where('active_version', true)
-            ->first();
-
-        // Get specific dropdown data based on quote type
         $dropdownData = $this->getDropdownDataByQuoteType($quoteTypeId);
 
         $responseData = [
             'config' => null,
             'version' => null,
             'allVersions' => $allVersionsForQuoteType,
-            'isCurrentVersion' => true, // Always true when getting latest
+            'isCurrentVersion' => true,
             'dropdownData' => $dropdownData,
         ];
 
+        $latestConfig = PrivateClientConfig::getLatestVersion($quoteTypeId);
+
         if ($latestConfig) {
-            $configData = $latestConfig->config;
-
-            // Ensure config data has the expected profiles structure
-            if (is_array($configData) && ! isset($configData['profiles'])) {
-                $configData = ['profiles' => $configData];
-            }
-
-            $responseData['config'] = $configData;
+            $responseData['config'] = $latestConfig->config;
             $responseData['version'] = $latestConfig->version;
         }
 
@@ -173,7 +116,6 @@ class PrivateClientConfigService
                 'quote_type' => $data['quote_type'],
                 'config' => $configData,
                 'version' => $newVersion,
-                'status' => 1,
                 'active_version' => true,
             ]);
 
