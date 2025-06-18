@@ -87,7 +87,7 @@ const createBlankProfile = () => {
     profile[fieldKey] = field.type === 'select_multiple' ? [] : '';
 
     if (field.hasCheckBox) {
-      profile[`${fieldKey}_isEnabled`] = false;
+      profile[`${fieldKey}_isEnabled`] = true;
     }
   });
 
