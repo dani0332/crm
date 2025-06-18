@@ -795,10 +795,43 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Command to bulk send policy documents
     Route::get('/run-policy-bulk-send', function () {
-        \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+        
+        // Check if user has admin role
+        if (!\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
 
-        return 'Command executed successfully!';
-    });
+        // Use cache lock to prevent multiple servers from executing simultaneously
+        $lockKey = 'policy_bulk_send_lock';
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 300); // 10 minutes lock
+
+        if (!$lock->get()) {
+            return response()->json([
+                'error' => 'Command is already running on another server. Please wait.',
+                'status' => 'locked'
+            ], 423); // 423 Locked
+        }
+
+        try {
+            // Execute the command
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+            
+            return response()->json([
+                'message' => 'Command executed successfully!',
+                'status' => 'completed'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Command execution failed: ' . $e->getMessage(),
+                'status' => 'failed'
+            ], 500);
+        } finally {
+            // Always release the lock
+            $lock->release();
+        }
+    })->name('run-policy-bulk-send');
+
+    
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously
