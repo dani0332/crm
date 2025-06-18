@@ -635,6 +635,7 @@ watch(
 );
 
 onMounted(() => {
+  console.log('REFACTORING CHANGES LOADED');
   if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
   }
