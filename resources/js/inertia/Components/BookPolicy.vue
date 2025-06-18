@@ -243,31 +243,38 @@ watch(
   },
 );
 
-const onUpdateBookPolicyDetails = isValid => {
-  if (!bp.isAllowedToUpdateCommission) {
-    notification.error({
-      title: commissionErrorMessage,
-      position: 'top',
-    });
-    return;
-  }
-  showInsufficientPaymentAlert();
-  if (isValid) {
-    bpForm.post('/quotes/update-booking-policy', {
-      preserveScroll: true,
-      onSuccess: () => {
-        bp.isEditing = false;
-      },
-      onError: errors => {
-        Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
+const onUpdateBookPolicyDetails = (isValid) => {
+  return new Promise((resolve, reject) => {
+    if (!bp.isAllowedToUpdateCommission) {
+      notification.error({
+        title: commissionErrorMessage,
+        position: 'top',
+      });
+      reject(false);
+      return;
+    }
+    showInsufficientPaymentAlert();
+    if (isValid) {
+      bpForm.post('/quotes/update-booking-policy', {
+        preserveScroll: true,
+        onSuccess: () => {
+          bp.isEditing = false;
+          resolve(true);
+        },
+        onError: errors => {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
           });
-        });
-      },
-    });
-  }
+          reject(false);
+        },
+      });
+    } else {
+      reject(false);
+    }
+  });
 };
 
 const isAllowedToSendPolicy = ref(false);
@@ -278,7 +285,20 @@ const modals = reactive({
   sendPolicyPopup: false,
 });
 
+let isBookingDetailsUpdated = computed(() => 
+  bpForm.vat_on_commission > 0 && bpForm.total_commission > 0 && bpForm.commission_percentage > 0
+);
+
 const confirmSendPolicy = () => {
+  if (!isBookingDetailsUpdated.value && (bpForm.commission_vat_applicable > 0 || bpForm.commission_vat_not_applicable > 0)) {
+    calculateCommission();
+    if (!bp.isAllowedToUpdateCommission) {
+      disableCommissionVatApplicable.value = false;
+      bp.isEditing = true;
+      return;
+    }
+  }
+
   if (page.props.bookPolicyDetails.isInsufficientPayment) {
     modals.sendPolicyPopup = true;
   } else {
@@ -286,8 +306,35 @@ const confirmSendPolicy = () => {
   }
 };
 
-const submitPolicy = () => {
+const executeUpdateBookingPolicy = async () => {
+  if(bpForm.commission_vat_applicable > 0 || bpForm.commission_vat_not_applicable > 0) {
+    calculateCommission();
+    try {
+      const result = await onUpdateBookPolicyDetails(true);
+      if (!result) {
+        modals.sendPolicyConfirm = false;
+        return false;
+      }
+      return true;
+    } catch (error) {
+      modals.sendPolicyConfirm = false;
+      return false;
+    }
+  }
+  return true;
+};
+
+const submitPolicy = async () => {
   isLoading.value = true;
+
+  let isSuccessfullyExecuted = true;
+  if (!isBookingDetailsUpdated.value) { 
+    isSuccessfullyExecuted = await executeUpdateBookingPolicy();
+    if (!isSuccessfullyExecuted) {
+      return;
+    }
+  }
+
   let url = '/quotes/send-booking-policy';
   let data = {
     send_policy_type: props.bookPolicyDetails.sendPolicyType,
@@ -297,7 +344,7 @@ const submitPolicy = () => {
     transaction_payment_status: bpForm.transaction_payment_status,
     modelType: props.modelType,
   };
-  axios
+  await axios
     .post(url, data)
     .then(response => {
       if (response.status == 200) {
