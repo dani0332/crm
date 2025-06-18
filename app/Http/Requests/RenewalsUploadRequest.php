@@ -35,6 +35,10 @@ class RenewalsUploadRequest extends FormRequest
             $rules['is_sic'] = 'required';
         }
 
+        if (request()->lob == QuoteTypeShortCode::HOM) {
+            $rules['lob'] = 'required';
+        }
+
         return $rules;
     }
 

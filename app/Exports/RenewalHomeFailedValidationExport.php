@@ -24,31 +24,7 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
     {
         $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
         $exportLeads = collect();
-        if ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::CREATE_LEADS) {
-            $firstRow = (object) [];
-            $firstRow->customer_name = 'Customer Name';
-            $firstRow->email = 'Customer e-mail';
-            $firstRow->mobile_no = 'Customer Mobile';
-            $firstRow->quote_type = 'Insurance Type';
-            $firstRow->insurer = 'Insurance Provider';
-            $firstRow->product = 'Product';
-            $firstRow->product_type = 'Product Type';
-            $firstRow->advisor = 'Advisor Email';
-            $firstRow->policy_number = 'Policy Number';
-            $firstRow->start_date = 'Policy Start Date';
-            $firstRow->end_date = 'Policy End date';
-            $firstRow->batch = 'Batch';
-            $firstRow->make = 'Car Make';
-            $firstRow->model = 'Car Model';
-            $firstRow->year = 'Model Year';
-            $firstRow->previous_advisor = 'Previous Advisor Email';
-            $firstRow->object = 'Object';
-            $firstRow->previous_quote_policy_premium = 'Gross Premium';
-            $firstRow->source = 'Sales channel';
-            $firstRow->notes = 'Notes';
-            $firstRow->errors = 'Errors';
-            $exportLeads->push($firstRow);
-        } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+        if ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             $firstRow = (object) [];
             $firstRow->customer_name = 'Customer Name';
             $firstRow->email = 'Customer e-mail';
@@ -76,12 +52,13 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
             $firstRow->notes = 'Notes';
             $firstRow->errors = 'Errors';
             $exportLeads->push($firstRow);
-        }
-        foreach ($failedLeads as $lead) {
-            if ($lead->data) {
-                $leadData = $lead->data;
-                $leadData['errors'] = $lead->validation_errors;
-                $exportLeads->push($leadData);
+
+            foreach ($failedLeads as $lead) {
+                if ($lead->data) {
+                    $leadData = $lead->data;
+                    $leadData['errors'] = $lead->validation_errors;
+                    $exportLeads->push($leadData);
+                }
             }
         }
 

@@ -24,13 +24,11 @@ class RenewalsUploadNonMotorRequest extends FormRequest
      */
     public function rules()
     {
-        $rules = [
+        return [
             'file_name' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
             'renewals_upload_type' => 'required',
             'lob' => 'required',
         ];
-
-        return $rules;
     }
 
     /**
@@ -39,7 +37,7 @@ class RenewalsUploadNonMotorRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            if (request()->hasFile('file_name') && ($existing = RenewalsUploadLeads::where('file_name', request()->file('file_name')->getClientOriginalName())->first())) {
+            if (request()->hasFile('file_name') && (RenewalsUploadLeads::where('file_name', request()->file('file_name')->getClientOriginalName())->first())) {
                 $validator->errors()->add('type', 'File already been uploaded. Please try again with different file.');
             }
         });

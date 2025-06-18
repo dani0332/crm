@@ -240,7 +240,7 @@ class RenewalsUploadService
         try {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
-            LoggerService::info($logPrefix.' In Progress Now');
+            LoggerService::info($logPrefix.' creating in Progress Now');
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
                 // start file import
@@ -272,7 +272,7 @@ class RenewalsUploadService
             return true;
         } catch (\Exception $exception) {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-            LoggerService::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.'uploading create renewals Process Failed. Error: '.$exception->getMessage());
 
             return false;
         }
@@ -305,7 +305,7 @@ class RenewalsUploadService
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' creating quotes all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
                     ->catch(function () use ($logPrefix, $renewalsUploadLead) {
@@ -313,7 +313,7 @@ class RenewalsUploadService
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.' creating quotes everything done');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -323,7 +323,7 @@ class RenewalsUploadService
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
-            LoggerService::error('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            LoggerService::error('BATCH: creating quotes one of batch is failed. Exception : '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
@@ -350,16 +350,16 @@ class RenewalsUploadService
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' updating quotes all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
                     ->catch(function () use ($logPrefix, $renewalsUploadLead) {
                         // Haystack failed
-                        LoggerService::info($logPrefix.' one of batch is failed. ');
+                        LoggerService::info($logPrefix.' updating quotes one of batch is failed. ');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.' updating quotes everything done');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -371,7 +371,7 @@ class RenewalsUploadService
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
-            LoggerService::error('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            LoggerService::error('BATCH: updating quotes one of batch is failed. Exception : '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
@@ -442,16 +442,16 @@ class RenewalsUploadService
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalStatusProcess) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' fetching plans all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
                     ->catch(function () use ($logPrefix, $renewalStatusProcess) {
                         // Haystack failed
-                        LoggerService::info($logPrefix.' one of batch is failed. ');
+                        LoggerService::info($logPrefix.' fetching plans one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix, $batch) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.' fetching plans everything done');
                         EmbeddedProductRepository::generateEPRenewal($batch);
                     })
                     ->allowFailures()
@@ -479,6 +479,7 @@ class RenewalsUploadService
      */
     public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
+        $logPrefix = 'FetchPlans FN: fetchQuotePlans';
         $leadData = (object) $renewalQuoteProcess->data;
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
@@ -486,7 +487,7 @@ class RenewalsUploadService
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
             if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
-                LoggerService::info('FetchPlans FN: fetchRenewalPlans'.' can not proceed with quote as payment is already in process. ');
+                LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
 
                 return false;
@@ -496,7 +497,9 @@ class RenewalsUploadService
                 $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
 
                 if (is_int($planResponse) && $planResponse == 200) {
-                    LoggerService::info('FetchPlans FN: fetchRenewalPlans'.' plan created successfully for UUID: '.$quote->uuid);
+                    LoggerService::info($logPrefix.' plan created successfully', extra: [
+                        'UUID' => $quote->uuid,
+                    ]);
                 } else {
                     $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
 
@@ -504,7 +507,9 @@ class RenewalsUploadService
                         $error = 'Error: '.$planResponse->message;
                     }
 
-                    LoggerService::info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid.' . fetch plans skipped');
+                    LoggerService::info($logPrefix.' plan creation failed. API Response ('.$error.')', extra: [
+                        'UUID' => $quote->uuid,
+                    ]);
                     RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
 
                     return false;
@@ -513,16 +518,18 @@ class RenewalsUploadService
 
             $plansResponse = $this->getPlans($quote->uuid);
             if ($plansResponse === true) {
-                LoggerService::info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
+                LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
+                    'UUID' => $quote->uuid,
+                ]);
                 // update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
             } else {
-                LoggerService::info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
+                LoggerService::info($logPrefix.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {
-            LoggerService::info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
+            LoggerService::info($logPrefix.' QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
@@ -552,7 +559,7 @@ class RenewalsUploadService
         $logPrefix = 'UAU FN: processUploadUpdate RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name;
 
         try {
-            LoggerService::info($logPrefix.' In Progress Now');
+            LoggerService::info($logPrefix.' uploading update leads in Progress Now');
 
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
@@ -599,7 +606,7 @@ class RenewalsUploadService
 
             return true;
         } catch (\Exception $exception) {
-            LoggerService::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.'uploading updates Process Failed. Error: '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
 
             return false;
@@ -1379,9 +1386,10 @@ class RenewalsUploadService
 
     public function renewalBatchEmailProcess($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
     {
+        $logPrefix = 'Renewals OCB Email FN: renewalBatchEmailProcess';
         try {
             $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
-            LoggerService::info('Renewals OCB Email started for uuid: '.$carQuote->uuid);
+            LoggerService::info($logPrefix.' started for uuid: '.$carQuote->uuid);
 
             if ($carQuote->quote_status_id != null && in_array($carQuote->quote_status_id, [
                 QuoteStatusEnum::PolicyIssued,
@@ -1404,7 +1412,7 @@ class RenewalsUploadService
                     ]],
                     'callSource' => 'imcrm',
                 ]);
-                LoggerService::info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
+                LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
                 $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, true) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -1427,12 +1435,12 @@ class RenewalsUploadService
                     return;
                 }
                 $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
-                info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
+                LoggerService::info($logPrefix.' Renewals OCB Email email template id: '.$emailTemplateId);
 
                 $previousAdvisor = $this->getPreviousAdvisor($carQuote);
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-                LoggerService::info('fn: renewalBatchEmailProcess Renewals OCB Email email data created');
+                LoggerService::info($logPrefix.' Renewals OCB Email email data created');
 
                 $this->attachPdfIfNeeded($carQuote, $listQuotePlans, $emailData);
 
@@ -1440,9 +1448,9 @@ class RenewalsUploadService
                 $this->handleResponse($responseCode, $carQuote, $renewalsBatchEmail, $renewalQuoteProcess);
             }
 
-            LoggerService::info('Renewals OCB Email completed for uuid: '.$carQuote->uuid);
+            LoggerService::info($logPrefix.' completed for uuid: '.$carQuote->uuid);
         } catch (\Exception $exception) {
-            LoggerService::error('Renewals OCB Email failed error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.' failed error: '.$exception->getMessage());
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
@@ -1457,19 +1465,19 @@ class RenewalsUploadService
     private function sendPCPFollowups($carQuote, $renewalsBatchEmail, $renewalQuoteProcess)
     {
         try {
-            LoggerService::info(self::class.' - Sending sendPCPFollowups followups email for lead: '.$carQuote->uuid.' | Time: '.now());
+            LoggerService::info(self::class.' - Sending sendPCPFollowups followups email for lead: '.$carQuote->uuid);
             if ($carQuote->quote_status_id == QuoteStatusEnum::NewLead || empty($carQuote->quote_status_id)) {
                 SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
-                LoggerService::info(self::class.' - SendPCPCarOCBEmailJob dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+                LoggerService::info(self::class.' - SendPCPCarOCBEmailJob dispatched for CAR-'.$carQuote->uuid);
             } else {
-                LoggerService::info(self::class.' -  SendPCPCarOCBEmailJob  already dispatched lead status  for CAR-'.$carQuote->uuid.' - Time: '.now());
+                LoggerService::info(self::class.' -  SendPCPCarOCBEmailJob  already dispatched lead status  for CAR-'.$carQuote->uuid);
             }
 
             if (empty($carQuote->pcp_flow_executed_at)) {
                 SendPCPFollowupsJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(3));
-                LoggerService::info(self::class.' -  SendPCPFollowupsJob dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+                LoggerService::info(self::class.' -  SendPCPFollowupsJob dispatched for CAR-'.$carQuote->uuid);
             } else {
-                LoggerService::info(self::class.' -  SendPCPFollowupsJob already dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+                LoggerService::info(self::class.' -  SendPCPFollowupsJob already dispatched for CAR-'.$carQuote->uuid);
             }
             $this->updateQuoteStatus($carQuote);
             $this->recordOcbSentDate($carQuote);
@@ -1484,8 +1492,6 @@ class RenewalsUploadService
     {
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
         LoggerService::info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
-
-        info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
 
         if (isset($carQuote->advisor_id)) {
             $advisor = $this->userService->getUserById($carQuote->advisor_id);
@@ -1566,7 +1572,7 @@ class RenewalsUploadService
     private function sendEmail($carQuote, $emailTemplateId, $emailData)
     {
         LoggerService::info('Renewals OCB Email sending email to email: '.$carQuote->email);
-        LoggerService::info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
+        LoggerService::info('fn: sendEmail - Renewals OCB Email email template id: '.$emailTemplateId);
         LoggerService::info('Renewals OCB Email check email data: '.json_encode($emailData));
 
         if (isset($carQuote->advisor_id)) {
@@ -2268,7 +2274,7 @@ class RenewalsUploadService
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' scheduling OCB email all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
 
                         if (($enableFollowups = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_AUTO_FOLLOWUP)->first())) {
@@ -2281,11 +2287,11 @@ class RenewalsUploadService
                         }
                     })
                     ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
-                        LoggerService::info($logPrefix.' one of batch is failed. ');
+                        LoggerService::info($logPrefix.' scheduling OCB email one of batch is failed. ');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.' scheduling OCB email everything done');
                     })
                     ->allowFailures()
                     ->withDelay(1)
@@ -2429,7 +2435,7 @@ class RenewalsUploadService
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                        LoggerService::info($logPrefix.' creating travel quotes everything done');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -2439,7 +2445,7 @@ class RenewalsUploadService
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
-            LoggerService::error('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            LoggerService::error('BATCH: creating travel quotes one of batch is failed. Exception : '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
@@ -2549,16 +2555,14 @@ class RenewalsUploadService
     public function getMonths(): array
     {
         $monthNames = array_map(fn ($m) => date('F', mktime(0, 0, 0, $m, 1)), range(1, 12));
-        $months = array_combine($monthNames, range(1, 12));
 
-        return $months;
+        return array_combine($monthNames, range(1, 12));
     }
 
     public function getNonMotorLobs(): array
     {
         return [
             quoteTypeCode::Home => QuoteTypeShortCode::HOM,
-            quoteTypeCode::Health => QuoteTypeShortCode::HEA,
         ];
     }
 
@@ -2573,14 +2577,10 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ]);
 
-        switch ($quoteType) {
-            case QuoteTypeShortCode::HOM:
-                $query->whereHas('personalQuote', function ($q) {
-                    $q->whereNull('paid_at');
-                });
-                break;
-            default:
-                break;
+        if ($quoteType == QuoteTypeShortCode::HOM) {
+            $query->whereHas('personalQuote', function ($q) {
+                $q->whereNull('paid_at');
+            });
         }
 
         return $query->groupBy('quote_id');
