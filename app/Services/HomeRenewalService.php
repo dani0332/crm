@@ -434,6 +434,8 @@ class HomeRenewalService extends RenewalsUploadService
 
     private function markAsOutdated(PersonalQuote $quote)
     {
+        LoggerService::info('fn: markAsOutdated - marking all fetch plans as outdated');
+
         // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
         return RenewalQuoteProcess::where([
             'quote_id' => $quote->id,
@@ -477,6 +479,8 @@ class HomeRenewalService extends RenewalsUploadService
 
     private function markAsProcessed(RenewalQuoteProcess $renewalQuoteProcess, PersonalQuote $quote)
     {
+        LoggerService::info('fn: markAsProcessed - marking renewal quote process as processed and assign quote id');
+
         return $renewalQuoteProcess->update([
             'status' => RenewalProcessStatuses::PROCESSED,
             'quote_id' => $quote->id,
@@ -496,10 +500,7 @@ class HomeRenewalService extends RenewalsUploadService
         $quoteData['personal_belongings_value_id'] = $this->getPersonalBelongingsAed($data);
         $quoteData['building_value'] = $this->getBuildingAed($data);
         $quoteData['building_aed'] = $this->getBuildingAed($data);
-        $quoteData['renewal_upload_insurance_provider_id'] = (! empty($data['insurance_provider'])) ? InsuranceProvider::where('code', $data['insurance_provider'])->first()->id : null;
-        $quoteData['renewal_upload_plan_code'] = (! empty($data['plan_name'])) ? $data['plan_name'] : null;
         $quoteData['has_claimed_losses'] = (! empty($data['claims_history']) && $data['claims_history'] == 'Yes') ? 1 : 0;
-        $quoteData['renewal_upload_renewal_premium'] = (! empty($data['premium'])) ? $data['premium'] : null;
         $quoteData['insurer_quote_number'] = (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null;
         $quoteData['previous_advisor_id'] = (! empty($data['previous_advisor_email'])) ? app(RenewalsAddonServices::class)->getUserInfo($data['previous_advisor_email']) : null;
         $quoteData['additional_notes'] = $data['notes'];
