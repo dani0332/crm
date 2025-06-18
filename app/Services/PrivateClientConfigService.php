@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use App\Models\CarMake;
 use App\Models\CurrencyType;
 use App\Models\InsuranceProvider;
@@ -219,5 +220,57 @@ class PrivateClientConfigService
         }
 
         return $responseData;
+    }
+
+    public function evaluateConfig(QuoteTypes $quoteType, int $nationlityId)
+    {
+        $config = PrivateClientConfig::activeVersion()
+            ->where('quote_type_id', $quoteType->id())
+            ->first();
+
+        if (! $config) {
+            return null;
+        }
+
+        $configData = $config->config;
+
+        $profiles = collect($configData && isset($configData['profiles']) ? $configData['profiles'] : []);
+
+        $profile = $profiles->whereIn('nationality_id', $nationlityId)->first();
+
+        $profile = $profile ?: $profiles->firstWhere('isDefaultCriteria', true);
+
+        if (! $profile) {
+            return null;
+        }
+
+        return match ($quoteType) {
+            QuoteTypes::CAR => $this->getCarConfiguration($profile),
+            default => null,
+        };
+    }
+
+    private function getCarConfiguration(array $profile)
+    {
+        $configuration = [];
+
+        $configuration['car_value'] = $this->resolveValue($profile, 'car_value');
+
+        $configuration['car_make_id'] = $this->resolveValue($profile, 'car_make_id');
+
+        $configuration['insurance_provider_id'] = $this->resolveValue($profile, 'insurance_provider_id');
+
+        $configuration['price_with_vat'] = $this->resolveValue($profile, 'price_with_vat');
+
+        return $configuration;
+    }
+
+    private function resolveValue(array $profile, string $key)
+    {
+        if (isset($profile[$key]) && $profile[$key]['isEnabled'] && ! empty($profile[$key]['value'])) {
+            return $profile[$key]['value'];
+        }
+
+        return null;
     }
 }

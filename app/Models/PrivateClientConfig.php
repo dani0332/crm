@@ -30,4 +30,9 @@ class PrivateClientConfig extends Model implements AuditableContract
             'auditable_type' => self::class,
         ];
     }
+
+    public function scopeActiveVersion($query)
+    {
+        $query->where('active_version', true);
+    }
 }
