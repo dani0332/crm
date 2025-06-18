@@ -54,7 +54,6 @@ class SaleDetailReportExport extends BaseReportsExport
     {
         return [
             $quote->code ?? 'N/A',
-            $quote->pcp_tag_formatted ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->department ?? 'N/A',
             $quote->transactions ? $quote->transactions : 'N/A',
@@ -91,6 +90,7 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->source ?? 'N/A',
             $quote->policy_booking_date ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 
