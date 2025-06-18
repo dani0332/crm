@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\ActivitesController;
@@ -794,11 +795,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    // Route::get('/run-policy-bulk-send', function () {
-    //     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+    Route::get('/run-policy-bulk-send', function () {
+        \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
 
-    //     return 'Command executed successfully!';
-    // });
+        return 'Command executed successfully!';
+    });
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously
