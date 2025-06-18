@@ -11,7 +11,6 @@ use App\Traits\QuoteTraits\PersonalQuotable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -278,6 +277,20 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Customer::class);
     }
 
+    // TODO: Remove this function and use latestInsured() instead
+    public function lastInsured()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // Foreign key on customer_insured table...
+            'id',               // Foreign key on insured table...
+            'id',               // Local key on personal_quotes table...
+            'insured_id'        // Local key on customer_insured table...
+        )
+            ->where('customer_insured.quote_type_id', $this->quote_type_id);
+    }
+
     public function leadHistory()
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
@@ -291,7 +304,7 @@ class PersonalQuote extends Model implements AuditableContract
     public function quoteRequestEntityMapping()
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski]);
+            ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Home]);
     }
 
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -345,16 +358,30 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
-    public function insured(): HasOneThrough
+    // Get all insured records for this quote (multiple AML screenings)
+    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // personal_quotes.id
+            'insured_id' // customer_insured.insured_id
+        );
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
+            'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // personal_quote_request.id
+            'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        );
+        )->latest('customer_insured.updated_at');
     }
 
     public function homeQuote()
