@@ -7,6 +7,7 @@ import { useVersionManagement } from '../composables/useVersionManagement.js';
 import { useFlashMessages } from '../composables/useFlashMessages.js';
 import { useUIState } from '../composables/useUIState.js';
 import { useConfigurationSave } from '../composables/useConfigurationSave.js';
+import { useNumericInput } from '../composables/useNumericInput.js';
 
 const props = defineProps({
   quoteType: {
@@ -112,6 +113,14 @@ const { loader, configForm, saveConfiguration } = useConfigurationSave(
   getProfiles,
   nationalityOptions,
 );
+
+// Numeric Input Handling
+const {
+  handleNumericKeypress,
+  handleNumericPaste,
+  isNumericField,
+  getNumericInputProps,
+} = useNumericInput();
 
 // Watchers and Initialization
 watch(
@@ -755,7 +764,7 @@ const handleLoadSpecificVersion = version => {
                           <x-input
                             v-model="profile[getFieldKey(field)]"
                             :placeholder="`Enter ${field.label.toLowerCase()}`"
-                            type="text"
+                            v-bind="getNumericInputProps(field)"
                             class="!mb-0"
                             :class="{
                               'border-red-300': getFieldError(
@@ -772,6 +781,16 @@ const handleLoadSpecificVersion = version => {
                                 !profile[`${getFieldKey(field)}_isEnabled`])
                             "
                             :tooltip="`Set the minimum ${field.label.toLowerCase()} for this profile.`"
+                            @keypress="
+                              isNumericField(field)
+                                ? handleNumericKeypress($event)
+                                : null
+                            "
+                            @paste="
+                              isNumericField(field)
+                                ? handleNumericPaste($event)
+                                : null
+                            "
                           >
                             <!-- Currency suffix for fields with currency -->
                             <template v-if="field.hasCurrency" #suffix>

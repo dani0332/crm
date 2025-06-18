@@ -94,9 +94,8 @@ export function useProfileValidation() {
         return `${field.label} must be a non-negative value`;
       }
 
-      // Check for reasonable maximum values (to prevent extremely large numbers)
-      if (numericValue > 999999999) {
-        return `${field.label} must be less than 1 billion`;
+      if (numericValue > 999999999999) {
+        return `${field.label} must be less than 1 trillion`;
       }
 
       // Check for too many decimal places (max 2 for currency fields)
