@@ -1119,6 +1119,7 @@ watch(
               :isLackingPayment="is_lacking_payment"
               :planText="planText"
               :capturePaymentValidationErrorMessage="capturePaymentValidationErrorMessage"
+              :isTransactionCaptureButtonEnabled="isTransactionCaptureButtonEnabled"
               
               @cancel-modal="createPaymentModal = !createPaymentModal"
               @aml-verification="openAmlVerificationModal"
