@@ -545,13 +545,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         })->where('id', '[A-Z0-9]+')->name('quotes.home.show');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
-        // Route::resource('home', CRUDController::class)->except(['show']);
-        // Route::resource('business', CRUDController::class);
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);
 
-        // Route::resource('travel', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -667,8 +664,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
         Route::get('get-insured-details', [AMLController::class, 'getInsuredDetails'])->name('get-insured-details');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
-        // Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
-        // Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
         Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
         Route::post('temp-skip-bridger-aml', [AMLController::class, 'tempSkipBridgerAML'])->name('temp-skip-bridger-aml');
@@ -693,7 +688,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/send-update-cancel', 'sendUpdateCancel')->name('send-update-cancel');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
-    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
         Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
@@ -737,7 +731,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('update-insured-kyc', [AMLController::class, 'insuredKycDetailsUpdate'])->name('update-insured-kyc');
     Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
     Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
-    // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
@@ -808,13 +801,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         echo 'Done';
     });
 
-    // Command to bulk send policy documents
-    // Route::get('/run-policy-bulk-send', function () {
-    //     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
-
-    //     return 'Command executed successfully!';
-    // });
-
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously
         \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
@@ -825,12 +811,3 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
     });
 });
-
-// Migration Not Required For Now 21 Nov 24
-// Route::get('run-insly-email-fix', function () {
-
-//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-//         Artisan::queue('InslyEmailFix:cron');
-//     }
-
-// });
