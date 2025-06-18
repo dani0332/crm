@@ -81,7 +81,6 @@ class HomeRenewalService extends RenewalsUploadService
 
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
-
         $logPrefix = get_class($this).' FN: updateQuote';
         $data = $renewalQuoteProcess->data;
 
@@ -121,41 +120,7 @@ class HomeRenewalService extends RenewalsUploadService
 
             $this->updateCustomer($quote, $customerData);
 
-            $isReAssignment = $quote->advisor_id != $advisorId;
-
-            $assignmentType = null;
-            if ($advisorId) {
-                $assignmentType = $isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
-            }
-
-            $quoteData = [
-                'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
-                'advisor_id' => $advisorId,
-                'assignment_type' => $assignmentType,
-                'renewal_batch_id' => $renewalQuoteProcess->renewal_batch_id,
-                'notes' => $data['notes'],
-                'insurer_quote_number' => (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null,
-            ];
-
-            if (! empty($customerData['first_name'])) {
-                $quoteData['first_name'] = $customerData['first_name'];
-            }
-
-            if (! empty($customerData['last_name'])) {
-                $quoteData['last_name'] = $customerData['last_name'];
-            }
-
-            if (! empty($customerData['email'])) {
-                $quoteData['email'] = $customerData['email'];
-            }
-
-            if (! empty($customerData['mobile_no'])) {
-                $quoteData['mobile_no'] = $customerData['mobile_no'];
-            }
-
-            if (! empty($data['start_date'])) {
-                $quoteData['previous_policy_start_date'] = $this->formatDate($data['start_date']);
-            }
+            $quoteData = $this->preparePersonalQuoteData($data, $quote, $advisorId, $renewalQuoteProcess, $customerData);
 
             LoggerService::info($logPrefix.' quote data setup to update');
 
@@ -186,19 +151,11 @@ class HomeRenewalService extends RenewalsUploadService
             }
 
             // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
-            RenewalQuoteProcess::where([
-                'quote_id' => $quote->id,
-                'status' => RenewalProcessStatuses::PROCESSED,
-                'type' => RenewalsUploadType::UPDATE_LEADS,
-                'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+            $this->markAsOutdated($quote);
 
             // mark renewal quote process as processed and assign quote id
-            $renewalQuoteProcess->update([
-                'status' => RenewalProcessStatuses::PROCESSED,
-                'quote_id' => $quote->id,
-                'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ]);
+            $this->markAsProcessed($renewalQuoteProcess, $quote);
+
 
             RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
             LoggerService::info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
@@ -316,34 +273,11 @@ class HomeRenewalService extends RenewalsUploadService
                     'quoteUID' => $quote->uuid,
                 ]);
 
-                $createManualPlan = app(HomeQuoteService::class)->createRenewalPlan($quote->uuid, $renewalQuoteProcess->data);
-
-                if (is_int($createManualPlan) && $createManualPlan == 200) {
-                    LoggerService::info("$logPrefix  - plan created successfully", extra: [
-                        'statusCode' => $createManualPlan,
-                    ]);
-
-                } else {
-                    $error = (is_string($createManualPlan)) ? ('Error: '.$createManualPlan) : '';
-
-                    if (isset($createManualPlan->message)) {
-                        $error = 'Error: '.$createManualPlan->message;
-                    }
-
-                    LoggerService::error("$logPrefix  - plan creation failed. fetch plans skipped UUID: $quote->uuid", extra: [
-                        'error' => $error,
-                        'statusCode' => $createManualPlan,
-                    ]);
-
-                    RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-
-                    return false;
-                }
+                $this->createManualPlan($quote, $renewalStatusProcess, $renewalQuoteProcess, $leadData);
 
             }
 
             // fetch plans
-
             $plansResponse = app(HomeQuoteService::class)->getQuotePlans($quote->uuid, [
                 'getLatestRating' => true,
             ]);
@@ -457,6 +391,100 @@ class HomeRenewalService extends RenewalsUploadService
             $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
+
+    private function preparePersonalQuoteData(array $data, PersonalQuote $quote, ?int $advisorId, RenewalQuoteProcess $renewalQuoteProcess, array $customerData): array
+    {
+        $isReAssignment = $quote->advisor_id != $advisorId;
+
+        $assignmentType = null;
+        if ($advisorId) {
+            $assignmentType = $isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
+        }
+
+        $quoteData = [
+            'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
+            'advisor_id' => $advisorId,
+            'assignment_type' => $assignmentType,
+            'renewal_batch_id' => $renewalQuoteProcess->renewal_batch_id,
+            'notes' => $data['notes'],
+            'insurer_quote_number' => (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null,
+        ];
+
+        if (! empty($customerData['first_name'])) {
+            $quoteData['first_name'] = $customerData['first_name'];
+        }
+
+        if (! empty($customerData['last_name'])) {
+            $quoteData['last_name'] = $customerData['last_name'];
+        }
+
+        if (! empty($customerData['email'])) {
+            $quoteData['email'] = $customerData['email'];
+        }
+
+        if (! empty($customerData['mobile_no'])) {
+            $quoteData['mobile_no'] = $customerData['mobile_no'];
+        }
+
+        if (! empty($data['start_date'])) {
+            $quoteData['previous_policy_start_date'] = $this->formatDate($data['start_date']);
+        }
+
+        return $quoteData;
+    }
+
+    private function markAsOutdated(PersonalQuote $quote)
+    {
+        // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+        return RenewalQuoteProcess::where([
+            'quote_id' => $quote->id,
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+        ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+    }
+
+    private function createManualPlan(PersonalQuote $quote, RenewalStatusProcess $renewalStatusProcess, RenewalQuoteProcess $renewalQuoteProcess){
+        
+        $logPrefix = get_class($this).' FN: createManualPlan';
+    
+        $createManualPlan = app(HomeQuoteService::class)->createRenewalPlan($quote->uuid, $renewalQuoteProcess->data);
+
+        if (is_int($createManualPlan) && $createManualPlan == 200) {
+            LoggerService::info("$logPrefix  - plan created successfully", extra: [
+                'statusCode' => $createManualPlan,
+            ]);
+
+        } else {
+            $error = (is_string($createManualPlan)) ? ('Error: '.$createManualPlan) : '';
+
+            if (isset($createManualPlan->message)) {
+                $error = 'Error: '.$createManualPlan->message;
+            }
+
+            LoggerService::error("$logPrefix  - plan creation failed. fetch plans skipped UUID: $quote->uuid", extra: [
+                'error' => $error,
+                'statusCode' => $createManualPlan,
+            ]);
+
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+
+            return false;
+        }
+
+        return true; 
+    }
+
+    private function markAsProcessed(RenewalQuoteProcess $renewalQuoteProcess, PersonalQuote $quote)
+    {
+        return $renewalQuoteProcess->update([
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'quote_id' => $quote->id, 
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+        ]);
+    }
+
+    
 
     private function createHomeQuoteData(array &$quoteData, array $data): array
     {
