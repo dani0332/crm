@@ -22,7 +22,6 @@ use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
-use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;

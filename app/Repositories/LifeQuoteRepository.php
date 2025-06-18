@@ -173,56 +173,56 @@ class LifeQuoteRepository extends BaseRepository
             'lifeQuote.purposeOfInsurance', 'lifeQuote.children', 'lifeQuote.currency', 'lifeQuote.insuranceTenure', 'lifeQuote.numberOfYears', 'lifeQuote.maritalStatus',
             'lifeQuote.paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
-            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob', 
-             'latestInsured' => function ($q) {
+            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob',
+            'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
             },
             'latestInsured.insuredKyc:id,insured_id',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
-        ])  ->with([
-                'advisor',
-                'quoteStatus',
-                'nationality',
-                'lifeQuote' => function ($q) {
-                    $q->with([
-                        'children',
-                        'currency',
-                        'maritalStatus',
-                        'purposeOfInsurance',
-                        'insuranceTenure',
-                        'numberOfYears',
-                        'previousAdvisor',
-                    ]);
-                },
-                'quoteDetail.lostReason:id,text',
-                'paymentStatus',
-                'customer.additionalContactInfo',
-                'transactionType',
-                'insuranceProvider',
-                'payments' => function ($q) {
-                    $q->with([
-                        'paymentMethod',
-                        'paymentStatus',
-                        'paymentSplits' => function ($q) {
-                            $q->with([
-                                'paymentStatus',
-                                'paymentMethod',
-                                'documents',
-                                'verifiedByUser',
-                                'processJob',
-                            ])->orderBy('sr_no', 'asc');
-                        },
-                    ]);
-                },
-                'documents' => function ($q) {
-                    $q->with('createdBy')->orderBy('created_at', 'desc');
-                },
-                'quoteRequestEntityMapping' => function ($entityMapping) {
-                    $entityMapping->with('entity');
-                },
-            ])
+        ])->with([
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'lifeQuote' => function ($q) {
+                $q->with([
+                    'children',
+                    'currency',
+                    'maritalStatus',
+                    'purposeOfInsurance',
+                    'insuranceTenure',
+                    'numberOfYears',
+                    'previousAdvisor',
+                ]);
+            },
+            'quoteDetail.lostReason:id,text',
+            'paymentStatus',
+            'customer.additionalContactInfo',
+            'transactionType',
+            'insuranceProvider',
+            'payments' => function ($q) {
+                $q->with([
+                    'paymentMethod',
+                    'paymentStatus',
+                    'paymentSplits' => function ($q) {
+                        $q->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                            'processJob',
+                        ])->orderBy('sr_no', 'asc');
+                    },
+                ]);
+            },
+            'documents' => function ($q) {
+                $q->with('createdBy')->orderBy('created_at', 'desc');
+            },
+            'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            },
+        ])
             ->select([
                 'personal_quotes.*',
                 'policy_expiry_date',

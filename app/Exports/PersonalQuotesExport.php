@@ -12,7 +12,6 @@ use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\Life\LifeQuoteService;
-use App\Traits\ExcelExportable;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
