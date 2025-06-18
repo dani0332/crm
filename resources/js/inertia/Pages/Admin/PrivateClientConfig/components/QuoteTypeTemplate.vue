@@ -62,7 +62,11 @@ const quoteTypeCode = computed(() => props.quoteType.code);
 const quoteTypeLabel = computed(() => props.quoteType.text);
 
 const configForm = useForm({
-  configurations: [],
+  quote_type_id: null,
+  config: [],
+  version: null,
+  created_at: null,
+  quote_type: null,
 });
 
 const isDisabled = computed(() => !isCurrentVersion.value);
@@ -404,52 +408,45 @@ const saveConfiguration = () => {
       return;
     }
 
-    // Prepare the configuration object
-    const configurationData = {
-      quote_type_id: props.quoteType.id,
-      config: {
-        profiles: validProfiles,
-        version: currentVersion.value ? currentVersion.value + 1 : 1,
-        created_at: new Date().toISOString(),
-        quote_type: props.quoteType.code,
-      },
-      create_new_version: true, // Signal backend to create new version
-      set_as_active: true, // Signal backend to set as active version
-    };
+    configForm.clearErrors();
 
-    configForm.reset();
-    Object.assign(configForm, configurationData);
+    configForm.quote_type_id = props.quoteType.id;
+    configForm.quote_type = props.quoteType.code;
+    configForm.version = currentVersion.value ? currentVersion.value + 1 : 1;
+    configForm.created_at = new Date().toISOString();
+    configForm.config = validProfiles;
 
     configForm.post(route('admin.private-client-config.upsert'), {
-      onSuccess: response => {
+      onSuccess: page => {
         loader.value = false;
         clearValidationErrors();
 
         // Update version information from response
-        if (response.props?.flash?.version) {
-          currentVersion.value = response.props.flash.version;
-          selectedVersion.value = response.props.flash.version;
-          isCurrentVersion.value = true;
+        const newVersion =
+          page.props?.flash?.version || configurationPayload.version;
+        currentVersion.value = newVersion;
+        selectedVersion.value = newVersion;
+        isCurrentVersion.value = true;
 
-          // Update versions list
-          if (!allVersions.value.includes(response.props.flash.version)) {
-            allVersions.value.push(response.props.flash.version);
-            allVersions.value.sort((a, b) => b - a); // Sort descending (newest first)
-          }
-
-          emit('versionLoaded', response.props.flash.version);
+        // Update versions list
+        if (!allVersions.value.includes(newVersion)) {
+          allVersions.value.push(newVersion);
+          allVersions.value.sort((a, b) => b - a); // Sort descending (newest first)
         }
 
+        emit('versionLoaded', newVersion);
         emit('configurationSaved');
+
+        console.log('Configuration saved successfully');
       },
       onError: errors => {
         loader.value = false;
         console.error('Save failed:', errors);
 
         // Show user-friendly error message
-        if (errors.config) {
+        if (errors.quote_type_id) {
           alert(
-            `Configuration save failed: ${errors.config[0] || 'Unknown error'}`,
+            `Configuration save failed: ${Array.isArray(errors.quote_type_id) ? errors.quote_type_id[0] : errors.quote_type_id}`,
           );
         } else {
           alert('Failed to save configuration. Please try again.');

@@ -85,12 +85,15 @@ class PrivateClientConfigController extends Controller
     public function upsert(Request $request)
     {
         try {
+            dd($request->all());
             // Basic validation
             $validated = $request->validate([
                 'configurations' => 'required|array',
                 'configurations.*.quote_type_id' => 'integer',
                 'configurations.*.profiles' => 'required|array',
             ]);
+
+            dd($validated);
 
             // Create new configuration version using service
             $this->configService->createNewConfigurationVersion($validated['configurations']);
