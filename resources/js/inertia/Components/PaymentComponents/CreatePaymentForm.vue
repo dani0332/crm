@@ -1423,7 +1423,7 @@
 		}
 	};
 
-	const calculateTotalAmount = () => {
+	const calculateTotalAmount = async () => {
 		const discount = discountValue.value;
 		if (
 			discount > 50 &&
@@ -1435,6 +1435,7 @@
 			// totalAmount.value = totalPrice.value - discount;
 			emit('update-total-amount', props.totalPrice - discount);
 		}
+		await new Promise(resolve => setTimeout(resolve, 10));
 		calculatePaymentBreakup(false);
 	};
 	

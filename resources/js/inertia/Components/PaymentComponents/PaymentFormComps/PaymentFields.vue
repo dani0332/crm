@@ -98,6 +98,10 @@
 
 	const localDiscountValue = ref(props.discountValue);
 
+	watch(() => props.discountValue, (newVal, oldVal) => {
+		localDiscountValue.value = newVal;
+	});
+
 	watch(localDiscountValue, (newVal, oldVal) => {
 		emit('handle-discount-value-change', newVal);
 	});
