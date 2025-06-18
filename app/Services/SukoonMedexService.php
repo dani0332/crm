@@ -42,12 +42,14 @@ class SukoonMedexService
 
     private $paymentPlan;
     private $amountDisclaimerText;
-    
+    private array $sukoonReqDocTypeCodes;
+
     private string $logPrefix = 'Sukoon Medex Service:';
     private array $errorMessages = [];
     
     public function __construct() {
         $this->sukoonRequestUrl = config('constants.SUKOON_API_URL')."/api/v".config('constants.SUKOON_API_VERSION');
+        $this->sukoonReqDocTypeCodes = [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE, QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER];
     }
 
     private function viewQuotePolicy()
@@ -68,17 +70,19 @@ class SukoonMedexService
             $this->quoteTypeId = $quoteTypeId;
             $this->transaction = $transaction;
 
+            $this->policyStatus = $transaction->policy_status ?? '';
+            $this->quoteNumber = $transaction->quote_policy ?? null;
+            $this->policyNumber = $transaction->certificate_number ?? null;
+
             LoggerService::startQuoteLogging($this->currentQuote);
 
             if (!in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike]))
                 throw new Exception('Only (Car / Bike) LOB are eligible');
 
+            $this->validateCustomerDetails($this->currentQuote);
+
             if(empty($this->sessionId))
                 $this->login();
-
-            $this->quoteNumber = $transaction->quote_policy ?? null;
-            $this->policyNumber = $transaction->certificate_number ?? null;
-            $this->policyStatus = $transaction->policy_status ?? null;
 
             $this->productSlug = 'afia_driver_medex'; // ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PRODUCT_SLUG)->value('value'); TODO::
             $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
@@ -118,53 +122,73 @@ class SukoonMedexService
     public function processPurchaseFlow()
     {
         try {
+            if($this->policyStatus == SukoonMedexEnum::STATUS_BOOKED) {
+                LoggerService::info("{$this->logPrefix} Already booked, skipping purchase flow");
+                return false;
+            }
+
             // Skipable Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
             // STEP #2 login (trigger by initiatePurchaseFlow)
 
-            // STEP #4 submitPersonalDetail
-            $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($this->currentQuote));
-            $this->syncSukoonData($this->transaction, $profileDetailResponse);
+            if(!SukoonMedexEnum::checkPolicyStatusPassed($this->policyStatus, SukoonMedexEnum::STATUS_QUOTED)) {
+                // STEP #4 submitPersonalDetail
+                $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($this->currentQuote));
+                $this->syncSukoonData($this->transaction, $profileDetailResponse);
 
-            // STEP #6 submitPlan
-            $submitPlanResponse = $this->submitPlan($this->prepareAdditionalData());
-            $this->syncSukoonData($this->transaction, $submitPlanResponse);
+                // STEP #6 submitPlan
+                $submitPlanResponse = $this->submitPlan($this->prepareAdditionalData());
+                $this->syncSukoonData($this->transaction, $submitPlanResponse);
 
-            // STEP #7 reviewSubmittedData
-            $reviewSubmittedDataResponse = $this->reviewSubmittedData();
-            $this->syncSukoonData($this->transaction, $reviewSubmittedDataResponse);
+                // STEP #7 reviewSubmittedData
+                $reviewSubmittedDataResponse = $this->reviewSubmittedData();
+                $this->syncSukoonData($this->transaction, $reviewSubmittedDataResponse);
 
-            // STEP #8 confirmSubmittedData
-            $this->confirmSubmittedData();
+                // STEP #8 confirmSubmittedData
+                $this->confirmSubmittedData();
+            }
 
-            // STEP #10 initiatePaymentProcess
-            $initPaymentResponse = $this->initiatePaymentProcess();
-            $this->syncSukoonData($this->transaction, $initPaymentResponse);
+            if(!SukoonMedexEnum::checkPolicyStatusPassed($this->policyStatus, SukoonMedexEnum::STATUS_PAYMENT_SUCCEED)) {
+                // STEP #10 initiatePaymentProcess
+                $initPaymentResponse = $this->initiatePaymentProcess();
+                $this->syncSukoonData($this->transaction, $initPaymentResponse);
 
-            // STEP #11 completeInvoicePayment
-            $invoicePaymentResponse = $this->completeInvoicePayment($this->transaction);
-            $this->syncSukoonData($this->transaction, $invoicePaymentResponse);
+                // STEP #11 completeInvoicePayment
+                $invoicePaymentResponse = $this->completeInvoicePayment($this->transaction);
+                $this->syncSukoonData($this->transaction, $invoicePaymentResponse);
+                $this->transaction->documents()->whereIn('document_type_code', $this->sukoonReqDocTypeCodes)->delete();
+                $this->transaction->load('documents');
 
-            // STEP #12 getPolicyScheduleCoi 
-            $this->getPolicyScheduleCoi();
+                // STEP #12 getPolicyScheduleCoi 
+                // if(in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $missingReqDocTypes))
+                $this->getPolicyScheduleCoi();
+    
+                // STEP #13 getCustomerTaxInvoice
+                $this->getCustomerTaxInvoice();
+            }
 
-            // STEP #13 getCustomerTaxInvoice
-            $this->getCustomerTaxInvoice();
+            $missingReqDocTypes = $this->getMissingReqDocTypes();
+            if(!empty($missingReqDocTypes)) {
+                // STEP #14 listGeneratedDocument
+                $listGeneratedDocumentResponse = $this->listGeneratedDocument();
 
-            // STEP #14 listGeneratedDocument
-            $listGeneratedDocumentResponse = $this->listGeneratedDocument();
+                // STEP #15 downloadDocument
+                if(count($listGeneratedDocumentResponse['documents']) > 0)
+                    $savedDocsResponse = $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
+                    if(($savedDocsResponse['created'] + $savedDocsResponse['updated']) > 0)
+                        $this->transaction->load('documents');
+            }
 
-            // STEP #15 downloadDocument
-            $this->saveGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
-            
             // STEP #16 viewQuotePolicy
             $quotePolicyResponse = $this->viewQuotePolicy();
             $this->updateTransaction($this->transaction, $quotePolicyResponse);
 
-            EmbeddedProductRepository::sendDocument([
-                'epId' => $this->transaction->product->embeddedProduct->id ?? null,
-                'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
-                'quoteId' => $this->currentQuote->id,
-            ]);
+            if(!$this->transaction->is_document_sent) {
+                EmbeddedProductRepository::sendDocument([
+                    'epId' => $this->transaction->product->embeddedProduct->id ?? null,
+                    'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
+                    'quoteId' => $this->currentQuote->id,
+                ]);
+            }
 
         } catch (Exception $e) {
             $this->logFailure("{$this->logPrefix} processPurchaseFlow Failed", $e->getMessage(), [
@@ -220,17 +244,17 @@ class SukoonMedexService
             $this->policyStatus = $data['policy_status'] = Str::slug($paymentData['status'], '_'); // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
 
         // Make sure no any required documents are missing & policyStatus is payment_succeeded
-        if(empty($this->checkMissingReqDocTypes()) && $this->policyStatus == SukoonMedexEnum::STATUS_PAYMENT_SUCCEED)
+        if(empty($this->getMissingReqDocTypes()) && $this->policyStatus == SukoonMedexEnum::STATUS_PAYMENT_SUCCEED)
             $this->policyStatus = $data['policy_status'] = SukoonMedexEnum::STATUS_BOOKED;
 
+        LoggerService::info("{$this->logPrefix} policyStatus: {$this->policyStatus}");
         return $transaction->update($data);
     }
 
     // Check missing required documents types
-    public function checkMissingReqDocTypes()
+    public function getMissingReqDocTypes()
     {
-        $medexRequiredDocumentTypeCodes = [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE, QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER];
-        return array_diff($medexRequiredDocumentTypeCodes, $this->transaction->documents->pluck('document_type')->toArray());
+        return array_diff($this->sukoonReqDocTypeCodes, $this->transaction->documents->pluck('document_type_code')->toArray());
     }
 
     /**
@@ -813,6 +837,12 @@ class SukoonMedexService
             $generatedDocCount = count($documents ?? []);
             LoggerService::info("{$this->logPrefix} Documents saved: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
                 "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}");
+
+            return [
+                'created' => $createdDocCount,
+                'updated' => $updatedDocCount,
+                'skipped' => $skippedDocCount,
+            ];
 
         } catch (Exception $e) {
             throw $e;

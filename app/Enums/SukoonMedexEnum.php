@@ -54,6 +54,22 @@ final class SukoonMedexEnum extends Enum
     // const STEP_LIST_PAYMENT_GATEWAYS = 9; // GET, Skiped
 
 
+    public static function getRemainingPolicyStatus(string $policyStatus = ''): array
+    {
+        return match($policyStatus) {
+            self::STATUS_NEW_POLICY => [self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
+            self::STATUS_QUOTED => [self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
+            self::STATUS_PAYMENT_SUCCEED => [self::STATUS_BOOKED],
+            self::STATUS_BOOKED => [],
+            default => [self::STATUS_NEW_POLICY, self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
+        };
+    }
+
+    public static function checkPolicyStatusPassed(string $policyStatus = '', string $passedPolicyStatus = ''): bool
+    {
+        return !in_array($passedPolicyStatus, self::getRemainingPolicyStatus($policyStatus));
+    }
+
     public static function getName(int $stepNumber): string
     {
         return self::STEPS_NAME[$stepNumber] ?? "";
