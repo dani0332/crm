@@ -58,6 +58,7 @@ const {
 const {
   profiles,
   highlightedProfileIndex,
+  isUserEditing,
   getFieldKey,
   createBlankProfile,
   addProfile,
@@ -125,8 +126,19 @@ const {
 // Watchers and Initialization
 watch(
   () => props.initialConfig,
-  () => {
-    initializeProfiles(props.initialConfig);
+  (newConfig, oldConfig) => {
+    // Only reinitialize if the configuration actually changed
+    // and not just due to reactive updates from user interactions
+    if (
+      newConfig &&
+      oldConfig &&
+      JSON.stringify(newConfig) !== JSON.stringify(oldConfig)
+    ) {
+      initializeProfiles(newConfig);
+    } else if (!oldConfig && newConfig) {
+      // Initial load
+      initializeProfiles(newConfig);
+    }
   },
   { deep: true, immediate: true },
 );
@@ -159,6 +171,17 @@ const handleChangeVersion = newVersion => {
 
 const handleLoadSpecificVersion = version => {
   loadSpecificVersion(version, profiles);
+};
+
+// Handler for nationality changes to prevent reinitialization
+const handleNationalityChange = (profileIndex, newNationalities) => {
+  isUserEditing.value = true;
+  profiles.value[profileIndex].nationalityIds = newNationalities;
+
+  // Reset editing flag after a short delay
+  setTimeout(() => {
+    isUserEditing.value = false;
+  }, 100);
 };
 </script>
 
@@ -581,7 +604,10 @@ const handleLoadSpecificVersion = version => {
 
                 <div v-if="!profile.isDefaultCriteria">
                   <x-select
-                    v-model="profile.nationalityIds"
+                    :modelValue="profile.nationalityIds"
+                    @update:modelValue="
+                      handleNationalityChange(profileIndex, $event)
+                    "
                     :options="nationalityOptions"
                     placeholder="Select nationalities..."
                     multiple
@@ -604,11 +630,12 @@ const handleLoadSpecificVersion = version => {
                     >
                       <ui-select-actions
                         @select-all="
-                          profile.nationalityIds = nationalityOptions.map(
-                            item => item.value,
+                          handleNationalityChange(
+                            profileIndex,
+                            nationalityOptions.map(item => item.value),
                           )
                         "
-                        @clear="profile.nationalityIds = []"
+                        @clear="handleNationalityChange(profileIndex, [])"
                       />
                     </template>
                   </x-select>

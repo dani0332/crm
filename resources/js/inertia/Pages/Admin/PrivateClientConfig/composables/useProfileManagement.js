@@ -7,6 +7,7 @@ export function useProfileManagement(
 ) {
   const profiles = ref([]);
   const highlightedProfileIndex = ref(-1);
+  const isUserEditing = ref(false); // Flag to track user editing state
 
   const getFieldKey = field => {
     if (
@@ -72,6 +73,7 @@ export function useProfileManagement(
 
   const toggleDefaultCriteria = (profileIndex, newValue) => {
     const profile = profiles.value[profileIndex];
+    isUserEditing.value = true; // Mark that user is actively editing
 
     if (newValue) {
       // If setting this profile as default, unmark all other defaults first
@@ -95,9 +97,19 @@ export function useProfileManagement(
     // Clear validation errors for the current profile
     clearFieldError(profileIndex, 'isDefaultCriteria');
     clearFieldError(profileIndex, 'nationalityIds');
+
+    // Reset editing flag after a short delay
+    setTimeout(() => {
+      isUserEditing.value = false;
+    }, 100);
   };
 
   const initializeProfiles = initialConfig => {
+    // Don't reinitialize if user is actively editing
+    if (isUserEditing.value) {
+      return;
+    }
+
     if (
       initialConfig &&
       initialConfig.profiles &&
@@ -279,6 +291,7 @@ export function useProfileManagement(
   return {
     profiles,
     highlightedProfileIndex,
+    isUserEditing,
     getFieldKey,
     createBlankProfile,
     addProfile,
