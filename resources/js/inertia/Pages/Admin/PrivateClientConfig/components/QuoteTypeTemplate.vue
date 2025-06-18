@@ -34,24 +34,21 @@ const props = defineProps({
 
 const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
-// Flash messages from Inertia
 const page = usePage();
 const flashSuccess = computed(() => page.props.flash?.success);
 const flashError = computed(() => page.props.flash?.error);
 const showFlashMessage = ref(false);
 
-// Watch for flash messages
 watch([flashSuccess, flashError], () => {
   if (flashSuccess.value || flashError.value) {
     showFlashMessage.value = true;
-    // Auto-hide after 5 seconds
+
     setTimeout(() => {
       showFlashMessage.value = false;
     }, 5000);
   }
 });
 
-// Use validation composable
 const {
   validationErrors,
   showValidationSummary,
@@ -181,7 +178,7 @@ const loadSpecificVersion = async version => {
         params: {
           quote_type_id: props.quoteType.id,
           version,
-          _t: Date.now(), // Cache busting
+          _t: Date.now(),
         },
       },
     );
@@ -200,7 +197,6 @@ const loadSpecificVersion = async version => {
       isCurrentVersion.value = response.data.isCurrentVersion;
     }
 
-    // Load configuration data
     if (
       response.data.config &&
       response.data.config.profiles &&
@@ -220,13 +216,22 @@ const loadSpecificVersion = async version => {
               : field.fieldName;
 
           formattedProfile[fieldKey] =
-            profile[fieldKey] || (field.type === 'select_multiple' ? [] : '');
+            profile[fieldKey] ||
+            profile[field.fieldName] ||
+            (field.type === 'select_multiple' ? [] : '');
 
           if (field.hasCheckBox) {
             formattedProfile[`${fieldKey}_isEnabled`] =
               profile[`${fieldKey}_isEnabled`] !== undefined
                 ? profile[`${fieldKey}_isEnabled`]
-                : true; // Default to enabled if not specified
+                : profile[`${field.fieldName}_isEnabled`] !== undefined
+                  ? profile[`${field.fieldName}_isEnabled`]
+                  : true; // Default to enabled if not specified
+          }
+
+          if (field.hasCurrency && profile[`${field.fieldName}_currencyId`]) {
+            // Currency info is stored but we don't need to put it in the profile
+            // as it's already in the field definition
           }
         });
 
@@ -271,13 +276,23 @@ const initializeProfiles = () => {
             : field.fieldName;
 
         formattedProfile[fieldKey] =
-          profile[fieldKey] || (field.type === 'select_multiple' ? [] : '');
+          profile[fieldKey] ||
+          profile[field.fieldName] ||
+          (field.type === 'select_multiple' ? [] : '');
 
         if (field.hasCheckBox) {
           formattedProfile[`${fieldKey}_isEnabled`] =
             profile[`${fieldKey}_isEnabled`] !== undefined
               ? profile[`${fieldKey}_isEnabled`]
-              : true; // Default to enabled if not specified
+              : profile[`${field.fieldName}_isEnabled`] !== undefined
+                ? profile[`${field.fieldName}_isEnabled`]
+                : true; // Default to enabled if not specified
+        }
+
+        // Handle currency information if present in saved data
+        if (field.hasCurrency && profile[`${field.fieldName}_currencyId`]) {
+          // Currency info is stored but we don't need to put it in the profile
+          // as it's already in the field definition
         }
       });
 
@@ -384,7 +399,10 @@ watch(
 );
 
 const getFieldKey = field => {
-  if (field.hasCurrency && field.currencyId) {
+  if (
+    field.hasCurrency &&
+    props.fields.filter(f => f.fieldName === field.fieldName).length > 1
+  ) {
     return `${field.fieldName}_${field.currencyId}`;
   }
   return field.fieldName;
@@ -480,7 +498,8 @@ const getProfiles = () => {
       if (profile.isDefaultCriteria) {
         // For default profiles, just check if at least one field has a value
         return props.fields.some(field => {
-          const value = profile[field.fieldName];
+          const fieldKey = getFieldKey(field);
+          const value = profile[fieldKey];
           if (Array.isArray(value)) {
             return value.length > 0;
           }
@@ -494,7 +513,8 @@ const getProfiles = () => {
       }
 
       return props.fields.some(field => {
-        const value = profile[field.fieldName];
+        const fieldKey = getFieldKey(field);
+        const value = profile[fieldKey];
         if (Array.isArray(value)) {
           return value.length > 0;
         }
@@ -508,10 +528,17 @@ const getProfiles = () => {
       };
 
       props.fields.forEach(field => {
-        cleanProfile[field.fieldName] = profile[field.fieldName];
+        const fieldKey = getFieldKey(field);
+        cleanProfile[field.fieldName] = profile[fieldKey]; // Map from internal key to field name
+
+        // Include currency information for fields that have currency
+        if (field.hasCurrency && field.currencyId) {
+          cleanProfile[`${field.fieldName}_currencyId`] = field.currencyId;
+        }
+
         if (field.hasCheckBox) {
           cleanProfile[`${field.fieldName}_isEnabled`] =
-            profile[`${field.fieldName}_isEnabled`];
+            profile[`${fieldKey}_isEnabled`]; // Use fieldKey for checkbox too
         }
       });
 
