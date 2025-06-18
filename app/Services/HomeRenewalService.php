@@ -156,7 +156,6 @@ class HomeRenewalService extends RenewalsUploadService
             // mark renewal quote process as processed and assign quote id
             $this->markAsProcessed($renewalQuoteProcess, $quote);
 
-
             RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
             LoggerService::info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
@@ -444,10 +443,11 @@ class HomeRenewalService extends RenewalsUploadService
         ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
     }
 
-    private function createManualPlan(PersonalQuote $quote, RenewalStatusProcess $renewalStatusProcess, RenewalQuoteProcess $renewalQuoteProcess){
-        
+    private function createManualPlan(PersonalQuote $quote, RenewalStatusProcess $renewalStatusProcess, RenewalQuoteProcess $renewalQuoteProcess)
+    {
+
         $logPrefix = get_class($this).' FN: createManualPlan';
-    
+
         $createManualPlan = app(HomeQuoteService::class)->createRenewalPlan($quote->uuid, $renewalQuoteProcess->data);
 
         if (is_int($createManualPlan) && $createManualPlan == 200) {
@@ -472,19 +472,17 @@ class HomeRenewalService extends RenewalsUploadService
             return false;
         }
 
-        return true; 
+        return true;
     }
 
     private function markAsProcessed(RenewalQuoteProcess $renewalQuoteProcess, PersonalQuote $quote)
     {
         return $renewalQuoteProcess->update([
             'status' => RenewalProcessStatuses::PROCESSED,
-            'quote_id' => $quote->id, 
+            'quote_id' => $quote->id,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ]);
     }
-
-    
 
     private function createHomeQuoteData(array &$quoteData, array $data): array
     {
