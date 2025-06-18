@@ -40,6 +40,8 @@ use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
+use App\Services\CsvExportService;
+use App\Services\EmailExportService;
 use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -57,6 +59,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singletonIf(LeadsCountService::class, function ($app) {
             return new LeadsCountService;
         });
+
+        // Register new CSV export services
+        $this->app->singleton(CsvExportService::class);
+        $this->app->singleton(EmailExportService::class);
     }
 
     /**

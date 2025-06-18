@@ -142,12 +142,7 @@ class TravelQuoteService extends BaseService
             'tqr.kyc_decision',
             'tqr.is_documents_valid',
             // 'tqr.prefill_plan_id',
-            DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',
@@ -204,7 +199,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
             ->leftJoin('renewal_batches as rb', 'tqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('embedded_transactions as et', 'et.code', 'tqr.code')
@@ -215,7 +210,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id)', [QuoteTypeId::Travel]);
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Travel]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -398,7 +393,7 @@ class TravelQuoteService extends BaseService
     {
         $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
         $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
-        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams, useJoin: false);
 
         return $query;
 
@@ -645,6 +640,8 @@ class TravelQuoteService extends BaseService
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
+                } elseif ($item == 'payment_status_id' && ! empty($request[$item])) {
+                    $this->query->where('py.payment_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
                     if (in_array($item, $skipped)) {

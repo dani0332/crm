@@ -1,0 +1,122 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Home Renewals Feature Documentation
+
+
+## Rule: Processing Steps for Home Renewals
+
+**Type:** Agent Requested
+**Trigger:** Entire renewal process flow
+**Description:** The complete home renewals process follows these steps:
+1. Upload renewal file to Azure storage via `uploadRenewalsFile()`
+2. Create renewal lead record via `createRenewalsLead()`
+3. Process upload and update via `processUploadUpdate()`
+4. Validate uploaded leads against business rules via `uploadedLeadsValidation()`
+5. Update quotes with provided information via `updateQuotes()` and `updateQuote()`
+6. Fetch plans for validated renewals via `fetchRenewalPlans()` and `fetchPlans()`
+7. Schedule OCB emails for processed renewals via `scheduleHomeRenewalsOcbEmails()` and `scheduleHomeOCB()`
+8. Send OCB emails via `HomeRenewalBatchEmailJob`
+9. Track completion and handle errors throughout the process 
+
+
+
+## Rule: Home Renewals Validation Rules
+**Type:** Agent Requested
+**Trigger:** `RenewalsUploadService->uploadedLeadsValidation()`
+**Description:** Validation rules for home renewals uploads check for:
+1. Valid location area in the SubArea table
+2. Valid insurance type ('HOM')
+3. Valid possession type from RangeLookup with key 'possession_type'
+4. Valid accommodation type from RangeLookup with key 'accommodation_type'
+5. Valid owner occupancy type from RangeLookup with key 'owner_occupancy_type' when required
+6. Valid coverage type from RangeLookup with key 'coverage_type'
+7. Valid contents value from RangeLookup with key 'content_values' when required
+8. Valid personal belongings value from RangeLookup with key 'personal_belonging_values' when required
+9. Required building value when applicable based on coverage type
+10. Valid insurance provider, plan name, and premium when premium is provided
+11. Valid previous advisor email when provided
+
+
+
+## Rule: File Format Requirements
+**Type:** Agent Requested
+**Trigger:** `app/Imports/UploadAndUpdateHomeImport.php`
+**Description:** Home renewal upload files must be in Excel format with specific columns for customer information, property details, coverage values, and renewal information. The file must include:
+- Customer name, email, and mobile number
+- Policy number and expiry date
+- Location area and insurance type
+- Possession type and accommodation type
+- Coverage type and relevant values (building, contents, personal belongings)
+- Current insurance provider and renewal details if available
+
+## Rule: Required Fields Based on Coverage Type
+**Type:** Agent Requested
+**Trigger:** `RenewalsUploadService.php->uploadedLeadsValidation()` - coverage type validation
+**Description:** The required fields vary based on the selected coverage type:
+1. Building Only: Building value is required, contents and personal belongings should not be provided
+2. Contents Only: Contents value is required, building should not be provided
+3. Building and Contents: Building and contents values are required
+4. Contents and Personal Belongings: Contents and personal belongings values are required, building should not be provided
+5. Building, Contents and Personal Belongings: All three values are required
+
+
+
+## Rule: Home Renewals Upload and Update Process
+**Type:** Agent Requested
+**Trigger:** `HomeRenewalService->updateQuote()` and `HomeRenewalService->updateQuotes()`
+**Description:** These methods handle the update of existing home insurance quotes during the renewals process. They retrieve quotes by policy number and end date, then update the quote data with the new information in personal)quotes and home_quote_request provided in the upload file. The process includes handling customer data, property information, and policy details. The methods are triggered during the renewal upload and update process.
+
+
+## Rule: Home Renewals Fetch Plans Process
+**Type:** Agent Requested
+**Trigger:** `HomeRenewalService->fetchRenewalPlans()` and `HomeRenewalService->fetchPlans()`
+**Description:** The fetch plans process retrieves plans for home renewal quotes. It selects quotes with status PROCESSED, type UPDATE_LEADS, and fetch_plans_status PENDING from a specific batch. If skip_plans flag is set on the renewal upload lead, fetching is skipped. For each eligible quote, it creates a manual plan if insurance provider, plan name, and premium are provided, then fetches plans using HomeQuoteService. The process tracks successful and failed fetches, and upon completion automatically triggers OCB email scheduling.
+
+
+
+## Rule: Home Renewals Batch Email Process
+**Type:** Agent Requested
+**Trigger:** `HomeRenewalService->scheduleHomeRenewalsOcbEmails()` and `HomeRenewalService->scheduleHomeOCB()`
+**Description:** The OCB email process targets quotes with status PLANS_FETCHED, fetch_plans_status FETCHED, and email_sent 0 from a specific batch. It only includes unpaid quotes. It creates a RenewalsBatchEmails record for tracking, processes quotes in batches of 50, and dispatches HomeRenewalBatchEmailJob for each eligible quote. The process tracks sent and failed emails, and marks the batch as COMPLETED when all jobs finish.
+
+## Rule: Home Renewals Email Job
+**Type:** Agent Requested
+**Trigger:** `app/Jobs/Renewals/HomeRenewalBatchEmailJob.php`
+**Description:** This job sends OCB emails for home renewal quotes. It retrieves the quote, builds email data including customer details and plans, sends the email through the appropriate service, updates the quote status to QUOTED if applicable, records the OCB sent date, and updates tracking counters for sent and failed emails. The job includes error handling and logging.
+
+
+## Rule: Home Renewal Coverage Type Validation
+**Type:** Agent Requested
+**Trigger:** `HomeRenewalService->getContentsAed()`, `HomeRenewalService->getPersonalBelongingsAed()`, and `HomeRenewalService->getBuildingAed()`
+**Description:** These methods validate and extract values based on the coverage type:
+1. For Building Only: building value is required, contents and personal belongings should not be provided
+2. For Contents Only: contents value is required, building and personal belongings should not be provided
+3. For Building and Contents: building and contents values are required, personal belongings should not be provided
+4. For Contents and Personal Belongings: contents and personal belongings values are required, building should not be provided
+5. For Building, Contents and Personal Belongings: all three values are required
+
+
+
+## Rule: Home Renewal Manual Plan Creation
+**Type:** Agent Requested
+**Trigger:** `HomeRenewalService->createRenewalPlan()`
+**Description:** Creates a manual plan for home renewal quotes when insurance provider, plan name, and premium are provided. The plan is created with the specified premium and linked to the quote. This process runs before regular plan fetching to ensure preferred plans are included in the results.
+
+
+
+
+## Rule: Home Renewal Quote Status Update
+**Type:** Agent Requested
+**Trigger:** `app/Jobs/Renewals/HomeRenewalBatchEmailJob.php` - status update logic
+**Description:** After sending OCB email, the quote status is updated to QUOTED if certain conditions are met. This ensures quotes are properly tracked in the workflow and advisors can see which quotes have received OCB emails. The update includes recording the OCB sent date in the quote details.
+
+
+
+## Rule: Home Renewal Batch Organization
+**Type:** Agent Requested
+**Trigger:** `RenewalsUploadService->validateBatch()`
+**Description:** Home renewals are organized into batches based on the week and year of the policy end date. The batch name follows the format "W{weekNumber}-{year}" (e.g., "W42-2023"). This ensures quotes with similar expiry dates are processed together and allows for tracking of renewal batches through the workflow.
+

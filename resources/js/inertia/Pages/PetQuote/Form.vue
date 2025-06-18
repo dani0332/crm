@@ -45,6 +45,12 @@ function onSubmit(isValid) {
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }
@@ -142,6 +148,9 @@ function onSubmit(isValid) {
           ]"
           class="w-full"
           label="GENDER"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.customer_gender"
         />
         <x-select
           v-model="quoteForm.pet_type_id"

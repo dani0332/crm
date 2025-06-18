@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalsUploadLeads;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -58,7 +59,9 @@ class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+        ], exception: $exception);
         $this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
         RenewalsUploadLeads::where('id', $this->renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
     }
