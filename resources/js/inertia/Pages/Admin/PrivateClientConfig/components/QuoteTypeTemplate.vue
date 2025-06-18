@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import CollapseIcon from './CollapseIcon.vue';
 import { useProfileValidation } from '../composables/useProfileValidation.js';
@@ -33,6 +33,23 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['versionLoaded', 'configurationSaved']);
+
+// Flash messages from Inertia
+const page = usePage();
+const flashSuccess = computed(() => page.props.flash?.success);
+const flashError = computed(() => page.props.flash?.error);
+const showFlashMessage = ref(false);
+
+// Watch for flash messages
+watch([flashSuccess, flashError], () => {
+  if (flashSuccess.value || flashError.value) {
+    showFlashMessage.value = true;
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      showFlashMessage.value = false;
+    }, 5000);
+  }
+});
 
 // Use validation composable
 const {
@@ -421,7 +438,6 @@ const saveConfiguration = () => {
         loader.value = false;
         clearValidationErrors();
 
-        // Update version information from response
         const newVersion =
           page.props?.flash?.version || configurationPayload.version;
         currentVersion.value = newVersion;
@@ -431,7 +447,7 @@ const saveConfiguration = () => {
         // Update versions list
         if (!allVersions.value.includes(newVersion)) {
           allVersions.value.push(newVersion);
-          allVersions.value.sort((a, b) => b - a); // Sort descending (newest first)
+          allVersions.value.sort((a, b) => b - a);
         }
 
         emit('versionLoaded', newVersion);
@@ -442,21 +458,11 @@ const saveConfiguration = () => {
       onError: errors => {
         loader.value = false;
         console.error('Save failed:', errors);
-
-        // Show user-friendly error message
-        if (errors.quote_type_id) {
-          alert(
-            `Configuration save failed: ${Array.isArray(errors.quote_type_id) ? errors.quote_type_id[0] : errors.quote_type_id}`,
-          );
-        } else {
-          alert('Failed to save configuration. Please try again.');
-        }
       },
     });
   } catch (error) {
     loader.value = false;
     console.error(`Error saving ${quoteTypeCode.value} configuration:`, error);
-    alert('An unexpected error occurred while saving. Please try again.');
   }
 };
 
@@ -498,6 +504,93 @@ const getProfiles = () => {
 <template>
   <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
+      <!-- Flash Messages -->
+      <div
+        v-if="showFlashMessage && (flashSuccess || flashError)"
+        class="mb-6 p-4 rounded-md border"
+        :class="{
+          'bg-green-50 border-green-200': flashSuccess,
+          'bg-red-50 border-red-200': flashError,
+        }"
+      >
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <i
+              class="text-lg"
+              :class="{
+                'ri-check-circle-line text-green-400': flashSuccess,
+                'ri-error-warning-line text-red-400': flashError,
+              }"
+            ></i>
+          </div>
+          <div class="ml-3 flex-1">
+            <p
+              class="text-sm font-medium"
+              :class="{
+                'text-green-800': flashSuccess,
+                'text-red-800': flashError,
+              }"
+            >
+              {{ flashSuccess || flashError }}
+            </p>
+          </div>
+          <div class="ml-auto pl-3">
+            <div class="-mx-1.5 -my-1.5">
+              <button
+                type="button"
+                class="inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                :class="{
+                  'bg-green-50 text-green-400 hover:bg-green-100 focus:ring-offset-green-50 focus:ring-green-600':
+                    flashSuccess,
+                  'bg-red-50 text-red-400 hover:bg-red-100 focus:ring-offset-red-50 focus:ring-red-600':
+                    flashError,
+                }"
+                @click="showFlashMessage = false"
+              >
+                <span class="sr-only">Dismiss</span>
+                <i class="ri-close-line text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server-side Form Errors -->
+      <div
+        v-if="configForm.hasErrors"
+        class="mb-6 p-4 bg-red-50 border border-red-200 rounded-md"
+      >
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <i class="ri-error-warning-line text-red-400 text-lg"></i>
+          </div>
+          <div class="ml-3 flex-1">
+            <h3 class="text-sm font-medium text-red-800">
+              Please fix the following errors:
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              <ul class="list-disc pl-5 space-y-1">
+                <li v-for="(error, field) in configForm.errors" :key="field">
+                  {{ Array.isArray(error) ? error[0] : error }}
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="ml-auto pl-3">
+            <div class="-mx-1.5 -my-1.5">
+              <button
+                type="button"
+                class="inline-flex bg-red-50 rounded-md p-1.5 text-red-400 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                @click="configForm.clearErrors()"
+              >
+                <span class="sr-only">Dismiss</span>
+                <i class="ri-close-line text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div
         v-if="currentVersion"
         class="mb-4 p-3 rounded-md border"
