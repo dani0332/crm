@@ -17,7 +17,6 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use DateTime;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -805,6 +804,11 @@ class SukoonMedexService
         }
     }
 
+    public function getDocumentCreatedTimestamp($docName)
+    {
+        return Str::match('/-(\d{14})\.[^.]+$/', $docName);
+    }
+
     public function saveGeneratedDocuments($documents, $quote, $embeddedTransaction)
     {
         try {
@@ -814,8 +818,7 @@ class SukoonMedexService
 
                 $docId = $document['doc_id'] ?? '';
                 $docName = $document['name'] ?? '';
-                $fileCreated = DateTime::createFromFormat('d/m/Y H:i', $document['file_created'] ?? now('UTC')->format('d/m/Y H:i'));
-                $fileCreatedTimestamp = $fileCreated->getTimestamp();
+                $docCreatedTimestamp = $this->getDocumentCreatedTimestamp($docName);
 
                 $docNamePrefix = explode('-', $docName)[0];
                 $docCode = match ($docNamePrefix) {
@@ -833,16 +836,15 @@ class SukoonMedexService
 
                 $document = $embeddedTransaction->documents()->where('document_type_code', $docCode)->first();
                 if(!empty($document)) {
-                    $docNameParts = explode('-', $document->doc_name);
-                    $existedDocTimestamp = reset($docNameParts);
-                    if($existedDocTimestamp >= $fileCreatedTimestamp) {
+                    $existedDocTimestamp = $this->getDocumentCreatedTimestamp($document->doc_name);
+                    if($existedDocTimestamp >= $docCreatedTimestamp) {
                         $skippedDocCount++;
                         LoggerService::info("{$this->logPrefix} Document skipped: {$docName}, updated one already exists");
                         continue;
                     }
                 }
 
-                $downloadResult = $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp);
+                $downloadResult = $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode);
                 if($downloadResult !== false)
                     $downloadResult ? $updatedDocCount++ : $createdDocCount++;
                 else
@@ -864,7 +866,7 @@ class SukoonMedexService
         }
     }
 
-    public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp)
+    public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode)
     {
         try {
             $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', $this->quoteTypeId)->first();
@@ -901,7 +903,7 @@ class SukoonMedexService
 
                 $dir = 'documents/'.$documentType->folder_path;
                 $originalName = $filename;
-                $docName = preg_replace('/\s+/', '', $fileCreatedTimestamp.'-'.$filename);
+                $docName = preg_replace('/\s+/', '', uniqid().'-'.$originalName);
                 $uploadedDocument = $this->uploadDocument($docName, $content, $dir)?->getData();
 
                 if(!($uploadedDocument->success ?? false)) {
