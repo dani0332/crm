@@ -435,6 +435,7 @@ class HomeRenewalService extends RenewalsUploadService
     private function markAsOutdated(PersonalQuote $quote)
     {
         LoggerService::info('fn: markAsOutdated - marking all fetch plans as outdated');
+
         // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
         return RenewalQuoteProcess::where([
             'quote_id' => $quote->id,
