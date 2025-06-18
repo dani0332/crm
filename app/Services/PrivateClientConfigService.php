@@ -279,19 +279,22 @@ class PrivateClientConfigService
     {
         $configuration = collect([]);
 
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value'));
+        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_1', 'sum_insured_value'));
+        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_2', 'sum_insured_value'));
+        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_3', 'sum_insured_value'));
+        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_4', 'sum_insured_value'));
         $configuration->push($this->buildEntity($config, $profile, 'insurer'));
 
         return $configuration;
     }
 
-    private function buildEntity(PrivateClientConfig $config, array $profile, string $key)
+    private function buildEntity(PrivateClientConfig $config, array $profile, string $key, ?string $customKey = null)
     {
         $profileData = $profile[$key] ?? null;
 
         $data = [
             'version' => $config->version,
-            'field_name' => $key,
+            'field_name' => $customKey ?? $key,
             'operator' => null,
             'value' => null,
             'currency_type_id' => null,
