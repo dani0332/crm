@@ -37,6 +37,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
 <template>
   <div>
+    <title>Plans Processes</title>
     <Head title="Plans Processes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Plans Processes</h2>
