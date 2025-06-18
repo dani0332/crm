@@ -67,9 +67,17 @@ const createBlankProfile = () => {
   };
 
   props.fields.forEach(field => {
-    profile[field.fieldName] = field.type === 'select_multiple' ? [] : '';
+    // For fields with multiple currencies, use unique key
+    const fieldKey =
+      field.hasCurrency &&
+      props.fields.filter(f => f.fieldName === field.fieldName).length > 1
+        ? `${field.fieldName}_${field.currencyId}`
+        : field.fieldName;
+
+    profile[fieldKey] = field.type === 'select_multiple' ? [] : '';
+
     if (field.hasCheckBox) {
-      profile[`${field.fieldName}_isEnabled`] = false;
+      profile[`${fieldKey}_isEnabled`] = false;
     }
   });
 
@@ -227,22 +235,72 @@ const validateProfiles = () => {
       }
     }
 
-    // Validate required fields (only if enabled when hasCheckBox is true)
-    props.fields.forEach(field => {
-      const isFieldEnabled = field.hasCheckBox
-        ? profile[`${field.fieldName}_isEnabled`]
-        : true;
+    // Group fields by fieldName for validation
+    const fieldGroups = {};
+    props.fields.forEach((field, fieldIndex) => {
+      if (!fieldGroups[field.fieldName]) {
+        fieldGroups[field.fieldName] = [];
+      }
+      fieldGroups[field.fieldName].push({
+        ...field,
+        originalIndex: fieldIndex,
+      });
+    });
 
-      if (field.isRequired && isFieldEnabled) {
-        const value = profile[field.fieldName];
+    // Validate each field group
+    Object.entries(fieldGroups).forEach(([fieldName, fieldsInGroup]) => {
+      const isAnyFieldRequired = fieldsInGroup.some(field => field.isRequired);
 
-        if (field.type === 'select_multiple') {
-          if (!Array.isArray(value) || value.length === 0) {
-            profileErrors[field.fieldName] = `${field.label} is required`;
+      if (fieldsInGroup.length > 1) {
+        // Multiple fields with same fieldName - validate as group
+        const enabledFields = fieldsInGroup.filter(
+          field =>
+            !field.hasCheckBox ||
+            profile[`${field.fieldName}_${field.currencyId}_isEnabled`],
+        );
+
+        const filledFields = enabledFields.filter(field => {
+          const value = profile[`${field.fieldName}_${field.currencyId}`];
+          if (field.type === 'select_multiple') {
+            return Array.isArray(value) && value.length > 0;
           }
-        } else {
-          if (!value || value.toString().trim() === '') {
-            profileErrors[field.fieldName] = `${field.label} is required`;
+          return value && value.toString().trim() !== '';
+        });
+
+        // If group is required and no enabled fields are filled
+        if (
+          isAnyFieldRequired &&
+          enabledFields.length > 0 &&
+          filledFields.length === 0
+        ) {
+          // Add error to the first enabled field in the group
+          const firstEnabledField = enabledFields[0];
+          const errorKey = `${firstEnabledField.fieldName}_${firstEnabledField.currencyId}`;
+          profileErrors[errorKey] =
+            `At least one ${firstEnabledField.label} field is required`;
+        }
+      } else {
+        // Single field - validate normally
+        const field = fieldsInGroup[0];
+        const isFieldEnabled = field.hasCheckBox
+          ? profile[`${field.fieldName}_isEnabled`]
+          : true;
+        const fieldKey =
+          field.hasCurrency && fieldsInGroup.length > 1
+            ? `${field.fieldName}_${field.currencyId}`
+            : field.fieldName;
+
+        if (field.isRequired && isFieldEnabled) {
+          const value = profile[fieldKey];
+
+          if (field.type === 'select_multiple') {
+            if (!Array.isArray(value) || value.length === 0) {
+              profileErrors[fieldKey] = `${field.label} is required`;
+            }
+          } else {
+            if (!value || value.toString().trim() === '') {
+              profileErrors[fieldKey] = `${field.label} is required`;
+            }
           }
         }
       }
@@ -475,6 +533,13 @@ onMounted(async () => {
     isInitialized.value = true;
   }, 100);
 });
+
+const getFieldKey = field => {
+  if (field.hasCurrency && field.currencyId) {
+    return `${field.fieldName}_${field.currencyId}`;
+  }
+  return field.fieldName;
+};
 </script>
 
 <template>
@@ -735,7 +800,9 @@ onMounted(async () => {
                             }"
                           >
                             <x-checkbox
-                              v-model="profile[`${field.fieldName}_isEnabled`]"
+                              v-model="
+                                profile[`${getFieldKey(field)}_isEnabled`]
+                              "
                               :disabled="isDisabled"
                               class="flex-shrink-0"
                             />
@@ -743,16 +810,22 @@ onMounted(async () => {
                               class="text-sm font-medium select-none"
                               :class="{
                                 'text-gray-700':
-                                  profile[`${field.fieldName}_isEnabled`],
+                                  profile[`${getFieldKey(field)}_isEnabled`],
                                 'text-gray-400':
-                                  !profile[`${field.fieldName}_isEnabled`],
+                                  !profile[`${getFieldKey(field)}_isEnabled`],
                               }"
                             >
                               {{ field.label }}
                               <span
+                                v-if="field.hasCurrency && field.currencyId"
+                                class="text-xs text-gray-500"
+                              >
+                                ({{ getCurrencySymbol(field.currencyId) }})
+                              </span>
+                              <span
                                 v-if="
                                   field.isRequired &&
-                                  profile[`${field.fieldName}_isEnabled`]
+                                  profile[`${getFieldKey(field)}_isEnabled`]
                                 "
                                 class="text-red-500"
                                 >*</span
@@ -774,6 +847,12 @@ onMounted(async () => {
                             class="block text-sm font-medium text-gray-700"
                           >
                             {{ field.label }}
+                            <span
+                              v-if="field.hasCurrency && field.currencyId"
+                              class="text-xs text-gray-500"
+                            >
+                              ({{ getCurrencySymbol(field.currencyId) }})
+                            </span>
                             <span v-if="field.isRequired" class="text-red-500"
                               >*</span
                             >
@@ -793,7 +872,7 @@ onMounted(async () => {
                       <!-- Field Value -->
                       <template v-if="field.type === 'select_multiple'">
                         <x-select
-                          v-model="profile[field.fieldName]"
+                          v-model="profile[getFieldKey(field)]"
                           :options="dropdownData[field.options]"
                           :placeholder="`Select ${field.label.toLowerCase()}...`"
                           multiple
@@ -802,16 +881,16 @@ onMounted(async () => {
                           :class="{
                             'border-red-300': getFieldError(
                               profileIndex,
-                              field.fieldName,
+                              getFieldKey(field),
                             ),
                             'opacity-50':
                               field.hasCheckBox &&
-                              !profile[`${field.fieldName}_isEnabled`],
+                              !profile[`${getFieldKey(field)}_isEnabled`],
                           }"
                           :disabled="
                             isDisabled ||
                             (field.hasCheckBox &&
-                              !profile[`${field.fieldName}_isEnabled`])
+                              !profile[`${getFieldKey(field)}_isEnabled`])
                           "
                           :tooltip="`Select ${field.label.toLowerCase()} options for this profile.`"
                         >
@@ -821,34 +900,34 @@ onMounted(async () => {
                           >
                             <ui-select-actions
                               @select-all="
-                                profile[field.fieldName] = dropdownData[
+                                profile[getFieldKey(field)] = dropdownData[
                                   field.options
                                 ].map(item => item.value)
                               "
-                              @clear="profile[field.fieldName] = []"
+                              @clear="profile[getFieldKey(field)] = []"
                             />
                           </template>
                         </x-select>
                       </template>
                       <template v-else>
                         <x-input
-                          v-model="profile[field.fieldName]"
+                          v-model="profile[getFieldKey(field)]"
                           :placeholder="`Enter ${field.label.toLowerCase()}`"
                           type="text"
                           class="!mb-0"
                           :class="{
                             'border-red-300': getFieldError(
                               profileIndex,
-                              field.fieldName,
+                              getFieldKey(field),
                             ),
                             'opacity-50':
                               field.hasCheckBox &&
-                              !profile[`${field.fieldName}_isEnabled`],
+                              !profile[`${getFieldKey(field)}_isEnabled`],
                           }"
                           :disabled="
                             isDisabled ||
                             (field.hasCheckBox &&
-                              !profile[`${field.fieldName}_isEnabled`])
+                              !profile[`${getFieldKey(field)}_isEnabled`])
                           "
                           :tooltip="`Set the minimum ${field.label.toLowerCase()} for this profile.`"
                         >
@@ -867,10 +946,10 @@ onMounted(async () => {
 
                       <!-- Error message for this field -->
                       <div
-                        v-if="getFieldError(profileIndex, field.fieldName)"
+                        v-if="getFieldError(profileIndex, getFieldKey(field))"
                         class="text-sm text-red-600"
                       >
-                        {{ getFieldError(profileIndex, field.fieldName) }}
+                        {{ getFieldError(profileIndex, getFieldKey(field)) }}
                       </div>
                     </div>
                   </template>
