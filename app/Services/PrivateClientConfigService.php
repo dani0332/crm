@@ -45,9 +45,6 @@ class PrivateClientConfigService
         return $responseData;
     }
 
-    /**
-     * Get dropdown data specific to each quote type
-     */
     public function getDropdownDataByQuoteType(int $quoteTypeId): array
     {
         $baseData = [
@@ -60,7 +57,7 @@ class PrivateClientConfigService
         ];
 
         switch ($quoteTypeId) {
-            case 1: // Car
+            case QuoteTypes::CAR->id():
                 return array_merge($baseData, [
                     'carMakes' => CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)
                         ->where('is_active', true)
@@ -70,7 +67,7 @@ class PrivateClientConfigService
                         ->get(),
                 ]);
 
-            case 2: // Home
+            case QuoteTypes::HOME->id():
                 return array_merge($baseData, [
                     'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
                         ->where('is_active', true)
@@ -79,9 +76,9 @@ class PrivateClientConfigService
                         ->get(),
                 ]);
 
-            case 3: // Health
-            case 4: // Life
-            case 7: // Yacht
+            case QuoteTypes::HEALTH->id():
+            case QuoteTypes::LIFE->id():
+            case QuoteTypes::YACHT->id():
                 return array_merge($baseData, [
                     'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
                         ->where('is_active', true)
