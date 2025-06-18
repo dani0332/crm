@@ -1597,12 +1597,12 @@ class AMLService
         // Customer Insured update record for personal quotes
         $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeId) {
             $join->on('pqr.id', '=', 'ci.quote_request_id')
-                ->where('ci.updated_at', function($subQuery) {
+                ->where('ci.updated_at', function ($subQuery) {
                     $subQuery->select(DB::raw('MAX(updated_at)'))
                         ->from('customer_insured as ci2')
                         ->whereColumn('ci2.quote_request_id', 'ci.quote_request_id');
                 });
-            
+
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
                 if (is_array($quoteTypeId)) {
                     $join->whereIn('ci.quote_type_id', $quoteTypeId);
@@ -1613,7 +1613,7 @@ class AMLService
         });
         $query->leftJoin('customer_members as cm', function ($join) use ($modelType) {
             $join->on('pqr.id', '=', 'cm.quote_id');
-            
+
             if (isset($modelType) && $modelType !== null) {
                 if (is_array($modelType)) {
                     $join->whereIn('cm.quote_type', $modelType);
@@ -1624,7 +1624,7 @@ class AMLService
         });
         $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
             $join->on('kl.quote_request_id', '=', 'pqr.id');
-            
+
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
                 if (is_array($quoteTypeId)) {
                     $join->whereIn('kl.quote_type_id', $quoteTypeId);
@@ -1642,12 +1642,12 @@ class AMLService
     {
         $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeId) {
             $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-                ->where('ci.updated_at', function($subQuery) {
+                ->where('ci.updated_at', function ($subQuery) {
                     $subQuery->select(DB::raw('MAX(updated_at)'))
                         ->from('customer_insured as ci2')
                         ->whereColumn('ci2.quote_request_id', 'ci.quote_request_id');
                 });
-            
+
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
                 if (is_array($quoteTypeId)) {
                     $join->whereNotIn('ci.quote_type_id', $quoteTypeId);
@@ -1658,7 +1658,7 @@ class AMLService
         });
         $query->leftJoin('customer_members as cm', function ($join) use ($modelType) {
             $join->on('pqr.quote_id', '=', 'cm.quote_id');
-            
+
             if (isset($modelType) && $modelType !== null) {
                 if (is_array($modelType)) {
                     $join->whereNotIn('cm.quote_type', $modelType);
@@ -1669,7 +1669,7 @@ class AMLService
         });
         $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
             $join->on('kl.quote_request_id', '=', 'pqr.quote_id');
-            
+
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
                 if (is_array($quoteTypeId)) {
                     $join->whereNotIn('kl.quote_type_id', $quoteTypeId);
