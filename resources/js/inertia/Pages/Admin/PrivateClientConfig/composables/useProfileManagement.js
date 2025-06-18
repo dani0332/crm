@@ -200,15 +200,42 @@ export function useProfileManagement(
             value: fieldValue,
           };
 
+          // Add operator information from field definition
+          if (field.operator) {
+            cleanProfile[field.fieldName].operator = field.operator;
+          }
+
+          // Add field type information
+          if (field.type) {
+            cleanProfile[field.fieldName].type = field.type;
+          }
+
+          // Add field label for reference
+          if (field.label) {
+            cleanProfile[field.fieldName].label = field.label;
+          }
+
           // Add currency information if field has currency
           if (field.hasCurrency && field.currencyId) {
             cleanProfile[field.fieldName].currencyId = field.currencyId;
+            cleanProfile[field.fieldName].hasCurrency = true;
           }
 
-          // Add enabled state if field has checkbox
+          // Add required flag
+          if (field.isRequired) {
+            cleanProfile[field.fieldName].isRequired = field.isRequired;
+          }
+
+          // Add checkbox flag
           if (field.hasCheckBox) {
+            cleanProfile[field.fieldName].hasCheckBox = true;
             cleanProfile[field.fieldName].isEnabled =
               profile[`${fieldKey}_isEnabled`];
+          }
+
+          // Add options reference for select fields
+          if (field.options) {
+            cleanProfile[field.fieldName].options = field.options;
           }
         });
 
