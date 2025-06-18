@@ -20,6 +20,10 @@ class PrivateClientConfig extends Model implements AuditableContract
         'status',
     ];
 
+    protected $casts = [
+        'config' => 'array',
+    ];
+
     public function getAuditables()
     {
         return [

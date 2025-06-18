@@ -146,61 +146,29 @@ class PrivateClientConfigService
     /**
      * Create new configuration version with provided configurations
      */
-    public function createNewConfigurationVersion(array $configurations): void
+    public function createNewConfigurationVersion(array $data): void
     {
         DB::beginTransaction();
 
         try {
-            // Set active_version=false for all existing configurations
             PrivateClientConfig::where('active_version', true)->update(['active_version' => false]);
 
             $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
             $newVersion = $existingVersion ? $existingVersion->version + 1 : 1;
 
-            foreach ($configurations as $config) {
-                // Create new config with new version
-                PrivateClientConfig::create([
-                    'quote_type_id' => $config['quote_type_id'],
-                    'config' => json_encode(['profiles' => $config['profiles']]),
-                    'version' => $newVersion,
-                    'status' => 1,
-                    'active_version' => true,
-                ]);
-            }
+            PrivateClientConfig::create([
+                'quote_type_id' => $data['quote_type_id'],
+                'config' => $data['config'],
+                'version' => $newVersion,
+                'status' => 1,
+                'active_version' => true,
+            ]);
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
-    }
-
-    /**
-     * Validate configuration data before saving
-     */
-    public function validateConfigurations(array $configurations): array
-    {
-        $rules = [
-            'configurations' => 'required|array',
-            'configurations.*.quote_type_id' => 'integer',
-            'configurations.*.profiles' => 'required|array',
-            'configurations.*.profiles.*.nationalityIds' => 'nullable|array',
-        ];
-
-        // Add validation for each profile field dynamically
-        foreach ($configurations as $configIndex => $config) {
-            if (isset($config['profiles'])) {
-                foreach ($config['profiles'] as $profileIndex => $profile) {
-                    foreach ($profile as $fieldName => $fieldValue) {
-                        if ($fieldName !== 'nationalityIds') {
-                            $rules["configurations.{$configIndex}.profiles.{$profileIndex}.{$fieldName}"] = 'nullable';
-                        }
-                    }
-                }
-            }
-        }
-
-        return $rules;
     }
 
     public function getConfigByVersionAndQuoteType(int $quoteTypeId, int $version): array
