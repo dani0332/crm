@@ -367,13 +367,24 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
+  for (const [key, value] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+      filters[key.substring(0, key.length - 2)] = value;
     } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
+      // Handle different data types appropriately
+      if (key.includes('_id') && !isNaN(parseInt(value))) {
+        // ID fields should be integers
+        filters[key] = parseInt(value);
+      } else if (key === 'page' && !isNaN(parseInt(value))) {
+        // Page should be integer
+        filters[key] = parseInt(value);
+      } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+        // Boolean-like fields
+        filters[key] = parseInt(value);
+      } else {
+        // Keep as string for dates, text fields, etc.
+        filters[key] = value;
+      }
     }
   }
 }

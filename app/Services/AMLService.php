@@ -1274,7 +1274,7 @@ class AMLService
         return $insured;
     }
 
-    private function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
+    public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
         $getPersonalQuote = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => $quoteTypeId])->first();
         if ($getPersonalQuote) {
@@ -1744,7 +1744,7 @@ class AMLService
 
     /**
      * Get the model class name(s) based on QuoteTypes id(s).
-     * @param int|array $quoteTypeIds
+     *
      * @return string|array
      */
     public static function getModelTypeByQuoteTypeId(int|array $quoteTypeIds)
@@ -1752,16 +1752,18 @@ class AMLService
         $nameSpace = 'App\\Models\\';
         $resolveModel = function ($id) use ($nameSpace) {
             $quoteType = QuoteTypes::getName($id);
-            if (!$quoteType) {
+            if (! $quoteType) {
                 throw new \InvalidArgumentException("Invalid QuoteTypeId: $id");
             }
+
             return checkPersonalQuotes(ucwords($quoteType->value))
-                ? $nameSpace . 'PersonalQuote'
-                : $nameSpace . ucwords($quoteType->value) . 'Quote';
+                ? $nameSpace.'PersonalQuote'
+                : $nameSpace.ucwords($quoteType->value).'Quote';
         };
         if (is_array($quoteTypeIds)) {
             return array_map($resolveModel, $quoteTypeIds);
         }
+
         return $resolveModel($quoteTypeIds);
     }
 }

@@ -646,7 +646,7 @@ class AMLController extends Controller
 
         // Reminder:: Entity id is Insured ID which we get from fetchEntity() this function
         $insured = Insured::where('id', $request->entity_id)->first();
-        $this->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
+        app(AMLService::class)->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
 
         $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)
             ->where('insured_id', $insured->id)
