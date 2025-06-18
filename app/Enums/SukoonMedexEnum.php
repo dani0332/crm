@@ -75,29 +75,9 @@ final class SukoonMedexEnum extends Enum
         return self::STEPS_NAME[$stepNumber] ?? "";
     }
 
-    public static function getStepNumber(string $stepName): int
+    public static function getStepNumber(string $stepName): int | bool
     {
         return array_search($stepName, self::STEPS_NAME); 
-    }
-
-    public static function getNextStep(int $currentStep): int
-    {
-        $recentAvailableSteps = self::findCurrentAvailableStep($currentStep);
-        return self::findNextAvailableStep($recentAvailableSteps);
-    }
-
-    public static function findCurrentAvailableStep(int $currentStep): int
-    {
-        $keys = array_keys(self::STEPS_NAME);
-        $recentAvailableSteps = array_filter($keys, fn($k) => $k <= $currentStep);
-        return $recentAvailableSteps ? max($recentAvailableSteps) : min($keys);
-    }
-
-    public static function findNextAvailableStep(int $currentStep): int
-    {
-        $keys = array_keys(self::STEPS_NAME);
-        $nextAvailableSteps = array_filter($keys, fn($k) => $k > $currentStep);
-        return $nextAvailableSteps ? min($nextAvailableSteps) : $currentStep;
     }
 
 }
