@@ -16,7 +16,7 @@ class PrivateClientConfigService
     private const LABEL_TEXT = 'text as label';
     private const VALUE_TEXT = 'id as value';
 
-    public function getLatestConfigByQuoteType(int $quoteTypeId): array
+    public function getLatestConfigByQuoteType(int $quoteTypeId, ?int $version = null): array
     {
         $allVersionsForQuoteType = PrivateClientConfig::byQuoteTypeId($quoteTypeId)
             ->select('version')
@@ -24,6 +24,14 @@ class PrivateClientConfigService
             ->orderBy('version', 'desc')
             ->pluck('version')
             ->toArray();
+
+        if($version) {
+            $config = PrivateClientConfig::byQuoteTypeId($quoteTypeId)->where('version', $version)->first();
+        } else {
+            $config = PrivateClientConfig::getCurrentVersion($quoteTypeId);
+        }
+
+        $latestConfig = PrivateClientConfig::getLatestVersion($quoteTypeId);
 
         $dropdownData = $this->getDropdownDataByQuoteType($quoteTypeId);
 
@@ -35,11 +43,14 @@ class PrivateClientConfigService
             'dropdownData' => $dropdownData,
         ];
 
-        $latestConfig = PrivateClientConfig::getLatestVersion($quoteTypeId);
+        if ($config) {
+            $responseData['config'] = $config->config;
+            $responseData['version'] = $config->version;
+        }
 
-        if ($latestConfig) {
-            $responseData['config'] = $latestConfig->config;
-            $responseData['version'] = $latestConfig->version;
+        if($version) {
+            $responseData['version'] = $version;
+            $responseData['isCurrentVersion'] = $latestConfig->version == $version;
         }
 
         return $responseData;
@@ -90,20 +101,17 @@ class PrivateClientConfigService
         }
     }
 
-    /**
-     * Create new configuration version with provided configurations
-     */
     public function createNewConfigurationVersion(array $data): void
     {
         DB::beginTransaction();
 
         try {
-            PrivateClientConfig::where('active_version', true)->update(['active_version' => false]);
+            PrivateClientConfig::byQuoteTypeId($data['quote_type_id'])->activeVersion()->update(['active_version' => false]);
 
-            $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
+            $existingVersion = PrivateClientConfig::getLatestVersion($data['quote_type_id']);
+
             $newVersion = $existingVersion ? $existingVersion->version + 1 : 1;
 
-            // Ensure config data is properly structured with profiles key
             $configData = is_array($data['config']) && ! isset($data['config']['profiles'])
                 ? ['profiles' => $data['config']]
                 : $data['config'];
@@ -121,45 +129,6 @@ class PrivateClientConfigService
             DB::rollBack();
             throw $e;
         }
-    }
-
-    public function getConfigByVersionAndQuoteType(int $quoteTypeId, int $version): array
-    {
-        $allVersionsForQuoteType = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
-            ->select('version')
-            ->distinct()
-            ->orderBy('version', 'desc')
-            ->pluck('version')
-            ->toArray();
-
-        $latestVersion = count($allVersionsForQuoteType) > 0 ? $allVersionsForQuoteType[0] : null;
-
-        $versionConfig = PrivateClientConfig::where('quote_type_id', $quoteTypeId)
-            ->where('version', $version)
-            ->first();
-
-        $dropdownData = $this->getDropdownDataByQuoteType($quoteTypeId);
-
-        $responseData = [
-            'config' => null,
-            'version' => $version,
-            'allVersions' => $allVersionsForQuoteType,
-            'isCurrentVersion' => $version === $latestVersion,
-            'dropdownData' => $dropdownData,
-        ];
-
-        if ($versionConfig) {
-            $configData = $versionConfig->config;
-
-            // Ensure config data has the expected profiles structure
-            if (is_array($configData) && ! isset($configData['profiles'])) {
-                $configData = ['profiles' => $configData];
-            }
-
-            $responseData['config'] = $configData;
-        }
-
-        return $responseData;
     }
 
     public function evaluateConfig(QuoteTypes $quoteType, int $nationlityId)
