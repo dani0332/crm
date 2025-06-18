@@ -248,6 +248,8 @@ class PrivateClientConfigService
             QuoteTypes::CAR => $this->getCarConfiguration($config, $profile),
             QuoteTypes::HOME => $this->getHomeConfiguration($config, $profile),
             QuoteTypes::LIFE => $this->getLifeConfiguration($config, $profile),
+            QuoteTypes::YACHT => $this->getYachtConfiguration($config, $profile),
+            QuoteTypes::HEALTH => $this->getHealthConfiguration($config, $profile),
             default => null,
         };
     }
@@ -286,6 +288,21 @@ class PrivateClientConfigService
         $configuration->push($this->buildEntity($config, $profile, 'insurer'));
 
         return $configuration;
+    }
+
+    private function getYachtConfiguration(PrivateClientConfig $config, array $profile)
+    {
+        $configuration = collect([]);
+
+        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
+        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
+
+        return $configuration;
+    }
+
+    private function getHealthConfiguration(PrivateClientConfig $config, array $profile)
+    {
+        return $this->getYachtConfiguration($config, $profile);
     }
 
     private function buildEntity(PrivateClientConfig $config, array $profile, string $key, ?string $customKey = null)
