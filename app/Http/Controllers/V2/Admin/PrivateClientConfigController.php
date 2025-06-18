@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeShortCode;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
+use App\Models\PrivateClientConfig;
 use App\Models\QuoteType;
 use App\Services\PrivateClientConfigService;
 use App\Traits\PrivateClient;
@@ -90,10 +90,15 @@ class PrivateClientConfigController extends Controller
                 'quote_type' => 'required|string',
                 'version' => 'required|integer',
             ]);
+
+            $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
+            $newVersion = $existingVersion ? $existingVersion->version + 1 : 1;
+
             $this->configService->createNewConfigurationVersion($validated);
 
             return redirect()->route('admin.private-client-config.show')
-                ->with('message', 'Private Client Configuration updated successfully.');
+                ->with('message', 'Private Client Configuration updated successfully.')
+                ->with('version', $newVersion);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->validator)->withInput();

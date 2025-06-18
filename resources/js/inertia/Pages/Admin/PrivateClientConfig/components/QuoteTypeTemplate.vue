@@ -86,7 +86,9 @@ const configForm = useForm({
   quote_type: null,
 });
 
-const isDisabled = computed(() => !isCurrentVersion.value);
+const isDisabled = computed(
+  () => !isCurrentVersion.value || configLoading.value,
+);
 
 const nationalityOptions = computed(() => {
   return props.dropdownData.nationalities || [];
@@ -179,6 +181,7 @@ const loadSpecificVersion = async version => {
         params: {
           quote_type_id: props.quoteType.id,
           version,
+          _t: Date.now(), // Cache busting
         },
       },
     );
@@ -235,7 +238,6 @@ const loadSpecificVersion = async version => {
       profiles.value = [createBlankProfile()];
     }
   } catch (error) {
-    console.error('Error loading configuration:', error);
     profiles.value = [createBlankProfile()];
   } finally {
     configLoading.value = false;
@@ -244,6 +246,8 @@ const loadSpecificVersion = async version => {
 
 const changeVersion = newVersion => {
   if (newVersion === selectedVersion.value) return;
+  selectedVersion.value = newVersion;
+
   loadSpecificVersion(newVersion);
 };
 
@@ -438,22 +442,25 @@ const saveConfiguration = () => {
         loader.value = false;
         clearValidationErrors();
 
+        // Use version from flash data if available, otherwise calculate
         const newVersion =
-          page.props?.flash?.version || configurationPayload.version;
+          page.props?.flash?.version ||
+          (currentVersion.value ? currentVersion.value + 1 : 1);
+
+        // Update local state immediately
         currentVersion.value = newVersion;
         selectedVersion.value = newVersion;
         isCurrentVersion.value = true;
 
         // Update versions list
         if (!allVersions.value.includes(newVersion)) {
-          allVersions.value.push(newVersion);
-          allVersions.value.sort((a, b) => b - a);
+          allVersions.value.unshift(newVersion); // Add to beginning
+          allVersions.value.sort((a, b) => b - a); // Sort descending
         }
 
+        // Emit events to notify parent components
         emit('versionLoaded', newVersion);
         emit('configurationSaved');
-
-        console.log('Configuration saved successfully');
       },
       onError: errors => {
         loader.value = false;
@@ -469,7 +476,19 @@ const saveConfiguration = () => {
 const getProfiles = () => {
   return profiles.value
     .filter(profile => {
-      // Check if profile has nationality and at least one field filled
+      // Default profiles are valid even without nationalities
+      if (profile.isDefaultCriteria) {
+        // For default profiles, just check if at least one field has a value
+        return props.fields.some(field => {
+          const value = profile[field.fieldName];
+          if (Array.isArray(value)) {
+            return value.length > 0;
+          }
+          return value && value.toString().trim() !== '';
+        });
+      }
+
+      // Non-default profiles need nationalities AND at least one field filled
       if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
         return false;
       }
@@ -484,7 +503,7 @@ const getProfiles = () => {
     })
     .map(profile => {
       const cleanProfile = {
-        nationalityIds: profile.nationalityIds,
+        nationalityIds: profile.nationalityIds || [], // Ensure empty array for default profiles
         isDefaultCriteria: profile.isDefaultCriteria || false,
       };
 
@@ -629,19 +648,49 @@ const getProfiles = () => {
             v-if="allVersions.length > 0"
             class="flex items-center space-x-2"
           >
-            <span class="text-sm text-gray-600">Version:</span>
-            <x-select
-              :modelValue="selectedVersion"
-              :options="
-                allVersions.map(v => ({
-                  value: v,
-                  label: `Version ${v}${v === Math.max(...allVersions) ? ' (Latest)' : ''}`,
-                }))
-              "
-              @update:modelValue="changeVersion"
-              class="w-40"
-              :disabled="configLoading"
-            />
+            <!-- Loading indicator for version change -->
+            <div
+              v-if="configLoading"
+              class="flex items-center space-x-2 text-blue-600"
+            >
+              <svg
+                class="animate-spin h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span class="text-sm">Loading...</span>
+            </div>
+
+            <div v-else class="flex items-center space-x-2">
+              <span class="text-sm text-gray-600">Version:</span>
+              <x-select
+                :modelValue="selectedVersion"
+                :options="
+                  allVersions.map(v => ({
+                    value: v,
+                    label: `Version ${v}${v === Math.max(...allVersions) ? ' (Latest)' : ''}`,
+                  }))
+                "
+                @update:modelValue="changeVersion"
+                class="w-40"
+                :disabled="configLoading"
+              />
+            </div>
           </div>
         </div>
 
@@ -670,7 +719,7 @@ const getProfiles = () => {
             color="#ff5e00"
             type="button"
             @click="addProfile"
-            :disabled="isDisabled"
+            :disabled="isDisabled || configLoading"
           >
             Add Profile
           </x-button>
@@ -684,256 +733,327 @@ const getProfiles = () => {
       </div>
 
       <div v-show="!isModuleCollapsed">
-        <!-- Validation Summary -->
+        <!-- Loading overlay for version changes -->
         <div
-          v-if="showValidationSummary"
-          class="mb-6 p-4 bg-red-50 border border-red-200 rounded-md"
+          v-if="configLoading"
+          class="relative bg-white border border-gray-200 rounded-lg p-8"
         >
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <i class="ri-error-warning-line text-red-400 text-lg"></i>
-            </div>
-            <div class="ml-3 flex-1">
-              <h3 class="text-sm font-medium text-red-800">
-                Please fix the following validation errors:
-              </h3>
-              <div class="mt-2 text-sm text-red-700">
-                <ul class="list-disc pl-5 space-y-1">
-                  <template
-                    v-for="(profileErrors, profileIndex) in validationErrors"
-                    :key="profileIndex"
-                  >
-                    <li class="font-medium">
-                      Profile {{ parseInt(profileIndex) + 1 }}:
-                    </li>
-                    <ul class="list-disc pl-5 space-y-1">
-                      <li
-                        v-for="(error, fieldName) in profileErrors"
-                        :key="fieldName"
-                      >
-                        {{ error }}
-                      </li>
-                    </ul>
-                  </template>
-                  <li v-if="Object.keys(validationErrors).length === 0">
-                    No valid profiles to save. Please add at least one profile
-                    with nationality and criteria.
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div class="ml-auto pl-3">
-              <div class="-mx-1.5 -my-1.5">
-                <button
-                  type="button"
-                  class="inline-flex bg-red-50 rounded-md p-1.5 text-red-400 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
-                  @click="showValidationSummary = false"
-                >
-                  <span class="sr-only">Dismiss</span>
-                  <i class="ri-close-line text-sm"></i>
-                </button>
-              </div>
+          <div class="flex items-center justify-center py-12">
+            <div class="text-center">
+              <svg
+                class="animate-spin mx-auto h-8 w-8 text-blue-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <p class="mt-2 text-sm text-gray-600">
+                Loading {{ quoteTypeLabel }} configuration version
+                {{ selectedVersion }}...
+              </p>
             </div>
           </div>
         </div>
 
-        <div
-          v-if="profiles.length === 0"
-          class="text-center py-8 text-gray-500"
-        >
-          No profiles configured. Click "Add Profile" to create one.
-        </div>
-
-        <div v-else class="space-y-6">
+        <!-- Configuration content (hidden when loading) -->
+        <div v-else>
+          <!-- Validation Summary -->
           <div
-            v-for="(profile, profileIndex) in profiles"
-            :key="`profile-${profileIndex}`"
-            :data-profile-index="`${quoteTypeCode}-${profileIndex}`"
-            class="border rounded-lg p-4 transition-all duration-500"
-            :class="{
-              'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
-                highlightedProfileIndex === profileIndex,
-              'shadow-lg': highlightedProfileIndex === profileIndex,
-              'border-red-300 bg-red-50': hasProfileErrors(profileIndex),
-              'border-gray-200': !hasProfileErrors(profileIndex),
-            }"
+            v-if="showValidationSummary"
+            class="mb-6 p-4 bg-red-50 border border-red-200 rounded-md"
           >
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center space-x-2">
-                <CollapseIcon
-                  :isExpanded="!collapsedProfiles.has(profileIndex)"
-                  size="md"
-                  @click="toggleProfile(profileIndex)"
-                />
-                <h4 class="text-md font-medium text-gray-800">
-                  Profile {{ profileIndex + 1 }}
-                  <span
-                    v-if="profile.isDefaultCriteria"
-                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    <i class="ri-star-line mr-1"></i>
-                    Default Criteria
-                  </span>
-                  <span
-                    v-if="highlightedProfileIndex === profileIndex"
-                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
-                  >
-                    New!
-                  </span>
-                  <span
-                    v-if="hasProfileErrors(profileIndex)"
-                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
-                  >
-                    <i class="ri-error-warning-line mr-1"></i>
-                    Has Errors
-                  </span>
-                </h4>
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <i class="ri-error-warning-line text-red-400 text-lg"></i>
               </div>
-              <x-button
-                size="sm"
-                color="error"
-                outlined
-                type="button"
-                :disabled="isDisabled"
-                @click="removeProfile(profileIndex)"
-              >
-                <svg
-                  class="h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                  />
-                </svg>
-              </x-button>
+              <div class="ml-3 flex-1">
+                <h3 class="text-sm font-medium text-red-800">
+                  Please fix the following validation errors:
+                </h3>
+                <div class="mt-2 text-sm text-red-700">
+                  <ul class="list-disc pl-5 space-y-1">
+                    <template
+                      v-for="(profileErrors, profileIndex) in validationErrors"
+                      :key="profileIndex"
+                    >
+                      <li class="font-medium">
+                        Profile {{ parseInt(profileIndex) + 1 }}:
+                      </li>
+                      <ul class="list-disc pl-5 space-y-1">
+                        <li
+                          v-for="(error, fieldName) in profileErrors"
+                          :key="fieldName"
+                        >
+                          {{ error }}
+                        </li>
+                      </ul>
+                    </template>
+                    <li v-if="Object.keys(validationErrors).length === 0">
+                      No valid profiles to save. Please ensure at least one
+                      profile has:
+                      <br />• Either specific nationalities selected OR marked
+                      as default criteria <br />• At least one field with a
+                      value
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="ml-auto pl-3">
+                <div class="-mx-1.5 -my-1.5">
+                  <button
+                    type="button"
+                    class="inline-flex bg-red-50 rounded-md p-1.5 text-red-400 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                    @click="showValidationSummary = false"
+                  >
+                    <span class="sr-only">Dismiss</span>
+                    <i class="ri-close-line text-sm"></i>
+                  </button>
+                </div>
+              </div>
             </div>
+          </div>
 
+          <div
+            v-if="profiles.length === 0"
+            class="text-center py-8 text-gray-500"
+          >
+            No profiles configured. Click "Add Profile" to create one.
+          </div>
+
+          <div v-else class="space-y-6">
             <div
-              v-show="!collapsedProfiles.has(profileIndex)"
-              class="space-y-6"
+              v-for="(profile, profileIndex) in profiles"
+              :key="`profile-${profileIndex}`"
+              :data-profile-index="`${quoteTypeCode}-${profileIndex}`"
+              class="border rounded-lg p-4 transition-all duration-500"
+              :class="{
+                'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+                  highlightedProfileIndex === profileIndex,
+                'shadow-lg': highlightedProfileIndex === profileIndex,
+                'border-red-300 bg-red-50': hasProfileErrors(profileIndex),
+                'border-gray-200': !hasProfileErrors(profileIndex),
+              }"
             >
-              <!-- Default Criteria Toggle -->
-              <div class="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                  <x-checkbox
-                    :modelValue="profile.isDefaultCriteria"
-                    @update:modelValue="
-                      toggleDefaultCriteria(profileIndex, $event)
-                    "
-                    :disabled="isDisabled"
-                    class="flex-shrink-0"
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                  <CollapseIcon
+                    :isExpanded="!collapsedProfiles.has(profileIndex)"
+                    size="md"
+                    @click="toggleProfile(profileIndex)"
                   />
-                  <div class="flex-1">
-                    <span class="text-sm font-medium text-blue-800">
-                      Set as Default Criteria
+                  <h4 class="text-md font-medium text-gray-800">
+                    Profile {{ profileIndex + 1 }}
+                    <span
+                      v-if="profile.isDefaultCriteria"
+                      class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      <i class="ri-star-line mr-1"></i>
+                      Default Criteria
                     </span>
-                    <p class="text-xs text-blue-600 mt-1">
-                      Default criteria will be used when no specific nationality
-                      match is found. Only one default criteria is allowed per
-                      quote type.
-                    </p>
-                  </div>
-                </label>
-                <div
-                  v-if="getFieldError(profileIndex, 'isDefaultCriteria')"
-                  class="mt-2 text-sm text-red-600"
-                >
-                  {{ getFieldError(profileIndex, 'isDefaultCriteria') }}
+                    <span
+                      v-if="highlightedProfileIndex === profileIndex"
+                      class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                    >
+                      New!
+                    </span>
+                    <span
+                      v-if="hasProfileErrors(profileIndex)"
+                      class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                    >
+                      <i class="ri-error-warning-line mr-1"></i>
+                      Has Errors
+                    </span>
+                  </h4>
                 </div>
-              </div>
-
-              <div v-if="!profile.isDefaultCriteria">
-                <x-select
-                  v-model="profile.nationalityIds"
-                  :options="nationalityOptions"
-                  placeholder="Select nationalities..."
-                  multiple
-                  filterable
-                  class="w-full min-h-[40px]"
-                  :class="{
-                    'border-red-300': getFieldError(
-                      profileIndex,
-                      'nationalityIds',
-                    ),
-                  }"
-                  label="Nationalities"
-                  required
-                  tooltip="Select the nationalities of customers this profile applies to."
+                <x-button
+                  size="sm"
+                  color="error"
+                  outlined
+                  type="button"
                   :disabled="isDisabled"
+                  @click="removeProfile(profileIndex)"
                 >
-                  <template
-                    #content-footer
-                    v-if="nationalityOptions.length > 0"
+                  <svg
+                    class="h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
                   >
-                    <ui-select-actions
-                      @select-all="
-                        profile.nationalityIds = nationalityOptions.map(
-                          item => item.value,
-                        )
-                      "
-                      @clear="profile.nationalityIds = []"
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
                     />
-                  </template>
-                </x-select>
-                <div
-                  v-if="getFieldError(profileIndex, 'nationalityIds')"
-                  class="mt-1 text-sm text-red-600"
-                >
-                  {{ getFieldError(profileIndex, 'nationalityIds') }}
-                </div>
+                  </svg>
+                </x-button>
               </div>
 
               <div
-                v-else
-                class="p-3 bg-amber-50 border border-amber-200 rounded-md"
+                v-show="!collapsedProfiles.has(profileIndex)"
+                class="space-y-6"
               >
-                <div class="flex items-center">
-                  <i class="ri-information-line text-amber-600 mr-2"></i>
-                  <span class="text-sm text-amber-800">
-                    This profile will be used as default criteria for all
-                    nationalities not covered by specific profiles.
-                  </span>
+                <!-- Default Criteria Toggle -->
+                <div class="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                  <label class="flex items-center space-x-2 cursor-pointer">
+                    <x-checkbox
+                      :modelValue="profile.isDefaultCriteria"
+                      @update:modelValue="
+                        toggleDefaultCriteria(profileIndex, $event)
+                      "
+                      :disabled="isDisabled"
+                      class="flex-shrink-0"
+                    />
+                    <div class="flex-1">
+                      <span class="text-sm font-medium text-blue-800">
+                        Set as Default Criteria
+                      </span>
+                      <p class="text-xs text-blue-600 mt-1">
+                        Default criteria will be used when no specific
+                        nationality match is found. Only one default criteria is
+                        allowed per quote type.
+                      </p>
+                    </div>
+                  </label>
+                  <div
+                    v-if="getFieldError(profileIndex, 'isDefaultCriteria')"
+                    class="mt-2 text-sm text-red-600"
+                  >
+                    {{ getFieldError(profileIndex, 'isDefaultCriteria') }}
+                  </div>
                 </div>
-              </div>
 
-              <!-- Single Card for All Fields -->
-              <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <h5 class="text-sm font-medium text-gray-700 mb-4">
-                  Criteria Fields
-                </h5>
+                <div v-if="!profile.isDefaultCriteria">
+                  <x-select
+                    v-model="profile.nationalityIds"
+                    :options="nationalityOptions"
+                    placeholder="Select nationalities..."
+                    multiple
+                    filterable
+                    class="w-full min-h-[40px]"
+                    :class="{
+                      'border-red-300': getFieldError(
+                        profileIndex,
+                        'nationalityIds',
+                      ),
+                    }"
+                    label="Nationalities"
+                    required
+                    tooltip="Select the nationalities of customers this profile applies to."
+                    :disabled="isDisabled"
+                  >
+                    <template
+                      #content-footer
+                      v-if="nationalityOptions.length > 0"
+                    >
+                      <ui-select-actions
+                        @select-all="
+                          profile.nationalityIds = nationalityOptions.map(
+                            item => item.value,
+                          )
+                        "
+                        @clear="profile.nationalityIds = []"
+                      />
+                    </template>
+                  </x-select>
+                  <div
+                    v-if="getFieldError(profileIndex, 'nationalityIds')"
+                    class="mt-1 text-sm text-red-600"
+                  >
+                    {{ getFieldError(profileIndex, 'nationalityIds') }}
+                  </div>
+                </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <template v-for="field in fields" :key="field.fieldName">
-                    <div class="space-y-2">
-                      <div class="flex items-center space-x-2">
-                        <template v-if="field.hasCheckBox">
-                          <label
-                            class="flex items-center space-x-2 cursor-pointer"
-                            :class="{
-                              'cursor-not-allowed': isDisabled,
-                            }"
-                          >
-                            <x-checkbox
-                              v-model="
-                                profile[`${getFieldKey(field)}_isEnabled`]
-                              "
-                              :disabled="isDisabled"
-                              class="flex-shrink-0"
-                            />
-                            <span
-                              class="text-sm font-medium select-none"
+                <div
+                  v-else
+                  class="p-3 bg-amber-50 border border-amber-200 rounded-md"
+                >
+                  <div class="flex items-center">
+                    <i class="ri-information-line text-amber-600 mr-2"></i>
+                    <span class="text-sm text-amber-800">
+                      This profile will be used as default criteria for all
+                      nationalities not covered by specific profiles.
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Single Card for All Fields -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <h5 class="text-sm font-medium text-gray-700 mb-4">
+                    Criteria Fields
+                  </h5>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <template v-for="field in fields" :key="field.fieldName">
+                      <div class="space-y-2">
+                        <div class="flex items-center space-x-2">
+                          <template v-if="field.hasCheckBox">
+                            <label
+                              class="flex items-center space-x-2 cursor-pointer"
                               :class="{
-                                'text-gray-700':
-                                  profile[`${getFieldKey(field)}_isEnabled`],
-                                'text-gray-400':
-                                  !profile[`${getFieldKey(field)}_isEnabled`],
+                                'cursor-not-allowed': isDisabled,
                               }"
+                            >
+                              <x-checkbox
+                                v-model="
+                                  profile[`${getFieldKey(field)}_isEnabled`]
+                                "
+                                :disabled="isDisabled"
+                                class="flex-shrink-0"
+                              />
+                              <span
+                                class="text-sm font-medium select-none"
+                                :class="{
+                                  'text-gray-700':
+                                    profile[`${getFieldKey(field)}_isEnabled`],
+                                  'text-gray-400':
+                                    !profile[`${getFieldKey(field)}_isEnabled`],
+                                }"
+                              >
+                                {{ field.label }}
+                                <span
+                                  v-if="field.hasCurrency && field.currencyId"
+                                  class="text-xs text-gray-500"
+                                >
+                                  ({{ getCurrencySymbol(field.currencyId) }})
+                                </span>
+                                <span
+                                  v-if="
+                                    field.isRequired &&
+                                    profile[`${getFieldKey(field)}_isEnabled`]
+                                  "
+                                  class="text-red-500"
+                                  >*</span
+                                >
+                                <span v-if="field.operator === '>='">
+                                  (Greater than or equal to)</span
+                                >
+                                <span v-if="field.operator === '<='">
+                                  (Less than or equal to)</span
+                                >
+                                <span v-if="field.operator === 'in'">
+                                  (Multiple selection)</span
+                                >
+                              </span>
+                            </label>
+                          </template>
+                          <template v-else>
+                            <label
+                              class="block text-sm font-medium text-gray-700"
                             >
                               {{ field.label }}
                               <span
@@ -942,12 +1062,7 @@ const getProfiles = () => {
                               >
                                 ({{ getCurrencySymbol(field.currencyId) }})
                               </span>
-                              <span
-                                v-if="
-                                  field.isRequired &&
-                                  profile[`${getFieldKey(field)}_isEnabled`]
-                                "
-                                class="text-red-500"
+                              <span v-if="field.isRequired" class="text-red-500"
                                 >*</span
                               >
                               <span v-if="field.operator === '>='">
@@ -956,183 +1071,158 @@ const getProfiles = () => {
                               <span v-if="field.operator === '<='">
                                 (Less than or equal to)</span
                               >
-                              <span v-if="field.operator === 'in'">
-                                (Multiple selection)</span
+                              <span v-if="field.operator === 'in'"
+                                >(Multiple selection)</span
                               >
-                            </span>
-                          </label>
+                            </label>
+                          </template>
+                        </div>
+
+                        <!-- Field Value -->
+                        <template v-if="field.type === 'select_multiple'">
+                          <x-select
+                            v-model="profile[getFieldKey(field)]"
+                            :options="dropdownData[field.options]"
+                            :placeholder="`Select ${field.label.toLowerCase()}...`"
+                            multiple
+                            filterable
+                            class="w-full min-h-[40px]"
+                            :class="{
+                              'border-red-300': getFieldError(
+                                profileIndex,
+                                getFieldKey(field),
+                              ),
+                              'opacity-50':
+                                field.hasCheckBox &&
+                                !profile[`${getFieldKey(field)}_isEnabled`],
+                            }"
+                            :disabled="
+                              isDisabled ||
+                              (field.hasCheckBox &&
+                                !profile[`${getFieldKey(field)}_isEnabled`])
+                            "
+                            :tooltip="`Select ${field.label.toLowerCase()} options for this profile.`"
+                          >
+                            <template
+                              #content-footer
+                              v-if="dropdownData[field.options]?.length > 0"
+                            >
+                              <ui-select-actions
+                                @select-all="
+                                  profile[getFieldKey(field)] = dropdownData[
+                                    field.options
+                                  ].map(item => item.value)
+                                "
+                                @clear="profile[getFieldKey(field)] = []"
+                              />
+                            </template>
+                          </x-select>
                         </template>
                         <template v-else>
-                          <label
-                            class="block text-sm font-medium text-gray-700"
+                          <x-input
+                            v-model="profile[getFieldKey(field)]"
+                            :placeholder="`Enter ${field.label.toLowerCase()}`"
+                            type="text"
+                            class="!mb-0"
+                            :class="{
+                              'border-red-300': getFieldError(
+                                profileIndex,
+                                getFieldKey(field),
+                              ),
+                              'opacity-50':
+                                field.hasCheckBox &&
+                                !profile[`${getFieldKey(field)}_isEnabled`],
+                            }"
+                            :disabled="
+                              isDisabled ||
+                              (field.hasCheckBox &&
+                                !profile[`${getFieldKey(field)}_isEnabled`])
+                            "
+                            :tooltip="`Set the minimum ${field.label.toLowerCase()} for this profile.`"
                           >
-                            {{ field.label }}
-                            <span
-                              v-if="field.hasCurrency && field.currencyId"
-                              class="text-xs text-gray-500"
-                            >
-                              ({{ getCurrencySymbol(field.currencyId) }})
-                            </span>
-                            <span v-if="field.isRequired" class="text-red-500"
-                              >*</span
-                            >
-                            <span v-if="field.operator === '>='">
-                              (Greater than or equal to)</span
-                            >
-                            <span v-if="field.operator === '<='">
-                              (Less than or equal to)</span
-                            >
-                            <span v-if="field.operator === 'in'"
-                              >(Multiple selection)</span
-                            >
-                          </label>
+                            <!-- Currency suffix for fields with currency -->
+                            <template v-if="field.hasCurrency" #suffix>
+                              <div
+                                class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                              >
+                                <span>{{
+                                  getCurrencySymbol(field.currencyId)
+                                }}</span>
+                              </div>
+                            </template>
+                          </x-input>
                         </template>
-                      </div>
 
-                      <!-- Field Value -->
-                      <template v-if="field.type === 'select_multiple'">
-                        <x-select
-                          v-model="profile[getFieldKey(field)]"
-                          :options="dropdownData[field.options]"
-                          :placeholder="`Select ${field.label.toLowerCase()}...`"
-                          multiple
-                          filterable
-                          class="w-full min-h-[40px]"
-                          :class="{
-                            'border-red-300': getFieldError(
-                              profileIndex,
-                              getFieldKey(field),
-                            ),
-                            'opacity-50':
-                              field.hasCheckBox &&
-                              !profile[`${getFieldKey(field)}_isEnabled`],
-                          }"
-                          :disabled="
-                            isDisabled ||
-                            (field.hasCheckBox &&
-                              !profile[`${getFieldKey(field)}_isEnabled`])
-                          "
-                          :tooltip="`Select ${field.label.toLowerCase()} options for this profile.`"
+                        <!-- Error message for this field -->
+                        <div
+                          v-if="getFieldError(profileIndex, getFieldKey(field))"
+                          class="text-sm text-red-600"
                         >
-                          <template
-                            #content-footer
-                            v-if="dropdownData[field.options]?.length > 0"
-                          >
-                            <ui-select-actions
-                              @select-all="
-                                profile[getFieldKey(field)] = dropdownData[
-                                  field.options
-                                ].map(item => item.value)
-                              "
-                              @clear="profile[getFieldKey(field)] = []"
-                            />
-                          </template>
-                        </x-select>
-                      </template>
-                      <template v-else>
-                        <x-input
-                          v-model="profile[getFieldKey(field)]"
-                          :placeholder="`Enter ${field.label.toLowerCase()}`"
-                          type="text"
-                          class="!mb-0"
-                          :class="{
-                            'border-red-300': getFieldError(
-                              profileIndex,
-                              getFieldKey(field),
-                            ),
-                            'opacity-50':
-                              field.hasCheckBox &&
-                              !profile[`${getFieldKey(field)}_isEnabled`],
-                          }"
-                          :disabled="
-                            isDisabled ||
-                            (field.hasCheckBox &&
-                              !profile[`${getFieldKey(field)}_isEnabled`])
-                          "
-                          :tooltip="`Set the minimum ${field.label.toLowerCase()} for this profile.`"
-                        >
-                          <!-- Currency suffix for fields with currency -->
-                          <template v-if="field.hasCurrency" #suffix>
-                            <div
-                              class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-                            >
-                              <span>{{
-                                getCurrencySymbol(field.currencyId)
-                              }}</span>
-                            </div>
-                          </template>
-                        </x-input>
-                      </template>
-
-                      <!-- Error message for this field -->
-                      <div
-                        v-if="getFieldError(profileIndex, getFieldKey(field))"
-                        class="text-sm text-red-600"
-                      >
-                        {{ getFieldError(profileIndex, getFieldKey(field)) }}
+                          {{ getFieldError(profileIndex, getFieldKey(field)) }}
+                        </div>
                       </div>
-                    </div>
-                  </template>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Save Button Section -->
-        <div class="mt-6 pt-4 border-t border-gray-200">
-          <div class="flex justify-end">
-            <x-tooltip>
-              <x-button
-                size="md"
-                color="#059669"
-                @click="saveConfiguration"
-                :loading="loader"
-                :disabled="loader || isDisabled"
-              >
-                <i class="ri-save-line mr-1"></i> Save
-                {{ quoteTypeLabel }} Configuration
-              </x-button>
-              <template #tooltip>
-                <span class="custom-tooltip-content">
-                  Save this {{ quoteTypeCode }} configuration and create a new
-                  version.
-                </span>
-              </template>
-            </x-tooltip>
-          </div>
-        </div>
-
-        <!-- Read-only notice -->
-        <div
-          v-if="isDisabled"
-          class="flex items-center justify-between mt-4 p-4 bg-amber-50 rounded-md border border-amber-200"
-        >
-          <div class="flex items-center text-amber-700">
-            <i class="ri-lock-line mr-2"></i>
-            <div>
-              <div class="font-medium">Configuration is Read-Only</div>
-              <div class="text-sm mt-1">
-                <span v-if="!isCurrentVersion">
-                  You are viewing version {{ currentVersion }}. Only the latest
-                  version can be modified.
-                </span>
-                <span v-else-if="props.disabled">
-                  This configuration is currently locked for editing.
-                </span>
-              </div>
+          <!-- Save Button Section -->
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <div class="flex justify-end">
+              <x-tooltip>
+                <x-button
+                  size="md"
+                  color="#059669"
+                  @click="saveConfiguration"
+                  :loading="loader"
+                  :disabled="loader || isDisabled"
+                >
+                  <i class="ri-save-line mr-1"></i> Save
+                  {{ quoteTypeLabel }} Configuration
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">
+                    Save this {{ quoteTypeCode }} configuration and create a new
+                    version.
+                  </span>
+                </template>
+              </x-tooltip>
             </div>
           </div>
-          <div v-if="!isCurrentVersion && allVersions.length > 0">
-            <x-button
-              size="sm"
-              color="#059669"
-              @click="changeVersion(Math.max(...allVersions))"
-              :disabled="configLoading"
-            >
-              <i class="ri-edit-line mr-1"></i>
-              Switch to Latest Version
-            </x-button>
+
+          <!-- Read-only notice -->
+          <div
+            v-if="isDisabled"
+            class="flex items-center justify-between mt-4 p-4 bg-amber-50 rounded-md border border-amber-200"
+          >
+            <div class="flex items-center text-amber-700">
+              <i class="ri-lock-line mr-2"></i>
+              <div>
+                <div class="font-medium">Configuration is Read-Only</div>
+                <div class="text-sm mt-1">
+                  <span v-if="!isCurrentVersion">
+                    You are viewing version {{ currentVersion }}. Only the
+                    latest version can be modified.
+                  </span>
+                  <span v-else-if="props.disabled">
+                    This configuration is currently locked for editing.
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-if="!isCurrentVersion && allVersions.length > 0">
+              <x-button
+                size="sm"
+                color="#059669"
+                @click="changeVersion(Math.max(...allVersions))"
+                :disabled="configLoading"
+              >
+                <i class="ri-edit-line mr-1"></i>
+                Switch to Latest Version
+              </x-button>
+            </div>
           </div>
         </div>
       </div>

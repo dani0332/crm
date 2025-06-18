@@ -90,7 +90,7 @@ class PrivateClientConfigService
             $configData = $latestConfig->config;
 
             // Ensure config data has the expected profiles structure
-            if (is_array($configData) && !isset($configData['profiles'])) {
+            if (is_array($configData) && ! isset($configData['profiles'])) {
                 $configData = ['profiles' => $configData];
             }
 
@@ -163,7 +163,7 @@ class PrivateClientConfigService
             $newVersion = $existingVersion ? $existingVersion->version + 1 : 1;
 
             // Ensure config data is properly structured with profiles key
-            $configData = is_array($data['config']) && !isset($data['config']['profiles'])
+            $configData = is_array($data['config']) && ! isset($data['config']['profiles'])
                 ? ['profiles' => $data['config']]
                 : $data['config'];
 
@@ -211,7 +211,7 @@ class PrivateClientConfigService
             $configData = $versionConfig->config;
 
             // Ensure config data has the expected profiles structure
-            if (is_array($configData) && !isset($configData['profiles'])) {
+            if (is_array($configData) && ! isset($configData['profiles'])) {
                 $configData = ['profiles' => $configData];
             }
 

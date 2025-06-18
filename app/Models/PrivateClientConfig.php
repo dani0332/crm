@@ -20,7 +20,6 @@ class PrivateClientConfig extends Model implements AuditableContract
         'status',
         'active_version',
     ];
-
     protected $casts = [
         'config' => 'array',
     ];

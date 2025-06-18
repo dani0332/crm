@@ -31,9 +31,21 @@ const loadConfigurationForTab = async quoteTypeCode => {
     const response = await axios.get(
       route('admin.private-client-config.latest-by-quote-type'),
       {
-        params: { quote_type_id: quoteType.id },
+        params: {
+          quote_type_id: quoteType.id,
+          _t: Date.now(), // Cache busting parameter
+        },
       },
     );
+
+    // Debug logging to help identify issues
+    console.log('Private Client Config Response:', {
+      quoteTypeCode,
+      response: response.data,
+      hasConfig: !!response.data.config,
+      hasProfiles: response.data.config?.profiles ? true : false,
+      profilesCount: response.data.config?.profiles?.length || 0,
+    });
 
     configurations.value[quoteTypeCode] = response.data.config || {
       profiles: [],
@@ -72,7 +84,13 @@ const handleVersionLoaded = (quoteTypeCode, version) => {
 };
 
 const handleConfigurationSaved = async quoteTypeCode => {
+  // Add a small delay to ensure database transaction is committed
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Force reload the configuration from server
   await loadConfigurationForTab(quoteTypeCode);
+
+  console.log(`Configuration reloaded for ${quoteTypeCode}`);
 };
 
 onMounted(async () => {
