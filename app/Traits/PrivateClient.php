@@ -8,7 +8,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
-use App\Models\PrivateClientConfig;
 use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
 use Exception;
