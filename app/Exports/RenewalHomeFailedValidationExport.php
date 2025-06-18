@@ -65,4 +65,3 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
         return $exportLeads;
     }
 }
-
