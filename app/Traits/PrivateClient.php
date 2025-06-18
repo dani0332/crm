@@ -259,15 +259,6 @@ trait PrivateClient
         }
     }
 
-    private function getActivePcpConfigs(int $quoteTypeId)
-    {
-        return PrivateClientConfig::where([
-            'status' => true,
-            'quote_type_id' => $quoteTypeId,
-            'active_version' => true,
-        ])->whereNotNull('value')->get();
-    }
-
     private function getCachedTableColumns(string $modelClass, string $table): array
     {
         if (! isset($this->columnsCache[$modelClass])) {
