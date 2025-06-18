@@ -236,8 +236,7 @@ class PrivateClientConfigService
 
         $profiles = collect($configData && isset($configData['profiles']) ? $configData['profiles'] : []);
 
-        $profile = $profiles->whereIn('nationality_id', $nationlityId)->first();
-
+        $profile = $profiles->filter(fn ($profile) => in_array($nationlityId, $profile['nationalityIds']))->first();
         $profile = $profile ?: $profiles->firstWhere('isDefaultCriteria', true);
 
         if (! $profile) {
