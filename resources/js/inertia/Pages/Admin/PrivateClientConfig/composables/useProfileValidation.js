@@ -75,7 +75,10 @@ export function useProfileValidation() {
 
     // Helper function to get field key (same as component)
     const getFieldKey = field => {
-      if (field.hasCurrency && field.currencyId) {
+      if (
+        field.hasCurrency &&
+        fields.filter(f => f.fieldName === field.fieldName).length > 1
+      ) {
         return `${field.fieldName}_${field.currencyId}`;
       }
       return field.fieldName;

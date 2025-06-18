@@ -1,9 +1,12 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
+import { onMounted, watch } from 'vue';
 import CollapseIcon from './CollapseIcon.vue';
 import { useProfileValidation } from '../composables/useProfileValidation.js';
+import { useProfileManagement } from '../composables/useProfileManagement.js';
+import { useVersionManagement } from '../composables/useVersionManagement.js';
+import { useFlashMessages } from '../composables/useFlashMessages.js';
+import { useUIState } from '../composables/useUIState.js';
+import { useConfigurationSave } from '../composables/useConfigurationSave.js';
 
 const props = defineProps({
   quoteType: {
@@ -34,21 +37,11 @@ const props = defineProps({
 
 const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 
-const page = usePage();
-const flashSuccess = computed(() => page.props.flash?.success);
-const flashError = computed(() => page.props.flash?.error);
-const showFlashMessage = ref(false);
+// Flash Messages
+const { flashSuccess, flashError, showFlashMessage, hideFlashMessage } =
+  useFlashMessages();
 
-watch([flashSuccess, flashError], () => {
-  if (flashSuccess.value || flashError.value) {
-    showFlashMessage.value = true;
-
-    setTimeout(() => {
-      showFlashMessage.value = false;
-    }, 5000);
-  }
-});
-
+// Profile Validation
 const {
   validationErrors,
   showValidationSummary,
@@ -60,295 +53,71 @@ const {
   showValidationErrors,
 } = useProfileValidation();
 
-const profiles = ref([]);
-const isModuleCollapsed = ref(false);
-const collapsedProfiles = ref(new Set());
-const highlightedProfileIndex = ref(-1);
-const loader = ref(false);
-const configLoading = ref(false);
-const isInitialized = ref(false);
-const currentVersion = ref(null);
-const selectedVersion = ref(null);
-const allVersions = ref([]);
-const isCurrentVersion = ref(true);
+// Profile Management
+const {
+  profiles,
+  highlightedProfileIndex,
+  getFieldKey,
+  createBlankProfile,
+  addProfile,
+  removeProfile,
+  toggleDefaultCriteria,
+  initializeProfiles,
+  getProfiles,
+  setupProfileWatcher,
+} = useProfileManagement(props, clearValidationErrors, clearFieldError);
 
-const quoteTypeCode = computed(() => props.quoteType.code);
-const quoteTypeLabel = computed(() => props.quoteType.text);
+// Version Management
+const {
+  currentVersion,
+  selectedVersion,
+  allVersions,
+  isCurrentVersion,
+  configLoading,
+  loadSpecificVersion,
+  changeVersion,
+  initializeVersionData,
+} = useVersionManagement(props, emit, getFieldKey);
 
-const configForm = useForm({
-  quote_type_id: null,
-  config: [],
-  version: null,
-  created_at: null,
-  quote_type: null,
-});
+// UI State
+const {
+  isModuleCollapsed,
+  collapsedProfiles,
+  isInitialized,
+  isDisabled,
+  nationalityOptions,
+  quoteTypeCode,
+  quoteTypeLabel,
+  toggleModule,
+  toggleProfile,
+  getCurrencySymbol,
+  initialize,
+} = useUIState(props, isCurrentVersion, configLoading);
 
-const isDisabled = computed(
-  () => !isCurrentVersion.value || configLoading.value,
+// Configuration Save
+const { loader, configForm, saveConfiguration } = useConfigurationSave(
+  props,
+  emit,
+  profiles,
+  currentVersion,
+  selectedVersion,
+  allVersions,
+  isCurrentVersion,
+  quoteTypeCode,
+  validateProfiles,
+  showValidationErrors,
+  clearValidationErrors,
+  validationErrors,
+  collapsedProfiles,
+  getProfiles,
+  nationalityOptions,
 );
 
-const nationalityOptions = computed(() => {
-  return props.dropdownData.nationalities || [];
-});
-
-const createBlankProfile = () => {
-  const profile = {
-    nationalityIds: [],
-    isDefaultCriteria: false,
-  };
-
-  props.fields.forEach(field => {
-    const fieldKey =
-      field.hasCurrency &&
-      props.fields.filter(f => f.fieldName === field.fieldName).length > 1
-        ? `${field.fieldName}_${field.currencyId}`
-        : field.fieldName;
-
-    profile[fieldKey] = field.type === 'select_multiple' ? [] : '';
-
-    if (field.hasCheckBox) {
-      profile[`${fieldKey}_isEnabled`] = true;
-    }
-  });
-
-  return profile;
-};
-
-const addProfile = () => {
-  const newProfile = createBlankProfile();
-  profiles.value.push(newProfile);
-
-  clearValidationErrors();
-
-  const newIndex = profiles.value.length - 1;
-  highlightedProfileIndex.value = newIndex;
-
-  setTimeout(() => {
-    const element = document.querySelector(
-      `[data-profile-index="${quoteTypeCode.value}-${newIndex}"]`,
-    );
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 100);
-
-  setTimeout(() => {
-    highlightedProfileIndex.value = -1;
-  }, 3000);
-};
-
-const removeProfile = profileIndex => {
-  if (profiles.value.length === 1) {
-    profiles.value = [createBlankProfile()];
-  } else {
-    profiles.value.splice(profileIndex, 1);
-  }
-  collapsedProfiles.value.delete(profileIndex);
-
-  clearValidationErrors();
-};
-
-const toggleModule = () => {
-  isModuleCollapsed.value = !isModuleCollapsed.value;
-};
-
-const toggleProfile = profileIndex => {
-  if (collapsedProfiles.value.has(profileIndex)) {
-    collapsedProfiles.value.delete(profileIndex);
-  } else {
-    collapsedProfiles.value.add(profileIndex);
-  }
-};
-
-const getCurrencySymbol = currencyId => {
-  const currency = props.dropdownData.currencies?.find(
-    c => c.value === currencyId,
-  );
-
-  return currency?.label || 'AED';
-};
-
-const loadSpecificVersion = async version => {
-  configLoading.value = true;
-
-  try {
-    const response = await axios.get(
-      route('admin.private-client-config.latest-by-quote-type'),
-      {
-        params: {
-          quote_type_id: props.quoteType.id,
-          version,
-          _t: Date.now(),
-        },
-      },
-    );
-
-    if (response.data.allVersions) {
-      allVersions.value = response.data.allVersions;
-    }
-
-    if (response.data.version !== undefined) {
-      currentVersion.value = response.data.version;
-      selectedVersion.value = response.data.version;
-      emit('versionLoaded', response.data.version);
-    }
-
-    if (response.data.isCurrentVersion !== undefined) {
-      isCurrentVersion.value = response.data.isCurrentVersion;
-    }
-
-    if (
-      response.data.config &&
-      response.data.config.profiles &&
-      response.data.config.profiles.length > 0
-    ) {
-      const loadedProfiles = response.data.config.profiles.map(profile => {
-        const formattedProfile = {
-          nationalityIds: profile.nationalityIds || [],
-          isDefaultCriteria: profile.isDefaultCriteria || false,
-        };
-
-        props.fields.forEach(field => {
-          const fieldKey =
-            field.hasCurrency &&
-            props.fields.filter(f => f.fieldName === field.fieldName).length > 1
-              ? `${field.fieldName}_${field.currencyId}`
-              : field.fieldName;
-
-          // Handle both new nested structure and legacy flat structure for loading
-          if (
-            profile[field.fieldName] &&
-            typeof profile[field.fieldName] === 'object'
-          ) {
-            // New nested structure - extract values to flat structure for form binding
-            formattedProfile[fieldKey] =
-              profile[field.fieldName].value ||
-              (field.type === 'select_multiple' ? [] : '');
-
-            if (field.hasCheckBox) {
-              formattedProfile[`${fieldKey}_isEnabled`] =
-                profile[field.fieldName].isEnabled !== undefined
-                  ? profile[field.fieldName].isEnabled
-                  : true;
-            }
-          } else {
-            // Legacy flat structure or direct field access
-            formattedProfile[fieldKey] =
-              profile[fieldKey] ||
-              profile[field.fieldName] ||
-              (field.type === 'select_multiple' ? [] : '');
-
-            if (field.hasCheckBox) {
-              formattedProfile[`${fieldKey}_isEnabled`] =
-                profile[`${fieldKey}_isEnabled`] !== undefined
-                  ? profile[`${fieldKey}_isEnabled`]
-                  : profile[`${field.fieldName}_isEnabled`] !== undefined
-                    ? profile[`${field.fieldName}_isEnabled`]
-                    : true;
-            }
-          }
-        });
-
-        return formattedProfile;
-      });
-
-      profiles.value = loadedProfiles;
-    } else {
-      profiles.value = [createBlankProfile()];
-    }
-  } catch (error) {
-    profiles.value = [createBlankProfile()];
-  } finally {
-    configLoading.value = false;
-  }
-};
-
-const changeVersion = newVersion => {
-  if (newVersion === selectedVersion.value) return;
-  selectedVersion.value = newVersion;
-
-  loadSpecificVersion(newVersion);
-};
-
-const initializeProfiles = () => {
-  if (
-    props.initialConfig &&
-    props.initialConfig.profiles &&
-    props.initialConfig.profiles.length > 0
-  ) {
-    const loadedProfiles = props.initialConfig.profiles.map(profile => {
-      const formattedProfile = {
-        nationalityIds: profile.nationalityIds || [],
-        isDefaultCriteria: profile.isDefaultCriteria || false,
-      };
-
-      props.fields.forEach(field => {
-        const fieldKey =
-          field.hasCurrency &&
-          props.fields.filter(f => f.fieldName === field.fieldName).length > 1
-            ? `${field.fieldName}_${field.currencyId}`
-            : field.fieldName;
-
-        // Handle both new nested structure and legacy flat structure for loading
-        if (
-          profile[field.fieldName] &&
-          typeof profile[field.fieldName] === 'object'
-        ) {
-          // New nested structure - extract values to flat structure for form binding
-          formattedProfile[fieldKey] =
-            profile[field.fieldName].value ||
-            (field.type === 'select_multiple' ? [] : '');
-
-          if (field.hasCheckBox) {
-            formattedProfile[`${fieldKey}_isEnabled`] =
-              profile[field.fieldName].isEnabled !== undefined
-                ? profile[field.fieldName].isEnabled
-                : true;
-          }
-        } else {
-          // Legacy flat structure or direct field access
-          formattedProfile[fieldKey] =
-            profile[fieldKey] ||
-            profile[field.fieldName] ||
-            (field.type === 'select_multiple' ? [] : '');
-
-          if (field.hasCheckBox) {
-            formattedProfile[`${fieldKey}_isEnabled`] =
-              profile[`${fieldKey}_isEnabled`] !== undefined
-                ? profile[`${fieldKey}_isEnabled`]
-                : profile[`${field.fieldName}_isEnabled`] !== undefined
-                  ? profile[`${field.fieldName}_isEnabled`]
-                  : true;
-          }
-        }
-      });
-
-      return formattedProfile;
-    });
-
-    profiles.value = loadedProfiles;
-  } else {
-    profiles.value = [createBlankProfile()];
-  }
-};
-
-const initializeVersionData = () => {
-  if (props.versionData) {
-    allVersions.value = props.versionData.allVersions || [];
-    currentVersion.value = props.versionData.currentVersion;
-    selectedVersion.value = props.versionData.currentVersion;
-    isCurrentVersion.value = props.versionData.isCurrentVersion !== false;
-
-    if (props.versionData.currentVersion) {
-      emit('versionLoaded', props.versionData.currentVersion);
-    }
-  }
-};
-
+// Watchers and Initialization
 watch(
   () => props.initialConfig,
   () => {
-    initializeProfiles();
+    initializeProfiles(props.initialConfig);
   },
   { deep: true, immediate: true },
 );
@@ -356,227 +125,31 @@ watch(
 watch(
   () => props.versionData,
   () => {
-    initializeVersionData();
+    initializeVersionData(props.versionData);
   },
   { deep: true, immediate: true },
 );
 
-onMounted(async () => {
-  setTimeout(() => {
-    isInitialized.value = true;
-  }, 100);
+onMounted(() => {
+  initialize();
+  setupProfileWatcher();
 });
 
-const toggleDefaultCriteria = (profileIndex, newValue) => {
-  const profile = profiles.value[profileIndex];
-
-  if (newValue) {
-    // If setting this profile as default, unmark all other defaults first
-    profiles.value.forEach((otherProfile, otherIndex) => {
-      if (otherIndex !== profileIndex && otherProfile.isDefaultCriteria) {
-        otherProfile.isDefaultCriteria = false;
-        // Clear validation errors for the previously default profile
-        clearFieldError(otherIndex, 'isDefaultCriteria');
-        clearFieldError(otherIndex, 'nationalityIds');
-      }
-    });
-
-    // Set this profile as default and clear its nationalities
-    profile.isDefaultCriteria = true;
-    profile.nationalityIds = [];
-  } else {
-    // Simply unmark this profile as default
-    profile.isDefaultCriteria = false;
-  }
-
-  // Clear validation errors for the current profile
-  clearFieldError(profileIndex, 'isDefaultCriteria');
-  clearFieldError(profileIndex, 'nationalityIds');
+// Wrapper functions for template
+const handleAddProfile = () => {
+  addProfile(quoteTypeCode.value, collapsedProfiles);
 };
 
-// Watch for changes in profile fields to clear errors
-watch(
-  profiles,
-  (newProfiles, oldProfiles) => {
-    if (oldProfiles && newProfiles) {
-      newProfiles.forEach((profile, profileIndex) => {
-        // Check nationality changes
-        if (
-          oldProfiles[profileIndex] &&
-          JSON.stringify(profile.nationalityIds) !==
-            JSON.stringify(oldProfiles[profileIndex].nationalityIds)
-        ) {
-          clearFieldError(profileIndex, 'nationalityIds');
-        }
-
-        // Check field changes
-        props.fields.forEach(field => {
-          const fieldKey = getFieldKey(field);
-          if (
-            oldProfiles[profileIndex] &&
-            profile[fieldKey] !== oldProfiles[profileIndex][fieldKey]
-          ) {
-            clearFieldError(profileIndex, fieldKey);
-          }
-        });
-      });
-    }
-  },
-  { deep: true },
-);
-
-const getFieldKey = field => {
-  if (
-    field.hasCurrency &&
-    props.fields.filter(f => f.fieldName === field.fieldName).length > 1
-  ) {
-    return `${field.fieldName}_${field.currencyId}`;
-  }
-  return field.fieldName;
+const handleRemoveProfile = profileIndex => {
+  removeProfile(profileIndex, collapsedProfiles);
 };
 
-const saveConfiguration = () => {
-  // Clear previous validation errors
-  clearValidationErrors();
-
-  // Validate profiles using the validation utility
-  if (
-    !validateProfiles(profiles.value, props.fields, nationalityOptions.value)
-  ) {
-    // Show validation summary
-    showValidationErrors();
-
-    // Scroll to first error
-    const firstErrorProfileIndex = Object.keys(validationErrors.value)[0];
-    if (firstErrorProfileIndex !== undefined) {
-      const element = document.querySelector(
-        `[data-profile-index="${quoteTypeCode.value}-${firstErrorProfileIndex}"]`,
-      );
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-
-      // Expand the profile with errors
-      collapsedProfiles.value.delete(parseInt(firstErrorProfileIndex));
-    }
-
-    return;
-  }
-
-  loader.value = true;
-
-  try {
-    const validProfiles = getProfiles();
-
-    if (validProfiles.length === 0) {
-      showValidationErrors();
-      loader.value = false;
-      return;
-    }
-
-    configForm.clearErrors();
-
-    configForm.quote_type_id = props.quoteType.id;
-    configForm.quote_type = props.quoteType.code;
-    configForm.version = currentVersion.value ? currentVersion.value + 1 : 1;
-    configForm.created_at = new Date().toISOString();
-    configForm.config = validProfiles;
-
-    configForm.post(route('admin.private-client-config.upsert'), {
-      onSuccess: page => {
-        loader.value = false;
-        clearValidationErrors();
-
-        // Use version from flash data if available, otherwise calculate
-        const newVersion =
-          page.props?.flash?.version ||
-          (currentVersion.value ? currentVersion.value + 1 : 1);
-
-        // Update local state immediately
-        currentVersion.value = newVersion;
-        selectedVersion.value = newVersion;
-        isCurrentVersion.value = true;
-
-        // Update versions list
-        if (!allVersions.value.includes(newVersion)) {
-          allVersions.value.unshift(newVersion); // Add to beginning
-          allVersions.value.sort((a, b) => b - a); // Sort descending
-        }
-
-        // Emit events to notify parent components
-        emit('versionLoaded', newVersion);
-        emit('configurationSaved');
-      },
-      onError: errors => {
-        loader.value = false;
-        console.error('Save failed:', errors);
-      },
-    });
-  } catch (error) {
-    loader.value = false;
-    console.error(`Error saving ${quoteTypeCode.value} configuration:`, error);
-  }
+const handleChangeVersion = newVersion => {
+  changeVersion(newVersion, profiles);
 };
 
-const getProfiles = () => {
-  return profiles.value
-    .filter(profile => {
-      // Default profiles are valid even without nationalities
-      if (profile.isDefaultCriteria) {
-        // For default profiles, just check if at least one field has a value
-        return props.fields.some(field => {
-          const fieldKey = getFieldKey(field);
-          const value = profile[fieldKey];
-          if (Array.isArray(value)) {
-            return value.length > 0;
-          }
-          return value && value.toString().trim() !== '';
-        });
-      }
-
-      // Non-default profiles need nationalities AND at least one field filled
-      if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
-        return false;
-      }
-
-      return props.fields.some(field => {
-        const fieldKey = getFieldKey(field);
-        const value = profile[fieldKey];
-        if (Array.isArray(value)) {
-          return value.length > 0;
-        }
-        return value && value.toString().trim() !== '';
-      });
-    })
-    .map(profile => {
-      const cleanProfile = {
-        nationalityIds: profile.nationalityIds || [], // Ensure empty array for default profiles
-        isDefaultCriteria: profile.isDefaultCriteria || false,
-      };
-
-      props.fields.forEach(field => {
-        const fieldKey = getFieldKey(field);
-        const fieldValue = profile[fieldKey];
-
-        // Create nested object for each field with its properties
-        cleanProfile[field.fieldName] = {
-          value: fieldValue,
-        };
-
-        // Add currency information if field has currency
-        if (field.hasCurrency && field.currencyId) {
-          cleanProfile[field.fieldName].currencyId = field.currencyId;
-        }
-
-        // Add enabled state if field has checkbox
-        if (field.hasCheckBox) {
-          cleanProfile[field.fieldName].isEnabled =
-            profile[`${fieldKey}_isEnabled`];
-        }
-      });
-
-      return cleanProfile;
-    });
+const handleLoadSpecificVersion = version => {
+  loadSpecificVersion(version, profiles);
 };
 </script>
 
@@ -624,7 +197,7 @@ const getProfiles = () => {
                   'bg-red-50 text-red-400 hover:bg-red-100 focus:ring-offset-red-50 focus:ring-red-600':
                     flashError,
                 }"
-                @click="showFlashMessage = false"
+                @click="hideFlashMessage"
               >
                 <span class="sr-only">Dismiss</span>
                 <i class="ri-close-line text-sm"></i>
@@ -746,7 +319,7 @@ const getProfiles = () => {
                     label: `Version ${v}${v === Math.max(...allVersions) ? ' (Latest)' : ''}`,
                   }))
                 "
-                @update:modelValue="changeVersion"
+                @update:modelValue="handleChangeVersion"
                 class="w-40"
                 :disabled="configLoading"
               />
@@ -778,7 +351,7 @@ const getProfiles = () => {
             size="md"
             color="#ff5e00"
             type="button"
-            @click="addProfile"
+            @click="handleAddProfile"
             :disabled="isDisabled || configLoading"
           >
             Add Profile
@@ -944,7 +517,7 @@ const getProfiles = () => {
                   outlined
                   type="button"
                   :disabled="isDisabled"
-                  @click="removeProfile(profileIndex)"
+                  @click="handleRemoveProfile(profileIndex)"
                 >
                   <svg
                     class="h-4 w-4"
@@ -1276,7 +849,7 @@ const getProfiles = () => {
               <x-button
                 size="sm"
                 color="#059669"
-                @click="changeVersion(Math.max(...allVersions))"
+                @click="handleChangeVersion(Math.max(...allVersions))"
                 :disabled="configLoading"
               >
                 <i class="ri-edit-line mr-1"></i>
