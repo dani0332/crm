@@ -643,9 +643,6 @@ watch(
 );
 
 onMounted(() => {
-  setInterval(() => {
-    console.log("====createPaymentFormRef", createPaymentFormRef.value, createPaymentFormRef.isApproveConfirmed);
-  }, 5000);
   if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
   }
