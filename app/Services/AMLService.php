@@ -1274,7 +1274,7 @@ class AMLService
         return $insured;
     }
 
-    private function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
+    public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
         $getPersonalQuote = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => $quoteTypeId])->first();
         if ($getPersonalQuote) {
