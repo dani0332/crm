@@ -1094,6 +1094,14 @@ const shouldShowPlanDetailsSection = computed(() => {
         >
           Stale for {{ countDays }}
         </p>
+        <x-button
+          v-if="quote?.customer.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
@@ -1495,6 +1503,13 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-QUALIFIED</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1641,7 +1656,10 @@ const shouldShowPlanDetailsSection = computed(() => {
                   <dt class="font-medium">STREET NAME</dt>
                   <dd>{{ page?.props?.customerAddressData?.street }}</dd>
                 </div>
-
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl

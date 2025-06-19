@@ -73,6 +73,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'vehicle_use',
             'company_name as car_company_name',
             'lead_assignment_trigger',
+            'customer_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -90,6 +91,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteViewCount:quote_id,quote_type_id,user_id,visit_count',
             'advisor:id,name',
             'carTypeInsurance:id,text',
+            'customer:id,pcp_tag',
         ]);
     }
 
@@ -153,6 +155,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
+            ->filterByPrivateClient(request('private_client'))
             ->when($hasFilterValue('previous_quote_policy_number'), function ($query) use ($requestParams) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', requestParams: $requestParams)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', requestParams: $requestParams));
             })

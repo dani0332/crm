@@ -105,6 +105,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const ecommerceOptions = [
@@ -293,6 +294,7 @@ const filters = reactive({
   registration_type: carRegistrationTypeEnum.PERSONAL,
   vehicle_use: '',
   company_name: '',
+  private_client: 'all',
 });
 
 const teamUsers =
@@ -1143,6 +1145,19 @@ const insurerAMLStatusOption = computed(() => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"

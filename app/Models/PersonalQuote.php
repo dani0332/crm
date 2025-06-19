@@ -54,6 +54,9 @@ class PersonalQuote extends Model implements AuditableContract
         'stale_at' => FilterTypes::NULL_CHECK,
         'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
+    protected $appends = [
+        'pc_qualified_formatted',
+    ];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

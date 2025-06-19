@@ -124,6 +124,7 @@ class PetQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::PET->id());
             },
             'quoteDetail',
+            'customer',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -145,6 +146,7 @@ class PetQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',

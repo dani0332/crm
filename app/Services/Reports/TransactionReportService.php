@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\TransactionReportExport;
+use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -89,6 +90,7 @@ class TransactionReportService extends ManagementReport
                 'personal_quotes.source',
                 'personal_quotes.policy_booking_date',
                 'ps.sage_reciept_id',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted')
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -102,6 +104,7 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id');
 
         $this->applyFilters($query, $request, isSSR: true);

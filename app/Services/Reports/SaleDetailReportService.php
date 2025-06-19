@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\SaleDetailReportExport;
+use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -80,6 +81,7 @@ class SaleDetailReportService extends ManagementReport
                 'p.commmission_percentage',
                 'personal_quotes.policy_booking_date',
                 'ps.sage_reciept_id',
+                DB::raw(Customer::formattedPcpTagCase('cm').' as pcp_tag_formatted')
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')

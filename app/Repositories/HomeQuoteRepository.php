@@ -125,6 +125,7 @@ class HomeQuoteRepository extends BaseRepository
                 }
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('personal_quotes.created_at', 'desc')
             ->when(
@@ -218,6 +219,7 @@ class HomeQuoteRepository extends BaseRepository
                     'paymentSplits.processJob',
                 ]);
             },
+            'customer',
         ];
     }
 
