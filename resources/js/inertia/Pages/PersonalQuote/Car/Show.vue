@@ -1615,6 +1615,14 @@ const isCommercialVehicle = computed(() => {
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Car Detail</h2>
+        <x-button
+          v-if="record?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
       <template #default>
         <Link
@@ -2050,6 +2058,13 @@ const isCommercialVehicle = computed(() => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ record.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -2337,6 +2352,10 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ record.pcp_tag_formatted }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>

@@ -168,7 +168,6 @@ function cleanString($string)
 
 function getDataAgainstStatus($modelType, $statusId, Request $request)
 {
-    // dd($request->all());
     $result = [];
 
     if (! $modelType) {
@@ -954,6 +953,10 @@ if (! function_exists('getCardViewRequestFilters')) {
             if (! empty($advisors)) {
                 $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             }
+        }
+
+        if ($request->has('private_client') && $request->filled('private_client')) {
+            $partialQuery->filterByPrivateClient($request->private_client);
         }
     }
 }

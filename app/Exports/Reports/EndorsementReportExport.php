@@ -10,6 +10,7 @@ class EndorsementReportExport extends BaseReportsExport
     {
         return [
             'Ref-ID',
+            'Private Client',
             'Department',
             'Policy Number',
             'Transactions',
@@ -97,6 +98,7 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->source ?? 'N/A',
             $quote->status ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 

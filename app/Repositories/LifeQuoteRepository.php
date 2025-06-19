@@ -76,7 +76,7 @@ class LifeQuoteRepository extends BaseRepository
     {
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
             'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
-            'payments', 'latestInsured' => function ($q) {
+            'payments', 'customer', 'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
             }])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
@@ -91,6 +91,7 @@ class LifeQuoteRepository extends BaseRepository
                 });
             })
             ->filter()
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
                 '*',
@@ -153,6 +154,7 @@ class LifeQuoteRepository extends BaseRepository
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
+            'customer',
         ])
             ->with([
                 'documents' => function ($q) {

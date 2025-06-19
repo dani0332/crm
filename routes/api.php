@@ -6,7 +6,6 @@ use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
-use App\Http\Controllers\API\V1\HomeQuoteController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +48,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
+Route::post('/customers/tag-private-clients', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClients');
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
