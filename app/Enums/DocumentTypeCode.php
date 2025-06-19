@@ -81,4 +81,7 @@ class DocumentTypeCode extends Enum
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
+    const PS_SAV = 'Policy Schedule';
+    const PC_SAV = 'Policy Certificate';
+    const AC_SAV = 'Application copy';
 }

@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -807,6 +808,7 @@ class SendEmailCustomerService extends BaseService
         LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called');
 
         $isEmailSent = 0;
+        $messageId = null;
         try {
             LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId);
 
@@ -881,6 +883,18 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalBcc->value,
                 ];
             }
+
+            if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
+                // TODO : need to verify the sender
+                //  'sender' => [
+                //           'email' => $sendUpdateEmail,
+                //           'name' => 'InsuranceMarket.ae',
+                //           ],
+
+                $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
+                $bodyData['bcc'][] = ['email' => $newLeadPool->value];
+            }
+
             LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
@@ -907,6 +921,9 @@ class SendEmailCustomerService extends BaseService
             );
 
             $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
+            if ($clientResponse->getBody()->getContents()->messageId) {
+                $messageId = $clientResponse->getBody()->getContents()->messageId;
+            }
             $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
             LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientResponse->getBody()->getContents()));
@@ -920,6 +937,11 @@ class SendEmailCustomerService extends BaseService
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
+        if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
+            $status = $responseCode == 201 ? ProcessStatusCode::COMPLETED : ProcessStatusCode::FAILED;
+            $emailSubject = $this->getEmailSubjectFromSib($messageId);
+            $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject ?? '', $status);
+        }
 
         return $responseCode;
     }
