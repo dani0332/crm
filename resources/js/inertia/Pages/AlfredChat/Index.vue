@@ -106,6 +106,7 @@ const isError = ref(false);
 const loader = reactive({
   table: false,
   view: false,
+  exportLoader: false,
 });
 const showChatLogs = ref(false);
 
@@ -236,10 +237,87 @@ onMounted(() => {
   }
 });
 
-const downloadReport = () => {
-  const data = useObjToUrl(useCleanObj({ ...filters, ...serverOptions.value }));
-  const url = route('exportChatData');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+const exportReport = async (exportType = 'download') => {
+  try {
+    loader.exportLoader = true;
+
+    // Validate required fields for email export
+    if (!filters.report) {
+      notification.error({
+        position: 'top',
+        title: 'Export Error',
+        text: 'Please select a report type before exporting.',
+      });
+      return;
+    }
+
+    const days = calculateDaysDifference(
+      filters.chat_initiated_at[0],
+      filters.chat_initiated_at[1],
+    );
+
+    if (days > 30) {
+      notification.error({
+        position: 'top',
+        title: 'Export Error',
+        message: 'Maximum 30 days are allowed.',
+      });
+      return;
+    }
+
+    const data = {
+      ...useCleanObj({ ...filters, ...serverOptions.value }),
+      ...(exportType === 'email'
+        ? { recipientEmail: page.props.auth.user.email }
+        : {}),
+      report: filters.report,
+    };
+
+    const payload =
+      exportType === 'download'
+        ? {
+            type: 'instant-alfred-chat',
+            quote_type_id: null,
+            exportType: 'download',
+            url: `${route('exportChatData')}?${new URLSearchParams(useObjToUrl(data)).toString()}`,
+          }
+        : {
+            type: 'instant-alfred-chat',
+            quote_type_id: null,
+            exportType: 'email',
+            url: route('instant-alfred.export-email'),
+            data: data,
+            method: 'post',
+          };
+
+    const result = await logAndExportQuotes(payload);
+
+    if (result.data.success !== false) {
+      notification.success({
+        title:
+          exportType === 'download'
+            ? 'Export Initiated'
+            : 'Your export has been queued and will be sent to your email shortly.',
+        position: 'top',
+      });
+    } else {
+      notification.error({
+        title:
+          result.data.message || 'Failed to initiate export. Please try again.',
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      position: 'top',
+      title: 'Export Error',
+      text:
+        error.response?.data?.message ||
+        'An error occurred while initiating the export. Please try again.',
+    });
+  } finally {
+    loader.exportLoader = false;
+  }
 };
 </script>
 
@@ -406,7 +484,7 @@ const downloadReport = () => {
     </div>
 
     <div class="flex justify-between gap-3">
-      <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+      <div v-if="can(permissionsEnum.DATA_EXTRACTION)" class="flex gap-2">
         <x-tooltip v-if="reportButtonCon.disable" position="right">
           <x-button size="sm" color="emerald">Export Excel</x-button>
           <template #tooltip v-if="reportButtonCon.msg">
@@ -421,8 +499,30 @@ const downloadReport = () => {
           v-else
           size="sm"
           color="emerald"
-          @click.prevent="downloadReport"
+          @click.prevent="exportReport('download')"
+          :loading="loader.exportLoader"
           >Export Excel</x-button
+        >
+
+        <x-tooltip v-if="reportButtonCon.disable" position="right">
+          <x-button size="sm" color="emerald" :loading="loader.exportLoader">
+            Export via Email
+          </x-button>
+          <template #tooltip v-if="reportButtonCon.msg">
+            <span class="font-medium">
+              {{ reportButtonCon.msg }}
+            </span>
+          </template>
+        </x-tooltip>
+
+        <x-button
+          :disabled="reportButtonCon.disable"
+          v-else
+          size="sm"
+          color="blue"
+          :loading="loader.exportLoader"
+          @click.prevent="exportReport('email')"
+          >Export via Email</x-button
         >
       </div>
 

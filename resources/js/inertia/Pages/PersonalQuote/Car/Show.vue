@@ -1343,13 +1343,14 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.record.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.record.customer_id,
-  customer_type: page.props.record.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.record.id,
-
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
   emirates_id_number: page.props.record.emirates_id_number || null,
@@ -1686,6 +1687,14 @@ function handleOcrNotification(event) {
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Car Detail</h2>
+        <x-button
+          v-if="record?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
       <template #default>
         <Link
@@ -1898,7 +1907,7 @@ function handleOcrNotification(event) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -2121,6 +2130,13 @@ function handleOcrNotification(event) {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ record.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -2134,7 +2150,7 @@ function handleOcrNotification(event) {
               <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">Name</dt>
-                  <dd>{{ record.first_name }} {{ record.last_name }}</dd>
+                  <dd>{{ record.driver_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -2262,7 +2278,7 @@ function handleOcrNotification(event) {
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                record.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -2283,8 +2299,7 @@ function handleOcrNotification(event) {
             <div class="text-sm">
               <dl
                 v-if="
-                  record.customer_type ===
-                  page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2410,23 +2425,25 @@ function handleOcrNotification(event) {
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ record.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
                 v-if="
-                  record.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
-                  <dd v-if="isPrivateCar">{{ record.customer_first_name }}</dd>
-                  <dd v-else>{{ record.first_name }}</dd>
+                  <dd>{{ record.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">LAST NAME</dt>
-                  <dd v-if="isPrivateCar">{{ record.customer_last_name }}</dd>
-                  <dd v-else>{{ record.last_name }}</dd>
+                  <dd>{{ record.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MOBILE NUMBER</dt>
@@ -2643,7 +2660,7 @@ function handleOcrNotification(event) {
     </x-modal>
 
     <MemberDetails
-      v-if="record.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -2653,7 +2670,7 @@ function handleOcrNotification(event) {
     />
 
     <UBODetails
-      v-if="record.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -4277,6 +4294,14 @@ function handleOcrNotification(event) {
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
+
+  <AuditLogs
+    :title="'KYC Audit Logs'"
+    :type="'App\\Models\\InsuredKyc'"
+    :id="record?.insured_kyc_id"
+    :expanded="sectionExpanded"
+  />
+
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"

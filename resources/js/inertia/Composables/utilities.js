@@ -364,6 +364,25 @@ export const calculateDaysDifference = (start_date, end_date) => {
   return 0;
 };
 
+export const calculateMonthsDifference = (start_date, end_date) => {
+  if (start_date && end_date) {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+
+    // Calculate year and month difference
+    const yearDiff = end.getFullYear() - start.getFullYear();
+    const monthDiff = end.getMonth() - start.getMonth();
+
+    // Total months difference
+    const totalMonths = yearDiff * 12 + monthDiff;
+
+    // Return absolute difference in months
+    // (e.g., March 31 to April 1 = 1 month, March 15 to March 20 = 0 months)
+    return Math.abs(totalMonths);
+  }
+  return 0;
+};
+
 // Function to get the quote type ID based on quote type name
 export const getQuoteTypeId = (quoteTypes, quoteType) => {
   return quoteTypes.filter(item => item.name === quoteType)[0]?.id;
@@ -375,8 +394,11 @@ export const logAndExportQuotes = async payload => {
   return axios
     .post('/quotes/export-logs/create', payload)
     .then(async res => {
-      const exportResponse = await axios
-        .get(payload.url)
+      const exportResponse = await axios({
+        method: payload.method || 'get',
+        url: payload.url,
+        data: payload.data || null,
+      })
         .then(resp => {
           return resp.data;
         })

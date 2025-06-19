@@ -3,6 +3,8 @@
 namespace App\Pipes\Allocation\Health;
 
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\BuyLeadRequest;
 use App\Models\Team;
 use App\Models\User;
@@ -67,7 +69,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
 
-        $teamId = Team::where('name', $this->lead->health_team_type)->value('id');
+        $parentTeamId = Team::where('name', TeamNameEnum::HEALTH)->active()->where('type', TeamTypeEnum::PRODUCT)->value('id');
+
+        $teamId = Team::where('name', $this->lead->health_team_type)->active()->where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $parentTeamId)->value('id');
 
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class."::fetchAdvisorByType - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
