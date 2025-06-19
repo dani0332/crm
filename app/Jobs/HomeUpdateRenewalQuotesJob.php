@@ -64,7 +64,7 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
             'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
         ]);
 
-        $renewalQuoteProcess = RenewalQuoteProcess::where('id',$this->renewalQuoteProcessId)->select('renewals_upload_lead_id', 'id')->first(); 
+        $renewalQuoteProcess = RenewalQuoteProcess::where('id', $this->renewalQuoteProcessId)->select('renewals_upload_lead_id', 'id')->first();
         $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
         RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
     }

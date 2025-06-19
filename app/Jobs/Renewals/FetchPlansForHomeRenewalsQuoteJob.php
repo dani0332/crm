@@ -2,7 +2,6 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
 use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
