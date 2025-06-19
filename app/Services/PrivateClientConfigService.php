@@ -157,7 +157,15 @@ class PrivateClientConfigService
         $configuration = collect([]);
 
         foreach ($fields as $field) {
-            $configuration->push($this->buildEntity($config, $profile, $field));
+            $fieldName = $field;
+            $customKeyName = null;
+
+            if (is_array($field)) {
+                $fieldName = key($field);
+                $customKeyName = $field[$fieldName];
+            }
+
+            $configuration->push($this->buildEntity($config, $profile, $fieldName, $customKeyName));
         }
 
         return $configuration;
@@ -165,14 +173,13 @@ class PrivateClientConfigService
 
     private function getLifeConfiguration(PrivateClientConfig $config, array $profile)
     {
-        $configuration = $this->buildConfig($config, $profile, ['insurer']);
-
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_1', 'sum_insured_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_2', 'sum_insured_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_3', 'sum_insured_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_4', 'sum_insured_value'));
-
-        return $configuration;
+        return $this->buildConfig($config, $profile, [
+            ['sum_insured_value_1' => 'sum_insured_value'],
+            ['sum_insured_value_2' => 'sum_insured_value'],
+            ['sum_insured_value_3' => 'sum_insured_value'],
+            ['sum_insured_value_4' => 'sum_insured_value'],
+            'insurer',
+        ]);
     }
 
     private function buildEntity(PrivateClientConfig $config, array $profile, string $key, ?string $customKey = null)
