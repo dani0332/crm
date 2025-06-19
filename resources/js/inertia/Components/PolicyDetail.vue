@@ -72,6 +72,16 @@ const policyIssuanceStatusOptions = computed(() => {
   });
 });
 
+const currencyOptions = computed(() => {
+  let currencyOptions = page.props.currencyOptions;
+  return currencyOptions.map(item => {
+    return {
+      value: item.id,
+      label: item.text,
+    };
+  });
+});
+
 const setQuoteInsurerNumber = () => {
   let quotePlanList = props.availablePlans;
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
@@ -238,6 +248,14 @@ const rules = {
     }
     return true;
   },
+
+  sum_insured_currency: v => {
+    if (isLifeQuote) {
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+  
   quote_policy_issuance_date: v => {
     if (v) {
       const date = new Date(v);
@@ -768,18 +786,12 @@ const calculateTotalPrice = () => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.quote_plan_insurer_quote_number"
-                  type="text"
-                  placeholder="Select the currency of sum assured as per the policy schedule"
-                  :custom-error="
-                    rules.quote_plan_insurer_quote_number(
-                      policyDetailsForm.quote_plan_insurer_quote_number,
-                    )
-                  "
-                  :rules="[rules.quote_plan_insurer_quote_number]"
+                <x-select
+                  v-model="policyDetailsForm.sum_insured_currency"
                   class="w-full"
+                  placeholder="Select the currency of sum assured as per the policy schedule"
                   :disabled="!policyDetailsState.isEditing"
+                  :options="currencyOptions"
                 />
               </div>
               <div class="w-full md:w-1/2">
@@ -787,7 +799,7 @@ const calculateTotalPrice = () => {
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Policy Sum Assured</label
-                  >
+                  ><span class="text-red-500">*</span>
                   <template #tooltip>
                     <span>{{
                       productionProcessTooltipEnum.POLICY_SUM_ASSURED
@@ -799,7 +811,7 @@ const calculateTotalPrice = () => {
                   type="number"
                   placeholder="Enter the sum assured as per the issued policy schedule"
                   class="w-full"
-                  :disabled="true"
+                  :disabled="!policyDetailsState.isEditing"
                 />
               </div>
             </div>
