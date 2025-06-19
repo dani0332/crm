@@ -1470,16 +1470,17 @@ class AMLService
 
         $query = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
 
-        $query->groupBy('pqr.id','kl.created_at', 'cm.id');
+        $query->groupBy('pqr.id', 'kl.created_at', 'cm.id');
         $collection = $query->get();
 
         // Sort collection by customer first name, with nulls last
         $collection = $collection->sortBy(function ($item) {
             $name = $item->customer_first_name ?: $item->first_name;
+
             return $name ? strtolower($name) : '~'; // ~ sorts after letters, putting nulls last
         })->values();
 
-    // Calculate summary
+        // Calculate summary
         $totalCustomers = $collection->count();
         $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();
         $mediumRisk = $collection->where('risk_score', '>=', 26)->where('risk_score', '<=', 34)->count();
@@ -1492,7 +1493,7 @@ class AMLService
                 'high_risk' => $highRisk,
                 'medium_risk' => $mediumRisk,
                 'low_risk' => $lowRisk,
-            ]
+            ],
         ];
     }
 
@@ -1504,11 +1505,11 @@ class AMLService
             QuoteTypes::JETSKI->id(),
             QuoteTypes::PET->id(),
             QuoteTypes::YACHT->id(),
-            QuoteTypes::HOME->id()
+            QuoteTypes::HOME->id(),
         ];
 
         $quoteTypeId = null;
-        if($request->quoteType) {
+        if ($request->quoteType) {
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
         }
         // KYC log subquery
@@ -1518,7 +1519,7 @@ class AMLService
             ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA)
             ->whereNotNull('quote_request_id')
             ->whereNotNull('quote_type_id');
-    
+
         $query = DB::table('personal_quotes as pqr')
             ->select([
                 'pqr.id',
@@ -1555,102 +1556,101 @@ class AMLService
             ->when(isset($startDate) && isset($endDate) && $startDate != 'null' && $endDate != 'null', function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('pqr.created_at', [
                     Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay()
+                    Carbon::parse($endDate)->endOfDay(),
                 ]);
             })
-            ->when($request->searchType === 'customerEmail', fn($q) => $q->where('pqr.email', $request->searchField))
-            ->when($request->searchType === 'cdbId', fn($q) => $q->where('pqr.code', $request->searchField));
-    
+            ->when($request->searchType === 'customerEmail', fn ($q) => $q->where('pqr.email', $request->searchField))
+            ->when($request->searchType === 'cdbId', fn ($q) => $q->where('pqr.code', $request->searchField));
+
         // Common joins
         $query->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
-              ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id');
-    
+            ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id');
+
         // Dynamic customer_insured join
-        $query->leftJoin('customer_insured as ci', function($join) use ($personalQuoteTypesIds, $quoteTypeId) {
-            $join->on(function($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                if($quoteTypeId) {
+        $query->leftJoin('customer_insured as ci', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                if ($quoteTypeId) {
                     $q->where('pqr.quote_type_id', $quoteTypeId)
-                      ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
+                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
                 } else {
                     $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                      ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
+                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
                 }
-                })
-                ->orOn(function($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                    if($quoteTypeId) {
+            })
+                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
                         $q->where('pqr.quote_type_id', $quoteTypeId)
-                          ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
+                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
                     } else {
                         $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                          ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
+                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
                     }
                 });
         })
-        ->whereRaw('ci.id = (SELECT MAX(ci2.id) FROM customer_insured ci2 WHERE ci2.quote_request_id = ci.quote_request_id)');
-    
+            ->whereRaw('ci.id = (SELECT MAX(ci2.id) FROM customer_insured ci2 WHERE ci2.quote_request_id = ci.quote_request_id)');
+
         // Join insured table
         $query->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id');
-    
+
         // Join insured_kyc
         $query->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
-    
+
         // Join customer_members with similar conditional logic
-        $query->leftJoin('customer_members as cm', function($join) use ($personalQuoteTypesIds, $quoteTypeId) {
-            if($quoteTypeId) {
+        $query->leftJoin('customer_members as cm', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            if ($quoteTypeId) {
                 $modelTypes = $this->getModelTypeByQuoteTypeId($quoteTypeId);
             } else {
                 $modelTypes = $this->getModelTypeByQuoteTypeId($personalQuoteTypesIds);
             }
-            $join->on(function($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
+            $join->on(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
 
-                if($quoteTypeId) {
+                if ($quoteTypeId) {
                     $q->where('pqr.quote_type_id', $quoteTypeId)
-                      ->whereColumn('cm.quote_id', '=', 'pqr.id')
-                      ->where('cm.quote_type', $modelTypes);
+                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
+                        ->where('cm.quote_type', $modelTypes);
                 } else {
                     $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                      ->whereColumn('cm.quote_id', '=', 'pqr.id')
-                      ->whereIn('cm.quote_type', $modelTypes);
+                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
+                        ->whereIn('cm.quote_type', $modelTypes);
                 }
-                })
-                ->orOn(function($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
-                    if($quoteTypeId) {
+            })
+                ->orOn(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
                         $q->where('pqr.quote_type_id', $quoteTypeId)
-                          ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
-                          ->where('cm.quote_type', $modelTypes);
+                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
+                            ->where('cm.quote_type', $modelTypes);
                     } else {
                         $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                          ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
-                          ->whereNotIn('cm.quote_type', $modelTypes);
+                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
+                            ->whereNotIn('cm.quote_type', $modelTypes);
                     }
                 });
         });
-    
+
         // Join kyc logs subquery
-        $query->leftJoinSub($kycLogSub, 'kl', function($join) use ($personalQuoteTypesIds, $quoteTypeId) {
-            $join->on(function($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                if($quoteTypeId) {
+        $query->leftJoinSub($kycLogSub, 'kl', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                if ($quoteTypeId) {
                     $q->where('pqr.quote_type_id', $quoteTypeId)
-                      ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
+                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
                 } else {
                     $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                      ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
+                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
                 }
-                })
-                ->orOn(function($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                    if($quoteTypeId) {
+            })
+                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
                         $q->where('pqr.quote_type_id', $quoteTypeId)
-                          ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
+                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
                     } else {
                         $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                          ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
+                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
                     }
                 });
         });
 
         return $query;
     }
-
 
     public function saveKYCComplianceQuestions($complianceQuestions)
     {
