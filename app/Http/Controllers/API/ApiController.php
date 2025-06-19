@@ -32,6 +32,7 @@ use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
+use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
@@ -336,5 +337,18 @@ class ApiController extends Controller
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
     {
         return $this->apiService->triggerTravelAIGWorkflow($request);
+    }
+
+    public function homeRenewalOCBAttachment(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required|string',
+        ]);
+
+        $publicUrl = app(HomeEmailService::class)->attachHomeOCBPDFToEmail($request->quoteUID);
+
+        return response()->json([
+            'public_url' => $publicUrl,
+        ]);
     }
 }
