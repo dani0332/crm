@@ -753,7 +753,7 @@ class SageApiService
         }
 
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
-        $sukoonMedXTransaction = $this->getSukoonMedXTransaction([$quote]);
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
         if ($isLobAllowedForEmbeddedProductBooking && $sukoonMedXTransaction) {
             LoggerService::info('################################## EP Booking : Start Sage booking Process for : '.$quote->code.' ##################################');
             $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $sukoonMedXTransaction]);
