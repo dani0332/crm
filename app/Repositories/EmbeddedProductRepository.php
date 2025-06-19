@@ -234,7 +234,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $item->sync_document_button = $documentCount < 5;
                 }
             }
-            else if (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && auth()->user()->hasRole(RolesEnum::Engineering)) {
+            else if (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && auth()->user()->hasRole(RolesEnum::Engineering) && count($transaction) > 0) {
                 $item->sync_document_button = $transaction[0]->policy_status != SukoonMedexEnum::STATUS_BOOKED;
             }
 
