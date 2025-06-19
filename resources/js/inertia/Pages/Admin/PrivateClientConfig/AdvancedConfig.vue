@@ -49,7 +49,6 @@ const loadConfigurationForTab = async quoteTypeCode => {
     };
     currentVersions.value[quoteTypeCode] = response.data.version;
   } catch (error) {
-    console.error('Error loading configuration:', error);
     configurations.value[quoteTypeCode] = { profiles: [] };
     dropdownData.value[quoteTypeCode] = {};
     versionData.value[quoteTypeCode] = {
@@ -80,8 +79,6 @@ const handleConfigurationSaved = async quoteTypeCode => {
 
   // Force reload the configuration from server
   await loadConfigurationForTab(quoteTypeCode);
-
-  console.log(`Configuration reloaded for ${quoteTypeCode}`);
 };
 
 onMounted(async () => {
