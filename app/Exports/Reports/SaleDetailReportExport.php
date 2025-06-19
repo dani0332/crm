@@ -46,7 +46,7 @@ class SaleDetailReportExport extends BaseReportsExport
             'Lead Source',
             'Booking Date',
             'Sage Receipt ID',
-            'Private Client'
+            'Private Client',
         ];
     }
 
