@@ -143,64 +143,36 @@ class PrivateClientConfigService
         }
 
         return match ($quoteType) {
-            QuoteTypes::CAR => $this->getCarConfiguration($config, $profile),
-            QuoteTypes::HOME => $this->getHomeConfiguration($config, $profile),
+            QuoteTypes::CAR => $this->buildConfig($config, $profile, ['car_value', 'car_make_id', 'insurance_provider_id', 'price_with_vat']),
+            QuoteTypes::HOME => $this->buildConfig($config, $profile, ['price_with_vat', 'insurance_provider_id', 'sub_area_id']),
             QuoteTypes::LIFE => $this->getLifeConfiguration($config, $profile),
-            QuoteTypes::YACHT => $this->getYachtConfiguration($config, $profile),
-            QuoteTypes::HEALTH => $this->getHealthConfiguration($config, $profile),
+            QuoteTypes::YACHT => $this->buildConfig($config, $profile, ['price_with_vat', 'insurance_provider_id']),
+            QuoteTypes::HEALTH => $this->buildConfig($config, $profile, ['price_with_vat', 'insurance_provider_id']),
             default => null,
         };
     }
 
-    private function getCarConfiguration(PrivateClientConfig $config, array $profile)
+    private function buildConfig(PrivateClientConfig $config, array $profile, array $fields)
     {
         $configuration = collect([]);
 
-        $configuration->push($this->buildEntity($config, $profile, 'car_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'car_make_id'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
-        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
-
-        return $configuration;
-    }
-
-    private function getHomeConfiguration(PrivateClientConfig $config, array $profile)
-    {
-        $configuration = collect([]);
-
-        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
-        $configuration->push($this->buildEntity($config, $profile, 'sub_area_id'));
+        foreach ($fields as $field) {
+            $configuration->push($this->buildEntity($config, $profile, $field));
+        }
 
         return $configuration;
     }
 
     private function getLifeConfiguration(PrivateClientConfig $config, array $profile)
     {
-        $configuration = collect([]);
+        $configuration = $this->buildConfig($config, $profile, ['insurer']);
 
         $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_1', 'sum_insured_value'));
         $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_2', 'sum_insured_value'));
         $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_3', 'sum_insured_value'));
         $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_4', 'sum_insured_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurer'));
 
         return $configuration;
-    }
-
-    private function getYachtConfiguration(PrivateClientConfig $config, array $profile)
-    {
-        $configuration = collect([]);
-
-        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
-
-        return $configuration;
-    }
-
-    private function getHealthConfiguration(PrivateClientConfig $config, array $profile)
-    {
-        return $this->getYachtConfiguration($config, $profile);
     }
 
     private function buildEntity(PrivateClientConfig $config, array $profile, string $key, ?string $customKey = null)
