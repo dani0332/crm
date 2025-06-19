@@ -47,8 +47,6 @@ class PrivateClientConfigService
             $config = PrivateClientConfig::getCurrentVersion($quoteTypeId);
         }
 
-        $latestConfig = PrivateClientConfig::getLatestVersion($quoteTypeId);
-
         $dropdownData = $this->getDropdownDataByQuoteType($quoteTypeId);
 
         $responseData = [
@@ -65,8 +63,10 @@ class PrivateClientConfigService
         }
 
         if ($version) {
+            $latestConfig = PrivateClientConfig::getLatestVersion($quoteTypeId);
+
             $responseData['version'] = $version;
-            $responseData['isCurrentVersion'] = $latestConfig->version == $version;
+            $responseData['isCurrentVersion'] = $latestConfig?->version == $version;
         }
 
         return $responseData;
