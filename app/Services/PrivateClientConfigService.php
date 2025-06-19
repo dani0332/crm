@@ -167,10 +167,10 @@ class PrivateClientConfigService
     private function getLifeConfiguration(PrivateClientConfig $config, array $profile)
     {
         return $this->buildConfig($config, $profile, [
-            ['sum_insured_value_1' => 'sum_insured_value'],
-            ['sum_insured_value_2' => 'sum_insured_value'],
-            ['sum_insured_value_3' => 'sum_insured_value'],
-            ['sum_insured_value_4' => 'sum_insured_value'],
+            ['policy_sum_assured_value_1' => 'policy_sum_assured_value'],
+            ['policy_sum_assured_value_2' => 'policy_sum_assured_value'],
+            ['policy_sum_assured_value_3' => 'policy_sum_assured_value'],
+            ['policy_sum_assured_value_4' => 'policy_sum_assured_value'],
             'insurer',
         ]);
     }
