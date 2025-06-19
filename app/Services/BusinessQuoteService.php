@@ -82,7 +82,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.renewal_import_code',
                 'bqr.kyc_decision',
                 'bqr.stale_at',
-                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                DB::raw('COALESCE(i.customer_type, "'.CustomerTypeEnum::Entity.'") as customer_type'),
+                'insured_kyc.id as insured_kyc_id',
                 'c.insured_first_name as customer_insured_first_name',
                 'c.insured_last_name as customer_insured_last_name',
                 'c.emirates_id_number',
@@ -117,7 +118,7 @@ class BusinessQuoteService extends BaseService
                 'policy_issuance_date',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
-                'bqr.payment_status_id',
+                'py.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
                 DB::raw('
@@ -131,7 +132,7 @@ class BusinessQuoteService extends BaseService
                 ')
             )
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
@@ -148,9 +149,10 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('customer_insured as ci', function ($query) {
                 $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
-                $query->whereRaw('ci.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id)', [QuoteTypeId::Business]);
+                $query->whereRaw('ci.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Business]);
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
+            ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -397,8 +399,9 @@ class BusinessQuoteService extends BaseService
         }
 
         // payment_status_id filter
+        // No option in front side for now to filter payments
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('bqr.payment_status_id', $request->payment_status);
+            $this->query->whereIn('py.payment_status_id', $request->payment_status);
         }
 
         // is_cold filter

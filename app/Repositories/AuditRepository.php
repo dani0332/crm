@@ -69,7 +69,7 @@ class AuditRepository extends BaseRepository
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
             $fieldMap = [
-                'pcp_tag' => 'PC-Customer',
+                'pcp_tag' => 'Private Client',
                 'pc_qualified' => 'PC-Qualified',
             ];
 

@@ -13,6 +13,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -86,17 +87,10 @@ class CarQuoteService extends BaseService
         $driverName = $request->driver_name ?? null;
 
         if ($registrationType == CarRegistrationType::COMPANY) {
-            if ($vehicleUse == CarVehicleUse::PRIVATE) {
-                $name = explode(' ', $driverName);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            } else {
-                $name = explode(' ', $request->company_contact_name);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            }
+            $name = explode(' ', $request->company_contact_name);
+            $firstName = reset($name);
+            unset($name[0]);
+            $lastName = implode(' ', $name) ?? null;
         }
 
         $dataArr = [
@@ -135,6 +129,7 @@ class CarQuoteService extends BaseService
             'companyAddress' => $request->company_address ?? null,
             'pointOfContactName' => $request->company_contact_name ?? null,
             'businessActivityId' => $request->business_activity_id ?? null,
+            'driverName' => $driverName,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -168,17 +163,6 @@ class CarQuoteService extends BaseService
         $carQuote->company_name = $request->company_name ?? null;
         $carQuote->company_address = $request->company_address ?? null;
 
-        if ($request->company_contact_name) {
-            $name = explode(' ', $request->company_contact_name);
-            $companyFirstName = reset($name);
-            unset($name[0]);
-            $companyLastName = implode(' ', $name) ?? ' ';
-            $carQuote->customer->update([
-                'first_name' => $companyFirstName,
-                'last_name' => $companyLastName,
-            ]);
-        }
-
         $driverName = $request->driver_name ?? null;
         $firstName = $request->first_name ?? null;
         $lastName = $request->last_name ?? null;
@@ -188,17 +172,11 @@ class CarQuoteService extends BaseService
             ->where('quote_request_id', $carQuote->id)
             ->first();
         if ($registrationType == CarRegistrationType::COMPANY) {
-            if ($vehicleUse == CarVehicleUse::PRIVATE) {
-                $name = explode(' ', $driverName);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            } else {
-                $name = explode(' ', $request->company_contact_name);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            }
+
+            $name = explode(' ', $request->company_contact_name);
+            $firstName = reset($name);
+            unset($name[0]);
+            $lastName = implode(' ', $name) ?? null;
 
             if (! $entityMapping) {
 
@@ -233,6 +211,7 @@ class CarQuoteService extends BaseService
         $carQuote->nationality_id = $request->nationality_id ?? null;
         $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id ?? null;
         $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id ?? null;
+        $carQuote->driver_name = $driverName;
 
         if ($request->year_of_manufacture) {
             $carQuote->year_of_manufacture = $request->year_of_manufacture;
@@ -352,6 +331,7 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.first_name',
                 'cqr.last_name',
+                'cqr.driver_name',
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
                 'cqr.company_name AS car_company_name',
                 'cqr.company_address AS car_company_address',
@@ -427,6 +407,7 @@ class CarQuoteService extends BaseService
                 'cqr.currently_insured_with',
                 'cqr.currently_insured_with as currently_insured_with_text',
                 'ls.text as lost_reason',
+                'ls.id as lost_reason_id',
                 'cqr.previous_quote_policy_number',
                 DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
                 DB::raw('DATE_FORMAT(cqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
@@ -459,9 +440,6 @@ class CarQuoteService extends BaseService
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
                 'cqr.risk_score',
-                DB::raw('IF(qrem.entity_id,
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
                 'cpip.code as plan_provider_code',
                 DB::raw('(CASE
                 WHEN cqr.assignment_type = 1 THEN "System Assigned"
@@ -471,8 +449,10 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 5 THEN "Bought Lead"
                 WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
+                DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
                 'insured.first_name as insured_first_name',
                 'insured.last_name as insured_last_name',
+                'insured_kyc.id as insured_kyc_id',
                 DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
@@ -558,9 +538,10 @@ class CarQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id)', [QuoteTypeId::Car]);
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Car]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();
@@ -1467,7 +1448,7 @@ class CarQuoteService extends BaseService
 
             LoggerService::info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType);
 
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Car, $userId);
             $lead->auto_assigned = false;
@@ -1737,6 +1718,15 @@ class CarQuoteService extends BaseService
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
+            LoggerService::error('Lead or new advisor ID is null, unable to update allocation counts');
+
+            return;
+        }
+
+        // Skip allocation count updates for IMCRM source leads
+        if ($lead->source === LeadSourceEnum::IMCRM) {
+            LoggerService::info('Skipping allocation count update for IMCRM source lead: '.$lead->uuid);
+
             return;
         }
 
@@ -1926,11 +1916,14 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.uuid', function ($query) {
                 $query->select('q.uuid')
                     ->from('car_quote_plan_details as cqp')
@@ -1984,7 +1977,6 @@ class CarQuoteService extends BaseService
                 'q.payment_status_date as paymentauthdate',
                 DB::raw('qs.text as `leadstatus`'),
                 DB::raw("'AUTHORIZED' as `paymentstatus`"),
-                'qs.id as quote_status_id',
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
@@ -1996,6 +1988,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
@@ -2003,6 +1997,7 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
+            ->where('t.parent_team_id', '=', $carTeam->id)
             ->orderBy('q.paid_at', 'desc')
             ->get();
 

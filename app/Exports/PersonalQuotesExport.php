@@ -2,6 +2,8 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -9,11 +11,13 @@ use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class PersonalQuotesExport
+class PersonalQuotesExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
     private const PRIVATE_CLIENT = 'PRIVATE CLIENT';
     private const ADVISOR_ASSIGNED_DATE = 'ADVISOR ASSIGNED DATE';
@@ -49,12 +53,21 @@ class PersonalQuotesExport
     private const POSSESION_TYPE = 'POSSESION TYPE';
     private const REF_ID = 'REF-ID';
 
-    private $quoteType = '';
-    private $quoteTypes = [];
+    private string $quoteType = '';
+    private array $quoteTypes = [];
 
-    public function __construct()
-    {
-        $this->quoteType = request()->segment(1);
+    public function __construct(
+        private BikeQuoteRepository $bikeQuoteRepository,
+        private YachtQuoteRepository $yachtQuoteRepository,
+        private PetQuoteRepository $petQuoteRepository,
+        private CycleQuoteRepository $cycleQuoteRepository,
+        private JetskiQuoteRepository $jetskiQuoteRepository,
+        private HomeQuoteRepository $homeQuoteRepository,
+        ?string $quoteType = null
+    ) {
+        // Use provided quote type first, then try request input (for job context),
+        // then fall back to URL segment (for direct calls)
+        $this->quoteType = $quoteType ?? request()->input('quoteType') ?? request()->segment(1) ?? '';
         $this->quoteTypes = [
             QuoteTypes::BIKE->value,
             QuoteTypes::YACHT->value,
@@ -65,7 +78,7 @@ class PersonalQuotesExport
         ];
     }
 
-    public function collection($requestParams)
+    public function collection(array $requestParams = []): Collection
     {
         return match (ucfirst($this->quoteType)) {
             QuoteTypes::BIKE->value => BikeQuoteRepository::getData(true, requestParams: $requestParams)->get(),
@@ -73,7 +86,7 @@ class PersonalQuotesExport
             QuoteTypes::PET->value => PetQuoteRepository::getData(true, requestParams: $requestParams)->get(),
             QuoteTypes::CYCLE->value => CycleQuoteRepository::getData(true, requestParams: $requestParams)->get(),
             QuoteTypes::JETSKI->value => JetskiQuoteRepository::getData(true, requestParams: $requestParams)->get(),
-            QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, requestParams: $requestParams)->get(),
+            QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams)->get(),
             default => abort(404),
         };
     }
@@ -82,7 +95,7 @@ class PersonalQuotesExport
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
         return match (ucfirst($this->quoteType)) {
             QuoteTypes::BIKE->value => BikeQuoteRepository::getData(true, requestParams: $requestParams),
@@ -90,21 +103,22 @@ class PersonalQuotesExport
             QuoteTypes::PET->value => PetQuoteRepository::getData(true, requestParams: $requestParams),
             QuoteTypes::CYCLE->value => CycleQuoteRepository::getData(true, requestParams: $requestParams),
             QuoteTypes::JETSKI->value => JetskiQuoteRepository::getData(true, requestParams: $requestParams),
-            QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, requestParams: $requestParams),
+            QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams),
             default => abort(404),
         };
     }
 
     public function headings(): array
     {
+        info('Export: '.ucfirst($this->quoteType).' Types: '.json_encode($this->quoteTypes));
         if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getHeadings($this->quoteType);
         } else {
-            return abort(404);
+            abort(404);
         }
     }
 
-    protected function getHeadings($quoteType)
+    protected function getHeadings(string $quoteType): array
     {
         $headings = [
             QuoteTypes::BIKE->value => [
@@ -240,11 +254,11 @@ class PersonalQuotesExport
         if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getValues($this->quoteType, $quote);
         } else {
-            return abort(404);
+            abort(404);
         }
     }
 
-    protected function getValues($quoteType, $quote)
+    protected function getValues(string $quoteType, $quote): array
     {
         $baseFields = [
             'code' => $quote->code,
@@ -390,5 +404,27 @@ class PersonalQuotesExport
             ],
             default => [],
         };
+    }
+
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        $quoteTypeIdMap = [
+            QuoteTypes::BIKE->value => QuoteTypeId::Bike,
+            QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
+            QuoteTypes::PET->value => QuoteTypeId::Pet,
+            QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
+            QuoteTypes::JETSKI->value => QuoteTypeId::Jetski,
+            QuoteTypes::HOME->value => QuoteTypeId::Home,
+        ];
+
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => $quoteTypeIdMap[ucfirst($this->quoteType)] ?? null,
+            'exportType' => 'personal_quotes',
+            'dynamicQuoteType' => ucfirst($this->quoteType),
+        ];
     }
 }
