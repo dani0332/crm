@@ -303,15 +303,15 @@ const handleCoverageChange = () => {
 
   // Define a mapping object for coverage types and their visibility rules
   const coverageVisibilityMap = {
-    9: { showBuildingField: true }, // Building only
-    10: { showContentsField: true }, // Contents only
-    11: { showBuildingField: true, showContentsField: true }, // Building and Contents
-    12: {
+    10000: { showBuildingField: true }, // Building only
+    10001: { showContentsField: true }, // Contents only
+    10002: { showBuildingField: true, showContentsField: true }, // Building and Contents
+    10003: {
       showBuildingField: true,
       showContentsField: true,
       showPersonalBelongingsField: true,
     }, // Building, Contents, and Personal Belongings
-    13: { showContentsField: true, showPersonalBelongingsField: true }, // Contents and Personal Belongings
+    10004: { showContentsField: true, showPersonalBelongingsField: true }, // Contents and Personal Belongings
   };
 
   // Apply visibility rules based on the selected coverage type
