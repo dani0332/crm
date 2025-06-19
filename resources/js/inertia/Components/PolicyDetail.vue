@@ -117,6 +117,8 @@ const policyDetailsForm = useForm({
     page.props.quote.policy_issuance_status_other || '',
   modelType: props.modelType,
   quote_id: page.props.quote.id,
+  policy_sum_assured_currency_id: page.props.quote.policy_sum_assured_currency_id,
+  policy_sum_assured: page.props.quote.policy_sum_assured,
 });
 
 watch(
@@ -249,13 +251,43 @@ const rules = {
     return true;
   },
 
-  sum_insured_currency: v => {
+  policy_sum_assured_currency_id: v => {
     if (isLifeQuote) {
       return !!v || 'This field is required';
     }
     return true;
   },
-  
+
+  policy_sum_assured: v => {
+    if (isLifeQuote) {
+      if (!v) return 'This field is required';
+      
+      // Check for incomplete decimal numbers (ending with decimal point)
+      if (v.toString().endsWith('.')) {
+        return 'Please enter a complete number';
+      }
+      
+      // Check if it's a valid number
+      const num = Number(v);
+      if (isNaN(num)) {
+        return 'This field must be a valid number';
+      }
+      
+      // Check if it's negative
+      if (num < 0) {
+        return 'Policy sum assured cannot be negative';
+      }
+      
+      // Check if it's zero
+      if (num === 0) {
+        return 'Policy sum assured must be greater than 0';
+      }
+      
+      return true;
+    }
+    return true;
+  },
+
   quote_policy_issuance_date: v => {
     if (v) {
       const date = new Date(v);
@@ -770,13 +802,13 @@ const calculateTotalPrice = () => {
                 />
               </div>
             </div>
-            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+            <div v-if="isLifeQuote" class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Sum Assured currency
-                    <span v-if="isCarOrBikeQuote" class="text-red-500"
+                    <span class="text-red-500"
                       >*</span
                     ></label
                   >
@@ -787,11 +819,17 @@ const calculateTotalPrice = () => {
                   </template>
                 </x-tooltip>
                 <x-select
-                  v-model="policyDetailsForm.sum_insured_currency"
+                  v-model="policyDetailsForm.policy_sum_assured_currency_id"
                   class="w-full"
                   placeholder="Select the currency of sum assured as per the policy schedule"
                   :disabled="!policyDetailsState.isEditing"
                   :options="currencyOptions"
+                  :custom-error="
+                    rules.policy_sum_assured_currency_id(
+                      policyDetailsForm.policy_sum_assured_currency_id,
+                    )
+                  "
+                  :rules="[rules.policy_sum_assured_currency_id]"
                 />
               </div>
               <div class="w-full md:w-1/2">
@@ -808,10 +846,16 @@ const calculateTotalPrice = () => {
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.policy_sum_assured"
-                  type="number"
+                  type="text"
                   placeholder="Enter the sum assured as per the issued policy schedule"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
+                  :custom-error="
+                    rules.policy_sum_assured(
+                      policyDetailsForm.policy_sum_assured,
+                    )
+                  "
+                  :rules="[rules.policy_sum_assured]"
                 />
               </div>
             </div>

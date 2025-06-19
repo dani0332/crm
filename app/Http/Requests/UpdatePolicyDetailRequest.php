@@ -57,6 +57,8 @@ class UpdatePolicyDetailRequest extends FormRequest
                 'quote_policy_issuance_status_other' => 'nullable',
                 'modelType' => 'required',
                 'quote_id' => 'required',
+                'policy_sum_assured_currency_id' => 'nullable',
+                'policy_sum_assured' => 'nullable',
 
             ];
         }

@@ -2048,6 +2048,8 @@ class CRUDController extends Controller
             'insurer_quote_number' => $request->quote_plan_insurer_quote_number ?? '',
             'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? null,
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
+            'policy_sum_assured_currency_id' => $request->policy_sum_assured_currency_id ?? null,
+            'policy_sum_assured' => $request->policy_sum_assured ?? null,
         ]);
 
         if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
