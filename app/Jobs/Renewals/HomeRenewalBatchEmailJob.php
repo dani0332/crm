@@ -25,7 +25,7 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
     protected $quoteTypeId;
     protected $isCompleted;
     protected $batch;
-    protected $renewalsBatchEmail;
+    protected $renewalsBatchEmailId;
     protected $renewalQuoteProcessId;
     public $tries = 3;
     public $timeout = 80;
@@ -37,11 +37,11 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
      * @return void
      */
     // $batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted, $batch
-    public function __construct($batch, RenewalsBatchEmails $renewalsBatchEmail, int $renewalQuoteProcessId)
+    public function __construct(int $batch, int $renewalsBatchEmailId, int $renewalQuoteProcessId)
     {
 
         $this->batch = $batch;
-        $this->renewalsBatchEmail = $renewalsBatchEmail;
+        $this->renewalsBatchEmailId = $renewalsBatchEmailId;
         $this->renewalQuoteProcessId = $renewalQuoteProcessId;
         $this->onQueue('renewals');
     }
@@ -58,8 +58,9 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
         ]);
 
         $renewalQuoteProcess = RenewalQuoteProcess::find($this->renewalQuoteProcessId);
+        $renewalsBatchEmail = RenewalsBatchEmails::find($this->renewalsBatchEmailId);
 
-        $homeEmailService->sendRenewalOCBEmail($this->renewalsBatchEmail, $renewalQuoteProcess);
+        $homeEmailService->sendRenewalOCBEmail($renewalsBatchEmail, $renewalQuoteProcess);
 
         LoggerService::info('Renewals OCB email job completed', extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
@@ -80,6 +81,6 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
             'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
             'exception' => $exception->getMessage(),
         ]);
-        RenewalsBatchEmails::where('id', $this->renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+        RenewalsBatchEmails::where('id', $this->renewalsBatchEmailId)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }
