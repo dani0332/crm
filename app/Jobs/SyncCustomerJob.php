@@ -18,7 +18,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use OwenIt\Auditing\Models\Audit;
 
 class SyncCustomerJob implements ShouldQueue
 {
@@ -62,7 +61,6 @@ class SyncCustomerJob implements ShouldQueue
                 $modelClass::where('email', $this->email)
                     ->select(['id', 'customer_id'])
                     ->chunk(1000, function ($entries) use ($modelClass) {
-                        $auditsToCreate = [];
                         $entriesToSkip = [];
 
                         foreach ($entries as $entry) {
@@ -71,24 +69,11 @@ class SyncCustomerJob implements ShouldQueue
 
                                 continue;
                             }
-
-                            $auditsToCreate[] = [
-                                'event' => 'updated',
-                                'auditable_type' => $modelClass,
-                                'auditable_id' => $entry->id,
-                                'old_values' => json_encode(['customer_id' => $entry->customer_id]),
-                                'new_values' => json_encode(['customer_id' => $this->newCustomerId]),
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ];
                         }
 
                         // update quote classes
                         $entryIds = $entries->pluck('id')->diff($entriesToSkip)->toArray();
                         $modelClass::whereIn('id', $entryIds)->update(['customer_id' => $this->newCustomerId]);
-
-                        // insert audits
-                        Audit::insert($auditsToCreate);
 
                         info('SyncCustomerJob - Updated '.count($entryIds).' entries in '.$modelClass.' for '.$this->email.' - new customer id - '.$this->newCustomerId);
                     });
