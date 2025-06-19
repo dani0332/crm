@@ -44,8 +44,7 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
     public function handle(HomeRenewalService $homeRenewalService)
     {
 
-        $renewalQuoteProcess = RenewalQuoteProcess::find($this->renewalQuoteProcessId);
-        $homeRenewalService->updateQuote($renewalQuoteProcess);
+        $homeRenewalService->updateQuoteHome($this->renewalQuoteProcessId);
     }
 
     /**
@@ -64,7 +63,8 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage(), extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
         ]);
-        $renewalQuoteProcess = RenewalQuoteProcess::find($this->renewalQuoteProcessId);
+
+        $renewalQuoteProcess = RenewalQuoteProcess::where('id',$this->renewalQuoteProcessId)->select('renewals_upload_lead_id', 'id')->first(); 
         $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
         RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
     }
