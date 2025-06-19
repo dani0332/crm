@@ -2145,7 +2145,7 @@
 		closeModal = false,
 	) => {
 		closePaymentModal == true &&
-			(emit('update-create-payment-modal', !createPaymentModal.value));
+			(emit('update-create-payment-modal', !props?.createPaymentModal));
 		confirmModalClose.value = closeModal;
 		insurerPaymentLinkChanged.value = paymentLinkChanged;
 	};
@@ -2454,7 +2454,7 @@
 				// Prevent the close event from triggering
 				if (confirmModalClose.value == false) {
 					await nextTick();
-					createPaymentModal.value = true;
+					// createPaymentModal.value = true;
 					emit('update-create-payment-modal', true)
 					await nextTick();
 					if (insurerPaymentComponent.value) {
