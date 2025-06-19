@@ -490,6 +490,11 @@ class CarQuote extends BaseModel
         return $this->is_renewal_tier_email_sent == 1;
     }
 
+    public function isProvider($code)
+    {
+        return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
+    }
+
     public function insured()
     {
         return $this->hasOneThrough(

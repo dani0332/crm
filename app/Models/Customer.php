@@ -124,6 +124,18 @@ class Customer extends Model implements AuditableContract
         return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
     }
 
+    public function insured()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'customer_id', // Foreign key on CustomerInsured table
+            'id', // Foreign key on Insured table
+            'id', // Local key on Customer table
+            'insured_id' // Local key on CustomerInsured table
+        );
+    }
+
     // Get all insured records for this customer
     public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {

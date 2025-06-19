@@ -2,7 +2,6 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
 use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
@@ -45,14 +44,11 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
      */
     public function handle(HomeRenewalService $homeRenewalService)
     {
-        $renewalQuoteProcess = RenewalQuoteProcess::find($this->renewalQuoteProcessId);
-        $renewalStatusProcess = RenewalStatusProcess::find($this->renewalStatusProcessId);
-
         LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: job being started', extra: [
-            'renewalQuoteProcessId' => $renewalQuoteProcess->id,
-            'policy_number' => $renewalQuoteProcess->policy_number,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
+            'renewalStatusProcessId' => $this->renewalStatusProcessId,
         ]);
-        $homeRenewalService->fetchPlans($renewalQuoteProcess, $renewalStatusProcess);
+        $homeRenewalService->fetchPlansHome($this->renewalQuoteProcessId, $this->renewalStatusProcessId);
     }
 
     /**

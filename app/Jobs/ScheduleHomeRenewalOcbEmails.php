@@ -19,7 +19,7 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $batch = null;
-    protected $renewalsBatchEmail = null;
+    protected $renewalsBatchEmailId = null;
     public $tries = 3;
     public $timeout = 80;
     public $backoff = 360;
@@ -29,10 +29,10 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($batch, RenewalsBatchEmails $renewalsBatchEmail)
+    public function __construct(int $batch, int $renewalsBatchEmailId)
     {
         $this->batch = $batch;
-        $this->renewalsBatchEmail = $renewalsBatchEmail;
+        $this->renewalsBatchEmailId = $renewalsBatchEmailId;
         $this->onQueue('renewals');
     }
 
@@ -47,9 +47,7 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
             'batch' => $this->batch,
         ]);
 
-        $this->renewalsBatchEmail->update(['status' => ProcessStatusCode::IN_PROGRESS]);
-
-        $homeRenewalService->scheduleHomeOCB($this->batch, $this->renewalsBatchEmail);
+        $homeRenewalService->scheduleHomeOCB($this->batch, $this->renewalsBatchEmailId);
 
         LoggerService::info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is completed', extra: [
             'batch' => $this->batch,
@@ -61,7 +59,7 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalsBatchEmail->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalsBatchEmailId))->dontRelease()];
     }
 
     /**
@@ -73,6 +71,6 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
             'batch' => $this->batch,
             'exception' => $exception->getMessage(),
         ]);
-        $this->renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
+        RenewalsBatchEmails::where('id', $this->renewalsBatchEmailId)->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

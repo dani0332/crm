@@ -74,7 +74,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
         $quoteTypeName = $quoteType ? ($quoteType->value ?? (string) $quoteType) : '';
 
         return [
-            isset($item->first_name) ? trim(($item->first_name ?? '').' '.($item->last_name ?? '')) : trim(($item->customer_first_name ?? '').' '.($item->customer_last_name ?? '')),
+            isset($item->customer_first_name) ? trim(($item->customer_first_name ?? '').' '.($item->customer_last_name ?? '')) : trim(($item->first_name ?? '').' '.($item->last_name ?? '')),
             $item->code ?? '',
             $item->emirates_id ?? '',
             $item->customer_type ?? '',
