@@ -93,7 +93,10 @@ class PrivateClientConfigService
         DB::beginTransaction();
 
         try {
-            PrivateClientConfig::byQuoteTypeId($data['quote_type_id'])->activeVersion()->update(['active_version' => false]);
+            $currentVersion = PrivateClientConfig::getCurrentVersion($data['quote_type_id']);
+            if ($currentVersion) {
+                $currentVersion->update(['active_version' => false]);
+            }
 
             $existingVersion = PrivateClientConfig::getLatestVersion($data['quote_type_id']);
 
