@@ -27,7 +27,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, Logable, QuoteAllocatable;
+    use Filterable, Logable, Optionable, QuoteAllocatable;
 
     /**
      * @return mixed|void
@@ -323,7 +323,7 @@ trait QuoteModelTrait
     public static function formattedPcQualifiedCase(): string
     {
         return "
-            CASE 
+            CASE
                 WHEN pc_qualified = 1 THEN 'Yes'
                 ELSE 'No'
             END
