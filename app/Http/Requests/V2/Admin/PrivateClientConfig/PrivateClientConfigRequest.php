@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Http\Requests\V2\Admin;
+namespace App\Http\Requests\V2\Admin\PrivateClientConfig;
 
 use App\Enums\QuoteTypes;
-use App\Models\Nationality;
 use App\Models\QuoteType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -20,7 +19,7 @@ class PrivateClientConfigRequest extends FormRequest
         return [
             'quote_type_id' => ['required', 'integer', Rule::exists(QuoteType::class, 'id')],
             'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
-            'config' => ['required', 'array']
+            'config' => ['required', 'array'],
         ];
     }
 

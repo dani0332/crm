@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
-use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\V2\Admin\PrivateClientConfigRequest;
-use App\Models\PrivateClientConfig;
-use App\Models\QuoteType;
+use App\Http\Requests\V2\Admin\PrivateClientConfig\GetPrivateClientConfigRequest;
+use App\Http\Requests\V2\Admin\PrivateClientConfig\PrivateClientConfigRequest;
 use App\Services\PrivateClientConfigService;
 use App\Traits\PrivateClient;
-use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Inertia\Inertia;
 
@@ -23,39 +20,21 @@ class PrivateClientConfigController extends Controller
         $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show', 'upsert']]);
     }
 
-    private function getQuoteTypes()
-    {
-        return QuoteType::where('is_active', 1)
-            ->whereIn('code', [
-                quoteTypeCode::Car,
-                quoteTypeCode::Health,
-                quoteTypeCode::Life,
-                quoteTypeCode::Home,
-                quoteTypeCode::Yacht,
-            ])
-            ->select('id', 'text', 'code')
-            ->get();
-    }
-
     public function show()
     {
-        $quoteTypes = $this->getQuoteTypes();
+        $quoteTypes = $this->configService->getAllowedQuoteTypes();
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
-            'quoteTypes' => $quoteTypes
+            'quoteTypes' => $quoteTypes,
         ]);
     }
 
-    public function getLatestConfigByQuoteType(Request $request)
+    public function getLatestConfigByQuoteType(GetPrivateClientConfigRequest $request)
     {
-        $quoteTypeId = $request->input('quote_type_id');
-        $version = $request->input('version');
-
-        if (! $quoteTypeId) {
-            return response()->json(['error' => 'Quote type ID is required'], 400);
-        }
-
         try {
+            $quoteTypeId = $request->quote_type_id;
+            $version = $request->version;
+
             $responseData = $this->configService->getLatestConfigByQuoteType($quoteTypeId, $version);
 
             return response()->json($responseData);
@@ -63,6 +42,7 @@ class PrivateClientConfigController extends Controller
             return response()->json(['error' => 'Failed to load configuration'], 500);
         }
     }
+
     public function upsert(PrivateClientConfigRequest $request)
     {
         try {

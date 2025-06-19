@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CarMake;
 use App\Models\CurrencyType;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PrivateClientConfig;
+use App\Models\QuoteType;
 use App\Models\SubArea;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +17,20 @@ class PrivateClientConfigService
 {
     private const LABEL_TEXT = 'text as label';
     private const VALUE_TEXT = 'id as value';
+
+    public function getAllowedQuoteTypes()
+    {
+        return QuoteType::withActive()
+            ->whereIn('code', [
+                quoteTypeCode::Car,
+                quoteTypeCode::Health,
+                quoteTypeCode::Life,
+                quoteTypeCode::Home,
+                quoteTypeCode::Yacht,
+            ])
+            ->select('id', 'text', 'code')
+            ->get();
+    }
 
     public function getLatestConfigByQuoteType(int $quoteTypeId, ?int $version = null): array
     {
@@ -25,7 +41,7 @@ class PrivateClientConfigService
             ->pluck('version')
             ->toArray();
 
-        if($version) {
+        if ($version) {
             $config = PrivateClientConfig::byQuoteTypeId($quoteTypeId)->where('version', $version)->first();
         } else {
             $config = PrivateClientConfig::getCurrentVersion($quoteTypeId);
@@ -48,7 +64,7 @@ class PrivateClientConfigService
             $responseData['version'] = $config->version;
         }
 
-        if($version) {
+        if ($version) {
             $responseData['version'] = $version;
             $responseData['isCurrentVersion'] = $latestConfig->version == $version;
         }
