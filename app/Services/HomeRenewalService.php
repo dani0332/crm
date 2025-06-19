@@ -45,7 +45,7 @@ class HomeRenewalService extends RenewalsUploadService
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new HomeUpdateRenewalQuotesJob($lead);
+                    $jobs[] = new HomeUpdateRenewalQuotesJob($lead->id);
                 }
             });
 
@@ -358,7 +358,7 @@ class HomeRenewalService extends RenewalsUploadService
             $this->getOcbLeadsQueryNonMotor($batch, QuoteTypeShortCode::HOM)
                 ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
                     foreach ($leads as $lead) {
-                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
+                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead->id);
                     }
                 });
 
