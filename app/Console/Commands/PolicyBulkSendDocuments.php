@@ -8,9 +8,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\BusinessQuote;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
-use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -39,26 +36,9 @@ class PolicyBulkSendDocuments extends Command
     public function handle(): int
     {
         LoggerService::info('PolicyBulkSendDocuments Started');
-        $businessCodes = [
-            'BUS-QMF4TU39',
-        ];
-        $carCodes = [
-            'CAR-BRDVRA2K', 'CAR-FS2A38AN', 'CAR-GMAYKRW6',
-            'CAR-HVCSRFT8', 'CAR-KSJS4YJ5', 'CAR-RUMR9GWQ',
-            'CAR-TK4TEPX4',
-        ];
-        $healthCodes = [
-            'HEA-CTMVEMR6',
-            'HEA-H36X57PD',
-        ];
-        $travelCodes = [
-            'TRA-YAC8UESV',
-        ];
+
         $codes = [
-            ...$businessCodes,
-            ...$carCodes,
-            ...$healthCodes,
-            ...$travelCodes,
+            'BUS-QMF4TU39',
         ];
 
         if (empty($codes)) {
@@ -77,22 +57,8 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            $modelType = null;
-            $quoteObject = null;
-
-            if (in_array($code, $businessCodes, true)) {
-                $quoteObject = BusinessQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Business;
-            } elseif (in_array($code, $carCodes, true)) {
-                $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Car;
-            } elseif (in_array($code, $healthCodes, true)) {
-                $quoteObject = HealthQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Health;
-            } elseif (in_array($code, $travelCodes, true)) {
-                $quoteObject = TravelQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Travel;
-            }
+            $quoteObject = BusinessQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+            $modelType = quoteTypeCode::Business;
 
             if (! $quoteObject) {
                 $notFound[] = $code;
@@ -103,6 +69,7 @@ class PolicyBulkSendDocuments extends Command
             $payload = (object) [
                 'model_type' => $modelType,
                 'quote_id' => $quoteObject->id,
+                'modelType' => quoteTypeCode::CORPLINE,
             ];
 
             SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);
