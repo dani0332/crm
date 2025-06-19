@@ -334,7 +334,7 @@ class HomeRenewalService extends RenewalsUploadService
             'created_by_id' => $userId,
         ]);
 
-        ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail);
+        ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail->id);
 
         LoggerService::info($logPrefix.' OCB Email Send Started', extra: [
             'batch' => $batch,
@@ -358,7 +358,7 @@ class HomeRenewalService extends RenewalsUploadService
             $this->getOcbLeadsQueryNonMotor($batch, QuoteTypeShortCode::HOM)
                 ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
                     foreach ($leads as $lead) {
-                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead->id);
+                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail->id, $lead->id);
                     }
                 });
 
