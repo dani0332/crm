@@ -200,7 +200,7 @@ class PrivateClientConfigService
             $data['currency_type_id'] = $profileData['currencyId'] ?? null;
         }
 
-        if ($data['operator'] === 'in') {
+        if ($data['operator'] === 'in' && is_array($data['value'])) {
             $data['value'] = implode(',', $data['value'] ?? []);
         }
 
