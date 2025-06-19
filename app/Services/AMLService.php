@@ -1544,7 +1544,7 @@ class AMLService
                 'ik.residential_status',
                 'ik.premium_tenure',
                 'ik.transaction_volume',
-                'ik.is_owner_pep as is_owner_pep',
+                'ik.pep as is_owner_pep',
                 'kl.created_at as last_aml_screening_date',
                 'cm.id as customer_id',
                 'cm.first_name as customer_first_name',
