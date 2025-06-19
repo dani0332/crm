@@ -698,7 +698,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         // Now handle database operations within transaction
-        return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment, $successMessage, $splitPaymentCode, $srNo) {
+        return $this->handleWithDeadlockRetries(function () use ($sageResponseStatus, $request, $splitPayment, $masterPayment, $successMessage, $splitPaymentCode, $srNo) {
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 LoggerService::info("Split payment approval started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
@@ -731,12 +731,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
+                $splitPayment->update($paymentInformation);
 
-                if ($masterPayment) {
-                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
+                if ($sageResponseStatus && $masterPayment) {
                     $masterPayment->update(
                         [
-                            'captured_amount' => $masterCapturedAmount,
+                            'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
                             'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                         ],
                     );
