@@ -243,7 +243,7 @@ watch(
   },
 );
 
-const onUpdateBookPolicyDetails = (isValid) => {
+const onUpdateBookPolicyDetails = isValid => {
   return new Promise((resolve, reject) => {
     if (!bp.isAllowedToUpdateCommission) {
       notification.error({
@@ -285,12 +285,19 @@ const modals = reactive({
   sendPolicyPopup: false,
 });
 
-let isBookingDetailsUpdated = computed(() => 
-  bpForm.vat_on_commission > 0 && bpForm.total_commission > 0 && bpForm.commission_percentage > 0
+let isBookingDetailsUpdated = computed(
+  () =>
+    bpForm.vat_on_commission > 0 &&
+    bpForm.total_commission > 0 &&
+    bpForm.commission_percentage > 0,
 );
 
 const confirmSendPolicy = () => {
-  if (!isBookingDetailsUpdated.value && (bpForm.commission_vat_applicable > 0 || bpForm.commission_vat_not_applicable > 0)) {
+  if (
+    !isBookingDetailsUpdated.value &&
+    (bpForm.commission_vat_applicable > 0 ||
+      bpForm.commission_vat_not_applicable > 0)
+  ) {
     calculateCommission();
     if (!bp.isAllowedToUpdateCommission) {
       disableCommissionVatApplicable.value = false;
@@ -307,7 +314,10 @@ const confirmSendPolicy = () => {
 };
 
 const executeUpdateBookingPolicy = async () => {
-  if(bpForm.commission_vat_applicable > 0 || bpForm.commission_vat_not_applicable > 0) {
+  if (
+    bpForm.commission_vat_applicable > 0 ||
+    bpForm.commission_vat_not_applicable > 0
+  ) {
     calculateCommission();
     try {
       const result = await onUpdateBookPolicyDetails(true);
@@ -328,7 +338,7 @@ const submitPolicy = async () => {
   isLoading.value = true;
 
   let isSuccessfullyExecuted = true;
-  if (!isBookingDetailsUpdated.value) { 
+  if (!isBookingDetailsUpdated.value) {
     isSuccessfullyExecuted = await executeUpdateBookingPolicy();
     if (!isSuccessfullyExecuted) {
       return;
