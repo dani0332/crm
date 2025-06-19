@@ -36,9 +36,9 @@ class PolicyBulkSendDocuments extends Command
     public function handle(): int
     {
         LoggerService::info('PolicyBulkSendDocuments Started');
-       
+
         $codes = [
-            'BUS-QMF4TU39'
+            'BUS-QMF4TU39',
         ];
 
         if (empty($codes)) {
