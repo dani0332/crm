@@ -373,15 +373,18 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: page.props.quote?.insured?.customer_type || null,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured?.first_name || '',
-  insured_last_name: page.props.quote?.insured?.last_name || '',
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
@@ -510,44 +513,7 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
-
-  if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
-    // Only check all these conditions if it's a RENEWAL_UPLOAD lead
-    if (
-      page.props.quote.advisor.name &&
-      page.props.quote.advisor.mobile_no &&
-      page.props.quote.email &&
-      page.props.quote.customerAddressData?.floor_number &&
-      page.props.quote.customerAddressData?.building_name &&
-      page.props.quote.customerAddressData?.street &&
-      page.props.quote.home_quote?.sub_area_id &&
-      page.props.quote.home_quote?.possession_type_id &&
-      page.props.quote.home_quote?.accommodation_type_id &&
-      page.props.quote.home_quote?.has_claimed_losses !== undefined &&
-      ((page.props.quote.home_quote?.possession_type_id ==
-        page.props.homePossessionTypeEnum.TENANT &&
-        page.props.quote.home_quote?.owner_occupancy_type_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.OWNER_RENTING &&
-          page.props.quote.home_quote?.personal_belongings_value_id &&
-          page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.OWNER_RENTING &&
-          page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.LANDLORD &&
-          page.props.quote.home_quote?.building_value) ||
-        (page.props.quote.home_quote?.possession_type_id ==
-          page.props.homePossessionTypeEnum.LANDLORD &&
-          page.props.quote.home_quote?.contents_value_id))
-    ) {
-      // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
-      onLoadAvailablePlansData();
-    }
-  } else {
-    // For all non-renewal upload leads, always run onLoadAvailablePlansData
-    onLoadAvailablePlansData();
-  }
+  onLoadAvailablePlansData();
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -1337,7 +1303,7 @@ const shouldShowPlanDetailsSection = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
@@ -1442,6 +1408,10 @@ const shouldShowPlanDetailsSection = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote.additional_notes }}</dd>
               </div>
             </dl>
           </div>
@@ -1552,7 +1522,7 @@ const shouldShowPlanDetailsSection = computed(() => {
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -1573,7 +1543,7 @@ const shouldShowPlanDetailsSection = computed(() => {
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType == page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -1693,9 +1663,7 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
-                "
+                v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
@@ -1898,7 +1866,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     </x-modal>
 
     <MemberDetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -1909,7 +1877,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     />
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -2107,6 +2075,16 @@ const shouldShowPlanDetailsSection = computed(() => {
                   >
                     Hidden
                   </x-tag>
+
+                  <x-tag
+                    v-if="item.isRenewal"
+                    size="xs"
+                    color="success"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Renewal Plan
+                  </x-tag>
+
                   <x-tooltip>
                     <x-tag
                       v-if="item.puaType"
@@ -2358,7 +2336,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     <AuditLogs
       :title="'KYC Audit Logs'"
       :type="'App\\Models\\InsuredKyc'"
-      :id="quote?.insured?.insured_kyc?.id"
+      :id="quote?.latest_insured?.insured_kyc?.id"
     />
 
     <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />

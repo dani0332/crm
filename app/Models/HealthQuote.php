@@ -345,6 +345,33 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
+    // TODO:: Need to verify this function
+    public function insuredDetails()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // Foreign key on customer_insured
+            'id',               // Foreign key on insured
+            'id',               // Local key on health_quote_requests
+            'insured_id'        // Local key on customer_insured
+        )->where('quote_type_id', QuoteTypeId::Health);
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // health_quote_requests.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
+            ->latest('customer_insured.updated_at');
+    }
+
     /******************************* Quote Status Logs Related Methods Below *******************************/
     /**
      * Get all quote status logs for this model

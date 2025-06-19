@@ -1338,13 +1338,14 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.record.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.record.customer_id,
-  customer_type: page.props.record.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.record.id,
-
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
   emirates_id_number: page.props.record.emirates_id_number || null,
@@ -1834,7 +1835,7 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -2205,7 +2206,7 @@ const isCommercialVehicle = computed(() => {
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                record.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -2226,8 +2227,7 @@ const isCommercialVehicle = computed(() => {
             <div class="text-sm">
               <dl
                 v-if="
-                  record.customer_type ===
-                  page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2361,7 +2361,7 @@ const isCommercialVehicle = computed(() => {
               </dl>
               <dl
                 v-if="
-                  record.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2588,7 +2588,7 @@ const isCommercialVehicle = computed(() => {
     </x-modal>
 
     <MemberDetails
-      v-if="record.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -2598,7 +2598,7 @@ const isCommercialVehicle = computed(() => {
     />
 
     <UBODetails
-      v-if="record.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"

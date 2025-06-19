@@ -201,6 +201,9 @@ class HomeQuoteRepository extends BaseRepository
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
             'homeQuote.homeQuoteRequestDetail.lostReason',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
+            },
             'payments' => function ($query) {
                 $query->with([
                     'paymentStatus',
@@ -740,10 +743,10 @@ class HomeQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-                'insured' => function ($q) {
+                'latestInsured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
                 },
-                'insured.insuredKyc:id,insured_id',
+                'latestInsured.insuredKyc:id,insured_id',
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
@@ -769,18 +772,13 @@ class HomeQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
             ])
             ->first();
 
         if ($response) {
+            $response->customer_type = $response->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
             // Only access insured property if response exists
-            $insured = $response->insured ?? null;
+            $insured = $response->latestInsured ?? null;
             if ($insured && $insured->id_type === 'emiratesId') {
                 $response->emirates_id_number = $insured->id_number;
             } else {
