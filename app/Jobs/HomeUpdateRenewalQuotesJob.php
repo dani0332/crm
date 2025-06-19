@@ -15,6 +15,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use App\Models\RenewalQuoteProcess;
 
 class HomeUpdateRenewalQuotesJob implements ShouldQueue
 {
@@ -23,16 +24,16 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
     public $timeout = 60;
     public $backoff = 10;
     public $tries = 3;
-    protected $renewalQuoteProcess;
+    protected $renewalQuoteProcessId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($renewalQuoteProcess)
+    public function __construct(int $renewalQuoteProcessId)
     {
-        $this->renewalQuoteProcess = $renewalQuoteProcess;
+        $this->renewalQuoteProcessId = $renewalQuoteProcessId;
     }
 
     /**
@@ -42,7 +43,9 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
      */
     public function handle(HomeRenewalService $homeRenewalService)
     {
-        $homeRenewalService->updateQuote($this->renewalQuoteProcess);
+
+        $renewalQuoteProcess = RenewalQuoteProcess::find($this->renewalQuoteProcessId);
+        $homeRenewalService->updateQuote($renewalQuoteProcess);
     }
 
     /**
@@ -50,7 +53,7 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalQuoteProcessId))->dontRelease()];
     }
 
     /**
@@ -59,9 +62,10 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage(), extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
         ]);
-        $this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
-        RenewalsUploadLeads::where('id', $this->renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
+        $renewalQuoteProcess = RenewalQuoteProcess::find($this->renewalQuoteProcessId);
+        $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
+        RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
     }
 }
