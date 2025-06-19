@@ -2,12 +2,12 @@
 
 namespace App\Services\OCR;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
-use App\Enums\ApplicationStorageEnums;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\SplitPaymentService;
-use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -165,7 +165,7 @@ trait OcrFillable
         }
 
         if ($this->isEnabled($quote, $providersWithCommissionVatApplicable)) {
-            if(! $quote->payment?->commission_vat_applicable){
+            if (! $quote->payment?->commission_vat_applicable) {
                 $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->commission_vat_applicable;
             }
 

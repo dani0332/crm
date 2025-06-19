@@ -494,7 +494,7 @@ class CarQuote extends BaseModel
     {
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
-    
+
     public function insured()
     {
         return $this->hasOneThrough(
