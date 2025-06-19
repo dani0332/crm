@@ -754,6 +754,57 @@ const calculateTotalPrice = () => {
             </div>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
+                <x-tooltip
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                    >Sum Assured currency
+                    <span v-if="isCarOrBikeQuote" class="text-red-500"
+                      >*</span
+                    ></label
+                  >
+                  <template #tooltip>
+                    <span>{{
+                      productionProcessTooltipEnum.SUM_ASSURED_CURRENCY
+                    }}</span>
+                  </template>
+                </x-tooltip>
+                <x-input
+                  v-model="policyDetailsForm.quote_plan_insurer_quote_number"
+                  type="text"
+                  placeholder="Select the currency of sum assured as per the policy schedule"
+                  :custom-error="
+                    rules.quote_plan_insurer_quote_number(
+                      policyDetailsForm.quote_plan_insurer_quote_number,
+                    )
+                  "
+                  :rules="[rules.quote_plan_insurer_quote_number]"
+                  class="w-full"
+                  :disabled="!policyDetailsState.isEditing"
+                />
+              </div>
+              <div class="w-full md:w-1/2">
+                <x-tooltip
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                    >Policy Sum Assured</label
+                  >
+                  <template #tooltip>
+                    <span>{{
+                      productionProcessTooltipEnum.POLICY_SUM_ASSURED
+                    }}</span>
+                  </template>
+                </x-tooltip>
+                <x-input
+                  v-model="policyDetailsForm.policy_sum_assured"
+                  type="number"
+                  placeholder="Enter the sum assured as per the issued policy schedule"
+                  class="w-full"
+                  :disabled="true"
+                />
+              </div>
+            </div>
+            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+              <div class="w-full md:w-1/2">
                 <x-input
                   v-if="
                     policyDetailsForm.quote_policy_issuance_status ==

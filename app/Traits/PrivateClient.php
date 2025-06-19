@@ -320,13 +320,13 @@ trait PrivateClient
         $value = trim($config->value);
         $currency_type_id = trim($config->currency_type_id);
         $values = array_map('trim', explode(',', $value));
-        $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
+        $hasSumInsuredCurrency = in_array('policy_sum_assured_currency_id', $tableColumns);
 
         $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $currency_type_id, $model, $hasSumInsuredCurrency) {
             $this->applyOperatorCondition($q, $field, $operator, $values, $value);
 
-            if ($hasSumInsuredCurrency && ! is_null($model->sum_insured_currency_id) && ! empty($model->sum_insured_currency_id)) {
-                $q->where('sum_insured_currency_id', $currency_type_id);
+            if ($hasSumInsuredCurrency && ! is_null($model->policy_sum_assured_currency_id) && ! empty($model->policy_sum_assured_currency_id)) {
+                $q->where('policy_sum_assured_currency_id', $currency_type_id);
             }
         });
     }
