@@ -56,6 +56,10 @@ class CarQuoteService extends BaseService
     protected $applicationStorageService;
     protected $activityService;
 
+    private const REQUIRED = 'required';
+    private const STRING = 'string';
+    private const REQUIRED_STRING = self::REQUIRED.'|'.self::STRING;
+
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
@@ -487,6 +491,10 @@ class CarQuoteService extends BaseService
                 'cqr.registration_type',
                 'cqr.vehicle_use',
                 'cqr.business_activity_id',
+                'c.pcp_tag',
+                'cqr.pc_qualified',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                DB::raw(CarQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -1619,36 +1627,36 @@ class CarQuoteService extends BaseService
     {
         $validationArray = [
             'back_home_license_held_for_id' => 'nullable',
-            'year_of_manufacture' => 'required',
-            'emirate_of_registration_id' => 'required',
-            'car_type_insurance_id' => 'required',
-            'claim_history_id' => 'required',
+            'year_of_manufacture' => self::REQUIRED,
+            'emirate_of_registration_id' => self::REQUIRED,
+            'car_type_insurance_id' => self::REQUIRED,
+            'claim_history_id' => self::REQUIRED,
             'additional_notes' => 'nullable',
-            'car_value_tier' => 'required',
-            'seat_capacity' => 'required',
-            'cylinder' => 'required|string',
-            'vehicle_type_id' => 'required',
-            'car_make_id' => 'required', // ID
-            'car_model_id' => 'required', // ID
-            'currently_insured_with' => 'required|string',
-            'chassis_number' => 'nullable|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
-            'registration_type' => 'required',
+            'car_value_tier' => self::REQUIRED,
+            'seat_capacity' => self::REQUIRED,
+            'cylinder' => self::REQUIRED_STRING,
+            'vehicle_type_id' => self::REQUIRED,
+            'car_make_id' => self::REQUIRED, // ID
+            'car_model_id' => self::REQUIRED, // ID
+            'currently_insured_with' => self::REQUIRED_STRING,
+            'chassis_number' => 'nullable|'.self::STRING.'|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
+            'registration_type' => self::REQUIRED,
         ];
 
         if ($request->registration_type == CarRegistrationType::COMPANY) {
             $validationArray = array_merge($validationArray, [
-                'vehicle_use' => 'required|string',
-                'company_name' => 'required|string',
-                'company_contact_name' => 'required|string',
-                'business_activity_id' => 'required',
+                'vehicle_use' => self::REQUIRED_STRING,
+                'company_name' => self::REQUIRED_STRING,
+                'company_contact_name' => self::REQUIRED_STRING,
+                'business_activity_id' => self::REQUIRED,
             ]);
 
             if ($request->vehicle_use == CarVehicleUse::PRIVATE) {
                 $validationArray = array_merge($validationArray, [
-                    'driver_name' => 'required|string|between:1,70',
-                    'dob' => 'required',
-                    'nationality_id' => 'required',
-                    'uae_license_held_for_id' => 'required',
+                    'driver_name' => self::REQUIRED_STRING.'|between:1,70',
+                    'dob' => self::REQUIRED,
+                    'nationality_id' => self::REQUIRED,
+                    'uae_license_held_for_id' => self::REQUIRED,
                 ]);
             }
         } else {

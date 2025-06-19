@@ -79,6 +79,7 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   last_modified_date: null,
+  private_client: 'all',
 });
 
 provide('filters', filters);
@@ -484,6 +485,19 @@ const validateDateRange = () => {
           label="Last Modified Date"
           range
           format="dd-MM-yyyy"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

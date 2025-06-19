@@ -56,6 +56,7 @@ use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
+use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
@@ -514,6 +515,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
+        });
+
+        Route::prefix('private-client-config')->group(function () {
+            Route::get('show', [PrivateClientConfigController::class, 'show'])->name('admin.private-client-config.show');
+            Route::post('upsert', [PrivateClientConfigController::class, 'upsert'])->name('admin.private-client-config.upsert');
         });
 
         Route::prefix('benchmarker')->group(function () {

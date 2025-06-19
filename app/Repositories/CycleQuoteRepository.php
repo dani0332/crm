@@ -87,6 +87,7 @@ class CycleQuoteRepository extends BaseRepository
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::CYCLE->id());
             },
+            'customer',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -104,6 +105,7 @@ class CycleQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',

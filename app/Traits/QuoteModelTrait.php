@@ -317,6 +317,25 @@ trait QuoteModelTrait
         );
     }
 
+    public function pcQualifiedFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->pc_qualified === true || $this->pc_qualified === 1 ? 'Yes' : 'No';
+            }
+        );
+    }
+
+    public static function formattedPcQualifiedCase(): string
+    {
+        return "
+            CASE 
+                WHEN pc_qualified = 1 THEN 'Yes'
+                ELSE 'No'
+            END
+        ";
+    }
+
     public function hasOneOfPaidStatus(): bool
     {
         return $this->payments && $this->payments->count() > 0 &&

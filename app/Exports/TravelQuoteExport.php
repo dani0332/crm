@@ -76,6 +76,7 @@ class TravelQuoteExport implements CsvExportableInterface
             'ADVISOR REQUESTED',
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
+            'PRIVATE CLIENT',
         ];
     }
 
@@ -121,6 +122,7 @@ class TravelQuoteExport implements CsvExportableInterface
             (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
             $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
+            $quote->customer?->pcp_tag_formatted ?? '',
         ];
     }
 
