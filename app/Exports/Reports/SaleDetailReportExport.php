@@ -10,6 +10,7 @@ class SaleDetailReportExport extends BaseReportsExport
     {
         return [
             'Ref-ID',
+            'Private Client',
             'Policy No.',
             'Department',
             'Transactions',
@@ -89,6 +90,7 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->source ?? 'N/A',
             $quote->policy_booking_date ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 

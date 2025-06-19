@@ -9,7 +9,6 @@ use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -168,15 +167,29 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class);
     }
 
-    public function insured(): HasOneThrough
+    // Get all insured records for this quote (multiple AML screenings)
+    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // personal_quotes.id
+            'insured_id' // customer_insured.insured_id
+        );
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
+            'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // business_quote_request.id
+            'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        );
+        )->latest('customer_insured.updated_at');
     }
 }

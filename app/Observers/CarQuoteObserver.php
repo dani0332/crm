@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
@@ -117,6 +118,7 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ]);
             }
+            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         if (
             isset($dirty['quote_status_id']) &&
@@ -125,6 +127,7 @@ class CarQuoteObserver
             SendPolicyIssueWhatsappMessageJob::dispatch($lead, QuoteTypes::CAR->id())->onQueue('insly');
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
+            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
     }
 }

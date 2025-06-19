@@ -34,7 +34,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-        // $this->seedBirdWorkflowUrls();
+        $this->seedBirdWorkflowUrls();
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
         //     [
@@ -107,6 +107,8 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
+
+        $this->seedOcrEnabled();
     }
 
     private function seedBirdWorkflowUrls()
@@ -184,6 +186,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE],
             [
                 'value' => '2024-12-03 23:59:59',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_RENEWAL_OCB],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -407,6 +419,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::CORPLINE_ADVISORS],
             [
                 'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae,arun.shankar@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOcrEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_ENABLED],
+            [
+                'value' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

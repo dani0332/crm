@@ -93,10 +93,10 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
-                'insured' => function ($q) use ($quoteTypeId) {
+                'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'insured.insuredKyc:id,insured_id',
+                'latestInsured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
@@ -116,9 +116,10 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
+
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
 
         return $quote;
     }
