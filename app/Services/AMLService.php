@@ -1550,7 +1550,6 @@ class AMLService
                 'cm.last_name as customer_last_name',
                 'cm.uae_resident as customer_is_uae_resident',
                 'kl.notes as remarks',
-                // 'kl.is_owner_pep as is_owner_pep',
             ])
             ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->when(isset($startDate) && isset($endDate) && $startDate != 'null' && $endDate != 'null', function ($q) use ($startDate, $endDate) {
@@ -1646,8 +1645,7 @@ class AMLService
                         $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
                           ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
                     }
-                })
-                ->whereColumn('kl.created_at', '>=', 'ci.updated_at');
+                });
         });
 
         return $query;
