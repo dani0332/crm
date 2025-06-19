@@ -168,7 +168,6 @@ function cleanString($string)
 
 function getDataAgainstStatus($modelType, $statusId, Request $request)
 {
-    // dd($request->all());
     $result = [];
 
     if (! $modelType) {
@@ -665,9 +664,10 @@ if (! function_exists('checkModifiedRecord')) {
 if (! function_exists('dateQueryFilter')) {
     function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
     {
-        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
-        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
-        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        $dateFormat = config('constants.DATE_FORMAT_ONLY') ?: 'Y-m-d';
+        $firstDate = date($dateFormat.' 00:00:00', strtotime($firstDate));
+        $secondDate = date($dateFormat.' 23:59:59', strtotime($secondDate));
+        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH') ?: 'Y-m-d H:i:s');
 
         if ($clauseTypeBetween) {
             return [$firstDate, $secondDate];
@@ -953,6 +953,10 @@ if (! function_exists('getCardViewRequestFilters')) {
             if (! empty($advisors)) {
                 $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             }
+        }
+
+        if ($request->has('private_client') && $request->filled('private_client')) {
+            $partialQuery->filterByPrivateClient($request->private_client);
         }
     }
 }

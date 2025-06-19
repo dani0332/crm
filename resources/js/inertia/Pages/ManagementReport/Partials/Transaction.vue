@@ -224,6 +224,10 @@ const tableHeader = reactive([
     value: 'sage_reciept_id',
     tooltip: 'Sage Receipt ID',
   },
+  {
+    text: 'Private Client',
+    value: 'pcp_tag_formatted',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer

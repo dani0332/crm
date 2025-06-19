@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendHomeOCBIntroEmailJob;
@@ -29,6 +30,7 @@ trait PersonalQuoteObservable
 
             if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $this->handlePolicyBookedOrSentToCustomer($personalQuote);
+                event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             }
 
             // For now PolicyCancelled Handling is only for Bike
@@ -40,6 +42,7 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
+            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
         }
 
         $this->handleStaleRemovalFromLeads($personalQuote);

@@ -2,34 +2,39 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class HealthQuotesExport
+class HealthQuotesExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
     private $genderOptions;
 
-    public function __construct()
-    {
-        $this->genderOptions = app(CRUDService::class)->getGenderOptions();
+    public function __construct(
+        private HealthQuoteService $healthQuoteService,
+        private CRUDService $crudService
+    ) {
+        $this->genderOptions = $this->crudService->getGenderOptions();
     }
 
-    public function collection($requestParams = [])
+    public function collection(array $requestParams = []): Collection
     {
-        return app(HealthQuoteService::class)->getGridData(requestParams: $requestParams)->get();
+        return $this->healthQuoteService->getGridData(requestParams: $requestParams)->get();
     }
 
     /**
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
-        return app(HealthQuoteService::class)->getGridData(requestParams: $requestParams);
+        return $this->healthQuoteService->getGridData(requestParams: $requestParams);
     }
 
     public function headings(): array
@@ -73,6 +78,7 @@ class HealthQuotesExport
             'BOOKING DATE',
             'PAYMENT STATUS',
             'ADVISOR CAR TEAM(s)',
+            'PRIVATE CLIENT',
         ];
     }
 
@@ -117,6 +123,22 @@ class HealthQuotesExport
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             $quote->payment_status?->payment_status_text ?? 'N/A',
             $quote->car_teams ?? 'N/A',
+            $quote->customer->pcp_tag_formatted ?? '',
+        ];
+    }
+
+    /**
+     * Get export metadata with health-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 3, // QuoteTypeId::Health
+            'exportType' => 'health_quotes',
         ];
     }
 }
