@@ -42,6 +42,7 @@ class SukoonMedexService
     private $paymentPlan;
     private $amountDisclaimerText;
     private array $sukoonReqDocTypeCodes;
+    private $providerId;
 
     private string $logPrefix = 'Sukoon Medex Service:';
     private array $errorMessages = [];
@@ -83,8 +84,9 @@ class SukoonMedexService
             if(empty($this->sessionId))
                 $this->login();
 
-            $this->productSlug = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG)->value('value') ?? 'afia_driver_medex'; // afia_driver_medex DONE_TODO
+            $this->productSlug = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG)->value('value');
             $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
+            $this->providerId = InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id');
 
         } catch (Exception $e) {
             throw $e;
@@ -387,7 +389,7 @@ class SukoonMedexService
             'execution_method' => $parentFunction,
             'quote_uuid' => $this->currentQuote->uuid,
             'call_type' => 'EmbeddedProduct',
-            'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'),
+            'provider_id' => $this->providerId,
         ];
 
         $extraLog = [
