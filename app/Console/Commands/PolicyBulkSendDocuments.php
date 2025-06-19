@@ -38,10 +38,7 @@ class PolicyBulkSendDocuments extends Command
         LoggerService::info('PolicyBulkSendDocuments Started');
        
         $codes = [
-            'BUS-QMF4TU39',  // prod lead
-            'BUS-ZLKQU7MG',
-            'BUS-5Z4388SH',
-            'BUS-ZHZR534X'
+            'BUS-QMF4TU39'
         ];
 
         if (empty($codes)) {
