@@ -45,9 +45,16 @@ trait PrivateClient
             return false;
         }
 
-        $quoteType = QuoteTypes::getName($quoteTypeId);
+        $configs = null;
 
-        $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $model->nationality_id);
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if ($quoteType && $quoteType instanceof QuoteTypes) {
+            $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $model->nationality_id);
+        }
+
+        if (empty($configs)) {
+            return false;
+        }
 
         // Check if lead matches PCP criteria
         if (! $this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
