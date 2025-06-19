@@ -44,6 +44,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Services\EmailServices\HomeEmailService;
 
 class ApiController extends Controller
 {
@@ -336,5 +337,18 @@ class ApiController extends Controller
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
     {
         return $this->apiService->triggerTravelAIGWorkflow($request);
+    }
+
+    public function homeRenewalOCBAttachment(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required|string',
+        ]);
+
+        $publicUrl = app(HomeEmailService::class)->attachHomeOCBPDFToEmail($request->quoteUID);
+
+        return response()->json([
+            'public_url' => $publicUrl,
+        ]);
     }
 }
