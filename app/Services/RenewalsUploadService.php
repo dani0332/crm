@@ -596,7 +596,7 @@ class RenewalsUploadService
                 ]);
 
                 if ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HOM) {
-                    app(HomeRenewalService::class)->updateQuotes($renewalsUploadLead);
+                    app(HomeRenewalService::class)->updateQuotesHome($renewalsUploadLead->id);
                 } else {
                     $this->updateQuotes($renewalsUploadLead);
                 }
