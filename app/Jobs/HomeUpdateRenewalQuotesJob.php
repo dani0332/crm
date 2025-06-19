@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\RenewalProcessStatuses;
+use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
@@ -15,7 +16,6 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-use App\Models\RenewalQuoteProcess;
 
 class HomeUpdateRenewalQuotesJob implements ShouldQueue
 {
