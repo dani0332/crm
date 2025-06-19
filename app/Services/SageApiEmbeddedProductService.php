@@ -219,11 +219,11 @@ class SageApiEmbeddedProductService
         $totalSteps = 6;
         $stepsMapping = ['step_1' => 4, 'step_2' => 5, 'step_3' => 6];
 
-        $isLiveApiCallStep4 = true;
+        $isLiveApiCallStep1 = true;
         $payLoadOptions = self::createARPremAndComInvoicePayload($sageRequest, $sageRequestEmbeddedProduct);
         if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('SAGE API :  createARInvoicePremAndComm  Sent Already for '.$quote->code);
-            $isLiveApiCallStep2 = false;
+            $isLiveApiCallStep1 = false;
             $sageResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
         } else {
             LoggerService::info('SAGE API :  Send createARInvoicePremAndComm  for '.$quote->code);
@@ -233,14 +233,14 @@ class SageApiEmbeddedProductService
 
         if (! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('SAGE API : '.$quote->code.' :  Batch Number - '.$sageResponse['BatchNumber'].' for createARInvoicePremAndComm');
-            if ($isLiveApiCallStep2) {
+            if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
-            $isLiveApiCallStep3 = true;
+            $isLiveApiCallStep2 = true;
             $readyToPostInvoiceAr = self::readyToPostARPremAndCommInvoicePayload(batchNumber: $sageResponse['BatchNumber']);
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 LoggerService::info('SAGE API :  readyToPostARPremAndCommInvoice  Sent Already for '.$quote->code);
-                $isLiveApiCallStep3 = false;
+                $isLiveApiCallStep2 = false;
                 $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
             } else {
                 LoggerService::info('SAGE API :  Send readyToPostARPremAndCommInvoice  for '.$quote->code);
@@ -254,15 +254,15 @@ class SageApiEmbeddedProductService
                 return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
             }
             LoggerService::info('SAGE API : '.$quote->code.' : readyToPostInvoiceAr - '.$sageResponse['BatchNumber'].' completed successfully');
-            if ($isLiveApiCallStep3) {
+            if ($isLiveApiCallStep2) {
                 $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
 
-            $isLiveApiCallStep4 = true;
+            $isLiveApiCallStep3 = true;
             $aRPostInvoices = self::postARPremAndCommInvoicePayload(batchNumber: $sageResponse['BatchNumber']);
             if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                 LoggerService::info('SAGE API :  aRPostInvoices  Sent Already for '.$quote->code);
-                $isLiveApiCallStep4 = false;
+                $isLiveApiCallStep3 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
                 $isAlreadyPosted = false;
@@ -300,7 +300,7 @@ class SageApiEmbeddedProductService
                 return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
             }
             LoggerService::info('SAGE API : '.$quote->code.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' completed successfully');
-            if ($isLiveApiCallStep4) {
+            if ($isLiveApiCallStep3) {
                 $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
         } else {
@@ -778,7 +778,7 @@ class SageApiEmbeddedProductService
                 ],
                 [
                     'CustomerNumber' => $sageRequestEmbeddedProduct->sageCustomerNumber,
-                    'DocumentNumber' => $request->commissionTaxInvoiceNumber,
+                    'DocumentNumber' => $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber,
                     'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => $createdOnDate,
                     'CurrencyCode' => 'AED',
