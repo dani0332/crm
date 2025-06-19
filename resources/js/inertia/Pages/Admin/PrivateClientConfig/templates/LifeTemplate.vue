@@ -30,7 +30,7 @@ const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 const lifeFields = [
   {
     fieldName: 'policy_sum_assured_value_1',
-    label: 'Sum Insured',
+    label: 'Sum Assured',
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
@@ -40,7 +40,7 @@ const lifeFields = [
   },
   {
     fieldName: 'policy_sum_assured_value_2',
-    label: 'Sum Insured',
+    label: 'Sum Assured',
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
@@ -50,7 +50,7 @@ const lifeFields = [
   },
   {
     fieldName: 'policy_sum_assured_value_3',
-    label: 'Sum Insured',
+    label: 'Sum Assured',
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
@@ -60,7 +60,7 @@ const lifeFields = [
   },
   {
     fieldName: 'policy_sum_assured_value_4',
-    label: 'Sum Insured',
+    label: 'Sum Assured',
     type: 'numeric',
     operator: '>=',
     hasCurrency: true,
