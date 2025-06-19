@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class HomeQuoteController extends Controller
 {
-    function homeRenewalOCBAttachment(Request $request)
+    public function homeRenewalOCBAttachment(Request $request)
     {
         $request->validate([
             'quoteUID' => 'required|string',
