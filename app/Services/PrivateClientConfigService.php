@@ -90,9 +90,7 @@ class PrivateClientConfigService
 
     public function createNewConfigurationVersion(array $data): ?PrivateClientConfig
     {
-        DB::beginTransaction();
-
-        try {
+        return DB::transaction(function () use ($data) {
             $currentVersion = PrivateClientConfig::getCurrentVersion($data['quote_type_id']);
             if ($currentVersion) {
                 $currentVersion->update(['active_version' => false]);
@@ -106,22 +104,14 @@ class PrivateClientConfigService
                 ? ['profiles' => $data['config']]
                 : $data['config'];
 
-            $config = PrivateClientConfig::create([
+            return PrivateClientConfig::create([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
                 'config' => $configData,
                 'version' => $newVersion,
                 'active_version' => true,
             ]);
-
-            DB::commit();
-
-            return $config;
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            throw $e;
-        }
+        });
     }
 
     public function evaluateConfig(QuoteTypes $quoteType, int $nationlityId)
