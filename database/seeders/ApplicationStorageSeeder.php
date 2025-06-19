@@ -97,6 +97,7 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
+        $this->seedSukoonMedexProductSlug();
     }
 
     private function seedBirdWorkflowUrls()
@@ -407,6 +408,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::CORPLINE_ADVISORS],
             [
                 'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae,arun.shankar@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedSukoonMedexProductSlug()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG],
+            [
+                'value' => 'afia_driver_medex',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
