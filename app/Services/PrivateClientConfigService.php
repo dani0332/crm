@@ -15,9 +15,6 @@ use Illuminate\Support\Facades\DB;
 
 class PrivateClientConfigService
 {
-    private const LABEL_TEXT = 'text as label';
-    private const VALUE_TEXT = 'id as value';
-
     public function getAllowedQuoteTypes()
     {
         return QuoteType::withActive()
