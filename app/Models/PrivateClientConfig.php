@@ -49,4 +49,9 @@ class PrivateClientConfig extends Model implements AuditableContract
     {
         return self::byQuoteTypeId($quoteTypeId)->orderBy('version', 'desc')->first();
     }
+
+    public static function findByVersion(int $quoteTypeId, int $version)
+    {
+        return self::byQuoteTypeId($quoteTypeId)->whereVersion($version)->first();
+    }
 }

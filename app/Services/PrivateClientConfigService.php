@@ -42,7 +42,7 @@ class PrivateClientConfigService
             ->toArray();
 
         if ($version) {
-            $config = PrivateClientConfig::byQuoteTypeId($quoteTypeId)->where('version', $version)->first();
+            $config = PrivateClientConfig::findByVersion($quoteTypeId, $version);
         } else {
             $config = PrivateClientConfig::getCurrentVersion($quoteTypeId);
         }
@@ -72,49 +72,23 @@ class PrivateClientConfigService
         return $responseData;
     }
 
-    public function getDropdownDataByQuoteType(int $quoteTypeId): array
+    private function getDropdownDataByQuoteType(int $quoteTypeId): array
     {
         $baseData = [
-            'nationalities' => Nationality::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                ->where('is_active', true)
-                ->get(),
-            'currencies' => CurrencyType::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                ->where('is_active', true)
-                ->get(),
+            'nationalities' => Nationality::getOptions(),
+            'currencies' => CurrencyType::getOptions(),
+            'insurers' => InsuranceProvider::getOptions(),
         ];
 
-        switch ($quoteTypeId) {
-            case QuoteTypes::CAR->id():
-                return array_merge($baseData, [
-                    'carMakes' => CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                ]);
-
-            case QuoteTypes::HOME->id():
-                return array_merge($baseData, [
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                    'locationAreas' => SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->get(),
-                ]);
-
-            case QuoteTypes::HEALTH->id():
-            case QuoteTypes::LIFE->id():
-            case QuoteTypes::YACHT->id():
-                return array_merge($baseData, [
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                ]);
-
-            default:
-                return $baseData;
+        if ($quoteTypeId == QuoteTypes::CAR->id()) {
+            $baseData['carMakes'] = CarMake::getOptions(withActive: false, active: true);
         }
+
+        if ($quoteTypeId == QuoteTypes::HOME->id()) {
+            $baseData['locationAreas'] = SubArea::getOptions(withActive: false, active: false);
+        }
+
+        return $baseData;
     }
 
     public function createNewConfigurationVersion(array $data): ?PrivateClientConfig
