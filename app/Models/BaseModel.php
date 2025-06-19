@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Optionable;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class BaseModel extends Model implements AuditableContract
 {
-    use Auditable , HasFactory;
+    use Auditable , HasFactory, Optionable;
     use SoftDeletes;
 
     public $isGetList = false;
