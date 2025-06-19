@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -751,14 +752,17 @@ class SageApiService
             LoggerService::info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
 
-        LoggerService::info('################################## EP Booking : Start Sage booking for : '.$quote->code.' ##################################');
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
-        $sukoonMedXTransaction = $this->getSukoonMedXTransaction([$quote]); 
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction([$quote]);
         if ($isLobAllowedForEmbeddedProductBooking && $sukoonMedXTransaction) {
-            (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $payment ,$sageRequest, $request, $sukoonMedXTransaction]);
-        }
-        LoggerService::info('################################## EP Booking : End Sage booking for : '.$quote->code.' ##################################');
+            LoggerService::info('################################## EP Booking : Start Sage booking Process for : '.$quote->code.' ##################################');
+            $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $sukoonMedXTransaction]);
+            LoggerService::info('################################## EP Booking : End Sage booking Process for : '.$quote->code.' ##################################', extra : $embeddedProductSageBookingResponse);
+            if (! $embeddedProductSageBookingResponse['status']) {
+                return $embeddedProductSageBookingResponse;
+            }
 
+        }
 
         $skipBookPolicyDocumentJob = false;
         if ($quoteTypeId === QuoteTypeId::Travel) {
@@ -1771,7 +1775,7 @@ class SageApiService
         if ($isLiveApiCallStep15) {
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
         }
-        LoggerService::info('########## End applypaymentInvoices for : '.$quote->code.' ##########');
+        LoggerService::info('########## End apply payment Invoices for : '.$quote->code.' ##########');
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'Prepayments applied on sage';
 
@@ -2543,14 +2547,18 @@ class SageApiService
     public function isLobAllowedForEmbeddedProductBooking($quoteTypeId)
     {
         $lobAllowedForEmbeddedProductBooking = [QuoteTypeId::Car, QuoteTypeId::Bike];
+
         return in_array($quoteTypeId, $lobAllowedForEmbeddedProductBooking);
     }
 
     public function getSukoonMedXTransaction($quote)
     {
-        return $quote->embeddedTransactions() 
+        return $quote->embeddedTransactions()
+            ->whereHas('product.embeddedProduct', function ($query) {
+                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
+            })
             ->where('is_selected', 1)
-            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
             ->first();
     }
 

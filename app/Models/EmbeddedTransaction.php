@@ -132,4 +132,9 @@ class EmbeddedTransaction extends Model
         $q->where('courier_sync_failed_at', '<=', now()->subHour());
 
     }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable');
+    }
 }
