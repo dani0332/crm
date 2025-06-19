@@ -38,15 +38,6 @@ const loadConfigurationForTab = async quoteTypeCode => {
       },
     );
 
-    // Debug logging to help identify issues
-    console.log('Private Client Config Response:', {
-      quoteTypeCode,
-      response: response.data,
-      hasConfig: !!response.data.config,
-      hasProfiles: response.data.config?.profiles ? true : false,
-      profilesCount: response.data.config?.profiles?.length || 0,
-    });
-
     configurations.value[quoteTypeCode] = response.data.config || {
       profiles: [],
     };
