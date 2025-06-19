@@ -7,14 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\V2\Admin\PrivateClientConfig\GetPrivateClientConfigRequest;
 use App\Http\Requests\V2\Admin\PrivateClientConfig\PrivateClientConfigRequest;
 use App\Services\PrivateClientConfigService;
-use App\Traits\PrivateClient;
 use Illuminate\Support\Arr;
 use Inertia\Inertia;
 
 class PrivateClientConfigController extends Controller
 {
-    use PrivateClient;
-
     public function __construct(protected PrivateClientConfigService $configService)
     {
         $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show', 'upsert']]);

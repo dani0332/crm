@@ -29,7 +29,7 @@ const emit = defineEmits(['versionLoaded', 'configurationSaved']);
 // Life-specific field definitions
 const lifeFields = [
   {
-    fieldName: 'sum_insured_value_1',
+    fieldName: 'policy_sum_assured_value_1',
     label: 'Sum Insured',
     type: 'numeric',
     operator: '>=',
@@ -39,7 +39,7 @@ const lifeFields = [
     hasCheckBox: true,
   },
   {
-    fieldName: 'sum_insured_value_2',
+    fieldName: 'policy_sum_assured_value_2',
     label: 'Sum Insured',
     type: 'numeric',
     operator: '>=',
@@ -49,7 +49,7 @@ const lifeFields = [
     hasCheckBox: true,
   },
   {
-    fieldName: 'sum_insured_value_3',
+    fieldName: 'policy_sum_assured_value_3',
     label: 'Sum Insured',
     type: 'numeric',
     operator: '>=',
@@ -59,7 +59,7 @@ const lifeFields = [
     hasCheckBox: true,
   },
   {
-    fieldName: 'sum_insured_value_4',
+    fieldName: 'policy_sum_assured_value_4',
     label: 'Sum Insured',
     type: 'numeric',
     operator: '>=',

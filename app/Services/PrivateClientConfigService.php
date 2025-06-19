@@ -208,10 +208,10 @@ class PrivateClientConfigService
     {
         $configuration = collect([]);
 
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_1', 'sum_insured_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_2', 'sum_insured_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_3', 'sum_insured_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'sum_insured_value_4', 'sum_insured_value'));
+        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_1', 'policy_sum_assured'));
+        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_2', 'policy_sum_assured'));
+        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_3', 'policy_sum_assured'));
+        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_4', 'policy_sum_assured'));
         $configuration->push($this->buildEntity($config, $profile, 'insurer'));
 
         return $configuration;

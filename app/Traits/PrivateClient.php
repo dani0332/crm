@@ -44,7 +44,6 @@ trait PrivateClient
         if (! $model) {
             return false;
         }
-
         $configs = null;
 
         $quoteType = QuoteTypes::getName($quoteTypeId);
@@ -53,6 +52,10 @@ trait PrivateClient
         }
 
         if (empty($configs)) {
+            LoggerService::warning('no configration found for this quoteType.', extra: [
+                'quoteType' => $quoteType,
+            ]);
+
             return false;
         }
 
