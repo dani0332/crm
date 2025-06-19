@@ -1470,11 +1470,16 @@ class AMLService
 
         $query = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
 
-        $query->groupBy(['pqr.id','kl.created_at', 'cm.id'])
-            ->orderByRaw('customer_first_name IS NULL, customer_first_name ASC, customer_last_name ASC');
+        $query->groupBy('pqr.id','kl.created_at', 'cm.id');
         $collection = $query->get();
 
-        // Calculate summary
+        // Sort collection by customer first name, with nulls last
+        $collection = $collection->sortBy(function ($item) {
+            $name = $item->customer_first_name ?: $item->first_name;
+            return $name ? strtolower($name) : '~'; // ~ sorts after letters, putting nulls last
+        })->values();
+
+    // Calculate summary
         $totalCustomers = $collection->count();
         $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();
         $mediumRisk = $collection->where('risk_score', '>=', 26)->where('risk_score', '<=', 34)->count();
@@ -1538,13 +1543,14 @@ class AMLService
                 'ik.residential_status',
                 'ik.premium_tenure',
                 'ik.transaction_volume',
+                'ik.is_owner_pep as is_owner_pep',
                 'kl.created_at as last_aml_screening_date',
                 'cm.id as customer_id',
                 'cm.first_name as customer_first_name',
                 'cm.last_name as customer_last_name',
                 'cm.uae_resident as customer_is_uae_resident',
                 'kl.notes as remarks',
-                'kl.is_owner_pep as is_owner_pep',
+                // 'kl.is_owner_pep as is_owner_pep',
             ])
             ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->when(isset($startDate) && isset($endDate) && $startDate != 'null' && $endDate != 'null', function ($q) use ($startDate, $endDate) {
