@@ -13,10 +13,11 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
+use App\Models\Insured;
 use App\Models\Payment;
-use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
@@ -27,7 +28,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, Logable, QuoteAllocatable;
+    use Filterable, Logable, Optionable, QuoteAllocatable;
 
     /**
      * @return mixed|void
@@ -302,11 +303,16 @@ trait QuoteModelTrait
     {
         return Attribute::make(
             get: function () {
-                $exists = QuoteRequestEntityMapping::where('quote_type_id', QuoteTypeId::Health)
-                    ->where('quote_request_id', $this->id)
-                    ->exists();
+                // Extract the prefix from the quote code (before the first dash)
+                $codePrefix = explode('-', $this->code)[0] ?? '';
 
-                return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+                // Get the latest insured record and return its customer_type
+                // If code prefix is BUS, default to Entity, otherwise default to Individual
+                $defaultType = ($codePrefix === QuoteTypeShortCode::BUS)
+                    ? CustomerTypeEnum::Entity
+                    : CustomerTypeEnum::Individual;
+
+                return $this->latestInsured?->customer_type ?? $defaultType;
             }
         );
     }
@@ -323,7 +329,7 @@ trait QuoteModelTrait
     public static function formattedPcQualifiedCase(): string
     {
         return "
-            CASE 
+            CASE
                 WHEN pc_qualified = 1 THEN 'Yes'
                 ELSE 'No'
             END

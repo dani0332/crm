@@ -11,12 +11,12 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
-  genericRequestEnum: Array,
+  genericRequestEnum: Object,
   isBetaUser: Boolean,
   teams: Object,
   authorizedDays: Number,
   assignmentTypes: Object,
-  insurerAMLStatus: Array,
+  insurerAMLStatus: Object,
 });
 
 const page = usePage();
@@ -426,13 +426,70 @@ const objToUrl = obj => {
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status_id',
+    'tier_id',
+    'vehicle_type_id',
+    'car_type_insurance_id',
+    'quote_batch_id',
+    'advisor_id',
+    'teams',
+    'payment_status_id',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    // Check for indexed array format like quote_status_id[0], quote_status_id[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status_id[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
     } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && value === '') {
+      // Empty string for ecommerce
+      filters[key] = '';
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -595,6 +652,37 @@ watch(
 );
 
 const onExport = (url, isLoading = false, exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        title: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   exportLoader.value = isLoading;
 
   // Add exportType to URL parameters if it's not already there
@@ -610,9 +698,10 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     exportType: exportType,
     url: `${window.location.origin}${url}`,
+    filters: { ...filters },
   };
 
-  console.log('onexport', payload);
+  // console.log('onexport', payload);
   logAndExportQuotes(payload)
     .then(result => {
       if (result.data.message) {

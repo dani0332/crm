@@ -15,9 +15,6 @@ use Illuminate\Support\Facades\DB;
 
 class PrivateClientConfigService
 {
-    private const LABEL_TEXT = 'text as label';
-    private const VALUE_TEXT = 'id as value';
-
     public function getAllowedQuoteTypes()
     {
         return QuoteType::withActive()
@@ -42,7 +39,7 @@ class PrivateClientConfigService
             ->toArray();
 
         if ($version) {
-            $config = PrivateClientConfig::byQuoteTypeId($quoteTypeId)->where('version', $version)->first();
+            $config = PrivateClientConfig::findByVersion($quoteTypeId, $version);
         } else {
             $config = PrivateClientConfig::getCurrentVersion($quoteTypeId);
         }
@@ -72,57 +69,32 @@ class PrivateClientConfigService
         return $responseData;
     }
 
-    public function getDropdownDataByQuoteType(int $quoteTypeId): array
+    private function getDropdownDataByQuoteType(int $quoteTypeId): array
     {
         $baseData = [
-            'nationalities' => Nationality::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                ->where('is_active', true)
-                ->get(),
-            'currencies' => CurrencyType::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                ->where('is_active', true)
-                ->get(),
+            'nationalities' => Nationality::getOptions(),
+            'currencies' => CurrencyType::getOptions(),
+            'insurers' => InsuranceProvider::getOptions(),
         ];
 
-        switch ($quoteTypeId) {
-            case QuoteTypes::CAR->id():
-                return array_merge($baseData, [
-                    'carMakes' => CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                ]);
-
-            case QuoteTypes::HOME->id():
-                return array_merge($baseData, [
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                    'locationAreas' => SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->get(),
-                ]);
-
-            case QuoteTypes::HEALTH->id():
-            case QuoteTypes::LIFE->id():
-            case QuoteTypes::YACHT->id():
-                return array_merge($baseData, [
-                    'insurers' => InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)
-                        ->where('is_active', true)
-                        ->get(),
-                ]);
-
-            default:
-                return $baseData;
+        if ($quoteTypeId == QuoteTypes::CAR->id()) {
+            $baseData['carMakes'] = CarMake::getOptions(withActive: false, active: true);
         }
+
+        if ($quoteTypeId == QuoteTypes::HOME->id()) {
+            $baseData['locationAreas'] = SubArea::getOptions(withActive: false, active: false);
+        }
+
+        return $baseData;
     }
 
     public function createNewConfigurationVersion(array $data): ?PrivateClientConfig
     {
-        DB::beginTransaction();
-
-        try {
-            PrivateClientConfig::byQuoteTypeId($data['quote_type_id'])->activeVersion()->update(['active_version' => false]);
+        return DB::transaction(function () use ($data) {
+            $currentVersion = PrivateClientConfig::getCurrentVersion($data['quote_type_id']);
+            if ($currentVersion) {
+                $currentVersion->update(['active_version' => false]);
+            }
 
             $existingVersion = PrivateClientConfig::getLatestVersion($data['quote_type_id']);
 
@@ -132,22 +104,14 @@ class PrivateClientConfigService
                 ? ['profiles' => $data['config']]
                 : $data['config'];
 
-            $config = PrivateClientConfig::create([
+            return PrivateClientConfig::create([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
                 'config' => $configData,
                 'version' => $newVersion,
                 'active_version' => true,
             ]);
-
-            DB::commit();
-
-            return $config;
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            throw $e;
-        }
+        });
     }
 
     public function evaluateConfig(QuoteTypes $quoteType, int $nationlityId)
@@ -172,64 +136,43 @@ class PrivateClientConfigService
         }
 
         return match ($quoteType) {
-            QuoteTypes::CAR => $this->getCarConfiguration($config, $profile),
-            QuoteTypes::HOME => $this->getHomeConfiguration($config, $profile),
+            QuoteTypes::CAR => $this->buildConfig($config, $profile, ['car_value', 'car_make_id', 'insurance_provider_id', 'price_with_vat']),
+            QuoteTypes::HOME => $this->buildConfig($config, $profile, ['price_with_vat', 'insurance_provider_id', 'sub_area_id']),
             QuoteTypes::LIFE => $this->getLifeConfiguration($config, $profile),
-            QuoteTypes::YACHT => $this->getYachtConfiguration($config, $profile),
-            QuoteTypes::HEALTH => $this->getHealthConfiguration($config, $profile),
+            QuoteTypes::YACHT => $this->buildConfig($config, $profile, ['price_with_vat', 'insurance_provider_id']),
+            QuoteTypes::HEALTH => $this->buildConfig($config, $profile, ['price_with_vat', 'insurance_provider_id']),
             default => null,
         };
     }
 
-    private function getCarConfiguration(PrivateClientConfig $config, array $profile)
+    private function buildConfig(PrivateClientConfig $config, array $profile, array $fields)
     {
         $configuration = collect([]);
 
-        $configuration->push($this->buildEntity($config, $profile, 'car_value'));
-        $configuration->push($this->buildEntity($config, $profile, 'car_make_id'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
-        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
+        foreach ($fields as $field) {
+            $fieldName = $field;
+            $customKeyName = null;
 
-        return $configuration;
-    }
+            if (is_array($field)) {
+                $fieldName = key($field);
+                $customKeyName = $field[$fieldName];
+            }
 
-    private function getHomeConfiguration(PrivateClientConfig $config, array $profile)
-    {
-        $configuration = collect([]);
-
-        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
-        $configuration->push($this->buildEntity($config, $profile, 'sub_area_id'));
+            $configuration->push($this->buildEntity($config, $profile, $fieldName, $customKeyName));
+        }
 
         return $configuration;
     }
 
     private function getLifeConfiguration(PrivateClientConfig $config, array $profile)
     {
-        $configuration = collect([]);
-
-        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_1', 'policy_sum_assured'));
-        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_2', 'policy_sum_assured'));
-        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_3', 'policy_sum_assured'));
-        $configuration->push($this->buildEntity($config, $profile, 'policy_sum_assured_value_4', 'policy_sum_assured'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurer'));
-
-        return $configuration;
-    }
-
-    private function getYachtConfiguration(PrivateClientConfig $config, array $profile)
-    {
-        $configuration = collect([]);
-
-        $configuration->push($this->buildEntity($config, $profile, 'price_with_vat'));
-        $configuration->push($this->buildEntity($config, $profile, 'insurance_provider_id'));
-
-        return $configuration;
-    }
-
-    private function getHealthConfiguration(PrivateClientConfig $config, array $profile)
-    {
-        return $this->getYachtConfiguration($config, $profile);
+        return $this->buildConfig($config, $profile, [
+            ['policy_sum_assured_value_1', 'policy_sum_assured'],
+            ['policy_sum_assured_value_1', 'policy_sum_assured'],
+            ['policy_sum_assured_value_1', 'policy_sum_assured'],
+            ['policy_sum_assured_value_1', 'policy_sum_assured'],
+            'insurer',
+        ]);
     }
 
     private function buildEntity(PrivateClientConfig $config, array $profile, string $key, ?string $customKey = null)
@@ -250,7 +193,7 @@ class PrivateClientConfigService
             $data['currency_type_id'] = $profileData['currencyId'] ?? null;
         }
 
-        if ($data['operator'] === 'in') {
+        if ($data['operator'] === 'in' && is_array($data['value'])) {
             $data['value'] = implode(',', $data['value'] ?? []);
         }
 

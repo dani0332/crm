@@ -80,7 +80,7 @@ trait AllocationRequestable
 
         $excludedAdvisorIds = array_merge($excludedAdvisorIds, $advisorIds);
 
-        $this->set('excluded_advisor_ids', $advisorIds);
+        $this->set('excluded_advisor_ids', $excludedAdvisorIds);
     }
 
     public function getExcludedAdvisorIds()

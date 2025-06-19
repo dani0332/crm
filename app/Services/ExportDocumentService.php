@@ -31,7 +31,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         */
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
 
-        $quote->load(['customer.insured' => function ($query) use ($quote) {
+        $quote->load(['customer.latestInsured' => function ($query) use ($quote) {
             $query->where('quote_request_id', $quote->id);
         }]);
 

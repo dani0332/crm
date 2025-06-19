@@ -2,14 +2,17 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Repositories\LifeQuoteRepository;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class LifeQuotesExport
+class LifeQuotesExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    public function collection($requestParams)
+    public function collection(array $requestParams = []): Collection
     {
         return LifeQuoteRepository::exportData($requestParams)->get();
     }
@@ -18,7 +21,7 @@ class LifeQuotesExport
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
         return LifeQuoteRepository::exportData($requestParams);
     }
@@ -76,4 +79,20 @@ class LifeQuotesExport
             $quote->customer?->pcp_tag_formatted ?? '',
         ];
     }
+
+    /**
+     * Get export metadata with life-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 4, // QuoteTypeId::Life
+            'exportType' => 'life_quotes',
+        ];
+    }
+
 }
