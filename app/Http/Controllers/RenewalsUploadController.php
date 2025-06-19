@@ -128,7 +128,7 @@ class RenewalsUploadController extends Controller
 
             // Dispatch the job based on the quote type
             if ($quoteType == QuoteTypeShortCode::HOM) {
-                FetchHomeRenewalsPlansJob::dispatch($renewalStatusProcess, $batch, $quoteType);
+                FetchHomeRenewalsPlansJob::dispatch($renewalStatusProcess->id, $batch, $quoteType);
             }
 
             return redirect()->route('batch-plans-processes.non.motor', [$batch, $quoteType])->with('success', 'Fetch plans is started for batch '.$batch);
@@ -499,7 +499,6 @@ class RenewalsUploadController extends Controller
         if (! $renewalLead) {
             return abort(404);
         }
-
         switch ($renewalLead->quote_type) {
             case QuoteTypeShortCode::CAR:
                 $carQuote = CarQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
