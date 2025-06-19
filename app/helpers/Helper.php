@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\Emirate;
 
 if (! function_exists('generate_code')) {
     /**
@@ -1407,6 +1408,12 @@ if (! function_exists('getCourierQuote')) {
 
                 if ($quoteAdditionalDetail) {
                     $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+                }
+
+                if ($quoteTypeId == QuoteTypeId::Travel) {
+                    $emirate = Emirate::where('text', $quote->courier_address_city)->first();
+                    $quote->emirate_text = $emirate?->text ?? null;
+                    $quote->emirate_code = $emirate?->code ?? null;
                 }
 
                 return [
