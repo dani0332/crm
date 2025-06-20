@@ -1067,7 +1067,7 @@ class CarQuoteService extends BaseService
                 'previous_policy_expiry_date',
             ]
         )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
-            $q->select('id', 'first_name', 'last_name')->with(['additionalContacts' => function ($q) {
+            $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {
                 $q->where('key', 'email');
             }]);
         }])
