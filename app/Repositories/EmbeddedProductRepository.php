@@ -391,9 +391,13 @@ class EmbeddedProductRepository extends BaseRepository
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $quoteObject->load('embeddedTransactions.product.embeddedProduct');
 
-            $transaction = $this->fetchMedexTransaction($quoteTypeId, $quoteId, $ep, ['is_selected' => true], ['certificate_number'])->first();
+            $transaction = $this->fetchTransaction($modelType, $quoteId, $ep)
+                ->whereHas('product.embeddedProduct', function($query) { 
+                    $query->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes()); 
+                })->first();
+
             if (empty($transaction))
-                LoggerService::info("No transaction found with certificate-number, ref_id: {$quoteObject->code}");
+                LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
 
             $sukoonMedexService = app(SukoonMedexService::class);
             $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
@@ -480,42 +484,6 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $advisorData;
-    }
-
-    /**
-     * Fetch Medex transactions with optional filters and whereNotNull conditions.
-     *
-     * @param int|string $quoteTypeId The quote type ID
-     * @param int|string $quoteId The quote ID
-     * @param mixed $ep The embedded product
-     * @param array<string, mixed> $filter Associative array of filter conditions (key-value pairs)
-     * @param array<int, string> $whereNotNull Indexed array of column names that should not be null
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    private function fetchMedexTransaction($quoteTypeId, $quoteId, $ep, array $filter = [], array $whereNotNull = [])
-    {
-        $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
-
-        $transactions = EmbeddedTransaction::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteId
-        ])->whereIn('product_id', $optionsIds)
-        ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
-
-        $filter = array_values(array_intersect($filter, ['is_selected']));
-        !empty($filter) && $transactions = $transactions->where($filter);
-
-        $whereNotNull = array_values(array_intersect($whereNotNull, ['certificate_number']));
-        !empty($whereNotNull) && $transactions = $transactions->whereNotNull($whereNotNull);
-
-        $transactions = $transactions->where(function ($transact) {
-            if (isset($transact->product) && isset($transact->product->embeddedProduct)) {
-                return EmbeddedProductStrategy::checkSukoonMedex($transact->product->embeddedProduct->short_code);
-            }
-            return false;
-        });
-
-        return $transactions->get();
     }
 
     private function fetchTransaction($modelType, $quoteId, $ep, $selected = true)
