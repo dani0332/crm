@@ -102,15 +102,10 @@ export function useConfigurationSave(
         },
         onError: errors => {
           loader.value = false;
-          console.error('Save failed:', errors);
         },
       });
     } catch (error) {
       loader.value = false;
-      console.error(
-        `Error saving ${quoteTypeCode.value} configuration:`,
-        error,
-      );
     }
   };
 
