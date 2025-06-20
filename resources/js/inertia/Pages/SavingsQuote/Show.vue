@@ -1921,7 +1921,10 @@ const getIncludedBenefitsTooltip = fieldText =>
                   <TabPanel>
                     <div class="p-4">
                       <div
-                        v-if="planDetails.policyWordings && planDetails.policyWordings.length > 0"
+                        v-if="
+                          planDetails.policyWordings &&
+                          planDetails.policyWordings.length > 0
+                        "
                         class="space-y-3"
                       >
                         <div
