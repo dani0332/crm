@@ -1425,7 +1425,7 @@ class SendUpdateLogService
         return true;
     }
 
-    public function getSendUpdateDocuments($category, $option): array
+    public function getSendUpdateDocuments($category, $option, $quoteTypeId = null): array
     {
         LoggerService::info('fn:getSendUpdateDocuments - Start - SendUpdateLogService');
 
@@ -1460,6 +1460,10 @@ class SendUpdateLogService
                     ])
                 ) {
                     $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) false;
+                }
+
+                if ($quoteTypeId == QuoteTypeId::Savings && $documentTypesByCategory['SEND_UPDATE'][$key]['code'] == DocumentTypeCode::SEND_UPDATE_RECEIPT) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
                 }
             }
         }
