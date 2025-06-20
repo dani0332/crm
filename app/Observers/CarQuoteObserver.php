@@ -78,6 +78,8 @@ class CarQuoteObserver
         $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+
             try {
                 $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
             } catch (Exception $e) {
@@ -91,6 +93,8 @@ class CarQuoteObserver
         }
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+
             try {
                 EmbeddedProductRepository::cancelEmbeddedProducts($lead->id, quoteTypeCode::Car);
             } catch (Exception $e) {
@@ -107,6 +111,7 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
             MAWelcomeJob::dispatch(
                 $lead->customer,
@@ -129,6 +134,7 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
