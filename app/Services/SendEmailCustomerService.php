@@ -929,8 +929,9 @@ class SendEmailCustomerService extends BaseService
                 'getStatusCode' => $clientResponse->getStatusCode(),
                 'responseBody' => $clientResponse->getBody(),
             ]);
-            if ($clientResponse->getBody()->getContents()->messageId) {
-                $messageId = $clientResponse->getBody()->getContents()->messageId;
+            $message = json_decode($clientResponse->getBody()->getContents());
+            if (isset($message->messageId)) {
+                $messageId = $message->messageId;
             }
             $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
