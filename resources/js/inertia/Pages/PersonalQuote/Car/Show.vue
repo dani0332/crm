@@ -8,6 +8,7 @@ import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import { ref, onMounted, onUnmounted, reactive, computed } from 'vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 
 defineProps({
   quote: Object,
@@ -1276,9 +1277,11 @@ onMounted(() => {
     getFollowUpsByQuote();
   }
   window.addEventListener('ocr-notification', handleOcrNotification);
+  window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
 });
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
+  window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
 });
 //activities
 const emailEventsTable = [
@@ -1633,6 +1636,18 @@ const hasOcrInProgress = computed(() => {
   return result;
 });
 
+function handleLeadStatusUpdated(event) {
+  const { uuid } = event.detail || {};
+  if (uuid === page.props.quote.uuid) {
+    router.reload({
+      onSuccess: () => {},
+      preserveState: true,
+      preserveScroll: true,
+      only: ['quote', 'record'],
+    });
+  }
+}
+
 function handleOcrNotification(event) {
   const { docType, status, userId } = event.detail || {};
   const currentUserId = usePage().props.auth.user.id;
@@ -1676,7 +1691,13 @@ function handleOcrNotification(event) {
       },
       preserveState: true,
       preserveScroll: true,
-      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
+      only: [
+        'payments',
+        'bookPolicyDetails',
+        'quote',
+        'record',
+        'quoteDocuments',
+      ],
     });
   }
 }
@@ -1684,6 +1705,7 @@ function handleOcrNotification(event) {
 
 <template>
   <OcrNotification />
+  <LeadStatusUpdatedNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
