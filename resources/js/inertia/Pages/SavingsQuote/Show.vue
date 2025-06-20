@@ -417,10 +417,7 @@ const onLoadAvailablePlansData = async () => {
               plan,
               'minimum_investment_amount',
             ),
-            policyTerm: getEligibilityValue(
-              plan,
-              'policy_term',
-            ),
+            policyTerm: getEligibilityValue(plan, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
@@ -443,10 +440,7 @@ const onLoadAvailablePlansData = async () => {
               plan,
               'minimum_investment_amount',
             ),
-            policyTerm: getEligibilityValue(
-              plan,
-              'policy_term',
-            ),
+            policyTerm: getEligibilityValue(plan, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
@@ -1773,7 +1767,10 @@ const getIncludedBenefitsTooltip = fieldText =>
                   <TabPanel>
                     <div class="p-6">
                       <div
-                        v-if="planDetails.eligibilities && planDetails.eligibilities.length > 0"
+                        v-if="
+                          planDetails.eligibilities &&
+                          planDetails.eligibilities.length > 0
+                        "
                         class="grid grid-cols-2 gap-x-8 gap-y-6"
                       >
                         <div
