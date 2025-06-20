@@ -414,10 +414,13 @@ const onLoadAvailablePlansData = async () => {
             investmentFrequency: 'Regular',
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(
-              plan.eligibility,
+              plan,
               'minimum_investment_amount',
             ),
-            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            policyTerm: getEligibilityValue(
+              plan,
+              'policy_term',
+            ),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
@@ -437,10 +440,13 @@ const onLoadAvailablePlansData = async () => {
             investmentFrequency: 'Lumpsum',
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(
-              plan.eligibility,
+              plan,
               'minimum_investment_amount',
             ),
-            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            policyTerm: getEligibilityValue(
+              plan,
+              'policy_term',
+            ),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
@@ -464,11 +470,14 @@ const onLoadAvailablePlansData = async () => {
 };
 
 // Helper function to extract value from eligibility array
-const getEligibilityValue = (eligibility, code) => {
-  if (!Array.isArray(eligibility)) return 'N/A';
+const getEligibilityValue = (plan, code) => {
+  // Check if eligibilities property exists (new API format)
+  if (plan?.eligibilities && Array.isArray(plan.eligibilities)) {
+    const found = plan.eligibilities.find(item => item.code === code);
+    return found ? found.value : 'N/A';
+  }
 
-  const found = eligibility.find(item => item.code === code);
-  return found ? found.value : 'N/A';
+  return 'N/A';
 };
 
 // Commented out - bulk actions disabled since checkboxes are hidden
@@ -1764,14 +1773,11 @@ const getIncludedBenefitsTooltip = fieldText =>
                   <TabPanel>
                     <div class="p-6">
                       <div
-                        v-if="
-                          planDetails.eligibility &&
-                          planDetails.eligibility.length > 0
-                        "
+                        v-if="planDetails.eligibilities && planDetails.eligibilities.length > 0"
                         class="grid grid-cols-2 gap-x-8 gap-y-6"
                       >
                         <div
-                          v-for="item in planDetails.eligibility"
+                          v-for="item in planDetails.eligibilities"
                           :key="item.id"
                           class="grid grid-cols-2 gap-x-4"
                         >
