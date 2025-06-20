@@ -109,6 +109,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $planName = $quote->plan->text;
         } elseif ($modelType == quoteTypeCode::SAVINGS) {
             $planName = $quote?->insuranceProviderPlan?->text ?? '';
+
+            $docs[] = (object) [
+                'watermarked_doc_url' => $quote->insuranceProviderPlan?->policyWordings?->link,
+                'document_type_text' => 'Policy Wording/handbook',
+            ];
         }
 
         $quote->load('advisor');
