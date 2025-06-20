@@ -925,7 +925,9 @@ class SendEmailCustomerService extends BaseService
             $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
             // temporarily added.
             LoggerService::info('email response for '.$emailData->code, extra: [
-                'response' => json_encode($clientResponse->getStatusCode()),
+                'response' => json_encode($clientResponse),
+                'getStatusCode' => $clientResponse->getStatusCode(),
+                'responseBody' => $clientResponse->getBody(),
             ]);
             if ($clientResponse->getBody()->getContents()->messageId) {
                 $messageId = $clientResponse->getBody()->getContents()->messageId;
