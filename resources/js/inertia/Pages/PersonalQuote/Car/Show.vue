@@ -1640,16 +1640,10 @@ function handleLeadStatusUpdated(event) {
   const { uuid } = event.detail || {};
   if (uuid === page.props.quote.uuid) {
     router.reload({
-      onSuccess: () => {
-        // Clear both the old ref and the reactive Set for immediate UI update
-        ocrLoadingDocType.value = null;
-        ocrLoadingDocTypes.clear();
-        policyDetailReloadKey.value++;
-        bookPolicyReloadKey.value++;
-      },
+      onSuccess: () => {},
       preserveState: true,
       preserveScroll: true,
-      only: ['quote'],
+      only: ['quote', 'record'],
     });
   }
 }
@@ -1697,7 +1691,13 @@ function handleOcrNotification(event) {
       },
       preserveState: true,
       preserveScroll: true,
-      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
+      only: [
+        'payments',
+        'bookPolicyDetails',
+        'quote',
+        'record',
+        'quoteDocuments',
+      ],
     });
   }
 }
