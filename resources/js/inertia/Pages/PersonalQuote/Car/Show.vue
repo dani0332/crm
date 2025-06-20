@@ -7,6 +7,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import { ref, onMounted, onUnmounted, reactive, computed } from 'vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 
 defineProps({
   quote: Object,
@@ -1682,6 +1683,7 @@ function handleOcrNotification(event) {
 </script>
 
 <template>
+  <OcrNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
