@@ -33,6 +33,21 @@ class EmbeddedTransaction extends Model
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
+    /**
+     * Get payment charges through payment splits
+     */
+    public function paymentCharges()
+    {
+        return $this->hasManyThrough(
+            PaymentCharge::class,
+            PaymentSplits::class,
+            'code', // Foreign key on payment_splits table
+            'payment_split_id', // Foreign key on payment_charges table
+            'code', // Local key on embedded_transactions table
+            'id' // Local key on payment_splits table
+        );
+    }
+
     public function travelAnnualPayments()
     {
         return $this->hasOne(Payment::class, 'code', 'code');
