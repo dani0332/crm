@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
@@ -85,6 +86,8 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ]);
             }
+
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
         }
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
@@ -96,6 +99,8 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ]);
             }
+
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
         }
 
         if (
@@ -118,6 +123,7 @@ class CarQuoteObserver
                 ]);
             }
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
         }
         if (
             isset($dirty['quote_status_id']) &&
@@ -126,6 +132,8 @@ class CarQuoteObserver
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
+
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
         }
     }
 }
