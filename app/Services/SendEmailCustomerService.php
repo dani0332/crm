@@ -812,6 +812,8 @@ class SendEmailCustomerService extends BaseService
 
         $isEmailSent = 0;
         $messageId = null;
+        $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
+
         try {
             LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId);
 
@@ -893,7 +895,6 @@ class SendEmailCustomerService extends BaseService
                     'name' => 'InsuranceMarket.ae',
                 ];
 
-                $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
                 $bodyData['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
 
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
@@ -951,8 +952,7 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
         if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-            $emailSubject = $this->getEmailSubjectFromSib($messageId);
-            $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject ?? '', $status);
+            $this->emailStatusService->addEmailStatus($emailData, $messageId, $subject, $status);
         }
 
         return $responseCode;
@@ -1025,6 +1025,7 @@ class SendEmailCustomerService extends BaseService
             'tag' => $tag,
         ]);
         $messageId = null;
+        $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
@@ -1113,9 +1114,7 @@ class SendEmailCustomerService extends BaseService
             ]];
 
             if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
-                $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
                 $body['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
-
 
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $body['bcc'][] = ['email' => $newLeadPool->value];
@@ -1160,8 +1159,7 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
         if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-            $emailSubject = $this->getEmailSubjectFromSib($messageId);
-            $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject ?? '', $status);
+            $this->emailStatusService->addEmailStatus($emailData, $messageId, $subject, $status);
         }
 
         return $responseCode;
