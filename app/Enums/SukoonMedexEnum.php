@@ -14,7 +14,6 @@ final class SukoonMedexEnum extends Enum
     const STATUS_PAYMENT_SUCCEED = 'payment_succeeded';
     const STATUS_BOOKED = 'booked';
 
-
     /* SukoonMedex Step-Name Enums */
     const STEPS_NAME = [
         self::STEP_INIT => 'init',
@@ -53,10 +52,9 @@ final class SukoonMedexEnum extends Enum
     // const STEP_PRE_REVIEW_SUBMITED_DATA = 5; // GET, Skiped
     // const STEP_LIST_PAYMENT_GATEWAYS = 9; // GET, Skiped
 
-
     public static function getRemainingPolicyStatus(string $policyStatus = ''): array
     {
-        return match($policyStatus) {
+        return match ($policyStatus) {
             self::STATUS_NEW_POLICY => [self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
             self::STATUS_QUOTED => [self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
             self::STATUS_PAYMENT_SUCCEED => [self::STATUS_BOOKED],
@@ -67,17 +65,17 @@ final class SukoonMedexEnum extends Enum
 
     public static function checkPolicyStatusPassed(string $policyStatus = '', string $passedPolicyStatus = ''): bool
     {
-        return !in_array($passedPolicyStatus, self::getRemainingPolicyStatus($policyStatus));
+        return ! in_array($passedPolicyStatus, self::getRemainingPolicyStatus($policyStatus));
     }
 
     public static function getName(int $stepNumber): string
     {
-        return self::STEPS_NAME[$stepNumber] ?? "";
+        return self::STEPS_NAME[$stepNumber] ?? '';
     }
 
-    public static function getStepNumber(string $stepName): int | bool
+    public static function getStepNumber(string $stepName): int|bool
     {
-        return array_search($stepName, self::STEPS_NAME); 
+        return array_search($stepName, self::STEPS_NAME);
     }
 
 }

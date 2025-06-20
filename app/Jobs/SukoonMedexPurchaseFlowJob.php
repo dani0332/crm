@@ -18,7 +18,6 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 300;
     public $backoff = 300;
-
     private $quoteObject;
     private $quoteTypeId;
     private $transaction;

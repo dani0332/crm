@@ -245,7 +245,7 @@ class EmbeddedProduct
 
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
-    
+
     public static function checkSukoonMedex($product)
     {
         $product = strtoupper(trim($product));
