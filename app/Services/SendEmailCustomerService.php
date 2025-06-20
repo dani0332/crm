@@ -885,11 +885,13 @@ class SendEmailCustomerService extends BaseService
             }
 
             if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
-                // TODO : need to verify the sender
-                //  'sender' => [
-                //           'email' => $sendUpdateEmail,
-                //           'name' => 'InsuranceMarket.ae',
-                //           ],
+                $bodyData['sender'] = [
+                    'email' => 'alfred@notify.insurancemarket.ae',
+                    'name' => 'InsuranceMarket.ae',
+                ];
+
+                $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
+                $bodyData['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
 
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $bodyData['bcc'][] = ['email' => $newLeadPool->value];
@@ -921,6 +923,10 @@ class SendEmailCustomerService extends BaseService
             );
 
             $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
+            // temporarily added.
+            LoggerService::info('email response for '.$emailData->code, extra: [
+                'response' => json_encode($clientResponse->getStatusCode()),
+            ]);
             if ($clientResponse->getBody()->getContents()->messageId) {
                 $messageId = $clientResponse->getBody()->getContents()->messageId;
             }
@@ -1101,6 +1107,10 @@ class SendEmailCustomerService extends BaseService
             ]];
 
             if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
+                $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
+                $body['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
+
+
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $body['bcc'][] = ['email' => $newLeadPool->value];
             }

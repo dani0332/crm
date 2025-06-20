@@ -1315,7 +1315,8 @@ class SendUpdateLogService
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
-                DocumentTypeCode::SEND_UPDATE_RECEIPT, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE
+                DocumentTypeCode::SEND_UPDATE_RECEIPT,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
             ])->toArray();
         }
 
@@ -1383,9 +1384,7 @@ class SendUpdateLogService
             $emailData->policyStartDate = date('d/m/Y', strtotime($start_date)) ?? '';
             $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
 
-            // TODO : Need to check if plan name is available in quote or not.
-            // $emailData->planName = ! empty($quote->plan_id) ? $quote->plan->name : '';
-            $emailData->planName == 'NA';
+            $emailData->planName == ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
         }
 
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
