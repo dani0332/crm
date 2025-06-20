@@ -6,6 +6,7 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Exports\Reports\InstallmentReportExport;
+use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -74,6 +75,7 @@ class InstallmentReportService extends ManagementReport
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
                 'personal_quotes.source',
                 'ps.sage_reciept_id',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted')
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -91,6 +93,7 @@ class InstallmentReportService extends ManagementReport
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->orderBy('personal_quotes.id', 'desc')
             ->orderBy('ps.due_date', 'asc');
 

@@ -18,6 +18,7 @@ use App\Models\DocumentType;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceProviderPlan;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -113,12 +114,7 @@ class HomeQuoteService extends BaseService
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',
-            DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
@@ -176,7 +172,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id)', [QuoteTypeId::Home]);
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id ORDER BY customer_insured.updated_at DESC LIMIT 1)', [QuoteTypeId::Home]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -796,7 +792,12 @@ class HomeQuoteService extends BaseService
 
         return 'true';
     }
-
+    /**
+     * Get Quote Plans from KEN API
+     *
+     * @param  string  $id
+     * @param  bool  $latestRating
+     */
     public function getQuotePlans($id, $extraData = [])
     {
         $quoteUuId = PersonalQuote::where('uuid', '=', $id)->value('uuid');
@@ -1330,6 +1331,51 @@ class HomeQuoteService extends BaseService
         info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
 
         return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    public function createRenewalPlan(string $quoteUID, array $data)
+    {
+        $planId = InsuranceProviderPlan::where([
+            'text' => $data['plan_name'],
+            'quote_type_id' => QuoteTypeId::Home,
+        ])->value('id');
+
+        $request = [[
+            'planId' => $planId,
+            'actualPremium' => $data['premium'],
+            'discountPremium' => $data['premium'],
+            'isDisabled' => false,
+            'isManualUpdate' => false,
+            'insurerQuoteNumber' => $data['insurer_quote_no'] ?? null,
+        ]];
+
+        return $this->createManualPlan($quoteUID, $request, false, true);
+    }
+
+    public function createManualPlan(string $quoteUID, array $data, $isUpdate = false, $isRenewal = false)
+    {
+
+        $request = [
+            'quoteUID' => $quoteUID,
+            'update' => $isUpdate,
+            'plans' => $data,
+        ];
+
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        $apiCreds = [
+            'apiEndPoint' => $apiEndPoint,
+            'apiToken' => $apiToken,
+            'apiTimeout' => $apiTimeout,
+            'apiUserName' => $apiUserName,
+            'apiPassword' => $apiPassword,
+        ];
+
+        return $this->httpService->processRequest($request, $apiCreds);
     }
 
     private function getHomeQuoteFlags($homeQuote): array
