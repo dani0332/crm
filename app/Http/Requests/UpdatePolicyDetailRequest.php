@@ -62,7 +62,7 @@ class UpdatePolicyDetailRequest extends FormRequest
 
             if (request()->modelType == quoteTypeCode::Life) {
                 $rules['policy_sum_assured_currency_id'] = 'required';
-                $rules['policy_sum_assured'] = 'required';
+                $rules['policy_sum_assured'] = 'required|numeric|min:1';
             }
 
             return $rules;
