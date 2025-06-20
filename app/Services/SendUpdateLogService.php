@@ -1391,7 +1391,7 @@ class SendUpdateLogService
             $emailData->policyStartDate = date('d/m/Y', strtotime($start_date)) ?? '';
             $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
 
-            $emailData->planName == ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
+            $emailData->planName = ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
         }
 
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
