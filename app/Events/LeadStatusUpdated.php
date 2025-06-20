@@ -27,7 +27,7 @@ class LeadStatusUpdated implements ShouldBroadcastNow
     public function broadcastWith()
     {
         return [
-            'quote_type' => $this->quoteType->value,
+            'quoteType' => $this->quoteType->value,
             'uuid' => $this->uuid,
         ];
     }
