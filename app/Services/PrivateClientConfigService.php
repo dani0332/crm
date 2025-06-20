@@ -114,7 +114,7 @@ class PrivateClientConfigService
         });
     }
 
-    public function evaluateConfig(QuoteTypes $quoteType, int $nationlityId)
+    public function evaluateConfig(QuoteTypes $quoteType, ?int $nationlityId)
     {
         $config = PrivateClientConfig::activeVersion()
             ->where('quote_type_id', $quoteType->id())
