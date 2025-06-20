@@ -10,7 +10,6 @@ class EndorsementReportExport extends BaseReportsExport
     {
         return [
             'Ref-ID',
-            'Private Client',
             'Department',
             'Policy Number',
             'Transactions',
@@ -50,6 +49,7 @@ class EndorsementReportExport extends BaseReportsExport
             'Lead Source',
             'SU Status',
             'Sage Receipt ID',
+            'Private Client',
         ];
     }
 
