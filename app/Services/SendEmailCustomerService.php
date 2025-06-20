@@ -950,7 +950,7 @@ class SendEmailCustomerService extends BaseService
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
         if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
-            $status = $responseCode == 201 ? ProcessStatusCode::COMPLETED : ProcessStatusCode::FAILED;
+            $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
             $emailSubject = $this->getEmailSubjectFromSib($messageId);
             $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject ?? '', $status);
         }
@@ -1159,7 +1159,7 @@ class SendEmailCustomerService extends BaseService
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
         if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
-            $status = $responseCode == 201 ? ProcessStatusCode::COMPLETED : ProcessStatusCode::FAILED;
+            $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
             $emailSubject = $this->getEmailSubjectFromSib($messageId);
             $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject ?? '', $status);
         }
@@ -1608,7 +1608,7 @@ class SendEmailCustomerService extends BaseService
 
     public function sendIntroAndReassignEmail($quote, $quoteType = null, $oldAdvisorId = null, $shortenedBusinessType = null)
     {
-        $advisor = User::where('id', $quote->advisor_id)->first();
+        $advisor = User::where('id', $quote->advisor_id)->first() ?? null;
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
         $logMessage = empty($oldAdvisorId) ? 'old Advisor is not available' : "old Advisor {$oldAdvisorId} is available";
         LoggerService::info(self::class." - {$logMessage} for the quote: {$quote->uuid} | Time: ".now());
