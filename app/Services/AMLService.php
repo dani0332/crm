@@ -1473,8 +1473,15 @@ class AMLService
         $query = $personalQuotes->union($nonPersonalQuotes);
 
         
-        $query->groupBy('pqr.id', 'kl.created_at', 'cm.id');
-        // $query = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
+        // Add explicit grouping to prevent duplicates
+        $query->groupBy([
+            'pqr.id', 
+            // 'pqr.uuid', 
+            // 'pqr.code', 
+            'ci.insured_id',
+            'cm.id'
+        ]);
+        
         $collection = $query->get();
 
 
@@ -1559,11 +1566,29 @@ class AMLService
                 $query->where('pqr.code', $request->searchField);
             });
 
-        // KYC log subquery as a query builder
+        // KYC log subquery to get the latest record per quote
         $latestKycLogSub = DB::table('kyc_logs')
-            ->select('quote_request_id', 'decision', 'notes', 'quote_type_id', 'is_owner_pep', 'created_at', 'updated_at')
+            ->select([
+                'quote_request_id', 
+                'decision', 
+                'notes', 
+                'quote_type_id', 
+                'is_owner_pep', 
+                'created_at', 
+                'updated_at',
+                DB::raw('ROW_NUMBER() OVER (PARTITION BY quote_request_id, quote_type_id ORDER BY created_at DESC, id DESC) as rn')
+            ])
             ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA);
+            ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA)
+            ->whereNotNull('quote_request_id')
+            ->whereNotNull('quote_type_id')
+            ->groupBy('quote_request_id', 'quote_type_id');
+        
+        // Wrap the subquery to filter only the latest records
+        $latestKycLogSub = DB::table(DB::raw("({$latestKycLogSub->toSql()}) as kyc_latest"))
+            ->mergeBindings($latestKycLogSub)
+            ->select('quote_request_id', 'decision', 'notes', 'quote_type_id', 'is_owner_pep', 'created_at', 'updated_at')
+            ->where('rn', 1);
 
         // Join logic
         if ($request->quoteType) {
@@ -1595,13 +1620,15 @@ class AMLService
 
     private function joinPersonalQuoteTables($query, $quoteTypeId, $latestKycLogSub, $modelType = null)
     {
-        // Customer Insured update record for personal quotes
+        // Customer Insured - get latest record per quote
         $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeId) {
             $join->on('pqr.id', '=', 'ci.quote_request_id')
-                ->where('ci.updated_at', function ($subQuery) {
-                    $subQuery->select(DB::raw('MAX(updated_at)'))
+                ->whereColumn('ci.quote_type_id', 'pqr.quote_type_id')
+                ->where('ci.id', function ($subQuery) {
+                    $subQuery->select(DB::raw('MAX(id)'))
                         ->from('customer_insured as ci2')
-                        ->whereColumn('ci2.quote_request_id', 'ci.quote_request_id');
+                        ->whereColumn('ci2.quote_request_id', 'ci.quote_request_id')
+                        ->whereColumn('ci2.quote_type_id', 'ci.quote_type_id');
                 });
 
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
@@ -1612,19 +1639,35 @@ class AMLService
                 }
             }
         });
-        $query->leftJoin('customer_members as cm', function ($join) use ($modelType) {
-            $join->on('pqr.id', '=', 'cm.quote_id');
 
-            if (isset($modelType) && $modelType !== null) {
-                if (is_array($modelType)) {
-                    $join->whereIn('cm.quote_type', $modelType);
+        // Customer Members - get latest record per quote with proper quote_type matching
+        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeId) {
+            $join->on('pqr.id', '=', 'cm.quote_id')
+                ->where('cm.id', function ($subQuery) {
+                    $subQuery->select(DB::raw('MAX(id)'))
+                        ->from('customer_members as cm2')
+                        ->whereColumn('cm2.quote_id', 'cm.quote_id');
+                });
+
+            // Match by model type using quote_type column
+            if (isset($quoteTypeId) && $quoteTypeId !== null) {
+                if (is_array($quoteTypeId)) {
+                    $modelTypes = array_map(function ($id) {
+                        return $this->getModelTypeByQuoteTypeId($id);
+                    }, $quoteTypeId);
+                    $join->whereIn('cm.quote_type', $modelTypes);
                 } else {
-                    $join->where('cm.quote_type', $modelType);
+                    $join->where('cm.quote_type', $this->getModelTypeByQuoteTypeId($quoteTypeId));
                 }
+            } else {
+                // If no specific quote type, match with personal quote model types
+                $join->whereRaw('cm.quote_type = CASE ' . $this->getQuoteTypeModelMapping([11,12,13,14,15,16]) . ' END');
             }
         });
+
         $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
-            $join->on('kl.quote_request_id', '=', 'pqr.id');
+            $join->on('kl.quote_request_id', '=', 'pqr.id')
+                ->whereColumn('kl.quote_type_id', 'pqr.quote_type_id');
 
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
                 if (is_array($quoteTypeId)) {
@@ -1638,12 +1681,15 @@ class AMLService
 
     private function joinSyncQuoteTables($query, $quoteTypeId, $latestKycLogSub, $modelType = null)
     {
+        // Customer Insured - get latest record per quote for sync quotes
         $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeId) {
             $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-                ->where('ci.updated_at', function ($subQuery) {
-                    $subQuery->select(DB::raw('MAX(updated_at)'))
+                ->whereColumn('ci.quote_type_id', 'pqr.quote_type_id')
+                ->where('ci.id', function ($subQuery) {
+                    $subQuery->select(DB::raw('MAX(id)'))
                         ->from('customer_insured as ci2')
-                        ->whereColumn('ci2.quote_request_id', 'ci.quote_request_id');
+                        ->whereColumn('ci2.quote_request_id', 'ci.quote_request_id')
+                        ->whereColumn('ci2.quote_type_id', 'ci.quote_type_id');
                 });
 
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
@@ -1654,19 +1700,35 @@ class AMLService
                 }
             }
         });
-        $query->leftJoin('customer_members as cm', function ($join) use ($modelType) {
-            $join->on('pqr.quote_id', '=', 'cm.quote_id');
 
-            if (isset($modelType) && $modelType !== null) {
-                if (is_array($modelType)) {
-                    $join->whereNotIn('cm.quote_type', $modelType);
+        // Customer Members - get latest record per quote for sync quotes
+        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeId) {
+            $join->on('pqr.quote_id', '=', 'cm.quote_id')
+                ->where('cm.id', function ($subQuery) {
+                    $subQuery->select(DB::raw('MAX(id)'))
+                        ->from('customer_members as cm2')
+                        ->whereColumn('cm2.quote_id', 'cm.quote_id');
+                });
+
+            // Match by model type using quote_type column for sync quotes
+            if (isset($quoteTypeId) && $quoteTypeId !== null) {
+                if (is_array($quoteTypeId)) {
+                    $modelTypes = array_map(function ($id) {
+                        return $this->getModelTypeByQuoteTypeId($id);
+                    }, $quoteTypeId);
+                    $join->whereNotIn('cm.quote_type', $modelTypes);
                 } else {
-                    $join->where('cm.quote_type', $modelType);
+                    $join->where('cm.quote_type', $this->getModelTypeByQuoteTypeId($quoteTypeId));
                 }
+            } else {
+                // If no specific quote type, match with non-personal quote model types
+                $join->whereRaw('cm.quote_type = CASE ' . $this->getQuoteTypeModelMapping([]) . ' END');
             }
         });
+
         $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
-            $join->on('kl.quote_request_id', '=', 'pqr.quote_id');
+            $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
+                ->whereColumn('kl.quote_type_id', 'pqr.quote_type_id');
 
             if (isset($quoteTypeId) && $quoteTypeId !== null) {
                 if (is_array($quoteTypeId)) {
@@ -1919,5 +1981,40 @@ class AMLService
         }
 
         return $resolveModel($quoteTypeIds);
+    }
+
+    /**
+     * Get quote type ID to model mapping for SQL CASE statements.
+     * 
+     * @param array $personalQuoteTypeIds
+     * @return string
+     */
+    private function getQuoteTypeModelMapping(array $personalQuoteTypeIds = []): string
+    {
+        $personalMapping = [
+            11 => 'BikeQuote', // QuoteTypes::BIKE
+            12 => 'CycleQuote', // QuoteTypes::CYCLE
+            13 => 'JetskiQuote', // QuoteTypes::JETSKI
+            14 => 'PetQuote', // QuoteTypes::PET
+            15 => 'YachtQuote', // QuoteTypes::YACHT
+            16 => 'HomeQuote', // QuoteTypes::HOME
+        ];
+
+        $nonPersonalMapping = [
+            1 => 'CarQuote', // QuoteTypes::CAR
+            2 => 'HealthQuote', // QuoteTypes::HEALTH
+            3 => 'LifeQuote', // QuoteTypes::LIFE
+            4 => 'BusinessQuote', // QuoteTypes::BUSINESS
+            5 => 'TravelQuote', // QuoteTypes::TRAVEL
+        ];
+
+        $mapping = empty($personalQuoteTypeIds) ? $nonPersonalMapping : $personalMapping;
+        
+        $cases = [];
+        foreach ($mapping as $id => $model) {
+            $cases[] = "WHEN pqr.quote_type_id = {$id} THEN \"App\\\\\\\\Models\\\\\\\\{$model}\"";
+        }
+
+        return implode(' ', $cases) . ' ELSE "App\\\\\\\\Models\\\\\\\\PersonalQuote"';
     }
 }
