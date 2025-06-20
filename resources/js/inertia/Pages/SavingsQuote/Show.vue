@@ -1919,24 +1919,72 @@ const getIncludedBenefitsTooltip = fieldText =>
 
                   <!-- Policy Wordings Tab -->
                   <TabPanel>
-                    <dl class="grid md:grid-cols-2 gap-5 p-4">
+                    <div class="p-4">
                       <div
-                        v-for="data in planDetails.policyWordings || []"
-                        :key="data"
+                        v-if="planDetails.policyWordings && planDetails.policyWordings.length > 0"
+                        class="space-y-3"
                       >
-                        <x-tooltip placement="bottom">
-                          <a
-                            :href="data.link"
-                            class="font-medium mb-1 underline decoration-dotted decoration-primary-700"
-                            target="_blank"
-                            >{{ data.text }}</a
-                          >
-                          <template #tooltip
-                            >Policy wordings for this savings plan</template
-                          >
-                        </x-tooltip>
+                        <div
+                          v-for="doc in planDetails.policyWordings"
+                          :key="doc.id"
+                          class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                        >
+                          <!-- PDF Icon -->
+                          <div class="flex-shrink-0">
+                            <svg
+                              class="w-6 h-6 text-red-500"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                clip-rule="evenodd"
+                              ></path>
+                            </svg>
+                          </div>
+
+                          <!-- Document Name -->
+                          <div class="flex-shrink-0">
+                            <x-tooltip placement="bottom">
+                              <span
+                                class="text-blue-600 font-medium underline decoration-dotted decoration-primary-700"
+                                >{{ doc.text }}</span
+                              >
+                              <template #tooltip
+                                >Policy wordings for this savings plan</template
+                              >
+                            </x-tooltip>
+                          </div>
+
+                          <!-- Download Icon -->
+                          <div class="flex-shrink-0">
+                            <a
+                              :href="doc.link"
+                              target="_blank"
+                              class="text-blue-600 hover:text-blue-800"
+                            >
+                              <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                ></path>
+                              </svg>
+                            </a>
+                          </div>
+                        </div>
                       </div>
-                    </dl>
+                      <div v-else class="text-center py-8 text-gray-500">
+                        No policy wordings available
+                      </div>
+                    </div>
                   </TabPanel>
                 </TabPanels>
               </TabGroup>
