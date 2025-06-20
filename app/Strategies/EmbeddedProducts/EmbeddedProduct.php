@@ -72,7 +72,7 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-            $customerInsured = $customer?->customerInsured
+            $customerInsured = $customer?->customerInsured()
                 ->where('quote_request_id', $item->quote_request_id)
                 ->where('quote_type_id', $item->quote_type_id)
                 ->latest('updated_at')

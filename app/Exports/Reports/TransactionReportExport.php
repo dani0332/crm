@@ -10,7 +10,6 @@ class TransactionReportExport extends BaseReportsExport
     {
         return [
             'Ref-ID',
-            'Private Client',
             'Department',
             'Policy Number',
             'Transactions',
@@ -48,6 +47,7 @@ class TransactionReportExport extends BaseReportsExport
             'Lead Source',
             'Booking Date',
             'Sage Receipt ID',
+            'Private Client',
         ];
     }
 

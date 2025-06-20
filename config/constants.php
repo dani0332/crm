@@ -156,4 +156,7 @@ return [
     'ALLIANCE_API_BASE_URL' => env('ALLIANCE_API_BASE_URL', ''),
     'ALLIANCE_AGENCY_ID' => env('ALLIANCE_AGENCY_ID', ''),
     'ALLIANCE_AGENCY_CODE' => env('ALLIANCE_AGENCY_CODE', ''),
+    'OCR_API_ENDPOINT' => env('OCR_API_ENDPOINT', ''),
+    'OCR_API_KEY' => env('OCR_API_KEY', ''),
+    'OCR_API_TIMEOUT' => env('OCR_API_TIMEOUT', 90),
 ];

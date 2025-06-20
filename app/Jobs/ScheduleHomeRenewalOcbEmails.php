@@ -47,11 +47,7 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
             'batch' => $this->batch,
         ]);
 
-        $renewalsBatchEmail = RenewalsBatchEmails::find($this->renewalsBatchEmailId);
-
-        $renewalsBatchEmail->update(['status' => ProcessStatusCode::IN_PROGRESS]);
-
-        $homeRenewalService->scheduleHomeOCB($this->batch, $renewalsBatchEmail);
+        $homeRenewalService->scheduleHomeOCB($this->batch, $this->renewalsBatchEmailId);
 
         LoggerService::info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is completed', extra: [
             'batch' => $this->batch,

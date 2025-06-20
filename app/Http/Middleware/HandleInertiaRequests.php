@@ -16,6 +16,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
@@ -152,6 +153,7 @@ class HandleInertiaRequests extends Middleware
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
             'carRegistrationType' => CarRegistrationType::asArray(),
             'carVehicleUse' => CarVehicleUse::asArray(),
+            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
         ];
     }
 
