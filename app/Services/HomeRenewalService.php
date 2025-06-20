@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CoverageTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
@@ -29,6 +30,7 @@ use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use App\Models\Lookup;
 
 class HomeRenewalService extends RenewalsUploadService
 {
@@ -504,11 +506,11 @@ class HomeRenewalService extends RenewalsUploadService
     private function createHomeQuoteData(array &$quoteData, array $data): array
     {
         $quoteData['insurance_provider_id'] = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
-        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null;
-        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null;
-        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null;
+        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? Lookup::where('text', $data['you_are_a'])->where('key', LookupsEnum::POSSESSION_TYPE)->first()->id : null;
+        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? Lookup::where('text', $data['i_live_in_a'])->where('key', LookupsEnum::ACCOMMODATION_TYPE)->first()->id : null;
+        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? Lookup::where('text', $data['occupancy_status_for_owners'])->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)->first()->id : null;
         $quoteData['sub_area_id'] = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
-        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null;
+        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? Lookup::where('text', $data['cover_required'])->where('key', LookupsEnum::COVERAGE_TYPE)->first()->id : null;
         $quoteData['contents_value_id'] = $this->getContentsAed($data);
         $quoteData['personal_belongings_value_id'] = $this->getPersonalBelongingsAed($data);
         $quoteData['building_value'] = $this->getBuildingAed($data);
