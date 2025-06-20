@@ -50,7 +50,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
-use App\Enums\SukoonMedexEnum;
+use App\Enums\EmbeddedTransactionEnum;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -235,7 +235,7 @@ class EmbeddedProductRepository extends BaseRepository
                 }
             }
             else if (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
-                $item->sync_document_button = $transaction[0]->policy_status != SukoonMedexEnum::STATUS_BOOKED;
+                $item->sync_document_button = $transaction[0]->policy_status != EmbeddedTransactionEnum::STATUS_BOOKED;
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);

@@ -21,6 +21,7 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use App\Enums\SukoonMedexEnum;
+use App\Enums\EmbeddedTransactionEnum;
 
 class SukoonMedexService
 {
@@ -98,7 +99,7 @@ class SukoonMedexService
         $updateableData = collect($data)->only('quote_policy', 'certificate_number');
 
         if(!empty($data['policy_status'] ?? null))
-            $this->policyStatus = $updateableData['policy_status'] = Str::slug($data['policy_status'], '_');
+            $this->policyStatus = $updateableData['policy_status'] = $data['policy_status'];
 
         $transaction->update($updateableData->toArray());
 
@@ -122,7 +123,7 @@ class SukoonMedexService
     public function processPurchaseFlow()
     {
         try {
-            if($this->policyStatus == SukoonMedexEnum::STATUS_BOOKED) {
+            if($this->policyStatus == EmbeddedTransactionEnum::STATUS_BOOKED) {
                 LoggerService::info("{$this->logPrefix} Already booked, skipping purchase flow");
                 return false;
             }
@@ -130,7 +131,7 @@ class SukoonMedexService
             // Skipable Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
             // STEP #2 login (trigger by initiatePurchaseFlow)
 
-            if(!SukoonMedexEnum::checkPolicyStatusPassed($this->policyStatus, SukoonMedexEnum::STATUS_QUOTED)) {
+            if(!EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_QUOTED)) {
                 // STEP #4 submitPersonalDetail
                 $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($this->currentQuote));
                 $this->syncSukoonData($this->transaction, $profileDetailResponse);
@@ -147,7 +148,7 @@ class SukoonMedexService
                 $this->confirmSubmittedData();
             }
 
-            if(!SukoonMedexEnum::checkPolicyStatusPassed($this->policyStatus, SukoonMedexEnum::STATUS_PAYMENT_SUCCEED)) {
+            if(!EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED)) {
                 // STEP #10 initiatePaymentProcess
                 $initPaymentResponse = $this->initiatePaymentProcess();
                 $this->syncSukoonData($this->transaction, $initPaymentResponse);
@@ -196,7 +197,7 @@ class SukoonMedexService
             $quotePolicyResponse = $this->viewQuotePolicy();
             $this->updateTransaction($this->transaction, $quotePolicyResponse);
 
-            if(SukoonMedexEnum::checkPolicyStatusPassed($this->policyStatus, SukoonMedexEnum::STATUS_BOOKED) && !$this->transaction->is_document_sent) {
+            if(EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_BOOKED) && !$this->transaction->is_document_sent) {
                 EmbeddedProductRepository::sendDocument([
                     'epId' => $this->transaction->product->embeddedProduct->id ?? null,
                     'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
@@ -266,11 +267,11 @@ class SukoonMedexService
         ];
 
         if(!empty($paymentData['status']))
-            $this->policyStatus = $data['policy_status'] = Str::slug($paymentData['status'], '_'); // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
+            $this->policyStatus = $data['policy_status'] = $paymentData['status']; // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
 
         // Make sure no any required documents are missing & policyStatus is payment_succeeded
-        if(empty($this->getMissingReqDocTypes()) && $this->policyStatus == SukoonMedexEnum::STATUS_PAYMENT_SUCCEED)
-            $this->policyStatus = $data['policy_status'] = SukoonMedexEnum::STATUS_BOOKED;
+        if(empty($this->getMissingReqDocTypes()) && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED)
+            $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
 
         LoggerService::info("{$this->logPrefix} policyStatus: {$this->policyStatus}");
         return $transaction->update($data);
@@ -768,7 +769,7 @@ class SukoonMedexService
             if(empty($result['policy_number']))
                 throw new Exception('Policy number is missing');
 
-            return ['certificate_number' => $result['policy_number'], 'policy_status' => SukoonMedexEnum::STATUS_PAYMENT_SUCCEED];
+            return ['certificate_number' => $result['policy_number'], 'policy_status' => EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED];
 
         } catch (Exception $e) {
             throw $e;
