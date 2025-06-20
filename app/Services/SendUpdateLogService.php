@@ -1337,6 +1337,10 @@ class SendUpdateLogService
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documents' => $documents,
+            'quoteTypeId' => $quoteTypeId,
+            'code' => $sendUpdateLog->code,
+            'quote' => $sendUpdateLog->code,
+            'quoteId' => $sendUpdateLog->quote_uuid, // for email status save
         ];
 
         if ($quoteTypeId == QuoteTypeId::Business) {
@@ -1354,6 +1358,9 @@ class SendUpdateLogService
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
             $templateId = getAppStorageValueByKey(constant($constantName));
         }
+
+        $emailData->templateId = $templateId;
+        $emailData->customerId = $quote->customer_id;
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
