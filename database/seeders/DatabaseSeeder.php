@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
+            PermissionSeeder::class,
         ]);
     }
 }

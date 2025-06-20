@@ -22,7 +22,7 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW, PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
-                    <li><a><i class="fa fa-tachometer" aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
+                    <li><a><i class="fa fa-tachometer" aria-hidden="true"></i>Dashboard  <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             @can(PermissionsEnum::DashboardView)
                             <li><a href="{{ url('dashboard/car-conversion') }}">Car Conversion</a></li>

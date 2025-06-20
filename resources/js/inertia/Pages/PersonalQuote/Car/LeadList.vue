@@ -11,12 +11,12 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
-  genericRequestEnum: Array,
+  genericRequestEnum: Object,
   isBetaUser: Boolean,
   teams: Object,
   authorizedDays: Number,
   assignmentTypes: Object,
-  insurerAMLStatus: Array,
+  insurerAMLStatus: Object,
 });
 
 const page = usePage();
@@ -105,6 +105,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const ecommerceOptions = [
@@ -293,6 +294,7 @@ const filters = reactive({
   registration_type: carRegistrationTypeEnum.PERSONAL,
   vehicle_use: '',
   company_name: '',
+  private_client: 'all',
 });
 
 const teamUsers =
@@ -424,13 +426,70 @@ const objToUrl = obj => {
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status_id',
+    'tier_id',
+    'vehicle_type_id',
+    'car_type_insurance_id',
+    'quote_batch_id',
+    'advisor_id',
+    'teams',
+    'payment_status_id',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    // Check for indexed array format like quote_status_id[0], quote_status_id[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status_id[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
     } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && value === '') {
+      // Empty string for ecommerce
+      filters[key] = '';
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -1086,6 +1145,19 @@ const insurerAMLStatusOption = computed(() => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"

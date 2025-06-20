@@ -70,7 +70,7 @@ const quoteForm = useForm({
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
 });
 
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, isValidName } = useRules();
 
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
@@ -121,7 +121,7 @@ function onSubmit(isValid) {
           type="text"
           label="First Name"
           required
-          :rules="[isRequired]"
+          :rules="[isRequired, isValidName]"
           class="w-full"
           maxLength="20"
           :error="quoteForm.errors.first_name"
@@ -132,7 +132,7 @@ function onSubmit(isValid) {
           label="Last Name"
           required
           maxLength="50"
-          :rules="[isRequired]"
+          :rules="[isRequired, isValidName]"
           class="w-full"
           :error="quoteForm.errors.last_name"
         />

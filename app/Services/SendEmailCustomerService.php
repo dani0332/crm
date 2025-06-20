@@ -529,10 +529,13 @@ class SendEmailCustomerService extends BaseService
             $attachments = $this->getEmailAttachments($emailData, $quoteId);
             $bcc = [];
             if ($emailData->advisorEmail) {
+                LoggerService::info("Adding BCC for Advisor Email: {$emailData->advisorEmail} and Name: {$emailData->advisorName}");
                 $bcc[] = [
                     'email' => $emailData->advisorEmail,
                     'name' => $emailData->advisorName,
                 ];
+            } else {
+                LoggerService::info("No Advisor Email found for ID : {$quoteId}");
             }
 
             $bccAdditional = $this->getBccAdditionalEmails($quoteType);

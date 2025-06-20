@@ -259,4 +259,17 @@ trait Filterable
         $query->whereDate($column, today());
     }
 
+    public function scopeFilterByPrivateClient($query, $filter)
+    {
+        if ($filter == 'all') {
+            return;
+        }
+
+        $query->whereRelation('customer', function ($q) use ($filter) {
+            $filter == 'no'
+                ? $q->whereNull('pcp_tag')
+                : $q->where('pcp_tag', $filter);
+        });
+    }
+
 }

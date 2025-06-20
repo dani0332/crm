@@ -229,6 +229,7 @@ class CentralController extends Controller
             ], [
                 'customer_id' => $customerProfileRequest->customer_id,
                 'insured_id' => $insuredPersonDetails->id,
+                'updated_at' => now(),
             ]);
         }
 
