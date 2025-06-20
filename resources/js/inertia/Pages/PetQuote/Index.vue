@@ -56,6 +56,7 @@ let availableFilters = {
   advisor_assigned_date: null,
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  private_client: 'all',
 };
 
 const canExport = ref(false);
@@ -147,6 +148,11 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ]);
 
 function onSubmit(isValid) {
@@ -799,6 +805,19 @@ const insurerAMLStatusOption = computed(() => {
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

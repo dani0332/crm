@@ -16,6 +16,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
@@ -152,6 +153,7 @@ class HandleInertiaRequests extends Middleware
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
             'carRegistrationType' => CarRegistrationType::asArray(),
             'carVehicleUse' => CarVehicleUse::asArray(),
+            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
         ];
     }
 
@@ -560,13 +562,22 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->canAny([PermissionsEnum::RenewalsUpload, PermissionsEnum::RenewalsUploadedLeadList, PermissionsEnum::RenewalsUploadUpdate, PermissionsEnum::RenewalsBatches])) {
+        if (auth()->user()->canAny([
+            PermissionsEnum::RenewalsUpload,
+            PermissionsEnum::RenewalsUploadedLeadList,
+            PermissionsEnum::RenewalsUploadUpdate,
+            PermissionsEnum::RenewalsBatches,
+            PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR,
+            PermissionsEnum::RENEWALS_BATCHES_NONMOTOR,
+        ])) {
             $nav = $nav->add('Renewals', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUpload), 'Upload & Create', route('renewals-upload-create'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadedLeadList), 'Uploaded Leads', route('renewals-uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadUpdate), 'Upload & Update', route('renewals-upload-update'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadUpdate), 'Motor Upload & Update', route('renewals-upload-update'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR), 'NonMotor Upload & Update', route('non-motor-renewals-upload-update'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsBatches), 'Batches', route('renewals-batches'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWALS_BATCHES_NONMOTOR), 'NonMotor Batches', route('renewals-batches-nonmotor'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(PermissionsEnum::RenewalsBatches || PermissionsEnum::RenewalsUploadUpdate || PermissionsEnum::RenewalsUploadedLeadList || PermissionsEnum::RenewalsUpload, 'Search', route('renewals-batches-search'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
@@ -692,6 +703,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Private Client Config',
+                        route('admin.private-client-config.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

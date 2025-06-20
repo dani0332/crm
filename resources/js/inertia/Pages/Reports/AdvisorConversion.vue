@@ -149,6 +149,10 @@ const totalLeads = reactive({
       value: 'premium',
       sortable: true,
     },
+    {
+      text: 'Private Client',
+      value: 'pcp_tag_formatted',
+    },
   ],
 });
 
