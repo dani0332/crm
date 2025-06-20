@@ -298,7 +298,6 @@ const confirmSendPolicy = () => {
     (bpForm.commission_vat_applicable > 0 ||
       bpForm.commission_vat_not_applicable > 0)
   ) {
-    calculateCommission();
     if (!bp.isAllowedToUpdateCommission) {
       disableCommissionVatApplicable.value = false;
       bp.isEditing = true;
@@ -318,8 +317,8 @@ const executeUpdateBookingPolicy = async () => {
     bpForm.commission_vat_applicable > 0 ||
     bpForm.commission_vat_not_applicable > 0
   ) {
-    calculateCommission();
     try {
+      calculateCommission();
       const result = await onUpdateBookPolicyDetails(true);
       if (!result) {
         modals.sendPolicyConfirm = false;
