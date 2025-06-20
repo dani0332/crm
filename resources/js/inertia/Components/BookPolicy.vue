@@ -454,7 +454,9 @@ const calculateCommission = () => {
   }
 };
 
-let isComissionVatApplicableEnabled = page.props.quoteType == quoteTypeCodeEnum.Life || page.props.quoteType == quoteTypeCodeEnum.SAVINGS;
+let isComissionVatApplicableEnabled =
+  page.props.quoteType == quoteTypeCodeEnum.Life ||
+  page.props.quoteType == quoteTypeCodeEnum.SAVINGS;
 let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {

@@ -169,10 +169,10 @@ export const useRules = () => {
     return true;
   };
 
-
   // For regex: only letters, spaces, hyphens (matches /^[a-zA-Z\s\-]+$/)
   const isValidName = v =>
-    /^[a-zA-Z\s\-]+$/.test(v) || 'Only letters, spaces, and hyphens are allowed.';
+    /^[a-zA-Z\s\-]+$/.test(v) ||
+    'Only letters, spaces, and hyphens are allowed.';
 
   return {
     name,
