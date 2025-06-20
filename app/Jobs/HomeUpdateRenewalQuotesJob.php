@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\RenewalProcessStatuses;
+use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
@@ -23,16 +24,16 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
     public $timeout = 60;
     public $backoff = 10;
     public $tries = 3;
-    protected $renewalQuoteProcess;
+    protected $renewalQuoteProcessId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($renewalQuoteProcess)
+    public function __construct(int $renewalQuoteProcessId)
     {
-        $this->renewalQuoteProcess = $renewalQuoteProcess;
+        $this->renewalQuoteProcessId = $renewalQuoteProcessId;
     }
 
     /**
@@ -42,7 +43,8 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
      */
     public function handle(HomeRenewalService $homeRenewalService)
     {
-        $homeRenewalService->updateQuote($this->renewalQuoteProcess);
+
+        $homeRenewalService->updateQuoteHome($this->renewalQuoteProcessId);
     }
 
     /**
@@ -50,7 +52,7 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalQuoteProcessId))->dontRelease()];
     }
 
     /**
@@ -59,9 +61,11 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage(), extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
         ]);
-        $this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
-        RenewalsUploadLeads::where('id', $this->renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
+
+        $renewalQuoteProcess = RenewalQuoteProcess::where('id', $this->renewalQuoteProcessId)->select('renewals_upload_lead_id', 'id')->first();
+        $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
+        RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
     }
 }

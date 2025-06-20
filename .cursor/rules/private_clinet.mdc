@@ -1,0 +1,177 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Private Client Feature Implementation Rules
+.
+### Rule: Admin Configuration Interface
+**Type**: Agent Requested
+**Trigger**: `app/Http/Controllers/V2/Admin/PrivateClientConfigController.php`
+**Description**:
+- Web interface for managing PCP rules
+- Version control for criteria
+- Role-based access control
+- Currency type configuration
+- Audit trail display
+
+### Rule: Command Line Interface
+**Type**: Agent Requested
+**Trigger**: `app/Console/Commands/RemovePcpTagCommand.php`
+**Description**:
+- CLI command for removing PCP tags
+- Checks active qualified leads
+- Removes tags based on criteria
+- Logs removal operations
+- Maintains audit trail
+
+## Core Implementation
+
+### Rule: Tag Application Logic
+**Type**: Agent Requested
+**Trigger**: `app/Traits/PrivateClient.php::applyPcpTag`
+**Description**:
+- Applies PCP tags based on configured criteria
+- Updates customer and lead records
+- Handles currency-specific checks
+- Maintains version control
+- Implements transaction safety
+- Tracks update status with boolean flags
+
+### Rule: Configuration Management
+**Type**: Agent Requested
+**Trigger**: `app/Models/PrivateClientConfig.php`
+**Description**:
+- Manages PCP qualification rules
+- Supports versioning
+- Handles currency types
+- Implements soft deletes
+- Maintains audit trail
+- Stores operator and value pairs
+
+## Event System
+
+### Rule: Quote Status Events
+**Type**: Agent Requested
+**Trigger**: `app/Observers/PersonalQuoteObserver.php`
+**Description**:
+- Triggers on specific quote statuses:
+  - PolicySentToCustomer
+  - PolicyBooked
+  - PolicyIssued
+- Maintains quote context
+- Handles event propagation
+- Logs status changes
+
+### Rule: Life Quote Events
+**Type**: Agent Requested
+**Trigger**: `app/Observers/LifeQuoteObserver.php`
+**Description**:
+- Handles life quote updates
+- Triggers on policy issuance
+- Maintains payment context
+- Logs life quote changes
+- Integrates with PCP system
+
+## Database Structure
+
+### Rule: Customer Model Fields
+**Type**: Agent Requested
+**Trigger**: `app/Models/Customer.php`
+**Description**:
+- `pcp_tag`: Boolean field
+- `pcp_tag_version`: Integer field
+- `ref_id`: String field
+- Formatted display values
+- Audit trail integration
+
+### Rule: Lead Qualification Fields
+**Type**: Agent Requested
+**Trigger**: `app/Traits/PrivateClient.php`
+**Description**:
+- `pc_qualified`: Boolean field
+- `pcp_tag_version`: Integer field
+- Synchronized with customer records
+- Qualification history tracking
+- Audit trail maintenance
+
+## Workflow Management
+
+### Rule: Batch Processing
+**Type**: Agent Requested
+**Trigger**: `app/Http/Controllers/API/ApiController.php::tagPrivateClients`
+**Description**:
+- Configurable batch sizes
+- Delayed processing:
+  - 1 second between leads
+  - 2 seconds between customers
+- Pagination support
+- Progress logging
+- Active lead filtering
+
+### Rule: Tag Removal Process
+**Type**: Agent Requested
+**Trigger**: `app/Traits/PrivateClient.php::removePcpTag`
+**Description**:
+- Checks active qualified leads
+- Validates policy expiry dates
+- Removes tags when criteria not met
+- Maintains audit trail
+- Handles errors gracefully
+
+## Logging and Monitoring
+
+### Rule: Activity Logging
+**Type**: Agent Requested
+**Trigger**: `app/Traits/PrivateClient.php`
+**Description**:
+- Logs all tag operations
+- Tracks currency operations
+- Records configuration changes
+- Maintains audit trail
+- Uses proper log levels
+
+### Rule: Error Handling
+**Type**: Agent Requested
+**Trigger**: `app/Traits/PrivateClient.php`
+**Description**:
+- Transaction safety
+- Currency-specific error handling
+- Detailed error logging
+- Rollback mechanisms
+- Exception propagation
+
+## Security and Access Control
+
+### Rule: Role-Based Access
+**Type**: Agent Requested
+**Trigger**: `app/Http/Controllers/V2/Admin/PrivateClientConfigController.php`
+**Description**:
+- Senior Management access
+- Admin access
+- Configuration management
+- Audit trail access
+- Operation logging
+
+## Integration Points
+
+### Rule: Quote Type Integration
+**Type**: Agent Requested
+**Trigger**: `app/Traits/PrivateClient.php`
+**Description**:
+- Supports multiple quote types
+- Currency type handling
+- Field validation
+- Operator support
+- Value comparison
+
+### Rule: Event Broadcasting
+**Type**: Agent Requested
+**Trigger**: `app/Events/PrivateClientUpdatedEvent.php`
+**Description**:
+- Private channel broadcasting
+- Lead context maintenance
+- Quote type tracking
+- Event propagation
+- Listener integration
+

@@ -59,6 +59,7 @@ const assignForm = useForm({
   isLeadPool: null,
   isManualAllocationAllowed: 1,
 });
+
 // adding comment
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
@@ -146,6 +147,11 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -193,6 +199,7 @@ const filters = reactive({
   last_modified_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  private_client: 'all',
 });
 
 const canExport = ref(false);
@@ -1055,6 +1062,19 @@ const insurerAMLStatusOption = computed(() => {
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

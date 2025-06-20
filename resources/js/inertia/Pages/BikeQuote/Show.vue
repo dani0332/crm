@@ -363,97 +363,114 @@ function capitalizeString(str) {
 <template>
   <div>
     <Head title="Bike Quotes" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Bike Detail</h2>
+        <x-button
+          v-if="record?.customer?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
+      </template>
 
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Bike Detail</h2>
-      <div class="flex gap-2">
-        <Link
-          v-if="quote.quote_detail?.insly_id"
-          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-          preserve-scroll
-        >
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            View Legacy policy
-          </x-button>
-        </Link>
-        <Link
-          v-else-if="
-            quote.source == leadSource.RENEWAL_UPLOAD &&
-            canAny([
-              permissionsEnum.VIEW_LEGACY_DETAILS,
-              permissionsEnum.VIEW_ALL_LEADS,
-            ])
-          "
-          :href="
-            route(
-              'view-legacy-policy.renewal-uploads',
-              quote.previous_quote_policy_number,
-            )
-          "
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+      <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+        <div class="flex gap-2">
           <Link
-            v-if="!isDisabled"
-            :href="route('bike-quotes-edit', quote.uuid)"
+            v-if="quote.quote_detail?.insly_id"
+            :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+            preserve-scroll
           >
-            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+            <x-button
+              size="sm"
+              color="#ff5e00"
+              tag="div"
+              v-if="readOnlyMode.isDisable === true"
+            >
+              View Legacy policy
+            </x-button>
+          </Link>
+          <Link
+            v-else-if="
+              quote.source == leadSource.RENEWAL_UPLOAD &&
+              canAny([
+                permissionsEnum.VIEW_LEGACY_DETAILS,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                quote.previous_quote_policy_number,
+              )
+            "
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <LeadEditBtnTemplate v-slot="{ isDisabled }">
+            <Link
+              v-if="!isDisabled"
+              :href="route('bike-quotes-edit', quote.uuid)"
+            >
+              <x-button
+                size="sm"
+                tag="div"
+                v-if="readOnlyMode.isDisable === true"
+                >Edit</x-button
+              >
+            </Link>
+            <x-button v-else :disabled="isDisabled" size="sm" tag="div"
               >Edit</x-button
             >
+          </LeadEditBtnTemplate>
+
+          <x-tooltip
+            v-if="lockLeadSectionsDetails.lead_details"
+            placement="bottom"
+          >
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.BikeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+              :isDisabled="true"
+            />
+            <template #tooltip
+              >This lead is now locked as the policy has been booked. If changes
+              are needed, go to 'Send Update', select 'Add Update', and choose
+              'Correction of Policy'</template
+            >
+          </x-tooltip>
+          <template v-else>
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.BikeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+            />
+          </template>
+
+          <Link
+            v-if="can(permissionsEnum.BikeQuotesList)"
+            :href="route('bike-quotes-list')"
+            preserve-scroll
+          >
+            <x-button size="sm" color="primary" tag="div">
+              Bike Quotes
+            </x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
-            >Edit</x-button
-          >
-        </LeadEditBtnTemplate>
-
-        <x-tooltip
-          v-if="lockLeadSectionsDetails.lead_details"
-          placement="bottom"
-        >
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.BikeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-            :isDisabled="true"
-          />
-          <template #tooltip
-            >This lead is now locked as the policy has been booked. If changes
-            are needed, go to 'Send Update', select 'Add Update', and choose
-            'Correction of Policy'</template
-          >
-        </x-tooltip>
-        <template v-else>
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.BikeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-          />
-        </template>
-
-        <Link
-          v-if="can(permissionsEnum.BikeQuotesList)"
-          :href="route('bike-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
-        </Link>
+        </div>
       </div>
-    </div>
+    </StickyHeader>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center flex-wrap gap-2">
@@ -748,6 +765,13 @@ function capitalizeString(str) {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -875,6 +899,10 @@ function capitalizeString(str) {
                 Home Country Driving License Held For
               </dt>
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PRIVATE CLIENT</dt>
+              <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
             </div>
             <RiskRatingScoreDetails
               v-if="quote"

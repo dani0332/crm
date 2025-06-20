@@ -24,7 +24,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted'];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
@@ -488,6 +488,11 @@ class CarQuote extends BaseModel
     public function isRenewalTierEmailSent()
     {
         return $this->is_renewal_tier_email_sent == 1;
+    }
+
+    public function isProvider($code)
+    {
+        return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
 
     public function insured()

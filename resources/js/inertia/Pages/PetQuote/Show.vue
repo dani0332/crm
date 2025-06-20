@@ -67,7 +67,7 @@ const countDays = computed(() =>
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const historyLoading = ref(false);
-
+const permissionEnum = page.props.permissionsEnum;
 const { isRequired, emiratesNumber } = useRules();
 const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');
@@ -303,6 +303,17 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Stale for {{ countDays }}
         </p>
+        <div class="grid sm:grid-cols-2">
+          <x-button
+            v-if="quote?.customer?.pcp_tag == true"
+            size="sm"
+            color="#BFA100"
+            tag="div"
+            class="mr-2"
+          >
+            Private Client
+          </x-button>
+        </div>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
@@ -569,6 +580,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
@@ -755,6 +773,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       :min-date="new Date()"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
               </dl>
