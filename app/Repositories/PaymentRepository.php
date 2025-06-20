@@ -731,15 +731,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
-                $splitPayment->update($paymentInformation);
 
-                if ($sageResponseStatus && $masterPayment) {
-                    $masterPayment->update(
-                        [
-                            'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                        ],
-                    );
+                $splitPayment->update($paymentInformation);
+                if ($masterPayment) {
+                    $masterPayment->update([
+                        'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                        'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED
+                    ]);
                 }
 
                 /* Create payment receipt for broker */
