@@ -68,24 +68,18 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
     }
 
     public function map($item): array
-    {
-        // Ensure QuoteTypes::getName returns a string (the enum value)
-        $quoteType = QuoteTypes::getName($item->quote_type_id);
-        $quoteTypeName = $quoteType ? ($quoteType->value ?? (string) $quoteType) : '';
-
+    {  
         return [
             isset($item->customer_first_name) ? trim(($item->customer_first_name ?? '').' '.($item->customer_last_name ?? '')) : trim(($item->first_name ?? '').' '.($item->last_name ?? '')),
             $item->code ?? '',
             $item->emirates_id ?? '',
             $item->customer_type ?? '',
-            isset($item->customer_id)
-                ? ($item->residential_status === 'uaeResident' || $item->customer_is_uae_resident === 1 ? 'Resident' : 'Non-Resident')
-                : 'Non-Resident',
+            isset($item->residential_status) ? ($item->residential_status === 'uaeResident' ? 'Resident' : 'Non-Resident') : 'Non-Resident',
             $item->risk_score ?? '',
             is_null($item->risk_score) ? 'N/A' : ($item->risk_score <= 25 ? 'Low' : ($item->risk_score <= 34 && $item->risk_score >= 26 ? 'Medium' : 'High')),
             $item->policy_number ?? '',
-            $quoteTypeName,
-            $item->customer_type === CustomerTypeEnum::Individual ? $item->premium_tenure : $item->transaction_volume,
+            $item->quote_type_name ?? '',
+            ($item->customer_type ?? CustomerTypeEnum::Individual) === CustomerTypeEnum::Individual ? ($item->premium_tenure ?? '') : ($item->transaction_volume ?? ''),
             $item->premium,
             $item->insurance_provider ?? '',
             $item->policy_start_date ?? '',
