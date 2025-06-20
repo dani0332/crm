@@ -1012,6 +1012,8 @@ class SendEmailCustomerService extends BaseService
             'emailTemplateId' => $emailTemplateId,
             'tag' => $tag,
         ]);
+        $messageId = null;
+
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
@@ -1098,6 +1100,11 @@ class SendEmailCustomerService extends BaseService
                 'email' => $sendPolicyUpdateEmail,
             ]];
 
+            if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
+                $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
+                $body['bcc'][] = ['email' => $newLeadPool->value];
+            }
+
             $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $this->url,
@@ -1110,6 +1117,7 @@ class SendEmailCustomerService extends BaseService
 
             $message = json_decode($clientRequest->getBody()->getContents());
             if (isset($message->messageId)) {
+                $messageId = $message->messageId;
                 LoggerService::info('fn:sendUpdateToCustomerEmail, email sending completed', extra: ['messageId' => $message->messageId]);
                 $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
                 $responseCode = $clientRequest->getStatusCode();
@@ -1134,6 +1142,11 @@ class SendEmailCustomerService extends BaseService
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
+        if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
+            $status = $responseCode == 201 ? ProcessStatusCode::COMPLETED : ProcessStatusCode::FAILED;
+            $emailSubject = $this->getEmailSubjectFromSib($messageId);
+            $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject ?? '', $status);
+        }
 
         return $responseCode;
     }

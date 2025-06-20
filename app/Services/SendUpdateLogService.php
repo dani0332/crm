@@ -1313,6 +1313,10 @@ class SendUpdateLogService
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
+        } elseif ($quoteTypeId == QuoteTypeId::Savings) {
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
+                DocumentTypeCode::SEND_UPDATE_RECEIPT, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE
+            ])->toArray();
         }
 
         $emailData = (object) [
@@ -1367,6 +1371,21 @@ class SendUpdateLogService
                     $emailData->roadsideAssistance = $roadsideAssistanceNumber;
                 }
             }
+        } elseif ($quoteTypeId == QuoteTypeId::Savings) {
+            $emailData->refID = $sendUpdateLog->code;
+            $start_date = $quote->policy_start_date ?? '';
+            $expiry_date = $quote->policy_expiry_date ?? '';
+
+            if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                $start_date = $sendUpdateLog->start_date ?? $quote->policy_start_date;
+                $expiry_date = $sendUpdateLog->expiry_date ?? $quote->policy_expiry_date;
+            }
+            $emailData->policyStartDate = date('d/m/Y', strtotime($start_date)) ?? '';
+            $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
+
+            // TODO : Need to check if plan name is available in quote or not.
+            // $emailData->planName = ! empty($quote->plan_id) ? $quote->plan->name : '';
+            $emailData->planName == 'NA';
         }
 
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
