@@ -29,6 +29,7 @@ use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Jobs\BridgerAMLJob;
+use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
 use App\Models\BikeQuote;
@@ -66,6 +67,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class AMLController extends Controller
 {
@@ -932,10 +934,50 @@ class AMLController extends Controller
      * @param  Request  $request
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
-    public function amlCtfReportExport()
+    public function amlCtfReportExport(Request $request)
     {
+        $recipientEmail = $request->recipientEmail ?? (Auth::check() ? Auth::user()->email : null);
+
+        if (! $recipientEmail) {
+            return response()->json([
+                'error' => 'Recipient email is required.',
+                'message' => 'Please provide a recipient email or ensure you are authenticated.',
+            ], 400);
+        }
+
         $fileName = 'AML_CTF_Report_'.now()->format('Ymd_His').'.xlsx';
 
-        return (new AmlCftReportExport)->download($fileName);
+        $subject = "AML CTF Report: {$request->report}";
+
+        $requestParams = array_merge($request->all(), [
+            'recipientEmail' => $recipientEmail,
+            'subject' => $subject,
+            'fileName' => $fileName,
+            'ccRecipients' => $request->ccRecipients ?? [],
+            'exportTitle' => 'AML CTF Report',
+        ]);
+
+        $exportClass = AmlCftReportExport::class;
+        try {
+            // Dispatch the job using the existing ExportCsvAndSendEmailJob
+            ExportCsvAndSendEmailJob::dispatch(
+                $exportClass,
+                $recipientEmail,
+                $requestParams
+            );
+
+            return response()->json([
+                'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
+                'report_type' => 'AML CTF Report',
+                'recipient' => $recipientEmail,
+                'subject' => $subject,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to initiate export.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

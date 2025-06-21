@@ -1,6 +1,4 @@
 <script setup>
-import dayjs from 'dayjs/esm/index.js';
-
 defineProps({
   aml: Object,
   quoteTypes: Array,
@@ -235,7 +233,7 @@ const quoteTypeOptions = computed(() =>
   ),
 );
 
-function downloadAmlCtfReport() {
+async function downloadAmlCtfReport() {
   resetCustomErrors();
   const daysDifference = calculateDaysDifference(
     filtersForm.amlCreatedStartDate,
@@ -254,15 +252,32 @@ function downloadAmlCtfReport() {
 
   //remove empty fields
   removeEmptyFields(exportData);
-
-  const url = `/kyc/aml-ctf-report-export`;
-  const data = useObjToUrl(exportData);
+  // const data = useObjToUrl(exportData);
 
   const payload = {
-    url: url + '?' + new URLSearchParams(data).toString(),
+    url: route('aml-ctf-report-export'),
+    method: 'post',
+    data: exportData,
+    type: 'aml-ctf-report',
+    exportType: 'email',
   };
 
-  window.open(url + '?' + useObjToUrl(exportData));
+  try {
+    const response = await logAndExportQuotes(payload);
+    if (response.data.message) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      title: error.response.data.message,
+      position: 'top',
+    });
+  } finally {
+    loader.export = false;
+  }
 }
 
 onMounted(() => {

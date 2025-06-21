@@ -4,90 +4,107 @@ declare(strict_types=1);
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\AMLService;
+use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\Exportable;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, WithMapping
+class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, WithMapping, CsvExportableInterface
 {
-    use Exportable;
+    use ModernCsvExportable;
 
     protected array $summary;
-    protected $collection;
+    protected $data;
 
     public function __construct()
     {
         $report = app(AMLService::class)->generateAmlCftReport();
-        $this->collection = $report['collection'];
+        $this->data = $report['collection'];
         $this->summary = $report['summary'];
     }
 
-    public function collection()
+    public function collection(array $requestParams = []): Collection
     {
-        return $this->collection;
+        $year = Carbon::now()->year;
+        
+        // Create header rows for CSV
+        $headerRows = collect([
+            // Title row
+            ['AFIA Insurance Brokerage Services LLC', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+            // Subtitle row  
+            ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}", '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+            // Department row
+            ['Requested By Compliance Dept.', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+            // Empty row
+            ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        ]);
+
+        // Merge header rows with actual data
+        return $headerRows->merge($this->data);
     }
 
     public function headings(): array
     {
-        // Multi-row headings for title, subtitle, etc.
-        $year = Carbon::now()->year;
-
+        // Simple CSV headings for email export compatibility
         return [
-            ['AFIA Insurance Brokerage Services LLC'],
-            ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}"],
-            ['Requested By Compliance Dept.'],
-            [],
-            [
-                'Customer Full Name',
-                'Ref-ID',
-                'Customer EID No/Trade license',
-                'Customer Type',
-                'Resident/Non-Resident customer',
-                'Risk Score',
-                'Customer Risk Profile (High /Medium/Low)',
-                'Insurance Policy Number',
-                'Type of insurance Policy',
-                'Number of Transactions',
-                'Transaction Amount',
-                'Name of the Insurance Company',
-                'Policy Start Date',
-                'Policy End Date',
-                'Lead status',
-                'Whether PEP Customer or Not',
-                'Date of last AML screening',
-                'Remarks',
-            ],
+            'Customer Full Name',
+            'Ref-ID',
+            'Customer EID No/Trade license',
+            'Customer Type',
+            'Resident/Non-Resident customer',
+            'Risk Score',
+            'Customer Risk Profile (High /Medium/Low)',
+            'Insurance Policy Number',
+            'Type of insurance Policy',
+            'Number of Transactions',
+            'Transaction Amount',
+            'Name of the Insurance Company',
+            'Policy Start Date',
+            'Policy End Date',
+            'Lead status',
+            'Whether PEP Customer or Not',
+            'Date of last AML screening',
+            'Remarks',
         ];
     }
 
     public function map($item): array
-    {  
+    {
+        // Handle header rows - return as-is if it's already an array
+        if (is_array($item) && !isset($item['code']) && !is_object($item)) {
+            return $item;
+        }
+        
+        // Convert object to array for consistent access
+        $data = is_array($item) ? $item : (array) $item;
+        
         return [
-            isset($item->customer_first_name) ? trim(($item->customer_first_name ?? '').' '.($item->customer_last_name ?? '')) : trim(($item->first_name ?? '').' '.($item->last_name ?? '')),
-            $item->code ?? '',
-            $item->emirates_id ?? '',
-            $item->customer_type ?? '',
-            isset($item->residential_status) ? ($item->residential_status === 'uaeResident' ? 'Resident' : 'Non-Resident') : 'Non-Resident',
-            $item->risk_score ?? '',
-            is_null($item->risk_score) ? 'N/A' : ($item->risk_score <= 25 ? 'Low' : ($item->risk_score <= 34 && $item->risk_score >= 26 ? 'Medium' : 'High')),
-            $item->policy_number ?? '',
-            $item->quote_type_name ?? '',
-            ($item->customer_type ?? CustomerTypeEnum::Individual) === CustomerTypeEnum::Individual ? ($item->premium_tenure ?? '') : ($item->transaction_volume ?? ''),
-            $item->premium,
-            $item->insurance_provider ?? '',
-            $item->policy_start_date ?? '',
-            $item->policy_expiry_date ?? '',
-            $item->lead_status ?? '',
-            $item->is_owner_pep === 1 ? 'Yes' : 'No',
-            $item->last_aml_screening_date ?? '',
-            $item->remarks ?? 'N/A',
+            isset($data['customer_first_name']) ? trim(($data['customer_first_name'] ?? '').' '.($data['customer_last_name'] ?? '')) : trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
+            $data['code'] ?? '',
+            $data['emirates_id'] ?? '',
+            $data['customer_type'] ?? '',
+            isset($data['residential_status']) ? ($data['residential_status'] === 'uaeResident' ? 'Resident' : 'Non-Resident') : 'Non-Resident',
+            $data['risk_score'] ?? '',
+            is_null($data['risk_score'] ?? null) ? 'N/A' : (($data['risk_score'] ?? 0) <= 25 ? 'Low' : (($data['risk_score'] ?? 0) <= 34 && ($data['risk_score'] ?? 0) >= 26 ? 'Medium' : 'High')),
+            $data['policy_number'] ?? '',
+            $data['quote_type_name'] ?? '',
+            ($data['customer_type'] ?? CustomerTypeEnum::Individual) === CustomerTypeEnum::Individual ? ($data['premium_tenure'] ?? '') : ($data['transaction_volume'] ?? ''),
+            $data['premium'] ?? '',
+            $data['insurance_provider'] ?? '',
+            $data['policy_start_date'] ?? '',
+            $data['policy_expiry_date'] ?? '',
+            $data['lead_status'] ?? '',
+            ($data['is_owner_pep'] ?? 0) === 1 ? 'Yes' : 'No',
+            $data['last_aml_screening_date'] ?? '',
+            $data['remarks'] ?? 'N/A',
         ];
     }
 
@@ -129,6 +146,22 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
                 $sheet->setCellValue('B'.($lastRow + 9), '"This report contains sensitive personal data. Do not share externally. For compliance use only."');
                 $sheet->getStyle('B'.($lastRow + 9))->getFont()->setBold(true);
             },
+        ];
+    }
+
+    /**
+     * Get export metadata for AML CTF reports
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'exportType' => 'aml_ctf_report',
+            'description' => 'AML/CFT Monitoring purpose Customer Risk Profile Report',
+            'includesPII' => true, // Contains personally identifiable information
+            'dataSource' => 'aml_service',
         ];
     }
 }
