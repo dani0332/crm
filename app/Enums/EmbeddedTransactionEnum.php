@@ -8,7 +8,6 @@ use BenSampo\Enum\Enum;
 
 final class EmbeddedTransactionEnum extends Enum
 {
-
     /* Statuses are using for SukoonMedex Process */
     const STATUS_QUEUED = 'Queued';
     const STATUS_NEW_POLICY = 'New policy';
@@ -17,10 +16,9 @@ final class EmbeddedTransactionEnum extends Enum
     const STATUS_BOOKED = 'Booked';
     const STATUS_FAILED = 'Failed';
 
-
     public static function getRemainingPolicyStatus(string $policyStatus = ''): array
     {
-        return match($policyStatus) {
+        return match ($policyStatus) {
             self::STATUS_NEW_POLICY => [self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
             self::STATUS_QUOTED => [self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
             self::STATUS_PAYMENT_SUCCEED => [self::STATUS_BOOKED],
@@ -31,6 +29,6 @@ final class EmbeddedTransactionEnum extends Enum
 
     public static function checkPolicyStatusPassed(string $policyStatus = '', string $passedPolicyStatus = ''): bool
     {
-        return !in_array($passedPolicyStatus, self::getRemainingPolicyStatus($policyStatus));
+        return ! in_array($passedPolicyStatus, self::getRemainingPolicyStatus($policyStatus));
     }
 }

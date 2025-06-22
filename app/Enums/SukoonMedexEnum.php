@@ -8,7 +8,6 @@ use BenSampo\Enum\Enum;
 
 final class SukoonMedexEnum extends Enum
 {
-
     /* SukoonMedex Step-Name Enums */
     const STEPS_NAME = [
         self::STEP_INIT => 'init',
@@ -46,7 +45,6 @@ final class SukoonMedexEnum extends Enum
     // const STEP_GET_FORM = 3; // GET, Skiped
     // const STEP_PRE_REVIEW_SUBMITED_DATA = 5; // GET, Skiped
     // const STEP_LIST_PAYMENT_GATEWAYS = 9; // GET, Skiped
-
 
     public static function getName(int $stepNumber): string
     {
