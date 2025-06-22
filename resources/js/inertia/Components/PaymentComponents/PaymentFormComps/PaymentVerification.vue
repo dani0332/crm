@@ -23,14 +23,14 @@ const props = defineProps({
 const emit = defineEmits([
   'upload-document',
   'open-inner-modal',
-  'delete-document'
+  'delete-document',
 ]);
 
 const uploadDocument = (document, event, count) => {
   emit('upload-document', document, event, count);
 };
 
-const openInnerModal = (id) => {
+const openInnerModal = id => {
   emit('open-inner-modal', id);
 };
 
@@ -52,9 +52,7 @@ const deleteDocument = (docName, count, docId) => {
       <x-tooltip class="tooltip-display">
         <h3 class="font-bold">Payment Verification</h3>
         <template #tooltip>
-          <span>{{
-            paymentTooltipEnum.PAYMENT_VIEW_VERIFICATION_HEADER
-          }}</span>
+          <span>{{ paymentTooltipEnum.PAYMENT_VIEW_VERIFICATION_HEADER }}</span>
         </template>
       </x-tooltip>
     </div>
@@ -82,10 +80,8 @@ const deleteDocument = (docName, count, docId) => {
       <div class="w-1/2 px-2">
         <div>
           <x-tooltip class="tooltip-display">
-            <span
-              class="border-b-2 border-dotted border-black text-sm"
-              >COLLECTED AMOUNT
-              <sup class="text-red-500">*</sup></span
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >COLLECTED AMOUNT <sup class="text-red-500">*</sup></span
             >
             <template #tooltip>
               <span>{{
@@ -125,9 +121,7 @@ const deleteDocument = (docName, count, docId) => {
             >
           </span>
           <template #tooltip>
-            <span>{{
-              paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE
-            }}</span>
+            <span>{{ paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE }}</span>
           </template>
         </x-tooltip>
         <x-field>
@@ -149,9 +143,7 @@ const deleteDocument = (docName, count, docId) => {
             ></span
           >
           <template #tooltip>
-            <span>{{
-              paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS
-            }}</span>
+            <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
           </template>
         </x-tooltip>
         <x-field>
@@ -164,11 +156,7 @@ const deleteDocument = (docName, count, docId) => {
             :max-size="approveProofDocument.max_size"
             :loading="documentForm.processing"
             @change="
-              uploadDocument(
-                approveProofDocument,
-                $event,
-                splitPaymentNo,
-              )
+              uploadDocument(approveProofDocument, $event, splitPaymentNo)
             "
           />
           <p
@@ -194,11 +182,7 @@ const deleteDocument = (docName, count, docId) => {
             <span
               class="delete-pointer"
               @click="
-                deleteDocument(
-                  fileData.doc_name,
-                  splitPaymentNo,
-                  fileData.id,
-                )
+                deleteDocument(fileData.doc_name, splitPaymentNo, fileData.id)
               "
               v-if="!readOnlyPayments[splitPaymentNo]"
             >
@@ -221,4 +205,4 @@ const deleteDocument = (docName, count, docId) => {
 .tooltip-display {
   display: block;
 }
-</style> 
+</style>

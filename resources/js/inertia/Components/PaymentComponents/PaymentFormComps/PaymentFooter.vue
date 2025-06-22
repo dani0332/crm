@@ -1,7 +1,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 import { useAMLKYC } from '../../../Composables/useAMLKYC';
-import InsurerPaymentLink from '../../InsurerPaymentLink.vue'
+import InsurerPaymentLink from '../../InsurerPaymentLink.vue';
 
 const { isAmlVerified } = useAMLKYC();
 
@@ -104,7 +104,7 @@ const emit = defineEmits([
   'approve',
   'cancel-modal',
   'aml-verification',
-  'update-from-insurer-payment-link'
+  'update-from-insurer-payment-link',
 ]);
 
 const handleCancelClick = () => {
@@ -127,7 +127,7 @@ const handleApproveClick = () => {
 const handleCancelModalClick = () => {
   emit('cancel-modal');
 };
-</script> 
+</script>
 
 <template>
   <div>
@@ -142,8 +142,7 @@ const handleCancelModalClick = () => {
         <div
           v-if="
             isCreditApprovalView ||
-            (splitPaymentRecord.payment_status_id !=
-              paymentStatusEnum.PAID &&
+            (splitPaymentRecord.payment_status_id != paymentStatusEnum.PAID &&
               (can(permissionEnum.ApprovePayments) ||
                 (can(permissionEnum.INPL_APPROVER) &&
                   splitPaymentRecord.payment_method.code ==
@@ -181,9 +180,7 @@ const handleCancelModalClick = () => {
           </div>
           <div
             v-if="
-              !isApproveClicked &&
-              isDeclineClicked &&
-              isVerificationAllowed
+              !isApproveClicked && isDeclineClicked && isVerificationAllowed
             "
             class="mr-4"
           >
@@ -238,9 +235,7 @@ const handleCancelModalClick = () => {
               <template v-if="isCreditApprovalView && isCreditCardView">
                 Capture
               </template>
-              <template v-else-if="isVerificationAllowed">
-                Approve
-              </template>
+              <template v-else-if="isVerificationAllowed"> Approve </template>
               <template v-else> Approve </template>
             </x-button>
           </div>
@@ -249,7 +244,10 @@ const handleCancelModalClick = () => {
     </template>
     <template v-else>
       <div class="w-full md:col-span-4 flex justify-end">
-        <div v-if="formStatus === 'edit' && insurerPaymentLinkIndex < 0" class="mr-4">
+        <div
+          v-if="formStatus === 'edit' && insurerPaymentLinkIndex < 0"
+          class="mr-4"
+        >
           <x-button
             @click="handleCancelModalClick"
             tabindex="0"
@@ -258,7 +256,12 @@ const handleCancelModalClick = () => {
             Cancel
           </x-button>
         </div>
-        <div v-if="insurerPaymentLinkIndex < 0 && (formStatus === 'create' || formStatus === 'edit')">
+        <div
+          v-if="
+            insurerPaymentLinkIndex < 0 &&
+            (formStatus === 'create' || formStatus === 'edit')
+          "
+        >
           <x-button
             color="emerald"
             type="submit"

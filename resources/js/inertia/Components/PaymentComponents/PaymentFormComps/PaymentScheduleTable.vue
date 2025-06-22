@@ -11,7 +11,8 @@ const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const isSplitFrequency = computed(
-  () => props.paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS,
+  () =>
+    props.paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS,
 );
 
 const props = defineProps({
@@ -38,7 +39,7 @@ const props = defineProps({
   paymentMethodsForm: { type: Object, required: true },
   splitPaymentNo: { type: Number, default: 1 },
   splitPaymentRecord: { type: Object, default: () => ({}) },
-  
+
   // Models
   paymentMethodsModels: { type: Object, required: true },
   checkDetailModels: { type: Object, required: true },
@@ -47,7 +48,7 @@ const props = defineProps({
   collectionAmountModels: { type: Object, required: true },
   fileUploadModels: { type: Object, required: true },
   readOnlyPayments: { type: Object, default: () => ({}) },
-  
+
   // Validation states
   isPaymentMetodNotSelected: { type: Object, default: () => ({}) },
   isSplitAmountInvalid: { type: Object, default: () => ({}) },
@@ -55,18 +56,18 @@ const props = defineProps({
   isDocumentNotUploaded: { type: Object, default: () => ({}) },
   isCreditPaymentInvalid: { type: Object, default: () => ({}) },
   isCreditPaymentInvalidError: { type: Object, default: () => ({}) },
-  
+
   // Option states
   isCheckDetailsEnabled: { type: Object, default: () => ({}) },
   authorizedPayments: { type: Object, default: () => ({}) },
-  
+
   // Documents
   paymentProofDocument: { type: Object, required: true },
   documentForm: { type: Object, required: true },
-  
+
   // Enums and helpers
   rules: { type: Object, required: true },
-  
+
   // Error messages
   capturePaymentValidationErrorMessage: { type: String, default: '' },
 
@@ -74,10 +75,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-  'upload-document', 
-  'delete-document', 
-  'open-inner-modal', 
-  'handle-payment-options'
+  'upload-document',
+  'delete-document',
+  'open-inner-modal',
+  'handle-payment-options',
 ]);
 
 // Methods that forward actions to parent component
@@ -89,22 +90,18 @@ const deleteDocument = (docName, count, id) => {
   emit('delete-document', docName, count, id);
 };
 
-const openInnerModal = (id) => {
+const openInnerModal = id => {
   emit('open-inner-modal', id);
 };
 
-const handlePaymentOptions = (count) => {
+const handlePaymentOptions = count => {
   emit('handle-payment-options', count);
 };
 
-const {
-    formatDate,
-    formatAmount,
-    formatString
-} = usePayment();
+const { formatDate, formatAmount, formatString } = usePayment();
 
-const getPaymentTypeLabel = (code) => {
- const paymentType = props.paymentTypes.find(item => item.value === code);
+const getPaymentTypeLabel = code => {
+  const paymentType = props.paymentTypes.find(item => item.value === code);
   if (paymentType) {
     return paymentType.label;
   }
@@ -112,7 +109,7 @@ const getPaymentTypeLabel = (code) => {
 };
 
 const hasAnyCCPayment = () => {
- const paymentMM = Object.values(props.paymentMethodsModels);
+  const paymentMM = Object.values(props.paymentMethodsModels);
   return paymentMM.some(item => item == 'CC');
 };
 
@@ -197,7 +194,8 @@ const isCCPaymentDisabled = option => {
 };
 
 const isPolicySendUpdateBooked = option => {
-  const isInsurerCollection = props.paymentMethodsForm.collection_type === 'insurer';
+  const isInsurerCollection =
+    props.paymentMethodsForm.collection_type === 'insurer';
   const isCCOption = option === 'CC';
   const isPolicyBooked =
     props.quoteRequest.quote_status_id ===
@@ -223,11 +221,14 @@ const isPolicySendUpdateBooked = option => {
     <div class="flex w-full">
       <div class="w-1/6 px-2 text-center">
         <span class="relative group text-sm">
-          <span class="border-b-2 border-dotted border-black text-sm">PAYMENT NO</span>
+          <span class="border-b-2 border-dotted border-black text-sm"
+            >PAYMENT NO</span
+          >
           <sup
             v-if="!isViewEnabled && !isCreditApprovalView && !hasAnyCCPayment()"
             class="text-red-500"
-          >*</sup>
+            >*</sup
+          >
           <div
             class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/2 right-full -translate-x-1/2 max-w-xs"
           >
@@ -246,11 +247,19 @@ const isPolicySendUpdateBooked = option => {
       <div class="w-1/5 px-2">
         <x-tooltip>
           <span class="text-sm">
-            <span class="border-b-2 border-dotted border-black text-sm">PAYMENT METHOD</span>
-            <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >PAYMENT METHOD</span
+            >
+            <sup
+              v-if="!isViewEnabled && !isCreditApprovalView"
+              class="text-red-500"
+              >*</sup
+            >
           </span>
           <template #tooltip>
-            <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PAYMENT_METHOD_VIEW }}</span>
+            <span v-if="isFieldReadonly">{{
+              paymentTooltipEnum.PAYMENT_METHOD_VIEW
+            }}</span>
             <span v-else>{{ paymentTooltipEnum.PAYMENT_METHOD }}</span>
           </template>
         </x-tooltip>
@@ -258,11 +267,19 @@ const isPolicySendUpdateBooked = option => {
       <div class="w-1/5 px-2">
         <x-tooltip>
           <span class="text-sm">
-            <span class="border-b-2 border-dotted border-black text-sm">TOTAL AMOUNT</span>
-            <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >TOTAL AMOUNT</span
+            >
+            <sup
+              v-if="!isViewEnabled && !isCreditApprovalView"
+              class="text-red-500"
+              >*</sup
+            >
           </span>
           <template #tooltip>
-            <span v-if="isFieldReadonly">{{ paymentTooltipEnum.TOTAL_AMOUNT_SPLIT_VIEW }}</span>
+            <span v-if="isFieldReadonly">{{
+              paymentTooltipEnum.TOTAL_AMOUNT_SPLIT_VIEW
+            }}</span>
             <span v-else>{{ paymentTooltipEnum.TOTAL_AMOUNT }}</span>
           </template>
         </x-tooltip>
@@ -270,25 +287,37 @@ const isPolicySendUpdateBooked = option => {
       <div class="w-1/5 px-2">
         <x-tooltip v-if="isCreditApprovalView">
           <span v-if="isCreditCardView" class="text-sm">
-            <span class="border-b-2 border-dotted border-black text-sm">CAPTURE AMOUNT</span>
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >CAPTURE AMOUNT</span
+            >
             <sup class="text-red-500">*</sup>
           </span>
           <span v-else class="text-sm">
-            <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT</span>
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >COLLECTED AMOUNT</span
+            >
           </span>
           <template #tooltip>
-            <span v-if="isCreditCardView">{{ paymentTooltipEnum.CAPTURE_AMOUNT }}</span>
-            <span v-else>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>
+            <span v-if="isCreditCardView">{{
+              paymentTooltipEnum.CAPTURE_AMOUNT
+            }}</span>
+            <span v-else>{{
+              paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
+            }}</span>
           </template>
         </x-tooltip>
 
         <x-tooltip v-else>
           <span class="text-sm">
-            <span class="border-b-2 border-dotted border-black text-sm">DUE DATE</span>
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >DUE DATE</span
+            >
             <sup v-if="!isViewEnabled" class="text-red-500">*</sup>
           </span>
           <template #tooltip>
-            <span v-if="isFieldReadonly">{{ paymentTooltipEnum.DUE_DATE_VIEW }}</span>
+            <span v-if="isFieldReadonly">{{
+              paymentTooltipEnum.DUE_DATE_VIEW
+            }}</span>
             <span v-else>{{ paymentTooltipEnum.DUE_DATE }}</span>
           </template>
         </x-tooltip>
@@ -296,18 +325,26 @@ const isPolicySendUpdateBooked = option => {
       <div class="w-1/5 px-2">
         <x-tooltip>
           <span class="text-sm">
-            <span class="border-b-2 border-dotted border-black text-sm">DOCUMENTS</span>
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >DOCUMENTS</span
+            >
             <sup
               v-if="
                 !isViewEnabled &&
                 !isCreditApprovalView &&
-                !(hasAnyCCPayment() && paymentMethodsForm.collection_type == 'insurer')
+                !(
+                  hasAnyCCPayment() &&
+                  paymentMethodsForm.collection_type == 'insurer'
+                )
               "
               class="text-red-500"
-            >*</sup>
+              >*</sup
+            >
           </span>
           <template #tooltip>
-            <span v-if="isFieldReadonly">{{ paymentTooltipEnum.DOCUMENTS_VIEW }}</span>
+            <span v-if="isFieldReadonly">{{
+              paymentTooltipEnum.DOCUMENTS_VIEW
+            }}</span>
             <span v-else>{{ paymentTooltipEnum.DOCUMENTS }}</span>
           </template>
         </x-tooltip>
@@ -333,12 +370,15 @@ const isPolicySendUpdateBooked = option => {
         </div>
 
         <div class="w-1/5 px-2">
-          <div v-for="fileData in fileUploadModels[splitPaymentNo]" :key="fileData.id">
+          <div
+            v-for="fileData in fileUploadModels[splitPaymentNo]"
+            :key="fileData.id"
+          >
             <span style="display: flex; align-items: center">
               <span
                 :key="fileData.id"
                 class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                style="flex: 1; text-decoration: none; cursor: pointer;"
+                style="flex: 1; text-decoration: none; cursor: pointer"
                 @click="openInnerModal(fileData.id)"
               >
                 {{ fileData.original_name }}
@@ -353,17 +393,23 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT STATUS INFO</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >CC PAYMENT STATUS INFO</span
+              >
             </span>
             <template #tooltip>
-              <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_PAYMENT_STATUS }}</span>
+              <span>{{
+                paymentTooltipEnum.PAYMENT_VIEW_CC_PAYMENT_STATUS
+              }}</span>
             </template>
           </x-tooltip>
         </div>
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT GATEWAY</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >CC PAYMENT GATEWAY</span
+              >
             </span>
             <template #tooltip>
               <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_GATEWAY }}</span>
@@ -373,7 +419,9 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">DIGITAL WALLET</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >DIGITAL WALLET</span
+              >
             </span>
             <template #tooltip>
               <span>{{ paymentTooltipEnum.PAYMENT_VIEW_WALLET }}</span>
@@ -383,7 +431,9 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">SAGE RECEIPT ID</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >SAGE RECEIPT ID</span
+              >
             </span>
             <template #tooltip>
               <span>{{ paymentTooltipEnum.PAYMENT_VIEW_SAGE_RECIPT }}</span>
@@ -394,16 +444,32 @@ const isPolicySendUpdateBooked = option => {
       <div class="flex w-full custombreak pt-1 pb-5">
         <div class="w-1/6 px-2 text-center"></div>
         <div class="w-1/5 px-2">
-          {{ splitPaymentRecord.cc_payment_status_info !== null ? splitPaymentRecord.cc_payment_status_info : 'N/A' }}
+          {{
+            splitPaymentRecord.cc_payment_status_info !== null
+              ? splitPaymentRecord.cc_payment_status_info
+              : 'N/A'
+          }}
         </div>
         <div class="w-1/5 px-2">
-          {{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : 'N/A' }}
+          {{
+            splitPaymentRecord.cc_payment_gateway !== null
+              ? splitPaymentRecord.cc_payment_gateway
+              : 'N/A'
+          }}
         </div>
         <div class="w-1/5 px-2">
-          {{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : 'N/A' }}
+          {{
+            splitPaymentRecord.digital_wallet !== null
+              ? splitPaymentRecord.digital_wallet
+              : 'N/A'
+          }}
         </div>
         <div class="w-1/5 px-2">
-          {{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : 'N/A' }}
+          {{
+            splitPaymentRecord.sage_reciept_id !== null
+              ? splitPaymentRecord.sage_reciept_id
+              : 'N/A'
+          }}
         </div>
       </div>
       <div class="flex w-full custombreak">
@@ -417,14 +483,21 @@ const isPolicySendUpdateBooked = option => {
           </div>
           <div class="w-1/5 px-2">
             <span class="text-sm">
-              {{ splitPaymentRecord.payment_status_id == paymentStatusEnum.PARTIALLY_PAID ? 'PARTIALLY CAPTURED AT' : 'CAPTURED AT' }}
+              {{
+                splitPaymentRecord.payment_status_id ==
+                paymentStatusEnum.PARTIALLY_PAID
+                  ? 'PARTIALLY CAPTURED AT'
+                  : 'CAPTURED AT'
+              }}
             </span>
           </div>
         </template>
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT ID</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >CC PAYMENT ID</span
+              >
             </span>
             <template #tooltip>
               <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_ID }}</span>
@@ -437,16 +510,32 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/6 px-2 text-center"></div>
         <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
           <div class="w-1/5 px-2">
-            {{ splitPaymentRecord.premium_authorized !== null ? formatAmount(splitPaymentRecord.premium_authorized) : 'N/A' }}
+            {{
+              splitPaymentRecord.premium_authorized !== null
+                ? formatAmount(splitPaymentRecord.premium_authorized)
+                : 'N/A'
+            }}
           </div>
           <div class="w-1/5 px-2">
-            {{ splitPaymentRecord.authorized_at !== null ? formatDate(splitPaymentRecord.authorized_at, true) : 'N/A' }}
+            {{
+              splitPaymentRecord.authorized_at !== null
+                ? formatDate(splitPaymentRecord.authorized_at, true)
+                : 'N/A'
+            }}
           </div>
           <div class="w-1/5 px-2">
-            {{ splitPaymentRecord.captured_at !== null ? formatDate(splitPaymentRecord.captured_at, true) : 'N/A' }}
+            {{
+              splitPaymentRecord.captured_at !== null
+                ? formatDate(splitPaymentRecord.captured_at, true)
+                : 'N/A'
+            }}
           </div>
           <div class="w-1/5 px-2">
-            {{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : 'N/A' }}
+            {{
+              splitPaymentRecord.cc_payment_id !== null
+                ? splitPaymentRecord.cc_payment_id
+                : 'N/A'
+            }}
           </div>
         </template>
       </div>
@@ -455,7 +544,9 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">PAYMENT STATUS</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >PAYMENT STATUS</span
+              >
             </span>
             <template #tooltip>
               <span>{{ paymentTooltipEnum.PAYMENT_VIEW_STATUS }}</span>
@@ -465,7 +556,9 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">PAYMENT ALLOCATION STATUS</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >PAYMENT ALLOCATION STATUS</span
+              >
             </span>
             <template #tooltip>
               <span>{{ paymentTooltipEnum.PAYMENT_VIEW_ALLO_STATUS }}</span>
@@ -475,7 +568,9 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/5 px-2">
           <x-tooltip>
             <span class="text-sm">
-              <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT</span>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >COLLECTED AMOUNT</span
+              >
             </span>
             <template #tooltip>
               <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>
@@ -495,13 +590,25 @@ const isPolicySendUpdateBooked = option => {
           {{ formatString(splitPaymentRecord.payment_status.text) }}
         </div>
         <div class="w-1/5 px-2">
-          {{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}
+          {{
+            splitPaymentRecord.payment_allocation_status !== null
+              ? formatString(splitPaymentRecord.payment_allocation_status)
+              : 'N/A'
+          }}
         </div>
         <div class="w-1/5 px-2">
-          {{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}
+          {{
+            splitPaymentRecord.collection_amount !== null
+              ? formatAmount(splitPaymentRecord.collection_amount)
+              : '0.00'
+          }}
         </div>
         <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
-          {{ splitPaymentRecord.verified_at !== null ? splitPaymentRecord.verified_at : 'N/A' }}
+          {{
+            splitPaymentRecord.verified_at !== null
+              ? splitPaymentRecord.verified_at
+              : 'N/A'
+          }}
         </div>
       </div>
 
@@ -509,17 +616,23 @@ const isPolicySendUpdateBooked = option => {
         <div class="w-1/6 px-2 text-center"></div>
         <div class="w-1/5 px-2">
           <span class="text-sm">
-            <span class="border-b-2 border-solid border-black text-sm">Receipt ID</span>
+            <span class="border-b-2 border-solid border-black text-sm"
+              >Receipt ID</span
+            >
           </span>
         </div>
         <div class="w-1/5 px-2">
           <span class="text-sm">
-            <span class="border-b-2 border-solid border-black text-sm">Auth Code</span>
+            <span class="border-b-2 border-solid border-black text-sm"
+              >Auth Code</span
+            >
           </span>
         </div>
         <div class="w-1/5 px-2">
           <span class="text-sm">
-            <span class="border-b-2 border-solid border-black text-sm">Charge ID</span>
+            <span class="border-b-2 border-solid border-black text-sm"
+              >Charge ID</span
+            >
           </span>
         </div>
       </div>
@@ -549,14 +662,22 @@ const isPolicySendUpdateBooked = option => {
       <div class="flex w-full custombreak pb-5" v-if="isVerifiedEnabled">
         <div class="w-1/6 px-2 text-center"></div>
         <div class="w-1/5 px-2">
-          {{ splitPaymentRecord.verified_by !== null ? splitPaymentRecord.verified_by_user.name : 'N/A' }}
+          {{
+            splitPaymentRecord.verified_by !== null
+              ? splitPaymentRecord.verified_by_user.name
+              : 'N/A'
+          }}
         </div>
       </div>
     </template>
-    
+
     <!-- Edit Mode -->
     <template v-else>
-      <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count" class="mb-2">
+      <div
+        v-for="count in parseInt(paymentMethodsForm.payment_no)"
+        :key="count"
+        class="mb-2"
+      >
         <div class="flex w-full custombreak">
           <div class="w-1/6 px-2 text-center">{{ count }}</div>
           <div class="w-1/5 px-2">
@@ -567,7 +688,9 @@ const isPolicySendUpdateBooked = option => {
             <template v-else>
               <x-tooltip v-if="isPaymentMethodEnabled">
                 <select
-                  :class="{ 'custom-select-error': isPaymentMetodNotSelected[count] }"
+                  :class="{
+                    'custom-select-error': isPaymentMetodNotSelected[count],
+                  }"
                   class="w-full custom-select"
                   v-model="paymentMethodsModels[count]"
                   disabled="true"
@@ -583,13 +706,17 @@ const isPolicySendUpdateBooked = option => {
                 </select>
                 <template #tooltip>
                   <span class="custom-tooltip-content">
-                    {{ paymentTooltipEnum.CREDIT_APPROVAL_PAYMENT_METHOD_DISABLED_MESSAGE }}
+                    {{
+                      paymentTooltipEnum.CREDIT_APPROVAL_PAYMENT_METHOD_DISABLED_MESSAGE
+                    }}
                   </span>
                 </template>
               </x-tooltip>
               <select
                 v-else
-                :class="{ 'custom-select-error': isPaymentMetodNotSelected[count] }"
+                :class="{
+                  'custom-select-error': isPaymentMetodNotSelected[count],
+                }"
                 class="w-full custom-select"
                 v-model="paymentMethodsModels[count]"
                 @change="handlePaymentOptions(count)"
@@ -662,12 +789,19 @@ const isPolicySendUpdateBooked = option => {
             </template>
             <template v-else>
               <x-input
-                v-if="paymentMethodsModels[count] === 'CC' && authorizedPayments[count]"
+                v-if="
+                  paymentMethodsModels[count] === 'CC' &&
+                  authorizedPayments[count]
+                "
                 v-model="collectionAmountModels[count]"
                 class="w-full"
-                :class="{ 'custom-select-error': isCreditPaymentInvalid[count] }"
+                :class="{
+                  'custom-select-error': isCreditPaymentInvalid[count],
+                }"
               />
-              <span v-else>{{ formatAmount(collectionAmountModels[count]) }}</span>
+              <span v-else>{{
+                formatAmount(collectionAmountModels[count])
+              }}</span>
               <sup
                 v-if="isCreditPaymentInvalid[count]"
                 class="text-sm text-red-500 dark:text-red-400"
@@ -718,12 +852,15 @@ const isPolicySendUpdateBooked = option => {
             >
               This field is required
             </p>
-            <div v-for="fileData in fileUploadModels[count]" :key="fileData?.id">
+            <div
+              v-for="fileData in fileUploadModels[count]"
+              :key="fileData?.id"
+            >
               <span style="display: flex; align-items: center">
                 <span
                   :key="fileData?.id"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                  style="flex: 1; text-decoration: none; cursor: pointer;"
+                  style="flex: 1; text-decoration: none; cursor: pointer"
                   @click="openInnerModal(fileData?.id)"
                 >
                   {{ fileData?.original_name }}
@@ -750,29 +887,29 @@ const isPolicySendUpdateBooked = option => {
 </template>
 
 <style scoped>
-    .custombreak {
-    page-break-inside: avoid;
-    }
-    .custom-select {
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    border-width: 1px;
-    width: 100%;
-    }
-    .custom-select-error {
-    border-color: #ef4444;
-    }
-    .delete-pointer {
-    cursor: pointer;
-    margin-left: 0.5rem;
-    color: red;
-    }
-    .custom-tooltip-content {
-    max-width: 200px; /* Adjust the max-width as needed */
-    white-space: normal; /* Allow the text to wrap */
-    z-index: 999;
-    position: relative;
-    font-size: 12px;
-    text-transform: none;
-    }
-</style> 
+.custombreak {
+  page-break-inside: avoid;
+}
+.custom-select {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  width: 100%;
+}
+.custom-select-error {
+  border-color: #ef4444;
+}
+.delete-pointer {
+  cursor: pointer;
+  margin-left: 0.5rem;
+  color: red;
+}
+.custom-tooltip-content {
+  max-width: 200px; /* Adjust the max-width as needed */
+  white-space: normal; /* Allow the text to wrap */
+  z-index: 999;
+  position: relative;
+  font-size: 12px;
+  text-transform: none;
+}
+</style>
