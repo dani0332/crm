@@ -57,6 +57,7 @@
 		planText: String,
 		isTransactionCaptureButtonEnabled: Boolean,
 		capturePaymentValidationErrorMessage: String,
+		selectedPaymentForEdit: Object,
 	});
 
 	const fileUploadModels = ref([]);
@@ -2578,6 +2579,7 @@
 		:isCCEnabled="isCCEnabled"
 		:quoteRequest="quoteRequest"
 		:sendUpdateStatusEnum="sendUpdateStatusEnum"
+		:selectedPaymentForEdit="selectedPaymentForEdit"
 		@upload-document="uploadDocument"
 		@delete-document="deleteDocument"
 		@open-inner-modal="openInnerModal"

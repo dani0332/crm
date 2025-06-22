@@ -69,6 +69,8 @@ const props = defineProps({
   
   // Error messages
   capturePaymentValidationErrorMessage: { type: String, default: '' },
+
+  selectedPaymentForEdit: { type: Object, required: false },
 });
 
 const emit = defineEmits([
@@ -151,8 +153,9 @@ const handlePaymentTypes = count => {
   if (props.paymentMethodsForm.collection_type === 'insurer') {
     let isMultiPaymentEnabled = props.isMultiPaymentsEnabled;
     if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-      // need to fix this for payments
-      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+      isMultiPaymentEnabled = props?.selectedPaymentForEdit
+        ? props?.selectedPaymentForEdit?.isMultiplePaymentsEnabled
+        : isMultiPaymentEnabled;
     }
     const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
