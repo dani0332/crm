@@ -235,6 +235,36 @@ const quoteTypeOptions = computed(() =>
   ),
 );
 
+function downloadAmlCtfReport() {
+  resetCustomErrors();
+  const daysDifference = calculateDaysDifference(
+    filtersForm.amlCreatedStartDate,
+    filtersForm.amlCreatedEndDate,
+  );
+  if (daysDifference > 30) {
+    customErrors.amlCreatedStartDate =
+      'Allowed no. of days between start & end dates are 30 days.';
+    return;
+  }
+
+  const exportData = {};
+  Object.keys(availableFilters).forEach(key => {
+    exportData[key] = filtersForm[key];
+  });
+
+  //remove empty fields
+  removeEmptyFields(exportData);
+
+  const url = `/kyc/aml-ctf-report-export`;
+  const data = useObjToUrl(exportData);
+
+  const payload = {
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+
+  window.open(url + '?' + useObjToUrl(exportData));
+}
+
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -321,6 +351,15 @@ onMounted(() => {
         >
           Export to Excel
         </x-button>
+        <!-- <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="downloadAmlCtfReport()"
+          :disabled="loader.export"
+          :loading="loader.export"
+        >
+          Export AML Risk Score Report
+        </x-button> -->
         <x-button
           size="sm"
           color="#ff5e00"

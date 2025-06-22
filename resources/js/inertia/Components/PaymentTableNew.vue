@@ -138,6 +138,7 @@ const isCreditApprovalViewReplicated = ref(false);
 const isCreditCardViewReplicated = ref(false);
 const isTransactionCaptureButtonEnabled = ref(true);
 const capturePaymentValidationErrorMessage = ref('');
+const selectedPaymentForEdit = ref(null);
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -200,7 +201,11 @@ const isPaymentAuthorized = computed(() => {
     );
     if (hasNotPaidPayments) {
       return payments.some(payment =>
-        payment.payment_splits.some(item => item.payment_method.code === 'CC'),
+        payment.payment_splits.some(
+          item =>
+            item.payment_method.code === 'CC' &&
+            item.payment_status_id == paymentStatusEnum.AUTHORISED,
+        ),
       );
     }
   }
@@ -500,6 +505,8 @@ const editPaymentModal = async (
   sr_no,
   capture_approval,
 ) => {
+  isTransactionCaptureButtonEnabled.value = true;
+  selectedPaymentForEdit.value = payment;
 
   if (
     sr_no === 0 &&
@@ -820,7 +827,7 @@ const isEditPaymentEnabled = payment => {
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
   if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+    isMultiPaymentEnabled = payment?.isMultiplePaymentsEnabled;
   }
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
@@ -1120,6 +1127,7 @@ watch(
               :planText="planText"
               :capturePaymentValidationErrorMessage="capturePaymentValidationErrorMessage"
               :isTransactionCaptureButtonEnabled="isTransactionCaptureButtonEnabled"
+              :selectedPaymentForEdit="selectedPaymentForEdit"
               
               @cancel-modal="createPaymentModal = !createPaymentModal"
               @aml-verification="openAmlVerificationModal"
