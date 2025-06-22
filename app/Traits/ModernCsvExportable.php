@@ -32,6 +32,11 @@ trait ModernCsvExportable
             foreach ($data as $record) {
                 fputcsv($handle, $this->map($record));
             }
+
+            if(method_exists($this, 'postDataRows')) {
+                $this->postDataRows($handle);
+            }
+
             fclose($handle);
         }, 200, [
             'Content-Type' => 'text/csv',

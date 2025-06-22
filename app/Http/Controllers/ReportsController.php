@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Exports\Reports\SaleSummaryReportExport;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
 use App\Http\Requests\UTMReportRequest;
@@ -581,7 +582,25 @@ class ReportsController extends Controller
     public function exportManagementReport(Request $request)
     {
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+
+        // Fallback for other report categories (maintain existing functionality)
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+
+        // For now, only handling Sale Summary Report - can be extended for other report categories
+        if ($reportCategory === ManagementReportCategoriesEnum::SALE_SUMMARY) {
+            $exportClass = app(SaleSummaryReportExport::class);
+
+            // Check if export type is email (following CentralController pattern)
+            if ($request->exportType == 'email') {
+                $request['exportTitle'] = "Managment Report";
+                return $exportClass->emailCSV('Sale-Summary-Report', $request->all());
+            }
+            //logger()->debug('controller: '.print_r($request->all(), true));
+
+            // Default to CSV download using the trait's download method
+            return $exportClass->download('Sale-Summary-Report');
+        }
+
 
         return $reportInstance->getReportData($request);
     }

@@ -9,6 +9,7 @@ use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -22,8 +23,22 @@ class SaleSummaryReportService extends ManagementReport
     private $groupByColumn;
     private $reportDateRange;
 
+
     public function getReportData(Request $request)
     {
+        $query = $this->getReportQueryBuilder($request);
+
+        //$data = $query->get();
+
+        if ($request->export == 1) {
+
+            return $this->getProcessedReportData($query, $request);
+        } else {
+            return $query->get();
+        }
+    }
+
+    public function getReportQueryBuilder(Request $request){
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
@@ -123,26 +138,34 @@ class SaleSummaryReportService extends ManagementReport
         }
         $this->applyFilters($query, $request, false, true);
 
-        $data = $query->get();
 
-        if ($request->export == 1) {
+        logger()->debug("toRawSql: ".$query->toRawSql());
 
-            /**
-             * Get endorsements data
-             */
-            $endorsementsData = $this->getEndorsementsData($request);
+        return $query;
+    }
 
-            /**
-             * Process endorsements data for pdf
-             */
-            $processedData = $this->processEndorsementsData($data, $endorsementsData, $request);
+    public function getProcessedReportData($query, Request $request)
+    {
+        /*if ($data === null) {
+            $data = $this->getReportData($request);
+        }*/
 
-            $this->formatData($processedData);
+        /**
+         * Get endorsements data
+         */
+        $endorsementsData = $this->getEndorsementsData($request);
 
-            return (new SaleSummaryReportExport($processedData, $this->groupByColumn))->download("Sale Summary Report {$this->reportDateRange}.xlsx");
-        } else {
-            return $data;
-        }
+        /**
+         * Process endorsements data for CSV
+         */
+        $processedData = $this->processEndorsementsData($query->get(), $endorsementsData, $request);
+
+        $this->formatData($processedData);
+
+        // logger()->debug("processedData: ".print_r($processedData->toArray(), true));
+
+        //  return (new SaleSummaryReportExport($processedData, $this->groupByColumn))->download("Sale Summary Report {$this->reportDateRange}.xlsx");
+        return $processedData;
     }
 
     /**
@@ -152,6 +175,7 @@ class SaleSummaryReportService extends ManagementReport
      */
     public function getEndorsementsData(Request $request)
     {
+        info("getEndorsementsData");
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
@@ -231,6 +255,7 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request->groupBy == 'insurer') {
+            logger()->debug('groupBy: '.$request->groupBy);
             // Endorsements
             $query
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
@@ -348,6 +373,8 @@ class SaleSummaryReportService extends ManagementReport
 
         $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
         $endorsementsQuery = $query->unionAll($reversalQuery);
+
+        logger()->debug('endorsmentDat-toRawSql: '.$endorsementsQuery->toRawSql());
 
         $data = $endorsementsQuery->get();
 
