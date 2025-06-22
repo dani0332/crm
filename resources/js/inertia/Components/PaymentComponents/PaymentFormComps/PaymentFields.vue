@@ -709,7 +709,7 @@
 						:class="{ 'custom-select-error': isDiscountError }"
 						v-model="localDiscountValue"
 						name="discount_value"
-						@keyup="emit('calculate-total-amount')"
+						@keyup="emit('calculate-total-amount', true)"
 					/>
 					<sup
 						v-if="isDiscountError"
