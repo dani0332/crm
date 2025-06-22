@@ -667,7 +667,7 @@ const isChildPaymentDeletable = computed(() => {
 });
 
 const setPaymentInitialPrice = () => {
-  if (paymentMethodsFormReplicated.status !== 'edit') {
+  if (paymentMethodsFormReplicated.value.status !== 'edit') {
     if (props.isPlanDetailEnabled) {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else if (props.sendUpdate) {
