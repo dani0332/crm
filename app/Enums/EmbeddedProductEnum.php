@@ -32,7 +32,7 @@ final class EmbeddedProductEnum extends Enum
     {
         return [
             self::MDX,
-            self::RDX
+            self::RDX,
         ];
     }
 }

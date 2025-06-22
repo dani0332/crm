@@ -48,15 +48,14 @@ final class SukoonMedexEnum extends Enum
     // const STEP_LIST_PAYMENT_GATEWAYS = 9; // GET, Skiped
 
 
-
     public static function getName(int $stepNumber): string
     {
-        return self::STEPS_NAME[$stepNumber] ?? "";
+        return self::STEPS_NAME[$stepNumber] ?? '';
     }
 
-    public static function getStepNumber(string $stepName): int | bool
+    public static function getStepNumber(string $stepName): int|bool
     {
-        return array_search($stepName, self::STEPS_NAME); 
+        return array_search($stepName, self::STEPS_NAME);
     }
 
 }
