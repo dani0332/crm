@@ -579,7 +579,7 @@ const onAddDocumentSubmit = event => {
           <template #item-policy_status="{ prices }">
             {{ 
               getFirstPriceWithTransaction(prices)?.transactions[0]
-                ?.policy_status 
+                ?.policy_status ?? '-'
             }}
           </template>
 

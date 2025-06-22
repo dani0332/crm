@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
+use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
@@ -234,8 +235,8 @@ class EmbeddedProductRepository extends BaseRepository
                     $item->sync_document_button = $documentCount < 5;
                 }
             }
-            else if (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && auth()->user()->hasRole(RolesEnum::Engineering) && count($transaction) > 0) {
-                $item->sync_document_button = $transaction[0]->policy_status != SukoonMedexEnum::STATUS_BOOKED;
+            else if (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
+                $item->sync_document_button = $transaction[0]->policy_status != EmbeddedTransactionEnum::STATUS_BOOKED;
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
