@@ -21,7 +21,6 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Repositories\EmbeddedProductRepository;
 use App\Enums\quoteTypeCode;
-use App\Services\Logger\LoggerService;
 
 class TravelQuoteObserver
 {
