@@ -547,6 +547,7 @@ class SplitPaymentService
 
     public function generateSplitPaymentLink($request)
     {
+        LoggerService::info('Generate split payment link called for payment code: '.$request->paymentCode.' and sr no: '.$request->splitPaymentId);
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
         if (! $splitPayment) {
             return response()->json(['success' => false]);
@@ -568,6 +569,7 @@ class SplitPaymentService
             ->exists();
 
         if ($embededTransaction) {
+            LoggerService::info('Generate split payment link called for payment code: '.$request->paymentCode.' and sr no: '.$request->splitPaymentId.' is an embedded transaction');
             $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
             $lob = strtolower($modelType);
             $paymentLink = $paymentLink.'/'.$lob.'-insurance/quote/'.$request->quoteUuid.'/payment';
@@ -582,9 +584,10 @@ class SplitPaymentService
         }
 
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
+            LoggerService::info('Generate split payment link called for payment code: '.$request->paymentCode.' and sr no: '.$request->splitPaymentId.' is an existing payment link');
             return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
         } else {
-
+            LoggerService::info('Generate split payment link called for payment code: '.$request->paymentCode.' and sr no: '.$request->splitPaymentId.' is not an embedded transaction');
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
             $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
 
