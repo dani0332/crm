@@ -226,6 +226,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
         Route::post('personal-quotes/life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('life-quotes-send-oca-email');
+        Route::post('personal-quotes/life/download-comparision-pdf', [LifeController::class, 'downloadComparisionPdf'])->name('life-quotes-download-comparision-pdf');
 
         Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
         Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
