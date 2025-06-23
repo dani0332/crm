@@ -502,7 +502,7 @@ class BaseService
             LogAllocation::dispatch($lead, $quoteType);
 
             if ($sendAdvisorAssignedEmail) {
-                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value, null);
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
             }
         }
     }

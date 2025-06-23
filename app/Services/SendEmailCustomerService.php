@@ -1558,12 +1558,18 @@ class SendEmailCustomerService extends BaseService
         return $bccAdditional;
     }
 
-    public function sendIntroAndReassignEmail($quote, $quoteType = null, $oldAdvisorId = null, $shortenedBusinessType = null)
+    public function sendIntroAndReassignEmail($quote, $quoteType = null, $oldAdvisorId = null, $shortenedBusinessType = null, bool $isNonAdvisorEmail = false)
     {
         $advisor = User::where('id', $quote->advisor_id)->first();
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
         $logMessage = empty($oldAdvisorId) ? 'old Advisor is not available' : "old Advisor {$oldAdvisorId} is available";
-        LoggerService::info(self::class." - {$logMessage} for the quote: {$quote->uuid} | Time: ".now());
+        LoggerService::info(self::class." - {$logMessage} for the quote: {$quote->uuid}");
+
+        $workflowType = empty($oldAdvisorId) ? WorkflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER : WorkflowTypeEnum::CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR;
+        if ($isNonAdvisorEmail) {
+            $workflowType = WorkflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER;
+        }
+
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
@@ -1580,7 +1586,7 @@ class SendEmailCustomerService extends BaseService
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'businessTypeInsurance' => $shortenedBusinessType ?? null,
-            'workflowType' => empty($oldAdvisorId) ? workflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER : workflowTypeEnum::CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR,
+            'workflowType' => $workflowType,
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
