@@ -29,7 +29,6 @@ use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Jobs\BridgerAMLJob;
-use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
 use App\Models\BikeQuote;
@@ -67,7 +66,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class AMLController extends Controller
 {
@@ -931,13 +929,12 @@ class AMLController extends Controller
     /**
      * Export AML CTF Report
      *
-     * @param  Request  $request
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
     public function amlCtfReportExport(Request $request)
     {
         $reportDateRange = now()->format('Y');
-        
+
         return app(AmlCftReportExport::class)->emailCSV("AML CTF Report {$reportDateRange}", $request->all());
     }
 }

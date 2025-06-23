@@ -6,7 +6,6 @@ namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteTypes;
 use App\Services\AMLService;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
@@ -18,7 +17,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, WithMapping, CsvExportableInterface
+class AmlCftReportExport implements CsvExportableInterface, FromCollection, WithEvents, WithHeadings, WithMapping
 {
     use Exportable, ModernCsvExportable {
         Exportable::download insteadof ModernCsvExportable;
@@ -70,7 +69,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
     {
         // Convert object to array for consistent access
         $data = is_array($item) ? $item : (array) $item;
-        
+
         return [
             isset($data['customer_first_name']) ? trim(($data['customer_first_name'] ?? '').' '.($data['customer_last_name'] ?? '')) : trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
             $data['code'] ?? '',
@@ -161,7 +160,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
         // Add CSV-specific parameters
         $requestParams['exportTitle'] = 'AML/CFT Report';
         $requestParams['fileName'] = $fileName;
-        
+
         // Dispatch the email job
         \App\Jobs\ExportCsvAndSendEmailJob::dispatch(
             static::class,
