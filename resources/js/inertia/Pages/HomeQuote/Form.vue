@@ -306,13 +306,19 @@ const handleCoverageChange = () => {
   const coverageVisibilityMap = {
     [props.coverageTypeEnum.BUILDING_ONLY]: { showBuildingField: true }, // Building only
     [props.coverageTypeEnum.CONTENTS_ONLY]: { showContentsField: true }, // Contents only
-    [props.coverageTypeEnum.BUILDING_AND_CONTENTS]: { showBuildingField: true, showContentsField: true }, // Building and Contents
+    [props.coverageTypeEnum.BUILDING_AND_CONTENTS]: {
+      showBuildingField: true,
+      showContentsField: true,
+    }, // Building and Contents
     [props.coverageTypeEnum.BUILDING_CONTENTS_PERSONAL_BELONGINGS]: {
       showBuildingField: true,
       showContentsField: true,
       showPersonalBelongingsField: true,
     }, // Building, Contents, and Personal Belongings
-    [props.coverageTypeEnum.CONTENTS_PERSONAL_BELONGINGS]: { showContentsField: true, showPersonalBelongingsField: true }, // Contents and Personal Belongings
+    [props.coverageTypeEnum.CONTENTS_PERSONAL_BELONGINGS]: {
+      showContentsField: true,
+      showPersonalBelongingsField: true,
+    }, // Contents and Personal Belongings
   };
 
   // Apply visibility rules based on the selected coverage type
