@@ -1520,6 +1520,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
     try {
       const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
+        quoteUuid: props.quoteRequest.uuid,
         modelType: props.quoteType,
         paymentCode: code,
         splitPaymentId: splitPaymentId,

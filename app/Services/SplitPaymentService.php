@@ -26,6 +26,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
+use App\Models\EmbeddedTransaction;
 use App\Models\FtcEmailLog;
 use App\Models\HealthQuote;
 use App\Models\Payment;
@@ -551,16 +552,38 @@ class SplitPaymentService
             return response()->json(['success' => false]);
         }
         $payment = $splitPayment->payment;
-        $modelType = $request->modelType;
-
         if (! $payment) {
             return response()->json(['success' => false]);
+        }
+        $modelType = $request->modelType;
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $paymentableType = $payment->paymentable_type;
+        $paymentableId = $payment->paymentable_id;
+
+        // If the payment is an embedded transaction, then we need to generate a new payment link
+        $embededTransaction = EmbeddedTransaction::where('quote_request_type', $paymentableType)
+            ->where('quote_request_id', $paymentableId)
+            ->select('id')
+            ->limit(1)
+            ->exists();
+
+        if ($embededTransaction) {
+            $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
+            $lob = strtolower($modelType);
+            $paymentLink = $paymentLink.'/'.$lob.'-insurance/quote/'.$request->quoteUuid.'/payment';
+            $insuranceProvider = getInsuranceProvider($payment, $lob);
+            $paymentParams = [
+                'planId' => $payment->plan_id,
+                'providerCode' => $insuranceProvider->code,
+                'quoteTypeId' => $quoteTypeId,
+            ];
+            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+            return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
 
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
             return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
         } else {
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
             $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
