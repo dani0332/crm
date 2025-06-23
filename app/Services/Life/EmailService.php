@@ -21,23 +21,12 @@ class EmailService
     public function sendOCAEmail(string $quoteUID)
     {
 
-        $logPrefix = 'Life - Send OCA Email';
+        $logPrefix = get_class($this). ' fn: sendOCAEmail - ';
 
         $lead = $this->getQuote($quoteUID);
 
-        if (! $lead) {
-            LoggerService::info($logPrefix.' - Lead not found');
-
-            return false;
-        }
-
-        // check plans, skip the email if the plan is zero
+        // get plans
         $plans = $this->getPlans($lead);
-        if (count($plans) == 0) {
-            LoggerService::info($logPrefix.' - Skipping OCA email on zero plans');
-
-            return false;
-        }
 
         // map data for bird service
         $emailData = $this->mapOCAEmailData($lead, $plans);
@@ -46,25 +35,22 @@ class EmailService
         $flowUrl = $this->getApplicationStorage();
         if (! $flowUrl) {
             LoggerService::info($logPrefix.' - Flow URL not found');
-
             return false;
         }
 
         try {
-            $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
 
-            LoggerService::info('sendLifeOCAEmail - Bird flow triggered successfully', extra: [
+            $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
+            
+            LoggerService::info("$logPrefix Bird flow triggered successfully - Email sent to customer", extra: [
                 'email' => $emailData->customerEmail,
             ]);
 
             return $response ?? null;
         } catch (\Exception $e) {
-            LoggerService::info("sendHomeOCBIntroEmail - Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()}");
-
+            LoggerService::error("$logPrefix Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()}");
             return false;
         }
-
-        LoggerService::info($logPrefix.' - Initiating process');
     }
 
     private function getPlans(PersonalQuote $quote)
