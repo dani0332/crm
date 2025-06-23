@@ -60,4 +60,5 @@ const yachtFields = [
     @version-loaded="$emit('versionLoaded', $event)"
     @configuration-saved="$emit('configurationSaved')"
   />
+  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="7"  />
 </template>

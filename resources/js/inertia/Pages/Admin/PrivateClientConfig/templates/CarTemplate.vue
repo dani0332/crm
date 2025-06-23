@@ -80,4 +80,7 @@ const carFields = [
     @version-loaded="$emit('versionLoaded', $event)"
     @configuration-saved="$emit('configurationSaved')"
   />
+
+  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="1"  />
 </template>
+

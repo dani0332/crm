@@ -71,4 +71,5 @@ const homeFields = [
     @version-loaded="$emit('versionLoaded', $event)"
     @configuration-saved="$emit('configurationSaved')"
   />
+  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="3"  />
 </template>

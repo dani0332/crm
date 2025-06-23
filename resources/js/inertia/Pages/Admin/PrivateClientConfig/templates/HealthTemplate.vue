@@ -61,4 +61,5 @@ const healthFields = [
     @version-loaded="$emit('versionLoaded', $event)"
     @configuration-saved="$emit('configurationSaved')"
   />
+  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="2"  />
 </template>
