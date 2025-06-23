@@ -1726,10 +1726,14 @@ const getIncludedBenefitsTooltip = fieldText =>
                         <div class="grid sm:grid-cols-2">
                           <dt class="text-sm font-medium text-gray-700">
                             <x-tooltip placement="bottom">
-                              <span class="underline decoration-dotted decoration-primary-700">
+                              <span
+                                class="underline decoration-dotted decoration-primary-700"
+                              >
                                 Investment Frequency
                               </span>
-                              <template #tooltip>How often you plan to invest</template>
+                              <template #tooltip
+                                >How often you plan to invest</template
+                              >
                             </x-tooltip>
                           </dt>
                           <dd class="text-gray-900">
