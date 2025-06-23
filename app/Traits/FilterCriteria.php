@@ -64,8 +64,8 @@ trait FilterCriteria
                                 $endDate = Carbon::parse($this->getFilterValue($key.'_end', $filters))->endOfDay();
                                 $query->whereBetween($tableName.'.'.$key, [$startDate, $endDate]);
                             } elseif ($this->hasFilterValue($key.'_time_start', $filters) && $this->hasFilterValue($key.'_time_end', $filters)) {
-                                $startDate = Carbon::parse($this->getFilterValue($key.'_time_start', $filters))->startOfDay()->format('Y-m-d H:i:s');
-                                $endDate = Carbon::parse($this->getFilterValue($key.'_time_end', $filters))->endOfDay()->format('Y-m-d H:i:s');
+                                $startDate = Carbon::parse($this->getFilterValue($key.'_time_start', $filters));
+                                $endDate = Carbon::parse($this->getFilterValue($key.'_time_end', $filters));
                                 $query->whereBetween($key, [$startDate, $endDate]);
                             } elseif ($this->hasFilterValue('policy_expiry_date', $filters) && $this->hasFilterValue('policy_expiry_date_end', $filters)) {
                                 $startDate = Carbon::parse($this->getFilterValue('policy_expiry_date', $filters))->format('Y-m-d');
