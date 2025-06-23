@@ -1478,162 +1478,191 @@ class AMLService
         LoggerService::info('fn:amlCtfReportExport - AMLController');
 
         $request = request();
-
         $startDate = $request->amlCreatedStartDate;
         $endDate = $request->amlCreatedEndDate;
 
-        $personalQuotesone = $this->buildAmlCftReportQuery($request, $startDate, $endDate, true);
-        $personalQuotestwo = $this->buildAmlCftReportQuery($request, $startDate, $endDate, false);
+        $query = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
 
-        $personalQuotes = $personalQuotesone->union($personalQuotestwo);
-        $personalQuotes = $personalQuotes->orderByRaw('COALESCE(first_name, customer_first_name) IS NULL, COALESCE(first_name, customer_first_name) ASC');
-        $collection = $personalQuotes->get();
+        $query->groupBy('pqr.id', 'kl.created_at', 'cm.id');
+        $collection = $query->get();
+
+        // Sort collection by customer first name, with nulls last
+        $collection = $collection->sortBy(function ($item) {
+            $name = $item->customer_first_name ?: $item->first_name;
+
+            return $name ? strtolower($name) : '~'; // ~ sorts after letters, putting nulls last
+        })->values();
+
         // Calculate summary
         $totalCustomers = $collection->count();
         $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();
         $mediumRisk = $collection->where('risk_score', '>=', 26)->where('risk_score', '<=', 34)->count();
         $highRisk = $collection->where('risk_score', '>=', 35)->count();
 
-        $summary = [
-            'total_customers' => $totalCustomers,
-            'high_risk' => $highRisk,
-            'medium_risk' => $mediumRisk,
-            'low_risk' => $lowRisk,
-        ];
-
         return [
             'collection' => $collection,
-            'summary' => $summary,
+            'summary' => [
+                'total_customers' => $totalCustomers,
+                'high_risk' => $highRisk,
+                'medium_risk' => $mediumRisk,
+                'low_risk' => $lowRisk,
+            ],
         ];
     }
 
-    /**
-     * Build the AML/CFT report query with optimized join logic and improved readability.
-     */
-    public function buildAmlCftReportQuery(Request $request, ?string $startDate, ?string $endDate, bool $isSyncQuote)
+    public function buildAmlCftReportQuery(Request $request, ?string $startDate, ?string $endDate)
     {
-        $quoteTypes = [
-            QuoteTypes::BIKE,
-            QuoteTypes::CYCLE,
-            QuoteTypes::JETSKI,
-            QuoteTypes::PET,
-            QuoteTypes::YACHT,
-            QuoteTypes::HOME,
+        $personalQuoteTypesIds = [
+            QuoteTypes::BIKE->id(),
+            QuoteTypes::CYCLE->id(),
+            QuoteTypes::JETSKI->id(),
+            QuoteTypes::PET->id(),
+            QuoteTypes::YACHT->id(),
+            QuoteTypes::HOME->id(),
         ];
-        $quoteTypeIds = array_map(fn ($type) => $type->id(), $quoteTypes);
 
-        // Main select
-        $personalQuotes = DB::table('personal_quotes as pqr')->select(
-            'pqr.id',
-            'pqr.uuid',
-            'pqr.code',
-            'pqr.quote_type_id',
-            'pqr.aml_status',
-            'pqr.policy_start_date',
-            'pqr.policy_expiry_date',
-            'pqr.premium',
-            'pqr.policy_number',
-            'pqr.quote_status_id',
-            'pqr.insurance_provider_id',
-            'pqr.risk_score as risk_score',
-            'qs.text as lead_status',
-            'ip.text as insurance_provider',
-            'ik.first_name as first_name',
-            'ik.last_name as last_name',
-            'ik.id_number as emirates_id',
-            'i.customer_type as customer_type',
-            'ci.insured_id as insured_id',
-            'ik.residential_status',
-            'ik.premium_tenure',
-            'ik.transaction_volume',
-            'pqr.created_at as last_aml_screening_date',
-            'cm.id as customer_id',
-            'cm.first_name as customer_first_name',
-            'cm.last_name as customer_last_name',
-            'cm.uae_resident as customer_is_uae_resident',
-            'kl.notes as remarks',
-            'kl.is_owner_pep as is_owner_pep',
-        )
-            ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('pqr.created_at', [$startDate, $endDate]);
-            })
-            ->when(isset($request->searchType) && $request->searchType === 'customerEmail', function ($query) use ($request) {
-                $query->where('pqr.email', $request->searchField);
-            })
-            ->when(isset($request->searchType) && $request->searchType === 'cdbId', function ($query) use ($request) {
-                $query->where('pqr.code', $request->searchField);
-            });
-
-        // KYC log subquery as a query builder
-        $latestKycLogSub = DB::table('kyc_logs')
-            ->select('quote_request_id', 'decision', 'notes', 'quote_type_id', 'is_owner_pep')
-            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA);
-
-        // Join logic
+        $quoteTypeId = null;
         if ($request->quoteType) {
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
-            $personalQuotes->where('pqr.quote_type_id', $quoteTypeId);
-            $isQuoteTypePresent = checkPersonalQuotes($request->quoteType);
-            if ($isQuoteTypePresent) {
-                $this->joinPersonalQuoteTables($personalQuotes, $quoteTypeId, $latestKycLogSub);
-            } else {
-                $this->joinSyncQuoteTables($personalQuotes, $quoteTypeId, $latestKycLogSub);
-            }
-        } else {
-            if ($isSyncQuote) {
-                $this->joinSyncQuoteTables($personalQuotes, $quoteTypeIds, $latestKycLogSub, true);
-            } else {
-                $this->joinPersonalQuoteTables($personalQuotes, $quoteTypeIds, $latestKycLogSub, true);
-            }
         }
+        // KYC log subquery
+        $kycLogSub = DB::table('kyc_logs')
+            ->select('quote_request_id', 'decision', 'notes', 'quote_type_id', 'is_owner_pep', 'created_at', 'updated_at')
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA)
+            ->whereNotNull('quote_request_id')
+            ->whereNotNull('quote_type_id');
+
+        $query = DB::table('personal_quotes as pqr')
+            ->select([
+                'pqr.id',
+                'pqr.uuid',
+                'pqr.code',
+                'pqr.quote_type_id',
+                'pqr.aml_status',
+                'pqr.policy_start_date',
+                'pqr.policy_expiry_date',
+                'pqr.premium',
+                'pqr.policy_number',
+                'pqr.quote_status_id',
+                'pqr.insurance_provider_id',
+                'pqr.risk_score as risk_score',
+                'qs.text as lead_status',
+                'ip.text as insurance_provider',
+                'ik.first_name as first_name',
+                'ik.last_name as last_name',
+                'ik.id_number as emirates_id',
+                'i.customer_type as customer_type',
+                'ci.insured_id as insured_id',
+                'ik.residential_status',
+                'ik.premium_tenure',
+                'ik.transaction_volume',
+                'ik.pep as is_owner_pep',
+                'kl.created_at as last_aml_screening_date',
+                'cm.id as customer_id',
+                'cm.first_name as customer_first_name',
+                'cm.last_name as customer_last_name',
+                'cm.uae_resident as customer_is_uae_resident',
+                'kl.notes as remarks',
+            ])
+            ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->when(isset($startDate) && isset($endDate) && $startDate != 'null' && $endDate != 'null', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('pqr.created_at', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay(),
+                ]);
+            })
+            ->when($request->searchType === 'customerEmail', fn ($q) => $q->where('pqr.email', $request->searchField))
+            ->when($request->searchType === 'cdbId', fn ($q) => $q->where('pqr.code', $request->searchField));
 
         // Common joins
-        $personalQuotes->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
-            ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id')
-            ->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id')
-            ->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
+        $query->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
+            ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id');
 
-        return $personalQuotes;
-    }
+        // Dynamic customer_insured join
+        $query->leftJoin('customer_insured as ci', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                if ($quoteTypeId) {
+                    $q->where('pqr.quote_type_id', $quoteTypeId)
+                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
+                } else {
+                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
+                }
+            })
+                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
+                        $q->where('pqr.quote_type_id', $quoteTypeId)
+                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
+                    } else {
+                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
+                    }
+                });
+        })
+            ->whereRaw('ci.id = (SELECT MAX(ci2.id) FROM customer_insured ci2 WHERE ci2.quote_request_id = ci.quote_request_id)');
 
-    /**
-     * Join tables for personal quotes (quoteTypeIds as array or single id).
-     */
-    private function joinPersonalQuoteTables($query, $quoteTypeIds, $latestKycLogSub, $isArray = false)
-    {
-        $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds) {
-            $join->on('pqr.id', '=', 'ci.quote_request_id')
-                ->whereIn('ci.quote_type_id', (array) $quoteTypeIds);
-        });
-        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds) {
-            $join->on('pqr.id', '=', 'cm.quote_id')
-                ->whereIn('cm.quote_type', (array) $quoteTypeIds);
-        });
-        $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds) {
-            $join->on('kl.quote_request_id', '=', 'pqr.id')
-                ->whereIn('kl.quote_type_id', (array) $quoteTypeIds);
-        });
-    }
+        // Join insured table
+        $query->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id');
 
-    /**
-     * Join tables for sync quotes (quoteTypeIds as array or single id).
-     */
-    private function joinSyncQuoteTables($query, $quoteTypeIds, $latestKycLogSub, $isArray = false)
-    {
-        $query->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds) {
-            $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-                ->whereNotIn('ci.quote_type_id', (array) $quoteTypeIds);
+        // Join insured_kyc
+        $query->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
+
+        // Join customer_members with similar conditional logic
+        $query->leftJoin('customer_members as cm', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            if ($quoteTypeId) {
+                $modelTypes = $this->getModelTypeByQuoteTypeId($quoteTypeId);
+            } else {
+                $modelTypes = $this->getModelTypeByQuoteTypeId($personalQuoteTypesIds);
+            }
+            $join->on(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
+
+                if ($quoteTypeId) {
+                    $q->where('pqr.quote_type_id', $quoteTypeId)
+                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
+                        ->where('cm.quote_type', $modelTypes);
+                } else {
+                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
+                        ->whereIn('cm.quote_type', $modelTypes);
+                }
+            })
+                ->orOn(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
+                        $q->where('pqr.quote_type_id', $quoteTypeId)
+                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
+                            ->where('cm.quote_type', $modelTypes);
+                    } else {
+                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
+                            ->whereNotIn('cm.quote_type', $modelTypes);
+                    }
+                });
         });
-        $query->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds) {
-            $join->on('pqr.quote_id', '=', 'cm.quote_id')
-                ->whereNotIn('cm.quote_type', (array) $quoteTypeIds);
+
+        // Join kyc logs subquery
+        $query->leftJoinSub($kycLogSub, 'kl', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                if ($quoteTypeId) {
+                    $q->where('pqr.quote_type_id', $quoteTypeId)
+                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
+                } else {
+                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
+                }
+            })
+                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
+                        $q->where('pqr.quote_type_id', $quoteTypeId)
+                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
+                    } else {
+                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
+                    }
+                });
         });
-        $query->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds) {
-            $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
-                ->whereNotIn('kl.quote_type_id', (array) $quoteTypeIds);
-        });
+
+        return $query;
     }
 
     public function saveKYCComplianceQuestions($complianceQuestions)
@@ -1696,5 +1725,30 @@ class AMLService
 
         return $amlStatus == AMLStatusCode::AMLScreeningCleared ?
                             AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
+    }
+
+    /**
+     * Get the model class name(s) based on QuoteTypes id(s).
+     *
+     * @return string|array
+     */
+    public static function getModelTypeByQuoteTypeId(int|array $quoteTypeIds)
+    {
+        $nameSpace = 'App\\Models\\';
+        $resolveModel = function ($id) use ($nameSpace) {
+            $quoteType = QuoteTypes::getName($id);
+            if (! $quoteType) {
+                throw new \InvalidArgumentException("Invalid QuoteTypeId: $id");
+            }
+
+            return checkPersonalQuotes(ucwords($quoteType->value))
+                ? $nameSpace.'PersonalQuote'
+                : $nameSpace.ucwords($quoteType->value).'Quote';
+        };
+        if (is_array($quoteTypeIds)) {
+            return array_map($resolveModel, $quoteTypeIds);
+        }
+
+        return $resolveModel($quoteTypeIds);
     }
 }

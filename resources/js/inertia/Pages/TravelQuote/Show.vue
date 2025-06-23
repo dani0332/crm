@@ -1583,6 +1583,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
     >
       <h2 class="text-xl font-semibold">
         Travel Detail
+        <x-button
+          v-if="quote?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
         <span
           class="inline-flex items-center rounded-md bg-yellow-300 px-2 py-1 text-xs font-medium text-yellow-900 ring-1 ring-inset ring-yellow-300/10"
           v-if="isEmbeddedProduct(quote.code)"
@@ -2082,6 +2090,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">API ISSUANCE STATUS</dt>
                 <dd>{{ quote.api_issuance_status }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -2253,6 +2268,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       :min-date="new Date()"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
               </dl>

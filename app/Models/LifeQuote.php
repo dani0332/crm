@@ -41,6 +41,9 @@ class LifeQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
     public $allowedColumns = ['others_info', 'is_smoker', 'sum_insured_value', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'tenure_of_insurance_id', 'number_of_years_id', 'height', 'weight', 'bmi', 'age', 'lang'];
+    protected $appends = [
+        'pc_qualified_formatted',
+    ];
 
     protected static function booted()
     {

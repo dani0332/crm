@@ -227,11 +227,13 @@ class BikeQuoteRepository extends BaseRepository
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::BIKE->id());
             },
+            'customer',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
                 '*',

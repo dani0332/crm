@@ -25,8 +25,8 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
     protected $quoteTypeId;
     protected $isCompleted;
     protected $batch;
-    protected $renewalsBatchEmail;
-    protected $renewalQuoteProcess;
+    protected $renewalsBatchEmailId;
+    protected $renewalQuoteProcessId;
     public $tries = 3;
     public $timeout = 80;
     public $backoff = 360;
@@ -37,12 +37,12 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
      * @return void
      */
     // $batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted, $batch
-    public function __construct($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
+    public function __construct(int $batch, int $renewalsBatchEmailId, int $renewalQuoteProcessId)
     {
 
         $this->batch = $batch;
-        $this->renewalsBatchEmail = $renewalsBatchEmail;
-        $this->renewalQuoteProcess = $renewalQuoteProcess;
+        $this->renewalsBatchEmailId = $renewalsBatchEmailId;
+        $this->renewalQuoteProcessId = $renewalQuoteProcessId;
         $this->onQueue('renewals');
     }
 
@@ -54,19 +54,22 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
     public function handle(HomeEmailService $homeEmailService)
     {
         LoggerService::info('Renewals OCB email job started', extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
         ]);
 
-        $homeEmailService->sendRenewalOCBEmail($this->renewalsBatchEmail, $this->renewalQuoteProcess);
+        $renewalQuoteProcess = RenewalQuoteProcess::find($this->renewalQuoteProcessId);
+        $renewalsBatchEmail = RenewalsBatchEmails::find($this->renewalsBatchEmailId);
+
+        $homeEmailService->sendRenewalOCBEmail($renewalsBatchEmail, $renewalQuoteProcess);
 
         LoggerService::info('Renewals OCB email job completed', extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
         ]);
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalQuoteProcessId))->dontRelease()];
     }
 
     /**
@@ -75,9 +78,9 @@ class HomeRenewalBatchEmailJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
             'exception' => $exception->getMessage(),
         ]);
-        RenewalsBatchEmails::where('id', $this->renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+        RenewalsBatchEmails::where('id', $this->renewalsBatchEmailId)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }

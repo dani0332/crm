@@ -23,17 +23,17 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
     public $backoff = 10;
     protected $batch;
     protected $quoteType;
-    protected $renewalStatusProcess;
+    protected $renewalStatusProcessId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(RenewalStatusProcess $renewalStatusProcess, $batch, $quoteType)
+    public function __construct(int $renewalStatusProcessId, $batch, $quoteType)
     {
         $this->batch = $batch;
-        $this->renewalStatusProcess = $renewalStatusProcess;
+        $this->renewalStatusProcessId = $renewalStatusProcessId;
         $this->quoteType = $quoteType;
         $this->onQueue('renewals');
     }
@@ -46,10 +46,10 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
     public function handle(HomeRenewalService $homeRenewalService)
     {
         LoggerService::info('FetchHomeRenewalsPlansJob: job being started', extra: [
-            'renewalStatusProcessId' => $this->renewalStatusProcess->id,
+            'renewalStatusProcessId' => $this->renewalStatusProcessId,
             'batch' => $this->batch,
         ]);
-        $homeRenewalService->fetchRenewalPlans($this->renewalStatusProcess, $this->batch);
+        $homeRenewalService->fetchRenewalPlansHome($this->renewalStatusProcessId, $this->batch);
     }
 
     /**
@@ -57,7 +57,7 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalStatusProcess->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalStatusProcessId))->dontRelease()];
     }
 
     /**
@@ -66,9 +66,9 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
-            'renewalStatusProcessId' => $this->renewalStatusProcess->id,
+            'renewalStatusProcessId' => $this->renewalStatusProcessId,
             'exception' => $exception->getMessage(),
         ]);
-        RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['status' => ProcessStatusCode::FAILED]);
+        RenewalStatusProcess::where('id', $this->renewalStatusProcessId)->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

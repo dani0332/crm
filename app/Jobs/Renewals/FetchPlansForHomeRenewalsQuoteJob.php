@@ -2,7 +2,6 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
 use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
@@ -20,8 +19,8 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $renewalQuoteProcess;
-    protected $renewalStatusProcess;
+    protected $renewalQuoteProcessId;
+    protected $renewalStatusProcessId;
     public $timeout = 60;
     public $backoff = 10;
     public $tries = 3;
@@ -31,13 +30,11 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
+    public function __construct(int $renewalQuoteProcessId, int $renewalStatusProcessId)
     {
-        LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: inside constructor', extra: [
-            'renewalQuoteProcessId' => $renewalQuoteProcess->id,
-        ]);
-        $this->renewalQuoteProcess = $renewalQuoteProcess;
-        $this->renewalStatusProcess = $renewalStatusProcess;
+        LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: inside constructor');
+        $this->renewalQuoteProcessId = $renewalQuoteProcessId;
+        $this->renewalStatusProcessId = $renewalStatusProcessId;
     }
 
     /**
@@ -48,10 +45,10 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
     public function handle(HomeRenewalService $homeRenewalService)
     {
         LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: job being started', extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
-            'policy_number' => $this->renewalQuoteProcess->policy_number,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
+            'renewalStatusProcessId' => $this->renewalStatusProcessId,
         ]);
-        $homeRenewalService->fetchPlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
+        $homeRenewalService->fetchPlansHome($this->renewalQuoteProcessId, $this->renewalStatusProcessId);
     }
 
     /**
@@ -59,7 +56,7 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalQuoteProcessId))->dontRelease()];
     }
 
     /**
@@ -69,9 +66,9 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue
     {
 
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. '.$exception->getMessage().' Line: '.$exception->getLine(), extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'renewalQuoteProcessId' => $this->renewalQuoteProcessId,
             'exception' => $exception->getMessage(),
         ]);
-        RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+        RenewalStatusProcess::where('id', $this->renewalStatusProcessId)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }

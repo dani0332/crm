@@ -227,4 +227,5 @@ final class ApplicationStorageEnums extends Enum
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
     public const LIFE_OCA_EMAIL_FLOW = 'LIFE_OCA_EMAIL_FLOW';
+    public const OCR_ENABLED = 'OCR_ENABLED';
 }

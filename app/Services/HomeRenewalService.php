@@ -32,8 +32,10 @@ use Throwable;
 
 class HomeRenewalService extends RenewalsUploadService
 {
-    public function updateQuotes(RenewalsUploadLeads $renewalsUploadLead)
+    public function updateQuotesHome(int $renewalsUploadLeadId)
     {
+        $renewalsUploadLead = RenewalsUploadLeads::find($renewalsUploadLeadId);
+
         $logPrefix = get_class($this).' fn: updateQuotes ';
         LoggerService::info($logPrefix.' Quote update started');
 
@@ -45,7 +47,7 @@ class HomeRenewalService extends RenewalsUploadService
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new HomeUpdateRenewalQuotesJob($lead);
+                    $jobs[] = new HomeUpdateRenewalQuotesJob($lead->id);
                 }
             });
 
@@ -79,8 +81,10 @@ class HomeRenewalService extends RenewalsUploadService
         }
     }
 
-    public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
+    public function updateQuoteHome(int $renewalQuoteProcessId)
     {
+        $renewalQuoteProcess = RenewalQuoteProcess::find($renewalQuoteProcessId);
+
         $logPrefix = get_class($this).' FN: updateQuote';
         $data = $renewalQuoteProcess->data;
 
@@ -170,8 +174,10 @@ class HomeRenewalService extends RenewalsUploadService
         Fetch plans Section
         --------------------------------------
     */
-    public function fetchRenewalPlans(RenewalStatusProcess $renewalStatusProcess, $batch)
+    public function fetchRenewalPlansHome(int $renewalStatusProcessId, int $batch)
     {
+
+        $renewalStatusProcess = RenewalStatusProcess::find($renewalStatusProcessId);
 
         $logPrefix = get_class($this).' FN: fetchRenewalPlans - ';
 
@@ -197,7 +203,7 @@ class HomeRenewalService extends RenewalsUploadService
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
 
-                        $jobs[] = new FetchPlansForHomeRenewalsQuoteJob($lead, $renewalStatusProcess);
+                        $jobs[] = new FetchPlansForHomeRenewalsQuoteJob($lead->id, $renewalStatusProcess->id);
 
                     } else {
                         LoggerService::info($logPrefix.' skipping fetch plans for uuid : '.$lead->personalQuote->uuid);
@@ -249,8 +255,11 @@ class HomeRenewalService extends RenewalsUploadService
         }
     }
 
-    public function fetchPlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
+    public function fetchPlansHome(int $renewalQuoteProcessId, int $renewalStatusProcessId)
     {
+        $renewalQuoteProcess = RenewalQuoteProcess::find($renewalQuoteProcessId);
+        $renewalStatusProcess = RenewalStatusProcess::find($renewalStatusProcessId);
+
         $leadData = (object) $renewalQuoteProcess->data;
 
         $quote = PersonalQuote::where('id', $renewalQuoteProcess->quote_id)->first();
@@ -334,7 +343,7 @@ class HomeRenewalService extends RenewalsUploadService
             'created_by_id' => $userId,
         ]);
 
-        ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail);
+        ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail->id);
 
         LoggerService::info($logPrefix.' OCB Email Send Started', extra: [
             'batch' => $batch,
@@ -343,8 +352,12 @@ class HomeRenewalService extends RenewalsUploadService
         return true;
     }
 
-    public function scheduleHomeOCB(int $batch, RenewalsBatchEmails $renewalsBatchEmail)
+    public function scheduleHomeOCB(int $batch, int $renewalsBatchEmailId)
     {
+        $renewalsBatchEmail = RenewalsBatchEmails::find($renewalsBatchEmailId);
+
+        $renewalsBatchEmail->update(['status' => ProcessStatusCode::IN_PROGRESS]);
+
         $logPrefix = get_class($this).' FN: scheduleHomeOCB';
 
         LoggerService::info($logPrefix.' Scheduling Home Renewals OCB email', extra: [
@@ -358,7 +371,7 @@ class HomeRenewalService extends RenewalsUploadService
             $this->getOcbLeadsQueryNonMotor($batch, QuoteTypeShortCode::HOM)
                 ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
                     foreach ($leads as $lead) {
-                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
+                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail->id, $lead->id);
                     }
                 });
 

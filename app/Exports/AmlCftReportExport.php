@@ -43,6 +43,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
             ['AFIA Insurance Brokerage Services LLC'],
             ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}"],
             ['Requested By Compliance Dept.'],
+            [],
             [
                 'Customer Full Name',
                 'Ref-ID',
@@ -73,7 +74,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
         $quoteTypeName = $quoteType ? ($quoteType->value ?? (string) $quoteType) : '';
 
         return [
-            isset($item->first_name) ? trim(($item->first_name ?? '').' '.($item->last_name ?? '')) : trim(($item->customer_first_name ?? '').' '.($item->customer_last_name ?? '')),
+            isset($item->customer_first_name) ? trim(($item->customer_first_name ?? '').' '.($item->customer_last_name ?? '')) : trim(($item->first_name ?? '').' '.($item->last_name ?? '')),
             $item->code ?? '',
             $item->emirates_id ?? '',
             $item->customer_type ?? '',
@@ -90,7 +91,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
             $item->policy_start_date ?? '',
             $item->policy_expiry_date ?? '',
             $item->lead_status ?? '',
-            $item->is_owner_pep ? 'Yes' : 'No',
+            $item->is_owner_pep === 1 ? 'Yes' : 'No',
             $item->last_aml_screening_date ?? '',
             $item->remarks ?? 'N/A',
         ];

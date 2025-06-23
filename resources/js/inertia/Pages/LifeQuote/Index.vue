@@ -81,6 +81,7 @@ const filters = reactive({
   sum_insured_currency_id: null,
   sum_insured_range: '',
   plan_type: '',
+  private_client: 'all',
 });
 
 const filterButtonStatuses = [
@@ -175,6 +176,11 @@ const tableHeader = ref([
   },
   { text: 'Tenure of Cover', value: 'number_of_years', is_active: true },
   { text: 'Sum Assured', value: 'sum_insured_value', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -888,6 +894,19 @@ const insurerAMLStatusOption = computed(() =>
             />
           </div>
         </div>
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
 
       <div class="flex justify-between gap-3 mb-4 mt-1">

@@ -16,6 +16,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
@@ -152,6 +153,7 @@ class HandleInertiaRequests extends Middleware
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
             'carRegistrationType' => CarRegistrationType::asArray(),
             'carVehicleUse' => CarVehicleUse::asArray(),
+            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
         ];
     }
 
@@ -694,6 +696,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Private Client Config',
+                        route('admin.private-client-config.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

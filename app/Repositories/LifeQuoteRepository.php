@@ -120,6 +120,7 @@ class LifeQuoteRepository extends BaseRepository
             'renewalBatchModel',
             'paymentStatus',
             'payments',
+            'customer',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
             }])
@@ -135,6 +136,7 @@ class LifeQuoteRepository extends BaseRepository
                 });
             })
             ->filter()
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
                 '*',
@@ -181,7 +183,7 @@ class LifeQuoteRepository extends BaseRepository
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
-        ])->with([
+            ])->with([
             'advisor',
             'quoteStatus',
             'nationality',
