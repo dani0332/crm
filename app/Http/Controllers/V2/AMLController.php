@@ -938,46 +938,6 @@ class AMLController extends Controller
     {
         $reportDateRange = now()->format('Y');
         
-        // Check if email export is requested
-        if ($request->exportType == 'email') {
-            // For email, we'll use CSV format with basic structure
-            return app(AmlCftReportExport::class)->emailCSV("AML CTF Report {$reportDateRange}", $request->all());
-        }
-
-        // For direct download, use Excel format with advanced formatting
-        $fileName = 'AML_CTF_Report_'.now()->format('Ymd_His').'.xlsx';
-        $tempDir = storage_path('temp');
-        $tempFilePath = $tempDir.'/'.$fileName;
-
-        try {
-            // Ensure temp directory exists
-            if (!is_dir($tempDir)) {
-                mkdir($tempDir, 0755, true);
-            }
-
-            // Generate Excel file directly using the Excel export functionality
-            $export = new AmlCftReportExport();
-            $export->store($fileName, 'temp');
-
-            $fileSize = filesize($tempFilePath);
-            $fileSizeFormatted = round($fileSize / 1024, 2) . ' KB';
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Export completed successfully! File saved to temp folder.',
-                'file_path' => $tempFilePath,
-                'file_name' => $fileName,
-                'file_size' => $fileSizeFormatted,
-                'records_count' => $export->collection([])->count(),
-                'temp_directory' => $tempDir,
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to generate export.',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+        return app(AmlCftReportExport::class)->emailCSV("AML CTF Report {$reportDateRange}", $request->all());
     }
 }
