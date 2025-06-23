@@ -38,7 +38,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     public function handle(): void
     {
         $sukoonMedexService = app(SukoonMedexService::class);
-        $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
+        $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction, true);
         $sukoonMedexService->processPurchaseFlow();
     }
 

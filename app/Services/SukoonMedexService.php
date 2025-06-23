@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use App\Enums\EmbeddedTransactionEnum;
 use Illuminate\Support\Str;
+use App\Jobs\SyncSukoonDocuments;
 
 class SukoonMedexService
 {
@@ -41,6 +42,7 @@ class SukoonMedexService
     private $paymentToken;
     private $transaction;
     private $paymentPlan;
+    private $isSendDocuments = false;
     private $amountDisclaimerText;
     private array $sukoonReqDocTypeCodes;
     private $providerId;
@@ -65,7 +67,7 @@ class SukoonMedexService
         }
     }
 
-    public function initiatePurchaseFlow($quote, $quoteTypeId, $transaction)
+    public function initiatePurchaseFlow($quote, $quoteTypeId, $transaction, $isSendDocuments = false)
     {
         try {
             $this->currentQuote = $quote;
@@ -75,6 +77,7 @@ class SukoonMedexService
             $this->policyStatus = $transaction->policy_status ?? '';
             $this->quotePolicy = $transaction->quote_policy ?? null;
             $this->certificateNumber = $transaction->certificate_number ?? null;
+            $this->isSendDocuments = $isSendDocuments;
 
             LoggerService::startQuoteLogging($this->currentQuote);
 
@@ -164,12 +167,63 @@ class SukoonMedexService
                 $this->transaction->load('documents');
             }
 
+            
+            // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument)
+            $this->syncSukoonDocuments();
+
+            // STEP #16 viewQuotePolicy
+            $quotePolicyResponse = $this->viewQuotePolicy();
+            $this->updateTransaction($this->transaction, $quotePolicyResponse);
+
+            if($this->isSendDocuments) {
+                EmbeddedProductRepository::sendDocument([
+                    'epId' => $this->transaction->product->embeddedProduct->id ?? null,
+                    'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
+                    'quoteId' => $this->currentQuote->id,
+                ]);
+            }
+
+            $missingReqDocTypes = $this->getMissingReqDocTypes();
+            if (! empty($missingReqDocTypes)) {
+                SyncSukoonDocuments::dispatch($this->currentQuote, $this->quoteTypeId, $this->transaction)
+                    ->delay(now()->addMinutes(1));
+
+                // STEP #16 viewQuotePolicy
+                // sync-data from sukoon, update commissions after fetch buyer-tax-invoice document
+                $quotePolicyResponse = $this->viewQuotePolicy();
+                $this->updateTransaction($this->transaction, $quotePolicyResponse);
+            }
+ 
+        } catch (Exception $e) {
+            $this->logFailure("{$this->logPrefix} processPurchaseFlow Failed", $e->getMessage(), [
+                'quote_uuid' => $this->currentQuote->uuid ?? null,
+                'error_messages' => $this->errorMessages,
+            ]);
+        }
+    }
+
+    public function fetchPaymentToken()
+    {
+        try {
+            // STEP #16 viewQuotePolicy
+            $viewQuotePolicyResponse = $this->viewQuotePolicy();
+
+            return $this->paymentToken = $viewQuotePolicyResponse['payments'][0]['token'] ?? null;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function syncSukoonDocuments()
+    {
+        try {
+            LoggerService::info("{$this->logPrefix} syncSukoonDocuments");
+
             $missingReqDocTypes = $this->getMissingReqDocTypes();
 
             // STEP #12 getPolicyScheduleCoi
-            if (in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $missingReqDocTypes)) {
+            if (in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $missingReqDocTypes))
                 $this->getPolicyScheduleCoi();
-            }
 
             // STEP #13 getCustomerTaxInvoice
             if (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $missingReqDocTypes)) {
@@ -198,48 +252,6 @@ class SukoonMedexService
                     }
                 }
             }
-
-            // STEP #16 viewQuotePolicy
-            $quotePolicyResponse = $this->viewQuotePolicy();
-            $this->updateTransaction($this->transaction, $quotePolicyResponse);
-
-            if(EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_BOOKED) && !$this->transaction->is_document_sent) {
-                EmbeddedProductRepository::sendDocument([
-                    'epId' => $this->transaction->product->embeddedProduct->id ?? null,
-                    'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
-                    'quoteId' => $this->currentQuote->id,
-                ]);
-            }
-
-        } catch (Exception $e) {
-            $this->logFailure("{$this->logPrefix} processPurchaseFlow Failed", $e->getMessage(), [
-                'quote_uuid' => $this->currentQuote->uuid ?? null,
-                'error_messages' => $this->errorMessages,
-            ]);
-        }
-    }
-
-    public function fetchPaymentToken()
-    {
-        try {
-            // STEP #16 viewQuotePolicy
-            $viewQuotePolicyResponse = $this->viewQuotePolicy();
-
-            return $this->paymentToken = $viewQuotePolicyResponse['payments'][0]['token'] ?? null;
-        } catch (Exception $e) {
-            throw $e;
-        }
-    }
-
-    public function syncSukoonDocuments()
-    {
-        try {
-            LoggerService::info("{$this->logPrefix} syncSukoonDocuments");
-            // STEP #14 listGeneratedDocument
-            $listGeneratedDocumentResponse = $this->listGeneratedDocument();
-
-            // STEP #15 downloadDocument
-            $this->syncGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
         } catch (Exception $e) {
             $this->logFailure("{$this->logPrefix} syncSukoonDocuments Failed", $e->getMessage(), [
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
