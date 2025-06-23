@@ -64,8 +64,6 @@ trait FilterCriteria
                                 $endDate = Carbon::parse($this->getFilterValue($key.'_end', $filters))->endOfDay();
                                 $query->whereBetween($tableName.'.'.$key, [$startDate, $endDate]);
                             } elseif ($this->hasFilterValue($key.'_time_start', $filters) && $this->hasFilterValue($key.'_time_end', $filters)) {
-                                // $startDate = date('Y-m-d H:i:s', strtotime($this->getFilterValue($key.'_time_start', $filters)));
-                                // $endDate = date('Y-m-d H:i:s', strtotime($this->getFilterValue($key.'_time_end', $filters)));
                                 $startDate = Carbon::parse($this->getFilterValue($key.'_time_start', $filters))->startOfDay()->format('Y-m-d H:i:s');
                                 $endDate = Carbon::parse($this->getFilterValue($key.'_time_end', $filters))->endOfDay()->format('Y-m-d H:i:s');
                                 $query->whereBetween($key, [$startDate, $endDate]);
