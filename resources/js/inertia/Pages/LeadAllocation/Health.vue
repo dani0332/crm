@@ -183,7 +183,7 @@ const tableHeader = ref([
     tooltip: "Advisor's team type",
   },
   {
-    text: 'IM To Assigned Leads',
+    text: 'IM Total Assigned Leads',
     value: 'im_total_assigned_leads',
     sortable: true,
     tooltip: "Advisor's IM lead count",
