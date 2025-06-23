@@ -2052,7 +2052,7 @@ class CRUDController extends Controller
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
 
-        if ($request->modelType == quoteTypeCode::Life) {
+        if ($request->modelType == strtolower(quoteTypeCode::Life)) {
             $quoteModel->update([
                 'policy_sum_assured_currency_id' => $request->policy_sum_assured_currency_id ?? null,
                 'policy_sum_assured' => $request->policy_sum_assured ?? null,
