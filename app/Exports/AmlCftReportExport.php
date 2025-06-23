@@ -244,9 +244,14 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
      */
     private function sendCustomFormattedCsvEmail($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [])
     {
-        // Create a temporary file with custom CSV content
+        // Fetch fresh data instead of using cached data
+        $freshReport = app(AMLService::class)->generateAmlCftReport();
+        $freshData = $freshReport['collection'];
+        $freshSummary = $freshReport['summary'];
+        
+        // Create a temporary file with custom CSV content using fresh data
         $year = Carbon::now()->year;
-        $csvContent = $this->generateCustomFormattedCsv($year);
+        $csvContent = $this->generateCustomFormattedCsv($year, $freshData, $freshSummary);
         $fileName = $requestParams['fileName'] ?? 'AML_CTF_Report';
         
         // Create temporary file
@@ -258,7 +263,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
             'recipientName' => $requestParams['recipientName'] ?? 'Valued User',
             'exportTitle' => 'AML/CFT Customer Risk Profile Report',
             'currentDate' => Carbon::now()->format('d M Y'),
-            'recordCount' => $this->data->count(),
+            'recordCount' => $freshData->count(),
             'fileSize' => round(strlen($csvContent) / 1024, 2), // Approximate file size in KB
             'systemName' => 'AFIA Insurance Brokerage Services LLC',
         ];
@@ -284,8 +289,12 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
     /**
      * Generate CSV content with custom headers and summary
      */
-    private function generateCustomFormattedCsv($year): string
+    private function generateCustomFormattedCsv($year, $data = null, $summary = null): string
     {
+        // Use provided data or fall back to cached data
+        $data = $data ?? $this->data;
+        $summary = $summary ?? $this->summary;
+        
         $output = fopen('php://temp', 'r+');
         
         // Add custom headers
@@ -298,7 +307,6 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         fputcsv($output, $this->headings());
         
         // Add data rows
-        $data = $this->collection([]);
         foreach ($data as $record) {
             fputcsv($output, $this->map($record));
         }
@@ -309,10 +317,10 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         fputcsv($output, []);
         
         // Add summary section
-        fputcsv($output, ['', 'Total Number of Customers', '', $this->summary['total_customers'] ?? '']);
-        fputcsv($output, ['', 'High Risk Customers', '', $this->summary['high_risk'] ?? '']);
-        fputcsv($output, ['', 'Medium Risk Customers', '', $this->summary['medium_risk'] ?? '']);
-        fputcsv($output, ['', 'Low Risk Customers', '', $this->summary['low_risk'] ?? '']);
+        fputcsv($output, ['', 'Total Number of Customers', '', $summary['total_customers'] ?? '']);
+        fputcsv($output, ['', 'High Risk Customers', '', $summary['high_risk'] ?? '']);
+        fputcsv($output, ['', 'Medium Risk Customers', '', $summary['medium_risk'] ?? '']);
+        fputcsv($output, ['', 'Low Risk Customers', '', $summary['low_risk'] ?? '']);
         
         // Add note section
         fputcsv($output, []);
