@@ -256,14 +256,17 @@ function onSubmit(isValid) {
                   v-model="quoteForm.investment_frequency"
                   :rules="[isRequired]"
                 >
-                  <div v-for="item in investmentFrequencies" :key="item.value" class="relative group mb-6">
+                  <div
+                    v-for="item in investmentFrequencies"
+                    :key="item.value"
+                    class="relative group mb-6"
+                  >
                     <div class="radio-wrapper">
-                      <x-radio
-                        :value="item.value"
-                        :label="item.label"
-                      />
+                      <x-radio :value="item.value" :label="item.label" />
                     </div>
-                    <div class="hidden group-hover:block absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-blue-400 rounded-md shadow-lg z-10 text-sm tooltip-box">
+                    <div
+                      class="hidden group-hover:block absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-blue-400 rounded-md shadow-lg z-10 text-sm tooltip-box"
+                    >
                       {{ item.description }}
                     </div>
                   </div>
@@ -306,7 +309,7 @@ function onSubmit(isValid) {
 
 /* Custom tooltip styling to match design */
 .tooltip-box {
-  border: 1px solid #1D83BC;
+  border: 1px solid #1d83bc;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   color: #33333399;
