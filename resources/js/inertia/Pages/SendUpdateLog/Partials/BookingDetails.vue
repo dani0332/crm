@@ -424,7 +424,10 @@ const calculateCommission = () => {
         if (page.props.isTapEnabled) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
           const brokerCommMinPer = brokerCommission
-            ? Math.max((Number(brokerCommission?.fixed_commission) ?? 0) - 2.5, 0)
+            ? Math.max(
+                (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
+                0,
+              )
             : null;
           const brokerCommMaxPer = brokerCommission
             ? brokerCommission?.fixed_commission
@@ -437,13 +440,13 @@ const calculateCommission = () => {
             brokerCommMinPer > 0 &&
             brokerCommMaxPer > 0
           ) {
-             if (
+            if (
               brokerCommMinPer != null &&
               brokerCommMaxPer != null &&
               !(
                 Number(commissionPercentage) >= Number(brokerCommMinPer) &&
                 Number(commissionPercentage) <= Number(brokerCommMaxPer)
-              ) && 
+              ) &&
               can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
             ) {
               commissionPercentageExceedsLimit.value = true;
@@ -454,7 +457,7 @@ const calculateCommission = () => {
               !(
                 Number(commissionPercentage) >= Number(brokerCommMinPer) &&
                 Number(commissionPercentage) <= Number(brokerCommMaxPer)
-              ) && 
+              ) &&
               !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
             ) {
               notification.error({
@@ -534,7 +537,11 @@ function thousandSeparator(value) {
 
 const saveBookingDetail = isValid => {
   if (!isValid) return;
-  if(commissionPercentageExceedsLimit.value && can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT) && !showCommissionPercentageExceedsLimitAlert.value) {
+  if (
+    commissionPercentageExceedsLimit.value &&
+    can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT) &&
+    !showCommissionPercentageExceedsLimitAlert.value
+  ) {
     showCommissionPercentageExceedsLimitAlert.value = true;
     return;
   } else {
@@ -2527,10 +2534,12 @@ watch(
             </template>
           </div>
           <BookPolicyOverrideCommissionLimitModal
-                  :showCommissionPercentageExceedsLimitAlert="showCommissionPercentageExceedsLimitAlert"
-                  :bpForm="bpForm"
-                  @modalClosed="showCommissionPercentageExceedsLimitAlert = false"
-                />
+            :showCommissionPercentageExceedsLimitAlert="
+              showCommissionPercentageExceedsLimitAlert
+            "
+            :bpForm="bpForm"
+            @modalClosed="showCommissionPercentageExceedsLimitAlert = false"
+          />
         </x-form>
       </template>
     </Collapsible>

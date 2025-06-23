@@ -412,14 +412,14 @@ const calculateCommissionPercentage = (
       : 0;
     if (commission_percentage_min != 0 && commission_percentage_max != 0) {
       if (
-        (totalCommissionInPercentage < commission_percentage_min ||
-        totalCommissionInPercentage > commission_percentage_max)
+        totalCommissionInPercentage < commission_percentage_min ||
+        totalCommissionInPercentage > commission_percentage_max
       ) {
         commissionPercentageExceedsLimit.value = true;
       }
       if (
         (totalCommissionInPercentage < commission_percentage_min ||
-        totalCommissionInPercentage > commission_percentage_max) &&
+          totalCommissionInPercentage > commission_percentage_max) &&
         !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
       ) {
         bp.isAllowedToUpdateCommission = false;
@@ -1577,11 +1577,15 @@ const isDocTypeLoading = docType => {
                   </template>
                 </x-tooltip>
                 <BookPolicyOverrideCommissionLimitModal
-                  :showCommissionPercentageExceedsLimitAlert="showCommissionPercentageExceedsLimitAlert"
+                  :showCommissionPercentageExceedsLimitAlert="
+                    showCommissionPercentageExceedsLimitAlert
+                  "
                   :bpForm="bpForm"
-                  @modalClosed="showCommissionPercentageExceedsLimitAlert = false"
+                  @modalClosed="
+                    showCommissionPercentageExceedsLimitAlert = false
+                  "
                 />
-                
+
                 <template v-if="is_lacking_payment || isDisabledSendPCB">
                   <x-tooltip>
                     <x-button
