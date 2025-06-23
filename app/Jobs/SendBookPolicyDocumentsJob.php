@@ -126,6 +126,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData = new \stdClass;
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
+            $emailData->customerId = $quote->customer_id;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->clientFirstName = $quote->first_name;
             $emailData->policy_number = $quote->policy_number;

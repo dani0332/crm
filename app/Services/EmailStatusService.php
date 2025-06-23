@@ -29,7 +29,7 @@ class EmailStatusService extends BaseService
         $newEmailStatus->quote_id = $emailData->quoteId;
         $newEmailStatus->email_address = $emailData->customerEmail;
         $newEmailStatus->msg_id = $messageId;
-        $newEmailStatus->template_id = $emailData->templateId;
+        $newEmailStatus->template_id = $emailData->templateId ?? $emailData->emailTemplateId;
         $newEmailStatus->customer_id = $emailData->customerId;
         $newEmailStatus->email_status = $status ?? ProcessStatusCode::IN_PROGRESS;
         $newEmailStatus->email_subject = $emailSubject;
