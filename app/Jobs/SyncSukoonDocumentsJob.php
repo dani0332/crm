@@ -8,7 +8,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class SyncSukoonDocuments implements ShouldQueue
+class SyncSukoonDocumentsJob implements ShouldQueue
 {
     use InteractsWithQueue, Queueable, SerializesModels;
 

@@ -10,7 +10,7 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SukoonMedexEnum;
-use App\Jobs\SyncSukoonDocuments;
+use App\Jobs\SyncSukoonDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
@@ -168,12 +168,8 @@ class SukoonMedexService
                 $this->transaction->load('documents');
             }
 
-            // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument)
+            // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
             $this->syncSukoonDocuments();
-
-            // STEP #16 viewQuotePolicy
-            $quotePolicyResponse = $this->viewQuotePolicy();
-            $this->updateTransaction($this->transaction, $quotePolicyResponse);
 
             if ($this->isSendDocuments) {
                 EmbeddedProductRepository::sendDocument([
@@ -185,13 +181,8 @@ class SukoonMedexService
 
             $missingReqDocTypes = $this->getMissingReqDocTypes();
             if (! empty($missingReqDocTypes)) {
-                SyncSukoonDocuments::dispatch($this->currentQuote, $this->quoteTypeId, $this->transaction)
+                SyncSukoonDocumentsJob::dispatch($this->currentQuote, $this->quoteTypeId, $this->transaction)
                     ->delay(now()->addMinutes(1));
-
-                // STEP #16 viewQuotePolicy
-                // sync-data from sukoon, update commissions after fetch buyer-tax-invoice document
-                $quotePolicyResponse = $this->viewQuotePolicy();
-                $this->updateTransaction($this->transaction, $quotePolicyResponse);
             }
 
         } catch (Exception $e) {
@@ -199,6 +190,21 @@ class SukoonMedexService
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
                 'error_messages' => $this->errorMessages,
             ]);
+        }
+    }
+
+    private function syncSukoonCommissions()
+    {
+        try {
+            // Check all required documents are saved
+            $isAllDocumentsSaved = empty($this->getMissingReqDocTypes());
+
+            // STEP #16 viewQuotePolicy
+            $viewQuotePolicyResponse = $this->viewQuotePolicy();
+
+            $this->updateTransaction($this->transaction, $viewQuotePolicyResponse, $isAllDocumentsSaved);
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 
@@ -248,9 +254,11 @@ class SukoonMedexService
                     LoggerService::info("{$this->logPrefix} Sync & Saved Documents: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
                         "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", extra: ['docs' => $savedDocs]);
 
-                    if (($createdDocCount + $updatedDocCount) > 0) {
+                    if (($createdDocCount + $updatedDocCount) > 0)
                         $this->transaction->load('documents');
-                    }
+                    
+                    // STEP #16 viewQuotePolicy
+                    $this->syncSukoonCommissions();
                 }
             }
         } catch (Exception $e) {
@@ -268,7 +276,7 @@ class SukoonMedexService
      * @param  array  $transactionDetail  The transaction details array.
      * @return void
      */
-    private function updateTransaction($transaction, $transactionDetail)
+    private function updateTransaction($transaction, $transactionDetail, bool $isAllDocumentsSaved = false)
     {
         $paymentData = $transactionDetail['payments'][0];
         $additionalData = $transactionDetail['additional_data'];
@@ -286,21 +294,18 @@ class SukoonMedexService
             'policy_price' => $paymentData['amount_breakdown']['policy_price'] ?? null,
         ];
 
-        if (! empty($paymentData['status'])) {
+        if (! empty($paymentData['status'])) // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
             $this->policyStatus = $data['policy_status'] = $paymentData['status'];
-        } // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
 
-        // Make sure no any required documents are missing & policyStatus is payment_succeeded
-        if (empty($this->getMissingReqDocTypes()) && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
+        if ($isAllDocumentsSaved && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED)
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
-        }
 
         LoggerService::info("{$this->logPrefix} policyStatus: {$this->policyStatus}");
 
         return $transaction->update($data);
     }
 
-    // Check missing required documents types
+    // Get missing required documents types
     public function getMissingReqDocTypes()
     {
         return array_diff($this->sukoonReqDocTypeCodes, $this->transaction->documents->pluck('document_type_code')->toArray());
