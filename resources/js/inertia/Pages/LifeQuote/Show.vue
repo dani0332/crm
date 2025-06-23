@@ -251,12 +251,11 @@ const sendOCAEmail = () => {
       planIds: selectedPlans.value.map(plan => plan.planId),
     })
     .then(res => {
-        notification.success({
-          title: res.data.message,
-          position: 'top',
-        });
-        loader.value.link = false;
-       
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+      loader.value.link = false;
     })
     .catch(err => {
       console.log(err);
