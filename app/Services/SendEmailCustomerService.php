@@ -951,13 +951,13 @@ class SendEmailCustomerService extends BaseService
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
-        if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
+        if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
             EmailStatus::create([
                 'quote_type_id' => $emailData->quoteTypeId,
-                'quote_id' => $emailData->quote_id,
+                'quote_id' => $emailData->quoteId,
                 'email_address' => $emailData->customerEmail,
-                'msg_id' => $messageId,
+                'msg_id' => $messageId ?? null,
                 'reason' => 'Send Policy to Customer',
                 'email_status' => $status,
                 'email_subject' => $subject,
@@ -1168,13 +1168,13 @@ class SendEmailCustomerService extends BaseService
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
-        if ($quoteTypeId == QuoteTypeId::Savings && $messageId) {
+        if ($quoteTypeId == QuoteTypeId::Savings) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
             EmailStatus::create([
                 'quote_type_id' => $quoteTypeId,
                 'quote_id' => $emailData->quoteId,
                 'email_address' => $emailData->customerEmail,
-                'msg_id' => $messageId,
+                'msg_id' => $messageId ?? null,
                 'reason' => 'Send Update to Customer',
                 'email_status' => $status,
                 'email_subject' => $subject,
