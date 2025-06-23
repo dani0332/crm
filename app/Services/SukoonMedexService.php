@@ -10,6 +10,7 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SukoonMedexEnum;
+use App\Jobs\SyncSukoonDocuments;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
@@ -22,7 +23,6 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Jobs\SyncSukoonDocuments;
 
 class SukoonMedexService
 {
@@ -168,7 +168,6 @@ class SukoonMedexService
                 $this->transaction->load('documents');
             }
 
-            
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument)
             $this->syncSukoonDocuments();
 
@@ -176,7 +175,7 @@ class SukoonMedexService
             $quotePolicyResponse = $this->viewQuotePolicy();
             $this->updateTransaction($this->transaction, $quotePolicyResponse);
 
-            if($this->isSendDocuments) {
+            if ($this->isSendDocuments) {
                 EmbeddedProductRepository::sendDocument([
                     'epId' => $this->transaction->product->embeddedProduct->id ?? null,
                     'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
@@ -194,7 +193,7 @@ class SukoonMedexService
                 $quotePolicyResponse = $this->viewQuotePolicy();
                 $this->updateTransaction($this->transaction, $quotePolicyResponse);
             }
- 
+
         } catch (Exception $e) {
             $this->logFailure("{$this->logPrefix} processPurchaseFlow Failed", $e->getMessage(), [
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
@@ -223,8 +222,9 @@ class SukoonMedexService
             $missingReqDocTypes = $this->getMissingReqDocTypes();
 
             // STEP #12 getPolicyScheduleCoi
-            if (in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $missingReqDocTypes))
+            if (in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $missingReqDocTypes)) {
                 $this->getPolicyScheduleCoi();
+            }
 
             // STEP #13 getCustomerTaxInvoice
             if (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $missingReqDocTypes)) {
