@@ -20,8 +20,6 @@ enum CoverageTypeEnum: string
     /**
      * Get all cases as an array of [name => id]
      * This provides a structure where the keys are the enum case names and the values are the IDs
-     *
-     * @return array
      */
     public static function nameToIdArray(): array
     {

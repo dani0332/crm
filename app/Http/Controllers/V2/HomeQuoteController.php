@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CoverageTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -23,8 +24,6 @@ use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
 use App\Services\Reports\RenewalBatchReportService;
 use Illuminate\Http\Request;
-use App\Enums\CoverageTypeEnum;
-
 
 class HomeQuoteController extends Controller
 {
