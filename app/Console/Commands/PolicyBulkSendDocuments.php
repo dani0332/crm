@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\CarQuote;
 use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -40,6 +41,7 @@ class PolicyBulkSendDocuments extends Command
         $codes = [
             'TRA-WAL8YDD4',
             'TRA-VTSDBMEQ',
+            'CAR-VXCWTTXH'
         ];
 
         if (empty($codes)) {
@@ -58,8 +60,13 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            $quoteObject = TravelQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-            $modelType = quoteTypeCode::Travel;
+            if ($code == 'CAR-VXCWTTXH'){
+                $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Car;
+            } else {
+                $quoteObject = TravelQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Travel;
+            }
 
             if (! $quoteObject) {
                 $notFound[] = $code;
