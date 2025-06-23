@@ -23,6 +23,8 @@ use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
 use App\Services\Reports\RenewalBatchReportService;
 use Illuminate\Http\Request;
+use App\Enums\CoverageTypeEnum;
+
 
 class HomeQuoteController extends Controller
 {
@@ -49,6 +51,7 @@ class HomeQuoteController extends Controller
     public function create()
     {
         $data = HomeQuoteRepository::getFormOptions();
+        $data['coverageTypeEnum'] = CoverageTypeEnum::nameToIdArray();
 
         return inertia('HomeQuote/Form', $data);
     }
@@ -88,6 +91,7 @@ class HomeQuoteController extends Controller
             [
                 ...$data,
                 'quote' => $quote,
+                'coverageTypeEnum' => CoverageTypeEnum::nameToIdArray(),
             ]
         );
     }
