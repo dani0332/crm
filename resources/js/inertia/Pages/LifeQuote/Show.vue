@@ -62,7 +62,6 @@ defineProps({
   currencyRanges: Array,
 });
 
-
 const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;

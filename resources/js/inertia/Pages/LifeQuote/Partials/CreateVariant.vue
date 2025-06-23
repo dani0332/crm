@@ -25,20 +25,28 @@ const getCurrencyId = currencyCode => {
   return props.currencies.find(currency => currency.text === currencyCode)?.id;
 };
 
-
 const validateSumAssured = () => {
-  
-  if(!props.plan.isApi) return true;
+  if (!props.plan.isApi) return true;
 
   const currencyRange = props.currencyRanges.find(
     range => range.code === createForm.currency,
   );
   if (currencyRange) {
     if (createForm.sumAssured < currencyRange.min_value) {
-      return 'Sum assured must be between ' + currencyRange.min_value + ' - ' + currencyRange.max_value;
+      return (
+        'Sum assured must be between ' +
+        currencyRange.min_value +
+        ' - ' +
+        currencyRange.max_value
+      );
     }
     if (createForm.sumAssured > currencyRange.max_value) {
-      return 'Sum assured must be between ' + currencyRange.min_value + ' - ' + currencyRange.max_value;  
+      return (
+        'Sum assured must be between ' +
+        currencyRange.min_value +
+        ' - ' +
+        currencyRange.max_value
+      );
     }
   }
   return true;
@@ -52,8 +60,6 @@ watch(
       getRiderDetails(props.plan.planId);
       submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
       exitAge.value = props.plan?.exitAge;
-      
-
     }
   },
 );
@@ -535,8 +541,6 @@ const validateRiderCoverValue = (value, riderId) => {
 
   return true;
 };
-
-
 </script>
 
 <template>
@@ -618,7 +622,12 @@ const validateRiderCoverValue = (value, riderId) => {
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
-              :rules="[isRequired, isNonNegative, validatePriceRange,validateSumAssured]"
+              :rules="[
+                isRequired,
+                isNonNegative,
+                validatePriceRange,
+                validateSumAssured,
+              ]"
               class="w-full"
               type="number"
               min="0"
