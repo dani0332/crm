@@ -25,7 +25,7 @@ class GenericLobController extends Controller
 
             $service = app('App\\Services\\'.ucfirst($quoteType).'QuoteService');
 
-            if($quoteType == QuoteTypes::LIFE->value) {
+            if($quoteType == strtolower(QuoteTypes::LIFE->value)) {
                 $service = app('App\\Services\\Life\\LifeQuoteService');
             }
             

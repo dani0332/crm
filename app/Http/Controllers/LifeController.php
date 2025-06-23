@@ -11,6 +11,9 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
 use PDF;
+use App\Jobs\SendOCAEmailJob;
+use App\Http\Requests\LifeSendOCAEmailRequest;
+
 
 class LifeController extends Controller
 {
@@ -207,5 +210,13 @@ class LifeController extends Controller
         ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
 
         return $pdf->stream('Life Insurance Comparison Table.pdf');
+    }
+
+    public function sendOCAEmail(LifeSendOCAEmailRequest $request)
+    {
+        // Dispatch job to send OCA email
+        SendOCAEmailJob::dispatch($request->quoteUID, $request?->planIds ?? []);
+
+        return response()->json(['message' => 'OCA Email Sent Successfully']);
     }
 }

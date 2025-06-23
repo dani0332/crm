@@ -2279,7 +2279,7 @@ class CRUDController extends Controller
             if ($ocbEmailJob) {
                 LoggerService::info('sendOCBEmailNB OCB email sending started');
                 dispatch(new $ocbEmailJob($quoteUuId, null));
-                LoggerService::info('sendOCBEmailNB OCB email Job dispatched');
+                LoggerService::info(message: 'sendOCBEmailNB OCB email Job dispatched');
             }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);

@@ -31,6 +31,7 @@ class LifeSendOCAEmailRequest extends FormRequest
                     $query->where('quote_type_id', QuoteTypeId::Life);
                 }),
             ],
+            'planIds' => 'nullable|array',
         ];
     }
 

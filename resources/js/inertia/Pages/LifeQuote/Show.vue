@@ -232,9 +232,9 @@ const sendOCAEmail = () => {
     return;
   }
 
-  if (selectedPlans.value.length > 6) {
+  if (selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Maximum 6 plans can be selected',
+      title: 'Maximum 5 plans can be selected',
       position: 'top',
     });
     modals.sendConfirm = false;
@@ -242,6 +242,30 @@ const sendOCAEmail = () => {
   }
 
   loader.value.link = true;
+
+  
+  // send email 
+  axios
+    .post(route('life-quotes-send-oca-email'), {
+      quoteUID: page.props.quote.uuid,
+      planIds: selectedPlans.value.map(plan => plan.planId),
+    })
+    .then(res => {
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+        loader.value.link = false;
+       
+    })
+    .catch(err => {
+      console.log(err);
+      notification.error({
+        title: 'Something went wrong',
+        position: 'top',
+      });
+      loader.value.link = false;
+    });
 };
 
 const getPaymentTermTitle = months => {

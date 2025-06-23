@@ -18,18 +18,15 @@ class EmailService
     /**
      * Create a new class instance.
      */
-    public function sendOCAEmail(string $quoteUID)
+    public function sendOCAEmail(string $quoteUID, array $planIds = [])
     {
 
         $logPrefix = get_class($this). ' fn: sendOCAEmail - ';
 
         $lead = $this->getQuote($quoteUID);
 
-        // get plans
-        $plans = $this->getPlans($lead);
-
         // map data for bird service
-        $emailData = $this->mapOCAEmailData($lead, $plans);
+        $emailData = $this->mapOCAEmailData($lead, $planIds);
 
         // get bird flow url for Life from ApplicationStorage
         $flowUrl = $this->getApplicationStorage();
@@ -61,13 +58,13 @@ class EmailService
         return $lifePlans;
     }
 
-    private function attachComparisionPdf(PersonalQuote $quote, $plans)
+    private function attachComparisionPdf(PersonalQuote $quote, $planIds)
     {
-        $lifePlans = $plans;
-        $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
-        $pdf = app(LifeQuoteService::class)->exportComparisionPdf($quote, $planIds, $lifePlans);
+        $pdf = app(LifeQuoteService::class)->exportPlansPdf($quote->uuid, $planIds);
+        
         $pdfContent = $pdf['pdf']->output();
 
+        
         LoggerService::info(self::class.' - attachLifeComparisionPdf - Storing PDF temporarily');
 
         // Generate a unique temporary file path
@@ -80,7 +77,7 @@ class EmailService
             now()->addMinutes(120)
         );
         // Schedule deletion after 5 minutes
-        $this->scheduleFileDeletion($tempFilePath);
+        // $this->scheduleFileDeletion($tempFilePath);
 
         LoggerService::info(self::class.' - attachLifeComparisionPdf - Public URL generated');
 
@@ -101,7 +98,7 @@ class EmailService
     {
         return ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW)->value('value');
     }
-    private function mapOCAEmailData($lead, $plans)
+    private function mapOCAEmailData($lead, $planIds)
     {
         $firstName = $lead->first_name;
         $lastName = $lead->last_name;
@@ -135,7 +132,7 @@ class EmailService
             'workflowType' => $workflowType,
         ];
 
-        $tempUrlPDF = $this->attachComparisionPdf($lead, $plans);
+        $tempUrlPDF = $this->attachComparisionPdf($lead, $planIds);
 
         if (! empty($tempUrlPDF)) {
             $data['pdfLink'] = $tempUrlPDF['pdfLink'];
