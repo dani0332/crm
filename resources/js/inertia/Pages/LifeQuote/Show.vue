@@ -243,20 +243,18 @@ const sendOCAEmail = () => {
 
   loader.value.link = true;
 
-  
-  // send email 
+  // send email
   axios
     .post(route('life-quotes-send-oca-email'), {
       quoteUID: page.props.quote.uuid,
       planIds: selectedPlans.value.map(plan => plan.planId),
     })
     .then(res => {
-        notification.success({
-          title: res.data.message,
-          position: 'top',
-        });
-        loader.value.link = false;
-       
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+      loader.value.link = false;
     })
     .catch(err => {
       console.log(err);
