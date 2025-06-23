@@ -664,6 +664,7 @@ const PLAN_TOOLTIP_MAPPINGS = {
       'Monthly, quarterly, semi-annual, or annual options',
     'Added life insurance coverage': 'Financial security for loved ones',
     'Investment options': 'Wide range of investment funds managed by experts',
+    'Rate of return': 'Potential growth on your investment',
   },
 };
 
@@ -1724,7 +1725,12 @@ const getIncludedBenefitsTooltip = fieldText =>
 
                         <div class="grid sm:grid-cols-2">
                           <dt class="text-sm font-medium text-gray-700">
-                            Investment Frequency
+                            <x-tooltip placement="bottom">
+                              <span class="underline decoration-dotted decoration-primary-700">
+                                Investment Frequency
+                              </span>
+                              <template #tooltip>How often you plan to invest</template>
+                            </x-tooltip>
                           </dt>
                           <dd class="text-gray-900">
                             {{ planDetails.investmentFrequency }}
