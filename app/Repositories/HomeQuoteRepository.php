@@ -730,6 +730,7 @@ class HomeQuoteRepository extends BaseRepository
                 'quoteStatus',
                 'advisor',
                 'nationality',
+                'renewalBatchModel',
                 'plans',
                 'homeQuote',
                 'homeQuote.nationality',

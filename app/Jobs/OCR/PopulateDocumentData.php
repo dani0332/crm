@@ -20,7 +20,7 @@ class PopulateDocumentData implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 100;
     public $backoff = 300;
 
