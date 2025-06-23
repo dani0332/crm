@@ -253,15 +253,24 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         $tempFile = tempnam(sys_get_temp_dir(), 'aml_ctf_');
         file_put_contents($tempFile, $csvContent);
         
+        // Prepare email template data
+        $templateData = [
+            'recipientName' => $requestParams['recipientName'] ?? 'Valued User',
+            'exportTitle' => 'AML/CFT Customer Risk Profile Report',
+            'currentDate' => Carbon::now()->format('d M Y'),
+            'recordCount' => $this->data->count(),
+            'fileSize' => round(strlen($csvContent) / 1024, 2), // Approximate file size in KB
+            'systemName' => 'AFIA Insurance Brokerage Services LLC',
+        ];
+
         // Send email with attachment
-        \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($recipientEmail, $emailSubject, $tempFile, $fileName, $ccRecipients) {
+        \Illuminate\Support\Facades\Mail::send('ExportCSVMail', $templateData, function ($message) use ($recipientEmail, $emailSubject, $tempFile, $fileName, $ccRecipients) {
             $message->to($recipientEmail)
                     ->subject($emailSubject)
                     ->attach($tempFile, [
                         'as' => $fileName . '.csv',
                         'mime' => 'text/csv',
-                    ])
-                    ->html('Please find the AML/CTF report attached.');
+                    ]);
             
             if (!empty($ccRecipients)) {
                 $message->cc($ccRecipients);
