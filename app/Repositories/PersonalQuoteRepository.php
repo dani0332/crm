@@ -7,9 +7,12 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
+use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
+use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
@@ -172,9 +175,9 @@ class PersonalQuoteRepository extends BaseRepository
                     WatermarkDocumentsJob::dispatch(
                         $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     )->afterCommit();
-                } else {
-                    info('Watermark job not dispatched - Ref: '.$quote->code);
                 }
+
+                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType);
 
                 if (! $insuranceProviderId && request()->is_send_update) {
                     LoggerService::info('File Uploaded - Insurance Provider is required to generate broker invoice number');
@@ -192,6 +195,28 @@ class PersonalQuoteRepository extends BaseRepository
             info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
             return ['status' => true, 'message' => $fileName.' :  Document upload failed, please try again'];
+        }
+    }
+
+    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType)
+    {
+        if ($quote instanceof SendUpdateLog) {
+            info(self::class."::populateDocumentData - Send Update Log found, skipping document data population for UUID: {$quote->uuid}");
+
+            return;
+        }
+
+        $quoteType = QuoteTypes::tryFrom(ucfirst(request('quote_type')));
+        $userId = Auth::user()->id;
+        if ($quote && $quoteType && $filePathAzure) {
+            PopulateDocumentData::dispatch(
+                $quoteType,
+                $quote,
+                $documentType,
+                $filePathAzure,
+                $fileMimeType,
+                $userId,
+            );
         }
     }
 

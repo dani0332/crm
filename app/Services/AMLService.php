@@ -12,10 +12,12 @@ use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
@@ -25,6 +27,7 @@ use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
@@ -437,6 +440,64 @@ class AMLService
         return true;
     }
 
+    public function getLatestScreening($quoteRequestId, $quoteTypeId)
+    {
+        return KycLog::withTrashed()->where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+        ])->where(function ($ryuFilter) {
+            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+            $ryuFilter->orWhereNull('decision');
+        })->where(function ($aml) {
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->orWhereNull('screening_type');
+        })->whereNull('screenshot')->get()->last() ?? [];
+    }
+
+    public function handleResponse(bool $status, string $message, bool $isAutomation = false)
+    {
+        return $isAutomation ? response()->json(['status' => $status, 'message' => $message]) : redirect()->back()->with($status ? 'success' : 'error', $message);
+    }
+
+    public function prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote)
+    {
+        $getMemberOrUBODetails = $this->getMemberOrUBODetails($AMLCheckRequest, $quoteType, $updateQuote->id);
+        $getLastScreening = $this->getLatestScreening($updateQuote->id, $quoteType->id);
+        $membersDetails = $getMemberOrUBODetails;
+
+        if (! empty($getMemberOrUBODetails->toArray())) {
+            LoggerService::info('AML Screening Bridger - Validation check - Members found against quote');
+            $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
+            if (in_array(null, $memberValidateCheck)) {
+                LoggerService::info('AML Screening Bridger - Validation check - Member First Name missing');
+
+                return [false, 'First Name missing', [], $getLastScreening];
+            }
+
+            // Filter members that need screening based on their updated_at date
+            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($member) use ($getLastScreening) {
+                $lastScreeningDate = $getLastScreening->created_at ?? '';
+
+                // Include members with null updated_at (replicated members that need screening)
+                if (is_null($member->updated_at)) {
+                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
+                        'member_id' => $member->id ?? 'unknown',
+                        'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
+                    ]);
+
+                    return true;
+                }
+
+                // Include members that were updated after the last screening
+                return $member->updated_at >= $lastScreeningDate;
+            });
+
+            $membersDetails = $getMemberOrUBODetails;
+        }
+
+        return [true, '', $membersDetails, $getLastScreening];
+    }
+
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
         LoggerService::info('fn:getMemberOrUBODetails - AMLService');
@@ -495,7 +556,6 @@ class AMLService
             } else {
                 $status = CustomerTypeEnum::IndividualShort;
             }
-
         } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::IndividualShort;
         }
@@ -705,7 +765,7 @@ class AMLService
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteDetails->id,
             'customer_id' => $quoteDetails->customer_id,
-        ])->with(['customer', 'insured'])->first();
+        ])->with(['customer', 'insured'])->latest('updated_at')->first();
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
         try {
@@ -736,7 +796,6 @@ class AMLService
             LoggerService::info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
             $screeningResponse['screening_type'] = $screeningType;
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
-
         } catch (Exception $exception) {
             LoggerService::error('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
             $screeningResponse = ['status' => AMLStatusCode::AMLPending, 'message' => $exception->getMessage(), 'screening_type' => $screeningType];
@@ -787,7 +846,6 @@ class AMLService
 
         $quoteObject::where('id', $quoteDetails->id)->update($insurerAMLStatus);
         LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
-
     }
 
     private function formatGender($gender)
@@ -841,19 +899,32 @@ class AMLService
 
     public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
     {
-        LoggerService::info('fn:getInsuredDetails - AMLService');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
-        return CustomerInsured::where([
+        $customerInsured = CustomerInsured::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
             'customer_id' => $customerId,
-        ])->with(['customer', 'insured', 'insured.insuredKyc'])->first();
+        ])
+            ->with(['customer', 'insured', 'insured.insuredKyc'])
+            ->latest('updated_at')
+            ->first();
+
+        if (! $customerInsured) {
+            LoggerService::info('No CustomerInsured record found', [
+                'customer_id' => $customerId,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+            ]);
+        }
+
+        return $customerInsured;
     }
 
     // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
     public function getEntityDetails($quoteTypeId, $quoteRequestId)
     {
-        LoggerService::info('fn:getEntityDetails - AMLService');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
         return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
@@ -862,7 +933,9 @@ class AMLService
 
     public function prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType): bool
     {
-        LoggerService::info('fn:prepareInsuredKycFormData - AMLService');
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_SCREENING);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+
         try {
             if ($insuredKycRequest->customer_type == CustomerTypeEnum::Entity) {
                 $data['corporation_country'] = Nationality::where('id', $insuredKycRequest['country_of_corporation'])->value('country_name');
@@ -1046,7 +1119,6 @@ class AMLService
             });
 
             $return = ['status' => true, 'response' => 'AML Screening skipped for this quote'];
-
         } catch (\Exception $exception) {
             LoggerService::error('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
 
@@ -1086,15 +1158,25 @@ class AMLService
 
     public function getAMLData($requestParams = [])
     {
+        // This method is kept for backward compatibility
+        $query = $this->getAMLQueryBuilder($requestParams);
+
+        return $this->processAMLDataFromQuery($query);
+    }
+
+    public function getAMLQueryBuilder($requestParams = [])
+    {
         if (! Auth::check()) {
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
-            Auth::login($user);
+            if ($user) {
+                Auth::login($user);
+            }
             DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 
-        $query = AML::select([
+        return AML::select([
             'id',
             'quote_request_id',
             'quote_type_id',
@@ -1107,7 +1189,10 @@ class AMLService
         ])
             ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
             ->whereBetween('created_at', dateQueryFilter(request('amlCreatedStartDate'), request('amlCreatedEndDate')));
+    }
 
+    public function processAMLDataFromQuery($query)
+    {
         $data = collect();
 
         $query->chunk(1000, function ($chunk) use (&$data) {
@@ -1117,7 +1202,7 @@ class AMLService
 
                 // Skip if quote type is not found
                 if (! $quoteType) {
-                    LoggerService::warning("Quote type not found for ID: {$quoteTypeId}");
+                    // LoggerService::warning("Quote type not found for ID: {$quoteTypeId}");
 
                     continue;
                 }
@@ -1139,5 +1224,518 @@ class AMLService
         });
 
         return $data;
+    }
+
+    public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
+    {
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+
+        $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
+
+        $insured = $this->createOrUpdateInsured($request, $isEntity);
+        $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
+
+        $isCustomerInsuredAssociationUpdated = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
+        $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+
+        $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
+
+        return [$shouldApplicableForScreening, $insured, $entityId];
+    }
+
+    private function createOrUpdateInsured($request, bool $isEntity): Insured
+    {
+        if ($isEntity) {
+            $insured = Insured::updateOrCreate([
+                'customer_type' => CustomerTypeEnum::Entity,
+                'trade_license_no' => $request->trade_license_no,
+            ], [
+                'company_name' => $request->company_name,
+                'company_address' => $request->company_address,
+                'industry_type_code' => $request->industry_type_code,
+                'emirate_of_registration_id' => $request->emirate_of_registration_id,
+            ]);
+        } else {
+            $insured = Insured::updateOrCreate([
+                'customer_type' => CustomerTypeEnum::Individual,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
+            ], [
+                'first_name' => $request->insured_first_name,
+                'last_name' => $request->insured_last_name,
+                'dob' => $request->dob,
+                'nationality_id' => $request->nationality_id,
+                'gender' => $request->screening_gender,
+            ]);
+        }
+
+        $insured->refresh();
+
+        return $insured;
+    }
+
+    public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
+    {
+        $getPersonalQuote = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => $quoteTypeId])->first();
+        if ($getPersonalQuote) {
+            $getPersonalQuote->insured_id = $insured->id;
+            $getPersonalQuote->save();
+        }
+
+        return $getPersonalQuote;
+    }
+
+    private function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
+    {
+        $isCustomerInsuredAssociationUpdated = false;
+
+        // Check for orphaned record (without quote mapping) first
+        $orphanedRecord = CustomerInsured::where([
+            'customer_id' => $request->customer_id,
+            'insured_id' => $insured->id,
+        ])->whereNull('quote_type_id')
+            ->whereNull('quote_request_id')
+            ->first();
+
+        // Create or update the customer-insured mapping
+        if ($orphanedRecord) {
+            // Update the existing orphaned record instead of deleting and creating new
+            $isCustomerInsuredAssociationUpdated = true;
+            $orphanedRecord->update([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+                'updated_at' => now(),
+            ]);
+
+            LoggerService::info('AML Screening Bridger - Updated orphaned customer_insured record', [
+                'customer_insured_id' => $orphanedRecord->id,
+                'customer_id' => $request->customer_id,
+                'insured_id' => $insured->id,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ]);
+        } else {
+            // Check existing quote mapping
+            $existingQuoteMapping = CustomerInsured::where([
+                'customer_id' => $request->customer_id,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ])->orderBy('updated_at', 'desc')->first();
+
+            if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
+                // Create new record or update existing quote mapping
+                $isCustomerInsuredAssociationUpdated = true;
+                CustomerInsured::updateOrCreate([
+                    'customer_id' => $request->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ], ['updated_at' => now()]);
+
+                // Update quote status
+                $quote->update(['kyc_decision' => Kyc::PENDING]);
+
+                LoggerService::info('AML Screening Bridger - Insured association changed for quote', [
+                    'old_insured_id' => $existingQuoteMapping->insured_id,
+                    'new_insured_id' => $insured->id,
+                    'quote_id' => $quote->id,
+                ]);
+
+            } elseif (! $existingQuoteMapping) {
+                // This is a completely new quote-insured association
+                $isCustomerInsuredAssociationUpdated = true;
+                CustomerInsured::updateOrCreate([
+                    'customer_id' => $request->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ], ['updated_at' => now()]);
+
+                LoggerService::info('AML Screening Bridger - New insured association created for quote', [
+                    'insured_id' => $insured->id,
+                    'quote_id' => $quote->id,
+                ]);
+            }
+        }
+
+        return $isCustomerInsuredAssociationUpdated;
+    }
+
+    private function shouldApplyScreening($insured, bool $isCustomerInsuredAssociationUpdated, $getLastScreening, bool $isEntity): bool
+    {
+        if ($insured->wasRecentlyCreated) {
+            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile created');
+
+            return true;
+        }
+
+        if ($isCustomerInsuredAssociationUpdated) {
+            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile association changed for quote');
+
+            return true;
+        }
+
+        if ($insured->isDirty() ||
+            ! isset($getLastScreening->created_at) ||
+            Carbon::parse($insured->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
+            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile details updated');
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // TODO:: this function is added because universal search and customer members have dependency on customer and entity details.
+    private function handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, bool $isEntity): ?int
+    {
+        if ($isEntity) {
+            return $this->handleEntityData($request, $quoteTypeId, $quote);
+        }
+
+        $this->updateCustomerData($request);
+
+        return null;
+    }
+
+    private function handleEntityData($request, $quoteTypeId, $quote): int
+    {
+        $entityData = [
+            'trade_license_no' => $request->trade_license_no,
+            'company_name' => $request->company_name,
+            'company_address' => $request->company_address,
+            'industry_type_code' => $request->industry_type_code,
+            'emirate_of_registration_id' => $request->emirate_of_registration_id,
+        ];
+
+        $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
+        $entity->fill($entityData);
+
+        if (! $entity->exists) {
+            $entity->save();
+            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+        } elseif ($entity->isDirty()) {
+            $entity->save();
+        }
+
+        $entity->refresh();
+
+        QuoteRequestEntityMapping::updateOrCreate([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quote->id,
+        ], [
+            'entity_id' => $entity->id,
+            'entity_type_code' => $request->entity_type_code,
+        ]);
+
+        return $entity->id;
+    }
+
+    private function updateCustomerData($request): void
+    {
+        $customer = Customer::with('nationality')->findOrFail($request->customer_id);
+
+        $customer->fill([
+            'nationality_id' => $request->nationality_id,
+            'dob' => $request->dob,
+            'insured_first_name' => $request->insured_first_name,
+            'insured_last_name' => $request->insured_last_name,
+        ]);
+
+        if ($customer->isDirty()) {
+            $customer->save();
+        }
+    }
+
+    public function updatePAId($payload, $updateQuote)
+    {
+        // Update PA ID if user has appropriate roles
+        if (auth()->user()?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]) || ($payload['isAutomation'] && $payload['systemUser']?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]))) {
+            if (checkPersonalQuotes(ucwords($payload['quoteType']->code))) {
+                AMLService::updatePaIdForPersonalQuotes((string) $payload['quoteType']->id, $payload['quoteRequestId'], true, ['pa_id' => $payload['processbyUser']->id]);
+            } else {
+                $updateQuote->pa_id = $payload['processbyUser']->id;
+                $updateQuote->save();
+            }
+        }
+    }
+
+    public function generateAmlCftReport()
+    {
+        LoggerService::info('fn:amlCtfReportExport - AMLController');
+
+        $request = request();
+        $startDate = $request->amlCreatedStartDate;
+        $endDate = $request->amlCreatedEndDate;
+
+        $query = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
+
+        $query->groupBy('pqr.id', 'kl.created_at', 'cm.id');
+        $collection = $query->get();
+
+        // Sort collection by customer first name, with nulls last
+        $collection = $collection->sortBy(function ($item) {
+            $name = $item->customer_first_name ?: $item->first_name;
+
+            return $name ? strtolower($name) : '~'; // ~ sorts after letters, putting nulls last
+        })->values();
+
+        // Calculate summary
+        $totalCustomers = $collection->count();
+        $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();
+        $mediumRisk = $collection->where('risk_score', '>=', 26)->where('risk_score', '<=', 34)->count();
+        $highRisk = $collection->where('risk_score', '>=', 35)->count();
+
+        return [
+            'collection' => $collection,
+            'summary' => [
+                'total_customers' => $totalCustomers,
+                'high_risk' => $highRisk,
+                'medium_risk' => $mediumRisk,
+                'low_risk' => $lowRisk,
+            ],
+        ];
+    }
+
+    public function buildAmlCftReportQuery(Request $request, ?string $startDate, ?string $endDate)
+    {
+        $personalQuoteTypesIds = [
+            QuoteTypes::BIKE->id(),
+            QuoteTypes::CYCLE->id(),
+            QuoteTypes::JETSKI->id(),
+            QuoteTypes::PET->id(),
+            QuoteTypes::YACHT->id(),
+            QuoteTypes::HOME->id(),
+        ];
+
+        $quoteTypeId = null;
+        if ($request->quoteType) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
+        }
+        // KYC log subquery
+        $kycLogSub = DB::table('kyc_logs')
+            ->select('quote_request_id', 'decision', 'notes', 'quote_type_id', 'is_owner_pep', 'created_at', 'updated_at')
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA)
+            ->whereNotNull('quote_request_id')
+            ->whereNotNull('quote_type_id');
+
+        $query = DB::table('personal_quotes as pqr')
+            ->select([
+                'pqr.id',
+                'pqr.uuid',
+                'pqr.code',
+                'pqr.quote_type_id',
+                'pqr.aml_status',
+                'pqr.policy_start_date',
+                'pqr.policy_expiry_date',
+                'pqr.premium',
+                'pqr.policy_number',
+                'pqr.quote_status_id',
+                'pqr.insurance_provider_id',
+                'pqr.risk_score as risk_score',
+                'qs.text as lead_status',
+                'ip.text as insurance_provider',
+                'ik.first_name as first_name',
+                'ik.last_name as last_name',
+                'ik.id_number as emirates_id',
+                'i.customer_type as customer_type',
+                'ci.insured_id as insured_id',
+                'ik.residential_status',
+                'ik.premium_tenure',
+                'ik.transaction_volume',
+                'ik.pep as is_owner_pep',
+                'kl.created_at as last_aml_screening_date',
+                'cm.id as customer_id',
+                'cm.first_name as customer_first_name',
+                'cm.last_name as customer_last_name',
+                'cm.uae_resident as customer_is_uae_resident',
+                'kl.notes as remarks',
+            ])
+            ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->when(isset($startDate) && isset($endDate) && $startDate != 'null' && $endDate != 'null', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('pqr.created_at', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay(),
+                ]);
+            })
+            ->when($request->searchType === 'customerEmail', fn ($q) => $q->where('pqr.email', $request->searchField))
+            ->when($request->searchType === 'cdbId', fn ($q) => $q->where('pqr.code', $request->searchField));
+
+        // Common joins
+        $query->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
+            ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id');
+
+        // Dynamic customer_insured join
+        $query->leftJoin('customer_insured as ci', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                if ($quoteTypeId) {
+                    $q->where('pqr.quote_type_id', $quoteTypeId)
+                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
+                } else {
+                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
+                }
+            })
+                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
+                        $q->where('pqr.quote_type_id', $quoteTypeId)
+                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
+                    } else {
+                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
+                    }
+                });
+        })
+            ->whereRaw('ci.id = (SELECT MAX(ci2.id) FROM customer_insured ci2 WHERE ci2.quote_request_id = ci.quote_request_id)');
+
+        // Join insured table
+        $query->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id');
+
+        // Join insured_kyc
+        $query->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
+
+        // Join customer_members with similar conditional logic
+        $query->leftJoin('customer_members as cm', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            if ($quoteTypeId) {
+                $modelTypes = $this->getModelTypeByQuoteTypeId($quoteTypeId);
+            } else {
+                $modelTypes = $this->getModelTypeByQuoteTypeId($personalQuoteTypesIds);
+            }
+            $join->on(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
+
+                if ($quoteTypeId) {
+                    $q->where('pqr.quote_type_id', $quoteTypeId)
+                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
+                        ->where('cm.quote_type', $modelTypes);
+                } else {
+                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
+                        ->whereIn('cm.quote_type', $modelTypes);
+                }
+            })
+                ->orOn(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
+                        $q->where('pqr.quote_type_id', $quoteTypeId)
+                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
+                            ->where('cm.quote_type', $modelTypes);
+                    } else {
+                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
+                            ->whereNotIn('cm.quote_type', $modelTypes);
+                    }
+                });
+        });
+
+        // Join kyc logs subquery
+        $query->leftJoinSub($kycLogSub, 'kl', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
+            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                if ($quoteTypeId) {
+                    $q->where('pqr.quote_type_id', $quoteTypeId)
+                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
+                } else {
+                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
+                }
+            })
+                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
+                    if ($quoteTypeId) {
+                        $q->where('pqr.quote_type_id', $quoteTypeId)
+                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
+                    } else {
+                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
+                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
+                    }
+                });
+        });
+
+        return $query;
+    }
+
+    public function saveKYCComplianceQuestions($complianceQuestions)
+    {
+        LoggerService::info('fn:saveKYCComplianceQuestions - AMLService', extra: [
+            'insured_id' => $complianceQuestions['insured_id'],
+        ]);
+
+        try {
+            $sameFields = [
+                'pep' => $complianceQuestions['pep'] ?? null,
+                'financial_sanctions' => $complianceQuestions['financial_sanctions'] ?? null,
+                'dual_nationality' => $complianceQuestions['dual_nationality'] ?? null,
+                'in_sanction_list' => $complianceQuestions['in_sanction_list'] ?? null,
+                'deal_sanction_list' => $complianceQuestions['deal_sanction_list'] ?? null,
+                'is_operation_high_risk' => $complianceQuestions['is_operation_high_risk'] ?? null,
+                'transaction_pattern' => $complianceQuestions['transaction_pattern'] ?? null,
+                'is_partner' => $complianceQuestions['is_partner'] ?? null,
+            ];
+
+            $kycData = array_merge($sameFields, [
+                'insured_id' => $complianceQuestions['insured_id'],
+                'is_sanction_match' => $complianceQuestions['is_sanction_match'] ?? null,
+                'in_fatf' => $complianceQuestions['in_fatf'] ?? null,
+                'is_owner_high_risk' => $complianceQuestions['is_owner_high_risk'] ?? null,
+                'transaction_volume' => $complianceQuestions['transaction_volume'] ?? null,
+                'transaction_activities' => $complianceQuestions['transaction_activities'] ?? null,
+            ]);
+
+            if ($insuredKyc = InsuredKyc::where('insured_id', $complianceQuestions['insured_id'])->first()) {
+                $insuredKyc->update($kycData);
+            } else {
+                InsuredKyc::create($kycData);
+            }
+
+            LoggerService::info('KYCComplianceQuestions updated');
+        } catch (Exception $exception) {
+            LoggerService::error('KYCComplianceQuestions failed to update', exception: $exception);
+        }
+    }
+
+    public function updateAMLStatusAgainstDecision($request, $quoteObject)
+    {
+        LoggerService::info(self::class.' - '.__FUNCTION__);
+
+        $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
+        $fetchKycLog->update([
+            'decision' => $request['aml_decision'] ?? '',
+            'notes' => trim($request['notes']) ?? '',
+            'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
+            'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
+            'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
+        ]);
+
+        $kycLog = $fetchKycLog->first();
+        $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
+
+        $quoteObject->aml_status = $amlStatus;
+        $quoteObject->save();
+
+        return $amlStatus == AMLStatusCode::AMLScreeningCleared ?
+                            AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
+    }
+
+    /**
+     * Get the model class name(s) based on QuoteTypes id(s).
+     *
+     * @return string|array
+     */
+    public static function getModelTypeByQuoteTypeId(int|array $quoteTypeIds)
+    {
+        $nameSpace = 'App\\Models\\';
+        $resolveModel = function ($id) use ($nameSpace) {
+            $quoteType = QuoteTypes::getName($id);
+            if (! $quoteType) {
+                throw new \InvalidArgumentException("Invalid QuoteTypeId: $id");
+            }
+
+            return checkPersonalQuotes(ucwords($quoteType->value))
+                ? $nameSpace.'PersonalQuote'
+                : $nameSpace.ucwords($quoteType->value).'Quote';
+        };
+        if (is_array($quoteTypeIds)) {
+            return array_map($resolveModel, $quoteTypeIds);
+        }
+
+        return $resolveModel($quoteTypeIds);
     }
 }

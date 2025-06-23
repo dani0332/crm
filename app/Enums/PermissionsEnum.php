@@ -242,6 +242,8 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_LIST = 'renewal-batches-list';
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
+    public const RENEWAL_UPLOAD_NONMOTOR = 'renewal-upload-nonmotor';
+    public const RENEWALS_BATCHES_NONMOTOR = 'renewals-batches-nonmotor';
     public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
     public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
@@ -418,6 +420,8 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
+    public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
+    public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
 
     public static function getAdvisorConversionReportPermissions()

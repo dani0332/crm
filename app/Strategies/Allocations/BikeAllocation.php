@@ -23,7 +23,7 @@ class BikeAllocation implements Allocation
         $this->overrideAdvisorId = $overrideAdvisorId;
     }
 
-    public function executeSteps()
+    public function execute()
     {
         $response = $this->bikeAllocationService->createResponse(0, '', Response::HTTP_INTERNAL_SERVER_ERROR);
 
@@ -53,7 +53,7 @@ class BikeAllocation implements Allocation
                 if ($tier) {
                     LoggerService::info('Tier finalized is : '.$tier->name);
                     // Find available users for the tier
-                    $availableUsers = $this->findAvailableUsers($tier->id, $lead->bikeQuote->source);
+                    $availableUsers = $this->findAvailableUsers($tier->id, $lead->bikeQuote->source, $lead);
 
                     // Find custom rules for the lead
                     $rules = $this->findRules($lead);
@@ -115,9 +115,9 @@ class BikeAllocation implements Allocation
         return $this->bikeAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource): array|Collection
+    protected function findAvailableUsers($tierId, $leadSource, $lead): array|Collection
     {
-        return $this->bikeAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource);
+        return $this->bikeAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $lead);
     }
 
     protected function findRules($lead)

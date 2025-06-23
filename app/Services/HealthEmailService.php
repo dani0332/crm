@@ -76,6 +76,10 @@ class HealthEmailService extends BaseService
 
     private function getMembers($currentPlan)
     {
+        if (! property_exists($currentPlan, 'memberPremiumBreakdown')) {
+            return [];
+        }
+
         return collect($currentPlan->memberPremiumBreakdown ?? [])
             ->map(function ($member, $index) {
                 return collect($member)
@@ -110,33 +114,87 @@ class HealthEmailService extends BaseService
         }, $documents);
     }
 
+    private function getValueFromRatesPerCopay($currentPlan, $property)
+    {
+        if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            $ratesPerCopay = is_array($currentPlan->ratesPerCopay) ? $currentPlan->ratesPerCopay : (array) $currentPlan->ratesPerCopay;
+
+            $ratesPerCopay = collect($ratesPerCopay)->first();
+
+            return $ratesPerCopay[$property] ?? 0;
+        }
+
+        return null;
+    }
+
+    private function getPlanData($currentPlan)
+    {
+        if (! $currentPlan || ! is_object($currentPlan) || empty((array) $currentPlan)) {
+            return [];
+        }
+
+        $plan = [];
+
+        $getValueFromPlanOrRates = function (string $property) use ($currentPlan) {
+            if (property_exists($currentPlan, $property) && ($currentPlan->$property ?? null)) {
+                return $currentPlan->{$property};
+            }
+
+            return $this->getValueFromRatesPerCopay($currentPlan, $property);
+        };
+
+        $discountPremium = $getValueFromPlanOrRates('discountPremium');
+        $vat = $getValueFromPlanOrRates('vat');
+
+        if (property_exists($currentPlan, 'name')) {
+            $plan['name'] = $currentPlan->name;
+        }
+
+        if (property_exists($currentPlan, 'providerName')) {
+            $plan['providerName'] = $currentPlan->providerName;
+        }
+
+        if (property_exists($currentPlan, 'providerCode')) {
+            $plan['providerCode'] = strtolower($currentPlan->providerCode);
+        }
+
+        if (property_exists($currentPlan, 'eligibilityName')) {
+            $plan['tpa'] = $currentPlan->eligibilityName;
+        }
+
+        $plan['actualPremium'] = "AED {$discountPremium}";
+        $plan['vat'] = "AED {$vat}";
+
+        if (property_exists($currentPlan, 'policyWordings')) {
+            $plan['tobs'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan->policyWordings));
+        }
+
+        if (property_exists($currentPlan, 'benefits')) {
+            $benefits = is_object($currentPlan->benefits) ? $currentPlan->benefits : (object) $currentPlan->benefits;
+
+            if (property_exists($benefits, 'networkLink')) {
+                $plan['networkLinks'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $benefits->networkLink));
+            }
+        }
+
+        if (property_exists($currentPlan, 'mafLink')) {
+            $plan['mafLink'] = $currentPlan->mafLink;
+        }
+
+        return $plan;
+    }
+
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
     {
         $response = Ken::request('/fetch-health-selected-plan', 'post', [
             'quoteUID' => $lead->uuid,
         ]);
-        $currentPlan = (object) collect($response['plans'])->first() ?? [];
+
+        $plans = collect($response['plans'] ?? []);
+
+        $currentPlan = (object) $plans->first();
         $members = $this->getMembers($currentPlan);
-
-        $getDiscountPremium = function () use ($currentPlan) {
-            if ($currentPlan->discountPremium ?? null) {
-                return $currentPlan->discountPremium;
-            }
-
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                return $currentPlan->ratesPerCopay?->discountPremium ?? 0;
-            }
-        };
-
-        $getVat = function () use ($currentPlan) {
-            if ($currentPlan->vat ?? null) {
-                return $currentPlan->vat;
-            }
-
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                return $currentPlan->ratesPerCopay?->vat ?? 0;
-            }
-        };
+        $plan = $this->getPlanData($currentPlan);
 
         $payload = [
             'code' => $lead->code,
@@ -148,17 +206,7 @@ class HealthEmailService extends BaseService
             'email' => $lead->email,
             'totalMembers' => count($members),
             'members' => $members,
-            'plan' => [
-                'name' => $currentPlan?->name,
-                'providerName' => $currentPlan?->providerName,
-                'providerCode' => strtolower($currentPlan?->providerCode ?? ''),
-                'tpa' => $currentPlan?->eligibilityName ?? '',
-                'actualPremium' => "AED {$getDiscountPremium()}",
-                'vat' => "AED {$getVat()}",
-                'tobs' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
-                'networkLinks' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
-                'mafLink' => $currentPlan?->mafLink,
-            ],
+            'plan' => $plan,
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
         ];
 

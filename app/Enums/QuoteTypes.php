@@ -32,10 +32,7 @@ use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use App\Services\Logger\LoggerService;
-use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
@@ -270,10 +267,10 @@ enum QuoteTypes: string
         LoggerService::startQuoteLogging($this->refId($uuid), LoggerFeatureEnum::ALLOCATION);
 
         $allocationService = match ($this) {
-            self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),
-            self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
+            self::CAR => new CarAllocation($uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),
+            self::HEALTH => new HealthAllocation($uuid, overrideAdvisorId: $overrideAdvisorId),
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
-            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $this->getTracker(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, $uuid, $teamId), $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::TRAVEL => new TravelAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::PET => new PetAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
@@ -285,7 +282,7 @@ enum QuoteTypes: string
         };
 
         if ($allocationService) {
-            return $allocationService->executeSteps();
+            return $allocationService->execute();
         }
 
         return $allocationService;
@@ -305,6 +302,7 @@ enum QuoteTypes: string
             self::CORPLINE => [RolesEnum::CorpLineAdvisor],
             self::HOME => [RolesEnum::HomeAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
+            self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             default => [],
         };
     }
@@ -355,6 +353,14 @@ enum QuoteTypes: string
                 return BusinessQuote::class;
             case self::getId(self::TRAVEL):
                 return TravelQuote::class;
+            case self::getId(self::YACHT):
+                return YachtQuote::class;
+            case self::getId(self::BIKE):
+                return BikeQuote::class;
+            case self::getId(self::CYCLE):
+                return CycleQuote::class;
+            case self::getId(self::JETSKI):
+                return JetskiQuote::class;
             default:
                 return PersonalQuote::class;
         }

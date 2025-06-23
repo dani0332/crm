@@ -93,6 +93,9 @@ class EventServiceProvider extends ServiceProvider
         \Illuminate\Queue\Events\JobTimedOut::class => [
             HandleAxiomBatchFlush::class,
         ],
+        \App\Events\PrivateClientUpdatedEvent::class => [
+            \App\Listeners\ApplyPrivateClientTagListener::class,
+        ],
 
     ];
 
