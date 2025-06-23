@@ -3,6 +3,7 @@
 namespace App\Services\OCR;
 
 use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Models\DocumentType;
@@ -145,7 +146,11 @@ class OCRService
                     $docType,
                     $data
                 );
-                (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
+
+                $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
+                if ($isQuoteStatusTransectionApproved) {
+                    (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
+                }
 
                 // Send end notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types when processing completes successfully
                 if ($this->requiresOcrNotifications($docType) && $dataFilledResponse) {
