@@ -366,7 +366,7 @@ onMounted(() => {
         >
           Export to Excel
         </x-button>
-        <!-- <x-button
+        <x-button
           size="sm"
           color="#ff5e00"
           @click.prevent="downloadAmlCtfReport()"
@@ -374,7 +374,7 @@ onMounted(() => {
           :loading="loader.export"
         >
           Export AML Risk Score Report
-        </x-button> -->
+        </x-button>
         <x-button
           size="sm"
           color="#ff5e00"
