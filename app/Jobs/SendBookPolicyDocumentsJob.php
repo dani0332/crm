@@ -110,11 +110,10 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         } elseif ($modelType == quoteTypeCode::SAVINGS) {
             $planName = $quote?->insuranceProviderPlan?->text ?? '';
 
-            // TODO : need to discuss this, because file size is exceed.
-            /*$docs[] = (object) [
+            $docs[] = (object) [
                 'watermarked_doc_url' => $quote->insuranceProviderPlan?->policyWordings?->link,
                 'document_type_text' => 'Policy Wording/handbook',
-            ];*/
+            ];
         }
 
         $quote->load('advisor');
