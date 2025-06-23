@@ -560,31 +560,33 @@ class SplitPaymentService
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
 
-        // Check if the transaction is an "embedded" transaction from the main website's quote flow.
-        $isEmbedded = EmbeddedTransaction::where('quote_request_type', $payment->paymentable_type)
+        if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
+             // Check if the transaction is an "embedded" transaction from the main website's quote flow.
+            $isEmbedded = EmbeddedTransaction::where('quote_request_type', $payment->paymentable_type)
             ->where('quote_request_id', $payment->paymentable_id)
             ->select('id')
             ->limit(1)
             ->exists();
 
-        if ($isEmbedded) {
-            // For embedded transactions, generate a link that directs the user back to the website's payment page.
-            LoggerService::info("Generating embedded payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
-            $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
-            $lob = strtolower($modelType);
-            $paymentLink = "{$paymentLink}/{$lob}-insurance/quote/{$request->quoteUuid}/payment";
+            if ($isEmbedded) {
+                // For embedded transactions, generate a link that directs the user back to the website's payment page.
+                LoggerService::info("Generating embedded payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
+                $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
+                $lob = strtolower($modelType);
+                $paymentLink = "{$paymentLink}/{$lob}-insurance/quote/{$request->quoteUuid}/payment";
 
-            $insuranceProvider = getInsuranceProvider($payment, $lob);
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+                $insuranceProvider = getInsuranceProvider($payment, $lob);
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
-            $paymentParams = [
-                'planId' => $payment->plan_id,
-                'providerCode' => $insuranceProvider->code,
-                'quoteTypeId' => $quoteTypeId,
-            ];
-            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+                $paymentParams = [
+                    'planId' => $payment->plan_id,
+                    'providerCode' => $insuranceProvider->code,
+                    'quoteTypeId' => $quoteTypeId,
+                ];
+                $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
 
-            return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+                return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+            }
         }
 
         // For standard transactions, check if a valid, non-expired payment link already exists.
