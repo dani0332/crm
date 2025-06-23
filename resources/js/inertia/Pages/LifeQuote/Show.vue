@@ -244,7 +244,7 @@ const sendOCAEmail = () => {
 
   loader.value.link = true;
 
-  // send email 
+  // send email
   axios
     .post(route('life-quotes-send-oca-email'), {
       quoteUID: page.props.quote.uuid,
@@ -269,48 +269,53 @@ const sendOCAEmail = () => {
 
 const downloadComparisionPdf = () => {
   loader.value.download = true;
-  
-  axios.post(route('life-quotes-download-comparision-pdf'), {
-    quoteUID: page.props.quote.uuid,
-    planIds: selectedPlans.value.map(plan => plan.planId),
-  }, {
-    responseType: 'blob'
-  })
-  .then(response => {
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // Extract filename from response headers or use default
-    const contentDisposition = response.headers['content-disposition'];
-    let filename = 'Life Insurance Comparison Table.pdf';
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-      if (filenameMatch) {
-        filename = filenameMatch[1];
+
+  axios
+    .post(
+      route('life-quotes-download-comparision-pdf'),
+      {
+        quoteUID: page.props.quote.uuid,
+        planIds: selectedPlans.value.map(plan => plan.planId),
+      },
+      {
+        responseType: 'blob',
+      },
+    )
+    .then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Extract filename from response headers or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'Life Insurance Comparison Table.pdf';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
       }
-    }
-    
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    
-    loader.value.download = false;
-    notification.success({
-      title: 'PDF downloaded successfully',
-      position: 'top',
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      loader.value.download = false;
+      notification.success({
+        title: 'PDF downloaded successfully',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      loader.value.download = false;
+      notification.error({
+        title: 'Error downloading PDF',
+        position: 'top',
+      });
     });
-  })
-  .catch(error => {
-    console.error('Download error:', error);
-    loader.value.download = false;
-    notification.error({
-      title: 'Error downloading PDF',
-      position: 'top',
-    });
-  });
 };
 
 const getPaymentTermTitle = months => {
