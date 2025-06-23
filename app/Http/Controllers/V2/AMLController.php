@@ -930,6 +930,7 @@ class AMLController extends Controller
 
     public function amlCtfReportExport(Request $request)
     {
+
         // Validate request parameters
         $request->validate([
             'recipientEmail' => 'sometimes|email',
@@ -981,7 +982,7 @@ class AMLController extends Controller
         ]);
 
         try {
-            // Dispatch the job using the existing ExportCsvAndSendEmailJob
+            // Use the export class's emailCSV method for consistency
             ExportCsvAndSendEmailJob::dispatch(
                 AmlCftReportExport::class,
                 $recipientEmail,
@@ -989,11 +990,10 @@ class AMLController extends Controller
             );
 
             return response()->json([
-                'message' => 'Your AML/CFT report is being processed. You will receive an email with the CSV file shortly.',
-                'report_type' => 'AML/CFT Customer Risk Profile Report',
+                'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
+                'report_type' => $request->report,
                 'recipient' => $recipientEmail,
                 'subject' => $subject,
-                'file_name' => $fileName,
             ]);
 
         } catch (\Exception $e) {
