@@ -18,6 +18,7 @@ use App\Jobs\Renewals\FetchPlansForHomeRenewalsQuoteJob;
 use App\Jobs\Renewals\HomeRenewalBatchEmailJob;
 use App\Jobs\ScheduleHomeRenewalOcbEmails;
 use App\Models\InsuranceProvider;
+use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\RangeLookup;
 use App\Models\RenewalQuoteProcess;
@@ -30,7 +31,6 @@ use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-use App\Models\Lookup;
 
 class HomeRenewalService extends RenewalsUploadService
 {
