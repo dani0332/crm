@@ -11,11 +11,11 @@ enum CoverageTypeEnum: string
     case CONTENTS_PERSONAL_BELONGINGS = 'Contents and Personal belongings';
 
     // Database IDs for each coverage type
-    public const BUILDING_ONLY_ID = 2216;
-    public const CONTENTS_ONLY_ID = 2217;
-    public const BUILDING_AND_CONTENTS_ID = 2218;
-    public const BUILDING_CONTENTS_PERSONAL_BELONGINGS_ID = 2219;
-    public const CONTENTS_PERSONAL_BELONGINGS_ID = 2220;
+    public const BUILDING_ONLY_ID = 506;
+    public const CONTENTS_ONLY_ID = 507;
+    public const BUILDING_AND_CONTENTS_ID = 508;
+    public const BUILDING_CONTENTS_PERSONAL_BELONGINGS_ID = 509;
+    public const CONTENTS_PERSONAL_BELONGINGS_ID = 510;
 
     /**
      * Get all cases as an array of [name => id]
