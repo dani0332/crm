@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 
 class SyncSukoonDocuments implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     protected $quote;
     protected $quoteTypeId;
@@ -31,7 +31,7 @@ class SyncSukoonDocuments implements ShouldQueue
      */
     public function handle(): void
     {
-        $sukoonService = new SukoonMedexService();
+        $sukoonService = new SukoonMedexService;
         $sukoonService->initiatePurchaseFlow($this->quote, $this->quoteTypeId, $this->transaction);
         $sukoonService->syncSukoonDocuments();
     }
