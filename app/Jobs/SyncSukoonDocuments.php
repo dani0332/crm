@@ -31,8 +31,8 @@ class SyncSukoonDocuments implements ShouldQueue
      */
     public function handle(): void
     {
-        $sukoonService = new SukoonMedexService;
-        $sukoonService->initiatePurchaseFlow($this->quote, $this->quoteTypeId, $this->transaction);
-        $sukoonService->syncSukoonDocuments();
+        $sukoonMedexService = app(SukoonMedexService::class);
+        $sukoonMedexService->initiatePurchaseFlow($this->quote, $this->quoteTypeId, $this->transaction);
+        $sukoonMedexService->syncSukoonDocuments();
     }
 }
