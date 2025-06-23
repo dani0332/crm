@@ -1460,13 +1460,32 @@ class AMLService
         }
     }
 
-    public function generateAmlCftReport()
+    public function generateAmlCftReport(array $requestParams = [])
     {
         LoggerService::info('fn:amlCtfReportExport - AMLController');
+        
+        // Debug: Log the received parameters
+        \Illuminate\Support\Facades\Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
 
-        $request = request();
-        $startDate = $request->amlCreatedStartDate;
-        $endDate = $request->amlCreatedEndDate;
+        // Create request object from parameters or use global request as fallback
+        if (!empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
+        
+        // Use get() method to access request parameters properly
+        $startDate = $request->get('amlCreatedStartDate');
+        $endDate = $request->get('amlCreatedEndDate');
+        
+        // Debug: Log the extracted dates and other filters
+        \Illuminate\Support\Facades\Log::info('AMLService Extracted Filters:', [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'searchType' => $request->get('searchType'),
+            'searchField' => $request->get('searchField'),
+            'quoteType' => $request->get('quoteType'),
+        ]);
 
         $personalQuotes = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
 
@@ -1546,14 +1565,14 @@ class AMLService
                 $endDate = Carbon::parse($endDate)->endOfDay();
                 $query->whereBetween('pqr.created_at', [$startDate, $endDate]);
             })
-            ->when(isset($request->searchType) && $request->searchType === 'customerEmail', function ($query) use ($request) {
-                $query->where('pqr.email', $request->searchField);
+            ->when($request->get('searchType') && $request->get('searchType') === 'customerEmail', function ($query) use ($request) {
+                $query->where('pqr.email', $request->get('searchField'));
             })
-            ->when(isset($request->searchType) && $request->searchType === 'cdbId', function ($query) use ($request) {
-                $query->where('pqr.code', $request->searchField);
+            ->when($request->get('searchType') && $request->get('searchType') === 'cdbId', function ($query) use ($request) {
+                $query->where('pqr.code', $request->get('searchField'));
             })
-            ->when(isset($request->quoteType), function ($query) use ($request) {
-                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
+            ->when($request->get('quoteType'), function ($query) use ($request) {
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->get('quoteType')));
                 $query->where('pqr.quote_type_id', $quoteTypeId);
             })
             ->orderBy('pqr.id'); // Required for chunk() method

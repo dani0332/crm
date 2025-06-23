@@ -28,14 +28,16 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
 
     public function __construct(array $requestParams = [])
     {
-        // If request params are provided, merge them with the current request
-        if (!empty($requestParams)) {
-            request()->merge($requestParams);
-        }
+        // Debug: Log the received parameters
+        \Illuminate\Support\Facades\Log::info('AmlCftReportExport Constructor Parameters:', $requestParams);
         
-        $report = app(AMLService::class)->generateAmlCftReport();
+        // Pass request params directly to the AML service instead of merging with global request
+        $report = app(AMLService::class)->generateAmlCftReport($requestParams);
         $this->data = $report['collection'];
         $this->summary = $report['summary'];
+        
+        // Debug: Log the data count
+        \Illuminate\Support\Facades\Log::info('AmlCftReportExport Data Count:', ['count' => $this->data->count()]);
     }
 
     public function collection(array $requestParams = []): Collection
@@ -294,7 +296,8 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         // Use provided data or fall back to cached data
         $data = $data ?? $this->data;
         $summary = $summary ?? $this->summary;
-        
+
+        info($data);
         $output = fopen('php://temp', 'r+');
         
         // Add custom headers
