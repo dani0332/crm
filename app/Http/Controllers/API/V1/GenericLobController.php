@@ -9,6 +9,8 @@ use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
 use Illuminate\Validation\ValidationException;
+use App\Enums\QuoteTypes;
+
 
 class GenericLobController extends Controller
 {
@@ -20,15 +22,21 @@ class GenericLobController extends Controller
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
         try {
+
             $service = app('App\\Services\\'.ucfirst($quoteType).'QuoteService');
-            $response = $service->exportPlansPdf($quoteType, $request->validated());
+
+            if($quoteType == QuoteTypes::LIFE->value) {
+                $service = app('App\\Services\\Life\\LifeQuoteService');
+            }
+            
+            $response = $service->exportPlansPdf($request->quote_uuid, $request?->plan_ids ?? []);
 
             if (isset($response['error'])) {
                 vAbort($response['error']);
             }
 
             $pdf = $response['pdf'];
-
+           
             return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->download()), 'name' => $response['name']]);
         } catch (ValidationException $e) {
             return response()->json([

@@ -48,6 +48,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
+use Illuminate\Validation\ValidationException;
 
 class LifeQuoteService extends BaseService
 {
@@ -701,8 +702,21 @@ class LifeQuoteService extends BaseService
         return $request;
     }
 
-    public function exportComparisionPdf($quote, $planIds, $lifePlans)
+    public function exportPlansPdf(string $quoteId, $planIds = [])
     {
+        $quotePlans = $this->getQuotePlans($quoteId);
+
+        $quote = PersonalQuote::where('uuid', $quoteId)->first();
+
+        if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
+            LoggerService::info('fn: exportPlansPdf - No plans found for the quote');
+            return ['pdf' => null, 'name' => null];
+        }
+
+        $lifePlans = $quotePlans->quotes->plans; 
+
+        $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
+
         $pdf = PDF::setOption([
             'isHtml5ParserEnabled' => true,
             'dpi' => 150,
