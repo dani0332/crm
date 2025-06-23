@@ -936,46 +936,46 @@ class AMLController extends Controller
      */
     public function amlCtfReportExport(Request $request)
     {
-        $recipientEmail = $request->recipientEmail ?? (Auth::check() ? Auth::user()->email : null);
-
-        if (! $recipientEmail) {
-            return response()->json([
-                'error' => 'Recipient email is required.',
-                'message' => 'Please provide a recipient email or ensure you are authenticated.',
-            ], 400);
+        $reportDateRange = now()->format('Y');
+        
+        // Check if email export is requested
+        if ($request->exportType == 'email') {
+            // For email, we'll use CSV format with basic structure
+            return app(AmlCftReportExport::class)->emailCSV("AML CTF Report {$reportDateRange}", $request->all());
         }
 
+        // For direct download, use Excel format with advanced formatting
         $fileName = 'AML_CTF_Report_'.now()->format('Ymd_His').'.xlsx';
+        $tempDir = storage_path('temp');
+        $tempFilePath = $tempDir.'/'.$fileName;
 
-        $subject = "AML CTF Report: {$request->report}";
-
-        $requestParams = array_merge($request->all(), [
-            'recipientEmail' => $recipientEmail,
-            'subject' => $subject,
-            'fileName' => $fileName,
-            'ccRecipients' => $request->ccRecipients ?? [],
-            'exportTitle' => 'AML CTF Report',
-        ]);
-
-        $exportClass = AmlCftReportExport::class;
         try {
-            // Dispatch the job using the existing ExportCsvAndSendEmailJob
-            ExportCsvAndSendEmailJob::dispatch(
-                $exportClass,
-                $recipientEmail,
-                $requestParams
-            );
+            // Ensure temp directory exists
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            // Generate Excel file directly using the Excel export functionality
+            $export = new AmlCftReportExport();
+            $export->store($fileName, 'temp');
+
+            $fileSize = filesize($tempFilePath);
+            $fileSizeFormatted = round($fileSize / 1024, 2) . ' KB';
 
             return response()->json([
-                'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
-                'report_type' => 'AML CTF Report',
-                'recipient' => $recipientEmail,
-                'subject' => $subject,
+                'success' => true,
+                'message' => 'Export completed successfully! File saved to temp folder.',
+                'file_path' => $tempFilePath,
+                'file_name' => $fileName,
+                'file_size' => $fileSizeFormatted,
+                'records_count' => $export->collection([])->count(),
+                'temp_directory' => $tempDir,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to initiate export.',
+                'success' => false,
+                'error' => 'Failed to generate export.',
                 'message' => $e->getMessage(),
             ], 500);
         }
