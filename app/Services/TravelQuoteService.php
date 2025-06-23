@@ -16,6 +16,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
@@ -39,8 +40,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Services\CustomerAddressService;
-use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 
 class TravelQuoteService extends BaseService
 {
@@ -355,7 +354,7 @@ class TravelQuoteService extends BaseService
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
 
             $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
-            if ($request->has('addressObj') && !empty(array_filter((array) $request->input('addressObj')))) {
+            if ($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
                 app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $response->quoteUID);
             }
         }
@@ -545,7 +544,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
 
         $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);
-        if (($request->has('addressObj') && !empty(array_filter((array) $request->input('addressObj'))))) {
+        if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
             app(CustomerAddressService::class)->sendAddressNotificationToCustomer($travelQuote, $request->input('addressObj'), QuoteTypeId::Travel);
             app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $travelQuote->uuid);
             SyncCourierQuoteWithMacrm::dispatch($travelQuote, QuoteTypeId::Travel);

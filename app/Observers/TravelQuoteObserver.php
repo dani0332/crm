@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
@@ -13,14 +14,13 @@ use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Repositories\EmbeddedProductRepository;
-use App\Enums\quoteTypeCode;
 
 class TravelQuoteObserver
 {

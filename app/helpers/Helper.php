@@ -20,6 +20,7 @@ use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\EmbeddedTransaction;
+use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
@@ -43,7 +44,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Models\Emirate;
 
 if (! function_exists('generate_code')) {
     /**

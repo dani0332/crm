@@ -26,6 +26,7 @@ class AddressReminderJob implements ShouldQueue
      * The lead instance.
      */
     private $lead;
+
     private $modelType;
 
     /**
