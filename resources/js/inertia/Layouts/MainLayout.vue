@@ -165,7 +165,6 @@ const isReceiveNotificationsEnabled = computed(() => {
     ></div>
 
     <XNotifications inject-key="toast">
-      <OcrNotification />
       <article
         :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all"

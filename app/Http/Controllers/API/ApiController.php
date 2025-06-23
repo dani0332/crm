@@ -412,7 +412,7 @@ class ApiController extends Controller
 
             return apiResponse($data, Response::HTTP_OK);
         } catch (\Exception $e) {
-            LoggerService::error('Error', exception: $e);
+            LoggerService::error('An error occurred while completing the private client tagging exercise', exception: $e);
 
             return apiResponse(
                 $e->getMessage(),
