@@ -274,7 +274,6 @@ const closeInnerModal = () => {
   isGalleryModelOpen.value = false;
 };
 
-
 // Add state for expanded rows
 const expandedPaymentRows = ref({});
 
@@ -295,7 +294,6 @@ const creditApprovalReasons = paymentLookups.paymentCreditApprovalReasons.map(
   }),
 );
 creditApprovalReasons.unshift({ value: '', label: 'Approval Reason' });
-
 
 // Define payment discount reasons
 const discountReasons = paymentLookups.paymentDiscountReasons.map(item => ({
@@ -388,7 +386,7 @@ const addPaymentModal = async () => {
     });
     return;
   }
- 
+
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -406,28 +404,28 @@ const addPaymentModal = async () => {
     return;
   }
 
-   // DONE TEMPORARY SOLUTION AS REF NOT WORKING
-    createPaymentModal.value = true;
-    await new Promise(resolve => setTimeout(resolve, 10));
-    createPaymentFormRef.value.resetPaymentMethodsForm();
-    const paymentFormUpdateData = {};
-    paymentFormUpdateData.payment_method = 'CHQ';
-    createPaymentFormRef.value.resetPaymentMethodsModal();
-    createPaymentFormRef.value.resetSplitAmountModels();
-    createPaymentFormRef.value.resetDueDateModels();
-    createPaymentFormRef.value.resetFileUploadModals();
-    createPaymentFormRef.value.resetCheckDetailModels();
-    createPaymentFormRef.value.resetIsDiscountReasonEnabled();
-    createPaymentFormRef.value.resetIsDiscountEnabled();
-    createPaymentFormRef.value.resetIsPaymentCalculationError();
-    createPaymentFormRef.value.resetShowDiscountOptions();
-    createPaymentFormRef.value.resetIsDiscountReasonError();
-    createPaymentFormRef.value.resetIsPaymentMetodNotSelected();
-    createPaymentFormRef.value.resetIsDocumentNotUploaded();
-    createPaymentFormRef.value.resetIsDiscountError();
-    createPaymentFormRef.value.resetDiscountError();
-    createPaymentFormRef.value.resetIsDiscountDocumentNotUploaded();
-    createPaymentFormRef.value.resetDiscountDocumentModel();
+  // DONE TEMPORARY SOLUTION AS REF NOT WORKING
+  createPaymentModal.value = true;
+  await new Promise(resolve => setTimeout(resolve, 10));
+  createPaymentFormRef.value.resetPaymentMethodsForm();
+  const paymentFormUpdateData = {};
+  paymentFormUpdateData.payment_method = 'CHQ';
+  createPaymentFormRef.value.resetPaymentMethodsModal();
+  createPaymentFormRef.value.resetSplitAmountModels();
+  createPaymentFormRef.value.resetDueDateModels();
+  createPaymentFormRef.value.resetFileUploadModals();
+  createPaymentFormRef.value.resetCheckDetailModels();
+  createPaymentFormRef.value.resetIsDiscountReasonEnabled();
+  createPaymentFormRef.value.resetIsDiscountEnabled();
+  createPaymentFormRef.value.resetIsPaymentCalculationError();
+  createPaymentFormRef.value.resetShowDiscountOptions();
+  createPaymentFormRef.value.resetIsDiscountReasonError();
+  createPaymentFormRef.value.resetIsPaymentMetodNotSelected();
+  createPaymentFormRef.value.resetIsDocumentNotUploaded();
+  createPaymentFormRef.value.resetIsDiscountError();
+  createPaymentFormRef.value.resetDiscountError();
+  createPaymentFormRef.value.resetIsDiscountDocumentNotUploaded();
+  createPaymentFormRef.value.resetDiscountDocumentModel();
 
   const quoteCollectedBy = [
     quoteTypeCodeEnum.Business,
@@ -537,7 +535,7 @@ const editPaymentModal = async (
   }
 
   isTransactionCaptureButtonEnabled.value = true;
-  
+
   // Payment Capture Validation for GIG
   if (
     capture_approval == 1 &&
@@ -554,7 +552,12 @@ const editPaymentModal = async (
   createPaymentModal.value = true;
   await new Promise(resolve => setTimeout(resolve, 10));
   createPaymentFormRef.value.resetPaymentForm();
-  createPaymentFormRef.value.initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
+  createPaymentFormRef.value.initializePaymentForm(
+    payment,
+    split_payment_id,
+    sr_no,
+    capture_approval,
+  );
   createPaymentFormRef.value.handleCollectionTypeChange();
   createPaymentFormRef.value.handleFrequencyChange(false);
   createPaymentFormRef.value.handleApprovalReasonChange(false);
@@ -580,11 +583,14 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
     .then(res => {
       if (res?.data?.response?.status == paymentCaptureValidationEnum.SUCCESS) {
-        createPaymentFormRef.value.updatePremiumToCapture(res?.data?.response?.premiumAmount);
+        createPaymentFormRef.value.updatePremiumToCapture(
+          res?.data?.response?.premiumAmount,
+        );
         isTransactionCaptureButtonEnabled.value = true;
       } else {
         isTransactionCaptureButtonEnabled.value = false;
-        capturePaymentValidationErrorMessage.value = res?.data?.response?.message;
+        capturePaymentValidationErrorMessage.value =
+          res?.data?.response?.message;
       }
     })
     .catch(err => {
@@ -734,7 +740,7 @@ const isPaidEditable = ref(
     false,
 );
 
-const updatePlanDetail = (planDetailValue) => {
+const updatePlanDetail = planDetailValue => {
   planDetail.value = planDetailValue;
 };
 
@@ -923,47 +929,47 @@ const closeVoidPaymentModal = () => {
 
 watch(
   () => createPaymentFormRef.value?.paymentMethodsForm,
-  (newVal) => {
+  newVal => {
     // console.clear();
     console.log(' newVal : ', newVal);
     paymentMethodsFormReplicated.value = newVal ?? {};
-  }
+  },
 );
 watch(
   () => createPaymentFormRef.value?.isApproveConfirmed,
-  (newVal) => {
+  newVal => {
     isApproveConfirmedReplicated.value = newVal;
-  }
+  },
 );
 watch(
   () => createPaymentFormRef.value?.isViewEnabled,
-  (newVal) => {
+  newVal => {
     isViewEnabledReplicated.value = newVal;
-  }
+  },
 );
 watch(
   () => createPaymentFormRef.value?.filesTest,
-  (newVal) => {
+  newVal => {
     filesTestReplicated.value = newVal;
-  }
+  },
 );
 watch(
   () => createPaymentFormRef.value?.currentFileIndex,
-  (newVal) => {
+  newVal => {
     currentFileIndexReplicated.value = newVal;
-  }
+  },
 );
 watch(
   () => createPaymentFormRef.value?.isCreditApprovalView,
-  (newVal) => {
+  newVal => {
     isCreditApprovalViewReplicated.value = newVal;
-  }
+  },
 );
 watch(
   () => createPaymentFormRef.value?.isCreditCardView,
-  (newVal) => {
+  newVal => {
     isCreditCardViewReplicated.value = newVal;
-  }
+  },
 );
 </script>
 
@@ -1097,47 +1103,52 @@ watch(
           show-close
           backdrop
         >
-            <CreatePaymentForm
-              ref="createPaymentFormRef"
-              :totalPrice="totalPrice"
-              :creditApprovalReasons="creditApprovalReasons"
-              :discountReasons="discountReasons"
-              :paymentDocument="paymentDocument"
-              :totalAmount="totalAmount"
-              :isPaidEditable="isPaidEditable"
-              :paymentProofDocument="paymentProofDocument"
-              :isMultiPaymentsEnabled="isMultiPaymentsEnabled"
-              :quoteType="quoteType"
-              :sendUpdate="sendUpdate"
-              :payments="payments"
-              :isCCEnabled="isCCEnabled"
-              :quoteRequest="quoteRequest"
-              :sendUpdateStatusEnum="sendUpdateStatusEnum"
-              :approveProofDocument="approveProofDocument"
-              :paymentStatusEnum="paymentStatusEnum"
-              :planDetail="planDetail"
-              :quoteTypesToCheck="quoteTypesToCheck"
-              :insuranceProviders="insuranceProviders"
-              :createPaymentModal="createPaymentModal"
-              :paymentMethods="paymentMethods"
-              :eCommercePriceWithLP="eCommercePriceWithLP"
-              :isPlanDetailSectionEnabled="isPlanDetailSectionEnabled"
-              :quoteSubType="quoteSubType"
-              :isLackingPayment="is_lacking_payment"
-              :planText="planText"
-              :capturePaymentValidationErrorMessage="capturePaymentValidationErrorMessage"
-              :isTransactionCaptureButtonEnabled="isTransactionCaptureButtonEnabled"
-              :selectedPaymentForEdit="selectedPaymentForEdit"
-              
-              @cancel-modal="createPaymentModal = !createPaymentModal"
-              @aml-verification="openAmlVerificationModal"
-              @update-plan-detail="updatePlanDetail"
-              @update-gallery-model-open="(value) => isGalleryModelOpen = value"
-              @update-is-aml-approval-required="(value) => isAmlApprovalRequired = value"
-              @update-create-payment-modal="(value) => createPaymentModal = value"
-              @update-total-amount="(value) => totalAmount = value"
-              @update-total-price="(value) => totalPrice = value"
-            />
+          <CreatePaymentForm
+            ref="createPaymentFormRef"
+            :totalPrice="totalPrice"
+            :creditApprovalReasons="creditApprovalReasons"
+            :discountReasons="discountReasons"
+            :paymentDocument="paymentDocument"
+            :totalAmount="totalAmount"
+            :isPaidEditable="isPaidEditable"
+            :paymentProofDocument="paymentProofDocument"
+            :isMultiPaymentsEnabled="isMultiPaymentsEnabled"
+            :quoteType="quoteType"
+            :sendUpdate="sendUpdate"
+            :payments="payments"
+            :isCCEnabled="isCCEnabled"
+            :quoteRequest="quoteRequest"
+            :sendUpdateStatusEnum="sendUpdateStatusEnum"
+            :approveProofDocument="approveProofDocument"
+            :paymentStatusEnum="paymentStatusEnum"
+            :planDetail="planDetail"
+            :quoteTypesToCheck="quoteTypesToCheck"
+            :insuranceProviders="insuranceProviders"
+            :createPaymentModal="createPaymentModal"
+            :paymentMethods="paymentMethods"
+            :eCommercePriceWithLP="eCommercePriceWithLP"
+            :isPlanDetailSectionEnabled="isPlanDetailSectionEnabled"
+            :quoteSubType="quoteSubType"
+            :isLackingPayment="is_lacking_payment"
+            :planText="planText"
+            :capturePaymentValidationErrorMessage="
+              capturePaymentValidationErrorMessage
+            "
+            :isTransactionCaptureButtonEnabled="
+              isTransactionCaptureButtonEnabled
+            "
+            :selectedPaymentForEdit="selectedPaymentForEdit"
+            @cancel-modal="createPaymentModal = !createPaymentModal"
+            @aml-verification="openAmlVerificationModal"
+            @update-plan-detail="updatePlanDetail"
+            @update-gallery-model-open="value => (isGalleryModelOpen = value)"
+            @update-is-aml-approval-required="
+              value => (isAmlApprovalRequired = value)
+            "
+            @update-create-payment-modal="value => (createPaymentModal = value)"
+            @update-total-amount="value => (totalAmount = value)"
+            @update-total-price="value => (totalPrice = value)"
+          />
 
           <!-- Image Gallery Modal -->
           <ImageGalleryModal
