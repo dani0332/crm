@@ -48,10 +48,9 @@ class BrokerCommissionService
             }
         }
 
-        if($planBasedQuery && $planBasedQuery->exists()){
+        if ($planBasedQuery && $planBasedQuery->exists()) {
             $brokerCommission = $planBasedQuery->first();
-        }
-        elseif(!$businessTypeId) {
+        } elseif (! $businessTypeId) {
             $query->whereNull('plan_id');
         }
 
@@ -59,7 +58,7 @@ class BrokerCommissionService
         // todo: confirm from denber
         // $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
 
-        $isCreditCardEnabled = $brokerCommission && !$brokerCommission->enable_payment_link;
+        $isCreditCardEnabled = $brokerCommission && ! $brokerCommission->enable_payment_link;
 
         $insurersWithoutCCRenewal = [
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
