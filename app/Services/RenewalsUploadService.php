@@ -24,7 +24,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
-use App\Enums\RangeLookupIdEnums;
+use App\Enums\RangeLookupCodeEnum;
 use App\Enums\RangeLookupKeyEnums;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -2030,7 +2030,7 @@ class RenewalsUploadService
                                     break;
                                 }
 
-                                if ($leadPossessionType->id === RangeLookupIdEnums::LANDLORD_RENTING_OUT->value) {
+                                if ($leadPossessionType->code === RangeLookupCodeEnum::LANDLORD_RENTING_OUT->value) {
                                     if (! $leadData->occupancy_status_for_owners) {
                                         $leadValidationErrors->push('Occupancy Status for Owners is required with Selected Ownership Status');
                                         break;
