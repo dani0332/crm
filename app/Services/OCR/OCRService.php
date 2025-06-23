@@ -150,6 +150,8 @@ class OCRService
                 $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
                 if ($isQuoteStatusTransectionApproved) {
                     (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
+                } else {
+                    event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
                 }
 
                 // Send end notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types when processing completes successfully
