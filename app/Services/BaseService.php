@@ -480,7 +480,7 @@ class BaseService
         $lead->save();
     }
 
-    public function selfAssign(QuoteTypes $quoteType, string $uuid)
+    public function selfAssign(QuoteTypes $quoteType, string $uuid, bool $sendAdvisorAssignedEmail = false)
     {
         $lead = $quoteType->model()->where('uuid', $uuid)->first();
 
@@ -500,6 +500,10 @@ class BaseService
             $lead->saveQuietly();
 
             LogAllocation::dispatch($lead, $quoteType);
+
+            if ($sendAdvisorAssignedEmail) {
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value, null);
+            }
         }
     }
 }
