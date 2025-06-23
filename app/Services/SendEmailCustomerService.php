@@ -17,6 +17,7 @@ use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
+use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
@@ -952,7 +953,17 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
         if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-            $this->emailStatusService->addEmailStatus($emailData, $messageId, $subject, $status);
+            EmailStatus::create([
+                'quote_type_id' => $emailData->quoteTypeId,
+                'quote_id' => $emailData->quote_id,
+                'email_address' => $emailData->customerEmail,
+                'msg_id' => $messageId,
+                'reason' => 'Send Policy to Customer',
+                'email_status' => $status,
+                'email_subject' => $subject,
+                'template_id' => $emailData->emailTemplateId,
+                'customer_id' => $emailData->customerId,
+            ]);
         }
 
         return $responseCode;
@@ -1113,7 +1124,7 @@ class SendEmailCustomerService extends BaseService
                 'email' => $sendPolicyUpdateEmail,
             ]];
 
-            if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
+            if ($quoteTypeId == QuoteTypeId::Savings) {
                 $body['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
 
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
@@ -1157,9 +1168,19 @@ class SendEmailCustomerService extends BaseService
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
-        if ($emailData->quoteTypeId == QuoteTypeId::Savings && $messageId) {
+        if ($quoteTypeId == QuoteTypeId::Savings && $messageId) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-            $this->emailStatusService->addEmailStatus($emailData, $messageId, $subject, $status);
+            EmailStatus::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_id' => $emailData->quoteId,
+                'email_address' => $emailData->customerEmail,
+                'msg_id' => $messageId,
+                'reason' => 'Send Update to Customer',
+                'email_status' => $status,
+                'email_subject' => $subject,
+                'template_id' => $emailTemplateId,
+                'customer_id' => $emailData->customerId,
+            ]);
         }
 
         return $responseCode;
