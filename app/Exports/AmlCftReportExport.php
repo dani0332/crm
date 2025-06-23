@@ -28,8 +28,10 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
 
     public function __construct(array $requestParams = [])
     {
-
-        $report = app(AMLService::class)->generateAmlCftReport($requestParams);
+        // Map export parameters to the format expected by AMLService
+        $serviceParams = empty($requestParams) ? [] : $this->mapExportParameters($requestParams);
+        
+        $report = app(AMLService::class)->generateAmlCftReport($serviceParams);
         $this->data = $report['collection'];
         $this->summary = $report['summary'];
     }
@@ -160,7 +162,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
     //     $requestParams = $this->processEmailParameters($fileName, $requestParams);
 
     //     // Add CSV-specific parameters
-    //     $requestParams['exportTitle'] = 'AML/CFT Report';
+    //     $requestParams['exportTitle'] = 'AML/CTF Report';
     //     $requestParams['fileName'] = $fileName;
         
     //     // Add flag to include custom headers and summary in CSV
@@ -337,6 +339,20 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         
     //     return $csvContent;
     // }
+
+    /**
+     * Map export parameters to the format expected by AMLService
+     */
+    private function mapExportParameters(array $requestParams): array
+    {
+        return [
+            'amlCreatedStartDate' => $requestParams['date_range']['start'] ?? $requestParams['amlCreatedStartDate'] ?? null,
+            'amlCreatedEndDate' => $requestParams['date_range']['end'] ?? $requestParams['amlCreatedEndDate'] ?? null,
+            'searchType' => $requestParams['filters']['searchType'] ?? $requestParams['searchType'] ?? null,
+            'searchField' => $requestParams['filters']['searchField'] ?? $requestParams['searchField'] ?? null,
+            'quoteType' => $requestParams['filters']['quoteType'] ?? $requestParams['quoteType'] ?? null,
+        ];
+    }
 
     /**
      * Get export metadata for AML CTF reports
