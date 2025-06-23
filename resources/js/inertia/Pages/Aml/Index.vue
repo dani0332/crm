@@ -257,7 +257,7 @@ async function downloadAmlCtfReport() {
   const payload = {
     url: route('aml-ctf-report-export'),
     method: 'post',
-    data: exportData,
+    data: { ...exportData, exportType: 'email' },
     type: 'aml-ctf-report',
     exportType: 'email',
   };

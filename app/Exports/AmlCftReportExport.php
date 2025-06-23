@@ -149,17 +149,20 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
     }
 
     /**
-     * Override emailCSV to provide a simpler CSV structure for email
+     * Override emailCSV to provide CSV structure for email with optional formatting
      */
     public function emailCSV(string $fileName, array $requestParams = []): \Illuminate\Http\JsonResponse
     {
-        // For email, we'll create a simplified CSV without Excel formatting
+        // For email, we'll create CSV with optional custom headers and summary
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
         $requestParams = $this->processEmailParameters($fileName, $requestParams);
 
         // Add CSV-specific parameters
         $requestParams['exportTitle'] = 'AML/CFT Report';
         $requestParams['fileName'] = $fileName;
+        
+        // Add flag to include custom headers and summary in CSV
+        $requestParams['includeCustomFormatting'] = true;
 
         // Dispatch the email job
         \App\Jobs\ExportCsvAndSendEmailJob::dispatch(
@@ -208,6 +211,116 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         }
 
         return $requestParams;
+    }
+
+    /**
+     * Override sendEmailWithCSVAttachment to support custom formatting
+     */
+    public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
+    {
+        // Use the modern email export service
+        $emailExportService = app(\App\Services\EmailExportService::class);
+
+        // Check if custom formatting is requested
+        $includeCustomFormatting = $requestParams['includeCustomFormatting'] ?? false;
+
+        if ($includeCustomFormatting) {
+            // Create CSV with custom headers and summary
+            $this->sendCustomFormattedCsvEmail($recipientEmail, $emailSubject, $requestParams, $ccRecipients);
+        } else {
+            // Use default CSV format
+            $emailExportService->sendCsvByEmail(
+                $this,
+                $recipientEmail,
+                $emailSubject,
+                $requestParams,
+                $ccRecipients
+            );
+        }
+    }
+
+    /**
+     * Send CSV email with custom formatting (headers and summary)
+     */
+    private function sendCustomFormattedCsvEmail($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [])
+    {
+        // Create a temporary file with custom CSV content
+        $year = Carbon::now()->year;
+        $csvContent = $this->generateCustomFormattedCsv($year);
+        $fileName = $requestParams['fileName'] ?? 'AML_CTF_Report';
+        
+        // Create temporary file
+        $tempFile = tempnam(sys_get_temp_dir(), 'aml_ctf_');
+        file_put_contents($tempFile, $csvContent);
+        
+        // Send email with attachment
+        \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($recipientEmail, $emailSubject, $tempFile, $fileName, $ccRecipients) {
+            $message->to($recipientEmail)
+                    ->subject($emailSubject)
+                    ->attach($tempFile, [
+                        'as' => $fileName . '.csv',
+                        'mime' => 'text/csv',
+                    ])
+                    ->html('Please find the AML/CTF report attached.');
+            
+            if (!empty($ccRecipients)) {
+                $message->cc($ccRecipients);
+            }
+        });
+        
+        // Clean up temporary file
+        unlink($tempFile);
+    }
+
+    /**
+     * Generate CSV content with custom headers and summary
+     */
+    private function generateCustomFormattedCsv($year): string
+    {
+        $output = fopen('php://temp', 'r+');
+        
+        // Add custom headers
+        fputcsv($output, ['AFIA Insurance Brokerage Services LLC']);
+        fputcsv($output, ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}"]);
+        fputcsv($output, ['Requested By Compliance Dept.']);
+        fputcsv($output, []); // Empty row
+        
+        // Add column headers
+        fputcsv($output, $this->headings());
+        
+        // Add data rows
+        $data = $this->collection([]);
+        foreach ($data as $record) {
+            fputcsv($output, $this->map($record));
+        }
+        
+        // Add empty rows before summary
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, []);
+        
+        // Add summary section
+        fputcsv($output, ['', 'Total Number of Customers', '', $this->summary['total_customers'] ?? '']);
+        fputcsv($output, ['', 'High Risk Customers', '', $this->summary['high_risk'] ?? '']);
+        fputcsv($output, ['', 'Medium Risk Customers', '', $this->summary['medium_risk'] ?? '']);
+        fputcsv($output, ['', 'Low Risk Customers', '', $this->summary['low_risk'] ?? '']);
+        
+        // Add note section
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, []);
+        fputcsv($output, ['Note:', 'This report contains sensitive personal data. Do not share externally. For compliance use only.']);
+        
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+        
+        return $csvContent;
     }
 
     /**

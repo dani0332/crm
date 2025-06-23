@@ -935,6 +935,13 @@ class AMLController extends Controller
     {
         $reportDateRange = now()->format('Y');
 
-        return app(AmlCftReportExport::class)->emailCSV("AML CTF Report {$reportDateRange}", $request->all());
+        if ($request->exportType == 'email') {
+            $requestParams = $request->all();
+            // You can control custom formatting with includeCustomFormatting parameter
+            // If not specified, it defaults to true in the AmlCftReportExport class
+            return app(AmlCftReportExport::class)->emailCSV("AML CTF Report {$reportDateRange}", $requestParams);
+        }
+
+        return app(AmlCftReportExport::class)->download("AML CTF Report {$reportDateRange}.xlsx", \Maatwebsite\Excel\Excel::XLSX);
     }
 }
