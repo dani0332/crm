@@ -741,7 +741,12 @@ const getIncludedBenefitsTooltip = fieldText =>
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
+            v-if="
+              canAny([
+                permissionsEnum.SAVINGS_QUOTES_EDIT,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -752,12 +757,22 @@ const getIncludedBenefitsTooltip = fieldText =>
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
+            v-if="
+              canAny([
+                permissionsEnum.SAVINGS_QUOTES_EDIT,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
 
         <Link
-          v-if="can(permissionsEnum.SAVINGS_QUOTES_LIST)"
+          v-if="
+            canAny([
+              permissionsEnum.SAVINGS_QUOTES_EDIT,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('savings-quotes-list')"
           preserve-scroll
         >
@@ -2087,6 +2102,7 @@ const getIncludedBenefitsTooltip = fieldText =>
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

@@ -20,7 +20,8 @@ class SavingsQuoteRequest extends FormRequest
     public function authorize(): bool
     {
         return Auth::user()->can(PermissionsEnum::SAVINGS_QUOTES_CREATE)
-            || Auth::user()->can(PermissionsEnum::SAVINGS_QUOTES_EDIT);
+            || Auth::user()->can(PermissionsEnum::SAVINGS_QUOTES_EDIT)
+            || Auth::user()->can(PermissionsEnum::VIEW_ALL_LEADS);
     }
 
     /**
