@@ -26,8 +26,13 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
     protected array $summary;
     protected $data;
 
-    public function __construct()
+    public function __construct(array $requestParams = [])
     {
+        // If request params are provided, merge them with the current request
+        if (!empty($requestParams)) {
+            request()->merge($requestParams);
+        }
+        
         $report = app(AMLService::class)->generateAmlCftReport();
         $this->data = $report['collection'];
         $this->summary = $report['summary'];
@@ -244,14 +249,9 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
      */
     private function sendCustomFormattedCsvEmail($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [])
     {
-        // Fetch fresh data instead of using cached data
-        $freshReport = app(AMLService::class)->generateAmlCftReport();
-        $freshData = $freshReport['collection'];
-        $freshSummary = $freshReport['summary'];
-        
-        // Create a temporary file with custom CSV content using fresh data
+        // Use data already fetched in constructor - no need to fetch again
         $year = Carbon::now()->year;
-        $csvContent = $this->generateCustomFormattedCsv($year, $freshData, $freshSummary);
+        $csvContent = $this->generateCustomFormattedCsv($year, $this->data, $this->summary);
         $fileName = $requestParams['fileName'] ?? 'AML_CTF_Report';
         
         // Create temporary file
@@ -263,7 +263,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
             'recipientName' => $requestParams['recipientName'] ?? 'Valued User',
             'exportTitle' => 'AML/CFT Customer Risk Profile Report',
             'currentDate' => Carbon::now()->format('d M Y'),
-            'recordCount' => $freshData->count(),
+            'recordCount' => $this->data->count(),
             'fileSize' => round(strlen($csvContent) / 1024, 2), // Approximate file size in KB
             'systemName' => 'AFIA Insurance Brokerage Services LLC',
         ];
