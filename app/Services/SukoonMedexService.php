@@ -254,9 +254,10 @@ class SukoonMedexService
                     LoggerService::info("{$this->logPrefix} Sync & Saved Documents: ".($createdDocCount + $updatedDocCount)." out of {$generatedDocCount}, ".
                         "created: {$createdDocCount}, updated: {$updatedDocCount}, skipped: {$skippedDocCount}", extra: ['docs' => $savedDocs]);
 
-                    if (($createdDocCount + $updatedDocCount) > 0)
+                    if (($createdDocCount + $updatedDocCount) > 0) {
                         $this->transaction->load('documents');
-                    
+                    }
+
                     // STEP #16 viewQuotePolicy
                     $this->syncSukoonCommissions();
                 }
@@ -294,11 +295,13 @@ class SukoonMedexService
             'policy_price' => $paymentData['amount_breakdown']['policy_price'] ?? null,
         ];
 
-        if (! empty($paymentData['status'])) // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
+        if (! empty($paymentData['status'])) { // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
             $this->policyStatus = $data['policy_status'] = $paymentData['status'];
+        }
 
-        if ($isAllDocumentsSaved && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED)
+        if ($isAllDocumentsSaved && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
+        }
 
         LoggerService::info("{$this->logPrefix} policyStatus: {$this->policyStatus}");
 
