@@ -41,7 +41,7 @@ class PolicyBulkSendDocuments extends Command
         $codes = [
             'TRA-WAL8YDD4',
             'TRA-VTSDBMEQ',
-            'CAR-VXCWTTXH'
+            'CAR-VXCWTTXH',
         ];
 
         if (empty($codes)) {
@@ -60,7 +60,7 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            if ($code == 'CAR-VXCWTTXH'){
+            if ($code == 'CAR-VXCWTTXH') {
                 $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
                 $modelType = quoteTypeCode::Car;
             } else {
