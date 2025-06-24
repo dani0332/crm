@@ -29,7 +29,7 @@ class GenericLobController extends Controller
                 $service = app('App\\Services\\Life\\LifeQuoteService');
             }
             
-            $response = $service->exportPlansPdf($request->quote_uuid, $request?->plan_ids ?? []);
+            $response = $service->exportPlansPdf($quoteType, $request->validated());
 
             if (isset($response['error'])) {
                 vAbort($response['error']);

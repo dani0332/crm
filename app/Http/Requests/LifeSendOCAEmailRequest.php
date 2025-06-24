@@ -24,23 +24,23 @@ class LifeSendOCAEmailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quoteUID' => [
+            'quote_uuid' => [
                 'required',
                 'string',
                 Rule::exists('personal_quotes', 'uuid')->where(function ($query) {
                     $query->where('quote_type_id', QuoteTypeId::Life);
                 }),
             ],
-            'planIds' => 'nullable|array',
+            'plan_ids' => 'nullable',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'quoteUID.required' => 'Quote UUID is required',
-            'quoteUID.string' => 'Quote UUID must be a string',
-            'quoteUID.exists' => 'The provided Quote UUID is invalid',
+            'quote_uuid.required' => 'Quote UUID is required',
+            'quote_uuid.string' => 'Quote UUID must be a string',
+            'quote_uuid.exists' => 'The provided Quote UUID is invalid',
         ];
     }
 }

@@ -18,20 +18,23 @@ class EmailService
     /**
      * Create a new class instance.
      */
-    public function sendOCAEmail(string $quoteUID, array $planIds = [])
+    public function sendOCAEmail(string $quoteType, array $data = [])
     {
+        LoggerService::startQuoteLogging($data['quote_uuid']);
 
         $logPrefix = get_class($this). ' fn: sendOCAEmail - ';
 
-        $lead = $this->getQuote($quoteUID);
+        LoggerService::info($logPrefix.' - Sending OCA email');
+
+        $lead = $this->getQuote($data['quote_uuid']);
 
         // map data for bird service
-        $emailData = $this->mapOCAEmailData($lead, $planIds);
+        $emailData = $this->mapOCAEmailData($lead);
 
         // get bird flow url for Life from ApplicationStorage
         $flowUrl = $this->getApplicationStorage();
         if (! $flowUrl) {
-            LoggerService::info($logPrefix.' - Flow URL not found');
+            LoggerService::info($logPrefix.' - Flow URL not found', );
             return false;
         }
 
@@ -58,9 +61,9 @@ class EmailService
         return $lifePlans;
     }
 
-    private function attachComparisionPdf(PersonalQuote $quote, $planIds)
+    private function attachComparisionPdf(PersonalQuote $quote, array $data = [])
     {
-        $pdf = app(LifeQuoteService::class)->exportPlansPdf($quote->uuid, $planIds);
+        $pdf = app(LifeQuoteService::class)->exportPlansPdf(QuoteTypes::LIFE->value, $data);
         
         $pdfContent = $pdf['pdf']->output();
 
@@ -98,7 +101,7 @@ class EmailService
     {
         return ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW)->value('value');
     }
-    private function mapOCAEmailData($lead, $planIds)
+    private function mapOCAEmailData($lead)
     {
         $firstName = $lead->first_name;
         $lastName = $lead->last_name;
@@ -106,7 +109,7 @@ class EmailService
         $advisor = $lead->advisor;
         $workflowType = WorkflowTypeEnum::LIFE_OCA_EMAIL;
 
-        $data = [
+        return (object) [
             // Lead-related data
             'quoteUID' => $lead->uuid,
             'uuid' => $lead->uuid,
@@ -131,15 +134,6 @@ class EmailService
             // Workflow-related data
             'workflowType' => $workflowType,
         ];
-
-        $tempUrlPDF = $this->attachComparisionPdf($lead, $planIds);
-
-        if (! empty($tempUrlPDF)) {
-            $data['pdfLink'] = $tempUrlPDF['pdfLink'];
-            $data['pdfName'] = $tempUrlPDF['pdfName'];
-        }
-
-        return (object) $data;
     }
 
     private function getQuote(string $quoteUID): PersonalQuote

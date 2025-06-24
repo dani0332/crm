@@ -702,11 +702,13 @@ class LifeQuoteService extends BaseService
         return $request;
     }
 
-    public function exportPlansPdf(string $quoteId, $planIds = [])
+    public function exportPlansPdf(string $quoteType, array $data = [])
     {
-        $quotePlans = $this->getQuotePlans($quoteId);
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
 
-        $quote = PersonalQuote::where('uuid', $quoteId)->first();
+        $planIds = $data['plan_ids'] ?? [];
+        
+        $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->first();
 
         if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
             LoggerService::info('fn: exportPlansPdf - No plans found for the quote');

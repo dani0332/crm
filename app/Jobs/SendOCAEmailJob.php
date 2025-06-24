@@ -13,15 +13,15 @@ class SendOCAEmailJob implements ShouldQueue
     use Queueable;
 
     protected string $quoteUID;
-    protected array $planIds;
+    protected array $data;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(string $quoteUID, array $planIds = [])
+    public function __construct(string $quoteUID, array $data = [])
     {
         $this->quoteUID = $quoteUID;
-        $this->planIds = $planIds;
+        $this->data = $data;
     }
 
     /**
@@ -33,7 +33,7 @@ class SendOCAEmailJob implements ShouldQueue
 
         LoggerService::info('Life OCA email job started');
 
-        app(EmailService::class)->sendOCAEmail($this->quoteUID, $this->planIds);
+        app(EmailService::class)->sendOCAEmail($this->quoteUID, $this->data);
 
         LoggerService::info('Life OCA email sent');
     }

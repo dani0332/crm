@@ -247,8 +247,8 @@ const sendOCAEmail = () => {
   // send email
   axios
     .post(route('life-quotes-send-oca-email'), {
-      quoteUID: page.props.quote.uuid,
-      planIds: selectedPlans.value.map(plan => plan.planId),
+      quote_uuid: page.props.quote.uuid,
+      plan_ids: selectedPlans.value.map(plan => plan.planId),
     })
     .then(res => {
       notification.success({
@@ -274,8 +274,8 @@ const downloadComparisionPdf = () => {
     .post(
       route('life-quotes-download-comparision-pdf'),
       {
-        quoteUID: page.props.quote.uuid,
-        planIds: selectedPlans.value.map(plan => plan.planId),
+        quote_uuid: page.props.quote.uuid,
+        plan_ids: selectedPlans.value.map(plan => plan.planId),
       },
       {
         responseType: 'blob',

@@ -13,6 +13,7 @@ use Inertia\ResponseFactory;
 use PDF;
 use App\Jobs\SendOCAEmailJob;
 use App\Http\Requests\LifeSendOCAEmailRequest;
+use App\Enums\QuoteTypes;
 
 
 class LifeController extends Controller
@@ -215,14 +216,14 @@ class LifeController extends Controller
     public function sendOCAEmail(LifeSendOCAEmailRequest $request)
     {
         // Dispatch job to send OCA email
-        SendOCAEmailJob::dispatch($request->quoteUID, $request?->planIds ?? []);
+        SendOCAEmailJob::dispatch(QuoteTypes::LIFE->value, $request->validated());
 
         return response()->json(['message' => 'OCA Email Sent Successfully']);
     }
 
-    public function downloadComparisionPdf(Request $request)
+    public function downloadComparisionPdf(LifeSendOCAEmailRequest $request)
     {
-        $pdfData = $this->lifeQuoteService->exportPlansPdf($request->quoteUID, $request?->planIds ?? []);
+        $pdfData = $this->lifeQuoteService->exportPlansPdf(QuoteTypes::LIFE->value, $request->validated());
 
         $pdf = $pdfData['pdf'];
         $filename = $pdfData['name'] ?? 'Life Insurance Comparison Table.pdf';
