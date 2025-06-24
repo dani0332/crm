@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Contracts\CsvExportableInterface;
 use App\Enums\EnvEnum;
 use App\Models\User;
-use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -35,7 +34,6 @@ class EmailExportService
 
         // Create zip file containing the CSV
         $zipFilePath = $this->createZipFile($csvFilePath);
-        LoggerService::info($zipFilePath);
 
         try {
             $this->sendEmailWithAttachment(
