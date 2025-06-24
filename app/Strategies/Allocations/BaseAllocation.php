@@ -265,7 +265,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         }
 
         if ($this->lead->isNonAdvisorEmailSent()) {
-            LoggerService::info(self::class." - Non Advisor Email already sent to customer");
+            LoggerService::info(self::class.' - Non Advisor Email already sent to customer');
+
             return;
         }
 
@@ -276,6 +277,6 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         );
 
         $this->lead->touch('non_advisor_email_sent_at');
-        LoggerService::info(self::class." - Non Advisor Email sent to customer");
+        LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 }

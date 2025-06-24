@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessStatusCode;
@@ -18,7 +17,6 @@ use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
-use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
