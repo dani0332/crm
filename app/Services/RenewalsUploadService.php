@@ -24,7 +24,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
-use App\Enums\RangeLookupIdEnums;
+use App\Enums\RangeLookupCodeEnum;
 use App\Enums\RangeLookupKeyEnums;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -66,6 +66,7 @@ use App\Models\Entity;
 use App\Models\HealthPlan;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
+use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
 use App\Models\QuoteAdditionalDetail;
@@ -2021,15 +2022,15 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->you_are_a) {
-                                $leadPossessionType = RangeLookup::where('text', $leadData->you_are_a)
-                                    ->where('key', RangeLookupKeyEnums::POSSESSION_TYPE->value)
+                                $leadPossessionType = Lookup::where('text', $leadData->you_are_a)
+                                    ->where('key', LookupsEnum::POSSESSION_TYPE->value)
                                     ->first();
                                 if (! $leadPossessionType) {
                                     $leadValidationErrors->push('Invalid Ownership Status Text');
                                     break;
                                 }
 
-                                if ($leadPossessionType->id === RangeLookupIdEnums::LANDLORD_RENTING_OUT->value) {
+                                if ($leadPossessionType->code === RangeLookupCodeEnum::LANDLORD_RENTING_OUT->value) {
                                     if (! $leadData->occupancy_status_for_owners) {
                                         $leadValidationErrors->push('Occupancy Status for Owners is required with Selected Ownership Status');
                                         break;
@@ -2049,8 +2050,8 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->i_live_in_a) {
-                                $leadAccommodationType = RangeLookup::where('text', $leadData->i_live_in_a)
-                                    ->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)
+                                $leadAccommodationType = Lookup::where('text', $leadData->i_live_in_a)
+                                    ->where('key', LookupsEnum::ACCOMMODATION_TYPE)
                                     ->first();
                                 if (! $leadAccommodationType) {
                                     $leadValidationErrors->push('Invalid Type of Property Text');
@@ -2058,8 +2059,8 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->occupancy_status_for_owners) {
-                                $leadOccupancyType = RangeLookup::where('text', $leadData->occupancy_status_for_owners)
-                                    ->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)
+                                $leadOccupancyType = Lookup::where('text', $leadData->occupancy_status_for_owners)
+                                    ->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)
                                     ->first();
                                 if (! $leadOccupancyType) {
                                     $leadValidationErrors->push('Invalid Occupancy Status for Owners Text');
@@ -2067,8 +2068,8 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->cover_required) {
-                                $leadCoverageType = RangeLookup::where('text', $leadData->cover_required)
-                                    ->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)
+                                $leadCoverageType = Lookup::where('text', $leadData->cover_required)
+                                    ->where('key', LookupsEnum::COVERAGE_TYPE)
                                     ->first();
                                 if (! $leadCoverageType) {
                                     $leadValidationErrors->push('Invalid Cover Required Text');
