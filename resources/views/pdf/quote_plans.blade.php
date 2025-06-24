@@ -416,7 +416,7 @@
             width: 70px;
         }
 
-        .advisor-photo {
+        .advisor-photo,.alfred-photo {
             width: 70px;
             height: 70px;
             border-radius: 50%;
@@ -453,6 +453,27 @@
             vertical-align: baseline;
             display: inline-block;
         }
+
+        .alfred-details{
+            display: table-cell;
+            vertical-align: middle;
+            padding-top: 0px;
+            padding-left: 8px;
+        }
+
+        .alfred-details p {
+            font-size: 10px;
+
+        }
+
+        .alfred-details p.title {
+            font-size: 13px;
+            margin-top: 0px;
+            line-height: 0.9;
+            padding: 2px 0px 10px 0px;
+        }
+
+
         /* End Header styles from home_quote_plans.blade.php */
 
         /* table td,
@@ -905,11 +926,11 @@
             </td>
 
             <td class="footer-td" style="width: 30%;">
-                <div class="footer-box" style="/*margin-right: 20px;*/ padding: 5px 10px">
+                <div class="footer-box" style="margin-top: 16px; padding: 5px 10px">
                     <div class="advisor-section">
-                        @if($quote->advisor)
+                        @if(/*$quote->advisor*/ FALSE)
                             <div class="advisor-photo-container">
-                                <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-1.png') }}"
+                                <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}"
                                      alt="Advisor Photo" class="advisor-photo">
                             </div>
                             <div class="advisor-details">
@@ -941,13 +962,26 @@
                                 </p>
                             </div>
                         @else
-                            <div style="text-align: center; width: 100%;">
-                                <img src="{{ public_path('image/alfred-theme.png') }}"
-                                     alt="Advisor Photo" class="advisor-photo" style="margin: 0 auto; display: block;">
-                                <p class="advisor-contact" style="text-align: center; margin-top: 8px;">
-                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon">
-                                    <span>800 ALFRED (800 253 733)</span>
-                                </p>
+                            <div class="advisor-photo-container">
+                                <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}"
+                                     alt="Alfred Image" class="alfred-photo">
+                            </div>
+                            <div class="alfred-details ">
+                                <div class="" style="vertical-align: middle;">
+                                    <p class="title">Chat with InstantAlfred instantly </p>
+
+                                    <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
+                                        <a
+                                            class="text-white"
+                                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
+                                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
+                                                 style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <p class="" style="line-height: 0.7;">You're in the driver's seat - no advisor calls
+                                    <br>will come your way without your request</p>
                             </div>
                         @endif
                     </div>
