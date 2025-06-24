@@ -21,15 +21,17 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     private $quoteObject;
     private $quoteTypeId;
     private $transaction;
+    private $isSendEmail = false;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteObject, $quoteTypeId, $transaction)
+    public function __construct($quoteObject, $quoteTypeId, $transaction, $isSendEmail = false)
     {
         $this->quoteObject = $quoteObject;
         $this->quoteTypeId = $quoteTypeId;
         $this->transaction = $transaction;
+        $this->isSendEmail = $isSendEmail;
     }
 
     /**
@@ -38,8 +40,8 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     public function handle(): void
     {
         $sukoonMedexService = app(SukoonMedexService::class);
-        $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction, true);
-        $sukoonMedexService->processPurchaseFlow();
+        $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
+        $sukoonMedexService->processPurchaseFlow($this->isSendEmail);
     }
 
     /**
