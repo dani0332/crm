@@ -969,8 +969,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
 const totalAnnualPrice = computed(() => {
   if (!ecomDetail.value) return 'N/A';
 
-  let totalPrice = (ecomDetail.value?.isManualPlan ? ecomDetail.value?.totalPrice : ecomDetail.value?.actualPremium) * (page.props.quote?.life_quote?.payment_term ?? 1);
-  
+  let totalPrice =
+    (ecomDetail.value?.isManualPlan
+      ? ecomDetail.value?.totalPrice
+      : ecomDetail.value?.actualPremium) *
+    (page.props.quote?.life_quote?.payment_term ?? 1);
+
   return totalPrice;
 });
 </script>
