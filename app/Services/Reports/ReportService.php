@@ -90,7 +90,8 @@ class ReportService extends BaseService
                 DB::raw('sum(CASE WHEN quote_status_id = '.QuoteStatusEnum::PolicyBooked.' THEN price_with_vat ELSE 0 END) as total_sum'),
             )
                 ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')->groupBy($groupBy)
-                ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+                ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+                ->where('personal_quotes.quote_type_id', $request->quote_type_id);
 
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
