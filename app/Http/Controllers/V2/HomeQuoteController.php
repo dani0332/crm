@@ -50,7 +50,6 @@ class HomeQuoteController extends Controller
     public function create()
     {
         $data = HomeQuoteRepository::getFormOptions();
-        $data['coverageTypeEnum'] = CoverageTypeEnum::nameToIdArray();
 
         return inertia('HomeQuote/Form', $data);
     }
@@ -89,8 +88,7 @@ class HomeQuoteController extends Controller
             'HomeQuote/Form',
             [
                 ...$data,
-                'quote' => $quote,
-                'coverageTypeEnum' => CoverageTypeEnum::nameToIdArray(),
+                'quote' => $quote
             ]
         );
     }
