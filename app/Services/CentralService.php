@@ -1129,7 +1129,7 @@ class CentralService extends BaseService
                         $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
                             ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
                     })->exists();
-                
+
                 $isCurrentlyTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
                 $hasRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
 
