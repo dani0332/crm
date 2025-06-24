@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -370,5 +371,13 @@ class PersonalQuote extends Model implements AuditableContract
     public function insuranceProviderPlan()
     {
         return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id']);
+    }
+
+    /**
+     * Get all of the model's ftc email logs.
+     */
+    public function ftcEmailLogs(): MorphMany
+    {
+        return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 }

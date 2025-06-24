@@ -1602,6 +1602,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </template>
       </Collapsible>
     </div>
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"

@@ -2331,6 +2331,13 @@ const shouldShowPlanDetailsSection = computed(() => {
       :quote-type="quoteType"
     />
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :id="$page.props.quote.id"
       :quote-type="quoteType"
