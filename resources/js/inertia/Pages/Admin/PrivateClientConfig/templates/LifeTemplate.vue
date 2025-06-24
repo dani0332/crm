@@ -91,5 +91,5 @@ const lifeFields = [
     @version-loaded="$emit('versionLoaded', $event)"
     @configuration-saved="$emit('configurationSaved')"
   />
-  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="4"  />
+  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="quoteType.id"  />
 </template>
