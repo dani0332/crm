@@ -43,8 +43,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Models\QuoteFlowDetails;
-use App\Services\Logger\LoggerService;
 
 if (! function_exists('generate_code')) {
     /**
@@ -1633,4 +1631,3 @@ if (! function_exists('userHasProduct')) {
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
-

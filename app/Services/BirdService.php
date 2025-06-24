@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
+use App\Models\QuoteFlowDetails;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Http;
-use App\Models\QuoteFlowDetails;
 
 class BirdService extends BaseService
 {
@@ -72,7 +72,7 @@ class BirdService extends BaseService
             ->where('quote_type_id', $quoteTypeId)
             ->where('flow_type', $flowType)
             ->exists();
-                                    
+
     }
     public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
     {
@@ -81,7 +81,7 @@ class BirdService extends BaseService
             if (! empty($runId)) {
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
-                    'quote_type_id' =>$quoteTypeId,
+                    'quote_type_id' => $quoteTypeId,
                     'flow_type' => $flowType,
                     'flow_id' => $runId,
                     'started_at' => now(),
@@ -91,7 +91,7 @@ class BirdService extends BaseService
                 LoggerService::info(" - createQuoteWorkFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} ");
             }
         } catch (\Throwable $th) {
-          
+
             LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid}");
 
         }
