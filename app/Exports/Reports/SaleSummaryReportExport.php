@@ -19,7 +19,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
     public function __construct(
         private SaleSummaryReportService $saleSummaryReportService,
     ) {
-        if(request()->filled('groupBy')){
+        if (request()->filled('groupBy')) {
             $this->groupByColumn = request()->groupBy;
             // Initialize totals for numeric columns
         }
@@ -46,7 +46,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-//        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
+        //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         $data = $this->saleSummaryReportService->getReportData($request);
 
         return $data;
@@ -58,24 +58,26 @@ class SaleSummaryReportExport implements CsvExportableInterface
     public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
     {
         $request = request()->merge($requestParams);
+
         return $this->saleSummaryReportService->getReportQueryBuilder($request);
     }
 
-    public function processChunkedQuery($query, array $requestParams, $stream): int{
+    public function processChunkedQuery($query, array $requestParams, $stream): int
+    {
         $totalRecords = 0;
         $chunkSize = 1000;
 
-        info("processChunkedQuery Start");
+        info('processChunkedQuery Start');
 
         $requestParams = request()->merge($requestParams);
 
         $endorsementsData = $this->saleSummaryReportService->getEndorsementsData($requestParams);
 
-//        logger()->debug("processChunkedQuery: " . print_r([
-//
-//            '$endorsementsData' => $endorsementsData[0]
-//
-//            ], true));
+        //        logger()->debug("processChunkedQuery: " . print_r([
+        //
+        //            '$endorsementsData' => $endorsementsData[0]
+        //
+        //            ], true));
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $requestParams, $stream, $endorsementsData) {
 
@@ -90,15 +92,12 @@ class SaleSummaryReportExport implements CsvExportableInterface
             }
         });
 
+        $cols = $this->map($processedData[0] ?? (object) []);
 
-        $cols = $this->map($processedData[0] ?? (object)[]);
-
-        logger()->debug("asdasdas End".print_r($cols, true));
+        logger()->debug('asdasdas End'.print_r($cols, true));
 
         // Write totals rows to file which were caculated during map()
         $this->postDataRows($stream);
-
-
 
         return $totalRecords;
     }
@@ -140,12 +139,12 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $groupBy = $groupByColumnMapping[$groupBy] ?? $groupBy;
 
-//        logger()->debug('groupBy: '.$groupBy);
-//        //logger()->debug('groupBy: '.$groupBy);
-//        logger()->debug("groupBy: ".print_r([
-//            '$quote' => $quote,
-//            //'quote->{groupBy}' => $quote->{$groupBy},
-//            ], true));
+        //        logger()->debug('groupBy: '.$groupBy);
+        //        //logger()->debug('groupBy: '.$groupBy);
+        //        logger()->debug("groupBy: ".print_r([
+        //            '$quote' => $quote,
+        //            //'quote->{groupBy}' => $quote->{$groupBy},
+        //            ], true));
 
         $values = [
             $quote->{$groupBy} ?? 'N/A',
@@ -173,14 +172,14 @@ class SaleSummaryReportExport implements CsvExportableInterface
         LoggerService::endLogging();
 
         foreach ($this->columnTotals->keys() as $field) {
-//            logger()->debug("field: ".$field);
-//            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($field, 0));
-//            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
+            //            logger()->debug("field: ".$field);
+            //            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($field, 0));
+            //            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
 
-//            logger()->debug("field: ".print_r([
-//                //'$field' => $field,
-//                'total_policies' => $numericValues->get('total_policies'),
-//                ], true));
+            //            logger()->debug("field: ".print_r([
+            //                //'$field' => $field,
+            //                'total_policies' => $numericValues->get('total_policies'),
+            //                ], true));
 
             $this->columnTotals->put($field, $this->columnTotals->get($field, 0) + ($numericValues->get($field) ?? 0));
         }
@@ -191,22 +190,20 @@ class SaleSummaryReportExport implements CsvExportableInterface
         ];
     }
 
-//    public static function afterSheet(AfterSheet $event)
-//    {
-//        $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
-//
-//        $sumCoumns = ['B', ...$commonColumns];
-//        if (in_array($event->getConcernable()->groupByColumn, ['advisor'])) {
-//            $sumCoumns = [...$commonColumns, 'N'];
-//        }
-//        self::performSum($event, $sumCoumns);
-//    }
-
-
+    //    public static function afterSheet(AfterSheet $event)
+    //    {
+    //        $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+    //
+    //        $sumCoumns = ['B', ...$commonColumns];
+    //        if (in_array($event->getConcernable()->groupByColumn, ['advisor'])) {
+    //            $sumCoumns = [...$commonColumns, 'N'];
+    //        }
+    //        self::performSum($event, $sumCoumns);
+    //    }
 
     private function postDataRows($stream)
     {
-        $totalsRow = array_fill(0, count($this->map((object)[])), '');
+        $totalsRow = array_fill(0, count($this->map((object) [])), '');
         $totalsRow[0] = 'Totals';
         $offset = in_array($this->groupByColumn, ['advisor']) ? 2 : 1; // Adjust for department column
         foreach ($this->columnTotals->keys() as $index => $key) {

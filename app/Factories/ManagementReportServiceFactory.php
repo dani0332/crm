@@ -96,7 +96,7 @@ class ManagementReportServiceFactory
     /**
      * Create an export instance based on the report category.
      *
-     * @param string $reportCategory
+     * @param  string  $reportCategory
      * @return mixed|null
      */
     public static function createExport($reportCategory)

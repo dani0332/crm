@@ -474,7 +474,6 @@ class ManagementReport
         /**
          * map the endorsement data to the report data
          */
-
         $reportData = $reportData->map(function ($item) use ($request, $endorsementData) {
             return self::mapEndorsementsToReport($item, $endorsementData, $request);
         });

@@ -11,7 +11,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
-use App\Exports\Reports\SaleSummaryReportExport;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
 use App\Http\Requests\UTMReportRequest;
@@ -581,7 +580,7 @@ class ReportsController extends Controller
      */
     public function exportManagementReport(Request $request)
     {
-        $reportCategory = !isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+        $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
 
         // Get the report service instance
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
@@ -592,7 +591,8 @@ class ReportsController extends Controller
         if ($exportClass) {
             // Check if export type is email
             if ($request->exportType == 'email') {
-                $request['exportTitle'] = "Management Report";
+                $request['exportTitle'] = 'Management Report';
+
                 return $exportClass->emailCSV($reportCategory, $request->all());
             }
 

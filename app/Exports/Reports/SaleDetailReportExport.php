@@ -18,10 +18,10 @@ class SaleDetailReportExport implements CsvExportableInterface
     public function __construct(
         private SaleDetailReportService $saleDetailReportService,
     ) {
-//        if(request()->filled('groupBy')){
-//            $this->groupByColumn = request()->groupBy;
-//            // Initialize totals for numeric columns
-//        }
+        //        if(request()->filled('groupBy')){
+        //            $this->groupByColumn = request()->groupBy;
+        //            // Initialize totals for numeric columns
+        //        }
 
         $this->columnTotals = collect();
 
@@ -38,7 +38,7 @@ class SaleDetailReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-//        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
+        //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         $data = $this->saleDetailReportService->getReportData($request);
 
         return $data;
@@ -50,6 +50,7 @@ class SaleDetailReportExport implements CsvExportableInterface
     public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
     {
         $request = request()->merge($requestParams);
+
         return $this->saleDetailReportService->getReportQueryBuilder($request);
     }
 
@@ -142,20 +143,19 @@ class SaleDetailReportExport implements CsvExportableInterface
 
         LoggerService::endLogging();
 
-
         foreach ($this->columnTotals as $index => $field) {
-//            logger()->debug("index: ".$index);
-//            logger()->debug("field: ".$field);
-//            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($index, 0));
-//            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
+            //            logger()->debug("index: ".$index);
+            //            logger()->debug("field: ".$field);
+            //            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($index, 0));
+            //            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
 
-//            logger()->debug("field: ".print_r([
-//                //'$field' => $field,
-//                'total_policies' => $numericValues->get('total_policies'),
-//                ], true));
+            //            logger()->debug("field: ".print_r([
+            //                //'$field' => $field,
+            //                'total_policies' => $numericValues->get('total_policies'),
+            //                ], true));
 
-            if(is_numeric($row->get($index))){
-                $this->columnTotals->put($index, ((float)$this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
+            if (is_numeric($row->get($index))) {
+                $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
 
@@ -172,11 +172,11 @@ class SaleDetailReportExport implements CsvExportableInterface
         $totalRecords = 0;
         $chunkSize = 1000;
 
-        info(__CLASS__." processChunkedQuery Start");
+        info(__CLASS__.' processChunkedQuery Start');
 
         $requestParams = request()->merge($requestParams);
 
-        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $requestParams, $stream) {
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
             $this->saleDetailReportService->formatData($chunk);
 
             // Now process ALL records in the chunk (just like the download path does)
@@ -204,8 +204,7 @@ class SaleDetailReportExport implements CsvExportableInterface
 
     private function getEmptyRow(): array
     {
-        return array_fill(0, count($this->map((object)[])), '');
+        return array_fill(0, count($this->map((object) [])), '');
     }
-
 
 }

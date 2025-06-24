@@ -33,7 +33,7 @@ trait ModernCsvExportable
                 fputcsv($handle, $this->map($record));
             }
 
-            if(method_exists($this, 'postDataRows')) {
+            if (method_exists($this, 'postDataRows')) {
                 $this->postDataRows($handle);
             }
 

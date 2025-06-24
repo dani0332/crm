@@ -9,7 +9,6 @@ use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
-use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -23,12 +22,11 @@ class SaleSummaryReportService extends ManagementReport
     private $groupByColumn;
     private $reportDateRange;
 
-
     public function getReportData(Request $request)
     {
         $query = $this->getReportQueryBuilder($request);
 
-        //$data = $query->get();
+        // $data = $query->get();
 
         if ($request->export == 1) {
 
@@ -38,7 +36,8 @@ class SaleSummaryReportService extends ManagementReport
         }
     }
 
-    public function getReportQueryBuilder(Request $request){
+    public function getReportQueryBuilder(Request $request)
+    {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
@@ -138,8 +137,7 @@ class SaleSummaryReportService extends ManagementReport
         }
         $this->applyFilters($query, $request, false, true);
 
-
-        logger()->debug("toRawSql: ".$query->toRawSql());
+        logger()->debug('toRawSql: '.$query->toRawSql());
 
         return $query;
     }
@@ -175,7 +173,7 @@ class SaleSummaryReportService extends ManagementReport
      */
     public function getEndorsementsData(Request $request)
     {
-        info("getEndorsementsData");
+        info('getEndorsementsData');
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
