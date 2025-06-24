@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\SageEnum;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteTag;
@@ -33,6 +34,7 @@ class SageApiEmbeddedProductService
     public function bookEmbeddedProductOnSage($sageRequestDataArray)
     {
         [$quote ,$sageRequest, $sukoonMedXTransaction] = $sageRequestDataArray;
+        $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id());
 
         LoggerService::startQuoteLogging($sukoonMedXTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING);
         LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Quote Code : '.$quote->code.'- Embedded Product Booking started for : '.$sukoonMedXTransaction->code);
@@ -59,6 +61,7 @@ class SageApiEmbeddedProductService
             // Execute AR Prepayment Receipt Post Call
             $arReceiptCreationResponse = $this->createARPrepaymentReceipt([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $arReceiptCreationResponse['status']) {
+                $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
                 return $arReceiptCreationResponse;
             }
             $sageRequestEmbeddedProduct->epSageReceiptId = $arReceiptCreationResponse['documentNumber'];
@@ -66,20 +69,25 @@ class SageApiEmbeddedProductService
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $createARInvoicePremAndComm['status']) {
+                $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
                 return $createARInvoicePremAndComm;
             }
 
             // Create AP Premium Invoice
             $createAPInvoicePrem = $this->createAPPremInvoice([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $createAPInvoicePrem['status']) {
+                $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
                 return $createAPInvoicePrem;
             }
 
             // Apply Prepayments
             $applyPaymentInvoices = $this->applyPaymentInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $applyPaymentInvoices['status']) {
+                $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
                 return $applyPaymentInvoices;
             }
+
+            $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id());
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
@@ -121,9 +129,9 @@ class SageApiEmbeddedProductService
         }
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
-            if (! $sukoonMedXEPTransaction->sage_reciept_id) {
+            if (! $sukoonMedXEPTransaction->payment_sage_receipt_id) {
                 $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-                $sukoonMedXEPTransaction->update(['sage_reciept_id' => $documentNumberForReceipt]);
+                $sukoonMedXEPTransaction->update(['payment_sage_receipt_id' => $documentNumberForReceipt]);
             }
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
@@ -1135,6 +1143,14 @@ class SageApiEmbeddedProductService
             'sage_request_type' => $sageRequestType ?? null,
             'entry_type' => $entryType,
         ];
+    }
+
+
+    public function updateAndLogEPBookingStatus($embeddedTransaction, $status)
+    {
+        LoggerService::info(self::CLASSNAME . ' fun:'. __FUNCTION__ . ' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status);
+        $embeddedTransaction->update('sage_status_id', $status);
+        LoggerService::info(self::CLASSNAME . ' fun:'. __FUNCTION__ . ' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
     }
 
 }

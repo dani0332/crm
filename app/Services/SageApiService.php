@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -754,7 +755,13 @@ class SageApiService
 
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
         $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
-        if ($isLobAllowedForEmbeddedProductBooking && $sukoonMedXTransaction) {
+        $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
+        LoggerService::info(self::class . 'fun:' .__FUNCTION__.'  EP Booking checks :  Quote Code for '.$quote->code, extra : [
+            'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
+            'sukoonMedXTransaction' => $sukoonMedXTransaction?->code,
+            'isTapPaymentGateway' => $isTapPaymentGateway,
+        ]);
+        if ($isLobAllowedForEmbeddedProductBooking && $sukoonMedXTransaction && $isTapPaymentGateway) {
             LoggerService::info('################################## EP Booking : Start Sage booking Process for : '.$quote->code.' ##################################');
             $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $sageRequest, $sukoonMedXTransaction]);
             LoggerService::info('################################## EP Booking : End Sage booking Process for : '.$quote->code.' ##################################', extra : $embeddedProductSageBookingResponse);
