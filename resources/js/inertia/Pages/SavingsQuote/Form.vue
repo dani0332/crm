@@ -49,6 +49,8 @@ const investmentFrequencies = computed(() => {
   return props.lookUpData.savingsInvestmentType.map(item => ({
     value: item.id,
     label: item.text,
+    description: item.description,
+    code: item.code,
   }));
 });
 
@@ -254,11 +256,20 @@ function onSubmit(isValid) {
                   v-model="quoteForm.investment_frequency"
                   :rules="[isRequired]"
                 >
-                  <x-radio
+                  <div
                     v-for="item in investmentFrequencies"
-                    :value="item.value"
-                    :label="item.label"
-                  />
+                    :key="item.value"
+                    class="relative group mb-6"
+                  >
+                    <div class="radio-wrapper">
+                      <x-radio :value="item.value" :label="item.label" />
+                    </div>
+                    <div
+                      class="hidden group-hover:block absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-blue-400 rounded-md shadow-lg z-10 text-sm tooltip-box"
+                    >
+                      {{ item.description }}
+                    </div>
+                  </div>
                 </x-form-group>
               </div>
             </x-field>
@@ -289,3 +300,27 @@ function onSubmit(isValid) {
     </x-form>
   </div>
 </template>
+
+<style scoped>
+/* Ensure tooltip appears on hover */
+.group:hover .group-hover\:block {
+  display: block;
+}
+
+/* Custom tooltip styling to match design */
+.tooltip-box {
+  border: 1px solid #1d83bc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #33333399;
+  line-height: 1.5;
+  padding: 12px;
+  font-size: 14px;
+  max-width: 280px;
+  background-color: #f8fafc;
+}
+
+.radio-wrapper {
+  cursor: pointer;
+}
+</style>

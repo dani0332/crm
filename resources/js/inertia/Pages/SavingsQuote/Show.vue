@@ -414,10 +414,10 @@ const onLoadAvailablePlansData = async () => {
             investmentFrequency: 'Regular',
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(
-              plan.eligibility,
+              plan,
               'minimum_investment_amount',
             ),
-            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            policyTerm: getEligibilityValue(plan, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
@@ -437,10 +437,10 @@ const onLoadAvailablePlansData = async () => {
             investmentFrequency: 'Lumpsum',
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(
-              plan.eligibility,
+              plan,
               'minimum_investment_amount',
             ),
-            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            policyTerm: getEligibilityValue(plan, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
@@ -464,11 +464,14 @@ const onLoadAvailablePlansData = async () => {
 };
 
 // Helper function to extract value from eligibility array
-const getEligibilityValue = (eligibility, code) => {
-  if (!Array.isArray(eligibility)) return 'N/A';
+const getEligibilityValue = (plan, code) => {
+  // Check if eligibilities property exists (new API format)
+  if (plan?.eligibilities && Array.isArray(plan.eligibilities)) {
+    const found = plan.eligibilities.find(item => item.code === code);
+    return found ? found.value : 'N/A';
+  }
 
-  const found = eligibility.find(item => item.code === code);
-  return found ? found.value : 'N/A';
+  return 'N/A';
 };
 
 // Commented out - bulk actions disabled since checkboxes are hidden
@@ -661,6 +664,7 @@ const PLAN_TOOLTIP_MAPPINGS = {
       'Monthly, quarterly, semi-annual, or annual options',
     'Added life insurance coverage': 'Financial security for loved ones',
     'Investment options': 'Wide range of investment funds managed by experts',
+    'Rate of return': 'Potential growth on your investment',
   },
 };
 
@@ -737,7 +741,12 @@ const getIncludedBenefitsTooltip = fieldText =>
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
+            v-if="
+              canAny([
+                permissionsEnum.SAVINGS_QUOTES_EDIT,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -748,12 +757,22 @@ const getIncludedBenefitsTooltip = fieldText =>
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SAVINGS_QUOTES_EDIT)"
+            v-if="
+              canAny([
+                permissionsEnum.SAVINGS_QUOTES_EDIT,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
 
         <Link
-          v-if="can(permissionsEnum.SAVINGS_QUOTES_LIST)"
+          v-if="
+            canAny([
+              permissionsEnum.SAVINGS_QUOTES_EDIT,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('savings-quotes-list')"
           preserve-scroll
         >
@@ -1721,7 +1740,16 @@ const getIncludedBenefitsTooltip = fieldText =>
 
                         <div class="grid sm:grid-cols-2">
                           <dt class="text-sm font-medium text-gray-700">
-                            Investment Frequency
+                            <x-tooltip placement="bottom">
+                              <span
+                                class="underline decoration-dotted decoration-primary-700"
+                              >
+                                Investment Frequency
+                              </span>
+                              <template #tooltip
+                                >How often you plan to invest</template
+                              >
+                            </x-tooltip>
                           </dt>
                           <dd class="text-gray-900">
                             {{ planDetails.investmentFrequency }}
@@ -1765,13 +1793,13 @@ const getIncludedBenefitsTooltip = fieldText =>
                     <div class="p-6">
                       <div
                         v-if="
-                          planDetails.eligibility &&
-                          planDetails.eligibility.length > 0
+                          planDetails.eligibilities &&
+                          planDetails.eligibilities.length > 0
                         "
                         class="grid grid-cols-2 gap-x-8 gap-y-6"
                       >
                         <div
-                          v-for="item in planDetails.eligibility"
+                          v-for="item in planDetails.eligibilities"
                           :key="item.id"
                           class="grid grid-cols-2 gap-x-4"
                         >
@@ -2074,6 +2102,7 @@ const getIncludedBenefitsTooltip = fieldText =>
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

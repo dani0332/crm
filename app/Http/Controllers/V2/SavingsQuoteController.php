@@ -19,10 +19,10 @@ class SavingsQuoteController extends Controller
     public function __construct(
         public SavingsQuoteService $savingsQuoteService,
     ) {
-        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_LIST, ['only' => ['index', 'cardsView']]);
+        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_LIST.'|'.PermissionsEnum::VIEW_ALL_LEADS, ['only' => ['index', 'cardsView']]);
         $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_CREATE, ['only' => ['create', 'store']]);
-        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_EDIT, ['only' => ['edit', 'update']]);
-        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_SHOW, ['only' => ['show']]);
+        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_EDIT.'|'.PermissionsEnum::VIEW_ALL_LEADS, ['only' => ['edit', 'update']]);
+        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_SHOW.'|'.PermissionsEnum::VIEW_ALL_LEADS, ['only' => ['show']]);
     }
 
     public function index()

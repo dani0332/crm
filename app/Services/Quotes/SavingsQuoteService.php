@@ -5,6 +5,8 @@ namespace App\Services\Quotes;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -114,7 +116,7 @@ class SavingsQuoteService extends BaseQuoteService
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
 
         if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID);
+            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, true);
         }
 
         return $response;
@@ -212,6 +214,8 @@ class SavingsQuoteService extends BaseQuoteService
     {
         $quote = $this->getOne($uuid, true);
         $data = $this->getShowCommonData($quote);
+
+        $data['permissions']['canEditQuote'] = (auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)));
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),

@@ -445,4 +445,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasMany(QuoteCustomerPlan::class, 'quote_uuid', 'uuid');
     }
+
+    public function isNonAdvisorEmailSent()
+    {
+        return ! is_null($this->non_advisor_email_sent_at);
+    }
 }

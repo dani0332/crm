@@ -20,6 +20,7 @@ defineProps({
 
 const page = usePage();
 const hasAnyRole = role => useHasAnyRole(role);
+const canAny = permissions => useCanAny(permissions);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const loader = reactive({
@@ -648,7 +649,12 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="can(permissionsEnum.SAVINGS_QUOTES_SHOW)"
+          v-if="
+            canAny([
+              permissionsEnum.SAVINGS_QUOTES_SHOW,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('savings-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
