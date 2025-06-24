@@ -5,6 +5,9 @@ namespace App\Factories;
 use App\Enums\GenericRequestEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportGroupByEnum;
+use App\Exports\Reports\EndingPoliciesReportExport;
+use App\Exports\Reports\SaleDetailReportExport;
+use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\LeadSource;
 use App\Models\Team;
 use App\Services\ApplicationStorageService;
@@ -88,5 +91,23 @@ class ManagementReportServiceFactory
             'managementReportCategories' => $managementReportCategories,
             'managementReportGroupBy' => $managementReportGroupBy,
         ];
+    }
+
+    /**
+     * Create an export instance based on the report category.
+     *
+     * @param string $reportCategory
+     * @return mixed|null
+     */
+    public static function createExport($reportCategory)
+    {
+        $exportMap = [
+            ManagementReportCategoriesEnum::SALE_SUMMARY => SaleSummaryReportExport::class,
+            ManagementReportCategoriesEnum::SALE_DETAIL => SaleDetailReportExport::class,
+            ManagementReportCategoriesEnum::ENDING_POLICIES => EndingPoliciesReportExport::class,
+            // Add other report categories and their corresponding export classes here
+        ];
+
+        return isset($exportMap[$reportCategory]) ? app($exportMap[$reportCategory]) : null;
     }
 }

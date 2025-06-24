@@ -155,4 +155,17 @@ trait ModernCsvExportable
             $ccRecipients
         );
     }
+
+    public function resolveNumberFormat($value)
+    {
+        if (is_string($value) && strpos($value, ',') !== false) {
+            return floatval(str_replace(',', '', $value));
+        }
+
+        if (is_numeric($value)) {
+            return floatval($value);
+        }
+
+        return $value;
+    }
 }

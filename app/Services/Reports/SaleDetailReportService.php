@@ -19,7 +19,7 @@ class SaleDetailReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
@@ -109,11 +109,20 @@ class SaleDetailReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
+        logger()->debug("toRawSql: ".$query->toRawSql());
+
+        return $query;
+    }
+
+
+    public function getReportData(Request $request){
+
+        $query = $this->getReportQueryBuilder($request);
+
         if ($request->export == 1) {
             $data = $query->get();
-            $this->formatData($data);
-
-            return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
+            return $this->formatData($data);
+            // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -125,7 +134,7 @@ class SaleDetailReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->transactions = $this->concatValues([$item->insurer_tax_invoice_number, $item->notes, $item->reference], '-');

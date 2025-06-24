@@ -2,10 +2,57 @@
 
 namespace App\Exports\Reports;
 
+use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
+use App\Services\Reports\SaleDetailReportService;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class SaleDetailReportExport extends BaseReportsExport
+class SaleDetailReportExport implements CsvExportableInterface
 {
+    use ModernCsvExportable;
+
+    protected Collection $columnTotals;
+
+    public function __construct(
+        private SaleDetailReportService $saleDetailReportService,
+    ) {
+//        if(request()->filled('groupBy')){
+//            $this->groupByColumn = request()->groupBy;
+//            // Initialize totals for numeric columns
+//        }
+
+        $this->columnTotals = collect();
+
+        $totalsRow = $this->getEmptyRow();
+
+        $totalsRow[0] = 'Totals';
+
+        $this->columnTotals = collect($totalsRow);
+    }
+
+    /**
+     * Get the data collection for CSV export
+     */
+    public function collection(array $requestParams = []): Collection
+    {
+        $request = request()->merge($requestParams);
+//        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
+        $data = $this->saleDetailReportService->getReportData($request);
+
+        return $data;
+    }
+
+    /**
+     * Get the query builder instance for chunked processing
+     */
+    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    {
+        $request = request()->merge($requestParams);
+        return $this->saleDetailReportService->getReportQueryBuilder($request);
+    }
+
     public function headings(): array
     {
         return [
@@ -52,13 +99,13 @@ class SaleDetailReportExport extends BaseReportsExport
 
     public function map($quote): array
     {
-        return [
+        $row = collect([
             $quote->code ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->department ?? 'N/A',
-            $quote->transactions ? $quote->transactions : 'N/A',
+            $quote->transactions ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',
-            $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
+            $quote->payment_due_date ?? ($quote->due_date ?? 'N/A'),
             $quote->code ?? 'N/A',
             $quote->team ?? 'N/A',
             $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
@@ -91,11 +138,74 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->policy_booking_date ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
             $quote->pcp_tag_formatted ?? 'N/A',
-        ];
+        ]);
+
+        LoggerService::endLogging();
+
+
+        foreach ($this->columnTotals as $index => $field) {
+//            logger()->debug("index: ".$index);
+//            logger()->debug("field: ".$field);
+//            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($index, 0));
+//            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
+
+//            logger()->debug("field: ".print_r([
+//                //'$field' => $field,
+//                'total_policies' => $numericValues->get('total_policies'),
+//                ], true));
+
+            if(is_numeric($row->get($index))){
+                $this->columnTotals->put($index, ((float)$this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
+            }
+        }
+
+        return $row->values()->toArray();
     }
 
     public static function afterSheet(AfterSheet $event)
     {
         self::performSum($event, ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'X']);
     }
+
+    public function processChunkedQuery($query, array $requestParams, $stream): int
+    {
+        $totalRecords = 0;
+        $chunkSize = 1000;
+
+        info(__CLASS__." processChunkedQuery Start");
+
+        $requestParams = request()->merge($requestParams);
+
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $requestParams, $stream) {
+            $this->saleDetailReportService->formatData($chunk);
+
+            // Now process ALL records in the chunk (just like the download path does)
+            foreach ($chunk as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
+            }
+        });
+
+        $this->postDataRows($stream);
+
+        return $totalRecords;
+    }
+
+    private function postDataRows($stream)
+    {
+        $totalsRow = $this->getEmptyRow();
+
+        foreach ($this->columnTotals as $index => $key) {
+            $totalsRow[$index] = $this->resolveNumberFormat($this->columnTotals->get($index));
+        }
+
+        fputcsv($stream, $totalsRow);
+    }
+
+    private function getEmptyRow(): array
+    {
+        return array_fill(0, count($this->map((object)[])), '');
+    }
+
+
 }

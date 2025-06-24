@@ -46,7 +46,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-        logger()->debug("SaleSummaryReportExport collection: " . print_r(['request' => $request->all()], true));
+//        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         $data = $this->saleSummaryReportService->getReportData($request);
 
         return $data;
@@ -63,7 +63,6 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
     public function processChunkedQuery($query, array $requestParams, $stream): int{
         $totalRecords = 0;
-        $columnTotals = [];
         $chunkSize = 1000;
 
         info("processChunkedQuery Start");
@@ -96,8 +95,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         logger()->debug("asdasdas End".print_r($cols, true));
 
-        // Write totals row
-
+        // Write totals rows to file which were caculated during map()
         $this->postDataRows($stream);
 
 
@@ -204,18 +202,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
 //        self::performSum($event, $sumCoumns);
 //    }
 
-    protected function resolveNumberFormat($value)
-    {
-        if (is_string($value) && strpos($value, ',') !== false) {
-            return floatval(str_replace(',', '', $value));
-        }
 
-        if (is_numeric($value)) {
-            return floatval($value);
-        }
-
-        return $value;
-    }
 
     private function postDataRows($stream)
     {
