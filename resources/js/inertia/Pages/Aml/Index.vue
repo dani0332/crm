@@ -192,7 +192,7 @@ const onDataExport = async (exportType = 'download') => {
 
 function removeEmptyFields(obj) {
   Object.keys(obj).forEach(key => {
-    if (obj[key] === '') {
+    if (obj[key] === '' || obj[key] === null || obj[key] === undefined) {
       delete obj[key];
     }
   });
