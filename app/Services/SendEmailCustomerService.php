@@ -953,17 +953,7 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
         if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-            EmailStatus::create([
-                'quote_type_id' => $emailData->quoteTypeId,
-                'quote_id' => $emailData->quoteId,
-                'email_address' => $emailData->customerEmail,
-                'msg_id' => $messageId ?? null,
-                'reason' => 'Send Policy to Customer',
-                'email_status' => $status,
-                'email_subject' => $subject,
-                'template_id' => $emailData->emailTemplateId,
-                'customer_id' => $emailData->customerId,
-            ]);
+            $this->emailStatusService->addEmailStatus($emailData, $messageId, $subject, $status, 'Send Policy to Customer');
         }
 
         return $responseCode;
@@ -1170,17 +1160,7 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
         if ($quoteTypeId == QuoteTypeId::Savings) {
             $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-            EmailStatus::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_id' => $emailData->quoteId,
-                'email_address' => $emailData->customerEmail,
-                'msg_id' => $messageId ?? null,
-                'reason' => 'Send Update to Customer',
-                'email_status' => $status,
-                'email_subject' => $subject,
-                'template_id' => $emailTemplateId,
-                'customer_id' => $emailData->customerId,
-            ]);
+            $this->emailStatusService->addEmailStatus($emailData, $messageId, $subject, $status, 'Send Update to Customer');
         }
 
         return $responseCode;
