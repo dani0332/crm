@@ -1463,21 +1463,21 @@ class AMLService
     public function generateAmlCftReport(array $requestParams = [])
     {
         LoggerService::info('fn:amlCtfReportExport - AMLController');
-        
+
         // Debug: Log the received parameters
         \Illuminate\Support\Facades\Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
 
         // Create request object from parameters or use global request as fallback
-        if (!empty($requestParams)) {
+        if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);
         } else {
             $request = request();
         }
-        
+
         // Use get() method to access request parameters properly
         $startDate = $request->get('amlCreatedStartDate');
         $endDate = $request->get('amlCreatedEndDate');
-        
+
         // Debug: Log the extracted dates and other filters
         \Illuminate\Support\Facades\Log::info('AMLService Extracted Filters:', [
             'startDate' => $startDate,

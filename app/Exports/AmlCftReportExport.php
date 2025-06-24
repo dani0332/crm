@@ -31,7 +31,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
     {
         // Map export parameters to the format expected by AMLService
         $serviceParams = empty($requestParams) ? [] : $this->mapExportParameters($requestParams);
-        
+
         $report = app(AMLService::class)->generateAmlCftReport($serviceParams);
         $this->data = $report['collection'];
         $this->summary = $report['summary'];
@@ -187,11 +187,11 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         $year = Carbon::now()->year;
         $csvContent = $this->generateCustomFormattedCsv($year, $this->data, $this->summary);
         $fileName = $requestParams['fileName'] ?? 'AML_CTF_Report';
-        
+
         // Create temporary file
         $tempFile = tempnam(sys_get_temp_dir(), 'aml_ctf_');
         file_put_contents($tempFile, $csvContent);
-        
+
         // Prepare email template data
         $templateData = [
             'recipientName' => $requestParams['recipientName'] ?? 'Valued User',
@@ -205,17 +205,17 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         // Send email with attachment
         Mail::send('ExportCSVMail', $templateData, function ($message) use ($recipientEmail, $emailSubject, $tempFile, $fileName, $ccRecipients) {
             $message->to($recipientEmail)
-                    ->subject($emailSubject)
-                    ->attach($tempFile, [
-                        'as' => $fileName . '.csv',
-                        'mime' => 'text/csv',
-                    ]);
-            
-            if (!empty($ccRecipients)) {
+                ->subject($emailSubject)
+                ->attach($tempFile, [
+                    'as' => $fileName.'.csv',
+                    'mime' => 'text/csv',
+                ]);
+
+            if (! empty($ccRecipients)) {
                 $message->cc($ccRecipients);
             }
         });
-        
+
         // Clean up temporary file
         unlink($tempFile);
     }
@@ -230,32 +230,32 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         $summary = $summary ?? $this->summary;
 
         $output = fopen('php://temp', 'r+');
-        
+
         // Add custom headers
         fputcsv($output, ['AFIA Insurance Brokerage Services LLC']);
         fputcsv($output, ["AML/CFT Monitoring purpose Customer Risk Profile Report {$year}"]);
         fputcsv($output, ['Requested By Compliance Dept.']);
         fputcsv($output, []); // Empty row
-        
+
         // Add column headers
         fputcsv($output, $this->headings());
-        
+
         // Add data rows
         foreach ($data as $record) {
             fputcsv($output, $this->map($record));
         }
-        
+
         // Add empty rows before summary
         fputcsv($output, []);
         fputcsv($output, []);
         fputcsv($output, []);
-        
+
         // Add summary section
         fputcsv($output, ['', 'Total Number of Customers', '', $summary['total_customers'] ?? '']);
         fputcsv($output, ['', 'High Risk Customers', '', $summary['high_risk'] ?? '']);
         fputcsv($output, ['', 'Medium Risk Customers', '', $summary['medium_risk'] ?? '']);
         fputcsv($output, ['', 'Low Risk Customers', '', $summary['low_risk'] ?? '']);
-        
+
         // Add note section
         fputcsv($output, []);
         fputcsv($output, []);
@@ -266,11 +266,11 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         fputcsv($output, []);
         fputcsv($output, []);
         fputcsv($output, ['Note:', 'This report contains sensitive personal data. Do not share externally. For compliance use only.']);
-        
+
         rewind($output);
         $csvContent = stream_get_contents($output);
         fclose($output);
-        
+
         return $csvContent;
     }
 
