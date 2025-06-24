@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessStatusCode;
@@ -836,8 +837,28 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
+
             if (is_array($emailData->handBookDocuments) && ! empty($emailData->handBookDocuments)) {
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
+            }
+
+            if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
+                if (! empty($emailData->policyWordingHandbook)) {
+                    $attachments[] = [
+                        'url' => $this->encodeUrl(config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url']),
+                        'name' => 'InsuranceMarket.ae™ '.$emailData->policyWordingHandbook['document_type_text'].' for Policy Number '.$emailData->policy_number.'.'.pathinfo($emailData->policyWordingHandbook['watermarked_doc_url'], PATHINFO_EXTENSION),
+                    ];
+                }
+
+                $bodyData['sender'] = [
+                    'email' => 'alfred@notify.insurancemarket.ae',
+                    'name' => 'InsuranceMarket.ae',
+                ];
+
+                $bodyData['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
+
+                $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
+                $bodyData['bcc'][] = ['email' => $newLeadPool->value];
             }
 
             LoggerService::info('Quote Code: '.$emailData->code.' Attachments: '.json_encode($attachments));
@@ -888,18 +909,6 @@ class SendEmailCustomerService extends BaseService
                 $bodyData['bcc'][] = [
                     'email' => $additionalBcc->value,
                 ];
-            }
-
-            if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
-                $bodyData['sender'] = [
-                    'email' => 'alfred@notify.insurancemarket.ae',
-                    'name' => 'InsuranceMarket.ae',
-                ];
-
-                $bodyData['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
-
-                $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
-                $bodyData['bcc'][] = ['email' => $newLeadPool->value];
             }
 
             LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);

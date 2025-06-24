@@ -82,7 +82,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             return;
         }
 
-        $handBookDocuments = [];
+        $handBookDocuments = $policyWordingDoc = [];
 
         try {
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
@@ -111,7 +111,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $planName = $quote?->insuranceProviderPlan?->text ?? '';
 
             // TODO : need to discuss this, because file size is exceed.
-            $docs[] = (object) [
+            $policyWordingDoc = [
                 'watermarked_doc_url' => $quote->insuranceProviderPlan?->policyWordings?->link,
                 'document_type_text' => 'Policy Wording/handbook',
             ];
@@ -175,6 +175,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->quoteTypeId = $quoteTypeId;
             $emailData->quoteId = $quote->id;
             $emailData->testingQuoteId = $quote->id; // temporary
+            $emailData->policyWordingHandbook = $policyWordingDoc;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
