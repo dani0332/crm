@@ -105,12 +105,11 @@ const lifeCoverToggled = true;
 const notification = useNotifications('toast');
 
 const paymentTerms = [
-  { value: 1, label: 'Monthly' },
-  { value: 3, label: 'Quarterly' },
-  { value: 6, label: 'Semi-Annually' },
-  { value: 12, label: 'Annually' },
+  { value: 12, label: 'Monthly' },
+  { value: 4, label: 'Quarterly' },
+  { value: 2, label: 'Semi-Annually' },
+  { value: 1, label: 'Annually' },
 ];
-
 const filteredPaymentTerms = computed(() => {
   return editForm.providerId === 180
     ? paymentTerms.filter(term => ![3, 6].includes(term.value))

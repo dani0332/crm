@@ -18,18 +18,18 @@ class EmailService
     /**
      * Create a new class instance.
      */
-    public function sendOCAEmail(string $quoteType, array $data = [])
+    public function sendOCAEmail(string $quoteUID, array $data = [])
     {
-        LoggerService::startQuoteLogging($data['quote_uuid']);
+        LoggerService::startQuoteLogging($quoteUID);
 
         $logPrefix = get_class($this). ' fn: sendOCAEmail - ';
 
         LoggerService::info($logPrefix.' - Sending OCA email');
 
-        $lead = $this->getQuote($data['quote_uuid']);
+        $lead = $this->getQuote($quoteUID);
 
         // map data for bird service
-        $emailData = $this->mapOCAEmailData($lead);
+        $emailData = $this->mapOCAEmailData($lead, $data);
 
         // get bird flow url for Life from ApplicationStorage
         $flowUrl = $this->getApplicationStorage();
@@ -72,7 +72,7 @@ class EmailService
     {
         return ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW)->value('value');
     }
-    private function mapOCAEmailData($lead)
+    private function mapOCAEmailData($lead, $data)
     {
         $firstName = $lead->first_name;
         $lastName = $lead->last_name;
@@ -102,6 +102,7 @@ class EmailService
             'whatsAppNumber' => $advisor?->mobile_no ? formatMobileNo($advisor->mobile_no) : null,
             'mobileNoWithoutSpaces' => $advisor?->mobile_no ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : null,
 
+            'planIds' => $data['plan_ids'] ?? null,
             // Workflow-related data
             'workflowType' => $workflowType,
         ];

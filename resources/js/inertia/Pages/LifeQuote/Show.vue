@@ -190,7 +190,7 @@ const plansTable = reactive({
       sortable: true,
     },
     {
-      text: 'Total Annual Premium',
+      text: 'Total Annual Price',
       value: 'totalAnnualPremium',
       sortable: true,
     },
@@ -320,12 +320,11 @@ const downloadComparisionPdf = () => {
 
 const getPaymentTermTitle = months => {
   const mapping = {
-    1: 'Monthly',
-    3: 'Quarterly',
-    6: 'Semi-Annually',
-    12: 'Annually',
+    12: 'Monthly',
+    4: 'Quarterly',
+    2: 'Semi-Annually',
+    1: 'Annually',
   };
-
   return mapping[months] || '';
 };
 
@@ -966,6 +965,14 @@ const getBMITag = () => {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const totalAnnualPrice = computed(() => {
+  if (!ecomDetail.value) return 'N/A';
+
+  let totalPrice = (ecomDetail.value?.isManualPlan ? ecomDetail.value?.totalPrice : ecomDetail.value?.actualPremium) * (page.props.quote?.life_quote?.payment_term ?? 1);
+  
+  return totalPrice;
+});
 </script>
 
 <template>
@@ -2058,19 +2065,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Price</dt>
+                <dt class="font-medium uppercase">Total Annual Price</dt>
                 <dd>
-                  {{
-                    ecomDetail?.isManualPlan
-                      ? ecomDetail?.totalPrice
-                      : (ecomDetail?.actualPremium ?? 'N/A')
-                  }}
+                  {{ totalAnnualPrice }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Payment Term</dt>
                 <dd>
-                  {{ quote.life_quote.payment_term }}
+                  {{ quote?.life_quote?.payment_term ?? 'N/A' }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">

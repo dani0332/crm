@@ -145,10 +145,10 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const active = ref(false);
 
 const paymentTerms = [
-  { value: 1, label: 'Monthly' },
-  { value: 3, label: 'Quarterly' },
-  { value: 6, label: 'Semi-Annually' },
-  { value: 12, label: 'Annually' },
+  { value: 12, label: 'Monthly' },
+  { value: 4, label: 'Quarterly' },
+  { value: 2, label: 'Semi-Annually' },
+  { value: 1, label: 'Annually' },
 ];
 
 const filteredPaymentTerms = computed(() => {

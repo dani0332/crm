@@ -704,7 +704,7 @@ class LifeQuoteService extends BaseService
 
     public function exportPlansPdf(string $quoteType, array $data = [])
     {
-        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        $quotePlans = $this->quotePlans($data);
 
         $planIds = $data['plan_ids'] ?? [];
         
@@ -732,6 +732,75 @@ class LifeQuoteService extends BaseService
         $riderDetails = LifePlanRider::with(['riderOption'])->where('plan_id', $planId)->get();
 
         return $riderDetails;
+    }
+
+    public function quotePlans($data)
+    {
+        $quoteUuId = LifeQuote::where('uuid', '=', $data['quote_uuid'])->value('uuid');
+        $planIds = $data['plan_ids'] ?? [];
+
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-life-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+
+        // Build query parameters
+        $queryParams = [
+            'quoteUID' => $quoteUuId,
+            'getLatestRating' => 'false',
+            'lang' => 'en',
+            'callSource' => 'imcrm',
+        ];
+
+        // Add planIds as comma-separated string if provided
+        $queryParams['quoteUID'] = $quoteUuId;
+        if (!empty($planIds)) {
+            $queryParams['planIds'] = is_array($planIds) ? implode(',', $planIds) : $planIds;
+        }
+
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $kenRequest = $client->get(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'query' => $queryParams,
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'No Plans were found for the selected quote.';
+            }
+
+            return $responseBodyAsString;
+        }
     }
 
     private function generatePdfFilename($quote): string

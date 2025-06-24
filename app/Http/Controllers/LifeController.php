@@ -216,7 +216,7 @@ class LifeController extends Controller
     public function sendOCAEmail(LifeSendOCAEmailRequest $request)
     {
         // Dispatch job to send OCA email
-        SendOCAEmailJob::dispatch(QuoteTypes::LIFE->value, $request->validated());
+        SendOCAEmailJob::dispatch($request->quote_uuid, $request->validated());
 
         return response()->json(['message' => 'OCA Email Sent Successfully']);
     }
