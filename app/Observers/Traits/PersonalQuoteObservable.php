@@ -157,7 +157,14 @@ trait PersonalQuoteObservable
 
     private function IntroAndReassignEmail(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
-        if ($personalQuote->source != LeadSourceEnum::IMCRM) {
+        $isEligibleForEmail = $personalQuote->source != LeadSourceEnum::IMCRM;
+
+        // for Savings, we need to send email to customer even if the source is IMCRM
+        if($personalQuote->isSavings()) {
+            $isEligibleForEmail = true;
+        }
+
+        if ($isEligibleForEmail) {
             $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
             info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
             $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
