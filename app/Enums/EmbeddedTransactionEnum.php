@@ -14,16 +14,18 @@ final class EmbeddedTransactionEnum extends Enum
     const STATUS_QUOTED = 'Quoted';
     const STATUS_PAYMENT_SUCCEED = 'Payment succeeded';
     const STATUS_BOOKED = 'Booked';
+    const STATUS_READY_FOR_SAGE = 'Ready for sage';
     const STATUS_FAILED = 'Failed';
 
     public static function getRemainingPolicyStatus(string $policyStatus = ''): array
     {
         return match ($policyStatus) {
-            self::STATUS_NEW_POLICY => [self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
-            self::STATUS_QUOTED => [self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
-            self::STATUS_PAYMENT_SUCCEED => [self::STATUS_BOOKED],
-            self::STATUS_BOOKED => [],
-            default => [self::STATUS_NEW_POLICY, self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED],
+            self::STATUS_NEW_POLICY => [self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED, self::STATUS_READY_FOR_SAGE],
+            self::STATUS_QUOTED => [self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED, self::STATUS_READY_FOR_SAGE],
+            self::STATUS_PAYMENT_SUCCEED => [self::STATUS_BOOKED, self::STATUS_READY_FOR_SAGE],
+            self::STATUS_BOOKED => [self::STATUS_READY_FOR_SAGE],
+            self::STATUS_READY_FOR_SAGE => [],
+            default => [self::STATUS_NEW_POLICY, self::STATUS_QUOTED, self::STATUS_PAYMENT_SUCCEED, self::STATUS_BOOKED, self::STATUS_READY_FOR_SAGE],
         };
     }
 

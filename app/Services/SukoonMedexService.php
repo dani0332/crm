@@ -42,7 +42,6 @@ class SukoonMedexService
     private $paymentToken;
     private $transaction;
     private $paymentPlan;
-    private $isSendDocuments = false;
     private $amountDisclaimerText;
     private array $sukoonReqDocTypeCodes;
     private $providerId;
@@ -67,7 +66,7 @@ class SukoonMedexService
         }
     }
 
-    public function initiatePurchaseFlow($quote, $quoteTypeId, $transaction, $isSendDocuments = false)
+    public function initiatePurchaseFlow($quote, $quoteTypeId, $transaction)
     {
         try {
             $this->currentQuote = $quote;
@@ -77,7 +76,6 @@ class SukoonMedexService
             $this->policyStatus = $transaction->policy_status ?? '';
             $this->quotePolicy = $transaction->quote_policy ?? null;
             $this->certificateNumber = $transaction->certificate_number ?? null;
-            $this->isSendDocuments = $isSendDocuments;
 
             LoggerService::startQuoteLogging($this->currentQuote);
 
@@ -127,57 +125,54 @@ class SukoonMedexService
      * @param  mixed  $transaction  The transaction object.
      * @return void
      */
-    public function processPurchaseFlow()
+    public function processPurchaseFlow($isSendEmail = false)
     {
         try {
-            if ($this->policyStatus == EmbeddedTransactionEnum::STATUS_BOOKED) {
-                LoggerService::info("{$this->logPrefix} Already booked, skipping purchase flow");
+            // EmbeddedTransaction policy_status
+            if (EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED)) {
+                LoggerService::info("{$this->logPrefix} Policy already purchased, skipping purchase flow");
+            } else {
 
-                return false;
+                // Skipable Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
+                // STEP #2 login (trigger by initiatePurchaseFlow)
+
+                if (! EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_QUOTED)) {
+                    // STEP #4 submitPersonalDetail
+                    $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($this->currentQuote));
+                    $this->syncSukoonData($this->transaction, $profileDetailResponse);
+
+                    // STEP #6 submitPlan
+                    $submitPlanResponse = $this->submitPlan($this->prepareAdditionalData());
+                    $this->syncSukoonData($this->transaction, $submitPlanResponse);
+
+                    // STEP #7 reviewSubmittedData
+                    $reviewSubmittedDataResponse = $this->reviewSubmittedData();
+                    $this->syncSukoonData($this->transaction, $reviewSubmittedDataResponse);
+
+                    // STEP #8 confirmSubmittedData
+                    $this->confirmSubmittedData();
+                }
+
+                if (! EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED)) {
+                    // STEP #10 initiatePaymentProcess
+                    $initPaymentResponse = $this->initiatePaymentProcess();
+                    $this->syncSukoonData($this->transaction, $initPaymentResponse);
+
+                    // STEP #11 completeInvoicePayment
+                    $invoicePaymentResponse = $this->completeInvoicePayment($this->transaction);
+                    $this->syncSukoonData($this->transaction, $invoicePaymentResponse);
+                    $this->transaction->documents()->whereIn('document_type_code', $this->sukoonReqDocTypeCodes)->delete();
+                    $this->transaction->load('documents');
+                }
+
             }
 
-            // Skipable Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
-            // STEP #2 login (trigger by initiatePurchaseFlow)
-
-            if (! EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_QUOTED)) {
-                // STEP #4 submitPersonalDetail
-                $profileDetailResponse = $this->submitPersonalDetail($this->prepareUserDetails($this->currentQuote));
-                $this->syncSukoonData($this->transaction, $profileDetailResponse);
-
-                // STEP #6 submitPlan
-                $submitPlanResponse = $this->submitPlan($this->prepareAdditionalData());
-                $this->syncSukoonData($this->transaction, $submitPlanResponse);
-
-                // STEP #7 reviewSubmittedData
-                $reviewSubmittedDataResponse = $this->reviewSubmittedData();
-                $this->syncSukoonData($this->transaction, $reviewSubmittedDataResponse);
-
-                // STEP #8 confirmSubmittedData
-                $this->confirmSubmittedData();
-            }
-
-            if (! EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED)) {
-                // STEP #10 initiatePaymentProcess
-                $initPaymentResponse = $this->initiatePaymentProcess();
-                $this->syncSukoonData($this->transaction, $initPaymentResponse);
-
-                // STEP #11 completeInvoicePayment
-                $invoicePaymentResponse = $this->completeInvoicePayment($this->transaction);
-                $this->syncSukoonData($this->transaction, $invoicePaymentResponse);
-                $this->transaction->documents()->whereIn('document_type_code', $this->sukoonReqDocTypeCodes)->delete();
-                $this->transaction->load('documents');
-            }
-
+            // sync documents then update commission
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
             $this->syncSukoonDocuments();
 
-            if ($this->isSendDocuments) {
-                EmbeddedProductRepository::sendDocument([
-                    'epId' => $this->transaction->product->embeddedProduct->id ?? null,
-                    'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
-                    'quoteId' => $this->currentQuote->id,
-                ]);
-            }
+            if ($isSendEmail)
+                $this->sendDocuments();
 
             $missingReqDocTypes = $this->getMissingReqDocTypes();
             if (! empty($missingReqDocTypes)) {
@@ -190,7 +185,18 @@ class SukoonMedexService
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
                 'error_messages' => $this->errorMessages,
             ]);
+            throw $e;
         }
+    }
+
+    public function sendDocuments()
+    {
+        EmbeddedProductRepository::sendDocument([
+            'epId' => $this->transaction->product->embeddedProduct->id ?? null,
+            'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
+            'quoteId' => $this->currentQuote->id,
+        ]);
+        LoggerService::info("{$this->logPrefix} sendDocuments in process");
     }
 
     private function syncSukoonCommissions()
@@ -208,7 +214,7 @@ class SukoonMedexService
         }
     }
 
-    public function fetchPaymentToken()
+    private function fetchPaymentToken()
     {
         try {
             // STEP #16 viewQuotePolicy
@@ -281,8 +287,8 @@ class SukoonMedexService
     {
         $paymentData = $transactionDetail['payments'][0];
         $additionalData = $transactionDetail['additional_data'];
-        $commissionAmount = floatval($additionalData['broker_commission_amount'] ?? 0) ? (float) ($additionalData['broker_commission_amount'] ?? 0) : (int) ($additionalData['broker_commission_amount'] ?? 0);
-        $commissionVat = floatval($additionalData['broker_commission_vat_amount'] ?? 0) ? (float) ($additionalData['broker_commission_vat_amount'] ?? 0) : (int) ($additionalData['broker_commission_vat_amount'] ?? 0);
+        $commissionAmount = floatval($additionalData['broker_commission_amount'] ?? 0) ?: (int) ($additionalData['broker_commission_amount'] ?? 0);
+        $commissionVat = floatval($additionalData['broker_commission_vat_amount'] ?? 0) ?: (int) ($additionalData['broker_commission_vat_amount'] ?? 0);
 
         $data = [
             'certificate_number' => $this->certificateNumber,
@@ -301,6 +307,10 @@ class SukoonMedexService
 
         if ($isAllDocumentsSaved && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
+        }
+        
+        if ($commissionAmount > 0 && $this->policyStatus == EmbeddedTransactionEnum::STATUS_BOOKED) {
+            $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
         }
 
         LoggerService::info("{$this->logPrefix} policyStatus: {$this->policyStatus}");

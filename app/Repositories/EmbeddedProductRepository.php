@@ -234,7 +234,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $item->sync_document_button = $documentCount < 5;
                 }
             } elseif (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
-                $item->sync_document_button = $transaction[0]->policy_status != EmbeddedTransactionEnum::STATUS_BOOKED;
+                $item->sync_document_button = $transaction[0]->policy_status != EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -303,11 +303,11 @@ class EmbeddedProductRepository extends BaseRepository
         ];
     }
 
-    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
+    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $callPurchaseFlow = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
-            return false;
+            return ['success' => false, 'message' => 'Only car, bike, home & travel lob are allowed'];
         }
 
         $epTransaction = EmbeddedTransaction::where([
@@ -327,42 +327,66 @@ class EmbeddedProductRepository extends BaseRepository
             $epTransaction = $epTransaction->whereIn('product_id', $optionsIds);
         }
 
-        if ($resendEmail) {
-            $epTransaction->whereHas('product.embeddedProduct', function ($query) {
-                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
-            });
-        }
-
         $epTransaction = $epTransaction->get();
+        if ($epTransaction->isEmpty()) {
+            return ['success' => false, 'message' => 'Record not found'];
+        }
+        
+        $response = ['success' => false];
+        foreach ($epTransaction as $item) {
+            $product_id = $item->product_id;
+            $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
 
-        if ($epTransaction->isNotEmpty()) {
-            foreach ($epTransaction as $item) {
-                $product_id = $item->product_id;
-                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+            $isDocPresent = $item->documents->count() > 0;
+            if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
+                $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                ProcessSyncAlfredProtect::dispatch($quoteObject);
+                $response = ['success' => true];
 
-                $isDocPresent = $item->documents->count() > 0;
-                if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
-                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    ProcessSyncAlfredProtect::dispatch($quoteObject);
+            } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+            && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
 
-                } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
+                $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
+                $response = ['success' => true];
 
-                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
+            } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
+                && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
 
-                } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
-                    && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
+                $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
 
-                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
-
+                if($callPurchaseFlow) {
                     // Sukoon Medex Purchase Flow
-                    LoggerService::info("SukoonMedexPurchaseFlowJob dispatch, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
-                    SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item);
+                    SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                    LoggerService::info("SukoonMedexPurchaseFlowJob dispatched, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
+                    $response = ['success' => true];
+
+                } else {
+                    try {
+                        $savedDocumentTypes = $item->documents->pluck('document_type_code')->toArray();
+                        $emailRequiredDocumentTypes = [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE];
+
+                        // check all email-required documents are saved
+                        if(empty(array_diff($emailRequiredDocumentTypes, $savedDocumentTypes))) {
+
+                            $sukoonMedexService = app(SukoonMedexService::class);
+                            $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
+                            $sukoonMedexService->sendDocuments($savedDocumentTypes);
+
+                            $response = ['success' => true];
+                        } else {
+                            $response = ['success' => false, 'message' => 'Required documents are not saved, please sync documents first'];
+                        }
+
+                    } catch (Exception $e) {
+                        $response = ['success' => false, 'message' => $e->getMessage()];
+                    }
                 }
             }
         }
+
+        return $response;
     }
 
     public function fetchSyncDocument($data)
@@ -373,12 +397,12 @@ class EmbeddedProductRepository extends BaseRepository
 
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
-            return 'Quote not found';
+            return ['success' => false, 'message' => 'Quote not found'];
         }
 
         $ep = $this->where('id', $epId)->first();
         if (empty($ep)) {
-            return 'Embedded Product not found';
+            return ['success' => false, 'message' => 'Embedded Product not found'];
         }
 
         $shortCode = $ep->short_code;
@@ -389,21 +413,24 @@ class EmbeddedProductRepository extends BaseRepository
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $quoteObject->load('embeddedTransactions.product.embeddedProduct');
 
-            $transaction = $this->fetchTransaction($modelType, $quoteId, $ep)
-                ->where('is_selected', true)
+            $shortCodes = EmbeddedProductEnum::getSukoonMedexCodes() ?? [];
+            $transaction = $this->fetchTransaction($modelType, $quoteId, $ep, shortCodes: $shortCodes)
                 ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
-                ->whereHas('product.embeddedProduct', function ($query) {
-                    $query->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes() ?? []);
-                })
                 ->first();
             if (empty($transaction)) {
-                LoggerService::info("No transaction found with certificate-number, ref_id: {$quoteObject->code}");
+                LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
             }
 
-            $sukoonMedexService = app(SukoonMedexService::class);
-            $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
-            $sukoonMedexService->processPurchaseFlow($transaction);
+            try {
+                $sukoonMedexService = app(SukoonMedexService::class);
+                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
+                $sukoonMedexService->processPurchaseFlow();
+            } catch (Exception $e) {
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
         }
+
+        return ['success' => true];
     }
 
     public function fetchSendDocument($data)
@@ -487,7 +514,7 @@ class EmbeddedProductRepository extends BaseRepository
         return $advisorData;
     }
 
-    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true)
+    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
     {
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -499,6 +526,12 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($selected) {
             $transactions = $transactions->where('is_selected', true);
+        }
+
+        if(!empty($shortCodes)) {
+            $transactions = $transactions->whereHas('product.embeddedProduct', function ($query) use ($shortCodes) {
+                $query->whereIn('short_code', $shortCodes);
+            });
         }
 
         return $transactions->get();
