@@ -171,8 +171,9 @@ class SukoonMedexService
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
             $this->syncSukoonDocuments();
 
-            if ($isSendEmail)
+            if ($isSendEmail) {
                 $this->sendDocuments();
+            }
 
             $missingReqDocTypes = $this->getMissingReqDocTypes();
             if (! empty($missingReqDocTypes)) {
@@ -308,7 +309,7 @@ class SukoonMedexService
         if ($isAllDocumentsSaved && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
         }
-        
+
         if ($commissionAmount > 0 && $this->policyStatus == EmbeddedTransactionEnum::STATUS_BOOKED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
         }

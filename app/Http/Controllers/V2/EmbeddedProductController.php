@@ -132,7 +132,7 @@ class EmbeddedProductController extends Controller
         $epId = $data['epId'];
         $result = EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
 
-        if($result['success']) {
+        if ($result['success']) {
             return redirect()->back()->with('success', $result['message'] ?? 'Certificate send successfully');
         } else {
             return redirect()->back()->with('error', $result['message'] ?? 'Certificate send failed');
@@ -143,7 +143,7 @@ class EmbeddedProductController extends Controller
     {
         $result = EmbeddedProductRepository::syncDocument($request->validated());
 
-        if($result['success']) {
+        if ($result['success']) {
             redirect()->back()->with('success', $result['message'] ?? 'Re-gerating request processing');
         } else {
             redirect()->back()->with('error', $result['message'] ?? 'Re-gerating request failed');

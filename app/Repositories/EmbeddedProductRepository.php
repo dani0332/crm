@@ -331,7 +331,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($epTransaction->isEmpty()) {
             return ['success' => false, 'message' => 'Record not found'];
         }
-        
+
         $response = ['success' => false];
         foreach ($epTransaction as $item) {
             $product_id = $item->product_id;
@@ -356,7 +356,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $quoteObject = $this->getQuoteObject($modelType, $leadId);
                 $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
 
-                if($callPurchaseFlow) {
+                if ($callPurchaseFlow) {
                     // Sukoon Medex Purchase Flow
                     SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
                     LoggerService::info("SukoonMedexPurchaseFlowJob dispatched, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
@@ -368,7 +368,7 @@ class EmbeddedProductRepository extends BaseRepository
                         $emailRequiredDocumentTypes = [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE];
 
                         // check all email-required documents are saved
-                        if(empty(array_diff($emailRequiredDocumentTypes, $savedDocumentTypes))) {
+                        if (empty(array_diff($emailRequiredDocumentTypes, $savedDocumentTypes))) {
 
                             $sukoonMedexService = app(SukoonMedexService::class);
                             $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
@@ -528,7 +528,7 @@ class EmbeddedProductRepository extends BaseRepository
             $transactions = $transactions->where('is_selected', true);
         }
 
-        if(!empty($shortCodes)) {
+        if (! empty($shortCodes)) {
             $transactions = $transactions->whereHas('product.embeddedProduct', function ($query) use ($shortCodes) {
                 $query->whereIn('short_code', $shortCodes);
             });
