@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\CoverageTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -88,7 +87,7 @@ class HomeQuoteController extends Controller
             'HomeQuote/Form',
             [
                 ...$data,
-                'quote' => $quote
+                'quote' => $quote,
             ]
         );
     }
