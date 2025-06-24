@@ -7,7 +7,8 @@ namespace App\Console\Commands;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Models\BusinessQuote;
+use App\Models\CarQuote;
+use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -38,7 +39,9 @@ class PolicyBulkSendDocuments extends Command
         LoggerService::info('PolicyBulkSendDocuments Started');
 
         $codes = [
-            'BUS-QMF4TU39',
+            'TRA-WAL8YDD4',
+            'TRA-VTSDBMEQ',
+            'CAR-VXCWTTXH',
         ];
 
         if (empty($codes)) {
@@ -57,8 +60,13 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            $quoteObject = BusinessQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-            $modelType = quoteTypeCode::Business;
+            if ($code == 'CAR-VXCWTTXH') {
+                $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Car;
+            } else {
+                $quoteObject = TravelQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Travel;
+            }
 
             if (! $quoteObject) {
                 $notFound[] = $code;
@@ -69,7 +77,6 @@ class PolicyBulkSendDocuments extends Command
             $payload = (object) [
                 'model_type' => $modelType,
                 'quote_id' => $quoteObject->id,
-                'modelType' => quoteTypeCode::CORPLINE,
             ];
 
             SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);

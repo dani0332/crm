@@ -287,9 +287,9 @@ const modals = reactive({
 
 let isBookingDetailsUpdated = computed(
   () =>
-    bpForm.vat_on_commission > 0 &&
-    bpForm.total_commission > 0 &&
-    bpForm.commission_percentage > 0,
+    page.props.payments[0]?.commmission_percentage > 0 ||
+    page.props.payments[0]?.commission_vat > 0 ||
+    page.props.payments[0]?.commission > 0,
 );
 
 const confirmSendPolicy = () => {
@@ -318,7 +318,6 @@ const executeUpdateBookingPolicy = async () => {
     bpForm.commission_vat_applicable > 0 ||
     bpForm.commission_vat_not_applicable > 0
   ) {
-    calculateCommission();
     try {
       const result = await onUpdateBookPolicyDetails(true);
       if (!result) {

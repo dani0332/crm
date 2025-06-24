@@ -1394,7 +1394,7 @@ class CRUDController extends Controller
         if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) && $modelType == quoteTypeCode::Car) {
             $lead = CarQuote::where('uuid', $id)->first();
             if ($lead) {
-                $this->carQuoteService->sendAddressNotificationToCustomer($lead, $request->input('addressObj'));
+                app(CustomerAddressService::class)->sendAddressNotificationToCustomer($lead, $request->input('addressObj'), QuoteTypeId::Car);
                 app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $id);
                 SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
             }
