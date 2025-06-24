@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\CoverageTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -50,7 +49,6 @@ class HomeQuoteController extends Controller
     public function create()
     {
         $data = HomeQuoteRepository::getFormOptions();
-        $data['coverageTypeEnum'] = CoverageTypeEnum::nameToIdArray();
 
         return inertia('HomeQuote/Form', $data);
     }
@@ -90,7 +88,6 @@ class HomeQuoteController extends Controller
             [
                 ...$data,
                 'quote' => $quote,
-                'coverageTypeEnum' => CoverageTypeEnum::nameToIdArray(),
             ]
         );
     }

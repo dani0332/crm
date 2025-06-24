@@ -64,8 +64,8 @@ use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
