@@ -918,6 +918,27 @@ class SendEmailCustomerService extends BaseService
                         'name' => $emailData->advisorName,
                     ],
                 ];
+
+                if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
+                    $bodyData['cc'][] = [
+                        [
+                            'email' => 'savings@insurancemarket.ae',
+                            'name' => 'savings@insurancemarket.ae',
+                        ],
+                    ];
+
+                    if ($this->appEnv != EnvEnum::PRODUCTION) {
+                        $bodyData['replyTo'] = [
+                            'email' => 'test.emails@insurancemarket.ae',
+                            'name' => 'test.emails@insurancemarket.ae',
+                        ];
+                    } else {
+                        $bodyData['replyTo'] = [
+                            'email' => $emailData->advisorEmaill,
+                            'name' => $emailData->advisorName,
+                        ];
+                    }
+                }
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
