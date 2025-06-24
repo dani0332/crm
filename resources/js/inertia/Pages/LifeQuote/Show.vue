@@ -2058,6 +2058,22 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Price</dt>
+                <dd>
+                  {{
+                    ecomDetail?.isManualPlan
+                      ? ecomDetail?.totalPrice
+                      : (ecomDetail?.actualPremium ?? 'N/A')
+                  }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Payment Term</dt>
+                <dd>
+                  {{ quote.life_quote.payment_term }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Authorised AT</dt>
                 <dd>{{ quote?.payments[0]?.authorized_at ?? 'N/A' }}</dd>
               </div>
