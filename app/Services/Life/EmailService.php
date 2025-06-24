@@ -61,35 +61,6 @@ class EmailService
         return $lifePlans;
     }
 
-    private function attachComparisionPdf(PersonalQuote $quote, array $data = [])
-    {
-        $pdf = app(LifeQuoteService::class)->exportPlansPdf(QuoteTypes::LIFE->value, $data);
-        
-        $pdfContent = $pdf['pdf']->output();
-
-        
-        LoggerService::info(self::class.' - attachLifeComparisionPdf - Storing PDF temporarily');
-
-        // Generate a unique temporary file path
-        $tempFilePath = 'temp/'.uniqid().'.pdf';
-        Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
-
-        // Generate a public URL
-        $publicUrl = Storage::disk('azureIM')->temporaryUrl(
-            $tempFilePath,
-            now()->addMinutes(120)
-        );
-        // Schedule deletion after 5 minutes
-        // $this->scheduleFileDeletion($tempFilePath);
-
-        LoggerService::info(self::class.' - attachLifeComparisionPdf - Public URL generated');
-
-        return [
-            'pdfLink' => $publicUrl,
-            'pdfName' => $pdf['name'],
-        ];
-
-    }
 
     protected function scheduleFileDeletion($filePath)
     {
