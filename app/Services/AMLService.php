@@ -1473,34 +1473,77 @@ class AMLService
         }
     }
 
-    public function generateAmlCftReport()
+    public function generateAmlCftReport(array $requestParams = [])
     {
         LoggerService::info('fn:amlCtfReportExport - AMLController');
 
-        $request = request();
-        $startDate = $request->amlCreatedStartDate;
-        $endDate = $request->amlCreatedEndDate;
+        // Debug: Log the received parameters
+        \Illuminate\Support\Facades\Log::info('AMLService generateAmlCftReport Parameters:', $requestParams);
 
-        $query = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
+        // Create request object from parameters or use global request as fallback
+        if (! empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
 
-        $query->groupBy('pqr.id', 'kl.created_at', 'cm.id');
-        $collection = $query->get();
+        // Use get() method to access request parameters properly
+        $startDate = $request->get('amlCreatedStartDate');
+        $endDate = $request->get('amlCreatedEndDate');
 
-        // Sort collection by customer first name, with nulls last
-        $collection = $collection->sortBy(function ($item) {
-            $name = $item->customer_first_name ?: $item->first_name;
+        // Debug: Log the extracted dates and other filters
+        \Illuminate\Support\Facades\Log::info('AMLService Extracted Filters:', [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'searchType' => $request->get('searchType'),
+            'searchField' => $request->get('searchField'),
+            'quoteType' => $request->get('quoteType'),
+        ]);
 
-            return $name ? strtolower($name) : '~'; // ~ sorts after letters, putting nulls last
-        })->values();
+        $personalQuotes = $this->buildAmlCftReportQuery($request, $startDate, $endDate);
 
-        // Calculate summary
-        $totalCustomers = $collection->count();
-        $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();
-        $mediumRisk = $collection->where('risk_score', '>=', 26)->where('risk_score', '<=', 34)->count();
-        $highRisk = $collection->where('risk_score', '>=', 35)->count();
+        // Initialize counters for incremental calculation
+        $totalCustomers = 0;
+        $highRisk = 0;   // 0-25 (lower scores = higher risk)
+        $mediumRisk = 0; // 26-34
+        $lowRisk = 0;    // 35+ (higher scores = lower risk)
+        $data = collect();
+
+        // Process chunks and calculate counts incrementally for better performance
+        $personalQuotes->chunk(1000, function ($chunk) use (&$data, &$totalCustomers, &$highRisk, &$mediumRisk, &$lowRisk) {
+            // Process each chunk and add data from different tables
+            $processedChunk = $this->processAmlCftReportChunk($chunk);
+
+            // Calculate risk counts for this chunk (optimized with single loop)
+            foreach ($processedChunk as $record) {
+                $totalCustomers++;
+                $riskScore = $record->risk_score ?? null;
+
+                // Categorize risk scores efficiently
+                if ($riskScore !== null) {
+                    match (true) {
+                        $riskScore >= 0 && $riskScore <= 25 => $lowRisk++,
+                        $riskScore >= 26 && $riskScore <= 34 => $mediumRisk++,
+                        $riskScore >= 35 => $highRisk++,
+                        default => null
+                    };
+                }
+            }
+
+            $data = $data->merge($processedChunk);
+        });
+
+        // Sort by customer name with nulls at the end (optimized single-pass sorting)
+        $data = $data->sortBy(function ($item) {
+            // Create a composite sort key for efficient sorting with null handling
+            $firstName = $item->customer_first_name ?? 'zzz_null';
+            $lastName = $item->customer_last_name ?? 'zzz_null';
+
+            return strtolower($firstName.'|'.$lastName);
+        })->values(); // Re-index the collection
 
         return [
-            'collection' => $collection,
+            'collection' => $data,
             'summary' => [
                 'total_customers' => $totalCustomers,
                 'high_risk' => $highRisk,
@@ -1512,219 +1555,230 @@ class AMLService
 
     public function buildAmlCftReportQuery(Request $request, ?string $startDate, ?string $endDate)
     {
-        $personalQuoteTypesIds = [
-            QuoteTypes::BIKE->id(),
-            QuoteTypes::CYCLE->id(),
-            QuoteTypes::JETSKI->id(),
-            QuoteTypes::PET->id(),
-            QuoteTypes::YACHT->id(),
-            QuoteTypes::HOME->id(),
-        ];
-
-        $quoteTypeId = null;
-        if ($request->quoteType) {
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
-        }
-        // KYC log subquery
-        $kycLogSub = DB::table('kyc_logs')
-            ->select('quote_request_id', 'decision', 'notes', 'quote_type_id', 'is_owner_pep', 'created_at', 'updated_at')
-            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA)
-            ->whereNotNull('quote_request_id')
-            ->whereNotNull('quote_type_id');
-
-        $query = DB::table('personal_quotes as pqr')
-            ->select([
-                'pqr.id',
-                'pqr.uuid',
-                'pqr.code',
-                'pqr.quote_type_id',
-                'pqr.aml_status',
-                'pqr.policy_start_date',
-                'pqr.policy_expiry_date',
-                'pqr.premium',
-                'pqr.policy_number',
-                'pqr.quote_status_id',
-                'pqr.insurance_provider_id',
-                'pqr.risk_score as risk_score',
-                'qs.text as lead_status',
-                'ip.text as insurance_provider',
-                'ik.first_name as first_name',
-                'ik.last_name as last_name',
-                'ik.id_number as emirates_id',
-                'i.customer_type as customer_type',
-                'ci.insured_id as insured_id',
-                'ik.residential_status',
-                'ik.premium_tenure',
-                'ik.transaction_volume',
-                'ik.pep as is_owner_pep',
-                'kl.created_at as last_aml_screening_date',
-                'cm.id as customer_id',
-                'cm.first_name as customer_first_name',
-                'cm.last_name as customer_last_name',
-                'cm.uae_resident as customer_is_uae_resident',
-                'kl.notes as remarks',
-            ])
+        // Main select
+        $personalQuotes = DB::table('personal_quotes as pqr')->select(
+            'pqr.id',
+            'pqr.uuid',
+            'pqr.code',
+            'pqr.quote_type_id',
+            'pqr.aml_status',
+            'pqr.policy_start_date',
+            'pqr.policy_expiry_date',
+            'pqr.premium',
+            'pqr.policy_number',
+            'pqr.quote_status_id',
+            'pqr.insurance_provider_id',
+            'pqr.risk_score as risk_score',
+            'pqr.quote_id',
+            'pqr.quote_type_id'
+        )
             ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
-            ->when(isset($startDate) && isset($endDate) && $startDate != 'null' && $endDate != 'null', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('pqr.created_at', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]);
+            ->when(isset($startDate) && isset($endDate) && $startDate != 'null' && $endDate != 'null', function ($query) use ($startDate, $endDate) {
+                $startDate = Carbon::parse($startDate)->startOfDay();
+                $endDate = Carbon::parse($endDate)->endOfDay();
+                $query->whereBetween('pqr.created_at', [$startDate, $endDate]);
             })
-            ->when($request->searchType === 'customerEmail', fn ($q) => $q->where('pqr.email', $request->searchField))
-            ->when($request->searchType === 'cdbId', fn ($q) => $q->where('pqr.code', $request->searchField));
-
-        // Common joins
-        $query->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
-            ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id');
-
-        // Dynamic customer_insured join
-        $query->leftJoin('customer_insured as ci', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
-            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                if ($quoteTypeId) {
-                    $q->where('pqr.quote_type_id', $quoteTypeId)
-                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
-                } else {
-                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                        ->whereColumn('ci.quote_request_id', '=', 'pqr.id');
-                }
+            ->when($request->get('searchType') && $request->get('searchType') === 'customerEmail', function ($query) use ($request) {
+                $query->where('pqr.email', $request->get('searchField'));
             })
-                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                    if ($quoteTypeId) {
-                        $q->where('pqr.quote_type_id', $quoteTypeId)
-                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
-                    } else {
-                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                            ->whereColumn('ci.quote_request_id', '=', 'pqr.quote_id');
-                    }
-                });
-        })
-            ->whereRaw('ci.id = (SELECT MAX(ci2.id) FROM customer_insured ci2 WHERE ci2.quote_request_id = ci.quote_request_id)');
-
-        // Join insured table
-        $query->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id');
-
-        // Join insured_kyc
-        $query->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
-
-        // Join customer_members with similar conditional logic
-        $query->leftJoin('customer_members as cm', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
-            if ($quoteTypeId) {
-                $modelTypes = $this->getModelTypeByQuoteTypeId($quoteTypeId);
-            } else {
-                $modelTypes = $this->getModelTypeByQuoteTypeId($personalQuoteTypesIds);
-            }
-            $join->on(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
-
-                if ($quoteTypeId) {
-                    $q->where('pqr.quote_type_id', $quoteTypeId)
-                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
-                        ->where('cm.quote_type', $modelTypes);
-                } else {
-                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                        ->whereColumn('cm.quote_id', '=', 'pqr.id')
-                        ->whereIn('cm.quote_type', $modelTypes);
-                }
+            ->when($request->get('searchType') && $request->get('searchType') === 'cdbId', function ($query) use ($request) {
+                $query->where('pqr.code', $request->get('searchField'));
             })
-                ->orOn(function ($q) use ($modelTypes, $personalQuoteTypesIds, $quoteTypeId) {
-                    if ($quoteTypeId) {
-                        $q->where('pqr.quote_type_id', $quoteTypeId)
-                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
-                            ->where('cm.quote_type', $modelTypes);
-                    } else {
-                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                            ->whereColumn('cm.quote_id', '=', 'pqr.quote_id')
-                            ->whereNotIn('cm.quote_type', $modelTypes);
-                    }
-                });
-        });
-
-        // Join kyc logs subquery
-        $query->leftJoinSub($kycLogSub, 'kl', function ($join) use ($personalQuoteTypesIds, $quoteTypeId) {
-            $join->on(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                if ($quoteTypeId) {
-                    $q->where('pqr.quote_type_id', $quoteTypeId)
-                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
-                } else {
-                    $q->whereIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                        ->whereColumn('kl.quote_request_id', '=', 'pqr.id');
-                }
+            ->when($request->get('quoteType'), function ($query) use ($request) {
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->get('quoteType')));
+                $query->where('pqr.quote_type_id', $quoteTypeId);
             })
-                ->orOn(function ($q) use ($personalQuoteTypesIds, $quoteTypeId) {
-                    if ($quoteTypeId) {
-                        $q->where('pqr.quote_type_id', $quoteTypeId)
-                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
-                    } else {
-                        $q->whereNotIn('pqr.quote_type_id', $personalQuoteTypesIds)
-                            ->whereColumn('kl.quote_request_id', '=', 'pqr.quote_id');
-                    }
-                });
-        });
+            ->orderBy('pqr.id'); // Required for chunk() method
 
-        return $query;
+        return $personalQuotes;
     }
 
-    public function saveKYCComplianceQuestions($complianceQuestions)
+    private function processAmlCftReportChunk($chunk)
     {
-        LoggerService::info('fn:saveKYCComplianceQuestions - AMLService', extra: [
-            'insured_id' => $complianceQuestions['insured_id'],
-        ]);
+        // Group chunk by quote_type_id for efficient processing
+        $quoteTypeGroup = $chunk->groupBy('quote_type_id');
 
-        try {
-            $sameFields = [
-                'pep' => $complianceQuestions['pep'] ?? null,
-                'financial_sanctions' => $complianceQuestions['financial_sanctions'] ?? null,
-                'dual_nationality' => $complianceQuestions['dual_nationality'] ?? null,
-                'in_sanction_list' => $complianceQuestions['in_sanction_list'] ?? null,
-                'deal_sanction_list' => $complianceQuestions['deal_sanction_list'] ?? null,
-                'is_operation_high_risk' => $complianceQuestions['is_operation_high_risk'] ?? null,
-                'transaction_pattern' => $complianceQuestions['transaction_pattern'] ?? null,
-                'is_partner' => $complianceQuestions['is_partner'] ?? null,
-            ];
+        foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
+            $quoteType = QuoteTypes::getName($quoteTypeId);
 
-            $kycData = array_merge($sameFields, [
-                'insured_id' => $complianceQuestions['insured_id'],
-                'is_sanction_match' => $complianceQuestions['is_sanction_match'] ?? null,
-                'in_fatf' => $complianceQuestions['in_fatf'] ?? null,
-                'is_owner_high_risk' => $complianceQuestions['is_owner_high_risk'] ?? null,
-                'transaction_volume' => $complianceQuestions['transaction_volume'] ?? null,
-                'transaction_activities' => $complianceQuestions['transaction_activities'] ?? null,
-            ]);
-
-            if ($insuredKyc = InsuredKyc::where('insured_id', $complianceQuestions['insured_id'])->first()) {
-                $insuredKyc->update($kycData);
-            } else {
-                InsuredKyc::create($kycData);
+            // Skip if quote type is not found
+            if (! $quoteType) {
+                continue;
             }
 
-            LoggerService::info('KYCComplianceQuestions updated');
-        } catch (Exception $exception) {
-            LoggerService::error('KYCComplianceQuestions failed to update', exception: $exception);
+            // Get distinct quote request IDs for this quote type
+            // Check if it's a personal quote type to determine which field to pluck
+            $isPersonalQuote = checkPersonalQuotes(ucwords($quoteType->value));
+            $distinctQuoteTypeIds = $quoteTypeData->pluck($isPersonalQuote ? 'id' : 'quote_id')->unique();
+
+            // Add additional data from related tables
+            $this->addQuoteStatusData($chunk, $distinctQuoteTypeIds, $quoteTypeId);
+            $this->addInsuranceProviderData($chunk, $distinctQuoteTypeIds, $quoteTypeId);
+            $this->addCustomerData($chunk, $distinctQuoteTypeIds, $quoteTypeId);
+            $this->addInsuredKycData($chunk, $distinctQuoteTypeIds, $quoteTypeId);
+            $this->addKycLogData($chunk, $distinctQuoteTypeIds, $quoteTypeId);
+
+            // Add quote type specific data
+            $this->addQuoteTypeSpecificData($chunk, $distinctQuoteTypeIds, $quoteTypeId, $quoteType);
+        }
+
+        return $chunk;
+    }
+
+    private function addQuoteStatusData($chunk, $quoteIds, $quoteTypeId)
+    {
+        $quoteStatuses = DB::table('quote_status')
+            ->whereIn('id', $chunk->where('quote_type_id', $quoteTypeId)->pluck('quote_status_id')->unique())
+            ->pluck('text', 'id');
+
+        foreach ($chunk as $index => $record) {
+            if ($record->quote_type_id == $quoteTypeId) {
+                $chunk[$index]->lead_status = $quoteStatuses[$record->quote_status_id] ?? null;
+            }
         }
     }
 
-    public function updateAMLStatusAgainstDecision($request, $quoteObject)
+    private function addInsuranceProviderData($chunk, $quoteIds, $quoteTypeId)
     {
-        LoggerService::info(self::class.' - '.__FUNCTION__);
+        $insuranceProviders = DB::table('insurance_provider')
+            ->whereIn('id', $chunk->where('quote_type_id', $quoteTypeId)->pluck('insurance_provider_id')->unique())
+            ->pluck('text', 'id');
 
-        $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
-        $fetchKycLog->update([
-            'decision' => $request['aml_decision'] ?? '',
-            'notes' => trim($request['notes']) ?? '',
-            'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
-            'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
-            'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
-        ]);
+        foreach ($chunk as $index => $record) {
+            if ($record->quote_type_id == $quoteTypeId) {
+                $chunk[$index]->insurance_provider = $insuranceProviders[$record->insurance_provider_id] ?? null;
+            }
+        }
+    }
 
-        $kycLog = $fetchKycLog->first();
-        $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
+    private function addCustomerData($chunk, $quoteIds, $quoteTypeId)
+    {
+        // Get customer insured data with insured_id (optimized with single query)
+        $customerInsured = DB::table('customer_insured as ci')
+            ->select(['ci.quote_request_id', 'ci.insured_id', 'ci.customer_id', 'ci.quote_type_id'])
+            ->whereIn('ci.quote_request_id', $quoteIds)
+            ->where('ci.quote_type_id', $quoteTypeId)
+            ->get()
+            ->keyBy('quote_request_id');
 
-        $quoteObject->aml_status = $amlStatus;
-        $quoteObject->save();
+        // Check if this quote type is a personal quote
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        $isPersonalQuote = $quoteType ? checkPersonalQuotes(ucwords($quoteType->value)) : false;
 
-        return $amlStatus == AMLStatusCode::AMLScreeningCleared ?
-                            AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
+        // Add insured_id to chunk records with batch processing
+        foreach ($chunk as $index => $record) {
+            if ($record->quote_type_id == $quoteTypeId) {
+                // Use appropriate field based on quote type
+                $lookupKey = $isPersonalQuote ? $record->id : $record->quote_id;
+                $customerInsuredRecord = $customerInsured[$lookupKey] ?? null;
+                $chunk[$index]->insured_id = $customerInsuredRecord->insured_id ?? null;
+                $chunk[$index]->customer_id = $customerInsuredRecord->customer_id ?? null;
+            }
+        }
+    }
+
+    private function addInsuredKycData($chunk, $quoteIds, $quoteTypeId)
+    {
+        // Get insured IDs from chunk (after customer data has been added)
+        $insuredIds = $chunk->where('quote_type_id', $quoteTypeId)
+            ->whereNotNull('insured_id')
+            ->pluck('insured_id')
+            ->unique()
+            ->filter(); // Remove null values
+
+        if ($insuredIds->isEmpty()) {
+            return;
+        }
+
+        // Get data from insured_kyc table using insured_ids
+        $insuredKycData = DB::table('insured_kyc as ik')
+            ->select([
+                'ik.insured_id', 'ik.first_name', 'ik.last_name', 'ik.id_number',
+                'ik.residential_status', 'ik.premium_tenure', 'ik.transaction_volume',
+                'ik.pep', 'ik.country_of_residence', 'ik.place_of_birth',
+                'ik.dual_nationality', 'ik.financial_sanctions', 'ik.in_sanction_list',
+            ])
+            ->whereIn('ik.insured_id', $insuredIds)
+            ->get()
+            ->keyBy('insured_id');
+
+        // Get customer_type from insured table
+        $insuredData = DB::table('insured as i')
+            ->select(['i.id', 'i.customer_type'])
+            ->whereIn('i.id', $insuredIds)
+            ->get()
+            ->keyBy('id');
+
+        // Add insured_kyc data to chunk records
+        foreach ($chunk as $index => $record) {
+            if ($record->quote_type_id == $quoteTypeId) {
+                $kycRecord = null;
+                $insuredRecord = null;
+
+                if (isset($record->insured_id) && $record->insured_id) {
+                    $kycRecord = $insuredKycData[$record->insured_id] ?? null;
+                    $insuredRecord = $insuredData[$record->insured_id] ?? null;
+                }
+
+                $chunk[$index]->first_name = $kycRecord->first_name ?? null;
+                $chunk[$index]->last_name = $kycRecord->last_name ?? null;
+                $chunk[$index]->customer_first_name = $kycRecord->first_name ?? null;
+                $chunk[$index]->customer_last_name = $kycRecord->last_name ?? null;
+                $chunk[$index]->emirates_id = $kycRecord->id_number ?? null;
+                $chunk[$index]->customer_type = $insuredRecord->customer_type ?? CustomerTypeEnum::Individual;
+                $chunk[$index]->residential_status = $kycRecord->residential_status ?? null;
+                $chunk[$index]->premium_tenure = $kycRecord->premium_tenure ?? null;
+                $chunk[$index]->transaction_volume = $kycRecord->transaction_volume ?? null;
+                $chunk[$index]->is_owner_pep = $kycRecord->pep ?? null;
+            }
+        }
+    }
+
+    private function addKycLogData($chunk, $quoteIds, $quoteTypeId)
+    {
+        // Get latest KYC log data using quote_request_id and quote_type_id
+        $kycLogs = DB::table('kyc_logs as kl')
+            ->select([
+                'kl.quote_request_id', 'kl.quote_type_id', 'kl.created_at',
+                'kl.notes', 'kl.decision', 'kl.match_found', 'kl.results_found',
+                'kl.is_owner_pep', 'kl.screening_type',
+            ])
+            ->whereIn('kl.quote_request_id', $quoteIds)
+            ->where('kl.quote_type_id', $quoteTypeId)
+            ->where('kl.decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->where('kl.decision', '!=', AMLDecisionStatusEnum::INSURER_AXA)
+            ->orderBy('kl.created_at', 'desc')
+            ->get()
+            ->groupBy('quote_request_id')
+            ->map->first(); // Get the latest record for each quote
+
+        // Check if it's a personal quote type to determine which field to use
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        $isPersonalQuote = $quoteType ? checkPersonalQuotes(ucwords($quoteType->value)) : false;
+
+        // Add KYC log data to chunk records
+        foreach ($chunk as $index => $record) {
+            if ($record->quote_type_id == $quoteTypeId) {
+                // Use appropriate field based on quote type
+                $lookupKey = $isPersonalQuote ? $record->id : $record->quote_id;
+                $kycLog = $kycLogs[$lookupKey] ?? null;
+
+                $chunk[$index]->last_aml_screening_date = $kycLog->created_at ?? null;
+                $chunk[$index]->remarks = $kycLog->notes ?? null;
+            }
+        }
+    }
+
+    private function addQuoteTypeSpecificData($chunk, $quoteIds, $quoteTypeId, $quoteType)
+    {
+        // Add quote type specific data based on the quote type
+        // This can be extended for specific quote types
+        foreach ($chunk as $index => $record) {
+            if ($record->quote_type_id == $quoteTypeId) {
+                $chunk[$index]->quote_type_name = $quoteType->value;
+                $chunk[$index]->quote_code_prefix = $quoteType->shortCode();
+            }
+        }
     }
 
     /**
@@ -1750,5 +1804,37 @@ class AMLService
         }
 
         return $resolveModel($quoteTypeIds);
+    }
+
+    /**
+     * Get quote type ID to model mapping for SQL CASE statements.
+     */
+    private function getQuoteTypeModelMapping(array $personalQuoteTypeIds = []): string
+    {
+        $personalMapping = [
+            11 => 'BikeQuote', // QuoteTypes::BIKE
+            12 => 'CycleQuote', // QuoteTypes::CYCLE
+            13 => 'JetskiQuote', // QuoteTypes::JETSKI
+            14 => 'PetQuote', // QuoteTypes::PET
+            15 => 'YachtQuote', // QuoteTypes::YACHT
+            16 => 'HomeQuote', // QuoteTypes::HOME
+        ];
+
+        $nonPersonalMapping = [
+            1 => 'CarQuote', // QuoteTypes::CAR
+            2 => 'HealthQuote', // QuoteTypes::HEALTH
+            3 => 'LifeQuote', // QuoteTypes::LIFE
+            4 => 'BusinessQuote', // QuoteTypes::BUSINESS
+            5 => 'TravelQuote', // QuoteTypes::TRAVEL
+        ];
+
+        $mapping = empty($personalQuoteTypeIds) ? $nonPersonalMapping : $personalMapping;
+
+        $cases = [];
+        foreach ($mapping as $id => $model) {
+            $cases[] = "WHEN pqr.quote_type_id = {$id} THEN \"App\\\\\\\\Models\\\\\\\\{$model}\"";
+        }
+
+        return implode(' ', $cases).' ELSE "App\\\\\\\\Models\\\\\\\\PersonalQuote"';
     }
 }
