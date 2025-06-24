@@ -18,45 +18,47 @@ class CPARulesSeeder extends Seeder
     public function run(): void
     {
 
-        $leadSource =   LeadSource::firstOrCreate([
+        $leadSource = LeadSource::where('name', LeadSourceEnum::CPA_AUSTRALIA)->first();
+        if (empty($leadSource)) {
+            $leadSource =   LeadSource::create([
             'name' => LeadSourceEnum::CPA_AUSTRALIA,
             'is_active' => 1,
             'is_applicable_for_rules' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
+        }
 
-
+       $rule = Rule::where('name', 'CPA Australia')->first();
+       if (empty($rule)) {
         // Create CPA Australia rule
-        $rule = Rule::firstOrCreate([
+        $rule = Rule::create([
             'name' => 'CPA Australia',
             'rule_start_date' => null,
             'rule_end_date' => null,
             'is_active' => 1,
             'rule_type' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
+        }
 
-    
-        // Create rule lead source mapping
-        RuleLeadSource::firstOrCreate([
+        $ruleLeadSource = RuleLeadSource::where('rule_id', $rule->id)->where('lead_source_id', $leadSource->id)->first();
+        if (empty($ruleLeadSource)) {
+            // Create rule lead source mapping
+            RuleLeadSource::create([
             'rule_id' => $rule->id,
             'lead_source_id' => $leadSource->id,
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+            ]);
+        }
 
-       
-        // Create rule details
-        RuleDetail::firstOrCreate([
+        $ruleDetail = RuleDetail::where('rule_id', $rule->id)->where('lead_source_id', $leadSource->id)->first();
+        if (empty($ruleDetail)) {
+            // Create rule details
+            RuleDetail::create([
             'rule_id' => $rule->id,
             'car_make_id' => null,
             'car_model_id' => null,
             'lead_source_id' => $leadSource->id,
-            'created_at' => now(),
-            'updated_at' => now()
+              
         ]);
+        }
 
     }
 }
