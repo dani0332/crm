@@ -1,5 +1,5 @@
 <script setup>
-import dayjs from 'dayjs/esm/index.js';
+import dayjs from 'dayjs';
 
 defineProps({
   aml: Object,
@@ -11,6 +11,7 @@ const notification = useToast();
 const loader = reactive({
   table: false,
   export: false,
+  exportAmlRiskScore: false,
 });
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
@@ -194,7 +195,7 @@ const onDataExport = async (exportType = 'download') => {
 
 function removeEmptyFields(obj) {
   Object.keys(obj).forEach(key => {
-    if (obj[key] === '') {
+    if (obj[key] === '' || obj[key] === null || obj[key] === undefined) {
       delete obj[key];
     }
   });
@@ -234,6 +235,54 @@ const quoteTypeOptions = computed(() =>
     })),
   ),
 );
+
+async function downloadAmlCtfReport() {
+  resetCustomErrors();
+  const daysDifference = calculateDaysDifference(
+    filtersForm.amlCreatedStartDate,
+    filtersForm.amlCreatedEndDate,
+  );
+  if (daysDifference > 30) {
+    customErrors.amlCreatedStartDate =
+      'Allowed no. of days between start & end dates are 30 days.';
+    return;
+  }
+
+  const exportData = {};
+  Object.keys(availableFilters).forEach(key => {
+    exportData[key] = filtersForm[key];
+  });
+
+  //remove empty fields
+  removeEmptyFields(exportData);
+  // const data = useObjToUrl(exportData);
+
+  const payload = {
+    url: route('aml-ctf-report-export'),
+    method: 'post',
+    data: { ...exportData, exportType: 'email' },
+    type: 'aml-ctf-report',
+    exportType: 'email',
+  };
+
+  try {
+    loader.exportAmlRiskScore = true;
+    const response = await logAndExportQuotes(payload);
+    if (response.data.message) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      title: error.response.data.message,
+      position: 'top',
+    });
+  } finally {
+    loader.exportAmlRiskScore = false;
+  }
+}
 
 onMounted(() => {
   setQueryStringFilters();
@@ -320,6 +369,15 @@ onMounted(() => {
           :loading="loader.export"
         >
           Export to Excel
+        </x-button>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="downloadAmlCtfReport()"
+          :disabled="loader.exportAmlRiskScore"
+          :loading="loader.exportAmlRiskScore"
+        >
+          Export AML Risk Score Report
         </x-button>
         <x-button
           size="sm"

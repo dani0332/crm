@@ -727,6 +727,30 @@ watch(
           </template>
         </x-select>
       </div>
+      <x-field
+        label="Private Client"
+        v-if="
+          [
+            'Transaction',
+            'Installment',
+            'Endorsement',
+            'Sales Detail',
+          ].includes(filters.reportCategory)
+        "
+      >
+        <ComboBox
+          :single="false"
+          v-model="filters.pcp_tag"
+          placeholder="Search by Private Client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          deselect-all
+        />
+      </x-field>
     </div>
 
     <div class="flex gap-3 justify-end">
