@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Home Insurance Comparison PDF</title>
+    <title>Life Insurance Comparison PDF</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -631,8 +631,9 @@
 @endphp
 
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_first_page.jpg') }}" class="full-page-image" style="height: 100%;"/>
+    <img src="{{ public_path('images/quote_plans_pages/ecom-life/pdf-intro.png') }}" class="full-page-image" style="height: 100%;"/>
     <div style="page-break-after: always;"></div>
+
     {{-- Second Page --}}
     <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image" />
     <div style="page-break-after: always;"></div>
