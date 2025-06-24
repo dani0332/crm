@@ -116,17 +116,17 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     /**
      * Get the middleware the job should pass through.
      */
-    // public function middleware(): array
-    // {
-    //     $lockKey = md5(
-    //         $this->exportClass.
-    //         $this->recipientEmail
-    //     );
+    public function middleware(): array
+    {
+        $lockKey = md5(
+            $this->exportClass.
+            $this->recipientEmail
+        );
 
-    //     return [
-    //         (new WithoutOverlapping($lockKey))
-    //             ->dontRelease() // Don't release back to queue if locked
-    //             ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
-    //     ];
-    // }
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease() // Don't release back to queue if locked
+                ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
+        ];
+    }
 }
