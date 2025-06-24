@@ -9,6 +9,7 @@ const notification = useToast();
 const loader = reactive({
   table: false,
   export: false,
+  exportAmlRiskScore: false,
 });
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
@@ -263,6 +264,7 @@ async function downloadAmlCtfReport() {
   };
 
   try {
+    loader.exportAmlRiskScore = true;
     const response = await logAndExportQuotes(payload);
     if (response.data.message) {
       notification.success({
@@ -276,7 +278,7 @@ async function downloadAmlCtfReport() {
       position: 'top',
     });
   } finally {
-    loader.export = false;
+    loader.exportAmlRiskScore = false;
   }
 }
 
@@ -370,8 +372,8 @@ onMounted(() => {
           size="sm"
           color="#ff5e00"
           @click.prevent="downloadAmlCtfReport()"
-          :disabled="loader.export"
-          :loading="loader.export"
+          :disabled="loader.exportAmlRiskScore"
+          :loading="loader.exportAmlRiskScore"
         >
           Export AML Risk Score Report
         </x-button>
