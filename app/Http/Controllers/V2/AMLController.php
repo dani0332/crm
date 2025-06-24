@@ -29,6 +29,7 @@ use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Jobs\BridgerAMLJob;
+use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
 use App\Models\BikeQuote;
@@ -64,6 +65,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -368,7 +370,7 @@ class AMLController extends Controller
 
         $systemUser = User::where('name', UserNameEnum::System)->first();
         $isAutomation = $AMLCheckRequest->is_automation ?? false;
-        $processbyUser = $isAutomation ? $systemUser : auth()->user();
+        $processbyUser = $isAutomation ? $systemUser : FacadesAuth::user();
 
         if ($updateQuote) {
             [$status, $message, $getMemberOrUBODetails, $getLastScreening] = app(AMLService::class)->prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote);
@@ -926,16 +928,84 @@ class AMLController extends Controller
         return response()->json(['response' => $skipBrigerAMLResponse['status'], 'message' => $skipBrigerAMLResponse['response']]);
     }
 
-    /**
-     * Export AML CTF Report
-     *
-     * @param  Request  $request
-     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
-     */
-    public function amlCtfReportExport()
+    public function amlCtfReportExport(Request $request)
     {
-        $fileName = 'AML_CTF_Report_'.now()->format('Ymd_His').'.xlsx';
 
-        return (new AmlCftReportExport)->download($fileName);
+        // Validate request parameters
+        $request->validate([
+            'recipientEmail' => 'sometimes|email',
+            'subject' => 'sometimes|string',
+            'ccRecipients' => 'sometimes|array',
+            'ccRecipients.*' => 'email',
+            'amlCreatedStartDate' => 'sometimes|date',
+            'amlCreatedEndDate' => 'sometimes|date',
+            'searchType' => 'sometimes|string|in:customerEmail,cdbId',
+            'searchField' => 'sometimes|string',
+            'quoteType' => 'sometimes|string',
+        ]);
+
+        // Set default recipient email to current user if not provided
+        $recipientEmail = $request->recipientEmail ?? (FacadesAuth::check() ? FacadesAuth::user()->email : null);
+
+        if (! $recipientEmail) {
+            return response()->json([
+                'error' => 'Recipient email is required.',
+                'message' => 'Please provide a recipient email or ensure you are authenticated.',
+            ], 400);
+        }
+
+        $reportYear = Carbon::now()->format('Y');
+        $fileName = "AML CTF Report {$reportYear} ".Carbon::now()->format('Y-m-d_H-i-s');
+        $subject = $request->subject ?? "AML/CFT Customer Risk Profile Report {$reportYear}";
+
+        $requestParams = array_merge($request->all(), [
+            'recipientEmail' => $recipientEmail,
+            'subject' => $subject,
+            'fileName' => $fileName,
+            'ccRecipients' => $request->ccRecipients ?? [],
+            'exportTitle' => 'AML/CFT Customer Risk Profile Report',
+            'includeCustomFormatting' => true, // Enable custom CSV formatting
+        ]);
+
+        // Log the export request
+        LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
+            'recipient' => $recipientEmail,
+            'date_range' => [
+                'start' => $request->amlCreatedStartDate,
+                'end' => $request->amlCreatedEndDate,
+            ],
+            'filters' => [
+                'searchType' => $request->searchType,
+                'searchField' => $request->searchField,
+                'quoteType' => $request->quoteType,
+            ],
+        ]);
+
+        try {
+            // Use the export class's emailCSV method for consistency
+            ExportCsvAndSendEmailJob::dispatch(
+                AmlCftReportExport::class,
+                $recipientEmail,
+                $requestParams
+            );
+
+            return response()->json([
+                'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
+                'report_type' => $request->report,
+                'recipient' => $recipientEmail,
+                'subject' => $subject,
+            ]);
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' fn: '.__FUNCTION__.' - Export failed', extra: [
+                'error' => $e->getMessage(),
+                'recipient' => $recipientEmail,
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to initiate AML/CFT report export.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
