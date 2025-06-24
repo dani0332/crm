@@ -303,18 +303,18 @@ const handleCoverageChange = () => {
 
   // Define a mapping object for coverage types and their visibility rules using codes
   const coverageVisibilityMap = {
-    'building': { showBuildingField: true }, // Building only
-    'contents': { showContentsField: true }, // Contents only
-    'building_contents': {
+    building: { showBuildingField: true }, // Building only
+    contents: { showContentsField: true }, // Contents only
+    building_contents: {
       showBuildingField: true,
       showContentsField: true,
     }, // Building and Contents
-    'building_contents_personal_belongings': {
+    building_contents_personal_belongings: {
       showBuildingField: true,
       showContentsField: true,
       showPersonalBelongingsField: true,
     }, // Building, Contents, and Personal Belongings
-    'contents_personal_belongings': {
+    contents_personal_belongings: {
       showContentsField: true,
       showPersonalBelongingsField: true,
     }, // Contents and Personal Belongings
@@ -404,11 +404,11 @@ const isMatchingCoverage = (
 ) => {
   // Map coverage codes to case numbers for readability
   const coverageCaseMap = {
-    'building': 1, // Building only
-    'contents': 2, // Contents only
-    'building_contents': 3, // Building and Contents
-    'building_contents_personal_belongings': 4, // Building, Contents, and Personal Belongings
-    'contents_personal_belongings': 5, // Contents and Personal Belongings
+    building: 1, // Building only
+    contents: 2, // Contents only
+    building_contents: 3, // Building and Contents
+    building_contents_personal_belongings: 4, // Building, Contents, and Personal Belongings
+    contents_personal_belongings: 5, // Contents and Personal Belongings
   };
 
   const caseNumber = coverageCaseMap[coverage.code];
