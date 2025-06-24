@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -756,7 +756,7 @@ class SageApiService
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
         $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
         $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
-        LoggerService::info(self::class . 'fun:' .__FUNCTION__.'  EP Booking checks :  Quote Code for '.$quote->code, extra : [
+        LoggerService::info(self::class.'fun:'.__FUNCTION__.'  EP Booking checks :  Quote Code for '.$quote->code, extra : [
             'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
             'sukoonMedXTransaction' => $sukoonMedXTransaction?->code,
             'isTapPaymentGateway' => $isTapPaymentGateway,
