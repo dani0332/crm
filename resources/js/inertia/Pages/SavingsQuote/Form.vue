@@ -205,17 +205,6 @@ function onSubmit(isValid) {
 
         <!-- Savings Details -->
         <x-select
-          v-model="quoteForm.tenure_id"
-          :options="tenures"
-          class="w-full"
-          :rules="[isRequired]"
-          :error="quoteForm.errors.tenure_id"
-          label="Tenure of savings"
-          placeholder="Select Tenure of Savings"
-          required
-        />
-
-        <x-select
           v-model="quoteForm.purpose_id"
           :options="purposes"
           class="w-full"
@@ -226,27 +215,16 @@ function onSubmit(isValid) {
           required
         />
 
-        <div class="grid sm:grid-cols-2 gap-4">
-          <x-select
-            v-model="quoteForm.currency_id"
-            :options="currencies"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.currency_id"
-            label="Currency"
-            placeholder="Select Investment Currency"
-            required
-          />
-          <x-input
-            v-model="quoteForm.investment_amount"
-            type="number"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.investment_amount"
-            label="Investment amount"
-            required
-          />
-        </div>
+        <x-select
+          v-model="quoteForm.tenure_id"
+          :options="tenures"
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.tenure_id"
+          label="Tenure of savings"
+          placeholder="Select Tenure of Savings"
+          required
+        />
 
         <div class="px-2 w-full">
           <div class="mb-2">
@@ -275,6 +253,29 @@ function onSubmit(isValid) {
             </x-field>
           </div>
         </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <x-select
+            v-model="quoteForm.currency_id"
+            :options="currencies"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.currency_id"
+            label="Currency"
+            placeholder="Select Investment Currency"
+            required
+          />
+          <x-input
+            v-model="quoteForm.investment_amount"
+            type="number"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.investment_amount"
+            label="Investment amount"
+            required
+          />
+        </div>
+
         <x-field label="Additional Notes" required>
           <x-input
             v-model="quoteForm.additional_notes"
