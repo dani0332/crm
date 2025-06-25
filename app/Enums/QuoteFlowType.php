@@ -26,7 +26,6 @@ enum QuoteFlowType: int
             QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS => 'nb_motor_automated_followups',
             QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
             QuoteFlowType::MOTOR_PCP_FOLLOWUPS => 'motor_pcp_followups',
-
         };
     }
 
@@ -42,7 +41,6 @@ enum QuoteFlowType: int
             7 => QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS,
             8 => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
             9 => QuoteFlowType::MOTOR_PCP_FOLLOWUPS,
-
             default => null,  // Return null if the value doesn't match any case
         };
     }

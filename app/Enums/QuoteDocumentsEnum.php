@@ -42,4 +42,5 @@ final class QuoteDocumentsEnum extends Enum
     public const SAVINGS_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
     public const SAVINGS_RECEIPT = 'SPDR';
     public const SAVINGS_ADDITIONAL_EMAIL_ATTACHMENTS = 'TAEA';
+    // End of Savings Quote
 }
