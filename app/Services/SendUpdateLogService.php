@@ -1307,7 +1307,7 @@ class SendUpdateLogService
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business]) && ! $quoteTypeId == QuoteTypeId::Savings) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
@@ -1316,6 +1316,7 @@ class SendUpdateLogService
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
                 DocumentTypeCode::SEND_UPDATE_RECEIPT,
+                DocumentTypeCode::PAYMENT_RECEIPT,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
             ])->toArray();
         }
