@@ -30,7 +30,7 @@ const validateSumAssured = () => {
   const currencyRange = currencyRanges.value.find(
     range => range.currency.code === createForm.currency,
   );
-  
+
   if (currencyRange) {
     if (createForm.sumAssured < parseFloat(currencyRange.min_cover)) {
       return (
@@ -57,6 +57,8 @@ const currencyRanges = ref([]);
 
 // Function to get currency coverages from API
 const getCurrencyCoverages = async planId => {
+  if (!props.plan.isApi) return;
+
   try {
     const res = await axios.get(
       `/personal-quotes/life/currency-coverages/${planId}`,
@@ -115,9 +117,10 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
 };
 
 const validatePriceRange = value => {
-  if (!createForm.isManualPlan) return true;
+  if (!props.plan.isManualPlan) return true;
   const price = parseFloat(value);
-  if ((createForm.isManualPlan && price < 1) || price > 100000000) {
+  
+  if (price < 1 || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
   }
   return true;
@@ -642,7 +645,7 @@ const validateRiderCoverValue = (value, riderId) => {
               :rules="[
                 isRequired,
                 isNonNegative,
-                validatePriceRange,
+                val => validatePriceRange(val),
                 validateSumAssured,
               ]"
               class="w-full"
@@ -693,8 +696,8 @@ const validateRiderCoverValue = (value, riderId) => {
             placeholder="Enter Price"
             :rules="
               submitType === 'getQuote'
-                ? [isNonNegative, validatePriceRange]
-                : [isRequired, isNonNegative, validatePriceRange]
+                ? [isNonNegative, val => validatePriceRange(val)]
+                : [isRequired, isNonNegative, val => validatePriceRange(val)]
             "
             class="w-full"
             type="number"
