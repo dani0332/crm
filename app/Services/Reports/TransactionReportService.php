@@ -19,7 +19,7 @@ class TransactionReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
@@ -117,11 +117,19 @@ class TransactionReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
+        logger()->debug('toRawSql: '.$query->toRawSql());
+
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+        $query = $this->getReportQueryBuilder($request);
+
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
-
-            return (new TransactionReportExport($data))->download("Transaction Report {$this->reportDateRange}.xlsx");
+            return $data;
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -133,7 +141,7 @@ class TransactionReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
@@ -144,7 +152,7 @@ class TransactionReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->commmission_percentage = number_format(strToFloat($item->commmission_percentage), 2);
             $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
         });
     }

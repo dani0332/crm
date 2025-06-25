@@ -18,7 +18,7 @@ class EndingPoliciesReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDING_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::EXPIRING_POLICIES;
@@ -74,20 +74,29 @@ class EndingPoliciesReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        if ($request->export == 1) {
-            $data = $query->get();
-            $this->formatData($data);
+        logger()->debug('toRawSql: '.$query->toRawSql());
 
-            return (new EndingPoliciesReportExport($data))->download("Ending Policies Report {$this->reportDateRange}.xlsx");
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
+        if ($request->export == 1) {
+             $data = $query->get();
+             $this->formatData($data);
+             return $data;
+            // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $this->formatData($data);
-
             return $data;
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');

@@ -591,6 +591,7 @@ class ReportsController extends Controller
         if ($exportClass) {
             // Check if export type is email
             if ($request->exportType == 'email') {
+                info("Email CSV");
                 $request['exportTitle'] = 'Management Report';
 
                 return $exportClass->emailCSV($reportCategory, $request->all());

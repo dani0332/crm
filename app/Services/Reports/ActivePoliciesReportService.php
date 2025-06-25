@@ -18,7 +18,7 @@ class ActivePoliciesReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ACTIVE_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ACTIVE_POLICIES;
@@ -42,10 +42,19 @@ class ActivePoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request, isSSR: true);
 
-        if ($request->export == 1) {
-            $data = $query->get();
+        logger()->debug('toRawSql: '.$query->toRawSql());
 
-            return (new ActivePoliciesReportExport($data))->download("Active Policies Report {$this->reportDateRange}.xlsx");
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
+        if ($request->export == 1) {
+            return $query->get();
+            // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
         } else {
             return $query->simplePaginate(100)->withQueryString();
         }
