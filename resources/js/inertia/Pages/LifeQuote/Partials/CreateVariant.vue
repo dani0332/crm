@@ -119,7 +119,7 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
 const validatePriceRange = value => {
   if (!props.plan.isManualPlan) return true;
   const price = parseFloat(value);
-  
+
   if (price < 1 || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
   }
