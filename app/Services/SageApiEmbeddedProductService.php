@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTagEnums;
-use App\Enums\SageEnum;
 use App\Enums\SageEmbeddedProductEnum;
+use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteTag;
@@ -62,6 +62,7 @@ class SageApiEmbeddedProductService
             $arReceiptCreationResponse = $this->createARPrepaymentReceipt([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $arReceiptCreationResponse['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
+
                 return $arReceiptCreationResponse;
             }
             $sageRequestEmbeddedProduct->epSageReceiptId = $arReceiptCreationResponse['documentNumber'];
@@ -70,6 +71,7 @@ class SageApiEmbeddedProductService
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $createARInvoicePremAndComm['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
+
                 return $createARInvoicePremAndComm;
             }
 
@@ -77,6 +79,7 @@ class SageApiEmbeddedProductService
             $createAPInvoicePrem = $this->createAPPremInvoice([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $createAPInvoicePrem['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
+
                 return $createAPInvoicePrem;
             }
 
@@ -84,6 +87,7 @@ class SageApiEmbeddedProductService
             $applyPaymentInvoices = $this->applyPaymentInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $applyPaymentInvoices['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id());
+
                 return $applyPaymentInvoices;
             }
 
@@ -1145,12 +1149,11 @@ class SageApiEmbeddedProductService
         ];
     }
 
-
     public function updateAndLogEPBookingStatus($embeddedTransaction, $status)
     {
-        LoggerService::info(self::CLASSNAME . ' fun:'. __FUNCTION__ . ' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status);
+        LoggerService::info(self::CLASSNAME.' fun:'.__FUNCTION__.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status);
         $embeddedTransaction->update(['sage_status_id' => $status]);
-        LoggerService::info(self::CLASSNAME . ' fun:'. __FUNCTION__ . ' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
+        LoggerService::info(self::CLASSNAME.' fun:'.__FUNCTION__.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
     }
 
 }
