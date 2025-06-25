@@ -258,7 +258,7 @@ if (props.sendUpdate) {
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Life) {
-  initialAmount.value = props.quoteRequest.premium;
+  initialAmount.value = (props.quoteRequest.premium * props.quoteRequest.life_quote.payment_term);
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -3083,7 +3083,7 @@ const setPaymentInitialPrice = () => {
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else if (props.quoteType === quoteTypeCodeEnum.Life) {
-      initialAmount.value = props.quoteRequest.premium;
+      initialAmount.value = (props.quoteRequest.premium * props.quoteRequest.travel_quote.payment_term);
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
