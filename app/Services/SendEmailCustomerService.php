@@ -912,19 +912,15 @@ class SendEmailCustomerService extends BaseService
             LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
-                $bodyData['cc'] = [
-                    [
-                        'email' => $emailData->advisorEmail,
-                        'name' => $emailData->advisorName,
-                    ],
+                $bodyData['cc'][] = [
+                    'email' => $emailData->advisorEmail,
+                    'name' => $emailData->advisorName,
                 ];
 
                 if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
                     $bodyData['cc'][] = [
-                        [
-                            'email' => 'savings@insurancemarket.ae',
-                            'name' => 'savings@insurancemarket.ae',
-                        ],
+                        'email' => 'savings@insurancemarket.ae',
+                        'name' => 'savings@insurancemarket.ae',
                     ];
 
                     if ($this->appEnv != EnvEnum::PRODUCTION) {
