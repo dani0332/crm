@@ -44,11 +44,9 @@ class SageApiEmbeddedProductService
         ])->latest()->first();
 
         $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($sukoonMedXTransaction, $viewQuotePolicyApiLog);
-        $quoteTypeId = $sageRequest->quoteTypeId;
-        $userId = $sageRequest->userId;
+        $quoteTypeId = $sageRequest->quoteTypeId; 
 
-        $sageLogArray = $sukoonMedXTransaction->sageApiLogs->keyBy('step')->toArray();
-        $userId = $sageRequest->userId;
+        $sageLogArray = $sukoonMedXTransaction->sageApiLogs->keyBy('step')->toArray(); 
 
         $isEmbeddedProductBookedOnSage = QuoteTag::where([
             'quote_type_id' => $quoteTypeId,
@@ -133,9 +131,9 @@ class SageApiEmbeddedProductService
         }
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
-            if (! $sukoonMedXEPTransaction->payment_sage_receipt_id) {
-                $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-                $sukoonMedXEPTransaction->update(['payment_sage_receipt_id' => $documentNumberForReceipt]);
+            $response['documentNumber'] = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber']; 
+            if (! $sukoonMedXEPTransaction->payment_sage_receipt_id) {  
+                $sukoonMedXEPTransaction->update(['payment_sage_receipt_id' => $$response['documentNumber']]);
             }
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
@@ -465,7 +463,7 @@ class SageApiEmbeddedProductService
         }
 
         if (isset($postedResponse['error'])) {
-            $errorMessage = 'Error while making split prepayments to sage';
+            $errorMessage = ' EP code: '.$sukoonMedXEPTransaction->code .' Error while making split prepayments to sage';
             $message = 'createPaymentReceiptOneInvoice failed';
 
             return $this->sageApiService->logErrorAndReturn([$sukoonMedXEPTransaction, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
@@ -598,7 +596,7 @@ class SageApiEmbeddedProductService
         $optionalFields = self::createEPARPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct);
 
         $entryType = SageEnum::SCT_STRAIGHT;
-        $customerNumber = $sageRequestEmbeddedProduct->sageCustomerNumber;
+        $customerNumber = $sageRequest->customerId;
         $bankCode = SageEnum::BANK_CODE;
         $paymentCode = SageEnum::PAYMENT_CODE;
         $bankReceiptAmount = roundNumber(floatval($sageRequestEmbeddedProduct->collectionAmount));
