@@ -32,17 +32,57 @@ class EmailExportService
         $csvFilePath = $csvResult['filePath'];
         $requestParams['recordCount'] = $csvResult['recordCount'];
 
+        // Create zip file containing the CSV
+        $zipFilePath = $this->createZipFile($csvFilePath);
+
         try {
             $this->sendEmailWithAttachment(
-                $csvFilePath,
+                $zipFilePath,
                 $recipientEmail,
                 $subject,
                 $requestParams,
                 $ccRecipients
             );
         } finally {
-            // Always cleanup the file
+            // Always cleanup both files
             $this->csvExportService->cleanupFile($csvFilePath);
+            $this->cleanupZipFile($zipFilePath);
+        }
+    }
+
+    /**
+     * Create a zip file containing the CSV file
+     */
+    private function createZipFile(string $csvFilePath): string
+    {
+        $zipFileName = pathinfo($csvFilePath, PATHINFO_FILENAME).'.zip';
+        $zipFilePath = storage_path('temp/'.$zipFileName);
+
+        // Ensure temp directory exists
+        if (! is_dir(dirname($zipFilePath))) {
+            mkdir(dirname($zipFilePath), 0755, true);
+        }
+
+        $zip = new \ZipArchive;
+
+        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \Exception('Cannot create zip file: '.$zipFilePath);
+        }
+
+        // Add CSV file to zip with just the filename (no path)
+        $zip->addFile($csvFilePath, basename($csvFilePath));
+        $zip->close();
+
+        return $zipFilePath;
+    }
+
+    /**
+     * Clean up zip file
+     */
+    private function cleanupZipFile(string $zipFilePath): void
+    {
+        if (file_exists($zipFilePath)) {
+            unlink($zipFilePath);
         }
     }
 
@@ -50,19 +90,19 @@ class EmailExportService
      * Send email with CSV attachment
      */
     private function sendEmailWithAttachment(
-        string $csvFilePath,
+        string $attachmentFilePath,
         string $recipientEmail,
         string $subject,
         array $requestParams,
         array $ccRecipients
     ): void {
         $emailConfig = $this->getEmailConfiguration($subject);
-        $emailParams = $this->buildEmailParameters($csvFilePath, $requestParams);
+        $emailParams = $this->buildEmailParameters($attachmentFilePath, $requestParams);
 
         Mail::send(
             ['html' => 'ExportCSVMail'],
             $emailParams,
-            function ($message) use ($emailConfig, $recipientEmail, $ccRecipients, $csvFilePath) {
+            function ($message) use ($emailConfig, $recipientEmail, $ccRecipients, $attachmentFilePath) {
                 $message->to($recipientEmail);
 
                 if (! empty($ccRecipients)) {
@@ -72,13 +112,28 @@ class EmailExportService
                 $message->subject($emailConfig['subject']);
                 $message->from($emailConfig['fromEmail'], $emailConfig['fromName']);
 
-                // Attach CSV file
-                $message->attach($csvFilePath, [
-                    'as' => basename($csvFilePath),
-                    'mime' => 'text/csv',
+                // Attach file with appropriate MIME type
+                $mimeType = $this->getMimeType($attachmentFilePath);
+                $message->attach($attachmentFilePath, [
+                    'as' => basename($attachmentFilePath),
+                    'mime' => $mimeType,
                 ]);
             }
         );
+    }
+
+    /**
+     * Get MIME type based on file extension
+     */
+    private function getMimeType(string $filePath): string
+    {
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+        return match ($extension) {
+            'zip' => 'application/zip',
+            'csv' => 'text/csv',
+            default => 'application/octet-stream'
+        };
     }
 
     /**
@@ -108,10 +163,10 @@ class EmailExportService
     /**
      * Build email template parameters
      */
-    private function buildEmailParameters(string $csvFilePath, array $requestParams): array
+    private function buildEmailParameters(string $attachmentFilePath, array $requestParams): array
     {
         $recipientName = $this->getRecipientName($requestParams);
-        $fileSize = $this->csvExportService->getFileSizeInKb($csvFilePath);
+        $fileSize = $this->csvExportService->getFileSizeInKb($attachmentFilePath);
 
         return [
             'recipientName' => $recipientName,
