@@ -30,7 +30,7 @@ const validateSumAssured = () => {
   const currencyRange = currencyRanges.value.find(
     range => range.currency.code === createForm.currency,
   );
-  
+
   if (currencyRange) {
     if (createForm.sumAssured < parseFloat(currencyRange.min_cover)) {
       return (
