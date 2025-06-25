@@ -25,11 +25,4 @@ class LookupService extends BaseService
             ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
             ->get();
     }
-
-    public function getCurrencyRanges()
-    {
-        return RangeLookup::where([
-            'key' => RangeLookUpEnum::CURRENCY_COVERAGE,
-        ])->select('code', 'min_value', 'max_value')->get();
-    }
 }

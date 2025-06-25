@@ -9,7 +9,6 @@ const props = defineProps({
   plan: Object,
   modelValue: Boolean,
   quote: Object,
-  currencyRanges: Array,
 });
 
 const notification = useNotifications('toast');
@@ -28,28 +27,45 @@ const getCurrencyId = currencyCode => {
 const validateSumAssured = () => {
   if (!props.plan.isApi) return true;
 
-  const currencyRange = props.currencyRanges.find(
-    range => range.code === createForm.currency,
+  const currencyRange = currencyRanges.value.find(
+    range => range.currency.code === createForm.currency,
   );
+  
   if (currencyRange) {
-    if (createForm.sumAssured < currencyRange.min_value) {
+    if (createForm.sumAssured < parseFloat(currencyRange.min_cover)) {
       return (
         'Sum assured must be between ' +
-        currencyRange.min_value +
+        currencyRange.min_cover +
         ' - ' +
-        currencyRange.max_value
+        currencyRange.max_cover
       );
     }
-    if (createForm.sumAssured > currencyRange.max_value) {
+    if (createForm.sumAssured > parseFloat(currencyRange.max_cover)) {
       return (
         'Sum assured must be between ' +
-        currencyRange.min_value +
+        currencyRange.min_cover +
         ' - ' +
-        currencyRange.max_value
+        currencyRange.max_cover
       );
     }
   }
   return true;
+};
+
+// Add reactive property for currency ranges from API
+const currencyRanges = ref([]);
+
+// Function to get currency coverages from API
+const getCurrencyCoverages = async planId => {
+  try {
+    const res = await axios.get(
+      `/personal-quotes/life/currency-coverages/${planId}`,
+    );
+    currencyRanges.value = res.data || [];
+  } catch (error) {
+    console.error('Error fetching currency coverages:', error);
+    currencyRanges.value = [];
+  }
 };
 
 // Add watch for modal visibility to call getRiderDetails when opened
@@ -58,6 +74,7 @@ watch(
   newVal => {
     if (newVal && props.plan?.planId) {
       getRiderDetails(props.plan.planId);
+      getCurrencyCoverages(props.plan.planId);
       submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
       exitAge.value = props.plan?.exitAge;
     }

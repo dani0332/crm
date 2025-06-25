@@ -58,8 +58,7 @@ defineProps({
   currencies: Array,
   lifeRiders: Array,
   paymentGatewayEnum: Array,
-  isFuncsEnabled: Array,
-  currencyRanges: Array,
+  isFuncsEnabled: Array
 });
 
 const { isRequired, emiratesNumber } = useRules();
@@ -2168,7 +2167,6 @@ const totalAnnualPrice = computed(() => {
       :plan="variantPlan"
       :lifeRiders="lifeRiders"
       :quote="quote"
-      :currencyRanges="currencyRanges"
       @success="onCreateVariant"
       @error="onPlanError"
     />

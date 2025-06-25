@@ -236,4 +236,10 @@ class LifeController extends Controller
             'Expires' => '0'
         ]);
     }
+
+    public function currencyCoverages(Request $request)
+    {
+        $currencyCoverages = $this->lifeQuoteService->getCurrencyCoverages($request->planId);
+        return response()->json($currencyCoverages);
+    }
 }

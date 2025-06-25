@@ -49,6 +49,7 @@ use DB;
 use Illuminate\Support\Arr;
 use PDF;
 use Illuminate\Validation\ValidationException;
+use App\Models\CurrencyCoverage;
 
 class LifeQuoteService extends BaseService
 {
@@ -67,10 +68,10 @@ class LifeQuoteService extends BaseService
         $authorizedDays = $this->getPaymentAuthorisedDays();
         $renewalBatches = $this->getRenewalBaches();
         $typesOfInsurance = LifeInsuranceTenure::withActive()->get();
-        // $planTypes = LifeInsuranceTenure::select('id', 'text')->oldest()->limit(2)->get();
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
         $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
+
 
         return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes');
     }
@@ -396,7 +397,7 @@ class LifeQuoteService extends BaseService
         $ecomLifeInsuranceQuoteUrl = config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL');
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
-        $currencyRanges = app(LookupService::class)->getCurrencyRanges();
+      
 
         return [
             'documentTypes' => $documentTypes,
@@ -445,8 +446,7 @@ class LifeQuoteService extends BaseService
             'ecomLifeInsuranceQuoteUrl' => $ecomLifeInsuranceQuoteUrl,
             'currencies' => $currencies,
             'lifeRiders' => $lifeRiders,
-            'availablePlan' => $this->getQuotePlans($uuid),
-            'currencyRanges' => $currencyRanges,
+            'availablePlan' => $this->getQuotePlans($uuid)
         ];
     }
 
@@ -801,6 +801,19 @@ class LifeQuoteService extends BaseService
 
             return $responseBodyAsString;
         }
+    }
+
+    public function getCurrencyCoverages($planId)
+    {
+        $currencyCoverages = CurrencyCoverage::active()
+        ->where('plan_id', $planId)
+        ->select('plan_id', 'min_cover', 'max_cover', 'currency_id')
+        ->with(['currency' => function ($query) {
+            $query->select('id', 'code', 'text'); // Make sure to include 'id' for relationship binding
+        }])
+        ->get();
+
+        return $currencyCoverages;
     }
 
     private function generatePdfFilename($quote): string
