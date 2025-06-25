@@ -201,7 +201,7 @@ class RuleService extends BaseService
         return ['id', 'name'];
     }
 
-    public function getUsersByLeadSourceRules(string $leadSource, $quoteTypeId)
+    public function getUsersByLeadSourceRules(string $leadSource, $quoteTypeId = null)
     {
         return LeadSource::query()
             ->leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
@@ -220,5 +220,26 @@ class RuleService extends BaseService
             ])
             ->get();
     
+    }
+    private function applyRuleExclusions($rules,  $quoteTypeId)
+    {
+        if ($rules->isEmpty()) {
+            $ruleUserIds = $this->getRuleUsers( $quoteTypeId);
+        }
+        
+        return array_diff( $ruleUserIds);
+        
+    }
+    public function getRuleUsers($quoteTypeId = null): mixed
+    {
+      
+        // Select distinct user IDs associated with these rules and convert the result to an array.
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->where('rules.quote_type_id', $quoteTypeId)
+            ->where('rules.is_active', 1)
+            ->distinct()
+            ->pluck('rule_users.user_id')
+            ->toArray();
     }
 }

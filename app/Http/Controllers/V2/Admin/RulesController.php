@@ -33,12 +33,14 @@ class RulesController extends Controller
                 return $query->whereBetween('created_at', [$dateFrom, $dateTo]);
             });
 
+        
         $rules = $data->simplePaginate(10)->withQueryString();
 
         $rules->load([
             'ruleUsers',
             'ruleType',
             'leadSource',
+            'quoteType',
         ]);
 
         return inertia('Admin/AllocationConfig/Rules/Index', [
@@ -55,7 +57,6 @@ class RulesController extends Controller
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
-            'quoteTypes' => QuoteTypes::allTypesWithIds(),
         ]);
     }
 

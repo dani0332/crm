@@ -15,7 +15,7 @@ class Rule extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'rules';
-    protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active', 'rule_type'];
+    protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active', 'rule_type', 'quote_type_id'];
 
     public function users()
     {
@@ -82,6 +82,6 @@ class Rule extends Model implements AuditableContract
 
     public function quoteType(): BelongsTo
     {
-        return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id');
+        return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id')->select('id','code');
     }
 }
