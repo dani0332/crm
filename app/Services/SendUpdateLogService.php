@@ -1342,6 +1342,7 @@ class SendUpdateLogService
             'code' => $sendUpdateLog->code,
             'quote' => $sendUpdateLog->code,
             'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
+            'refID' => $sendUpdateLog->code,
         ];
 
         if ($quoteTypeId == QuoteTypeId::Business) {
