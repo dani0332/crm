@@ -537,22 +537,21 @@ const getRiderDetails = async planId => {
     // Clear existing options if needed
     riderOptions.value = [];
 
-    // Loop through the data
+    // Loop through the data with new format
     res.data.forEach(item => {
-      console.log('Item:', item);
-      if (item.rider_option) {
-        const { rider_id, currency_id, range_minimum, range_maximum } =
-          item.rider_option;
-        riderOptions.value.push({
-          riderId: rider_id,
-          currency_id,
-          range_minimum,
-          range_maximum,
+      if (item.currency_coverages && Array.isArray(item.currency_coverages)) {
+        item.currency_coverages.forEach(coverage => {
+          riderOptions.value.push({
+            riderId: item.rider_id,
+            currency_id: coverage.currency_id,
+            range_minimum: coverage.min_cover,
+            range_maximum: coverage.max_cover,
+          });
         });
       }
-
-      console.log('Rider options:', riderOptions.value);
     });
+
+
   } catch (error) {
     console.error('Error fetching rider details:', error);
   }

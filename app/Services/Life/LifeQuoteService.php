@@ -50,6 +50,7 @@ use Illuminate\Support\Arr;
 use PDF;
 use Illuminate\Validation\ValidationException;
 use App\Models\CurrencyCoverage;
+use App\Models\LifeRiderOption;
 
 class LifeQuoteService extends BaseService
 {
@@ -729,9 +730,13 @@ class LifeQuoteService extends BaseService
 
     public function getRiderDetails($planId)
     {
-        $riderDetails = LifePlanRider::with(['riderOption'])->where('plan_id', $planId)->get();
-
-        return $riderDetails;
+        return LifeRiderOption::active()
+        ->where('plan_id', $planId)
+        ->select('id','rider_id', 'plan_id')
+        ->with(['currencyCoverages' => function ($query) {
+            $query->select('life_rider_option_id', 'min_cover', 'max_cover', 'currency_id');
+        }])
+        ->get();
     }
 
     public function quotePlans($data)

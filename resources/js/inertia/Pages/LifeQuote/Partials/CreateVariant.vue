@@ -264,7 +264,6 @@ watch(
 
     // Handle rider data on plan change
     if (props.plan?.riders && props.plan.riders.length > 0) {
-      console.log('Watch - Using riders from plan:', props.plan.riders);
       ridersData.value = props.plan.riders.map(rider => ({
         riderId: rider.id,
         active: rider.active ?? 0,
@@ -273,7 +272,6 @@ watch(
         text: rider.text,
       }));
     } else {
-      console.log('Watch - No riders in plan, using lifeRiders');
       ridersData.value = props.lifeRiders.map(rider => ({
         riderId: rider.id,
         active: 0,
@@ -282,7 +280,6 @@ watch(
         text: rider.text,
       }));
     }
-    console.log('Watch - Final rider data:', ridersData.value);
   },
   { deep: true },
 );
@@ -359,10 +356,8 @@ const handleSubmit = isValid => {
 
   if (submitType.value === 'getQuote') {
     getQuote();
-    console.log('getQuote');
   } else {
     onSubmit();
-    console.log('onSubmit');
   }
 };
 
@@ -435,22 +430,20 @@ const getRiderDetails = async planId => {
     // Clear existing options if needed
     riderOptions.value = [];
 
-    // Loop through the data
+    // Loop through the data with new format
     res.data.forEach(item => {
-      console.log('Item:', item);
-      if (item.rider_option) {
-        const { rider_id, currency_id, range_minimum, range_maximum } =
-          item.rider_option;
-        riderOptions.value.push({
-          riderId: rider_id,
-          currency_id,
-          range_minimum,
-          range_maximum,
+      if (item.currency_coverages && Array.isArray(item.currency_coverages)) {
+        item.currency_coverages.forEach(coverage => {
+          riderOptions.value.push({
+            riderId: item.rider_id,
+            currency_id: coverage.currency_id,
+            range_minimum: coverage.min_cover,
+            range_maximum: coverage.max_cover,
+          });
         });
       }
-
-      console.log('Rider options:', riderOptions.value);
     });
+    
   } catch (error) {
     console.error('Error fetching rider details:', error);
   }
@@ -502,7 +495,6 @@ onMounted(() => {
           coverValue: 0,
           text: rider.text || rider.name,
         };
-        console.log('Mapped lifeRider:', mappedRider);
         return mappedRider;
       });
     }
