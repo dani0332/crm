@@ -641,7 +641,7 @@ class SageApiService
             return $checkRequiredSageIds;
         }
         /* Check Sage Vendor ID, GL Account ID, Insurer Customer ID, and Sage Customer ID */
-        $isEPTransStatusReadyForSage = $this->isEmbeddedTransactionStatusReadyForSage($quote);
+        $isEPTransStatusReadyForSage = $this->isEmbeddedTransactionStatusReadyForSage($quote, $quoteTypeId);
         if (! $isEPTransStatusReadyForSage) {
             LoggerService::info('Policy Book : postBookPolicyToSage : Please check the embedded transaction status for quote code : '.$quote->code.' as its not ready for sage yet!');
 
@@ -2577,11 +2577,14 @@ class SageApiService
             ->first();
     }
 
-    public function isEmbeddedTransactionStatusReadyForSage($quote)
+    public function isEmbeddedTransactionStatusReadyForSage($quote, $quoteTypeId)
     {
         $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
+        if($this->isLobAllowedForEmbeddedProductBooking($quoteTypeId) && $sukoonMedXTransaction){
+            return $sukoonMedXTransaction->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+        }
 
-        return $sukoonMedXTransaction->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+        return true;
     }
 
 }

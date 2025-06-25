@@ -137,4 +137,9 @@ class EmbeddedTransaction extends Model
     {
         return $this->morphOne(Payment::class, 'paymentable');
     }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
 }
