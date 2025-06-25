@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteTypes;
 use App\Http\Requests\AllocationConfigurationRequest;
+use App\Http\Requests\FetchAllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Services\AllocationConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Inertia\Response;
 
 class AllocationConfigurationController extends Controller
@@ -28,15 +27,9 @@ class AllocationConfigurationController extends Controller
         ]);
     }
 
-    public function fetchConfiguration(Request $request)
+    public function fetchConfiguration(FetchAllocationConfigurationRequest $request)
     {
-        $request->validate([
-            'quote_type' => [Rule::enum(QuoteTypes::class)],
-        ]);
-
-        $quoteType = QuoteTypes::from($request->quote_type);
-
-        $configuration = $this->allocationConfigurationService->findConfig($quoteType);
+        $configuration = $this->allocationConfigurationService->findConfig($request->getQuoteType());
 
         return response()->json([
             'success' => true,
