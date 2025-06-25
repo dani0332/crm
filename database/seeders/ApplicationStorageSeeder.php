@@ -97,6 +97,7 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
+        $this->savingsLOB();
 
         $this->seedOcrEnabled();
         $this->seedSukoonMedexProductSlug();
@@ -410,6 +411,39 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::CORPLINE_ADVISORS],
             [
                 'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae,arun.shankar@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function savingsLOB()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NEW_LEAD_POOL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_BOOK_POLICY_TEMPLATE],
+            [
+                'value' => 734,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 737,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
