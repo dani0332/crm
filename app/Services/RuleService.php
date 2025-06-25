@@ -3,14 +3,14 @@
 namespace App\Services;
 
 use App\Enums\RuleTypeEnum;
+use App\Models\LeadSource;
 use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use stdClass;
-use App\Models\LeadSource;
 
 class RuleService extends BaseService
 {
@@ -216,23 +216,23 @@ class RuleService extends BaseService
             ->select([
                 'lead_sources.name AS leadSourceName',
                 'lead_sources.id AS leadSourceId',
-                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'),
             ])
             ->get();
-    
+
     }
-    private function applyRuleExclusions($rules,  $quoteTypeId)
+    private function applyRuleExclusions($rules, $quoteTypeId)
     {
         if ($rules->isEmpty()) {
-            $ruleUserIds = $this->getRuleUsers( $quoteTypeId);
+            $ruleUserIds = $this->getRuleUsers($quoteTypeId);
         }
-        
-        return array_diff( $ruleUserIds);
-        
+
+        return array_diff($ruleUserIds);
+
     }
     public function getRuleUsers($quoteTypeId = null): mixed
     {
-      
+
         // Select distinct user IDs associated with these rules and convert the result to an array.
         return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')

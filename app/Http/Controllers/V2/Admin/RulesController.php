@@ -9,7 +9,6 @@ use App\Models\RuleType;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Enums\QuoteTypes;
 
 class RulesController extends Controller
 {
@@ -33,7 +32,6 @@ class RulesController extends Controller
                 return $query->whereBetween('created_at', [$dateFrom, $dateTo]);
             });
 
-        
         $rules = $data->simplePaginate(10)->withQueryString();
 
         $rules->load([
@@ -53,7 +51,7 @@ class RulesController extends Controller
      */
     public function create()
     {
-        
+
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
