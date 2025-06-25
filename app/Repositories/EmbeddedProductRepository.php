@@ -234,7 +234,13 @@ class EmbeddedProductRepository extends BaseRepository
                     $item->sync_document_button = $documentCount < 5;
                 }
             } elseif (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
-                $item->sync_document_button = $transaction[0]->policy_status != EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+                $sukoonReqDocTypeCodes = QuoteDocumentsEnum::getSukoonAllDocTypes();
+                $savedDocTypes = $transaction[0]->documents()
+                    ->whereIn('document_type_code', $sukoonReqDocTypeCodes)
+                    ->pluck('document_type_code')->toArray() ?? [];
+
+                $missingDocTypes = array_diff($sukoonReqDocTypeCodes, $savedDocTypes);
+                $item->sync_document_button = !empty($missingDocTypes) && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -365,10 +371,10 @@ class EmbeddedProductRepository extends BaseRepository
                 } else {
                     try {
                         $savedDocumentTypes = $item->documents->pluck('document_type_code')->toArray();
-                        $emailRequiredDocumentTypes = [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE];
+                        $sukoonInitialDocTypes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
 
                         // check all email-required documents are saved
-                        if (empty(array_diff($emailRequiredDocumentTypes, $savedDocumentTypes))) {
+                        if (empty(array_diff($sukoonInitialDocTypes, $savedDocumentTypes))) {
 
                             $sukoonMedexService = app(SukoonMedexService::class);
                             $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
@@ -419,6 +425,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ->first();
             if (empty($transaction)) {
                 LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
+                return ['success' => false, 'message' => 'No transaction found'];
             }
 
             try {
@@ -466,7 +473,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-        } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
+        } elseif (EmbeddedProductStrategy::checkSukoonMedex($short_code)) {
             return $this->sendMedexEmailV3($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep);
             // return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep, $data['regenerate']);
         }
@@ -574,7 +581,7 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function sendMedexEmailV3($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep)
     {
-        $documents = $transaction->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE])->get();
+        $documents = $transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get();
         $certificatesConfig = config('embedded-products.certificates');
 
         foreach ($documents as $document) {

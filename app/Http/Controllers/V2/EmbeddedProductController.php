@@ -144,9 +144,9 @@ class EmbeddedProductController extends Controller
         $result = EmbeddedProductRepository::syncDocument($request->validated());
 
         if ($result['success']) {
-            redirect()->back()->with('success', $result['message'] ?? 'Re-gerating request processing');
+            return redirect()->back()->with('success', $result['message'] ?? 'Re-gerating request processing');
         } else {
-            redirect()->back()->with('error', $result['message'] ?? 'Re-gerating request failed');
+            return redirect()->back()->with('error', $result['message'] ?? 'Re-gerating request failed');
         }
     }
 

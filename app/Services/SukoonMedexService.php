@@ -51,7 +51,7 @@ class SukoonMedexService
     public function __construct()
     {
         $this->sukoonRequestUrl = config('constants.SUKOON_API_URL').'/api/v'.config('constants.SUKOON_API_VERSION');
-        $this->sukoonReqDocTypeCodes = [QuoteDocumentsEnum::CAR_TAX_INVOICE, QuoteDocumentsEnum::POLICY_SCHEDULE, QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER];
+        $this->sukoonReqDocTypeCodes = QuoteDocumentsEnum::getSukoonAllDocTypes();
     }
 
     private function viewQuotePolicy()
@@ -66,9 +66,12 @@ class SukoonMedexService
         }
     }
 
-    public function initiatePurchaseFlow($quote, $quoteTypeId, $transaction)
+    public function initiatePurchaseFlow(mixed $quote, int $quoteTypeId, mixed $transaction)
     {
         try {
+            if(empty($quote) || empty($quoteTypeId) || empty($transaction))
+                throw new Exception('Invalid quote, quoteTypeId or transaction');
+
             $this->currentQuote = $quote;
             $this->quoteTypeId = $quoteTypeId;
             $this->transaction = $transaction;
@@ -192,24 +195,24 @@ class SukoonMedexService
 
     public function sendDocuments()
     {
+        LoggerService::info("{$this->logPrefix} sendDocuments in process");
         EmbeddedProductRepository::sendDocument([
             'epId' => $this->transaction->product->embeddedProduct->id ?? null,
             'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
             'quoteId' => $this->currentQuote->id,
         ]);
-        LoggerService::info("{$this->logPrefix} sendDocuments in process");
     }
 
     private function syncSukoonCommissions()
     {
         try {
             // Check all required documents are saved
-            $isAllDocumentsSaved = empty($this->getMissingReqDocTypes());
+            $savedDocTypes = $this->transaction->documents->pluck('document_type_code')->toArray();
 
             // STEP #16 viewQuotePolicy
             $viewQuotePolicyResponse = $this->viewQuotePolicy();
 
-            $this->updateTransaction($this->transaction, $viewQuotePolicyResponse, $isAllDocumentsSaved);
+            $this->updateTransaction($this->transaction, $viewQuotePolicyResponse, $savedDocTypes);
         } catch (Exception $e) {
             throw $e;
         }
@@ -284,7 +287,7 @@ class SukoonMedexService
      * @param  array  $transactionDetail  The transaction details array.
      * @return void
      */
-    private function updateTransaction($transaction, $transactionDetail, bool $isAllDocumentsSaved = false)
+    private function updateTransaction($transaction, $transactionDetail, $savedDocTypes = [])
     {
         $paymentData = $transactionDetail['payments'][0];
         $additionalData = $transactionDetail['additional_data'];
@@ -306,11 +309,13 @@ class SukoonMedexService
             $this->policyStatus = $data['policy_status'] = $paymentData['status'];
         }
 
-        if ($isAllDocumentsSaved && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
+        $missingDocTypes = array_diff($this->sukoonReqDocTypeCodes, $savedDocTypes);
+        $missingInitialDocuments = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $savedDocTypes);
+        if (empty($missingInitialDocuments) && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
         }
 
-        if ($commissionAmount > 0 && $this->policyStatus == EmbeddedTransactionEnum::STATUS_BOOKED) {
+        if (empty($missingDocTypes) && $commissionAmount > 0 && $this->policyStatus == EmbeddedTransactionEnum::STATUS_BOOKED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
         }
 
@@ -488,24 +493,43 @@ class SukoonMedexService
     public function validateCustomerDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
-        $insuredKyc = $latestInsuredData?->insuredKyc;
         $customerType = $latestInsuredData?->customer_type;
+        $insuredKyc = $latestInsuredData?->insuredKyc;
+
+        if($customerType != CustomerTypeEnum::Individual)
+            throw new Exception('Insured record should be individual customer-type');
+
+        if(empty($insuredKyc))
+            throw new Exception('KYC is not found');
+
         $idType = $insuredKyc?->id_type;
 
-        if (($customerType != CustomerTypeEnum::Individual || $idType != 'emiratesId') && ! $this->validateCustomerKycDetail(
+        $missingFields = [];
+        if($idType != 'emiratesId' || empty($insuredKyc?->id_number))
+            $missingFields[] = 'emirates-id-number';
+
+        if(empty($insuredKyc?->id_expiry_date))
+            $missingFields[] = 'emirates-id-expiry-date';
+        
+        if(empty($insuredKyc?->residential_address))
+            $missingFields[] = 'residential-address';
+
+        if(!empty($missingFields))
+            throw new Exception('Missing: '.implode(', ', $missingFields));
+
+        if (! $this->validateEmiratesIdAndExpiryDate(
             $insuredKyc?->id_number,
-            $insuredKyc?->id_expiry_date,
-            $insuredKyc?->residential_address
+            $insuredKyc?->id_expiry_date
         )) {
-            throw new Exception('Address cannot be empty, Invalid Emirates ID or Expiry Date');
+            throw new Exception('Invalid emirates-id or emirates-id-expiry-date');
         }
     }
 
-    private function validateCustomerKycDetail($idNumber, $IdExpiryDate, $address)
+    private function validateEmiratesIdAndExpiryDate($idNumber, $IdExpiryDate)
     {
         $patternOfEID = '/^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$/';
 
-        return preg_match($patternOfEID, $idNumber) && $IdExpiryDate >= Carbon::now() && ! empty($address);
+        return preg_match($patternOfEID, $idNumber) && $IdExpiryDate >= Carbon::now();
     }
 
     /**
