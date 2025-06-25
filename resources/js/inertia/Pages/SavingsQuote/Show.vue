@@ -415,9 +415,9 @@ const onLoadAvailablePlansData = async () => {
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(
               plan,
-              'minimum_investment_amount',
+              'minimumInvestmentAmount',
             ),
-            policyTerm: getEligibilityValue(plan, 'policy_term'),
+            policyTerm: getEligibilityValue(plan, 'policyTerm'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
@@ -438,9 +438,9 @@ const onLoadAvailablePlansData = async () => {
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(
               plan,
-              'minimum_investment_amount',
+              'minimumInvestmentAmount',
             ),
-            policyTerm: getEligibilityValue(plan, 'policy_term'),
+            policyTerm: getEligibilityValue(plan, 'policyTerm'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
             // Add properties needed by SelectPlan component
