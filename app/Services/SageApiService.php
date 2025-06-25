@@ -2579,7 +2579,7 @@ class SageApiService
 
     public function isEmbeddedTransactionStatusReadyForSage($quote)
     {
-        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote); 
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
 
         return $sukoonMedXTransaction->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
     }
