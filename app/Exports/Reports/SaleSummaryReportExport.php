@@ -94,8 +94,6 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $cols = $this->map($processedData[0] ?? (object) []);
 
-        logger()->debug('asdasdas End'.print_r($cols, true));
-
         // Write totals rows to file which were caculated during map()
         $this->postDataRows($stream);
 

@@ -321,7 +321,7 @@ const onDataExport = async (flag, exportType = 'download') => {
           position: 'top',
         });
         setTimeout(() => {
-          loader.export = false;
+          loaders.export = false;
         }, 1000);
         throw err;
       });
