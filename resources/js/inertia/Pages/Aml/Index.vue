@@ -238,14 +238,30 @@ const quoteTypeOptions = computed(() =>
 
 async function downloadAmlCtfReport() {
   resetCustomErrors();
-  const daysDifference = calculateDaysDifference(
-    filtersForm.amlCreatedStartDate,
-    filtersForm.amlCreatedEndDate,
-  );
-  if (daysDifference > 30) {
+
+  // Validate that either search criteria or date range is provided
+  const hasSearchCriteria =
+    filtersForm.quoteType || filtersForm.searchField || filtersForm.searchType;
+  const hasDateRange =
+    filtersForm.amlCreatedStartDate && filtersForm.amlCreatedEndDate;
+
+  if (!hasSearchCriteria && !hasDateRange) {
     customErrors.amlCreatedStartDate =
-      'Allowed no. of days between start & end dates are 30 days.';
+      'Please provide either search criteria (Quote Type, Search Field, or Search Type) or both start and end dates.';
     return;
+  }
+
+  // Only validate date difference if both dates are provided
+  if (filtersForm.amlCreatedStartDate && filtersForm.amlCreatedEndDate) {
+    const daysDifference = calculateDaysDifference(
+      filtersForm.amlCreatedStartDate,
+      filtersForm.amlCreatedEndDate,
+    );
+    if (daysDifference > 30) {
+      customErrors.amlCreatedStartDate =
+        'Allowed no. of days between start & end dates are 30 days.';
+      return;
+    }
   }
 
   const exportData = {};
@@ -364,15 +380,6 @@ onMounted(() => {
           v-if="can(permissionsEnum.DATA_EXTRACTION)"
           size="sm"
           color="#48bb78"
-          @click.prevent="onDataExport()"
-          :disabled="loader.export"
-          :loading="loader.export"
-        >
-          Export to Excel
-        </x-button>
-        <x-button
-          size="sm"
-          color="#ff5e00"
           @click.prevent="downloadAmlCtfReport()"
           :disabled="loader.exportAmlRiskScore"
           :loading="loader.exportAmlRiskScore"

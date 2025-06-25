@@ -261,7 +261,7 @@ trait Filterable
 
     public function scopeFilterByPrivateClient($query, $filter)
     {
-        if ($filter == 'all') {
+        if (is_null($filter) || $filter == 'all') {
             return;
         }
 
