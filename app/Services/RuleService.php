@@ -3,14 +3,14 @@
 namespace App\Services;
 
 use App\Enums\RuleTypeEnum;
+use App\Models\LeadSource;
 use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use stdClass;
-use App\Models\LeadSource;
 
 class RuleService extends BaseService
 {
@@ -216,10 +216,10 @@ class RuleService extends BaseService
             ->select([
                 'lead_sources.name AS leadSourceName',
                 'lead_sources.id AS leadSourceId',
-                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'),
             ])
             ->get();
-    
+
     }
 
     public function getUserIdsFromRuleRecords($matchedRuleRecords): array

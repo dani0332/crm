@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
+use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
@@ -15,7 +16,6 @@ use App\Pipes\Allocation\Health\VerifyLeadPreChecksPipe;
 use App\Services\AllocationService;
 use Exception;
 use Illuminate\Support\Facades\Pipeline;
-use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 
 class HealthAllocation implements Allocation
 {

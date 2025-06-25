@@ -34,7 +34,7 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
 
         $tierUserIds = $this->applyRuleExclusions($rules, $tierUserIds, $lead);
 
-        $this->allocationRequest->set('rules',  $rules);
+        $this->allocationRequest->set('rules', $rules);
         $this->allocationRequest->set('ruleUsers', $this->getRuleUsers());
 
         return $next($request);

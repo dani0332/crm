@@ -82,6 +82,6 @@ class Rule extends Model implements AuditableContract
 
     public function quoteType(): BelongsTo
     {
-        return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id')->select('id','code');
+        return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id')->select('id', 'code');
     }
 }
