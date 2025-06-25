@@ -59,13 +59,12 @@ class SendUpdateCustomerValidationRequest extends FormRequest
 
             if ($this->sendUpdate->quote_type_id == QuoteTypeId::Savings) {
                 $uploadedDocuments = $this->sendUpdate?->documents()->pluck('document_type_code')->toArray();
-                $requiredDocuments = [
-                    DocumentTypeCode::SEND_UPDATE_RECEIPT,
-                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
-                ];
-
-                // Check if all required documents are present in uploaded documents
-                if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
+                if (
+                    ! (
+                        in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) &&
+                        (in_array(DocumentTypeCode::PAYMENT_RECEIPT, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_RECEIPT, $uploadedDocuments))
+                    )
+                ) {
                     $validator->errors()->add('error', 'Required documents are not uploaded');
                 }
             }

@@ -84,4 +84,5 @@ class DocumentTypeCode extends Enum
     const PS_SAV = 'PS_SAV';
     const PC_SAV = 'PC_SAV';
     const AC_SAV = 'AC_SAV';
+    const PAYMENT_RECEIPT = 'SPD';
 }
