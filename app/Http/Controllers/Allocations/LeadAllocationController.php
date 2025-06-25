@@ -48,6 +48,12 @@ class LeadAllocationController extends Controller
 
             $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $this->quoteType->value)->first();
 
+            $advisorRoles = $this->quoteType->advisorRoles();
+
+            if ($this->quoteType == QuoteTypes::SAVINGS) {
+                $advisorRoles[] = RolesEnum::SavingsManager;
+            }
+
             $users = User::activeUser()
                 ->select(
                     'users.id as userId',
@@ -76,12 +82,7 @@ class LeadAllocationController extends Controller
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->where('la.quote_type_id', in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id())
-                ->where(function ($query) {
-                    $query->whereIn('r.name', $this->quoteType->advisorRoles());
-                    $query->when($this->quoteType == QuoteTypes::SAVINGS, function ($subQuery) {
-                        $subQuery->orWhereIn('r.name', [RolesEnum::SavingsManager]);
-                    });
-                })
+                ->whereIn('r.name', $advisorRoles)
                 ->when($this->quoteType !== QuoteTypes::SAVINGS, function ($query) use ($managerRoleIds) {
                     // subquery to exclude users with any kind of "manager" roles
                     $query->whereNotExists(function ($query) use ($managerRoleIds) {
