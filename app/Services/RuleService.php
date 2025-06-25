@@ -7,9 +7,10 @@ use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
 use App\Services\Logger\LoggerService;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use stdClass;
+use App\Models\LeadSource;
 
 class RuleService extends BaseService
 {
@@ -198,5 +199,26 @@ class RuleService extends BaseService
     public function fillSortingProperties()
     {
         return ['id', 'name'];
+    }
+
+    public function getUsersByLeadSourceRules(string $leadSource, $quoteTypeId)
+    {
+        return LeadSource::query()
+            ->leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
+            ->join('rules', 'rules.id', 'rule_details.rule_id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rules.quote_type_id', $quoteTypeId)
+            ->where('lead_sources.name', $leadSource)
+            ->where('rules.is_active', true)
+            ->where('lead_sources.is_applicable_for_rules', true)
+            ->groupBy('rule_details.lead_source_id')
+            ->select([
+                'lead_sources.name AS leadSourceName',
+                'lead_sources.id AS leadSourceId',
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            ])
+            ->get();
+    
     }
 }

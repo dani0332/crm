@@ -9,6 +9,7 @@ use App\Models\RuleType;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Enums\QuoteTypes;
 
 class RulesController extends Controller
 {
@@ -50,9 +51,11 @@ class RulesController extends Controller
      */
     public function create()
     {
+        
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
+            'quoteTypes' => QuoteTypes::allTypesWithIds(),
         ]);
     }
 

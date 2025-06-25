@@ -4,6 +4,7 @@ const props = defineProps({
   id: String,
   usersList: Object,
   rulesTypeList: Object,
+  quoteTypes: Object,
 });
 const { isRequired, isNumber } = useRules();
 
@@ -17,6 +18,7 @@ const ruleForm = useForm({
   is_active: props.rule?.is_active ? true : false,
   rule_users: props.rule?.rule_users.map(x => x.id) ?? [],
   rule_type: props.rule?.rule_type.id ?? null,
+  quote_type: props.rule?.quote_type.id ?? null,
 });
 
 const ruleUsers = computed(() => {
@@ -35,6 +37,16 @@ const ruleTypes = computed(() => {
     return {
       value: user.id,
       label: user.name,
+    };
+  });
+});
+
+const quoteTypes = computed(() => {
+  let quoteTypes = Object.values(props.quoteTypes);
+  return quoteTypes.map(quoteType => {
+    return {
+      value: quoteType.id,
+      label: quoteType.name,
     };
   });
 });
@@ -105,6 +117,18 @@ function onSubmit(isValid) {
         filterable
         filterPlaceholder="Filter Rule Type...."
         placeholder="Select Rule Type"
+        required
+        :rules="[isRequired]"
+      />
+
+      <x-select
+        v-model="ruleForm.quote_type"
+        label="Quote Type"
+        :options="quoteTypes"
+        :error="ruleForm.errors.quote_type"
+        filterable
+        filterPlaceholder="Filter Quote Type...."
+        placeholder="Select Quote Type"
         required
         :rules="[isRequired]"
       />

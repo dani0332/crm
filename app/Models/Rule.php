@@ -79,4 +79,9 @@ class Rule extends Model implements AuditableContract
             'lead_source_id' // Foreign key on the LeadSource table
         );
     }
+
+    public function quoteType(): BelongsTo
+    {
+        return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id');
+    }
 }
