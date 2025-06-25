@@ -57,6 +57,10 @@ class SukoonMedexService
     private function viewQuotePolicy()
     {
         try {
+            if (empty($this->certificateNumber)) {
+                throw new Exception('Step: #16 viewQuotePolicy - Required certificate_number');
+            }
+
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
             $response = $this->request("/policy/{$this->certificateNumber}", 'get', headers: $headers)->json();
 
@@ -208,7 +212,7 @@ class SukoonMedexService
     {
         try {
             // Check all required documents are saved
-            $savedDocTypes = $this->transaction->documents->pluck('document_type_code')->toArray();
+            $savedDocTypes = $this->transaction?->documents?->pluck('document_type_code')?->toArray() ?? [];
 
             // STEP #16 viewQuotePolicy
             $viewQuotePolicyResponse = $this->viewQuotePolicy();
@@ -225,7 +229,7 @@ class SukoonMedexService
             // STEP #16 viewQuotePolicy
             $viewQuotePolicyResponse = $this->viewQuotePolicy();
 
-            return $this->paymentToken = $viewQuotePolicyResponse['payments'][0]['token'] ?? null;
+            return $this->paymentToken = $viewQuotePolicyResponse['payments'][0]['payment_token'] ?? null;
         } catch (Exception $e) {
             throw $e;
         }
@@ -269,10 +273,12 @@ class SukoonMedexService
                         $this->transaction->load('documents');
                     }
 
-                    // STEP #16 viewQuotePolicy
-                    $this->syncSukoonCommissions();
                 }
             }
+
+            // STEP #16 viewQuotePolicy
+            $this->syncSukoonCommissions();
+
         } catch (Exception $e) {
             $this->logFailure("{$this->logPrefix} syncSukoonDocuments Failed", $e->getMessage(), [
                 'quote_uuid' => $this->currentQuote->uuid ?? null,
@@ -645,7 +651,7 @@ class SukoonMedexService
             ])->json();
 
             if (! empty(array_diff(['policy_number', 'policy_status'], array_keys($result)))) {
-                throw new Exception('Not found (policy_number, policy_status)');
+                throw new Exception('Step: #6 submitPlan - Missing (policy_number, policy_status) in response');
             }
 
             // policy_status => SukoonPurchaseFlowEnum::STATUS_QUOTED
@@ -691,7 +697,7 @@ class SukoonMedexService
             $fields = $result['form']['fields'] ?? [];
 
             if (empty($fields) || ! empty(array_diff(['policy_number', 'policy_status'], array_keys($result)))) {
-                throw new Exception('Not found (fields, policy_number, policy_status)');
+                throw new Exception('Step: #4 submitPersonalDetail - Missing (fields, policy_number, policy_status) in response');
             }
 
             $requiredFields = ['payment_plan', 'amount_disclaimer_text'];
@@ -699,7 +705,7 @@ class SukoonMedexService
 
             // check required fields are present
             if (! empty(array_diff($requiredFields, array_keys($pluckedFieldsValue)))) {
-                throw new Exception('Not found (payment_plan, amount_disclaimer_text)');
+                throw new Exception('Step: #4 submitPersonalDetail - Missing (payment_plan, amount_disclaimer_text) in response');
             }
 
             return [
@@ -773,7 +779,7 @@ class SukoonMedexService
 
             $responsePolicyData = $response['policy_data'] ?? [];
             if (! empty(array_diff(['quote_number', 'policy_status'], array_keys($responsePolicyData)))) {
-                throw new Exception('Not found (quote_number, policy_status)');
+                throw new Exception('Step: #7 reviewSubmittedData - Missing (quote_number, policy_status) in response');
             }
 
             return [
@@ -818,13 +824,21 @@ class SukoonMedexService
         $data = ['policy_number' => $this->quotePolicy, 'gateway' => $this->paymentGateway];
 
         try {
+            if (empty($data['policy_number']) || empty($data['gateway'])) {
+                throw new Exception('Step: #10 initiatePaymentProcess - Required policy number & gateway');
+            }
+
             $result = $this->request('/payment/initiate/', 'post', $data, [
                 'x-session-id' => $this->sessionId,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->json();
 
-            return ['payment_token' => $result['token']];
+            if (empty($result['token'] ?? null)) {
+                throw new Exception('Step: #10 initiatePaymentProcess - Missing token in response');
+            }
+
+            return ['payment_token' => $result['token'] ?? null];
 
         } catch (Exception $e) {
             throw $e;
@@ -844,6 +858,10 @@ class SukoonMedexService
         $data = ['payment_reference' => $paymentReference, 'payment_token' => $this->paymentToken];
 
         try {
+            if (empty($paymentReference) || empty($this->paymentToken)) {
+                throw new Exception('Step: #11 completeInvoicePayment - Required payment_reference & payment_token');
+            }
+
             $result = $this->request('/payment/complete/'.$this->paymentGateway.'/?token='.$this->paymentToken, 'post', $data, [
                 'x-session-id' => $this->sessionId,
                 'X-Requested-With' => 'XMLHttpRequest',
@@ -852,7 +870,7 @@ class SukoonMedexService
             ])->json();
 
             if (empty($result['policy_number'])) {
-                throw new Exception('Policy number is missing');
+                throw new Exception('Step: #11 completeInvoicePayment - Missing policy_number in response');
             }
 
             return ['certificate_number' => $result['policy_number'], 'policy_status' => EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED];
@@ -865,6 +883,10 @@ class SukoonMedexService
     public function getPolicyScheduleCoi()
     {
         try {
+            if (empty($this->certificateNumber)) {
+                throw new Exception('Step: #12 getPolicyScheduleCoi - Required certificate_number');
+            }
+
             $this->request('/policy/'.$this->certificateNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
         } catch (Exception $e) {
             throw $e;
@@ -874,6 +896,10 @@ class SukoonMedexService
     public function getCustomerTaxInvoice()
     {
         try {
+            if (empty($this->paymentToken)) {
+                throw new Exception('Step: #13 getCustomerTaxInvoice - Required payment_token');
+            }
+
             $this->request('/payment/'.$this->paymentToken.'/tax-invoice', 'get', headers: ['x-session-id' => $this->sessionId]);
         } catch (Exception $e) {
             throw $e;
@@ -892,6 +918,10 @@ class SukoonMedexService
     public function listGeneratedDocument()
     {
         try {
+            if (empty($this->certificateNumber)) {
+                throw new Exception('Step: #14 listGeneratedDocument - Required certificate_number');
+            }
+
             $result = $this->request('/policy/'.$this->certificateNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
 
             return $result->json();
