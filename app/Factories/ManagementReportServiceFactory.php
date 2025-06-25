@@ -7,6 +7,8 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportGroupByEnum;
 use App\Exports\Reports\ActivePoliciesReportExport;
 use App\Exports\Reports\EndingPoliciesReportExport;
+use App\Exports\Reports\EndorsementReportExport;
+use App\Exports\Reports\InstallmentReportExport;
 use App\Exports\Reports\SaleDetailReportExport;
 use App\Exports\Reports\SaleSummaryReportExport;
 use App\Exports\Reports\TransactionReportExport;
@@ -110,6 +112,8 @@ class ManagementReportServiceFactory
             ManagementReportCategoriesEnum::ENDING_POLICIES => EndingPoliciesReportExport::class,
             ManagementReportCategoriesEnum::TRANSACTION => TransactionReportExport::class,
             ManagementReportCategoriesEnum::ACTIVE_POLICIES => ActivePoliciesReportExport::class,
+            ManagementReportCategoriesEnum::ENDORSEMENT => EndorsementReportExport::class,
+            ManagementReportCategoriesEnum::INSTALLMENT => InstallmentReportExport::class,
             // Add other report categories and their corresponding export classes here
         ];
 

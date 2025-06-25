@@ -117,6 +117,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             'App\\Exports\\Reports\\EndingPoliciesReportExport',
             'App\\Exports\\Reports\\TransactionReportExport',
             'App\\Exports\\Reports\\ActivePoliciesReportExport',
+            'App\\Exports\\Reports\\EndorsementReportExport',
+            'App\\Exports\\Reports\\InstallmentReportExport',
         ];
 
         if (in_array($this->exportClass,$exportWithRequestParams) ) {

@@ -21,7 +21,7 @@ class EndorsementReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDORSEMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
@@ -264,11 +264,22 @@ class EndorsementReportService extends ManagementReport
         $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
 
+
+        logger()->debug('toRawSql: '.$query->toRawSql());
+
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
-
-            return (new EndorsementReportExport($data))->download("Endorsement Report {$this->reportDateRange}.xlsx");
+            return $data;
+            //return (new EndorsementReportExport($data))->download("Endorsement Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -280,7 +291,7 @@ class EndorsementReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
 
@@ -294,7 +305,7 @@ class EndorsementReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->commmission_percentage = is_numeric($item->commmission_percentage) ? number_format($item->commmission_percentage, 2) : 0;
             $item->status = ucwords(str_replace('_', ' ', strtolower($item->status)));
         });
     }

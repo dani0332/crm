@@ -20,7 +20,7 @@ class InstallmentReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::INSTALLMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
@@ -100,11 +100,20 @@ class InstallmentReportService extends ManagementReport
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
 
+        logger()->debug('toRawSql: '.$query->toRawSql());
+
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+        $query = $this->getReportQueryBuilder($request);
+
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
-
-            return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
+            return $data;
+            //return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -116,7 +125,7 @@ class InstallmentReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
