@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Builders\QueryBuildable;
 use App\Enums\QuoteStatusEnum;
+use Carbon\Carbon;
 
 trait Filterable
 {
@@ -78,6 +79,41 @@ trait Filterable
                     ->from('users')
                     ->whereIn('users.sub_team_id', $this->resolveIds($id));
             });
+        });
+    }
+
+    public function scopeResolveData($query, bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
+    {
+        return $query
+            ->when(
+                $getTotalCount,
+                fn ($q) => $q->count(),
+                fn ($query) => $query->when(
+                    $forExport,
+                    fn ($q) => $q->get(),
+                    fn ($q) => $q->when($paginted, fn ($sq) => $sq->simplePaginate(10)->withQueryString())
+                )
+            );
+    }
+
+    public function scopeFilterByCreatedAt($query, $start, $end, $alias = null)
+    {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $defaultStartDate = now()->startOfDay();
+        $defaultEndDate = now()->endOfDay();
+
+        $start = $start ? Carbon::parse($start)->startOfDay() : $defaultStartDate;
+        $end = $end ? Carbon::parse($end)->endOfDay() : $defaultEndDate;
+
+        $start = $start->format($dateFormat);
+        $end = $end->format($dateFormat);
+
+        $query->when($start, function ($sq) use ($start, $alias) {
+            $sq->where("{$this->getAlias($alias)}.created_at", '>=', $start);
+        });
+
+        $query->when($end, function ($sq) use ($end, $alias) {
+            $sq->where("{$this->getAlias($alias)}.created_at", '<=', $end);
         });
     }
 

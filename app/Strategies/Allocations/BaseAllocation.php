@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -53,8 +54,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
+                    $this->sendNonAdvisorEmail();
 
                     LoggerService::info(self::class.' - execute: No advisor found');
+                    if ($this->quoteType->model->isSavings()) {
+                        app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($this->lead, $this->quoteType);
+                    }
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
@@ -249,5 +254,29 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         }
 
         $this->excludedAdvisorIds = $excludedAdvisorIds;
+    }
+
+    private function sendNonAdvisorEmail()
+    {
+        $lobsToSend = [QuoteTypes::SAVINGS];
+
+        if (! in_array($this->quoteType, $lobsToSend)) {
+            return;
+        }
+
+        if ($this->lead->isNonAdvisorEmailSent()) {
+            LoggerService::info(self::class.' - Non Advisor Email already sent to customer');
+
+            return;
+        }
+
+        app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+            $this->lead,
+            $this->quoteType->value,
+            isNonAdvisorEmail: true,
+        );
+
+        $this->lead->touch('non_advisor_email_sent_at');
+        LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 }
