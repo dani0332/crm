@@ -26,7 +26,7 @@ class EmailStatusService extends BaseService
     {
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailData->quoteTypeId;
-        $newEmailStatus->quote_id = $emailData->quoteId ?? $emailData->testingQuoteId; // temporary added $emailData->testingQuoteId
+        $newEmailStatus->quote_id = $emailData->quoteId;
         $newEmailStatus->email_address = $emailData->customerEmail;
         $newEmailStatus->msg_id = $messageId;
         $newEmailStatus->template_id = $emailData->templateId ?? $emailData->emailTemplateId;

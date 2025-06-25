@@ -174,7 +174,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->quoteTypeId = $quoteTypeId;
             $emailData->quoteId = $quote->id;
-            $emailData->testingQuoteId = $quote->id; // temporary
             $emailData->policyWordingHandbook = $policyWordingDoc;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
