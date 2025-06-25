@@ -422,8 +422,8 @@ class SavingsQuoteService extends BaseQuoteService
     /**
      * Get detailed information about a specific savings plan
      *
-     * @param string $quoteId The quote UUID
-     * @param string $planId The plan ID to retrieve details for
+     * @param  string  $quoteId  The quote UUID
+     * @param  string  $planId  The plan ID to retrieve details for
      * @return array|string The plan details or error message
      */
     public function getPlanDetails($quoteId, $planId)
@@ -435,7 +435,7 @@ class SavingsQuoteService extends BaseQuoteService
             return [
                 'error' => true,
                 'message' => $quotePlans,
-                'status' => 404
+                'status' => 404,
             ];
         }
 
@@ -443,7 +443,7 @@ class SavingsQuoteService extends BaseQuoteService
             return [
                 'error' => true,
                 'message' => 'No plans available',
-                'status' => 404
+                'status' => 404,
             ];
         }
 
@@ -487,7 +487,7 @@ class SavingsQuoteService extends BaseQuoteService
             return [
                 'error' => true,
                 'message' => 'Plan not found',
-                'status' => 404
+                'status' => 404,
             ];
         }
 
@@ -527,15 +527,15 @@ class SavingsQuoteService extends BaseQuoteService
                 'isDisabled' => $foundPlan->isDisabled ?? false,
                 'isManualUpdate' => $foundPlan->isManualUpdate ?? false,
             ],
-            'status' => 200
+            'status' => 200,
         ];
     }
 
     /**
      * Helper function to extract value from eligibility array
      *
-     * @param array $eligibility The eligibility array
-     * @param string $code The code to search for
+     * @param  array  $eligibility  The eligibility array
+     * @param  string  $code  The code to search for
      * @return string The value or 'N/A' if not found
      */
     private function getEligibilityValue($eligibility, $code)
