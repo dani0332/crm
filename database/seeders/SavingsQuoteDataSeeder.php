@@ -82,7 +82,6 @@ class SavingsQuoteDataSeeder extends Seeder
         if (! Team::where('name', 'Savings')->where('type', TeamTypeEnum::PRODUCT)->exists()) {
             Team::create([
                 'name' => 'Savings',
-                'code' => 'Savings',
                 'type' => TeamTypeEnum::PRODUCT,
                 'is_active' => 1,
             ]);
@@ -91,7 +90,6 @@ class SavingsQuoteDataSeeder extends Seeder
         if (! Team::where('name', 'Savings - Team')->where('type', TeamTypeEnum::TEAM)->exists()) {
             Team::create([
                 'name' => 'Savings - Team',
-                'code' => 'Savings - Team',
                 'parent_team_id' => Team::where('name', 'Savings')->value('id'),
                 'type' => TeamTypeEnum::TEAM,
                 'is_active' => 1,
