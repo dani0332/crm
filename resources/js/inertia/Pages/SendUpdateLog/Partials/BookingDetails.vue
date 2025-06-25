@@ -1054,7 +1054,9 @@ const isPriceVatNotApplicableEditable = computed(() => {
 const isPriceVatApplicableEditable = computed(() => {
   return (
     (isCIOrCIR.value || isEF.value || isCPD.value) &&
-    ![quoteTypeCodeEnum.Life, quoteTypeCodeEnum.SAVINGS].includes(props.quoteType)
+    ![quoteTypeCodeEnum.Life, quoteTypeCodeEnum.SAVINGS].includes(
+      props.quoteType,
+    )
   );
 });
 
