@@ -1689,18 +1689,23 @@ const addPaymentModal = () => {
   createPaymentModal.value = true;
 
   // Special handling for life quotes - map payment term to frequency
-  if (props.quoteType === quoteTypeCodeEnum.Life && props.quoteRequest?.life_quote?.payment_term) {
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.quoteRequest?.life_quote?.payment_term
+  ) {
     const paymentTermToFrequency = {
       12: paymentFrequencyEnum.MONTHLY,
       4: paymentFrequencyEnum.QUARTERLY,
       2: paymentFrequencyEnum.SEMI_ANNUAL,
-      1: paymentFrequencyEnum.UPFRONT
+      1: paymentFrequencyEnum.UPFRONT,
     };
-    paymentMethodsForm.frequency = paymentTermToFrequency[props.quoteRequest.life_quote.payment_term] || paymentFrequencyEnum.UPFRONT;
+    paymentMethodsForm.frequency =
+      paymentTermToFrequency[props.quoteRequest.life_quote.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
   } else {
     paymentMethodsForm.frequency = paymentFrequencyEnum.UPFRONT;
   }
-  
+
   paymentMethodsForm.discount = '';
   paymentMethodsForm.credit_approval = '';
   totalPayments.value = [];
@@ -1708,12 +1713,12 @@ const addPaymentModal = () => {
   paymentMethodsForm.payment_no = '1';
   handleCollectionTypeChange();
   calculatePaymentBreakup();
-  
+
   // Trigger frequency change for life quotes to update payment schedule
   if (props.quoteType === quoteTypeCodeEnum.Life) {
     handleFrequencyChange();
   }
-  
+
   applyPermissions();
 };
 
@@ -1803,12 +1808,12 @@ const editPaymentModal = async (
   initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
   handleCollectionTypeChange();
   handleFrequencyChange(false);
-  
+
   // Additional frequency change trigger for life quotes to ensure payment schedule updates
   if (props.quoteType === quoteTypeCodeEnum.Life) {
     handleFrequencyChange(false);
   }
-  
+
   handleApprovalReasonChange(false);
   handleDiscountChange();
   handleDeclinedReasonChange();
@@ -1924,17 +1929,22 @@ const initializePaymentForm = (
   paymentMethodsForm.collection_type = payment.collection_type;
   paymentMethodsForm.payment_no = payment.total_payments;
   oldTotalPayments.value = payment.total_payments;
-  
+
   // Special handling for life quotes - map payment term to frequency during edit
-  if (props.quoteType === quoteTypeCodeEnum.Life && props.quoteRequest?.life_quote?.payment_term) {
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.quoteRequest?.life_quote?.payment_term
+  ) {
     // Map numeric payment term to frequency enum
     const paymentTermToFrequency = {
       12: paymentFrequencyEnum.MONTHLY,
       4: paymentFrequencyEnum.QUARTERLY,
       2: paymentFrequencyEnum.SEMI_ANNUAL,
-      1: paymentFrequencyEnum.UPFRONT
+      1: paymentFrequencyEnum.UPFRONT,
     };
-    paymentMethodsForm.frequency = paymentTermToFrequency[props.quoteRequest.life_quote.payment_term] || paymentFrequencyEnum.UPFRONT;
+    paymentMethodsForm.frequency =
+      paymentTermToFrequency[props.quoteRequest.life_quote.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
   } else {
     paymentMethodsForm.frequency = payment.frequency;
   }
@@ -3522,8 +3532,6 @@ const closeVoidPaymentModal = () => {
 const isLifeQuoteFrequencyReadonly = computed(() => {
   return props.quoteType === quoteTypeCodeEnum.Life;
 });
-
-
 </script>
 
 <template>
@@ -3759,7 +3767,11 @@ const isLifeQuoteFrequencyReadonly = computed(() => {
               <div>
                 <ToolTip
                   title="FREQUENCY"
-                  :tooltip="isLifeQuoteFrequencyReadonly ? 'To make changes, please update the payment term in the Available Plan section.' : paymentTooltipEnum.FREQUENCY"
+                  :tooltip="
+                    isLifeQuoteFrequencyReadonly
+                      ? 'To make changes, please update the payment term in the Available Plan section.'
+                      : paymentTooltipEnum.FREQUENCY
+                  "
                   :required="!isFieldReadonly"
                 />
                 <x-field class="w-full">
@@ -3792,7 +3804,11 @@ const isLifeQuoteFrequencyReadonly = computed(() => {
                   <input
                     v-if="!isFieldReadonly && isLifeQuoteFrequencyReadonly"
                     class="custom-select cursor-not-allowed bg-gray-100"
-                    :value="frequencyTypes.find(item => item.value === paymentMethodsForm.frequency)?.label || paymentMethodsForm.frequency"
+                    :value="
+                      frequencyTypes.find(
+                        item => item.value === paymentMethodsForm.frequency,
+                      )?.label || paymentMethodsForm.frequency
+                    "
                     readonly
                     :title="'To make changes, please update the payment term in the Available Plan section.'"
                   />

@@ -2077,7 +2077,10 @@ const totalAnnualPrice = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Payment Term</dt>
                 <dd>
-                  {{ getPaymentTermTitle(quote?.life_quote?.payment_term) ?? 'N/A' }}
+                  {{
+                    getPaymentTermTitle(quote?.life_quote?.payment_term) ??
+                    'N/A'
+                  }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
