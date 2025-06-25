@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeShortCode;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
-use App\Models\QuoteType;
 use App\Services\AllocationConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
