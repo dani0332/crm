@@ -315,6 +315,7 @@ class CentralController extends Controller
             LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return back()->with('error', $e->getMessage());
         }
     }
