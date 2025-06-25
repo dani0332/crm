@@ -160,7 +160,7 @@ trait PersonalQuoteObservable
         $isEligibleForEmail = $personalQuote->source != LeadSourceEnum::IMCRM;
 
         // for Savings, we need to send email to customer even if the source is IMCRM
-        if($personalQuote->isSavings()) {
+        if ($personalQuote->isSavings()) {
             $isEligibleForEmail = true;
         }
 
