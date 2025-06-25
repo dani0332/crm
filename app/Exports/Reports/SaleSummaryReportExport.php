@@ -18,7 +18,11 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
     public function __construct(
         private SaleSummaryReportService $saleSummaryReportService,
-    ) {
+        private array                    $requestParams
+    )
+    {
+        request()->merge($this->requestParams);
+
         if (request()->filled('groupBy')) {
             $this->groupByColumn = request()->groupBy;
             // Initialize totals for numeric columns
@@ -94,7 +98,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $cols = $this->map($processedData[0] ?? (object) []);
 
-        // Write totals rows to file which were caculated during map()
+        // Write totals rows to file which were calculated during map()
         $this->postDataRows($stream);
 
         return $totalRecords;

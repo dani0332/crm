@@ -17,7 +17,10 @@ class SaleDetailReportExport implements CsvExportableInterface
 
     public function __construct(
         private SaleDetailReportService $saleDetailReportService,
-    ) {
+        private array                    $requestParams
+    )
+    {
+        request()->merge($this->requestParams);
         //        if(request()->filled('groupBy')){
         //            $this->groupByColumn = request()->groupBy;
         //            // Initialize totals for numeric columns
@@ -154,7 +157,8 @@ class SaleDetailReportExport implements CsvExportableInterface
             //                'total_policies' => $numericValues->get('total_policies'),
             //                ], true));
 
-            if (is_numeric($row->get($index))) {
+            $sumColumns = [10, 11, 12, 13, 14, 15, 16, 17, 24];
+            if (is_numeric($row->get($index)) && in_array($index, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
@@ -162,10 +166,10 @@ class SaleDetailReportExport implements CsvExportableInterface
         return $row->values()->toArray();
     }
 
-    public static function afterSheet(AfterSheet $event)
-    {
-        self::performSum($event, ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'X']);
-    }
+//    public static function afterSheet(AfterSheet $event)
+//    {
+//        self::performSum($event, ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'X']);
+//    }
 
     public function processChunkedQuery($query, array $requestParams, $stream): int
     {
@@ -173,8 +177,6 @@ class SaleDetailReportExport implements CsvExportableInterface
         $chunkSize = 1000;
 
         info(__CLASS__.' processChunkedQuery Start');
-
-        $requestParams = request()->merge($requestParams);
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
             $this->saleDetailReportService->formatData($chunk);

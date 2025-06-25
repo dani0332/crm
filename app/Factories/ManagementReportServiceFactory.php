@@ -5,9 +5,11 @@ namespace App\Factories;
 use App\Enums\GenericRequestEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportGroupByEnum;
+use App\Exports\Reports\ActivePoliciesReportExport;
 use App\Exports\Reports\EndingPoliciesReportExport;
 use App\Exports\Reports\SaleDetailReportExport;
 use App\Exports\Reports\SaleSummaryReportExport;
+use App\Exports\Reports\TransactionReportExport;
 use App\Models\LeadSource;
 use App\Models\Team;
 use App\Services\ApplicationStorageService;
@@ -97,17 +99,25 @@ class ManagementReportServiceFactory
      * Create an export instance based on the report category.
      *
      * @param  string  $reportCategory
+     * @param  array  $requestParams
      * @return mixed|null
      */
-    public static function createExport($reportCategory)
+    public static function createExport($reportCategory, $requestParams = [])
     {
         $exportMap = [
             ManagementReportCategoriesEnum::SALE_SUMMARY => SaleSummaryReportExport::class,
             ManagementReportCategoriesEnum::SALE_DETAIL => SaleDetailReportExport::class,
             ManagementReportCategoriesEnum::ENDING_POLICIES => EndingPoliciesReportExport::class,
+            ManagementReportCategoriesEnum::TRANSACTION => TransactionReportExport::class,
+            ManagementReportCategoriesEnum::ACTIVE_POLICIES => ActivePoliciesReportExport::class,
             // Add other report categories and their corresponding export classes here
         ];
 
-        return isset($exportMap[$reportCategory]) ? app($exportMap[$reportCategory]) : null;
+        if (isset($exportMap[$reportCategory])) {
+            $service = self::createStrategy($reportCategory);
+            return app()->make($exportMap[$reportCategory], ['saleSummaryReportService' => $service, 'requestParams' => $requestParams]);
+        }
+
+        return null;
     }
 }

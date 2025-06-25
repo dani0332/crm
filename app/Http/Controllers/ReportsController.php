@@ -586,7 +586,7 @@ class ReportsController extends Controller
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
 
         // Use the factory to create the appropriate export class
-        $exportClass = ManagementReportServiceFactory::createExport($reportCategory);
+        $exportClass = ManagementReportServiceFactory::createExport($reportCategory, $request->all());
 
         if ($exportClass) {
             // Check if export type is email
