@@ -1091,7 +1091,7 @@ class SageApiEmbeddedProductService
                         [
                             'BatchType' => 'CA',
                             'CustomerNumber' => $sageRequest->customerId,
-                            'DocumentNumber' => $$sageRequestEmbeddedProduct->epSageReceiptId,
+                            'DocumentNumber' => $sageRequestEmbeddedProduct->epSageReceiptId,
                             'PaymentNumber' => 1,
                             'ReceiptTransactionType' => 'Receipt',
                             'CustomerReceiptAmount' => roundNumber($sageRequestEmbeddedProduct->paymentAmount),
