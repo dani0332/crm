@@ -444,7 +444,7 @@ class SageApiEmbeddedProductService
     public function applyPaymentInvoices($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        [$quote, $sukoonMedXEPTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray, $userId] = $sageRequestDataArray;
+        [$quote, $sukoonMedXEPTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
         LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code .'  Start applypaymentInvoices for : '.$quote->code.' ');
         $totalSteps = 12;
         $currentStep = 10;
@@ -578,7 +578,7 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $commissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $insurerTaxInvoiceNumber;
-        $sageRequestEmbeddedProduct->createdOn = $viewQuotePolicyApiResponse->created_on;
+        $sageRequestEmbeddedProduct->createdOn = Carbon::createFromFormat('d/m/Y', $viewQuotePolicyApiResponse->created_on)->format(env('DATE_FORMAT_ONLY'));
         $sageRequestEmbeddedProduct->taxAmount = $viewQuotePolicyApiResponse->pricing->tax_amount;
         $sageRequestEmbeddedProduct->policyPrice = $viewQuotePolicyApiResponse->pricing->policy_price;
         $sageRequestEmbeddedProduct->totalPrice = $viewQuotePolicyApiResponse->pricing->total_price;
@@ -586,8 +586,8 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->brokerCommissionAmount = $viewQuotePolicyApiResponse->additional_data->broker_commission_amount;
         $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $viewQuotePolicyApiResponse->additional_data->broker_commission_vat_amount;
         $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $viewQuotePolicyApiResponse->additional_data->broker_commission_total_amount;
-        $sageRequestEmbeddedProduct->startDate = $viewQuotePolicyApiResponse->start_date;
-        $sageRequestEmbeddedProduct->endDate = $viewQuotePolicyApiResponse->end_date;
+        $sageRequestEmbeddedProduct->startDate = Carbon::createFromFormat('d/m/Y', $viewQuotePolicyApiResponse->start_date)->format(env('DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->endDate = Carbon::createFromFormat('d/m/Y', $viewQuotePolicyApiResponse->end_date)->format(env('DATE_FORMAT_ONLY'));
 
         return $sageRequestEmbeddedProduct;
 
@@ -595,7 +595,7 @@ class SageApiEmbeddedProductService
 
     private static function createARPaymentReceiptsPayload($sageRequest, $sageRequestEmbeddedProduct)
     {
-        $optionalFields = self::createPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct);
+        $optionalFields = self::createEPARPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct);
 
         $entryType = SageEnum::SCT_STRAIGHT;
         $customerNumber = $sageRequestEmbeddedProduct->sageCustomerNumber;
@@ -636,7 +636,7 @@ class SageApiEmbeddedProductService
         ];
     }
 
-    private static function createPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct)
+    private static function createEPARPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct)
     {
         $optionalArray = [
             [
@@ -753,7 +753,7 @@ class SageApiEmbeddedProductService
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $commissionDescription = 'C.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $createdOn = $sageRequestEmbeddedProduct->createdOn;
-        $createdOnDate = Carbon::createFromFormat('d/m/Y', $createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+        $createdOnDate = Carbon::parse( $createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
         $optionalFields = self::createOptionalFields($request, $sageRequestEmbeddedProduct);
 
         $payLoad = [
@@ -850,7 +850,7 @@ class SageApiEmbeddedProductService
 
     public static function postARPremAndCommInvoicePayload($batchNumber)
     {
-        $sageRequestType = null;
+        $sageRequestType = SageEnum::EP_SRT_POST_AR_PREM_COMM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'PostAllBatches' => 'Donotpostallbatches',
@@ -884,11 +884,11 @@ class SageApiEmbeddedProductService
             ],
             [
                 'OptionalField' => 'EXPIRY',
-                'Value' => Carbon::createFromFormat('d/m/Y', $sageRequestEmbeddedProduct->endDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                'Value' => Carbon::parse($sageRequestEmbeddedProduct->endDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
             ],
             [
                 'OptionalField' => 'INCEPTION',
-                'Value' => Carbon::createFromFormat('d/m/Y', $sageRequestEmbeddedProduct->startDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                'Value' => Carbon::parse( $sageRequestEmbeddedProduct->startDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
             ],
             [
                 'OptionalField' => 'INSURED',
@@ -948,7 +948,7 @@ class SageApiEmbeddedProductService
             ],
             [
                 'OptionalField' => 'COMMRATE',
-                'Value' => 'N/A',
+                'Value' => '',
             ],
             [
                 'OptionalField' => 'STATE',
@@ -977,7 +977,7 @@ class SageApiEmbeddedProductService
         ];
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $createdOn = $sageRequestEmbeddedProduct->createdOn;
-        $createdOnDate = Carbon::createFromFormat('d/m/Y', $createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+        $createdOnDate = Carbon::parse( $createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
 
         $payLoad = [
             'Invoices' => [
