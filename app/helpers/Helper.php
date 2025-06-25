@@ -20,6 +20,7 @@ use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\EmbeddedTransaction;
+use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
@@ -1435,6 +1436,12 @@ if (! function_exists('getCourierQuote')) {
 
                 if ($quoteAdditionalDetail) {
                     $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+                }
+
+                if ($quoteTypeId == QuoteTypeId::Travel) {
+                    $emirate = Emirate::where('text', $quote->courier_address_city)->first();
+                    $quote->emirate_text = $emirate?->text ?? null;
+                    $quote->emirate_code = $emirate?->code ?? null;
                 }
 
                 return [
