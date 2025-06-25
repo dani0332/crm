@@ -7,6 +7,7 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -638,6 +639,13 @@ class SageApiService
             LoggerService::info('Policy Book : postBookPolicyToSage : '.$checkRequiredSageIds['message']);
 
             return $checkRequiredSageIds;
+        }
+        /* Check Sage Vendor ID, GL Account ID, Insurer Customer ID, and Sage Customer ID */
+        $isEPTransStatusReadyForSage = $this->isEmbeddedTransactionStatusReadyForSage($quote);
+        if (! $isEPTransStatusReadyForSage) {
+            LoggerService::info('Policy Book : postBookPolicyToSage : Please check the embedded transaction status for quote code : ' . $quote->code . ' as its not ready for sage yet!');
+
+            return ['status' => false, 'message' => 'Please check the embedded transaction status for quote code : ' . $quote->code . ' as its not ready for sage yet!'];
         }
 
         $this->createSageProcess($quote, $sageRequest, $request);
@@ -2567,6 +2575,13 @@ class SageApiService
             ->where('is_selected', 1)
             ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
             ->first();
+    }
+
+    public function isEmbeddedTransactionStatusReadyForSage($quote)
+    {
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
+
+        return $sukoonMedXTransaction->sage_status_id == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
     }
 
 }
