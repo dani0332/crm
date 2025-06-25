@@ -281,7 +281,7 @@ const paymentTerms = [
 
 const filteredPaymentTerms = computed(() => {
   return createForm.providerId === 180
-    ? paymentTerms.filter(term => ![3, 6].includes(term.value))
+    ? paymentTerms.filter(term => ![4, 2].includes(term.value))
     : paymentTerms;
 });
 
