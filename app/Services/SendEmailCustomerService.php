@@ -928,7 +928,7 @@ class SendEmailCustomerService extends BaseService
                         ];
                     } else {
                         $bodyData['replyTo'] = [
-                            'email' => $emailData->advisorEmaill,
+                            'email' => $emailData->advisorEmail,
                             'name' => $emailData->advisorName,
                         ];
                         $bodyData['cc'][] = [
