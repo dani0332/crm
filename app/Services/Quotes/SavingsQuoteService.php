@@ -418,4 +418,134 @@ class SavingsQuoteService extends BaseQuoteService
 
         return true;
     }
+
+    /**
+     * Get detailed information about a specific savings plan
+     *
+     * @param string $quoteId The quote UUID
+     * @param string $planId The plan ID to retrieve details for
+     * @return array|string The plan details or error message
+     */
+    public function getPlanDetails($quoteId, $planId)
+    {
+        $quotePlans = $this->getQuotePlans($quoteId);
+
+        // Check if there was an error retrieving plans
+        if (gettype($quotePlans) == 'string') {
+            return [
+                'error' => true,
+                'message' => $quotePlans,
+                'status' => 404
+            ];
+        }
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return [
+                'error' => true,
+                'message' => 'No plans available',
+                'status' => 404
+            ];
+        }
+
+        $plans = [];
+        $planSource = null; // Track whether plan came from regular or lumpsum
+
+        // Handle both regular and lumpsum plans
+        if (isset($quotePlans->quotes->plans->regular)) {
+            foreach ($quotePlans->quotes->plans->regular as $plan) {
+                if ($plan->id == $planId) {
+                    $plans[] = $plan;
+                    $planSource = 'regular';
+                    break;
+                }
+            }
+        }
+
+        if (empty($plans) && isset($quotePlans->quotes->plans->lumpsum)) {
+            foreach ($quotePlans->quotes->plans->lumpsum as $plan) {
+                if ($plan->id == $planId) {
+                    $plans[] = $plan;
+                    $planSource = 'lumpsum';
+                    break;
+                }
+            }
+        }
+
+        // If plans are in a different structure
+        if (empty($plans) && is_array($quotePlans->quotes->plans)) {
+            foreach ($quotePlans->quotes->plans as $plan) {
+                if ($plan->id == $planId) {
+                    $plans[] = $plan;
+                    // Default to regular if we can't determine from structure
+                    $planSource = 'regular';
+                    break;
+                }
+            }
+        }
+
+        if (empty($plans)) {
+            return [
+                'error' => true,
+                'message' => 'Plan not found',
+                'status' => 404
+            ];
+        }
+
+        $foundPlan = $plans[0];
+
+        // Determine investment frequency based on the plan source
+        $investmentFrequency = match ($planSource) {
+            'regular' => \App\Enums\InvestmentFrequencyEnum::REGULAR->value,
+            'lumpsum' => \App\Enums\InvestmentFrequencyEnum::LUMPSUM->value,
+            default => \App\Enums\InvestmentFrequencyEnum::REGULAR->value
+        };
+
+        // Extract eligibility values
+        $eligibility = $foundPlan->eligibilities ?? [];
+        $minimumInvestment = $this->getEligibilityValue($eligibility, 'minimumInvestmentAmount');
+        $policyTerm = $this->getEligibilityValue($eligibility, 'policyTerm');
+
+        return [
+            'error' => false,
+            'data' => [
+                'id' => $foundPlan->id,
+                'name' => $foundPlan->name ?? '',
+                'providerCode' => $foundPlan->providerCode ?? '',
+                'providerName' => $foundPlan->providerName ?? '',
+                'planTypeId' => $foundPlan->planTypeId ?? null,
+                'investmentFrequency' => ucfirst($investmentFrequency),
+                'currency' => 'USD',
+                'minimumInvestment' => $minimumInvestment,
+                'policyTerm' => $policyTerm,
+                'eligibilities' => $foundPlan->eligibilities ?? [],
+                'includedBenefits' => $foundPlan->includedBenefits ?? [],
+                'keyFeatureDocument' => $foundPlan->keyFeatureDocument ?? [],
+                'description' => $foundPlan->description ?? '',
+                'policyWordings' => $foundPlan->policyWordings ?? [],
+                'actualPremium' => $foundPlan->actualPremium ?? 0,
+                'insurerQuoteNo' => $foundPlan->insurerQuoteNo ?? '',
+                'isDisabled' => $foundPlan->isDisabled ?? false,
+                'isManualUpdate' => $foundPlan->isManualUpdate ?? false,
+            ],
+            'status' => 200
+        ];
+    }
+
+    /**
+     * Helper function to extract value from eligibility array
+     *
+     * @param array $eligibility The eligibility array
+     * @param string $code The code to search for
+     * @return string The value or 'N/A' if not found
+     */
+    private function getEligibilityValue($eligibility, $code)
+    {
+        if (! is_array($eligibility)) {
+            return 'N/A';
+        }
+
+        $found = collect($eligibility)->firstWhere('code', $code);
+
+        return $found ? $found->value : 'N/A';
+    }
 }
