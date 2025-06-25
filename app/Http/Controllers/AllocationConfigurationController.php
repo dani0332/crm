@@ -22,15 +22,10 @@ class AllocationConfigurationController extends Controller
         $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB);
     }
 
-    private function getQuoteTypes()
-    {
-        return QuoteType::where('is_active', 1)->whereIn('short_code', [QuoteTypeShortCode::SAV])->get();
-    }
-
     public function index(Request $request): Response
     {
         return inertia('Admin/AllocationConfig/AllocationConfiguration/Form', [
-            'quoteTypes' => $this->getQuoteTypes(),
+            'quoteTypes' => $this->allocationConfigurationService->getQuoteTypes(),
             'nationalities' => $this->allocationConfigurationService->getNationalities(),
         ]);
     }

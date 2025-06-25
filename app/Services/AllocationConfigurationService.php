@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypes;
-use App\Models\Allocation\AllocationConfiguration;
+use App\Models\QuoteType;
 use App\Models\Nationality;
+use App\Enums\QuoteTypeShortCode;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Enums\InvestmentFrequencyEnum;
+use App\Models\Allocation\AllocationConfiguration;
 
 class AllocationConfigurationService
 {
@@ -57,7 +59,12 @@ class AllocationConfigurationService
 
     public function getNationalities(): Collection
     {
-        return Nationality::where('is_active', 1)->get();
+        return Nationality::withActive()->get();
+    }
+
+    public function getQuoteTypes()
+    {
+        return QuoteType::withActive()->whereIn('short_code', [QuoteTypeShortCode::SAV])->get();
     }
 
     public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array
