@@ -58,7 +58,7 @@ defineProps({
   currencies: Array,
   lifeRiders: Array,
   paymentGatewayEnum: Array,
-  isFuncsEnabled: Array
+  isFuncsEnabled: Array,
 });
 
 const { isRequired, emiratesNumber } = useRules();
