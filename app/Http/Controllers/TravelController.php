@@ -41,8 +41,11 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\CustomerAddressService;
+use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\MACRMService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Services\QuoteDocumentService;
@@ -271,6 +274,8 @@ class TravelController extends Controller
             $record->days_cover_for = (new AllianceInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
         }
 
+        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'isAmlClearedForQuote' => $isAmlClearedForQuote,
@@ -352,6 +357,7 @@ class TravelController extends Controller
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'isAllianceProvider' => $insuranceProvider?->code === InsuranceProvidersEnum::ALNC,
+            'customerAddressData' => $customerAddressData,
         ]);
     }
 
@@ -410,6 +416,7 @@ class TravelController extends Controller
      */
     public function store(StoreTravelRequest $request)
     {
+        app(CustomerAddressService::class)->validateAddress($request);
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $record = $this->travelQuoteService->saveTravelQuote($request);
 
@@ -466,6 +473,12 @@ class TravelController extends Controller
         $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
         $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
 
+        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
+        $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Travel);
+        $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
+            ? $courierQuoteResponse['data']['status']
+            : 'Pending';
+
         return inertia('TravelQuote/Form', [
             'quote' => $record,
             'quotePlans' => $quotePlans,
@@ -476,6 +489,8 @@ class TravelController extends Controller
             'travelDestinations' => $travelDestinations,
             'model' => json_encode($this->genericModel->properties),
             'fields' => $fields,
+            'customerAddressData' => $customerAddressData,
+            'courierQuoteStatus' => $courierQuoteStatus,
         ]);
     }
 
@@ -488,6 +503,7 @@ class TravelController extends Controller
      */
     public function update(UpdateTravelRequest $request, $id)
     {
+        app(CustomerAddressService::class)->validateAddress($request);
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $this->travelQuoteService->updateTravelQuote($request, $id);
 
