@@ -74,6 +74,18 @@ const quoteForm = useForm({
   members: [{ value: 'male', label: 'Male', primary: true }], // not used in update mode
   edit_mode: editMode.value,
   departure_country_id: null,
+  addressObj: {
+    address_type: page.props.customerAddressData?.type || null,
+    villa_apartment_office_no:
+      page.props.customerAddressData?.office_number || null,
+    floor_no: page.props.customerAddressData?.floor_number || null,
+    villa_building_name: page.props.customerAddressData?.building_name || null,
+    street_name: page.props.customerAddressData?.street || null,
+    area: page.props.customerAddressData?.area || null,
+    city: page.props.customerAddressData?.city || null,
+    landmark: page.props.customerAddressData?.landmark || null,
+  },
+  courierQuoteStatus: page.props.courierQuoteStatus || 'Pending',
 });
 
 const rules = {
@@ -379,6 +391,58 @@ watch(
     }
   },
 );
+
+const addressTypes = [
+  { value: '', label: 'No Address' }, // option for leaving it blank
+  { value: 'Home', label: 'Home' },
+  { value: 'Office', label: 'Office' },
+];
+
+const isCourierStatusPending = computed(() => {
+  return quoteForm.courierQuoteStatus !== 'Pending';
+});
+
+const villaApartmentOfficeLabel = computed(() => {
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Villa / Apartment Number';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Office Name';
+  } else {
+    label = 'Villa / Apartment / Office No.';
+  }
+
+  return label;
+});
+
+const villaBuildingLabel = computed(() => {
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Community / Building Name';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Building Name';
+  } else {
+    label = 'Villa / Building Name';
+  }
+
+  return label;
+});
+
+const floorLabel = computed(() => {
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Floor / Block';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Floor';
+  } else {
+    label = 'Floor No.';
+  }
+
+  return label;
+});
 </script>
 
 <template>
@@ -603,6 +667,95 @@ watch(
           label="Mobile number"
           required
         />
+
+        <x-select
+          v-model="quoteForm.addressObj.address_type"
+          placeholder="Select address type"
+          :options="addressTypes"
+          :disabled="isCourierStatusPending"
+          filterable
+          filterPlaceholder="Filter Address Type...."
+          label="Address Type"
+        />
+        <x-field
+          label="ADDRESS"
+          required
+          v-if="
+            quoteForm.addressObj.address_type === 'Home' ||
+            quoteForm.addressObj.address_type === 'Office'
+          "
+        >
+          <div class="flex flex-wrap -mx-2">
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_apartment_office_no"
+                :placeholder="villaApartmentOfficeLabel"
+                :rules="[isRequired]"
+                class="w-full"
+                :disabled="isCourierStatusPending"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.floor_no"
+                :placeholder="floorLabel"
+                :rules="[isRequired]"
+                class="w-full"
+                :disabled="isCourierStatusPending"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_building_name"
+                :placeholder="villaBuildingLabel"
+                :rules="[isRequired]"
+                class="w-full"
+                :disabled="isCourierStatusPending"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.street_name"
+                placeholder="Street (Optional)"
+                class="w-full"
+                :disabled="isCourierStatusPending"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.area"
+                placeholder="Area"
+                :rules="[isRequired]"
+                class="w-full"
+                :disabled="isCourierStatusPending"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.city"
+                placeholder="City"
+                :rules="[isRequired]"
+                class="w-full"
+                :disabled="isCourierStatusPending"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.landmark"
+                placeholder="Landmark (Optional)"
+                class="w-full"
+                :disabled="isCourierStatusPending"
+              />
+            </div>
+          </div>
+        </x-field>
       </div>
 
       <template
