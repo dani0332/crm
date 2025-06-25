@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
-use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
@@ -240,7 +239,7 @@ class EmbeddedProductRepository extends BaseRepository
                     ->pluck('document_type_code')->toArray() ?? [];
 
                 $missingDocTypes = array_diff($sukoonReqDocTypeCodes, $savedDocTypes);
-                $item->sync_document_button = !empty($missingDocTypes) && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+                $item->sync_document_button = ! empty($missingDocTypes) && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -425,6 +424,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ->first();
             if (empty($transaction)) {
                 LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
+
                 return ['success' => false, 'message' => 'No transaction found'];
             }
 

@@ -69,8 +69,9 @@ class SukoonMedexService
     public function initiatePurchaseFlow(mixed $quote, int $quoteTypeId, mixed $transaction)
     {
         try {
-            if(empty($quote) || empty($quoteTypeId) || empty($transaction))
+            if (empty($quote) || empty($quoteTypeId) || empty($transaction)) {
                 throw new Exception('Invalid quote, quoteTypeId or transaction');
+            }
 
             $this->currentQuote = $quote;
             $this->quoteTypeId = $quoteTypeId;
@@ -496,26 +497,32 @@ class SukoonMedexService
         $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
-        if($customerType != CustomerTypeEnum::Individual)
+        if ($customerType != CustomerTypeEnum::Individual) {
             throw new Exception('Insured record should be individual customer-type');
+        }
 
-        if(empty($insuredKyc))
+        if (empty($insuredKyc)) {
             throw new Exception('KYC is not found');
+        }
 
         $idType = $insuredKyc?->id_type;
 
         $missingFields = [];
-        if($idType != 'emiratesId' || empty($insuredKyc?->id_number))
+        if ($idType != 'emiratesId' || empty($insuredKyc?->id_number)) {
             $missingFields[] = 'emirates-id-number';
+        }
 
-        if(empty($insuredKyc?->id_expiry_date))
+        if (empty($insuredKyc?->id_expiry_date)) {
             $missingFields[] = 'emirates-id-expiry-date';
-        
-        if(empty($insuredKyc?->residential_address))
-            $missingFields[] = 'residential-address';
+        }
 
-        if(!empty($missingFields))
+        if (empty($insuredKyc?->residential_address)) {
+            $missingFields[] = 'residential-address';
+        }
+
+        if (! empty($missingFields)) {
             throw new Exception('Missing: '.implode(', ', $missingFields));
+        }
 
         if (! $this->validateEmiratesIdAndExpiryDate(
             $insuredKyc?->id_number,
