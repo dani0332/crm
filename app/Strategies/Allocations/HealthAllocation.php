@@ -37,7 +37,6 @@ class HealthAllocation implements Allocation
                 VerifyAlreadyInProgressAllocationPipe::class,
                 ValidateNationalityConfigPipe::class,
                 AssignTeamPipe::class,
-                ApplyRuleExclusionPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,

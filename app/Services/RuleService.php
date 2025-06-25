@@ -221,25 +221,22 @@ class RuleService extends BaseService
             ->get();
     
     }
-    private function applyRuleExclusions($rules,  $quoteTypeId)
+
+    public function getUserIdsFromRuleRecords($matchedRuleRecords): array
     {
-        if ($rules->isEmpty()) {
-            $ruleUserIds = $this->getRuleUsers( $quoteTypeId);
+        // Get the lead source users from the first matched rule record.
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
+
+        // Check if the lead source users contain a comma (,) indicating multiple users.
+        if (str_contains($leadSourceUsers, ',')) {
+            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
+            $userIds = array_map('intval', explode(',', $leadSourceUsers));
+        } else {
+            // If there's only one user, cast it to an integer and store it in a single-element array.
+            $userIds = [(int) $leadSourceUsers];
         }
-        
-        return array_diff( $ruleUserIds);
-        
-    }
-    public function getRuleUsers($quoteTypeId = null): mixed
-    {
-      
-        // Select distinct user IDs associated with these rules and convert the result to an array.
-        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
-            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-            ->where('rules.quote_type_id', $quoteTypeId)
-            ->where('rules.is_active', 1)
-            ->distinct()
-            ->pluck('rule_users.user_id')
-            ->toArray();
+
+        // Return the array of user IDs.
+        return $userIds;
     }
 }

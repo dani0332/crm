@@ -56,7 +56,6 @@ class CPARulesSeeder extends Seeder
             'car_make_id' => null,
             'car_model_id' => null,
             'lead_source_id' => $leadSource->id,
-              
         ]);
         }
 
