@@ -122,6 +122,7 @@ class SaleDetailReportService extends ManagementReport
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
+
             return $data;
             // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
         } else {
