@@ -550,8 +550,6 @@ const getRiderDetails = async planId => {
         });
       }
     });
-
-
   } catch (error) {
     console.error('Error fetching rider details:', error);
   }
