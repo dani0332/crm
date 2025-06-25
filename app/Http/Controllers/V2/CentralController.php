@@ -312,6 +312,9 @@ class CentralController extends Controller
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', $e->getMessage());
         }
     }
