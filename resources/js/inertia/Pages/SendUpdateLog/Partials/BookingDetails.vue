@@ -1043,17 +1043,18 @@ watch(
 );
 
 const isPriceVatNotApplicableEditable = computed(() => {
-  return (
-    props.quoteType === quoteTypeCodeEnum.Business ||
-    props.quoteType === quoteTypeCodeEnum.Health ||
-    props.quoteType === quoteTypeCodeEnum.Life
-  );
+  return [
+    quoteTypeCodeEnum.Business,
+    quoteTypeCodeEnum.Health,
+    quoteTypeCodeEnum.Life,
+    quoteTypeCodeEnum.SAVINGS,
+  ].includes(props.quoteType);
 });
 
 const isPriceVatApplicableEditable = computed(() => {
   return (
     (isCIOrCIR.value || isEF.value || isCPD.value) &&
-    props.quoteType !== quoteTypeCodeEnum.Life
+    ![quoteTypeCodeEnum.Life, quoteTypeCodeEnum.SAVINGS].includes(props.quoteType)
   );
 });
 

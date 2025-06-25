@@ -57,6 +57,9 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                     $this->sendNonAdvisorEmail();
 
                     LoggerService::info(self::class.' - execute: No advisor found');
+                    if ($this->quoteType->model->isSavings()) {
+                        app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($this->lead, $this->quoteType);
+                    }
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {

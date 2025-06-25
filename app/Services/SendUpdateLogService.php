@@ -1289,7 +1289,7 @@ class SendUpdateLogService
         return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmailData($sendUpdateLog, $action): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog): array
     {
         LoggerService::info('fn:sendUpdateToCustomerEmailData - SendUpdateLogService');
 
@@ -1313,6 +1313,11 @@ class SendUpdateLogService
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
+        } elseif ($quoteTypeId == QuoteTypeId::Savings) {
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
+                DocumentTypeCode::SEND_UPDATE_RECEIPT,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
+            ])->toArray();
         }
 
         $emailData = (object) [
@@ -1332,6 +1337,10 @@ class SendUpdateLogService
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documents' => $documents,
+            'quoteTypeId' => $quoteTypeId,
+            'code' => $sendUpdateLog->code,
+            'quote' => $sendUpdateLog->code,
+            'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
         ];
 
         if ($quoteTypeId == QuoteTypeId::Business) {
@@ -1350,6 +1359,9 @@ class SendUpdateLogService
             $templateId = getAppStorageValueByKey(constant($constantName));
         }
 
+        $emailData->templateId = $templateId;
+        $emailData->customerId = $quote->customer_id;
+
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
                 $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
@@ -1367,6 +1379,19 @@ class SendUpdateLogService
                     $emailData->roadsideAssistance = $roadsideAssistanceNumber;
                 }
             }
+        } elseif ($quoteTypeId == QuoteTypeId::Savings) {
+            $emailData->refID = $sendUpdateLog->code;
+            $start_date = $quote->policy_start_date ?? '';
+            $expiry_date = $quote->policy_expiry_date ?? '';
+
+            if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                $start_date = $sendUpdateLog->start_date ?? $quote->policy_start_date;
+                $expiry_date = $sendUpdateLog->expiry_date ?? $quote->policy_expiry_date;
+            }
+            $emailData->policyStartDate = date('d/m/Y', strtotime($start_date)) ?? '';
+            $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
+
+            $emailData->planName = ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
         }
 
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
@@ -1400,7 +1425,7 @@ class SendUpdateLogService
         return true;
     }
 
-    public function getSendUpdateDocuments($category, $option): array
+    public function getSendUpdateDocuments($category, $option, $quoteTypeId = null): array
     {
         LoggerService::info('fn:getSendUpdateDocuments - Start - SendUpdateLogService');
 
@@ -1435,6 +1460,10 @@ class SendUpdateLogService
                     ])
                 ) {
                     $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) false;
+                }
+
+                if ($quoteTypeId == QuoteTypeId::Savings && $documentTypesByCategory['SEND_UPDATE'][$key]['code'] == DocumentTypeCode::SEND_UPDATE_RECEIPT) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
                 }
             }
         }
