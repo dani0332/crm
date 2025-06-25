@@ -553,7 +553,7 @@ class SageApiEmbeddedProductService
 
     }
 
-    private function createEmbeddedProductPayload($sukoonMedXTransaction, $viewQuotePolicyApiLog)
+    public static function createEmbeddedProductPayload($sukoonMedXTransaction, $viewQuotePolicyApiLog)
     {
         $insuranceProvider = $viewQuotePolicyApiLog->insuranceProvider;
         $viewQuotePolicyApiResponse = json_decode($viewQuotePolicyApiLog->response);
@@ -573,7 +573,7 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->sageCustomerNumber = $insuranceProvider->sage_insurer_customer_id;
         $sageRequestEmbeddedProduct->sageInsurerGlLiabilityAccount = $insuranceProvider->gl_liaiblity_account;
         $sageRequestEmbeddedProduct->insurerName = $insuranceProvider->text;
-        $sageRequestEmbeddedProduct->collectionAmount = $viewQuotePolicyApiResponse->amount;
+        $sageRequestEmbeddedProduct->collectionAmount = $viewQuotePolicyApiResponse->payments[0]->amount;
         $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber = (string) mb_substr($commissionTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $commissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
@@ -582,7 +582,7 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->taxAmount = $viewQuotePolicyApiResponse->pricing->tax_amount;
         $sageRequestEmbeddedProduct->policyPrice = $viewQuotePolicyApiResponse->pricing->policy_price;
         $sageRequestEmbeddedProduct->totalPrice = $viewQuotePolicyApiResponse->pricing->total_price;
-        $sageRequestEmbeddedProduct->paymentAmount = $viewQuotePolicyApiResponse->payments[0]->total_price;
+        $sageRequestEmbeddedProduct->paymentAmount = $viewQuotePolicyApiResponse->payments[0]->amount;
         $sageRequestEmbeddedProduct->brokerCommissionAmount = $viewQuotePolicyApiResponse->additional_data->broker_commission_amount;
         $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $viewQuotePolicyApiResponse->additional_data->broker_commission_vat_amount;
         $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $viewQuotePolicyApiResponse->additional_data->broker_commission_total_amount;
