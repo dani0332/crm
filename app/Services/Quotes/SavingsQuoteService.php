@@ -13,7 +13,6 @@ use App\Facades\Capi;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
-use App\Models\QuoteCustomerPlan;
 use App\Models\SavingsQuote;
 use App\Services\HttpRequestService;
 use App\Services\Logger\LoggerService;
@@ -219,24 +218,8 @@ class SavingsQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
-            // 'selectedCustomerPlans' => $this->getSelectedCustomerPlans($uuid),
             ...$data,
         ];
-    }
-
-    public function getSelectedCustomerPlans(string $uuid)
-    {
-        return QuoteCustomerPlan::byQuoteUuid($uuid)
-            ->byQuoteType($this->quoteType->id())
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($plan) {
-                return [
-                    'id' => $plan->id,
-                    'plan_name' => $plan->plan_name,
-                    'provider_name' => $plan->provider_name,
-                ];
-            });
     }
 
     public function getSavingsQuoteLookUpData()
