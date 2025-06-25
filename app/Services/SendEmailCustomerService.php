@@ -808,7 +808,9 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called');
+        LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called', extra: [
+            'payload' => json_encode($emailData),
+        ]);
 
         $isEmailSent = 0;
         $messageId = null;
@@ -886,6 +888,7 @@ class SendEmailCustomerService extends BaseService
                     'appDownloadLink' => $emailData->appDownloadLink,
                     'insuranceType' => $emailData->insuranceType,
                     'planName' => $emailData->planName,
+                    'refID' => $emailData->code,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
