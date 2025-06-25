@@ -1150,10 +1150,10 @@ class SendEmailCustomerService extends BaseService
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $body['bcc'][] = ['email' => $newLeadPool->value];
 
-                $body['cc'] = array_merge($body['cc'], [
+                $body['cc'][] = [
                     'email' => 'life@insurancemarket.ae',
                     'name' => 'life@insurancemarket.ae',
-                ]);
+                ];
 
                 $body['replyTo'] = [
                     'email' => 'life@insurancemarket.ae',
