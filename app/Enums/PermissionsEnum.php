@@ -405,15 +405,6 @@ final class PermissionsEnum extends Enum
     public const VIEW_ALL_REPORTS = 'view-all-reports';
     public const TAP_BETA_ACCESS = 'tap-beta-access';
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
-    public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
-    public const SAVINGS_QUOTES_CREATE = 'savings-quotes-create';
-    public const SAVINGS_QUOTES_EDIT = 'savings-quotes-edit';
-    public const SAVINGS_QUOTES_SHOW = 'savings-quotes-show';
-    public const SAVINGS_COMPREHENSIVE_DASHBOARD = 'savings-comprehensive-dashboard';
-    public const SAVINGS_CONVERSION_REPORT = 'savings-conversion-report';
-    public const SAVINGS_DISTRIBUTION_REPORT = 'savings-distribution-report';
-    public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
-    public const SAVINGS_AS_AT_REPORT_MANAGER = 'savings-as-at-report-manager';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
     public const PERMISSION_LIST = 'permission-list';
@@ -426,12 +417,25 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_LEADPOOL = 'corpline-leadpool';
     public const CYCLE_LEADPOOL = 'cycle-leadpool';
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
-    public const SAVINGS_LEADPOOL = 'savings-leadpool';
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
+
+    // Savings Permissions
+    public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
+    public const SAVINGS_QUOTES_CREATE = 'savings-quotes-create';
+    public const SAVINGS_QUOTES_EDIT = 'savings-quotes-edit';
+    public const SAVINGS_QUOTES_SHOW = 'savings-quotes-show';
+    public const SAVINGS_COMPREHENSIVE_DASHBOARD = 'savings-comprehensive-dashboard';
+    public const SAVINGS_CONVERSION_REPORT = 'savings-conversion-report';
+    public const SAVINGS_DISTRIBUTION_REPORT = 'savings-distribution-report';
+    public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
+    public const SAVINGS_AS_AT_REPORT_MANAGER = 'savings-as-at-report-manager';
+    public const SAVINGS_LEADPOOL = 'savings-leadpool';
+    // End of Savings Permissions
+
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
 
     public static function getAdvisorConversionReportPermissions()

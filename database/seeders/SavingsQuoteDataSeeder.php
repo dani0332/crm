@@ -219,7 +219,7 @@ class SavingsQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'TL_SAV',
+                'code' => 'Others_SAV',
                 'text' => 'Others',
                 'description' => '',
                 'is_active' => 1,

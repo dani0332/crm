@@ -13,7 +13,6 @@ use App\Facades\Capi;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
-use App\Models\QuoteCustomerPlan;
 use App\Models\SavingsQuote;
 use App\Services\HttpRequestService;
 use App\Services\Logger\LoggerService;
@@ -215,28 +214,12 @@ class SavingsQuoteService extends BaseQuoteService
         $quote = $this->getOne($uuid, true);
         $data = $this->getShowCommonData($quote);
 
-        $data['permissions']['canEditQuote'] = (auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)));
+        $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::SAVINGS_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SAVINGS) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
-            // 'selectedCustomerPlans' => $this->getSelectedCustomerPlans($uuid),
             ...$data,
         ];
-    }
-
-    public function getSelectedCustomerPlans(string $uuid)
-    {
-        return QuoteCustomerPlan::byQuoteUuid($uuid)
-            ->byQuoteType($this->quoteType->id())
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($plan) {
-                return [
-                    'id' => $plan->id,
-                    'plan_name' => $plan->plan_name,
-                    'provider_name' => $plan->provider_name,
-                ];
-            });
     }
 
     public function getSavingsQuoteLookUpData()
@@ -417,5 +400,122 @@ class SavingsQuoteService extends BaseQuoteService
         LoggerService::endLogging();
 
         return true;
+    }
+
+    public function getPlanDetails($quoteId, $planId)
+    {
+        $quotePlans = $this->getQuotePlans($quoteId);
+
+        // Check if there was an error retrieving plans
+        if (gettype($quotePlans) == 'string') {
+            return $this->createErrorResponse($quotePlans);
+        }
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return $this->createErrorResponse('No plans available');
+        }
+
+        $planResult = $this->findPlanById($quotePlans->quotes->plans, $planId);
+
+        if ($planResult['found'] === false) {
+            return $this->createErrorResponse('Plan not found');
+        }
+
+        $foundPlan = $planResult['plan'];
+        $planSource = $planResult['source'];
+
+        // Determine investment frequency based on the plan source
+        $investmentFrequency = match ($planSource) {
+            'regular' => \App\Enums\InvestmentFrequencyEnum::REGULAR->value,
+            'lumpsum' => \App\Enums\InvestmentFrequencyEnum::LUMPSUM->value,
+            default => \App\Enums\InvestmentFrequencyEnum::REGULAR->value
+        };
+
+        // Extract eligibility values
+        $eligibility = $foundPlan->eligibilities ?? [];
+        $minimumInvestment = $this->getEligibilityValue($eligibility, 'minimumInvestmentAmount');
+        $policyTerm = $this->getEligibilityValue($eligibility, 'policyTerm');
+
+        return [
+            'error' => false,
+            'data' => $this->formatPlanData($foundPlan, $investmentFrequency, $minimumInvestment, $policyTerm),
+            'status' => 200,
+        ];
+    }
+
+    private function createErrorResponse($message)
+    {
+        return [
+            'error' => true,
+            'message' => $message,
+            'status' => 404,
+        ];
+    }
+
+    private function findPlanById($plans, $planId)
+    {
+        // Check regular plans
+        if (isset($plans->regular)) {
+            foreach ($plans->regular as $plan) {
+                if ($plan->id == $planId) {
+                    return ['found' => true, 'plan' => $plan, 'source' => 'regular'];
+                }
+            }
+        }
+
+        // Check lumpsum plans
+        if (isset($plans->lumpsum)) {
+            foreach ($plans->lumpsum as $plan) {
+                if ($plan->id == $planId) {
+                    return ['found' => true, 'plan' => $plan, 'source' => 'lumpsum'];
+                }
+            }
+        }
+
+        // Check if plans is an array (different structure)
+        if (is_array($plans)) {
+            foreach ($plans as $plan) {
+                if ($plan->id == $planId) {
+                    return ['found' => true, 'plan' => $plan, 'source' => 'regular'];
+                }
+            }
+        }
+
+        return ['found' => false];
+    }
+
+    private function formatPlanData($plan, $investmentFrequency, $minimumInvestment, $policyTerm)
+    {
+        return [
+            'id' => $plan->id,
+            'name' => $plan->name ?? '',
+            'providerCode' => $plan->providerCode ?? '',
+            'providerName' => $plan->providerName ?? '',
+            'planTypeId' => $plan->planTypeId ?? null,
+            'investmentFrequency' => ucfirst($investmentFrequency),
+            'currency' => 'USD',
+            'minimumInvestment' => $minimumInvestment,
+            'policyTerm' => $policyTerm,
+            'eligibilities' => $plan->eligibilities ?? [],
+            'includedBenefits' => $plan->includedBenefits ?? [],
+            'keyFeatureDocument' => $plan->keyFeatureDocument ?? [],
+            'description' => $plan->description ?? '',
+            'policyWordings' => $plan->policyWordings ?? [],
+            'actualPremium' => $plan->actualPremium ?? 0,
+            'insurerQuoteNo' => $plan->insurerQuoteNo ?? '',
+            'isDisabled' => $plan->isDisabled ?? false,
+            'isManualUpdate' => $plan->isManualUpdate ?? false,
+        ];
+    }
+
+    private function getEligibilityValue($eligibility, $code)
+    {
+        if (! is_array($eligibility)) {
+            return 'N/A';
+        }
+
+        $found = collect($eligibility)->firstWhere('code', $code);
+
+        return $found ? $found->value : 'N/A';
     }
 }

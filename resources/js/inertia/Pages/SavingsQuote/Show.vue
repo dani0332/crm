@@ -51,7 +51,6 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
-  // selectedCustomerPlans: Array,
 });
 
 const page = usePage();
@@ -365,21 +364,6 @@ const selectedProviderPlan = ref({
   providerName: page.props?.quote?.plans?.providerName,
   premium: page.props?.quote?.plans?.premium,
 });
-
-// const displayPlans = computed(() => {
-//   const plans = [...(props.selectedCustomerPlans || [])];
-
-//   // Always ensure we have exactly 3 rows (max 3 plans possible)
-//   while (plans.length < 3) {
-//     plans.push({
-//       id: null,
-//       provider_name: null,
-//       plan_name: null,
-//     });
-//   }
-
-//   return plans;
-// });
 
 const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id;
@@ -973,46 +957,6 @@ const getIncludedBenefitsTooltip = fieldText =>
               </div>
             </dl>
           </div>
-
-          <!-- <div class="mt-6">
-            <h3 class="font-semibold text-primary-800">Selected Plans</h3>
-            <x-divider class="mb-4 mt-1" />
-          </div>
-
-          <div>
-            <table class="border border-gray-300 text-sm">
-              <thead>
-                <tr class="bg-primary-600 text-white">
-                  <th
-                    class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider border-r border-white whitespace-nowrap"
-                  >
-                    PROVIDER NAME
-                  </th>
-                  <th
-                    class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap"
-                  >
-                    PLAN NAME
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white">
-                <tr
-                  v-for="(plan, index) in displayPlans"
-                  :key="plan.id || `empty-${index}`"
-                  class="border-b border-gray-300 last:border-b-0"
-                >
-                  <td
-                    class="px-3 py-2 text-sm text-gray-900 border-r border-gray-300 whitespace-nowrap"
-                  >
-                    {{ plan.provider_name || 'N/A' }}
-                  </td>
-                  <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
-                    {{ plan.plan_name || 'N/A' }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div> -->
         </template>
       </Collapsible>
     </div>

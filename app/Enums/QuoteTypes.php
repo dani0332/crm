@@ -259,7 +259,7 @@ enum QuoteTypes: string
             self::JETSKI => $isPersonalQuote ? route('jetski-quotes-show', $uuid) : route('jetski.show', $uuid),
             self::CORPLINE => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
             self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
-            self::SAVINGS => $isPersonalQuote ? route('savings-quotes-show', $uuid) : route('savings.show', $uuid),
+            self::SAVINGS => route('savings-quotes-show', $uuid),
         };
     }
 

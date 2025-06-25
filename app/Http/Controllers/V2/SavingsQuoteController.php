@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -97,99 +96,15 @@ class SavingsQuoteController extends Controller
 
     public function planDetails($quoteId, $planId)
     {
-        $quotePlans = $this->savingsQuoteService->getQuotePlans($quoteId);
+        $result = $this->savingsQuoteService->getPlanDetails($quoteId, $planId);
 
-        if (gettype($quotePlans) == 'string') {
+        if (isset($result['error']) && $result['error']) {
             return response()->json([
-                'message' => $quotePlans,
-            ], 404);
+                'message' => $result['message'],
+            ], $result['status']);
         }
 
-        if (! isset($quotePlans->quotes->plans)) {
-            return response()->json([
-                'message' => 'No plans available',
-            ], 404);
-        }
-
-        $plans = [];
-        $planSource = null; // Track whether plan came from regular or lumpsum
-
-        // Handle both regular and lumpsum plans
-        if (isset($quotePlans->quotes->plans->regular)) {
-            foreach ($quotePlans->quotes->plans->regular as $plan) {
-                if ($plan->id == $planId) {
-                    $plans[] = $plan;
-                    $planSource = 'regular';
-                    break;
-                }
-            }
-        }
-
-        if (empty($plans) && isset($quotePlans->quotes->plans->lumpsum)) {
-            foreach ($quotePlans->quotes->plans->lumpsum as $plan) {
-                if ($plan->id == $planId) {
-                    $plans[] = $plan;
-                    $planSource = 'lumpsum';
-                    break;
-                }
-            }
-        }
-
-        // If plans are in a different structure
-        if (empty($plans) && is_array($quotePlans->quotes->plans)) {
-            foreach ($quotePlans->quotes->plans as $plan) {
-                if ($plan->id == $planId) {
-                    $plans[] = $plan;
-                    // Default to regular if we can't determine from structure
-                    $planSource = 'regular';
-                    break;
-                }
-            }
-        }
-
-        if (empty($plans)) {
-            return response()->json([
-                'message' => 'Plan not found',
-            ], 404);
-        }
-
-        $foundPlan = $plans[0];
-
-        // Helper function to extract value from eligibility array
-        $getEligibilityValue = function ($eligibility, $code) {
-            if (! is_array($eligibility)) {
-                return 'N/A';
-            }
-
-            $found = collect($eligibility)->firstWhere('code', $code);
-
-            return $found ? $found->value : 'N/A';
-        };
-
-        // Determine investment frequency based on the plan source
-        $investmentFrequency = match ($planSource) {
-            'regular' => InvestmentFrequencyEnum::REGULAR->value,
-            'lumpsum' => InvestmentFrequencyEnum::LUMPSUM->value,
-            default => InvestmentFrequencyEnum::REGULAR->value
-        };
-
-        $data = [
-            'id' => $foundPlan->id,
-            'name' => $foundPlan->name ?? '',
-            'providerCode' => $foundPlan->providerCode ?? '',
-            'providerName' => $foundPlan->providerName ?? '',
-            'planTypeId' => $foundPlan->planTypeId ?? null,
-            'investmentFrequency' => ucfirst($investmentFrequency),
-            'currency' => 'USD',
-            'minimumInvestment' => $getEligibilityValue($foundPlan->eligibility ?? [], 'minimum_investment_amount'),
-            'policyTerm' => $getEligibilityValue($foundPlan->eligibility ?? [], 'policy_term'),
-            'eligibility' => $foundPlan->eligibility ?? [],
-            'includedBenefits' => $foundPlan->includedBenefits ?? [],
-            'keyFeatureDocument' => $foundPlan->keyFeatureDocument ?? [],
-            'description' => $foundPlan->description ?? '',
-        ];
-
-        return response()->json($data, 200);
+        return response()->json($result['data'], 200);
     }
 
     public function savingsPlanUpdateManualProcess(SavingsPlanUpdateRequest $request)
