@@ -46,9 +46,7 @@ class SavingsQuoteController extends Controller
             'advisors' => $advisors,
             'totalCount' => $count,
             'authorizedDays' => intval($authorizedDays->value),
-            'investmentFrequencies' => collect($this->savingsQuoteService->getSavingsQuoteLookUpData()->savingsInvestmentType ?? [])->map(function ($item) {
-                return ['value' => $item['id'], 'label' => $item['text']];
-            })->toArray(),
+            'investmentFrequencies' => $this->savingsQuoteService->getInvestmentFrequencies(),
         ]);
     }
 
@@ -167,9 +165,7 @@ class SavingsQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::SAVINGS->id(),
             'quoteType' => QuoteTypes::SAVINGS->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : $this->savingsQuoteService->getData(forExport: true, getTotalCount: true),
-            'investmentFrequencies' => collect($this->savingsQuoteService->getSavingsQuoteLookUpData()->savingsInvestmentType ?? [])->map(function ($item) {
-                return ['value' => $item['id'], 'label' => $item['text']];
-            })->toArray(),
+            'investmentFrequencies' => $this->savingsQuoteService->getInvestmentFrequencies(),
         ]);
     }
 }

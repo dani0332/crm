@@ -227,6 +227,13 @@ class SavingsQuoteService extends BaseQuoteService
         return app(LookupService::class)->getSavingsQuoteLookUpData();
     }
 
+    public function getInvestmentFrequencies()
+    {
+        return collect($this->getSavingsQuoteLookUpData()->savingsInvestmentType ?? [])->map(function ($item) {
+            return ['value' => $item['id'], 'label' => $item['text']];
+        })->toArray();
+    }
+
     public function getAvailablePlans($uuid)
     {
         return $this->listQuotePlans($uuid);
