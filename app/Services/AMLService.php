@@ -1671,7 +1671,7 @@ class AMLService
         $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
         $fetchKycLog->update([
             'decision' => $request['aml_decision'] ?? '',
-            'notes' => trim($request['notes']) ?? '',
+            'notes' => isset($request['notes']) ? trim($request['notes']) : '',
             'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
             'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
             'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
