@@ -58,7 +58,9 @@ class UpdateRenewalQuotesJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+        ], exception: $exception);
         $this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
         RenewalsUploadLeads::where('id', $this->renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
     }

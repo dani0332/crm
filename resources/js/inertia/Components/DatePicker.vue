@@ -122,7 +122,6 @@ const iconPosition = computed(() => {
 
 .dp__icon.dp__clear_icon {
   @apply !text-orange-500;
-  /* top: v-bind(iconPosition) !important; */
 }
 
 .dp__cell_disabled {
