@@ -44,9 +44,9 @@ class SageApiEmbeddedProductService
         ])->latest()->first();
 
         $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($sukoonMedXTransaction, $viewQuotePolicyApiLog);
-        $quoteTypeId = $sageRequest->quoteTypeId; 
+        $quoteTypeId = $sageRequest->quoteTypeId;
 
-        $sageLogArray = $sukoonMedXTransaction->sageApiLogs->keyBy('step')->toArray(); 
+        $sageLogArray = $sukoonMedXTransaction->sageApiLogs->keyBy('step')->toArray();
 
         $isEmbeddedProductBookedOnSage = QuoteTag::where([
             'quote_type_id' => $quoteTypeId,
@@ -131,9 +131,9 @@ class SageApiEmbeddedProductService
         }
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
-            $response['documentNumber'] = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber']; 
-            if (! $sukoonMedXEPTransaction->payment_sage_receipt_id) {  
-                $sukoonMedXEPTransaction->update(['payment_sage_receipt_id' => $$response['documentNumber']]);
+            $response['documentNumber'] = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+            if (! $sukoonMedXEPTransaction->payment_sage_receipt_id) {
+                $sukoonMedXEPTransaction->update(['payment_sage_receipt_id' => $response['documentNumber']]);
             }
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
@@ -763,7 +763,7 @@ class SageApiEmbeddedProductService
                     'DocumentDate' => $createdOnDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $createdOnDate,
-                    /* 'AsOfDate' => $createdOnDate, */
+                    'AsOfDate' => $createdOnDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
@@ -793,7 +793,7 @@ class SageApiEmbeddedProductService
                     'DocumentDate' => $createdOnDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $createdOnDate,
-                    /* 'AsOfDate' => $createdOnDate, */
+                    'AsOfDate' => $createdOnDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
