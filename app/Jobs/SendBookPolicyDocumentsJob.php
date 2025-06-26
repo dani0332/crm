@@ -126,7 +126,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $roadsideAssistance = '';
             $emailData = new \stdClass;
             $emailData->code = $quote->code;
-            $emailData->refID = $quote->code;
             $emailData->customerEmail = $quote->email;
             $emailData->customerId = $quote->customer_id;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
