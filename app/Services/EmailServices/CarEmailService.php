@@ -136,15 +136,15 @@ class CarEmailService extends BaseService
             $fileSizeBytes = strlen($pdfContent);
             $fileSizeMB = round($fileSizeBytes / (1024 * 1024), 2);
 
-            // Set maximum file size to 20MB
-            $maxSizeBytes = 20 * 1024 * 1024; // 20MB
+            // Set maximum file size to 17MB
+            $maxSizeBytes = 17 * 1024 * 1024; // 17MB
 
             $sizeMessage = "Size: {$fileSizeMB} MB";
 
             if ($fileSizeBytes > $maxSizeBytes) {
                 return [
                     'isValid' => false,
-                    'message' => "{$sizeMessage} exceeds 20MB limit",
+                    'message' => "{$sizeMessage} exceeds 17MB limit",
                 ];
             }
 
