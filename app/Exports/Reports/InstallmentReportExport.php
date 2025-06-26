@@ -150,7 +150,7 @@ class InstallmentReportExport implements CsvExportableInterface
             //                ], true));
 
             $sumColumns = [8, 9, 10, 11, 12, 11, 13, 14, 15, 16, 18];
-            if (is_numeric($row->get($index)) && in_array($index, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }

@@ -153,7 +153,7 @@ class TransactionReportExport implements CsvExportableInterface
 
             $sumColumns = [8,9,10,11,12,11,13,14,15,16,18];
 
-            if (is_numeric($row->get($index)) && in_array($index, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
                 if($index == 2){
                     logger()->debug("numeric: ".$row->get($index));
                 }

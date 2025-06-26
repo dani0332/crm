@@ -158,7 +158,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             //                ], true));
 
             $sumColumns = [10, 11, 12, 13, 14, 15, 16, 17, 24];
-            if (is_numeric($row->get($index)) && in_array($index, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }

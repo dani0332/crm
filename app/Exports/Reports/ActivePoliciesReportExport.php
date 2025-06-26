@@ -90,11 +90,32 @@ class ActivePoliciesReportExport implements CsvExportableInterface
 
             $sumColumns = [3,4,5];
 
-            if (is_numeric($row->get($index)) && in_array($index, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
         return $row->values()->toArray();
+    }
+
+    public function processChunkedQuery($query, array $requestParams, $stream): int
+    {
+        $totalRecords = 0;
+        $chunkSize = 1000;
+
+        info(__CLASS__.' processChunkedQuery Start');
+
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+
+            // Now process ALL records in the chunk (just like the download path does)
+            foreach ($chunk as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
+            }
+        });
+
+        $this->postDataRows($stream);
+
+        return $totalRecords;
     }
 
 //    public static function afterSheet(AfterSheet $event)
