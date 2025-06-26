@@ -131,9 +131,6 @@ class SendUpdateLogController extends Controller
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
         LoggerService::startQuoteLogging($sendUpdateLog->code);
         LoggerService::info('fn:show - Start - SendUpdateLogController');
-        $isSentOrBooked = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-            SendUpdateLogStatusEnum::UPDATE_BOOKED]) || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED]);
-
         // we don't need to push this on production, need to remove this before production.
         if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
             return redirect()->back()->with('error', 'Send update log not found');
@@ -166,7 +163,7 @@ class SendUpdateLogController extends Controller
 
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
-        $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode);
+        $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode, $quoteTypeId);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -272,7 +269,6 @@ class SendUpdateLogController extends Controller
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
-            'isSentOrBooked' => $isSentOrBooked,
             'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],

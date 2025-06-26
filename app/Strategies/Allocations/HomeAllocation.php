@@ -185,6 +185,12 @@ class HomeAllocation extends BaseAllocation
 
         $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
 
+        if (! $homeQuote) {
+            Log::warning('HomeAllocation: No home quote data found');
+
+            return [];
+        }
+
         if ($this->isValueLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a value lead, fetching value advisors');
 

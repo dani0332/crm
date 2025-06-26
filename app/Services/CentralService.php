@@ -55,6 +55,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
@@ -78,6 +79,7 @@ class CentralService extends BaseService
             quoteTypeCode::Car,
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
+            quoteTypeCode::SAVINGS,
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -116,8 +118,22 @@ class CentralService extends BaseService
             $parentType = quoteTypeCode::Business;
         }
 
-        $repository = $this->getRepositoryObject($parentType);
-        $parentRecord = $repository::where('id', $entityId)->first();
+        $parentRecord = null;
+
+        if ($quoteType = QuoteTypes::tryFrom($parentType)) {
+            $parentRecord = $quoteType->model()::find($entityId);
+        }
+
+        if (! $parentRecord) {
+            $repository = $this->getRepositoryObject($parentType);
+            if ($repository) {
+                $parentRecord = $repository::where('id', $entityId)->first();
+            }
+        }
+
+        if (! $parentRecord) {
+            return false;
+        }
 
         if (! empty($data['lob_team_sub_selection'])) {
             $parentRecord['enquiryType'] = $data['lob_team_sub_selection'];
@@ -146,13 +162,19 @@ class CentralService extends BaseService
                     }
                 }
 
-                $repository = $this->getRepositoryObject(ucfirst($lob));
+                if (in_array($lob, [
+                    quoteTypeCode::SAVINGS,
+                ])) {
+                    $response = PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob));
+                } else {
+                    $repository = $this->getRepositoryObject(ucfirst($lob));
 
-                if (! class_exists($repository)) {
-                    return false;
+                    if (! class_exists($repository)) {
+                        return false;
+                    }
+
+                    $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
                 }
-
-                $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -183,7 +205,7 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::Home];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home];
         $quoteBatch = QuoteBatches::latest()->first();
         LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
@@ -281,6 +303,8 @@ class CentralService extends BaseService
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             case quoteTypeCode::Home:
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
+            case quoteTypeCode::SAVINGS:
+                return app(SavingsQuoteService::class)->getAvailablePlans($id);
             default:
                 return [];
         }
@@ -492,6 +516,16 @@ class CentralService extends BaseService
                     'planId' => intval($data->plan_id),
                     'quoteTypeId' => QuoteTypeId::Home,
                     'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
+            case QuoteTypes::SAVINGS->value:
+                $endpoint = '/process-savings-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteUID' => $uuid,
+                    'quoteTypeId' => QuoteTypeId::Savings,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
@@ -1115,13 +1149,25 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+
         LoggerService::info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
         if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             LoggerService::info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-                if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
+                $hasTransactionApprovedStatus = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+                    ->where('quote_request_id', $quote->id)
+                    ->where(function ($query) {
+                        $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                            ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
+                    })->exists();
+
+                $isCurrentlyTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
+                $hasRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
+
+                if (($hasTransactionApprovedStatus || $isCurrentlyTransactionApproved) && $hasRequiredDocuments) {
                     $oldQuoteStatus = $quote->quote_status_id;
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
@@ -1133,7 +1179,6 @@ class CentralService extends BaseService
                     // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
                     // No need to create quote status log
                     if ($oldQuoteStatus != $quote->quote_status_id) {
-                        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
                         QuoteStatusLog::create([
                             'quote_type_id' => $quoteTypeId,
                             'quote_request_id' => $quote->id,
@@ -1143,8 +1188,8 @@ class CentralService extends BaseService
                             'updated_at' => Carbon::now(),
                         ]);
                     }
+                    LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
                 }
-                LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
     }
@@ -1215,23 +1260,24 @@ class CentralService extends BaseService
 
     public function voidPayment($request): array
     {
-        LoggerService::info('fn:voidPayment - Void authorized payment process started');
-        $payment = Payment::where('code', $request->payment_code)->first();
+        $paymentCode = $request->payment_code;
+        LoggerService::info('fn:voidPayment - Void authorized payment process started for payment code: '.$paymentCode);
+        $payment = Payment::where('code', $paymentCode)->first();
         if (! $payment) {
-            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$request->payment_code);
+            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment not found'];
         }
 
         $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
-        LoggerService::info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'.$request->payment_code);
+        LoggerService::info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'.$paymentCode);
         $paymentGateways = [
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT_TEXT,
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP_TEXT,
         ];
 
         if ($payment->payment_gateway_id !== PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
-            LoggerService::info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$request->payment_code);
+            LoggerService::info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment gateway not supported'];
         }
@@ -1242,7 +1288,7 @@ class CentralService extends BaseService
             'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
-                    'codeRef' => $request->payment_code,
+                    'codeRef' => $paymentCode,
                 ],
             ],
         ];
@@ -1254,15 +1300,15 @@ class CentralService extends BaseService
         }
 
         $response = Marshall::request($voidPaymentURL, 'post', $payload);
-        LoggerService::info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment - payload:'.json_encode($payload).' - response:'.json_encode($response));
+        LoggerService::info('fn:voidPayment - Payment Code:'.$paymentCode.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment - payload:'.json_encode($payload).' - response:'.json_encode($response));
 
         if (! empty($response)) {
-            LoggerService::info('fn:voidPayment - Void authorized payment process failed');
+            LoggerService::info('fn:voidPayment - Void authorized payment process failed for payment code: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Something went wrong'];
         }
 
-        LoggerService::info('fn:voidPayment - Void authorized payment process completed');
+        LoggerService::info('fn:voidPayment - Void authorized payment process completed for payment code: '.$paymentCode);
 
         return ['status' => true, 'message' => 'Void payment processed'];
     }
@@ -1342,7 +1388,8 @@ class CentralService extends BaseService
 
     public function deletePayment($request): array
     {
-        LoggerService::info('fn:deletePayment - process started: '.$request->payment_id);
+        $paymentCode = $request->payment_code;
+        LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
 
         $payment = Payment::where(
             [
@@ -1358,7 +1405,7 @@ class CentralService extends BaseService
             ])
             ->first();
         if (! $payment) {
-            LoggerService::info('fn:deletePayment - Payment not found: '.$request->payment_id);
+            LoggerService::info('fn:deletePayment - Payment not found: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment not found'];
         }
@@ -1366,7 +1413,7 @@ class CentralService extends BaseService
         $quote = $payment->paymentable;
         $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
         if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
-            LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
+            LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment cannot be deleted'];
         }
@@ -1383,9 +1430,9 @@ class CentralService extends BaseService
                 PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
-            info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
+            info('fn:deletePayment - Payment deleted successfully: '.$paymentCode);
         } catch (\Throwable $th) {
-            info('fn:deletePayment - Payment deletion failed: '.$request->payment_id);
+            info('fn:deletePayment - Payment deletion failed: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment deletion failed'];
         }

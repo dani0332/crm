@@ -130,6 +130,9 @@ if (can(permissionsEnum.AMLDecisionUpdate)) {
 onMounted(() => {
   enableComplianceComments();
 });
+
+const customerId = props.quoteRequest.customer_id ?? null;
+const insuredId = props.insuredDetails?.insured?.id ?? null;
 </script>
 
 <template>
@@ -733,7 +736,12 @@ onMounted(() => {
         #item-action="{ id }"
       >
         <div class="space-x-4">
-          <x-button size="xs" color="orange" outlined :href="`/kyc/aml/${id}`">
+          <x-button
+            size="xs"
+            color="orange"
+            outlined
+            :href="`/kyc/aml/${id}/${insuredId}/${customerId}`"
+          >
             View
           </x-button>
         </div>

@@ -64,6 +64,10 @@ const validatePayments = selectedPlanObj => {
       }
     }
 
+    if (!hasAnyPendingPayment.value) {
+      return resolve(false);
+    }
+
     const planIds = [];
     for (let i = 0; i < props.plans.length; i++) {
       if (props.extraDetails.selectedPlansIds.includes(props.plans[i].id)) {
@@ -86,8 +90,10 @@ const validatePayments = selectedPlanObj => {
       props.extraDetails?.planType == 'seniorPlans'
     ) {
       planIds.push({
-        providerId: selectedPlanObj.selected_insurance_provider_id,
-        planId: selectedPlanObj.selected_plan_id,
+        providerId:
+          selectedPlanObj.selected_insurance_provider_id ||
+          selectedPlanObj.insurance_provider_id,
+        planId: selectedPlanObj.selected_plan_id || selectedPlanObj.plan_id,
       });
     } else {
       planIds.push({
@@ -129,6 +135,7 @@ const validatePayments = selectedPlanObj => {
 
 const checkAndUpdateSelectedPlan = async () => {
   isLoading.value = true;
+
   let data = {
     plan_id: props.plan.id,
     provider_code: props.plan?.providerCode ?? null,
@@ -266,6 +273,13 @@ const updateSelectedPlan = () => {
             (props.plan?.basmah || 0) +
             props.plan?.vat +
             (props.plan?.loadingPrice || 0);
+          break;
+        case 'savings':
+          // For savings quotes, the premium is typically the investment amount
+          premium =
+            res.data.plan?.planProcessValue?.totalPremium ||
+            props.plan?.actualPremium ||
+            0;
           break;
         default:
           break;
