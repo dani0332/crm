@@ -33,7 +33,7 @@ class SageApiEmbeddedProductService
 
     public function bookReversalOfEmbeddedProductOnSage($sageRequestDataArray)
     {
-        [$quote ,$sendUpdateLog, $sageRequest, $sukoonMedXTransaction] = $sageRequestDataArray; 
+        [$quote ,$sendUpdateLog, $sageRequest, $sukoonMedXTransaction] = $sageRequestDataArray;
 
         LoggerService::startQuoteLogging($sukoonMedXTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING);
         LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Quote Code : '.$quote->code.'- Embedded Product Booking started for : '.$sukoonMedXTransaction->code);
@@ -46,7 +46,7 @@ class SageApiEmbeddedProductService
         $quoteTypeId = $sageRequest->quoteTypeId;
 
         $sageLogArray = $sukoonMedXTransaction->sageApiLogs->keyBy('step')->toArray();
-          
+
         // Create AR Commission and Premium Invoice
         $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray], sendUpdateLog, true);
         if (! $createARInvoicePremAndComm['status']) {
@@ -63,9 +63,7 @@ class SageApiEmbeddedProductService
             return $createAPInvoicePrem;
         }
 
-
         LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Embedded Product Booked for : '.$quote->code.' ');
-         
 
         LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Embedded Product Booking Process Completed for : '.$sukoonMedXTransaction->code);
 
@@ -288,7 +286,7 @@ class SageApiEmbeddedProductService
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $sukoonMedXEPTransaction, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
             $isLiveApiCallStep2 = true;
-            $readyToPostInvoiceAr = self::readyToPostARPremAndCommInvoicePayload( $sageResponse['BatchNumber'], $isReversal);
+            $readyToPostInvoiceAr = self::readyToPostARPremAndCommInvoicePayload($sageResponse['BatchNumber'], $isReversal);
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.'  :  readyToPostARPremAndCommInvoice  Sent Already for '.$quote->code);
                 $isLiveApiCallStep2 = false;
@@ -367,7 +365,7 @@ class SageApiEmbeddedProductService
 
     }
 
-    private function createAPPremInvoice($sageRequestDataArray,$sendUpdateLog = null, $isReversal = false)
+    private function createAPPremInvoice($sageRequestDataArray, $sendUpdateLog = null, $isReversal = false)
     {
         [$quote, $sukoonMedXEPTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
