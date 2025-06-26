@@ -20,7 +20,7 @@ class PopulateDocumentData implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 100;
     public $backoff = 300;
 
@@ -101,8 +101,6 @@ class PopulateDocumentData implements ShouldQueue
 
     public function failed(\Throwable $exception)
     {
-        LoggerService::error('Job has failed permanently.', extra: ['job' => static::class, 'error' => $exception->getMessage()]);
-
         // Send OCR fail notification for supported document types
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
         if (app(OCRService::class)->requiresOcrNotifications($docType)) {
