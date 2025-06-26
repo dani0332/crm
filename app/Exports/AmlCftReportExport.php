@@ -75,7 +75,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         $data = is_array($item) ? $item : (array) $item;
 
         return [
-            isset($data['customer_first_name']) ? trim(($data['customer_first_name'] ?? '').' '.($data['customer_last_name'] ?? '')) : trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
+            trim((isset($data['first_name']) ? $data['first_name'] : '').' '.(isset($data['last_name']) ? $data['last_name'] : '')),
             $data['code'] ?? '',
             $data['emirates_id'] ?? '',
             $data['customer_type'] ?? '',
@@ -85,7 +85,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
             $data['policy_number'] ?? '',
             $data['quote_type_name'] ?? '',
             ($data['customer_type'] ?? CustomerTypeEnum::Individual) === CustomerTypeEnum::Individual ? ($data['premium_tenure'] ?? '') : ($data['transaction_volume'] ?? ''),
-            $data['premium'] ?? '',
+            $data['price_with_vat'] ?? '',
             $data['insurance_provider'] ?? '',
             $data['policy_start_date'] ?? '',
             $data['policy_expiry_date'] ?? '',
