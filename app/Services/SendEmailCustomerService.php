@@ -1161,6 +1161,8 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
 
+            LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
+
             $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $this->url,
