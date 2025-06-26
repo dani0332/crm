@@ -744,8 +744,11 @@ class SageApiEmbeddedProductService
         ];
     }
 
-    private function createARPremAndComInvoicePayload($request, $sageRequestEmbeddedProduct)
+    private function createARPremAndComInvoicePayload($request, $sageRequestEmbeddedProduct, $isReversal = false)
     {
+        $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV;
+        $entryType = SageEnum::SCT_STRAIGHT;
+
         // Payload creation logic for default scenario
         $taxClass = 1;
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
@@ -819,8 +822,19 @@ class SageApiEmbeddedProductService
             ],
         ];
 
-        $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV;
-        $entryType = SageEnum::SCT_STRAIGHT;
+        if ($isReversal) {
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][1]['DocumentNumber'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber.'-REV';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber;
+
+            $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV_REV;
+        }
+
+
 
         return [
             'endPoint' => 'AR/ARInvoiceBatches',
@@ -830,9 +844,12 @@ class SageApiEmbeddedProductService
         ];
     }
 
-    public static function readyToPostARPremAndCommInvoicePayload($batchNumber)
+    public static function readyToPostARPremAndCommInvoicePayload($batchNumber, $isReversal = false)
     {
         $sageRequestType = SageEnum::EP_SRT_RTP_AR_PREM_COMM_INV;
+        if ($isReversal) {
+            $sageRequestType = SageEnum::EP_SRT_RTP_AR_PREM_COMM_INV_REV;
+        }
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchStatus' => 'ReadyToPost',
@@ -846,9 +863,12 @@ class SageApiEmbeddedProductService
         ];
     }
 
-    public static function postARPremAndCommInvoicePayload($batchNumber)
+    public static function postARPremAndCommInvoicePayload($batchNumber, $isReversal = false)
     {
         $sageRequestType = SageEnum::EP_SRT_POST_AR_PREM_COMM_INV;
+        if ($isReversal) {
+            $sageRequestType = SageEnum::EP_SRT_POST_AR_PREM_COMM_INV_REV;
+        }
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'PostAllBatches' => 'Donotpostallbatches',
@@ -965,7 +985,7 @@ class SageApiEmbeddedProductService
         return $optionalArray;
     }
 
-    public static function createAPPremInvoicePayload($request, $sageRequestEmbeddedProduct)
+    public static function createAPPremInvoicePayload($request, $sageRequestEmbeddedProduct, $isReversal = false)
     {
         $optionalFields = self::createOptionalFields($request, $sageRequestEmbeddedProduct);
         // Additional Option Field just for AP Invoice
@@ -1014,6 +1034,12 @@ class SageApiEmbeddedProductService
 
         $sageRequestType = SageEnum::EP_SRT_CREATE_AP_PREM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
+        if ($isReversal) {
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
+            $sageRequestType = SageEnum::EP_SRT_CREATE_AP_PREM_INV_REV;
+        }
 
         return [
             'endPoint' => 'AP/APInvoiceBatches',
@@ -1023,13 +1049,16 @@ class SageApiEmbeddedProductService
         ];
     }
 
-    public static function readyToPostAPPremInvoicePayload($batchNumber)
+    public static function readyToPostAPPremInvoicePayload($batchNumber, $isReversal = false)
     {
         $payLoad = [
             'BatchStatus' => 'ReadyToPost',
         ];
 
         $sageRequestType = SageEnum::EP_SRT_RTP_AP_PREM_INV;
+        if ($isReversal) {
+            $sageRequestType = SageEnum::EP_SRT_RTP_AP_PREM_INV_REV;
+        }
         $entryType = SageEnum::SCT_STRAIGHT;
 
         return [
@@ -1040,7 +1069,7 @@ class SageApiEmbeddedProductService
         ];
     }
 
-    public static function postAPPremInvoicePayload($batchNumber)
+    public static function postAPPremInvoicePayload($batchNumber, $isReversal = false)
     {
         $payLoad = [
             'ProcessAllBatches' => 'Donotpostallbatches',
@@ -1055,6 +1084,9 @@ class SageApiEmbeddedProductService
         $val = "('".$sign."')";
 
         $sageRequestType = SageEnum::EP_SRT_POST_AP_PREM_INV;
+        if ($isReversal) {
+            $sageRequestType = SageEnum::EP_SRT_POST_AP_PREM_INV_REV;
+        }
         $entryType = SageEnum::SCT_STRAIGHT;
 
         return [
@@ -1092,7 +1124,7 @@ class SageApiEmbeddedProductService
                             'DocumentNumber' => $sageRequestEmbeddedProduct->epSageReceiptId,
                             'PaymentNumber' => 1,
                             'ReceiptTransactionType' => 'Receipt',
-                            'CustomerReceiptAmount' => roundNumber($sageRequestEmbeddedProduct->paymentAmount),
+                            'CustomerReceiptAmount' => -roundNumber($sageRequestEmbeddedProduct->paymentAmount),
                         ],
                     ],
                 ],
