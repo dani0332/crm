@@ -62,8 +62,9 @@ class CarEmailService extends BaseService
             } else {
                 $validationResult = $this->validatePdfFileSize($pdf['pdf']);
 
-                if (!$validationResult['isValid']) {
+                if (! $validationResult['isValid']) {
                     LoggerService::error(self::class." - PDF validation failed for UUID: {$lead->uuid} | {$validationResult['message']}");
+
                     return;
                 }
 
@@ -143,19 +144,19 @@ class CarEmailService extends BaseService
             if ($fileSizeBytes > $maxSizeBytes) {
                 return [
                     'isValid' => false,
-                    'message' => "{$sizeMessage} exceeds 20MB limit"
+                    'message' => "{$sizeMessage} exceeds 20MB limit",
                 ];
             }
 
             return [
                 'isValid' => true,
-                'message' => $sizeMessage
+                'message' => $sizeMessage,
             ];
 
         } catch (\Exception $e) {
             return [
                 'isValid' => false,
-                'message' => "Error calculating PDF size: " . $e->getMessage()
+                'message' => 'Error calculating PDF size: '.$e->getMessage(),
             ];
         }
     }
