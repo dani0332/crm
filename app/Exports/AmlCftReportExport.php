@@ -75,7 +75,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         $data = is_array($item) ? $item : (array) $item;
 
         return [
-            trim((isset($data['first_name']) ? $data['first_name'] : '') . ' ' . (isset($data['last_name']) ? $data['last_name'] : '')),
+            trim((isset($data['first_name']) ? $data['first_name'] : '').' '.(isset($data['last_name']) ? $data['last_name'] : '')),
             $data['code'] ?? '',
             $data['emirates_id'] ?? '',
             $data['customer_type'] ?? '',
