@@ -947,7 +947,7 @@ class RenewalsUploadService
                 unset($quoteData['quote_type_id'], $quoteData['currently_insured_with'], $quoteData['currently_insured_with_id']);
                 $homeQuote = $quote->homeQuote()->create($quoteData);
 
-                unset($detailData['additional_notes'], $quoteData['previous_advisor_id']);
+                unset($detailData['additional_notes'], $detailData['previous_advisor_id']);
                 $homeQuote->homeQuoteRequestDetail()->create($detailData);
             }
 
