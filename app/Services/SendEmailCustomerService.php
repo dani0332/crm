@@ -1107,8 +1107,11 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => count($attachments) > 0 ? $attachments : null,
             ];
+
+            if (count($attachments) > 0) {
+                $body['attachment'] = $attachments;
+            }
 
             $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || isset($emailData->isGroupMedical);
 
