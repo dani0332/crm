@@ -808,7 +808,9 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called');
+        LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called', extra: [
+            'payload' => json_encode($emailData),
+        ]);
 
         $isEmailSent = 0;
         $messageId = null;
@@ -850,7 +852,7 @@ class SendEmailCustomerService extends BaseService
 
                 $bodyData['sender'] = [
                     'email' => 'alfred@notify.insurancemarket.ae',
-                    'name' => 'InsuranceMarket.ae',
+                    'name' => $emailData->advisorName,
                 ];
 
                 $bodyData['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
@@ -886,6 +888,7 @@ class SendEmailCustomerService extends BaseService
                     'appDownloadLink' => $emailData->appDownloadLink,
                     'insuranceType' => $emailData->insuranceType,
                     'planName' => $emailData->planName,
+                    'refID' => $emailData->code,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
@@ -918,11 +921,6 @@ class SendEmailCustomerService extends BaseService
                 ];
 
                 if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
-                    $bodyData['cc'][] = [
-                        'email' => 'savings@insurancemarket.ae',
-                        'name' => 'savings@insurancemarket.ae',
-                    ];
-
                     if ($this->appEnv != EnvEnum::PRODUCTION) {
                         $bodyData['replyTo'] = [
                             'email' => 'test.emails@insurancemarket.ae',
@@ -930,8 +928,12 @@ class SendEmailCustomerService extends BaseService
                         ];
                     } else {
                         $bodyData['replyTo'] = [
-                            'email' => $emailData->advisorEmaill,
+                            'email' => $emailData->advisorEmail,
                             'name' => $emailData->advisorName,
+                        ];
+                        $bodyData['cc'][] = [
+                            'email' => 'life@insurancemarket.ae',
+                            'name' => 'life@insurancemarket.ae',
                         ];
                     }
                 }
@@ -1081,15 +1083,19 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $sendUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_UPDATE_EMAIL);
+            if ($quoteTypeId == QuoteTypeId::Savings) {
+                $senderEmail = 'alfred@notify.insurancemarket.ae';
+            } else {
+                $senderEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_UPDATE_EMAIL);
+            }
             LoggerService::info('Send Update email and templateId fetched', extra: [
-                'email' => $sendUpdateEmail,
+                'email' => $senderEmail,
                 'templateId' => $emailTemplateId,
             ]);
 
             $body = [
                 'sender' => [
-                    'email' => $sendUpdateEmail,
+                    'email' => $senderEmail,
                     'name' => 'InsuranceMarket.ae',
                 ],
                 'to' => [[
@@ -1143,6 +1149,16 @@ class SendEmailCustomerService extends BaseService
 
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $body['bcc'][] = ['email' => $newLeadPool->value];
+
+                $body['cc'][] = [
+                    'email' => 'life@insurancemarket.ae',
+                    'name' => 'life@insurancemarket.ae',
+                ];
+
+                $body['replyTo'] = [
+                    'email' => 'life@insurancemarket.ae',
+                    'name' => 'life@insurancemarket.ae',
+                ];
             }
 
             $client = new \GuzzleHttp\Client;
