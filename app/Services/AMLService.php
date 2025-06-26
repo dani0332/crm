@@ -1565,6 +1565,7 @@ class AMLService
             'pqr.policy_start_date',
             'pqr.policy_expiry_date',
             'pqr.premium',
+            'pqr.price_with_vat',
             'pqr.policy_number',
             'pqr.quote_status_id',
             'pqr.insurance_provider_id',

@@ -85,7 +85,7 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
             $data['policy_number'] ?? '',
             $data['quote_type_name'] ?? '',
             ($data['customer_type'] ?? CustomerTypeEnum::Individual) === CustomerTypeEnum::Individual ? ($data['premium_tenure'] ?? '') : ($data['transaction_volume'] ?? ''),
-            $data['premium'] ?? '',
+            $data['price_with_vat'] ?? '',
             $data['insurance_provider'] ?? '',
             $data['policy_start_date'] ?? '',
             $data['policy_expiry_date'] ?? '',
