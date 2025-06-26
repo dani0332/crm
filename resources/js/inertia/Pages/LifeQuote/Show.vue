@@ -1773,7 +1773,7 @@ const totalAnnualPrice = computed(() => {
               color="emerald"
               v-if="selectedPlans.length > 0"
             >
-              Download
+              Download PDF Comparison
             </x-button>
 
             <x-button
