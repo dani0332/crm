@@ -108,8 +108,10 @@ class DttHealthFollowUp extends Command
         LoggerService::info($logPrefix.'count - '.$revivalLeads->count().' - leads - '.$revivalLeads->pluck('uuid')->toJson());
 
         $jobs = [];
+        $delayInSeconds = 0;
         foreach ($revivalLeads as $item) {
-            $jobs[] = (new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']))->delay(now()->addSeconds(10));
+            $jobs[] = (new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']))->delay(now()->addSeconds($delayInSeconds));
+            $delayInSeconds += 10;
         }
 
         if ($jobs != null && count($jobs)) {
