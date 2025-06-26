@@ -1723,8 +1723,6 @@ class AMLService
 
                 $chunk[$index]->first_name = $kycRecord->first_name ?? $insuredRecord->first_name ?? null;
                 $chunk[$index]->last_name = $kycRecord->last_name ?? $insuredRecord->last_name ?? null;
-                // $chunk[$index]->customer_first_name = $kycRecord->first_name ?? null;
-                // $chunk[$index]->customer_last_name = $kycRecord->last_name ?? null;
                 $chunk[$index]->emirates_id = $kycRecord->id_number ?? null;
                 $chunk[$index]->customer_type = $insuredRecord->customer_type ?? CustomerTypeEnum::Individual;
                 $chunk[$index]->residential_status = $kycRecord->residential_status ?? null;
