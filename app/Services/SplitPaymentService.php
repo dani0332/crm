@@ -517,6 +517,8 @@ class SplitPaymentService
                 return DocumentTypeCode::CYCPD_RECEIPT;
             case QuoteTypes::GROUP_MEDICAL->value:
                 return DocumentTypeCode::GMQPD_RECEIPT;
+            case QuoteTypes::SAVINGS->value:
+                return DocumentTypeCode::SPD_RECEIPT;
             default:
                 return DocumentTypeCode::CPD_RECEIPT;
         }

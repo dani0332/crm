@@ -7,7 +7,6 @@ const props = defineProps({
   model: String,
   nationalities: Object,
   lookUpData: Object,
-  coverageTypeEnum: Object,
 });
 const page = usePage();
 const hasContentOrBuilding = ref(true);
@@ -302,27 +301,27 @@ const handleCoverageChange = () => {
     return;
   }
 
-  // Define a mapping object for coverage types and their visibility rules
+  // Define a mapping object for coverage types and their visibility rules using codes
   const coverageVisibilityMap = {
-    [props.coverageTypeEnum.BUILDING_ONLY]: { showBuildingField: true }, // Building only
-    [props.coverageTypeEnum.CONTENTS_ONLY]: { showContentsField: true }, // Contents only
-    [props.coverageTypeEnum.BUILDING_AND_CONTENTS]: {
+    building: { showBuildingField: true }, // Building only
+    contents: { showContentsField: true }, // Contents only
+    building_contents: {
       showBuildingField: true,
       showContentsField: true,
     }, // Building and Contents
-    [props.coverageTypeEnum.BUILDING_CONTENTS_PERSONAL_BELONGINGS]: {
+    building_contents_personal_belongings: {
       showBuildingField: true,
       showContentsField: true,
       showPersonalBelongingsField: true,
     }, // Building, Contents, and Personal Belongings
-    [props.coverageTypeEnum.CONTENTS_PERSONAL_BELONGINGS]: {
+    contents_personal_belongings: {
       showContentsField: true,
       showPersonalBelongingsField: true,
     }, // Contents and Personal Belongings
   };
 
-  // Apply visibility rules based on the selected coverage type
-  const visibilityRules = coverageVisibilityMap[selectedCoverage.id] || {};
+  // Apply visibility rules based on the selected coverage type's code
+  const visibilityRules = coverageVisibilityMap[selectedCoverage.code] || {};
   if (visibilityRules.showBuildingField) showBuildingField.value = true;
   if (visibilityRules.showContentsField) showContentsField.value = true;
   if (visibilityRules.showPersonalBelongingsField)
@@ -403,15 +402,16 @@ const isMatchingCoverage = (
   has_contents,
   has_personal_belongings,
 ) => {
+  // Map coverage codes to case numbers for readability
   const coverageCaseMap = {
-    [props.coverageTypeEnum.BUILDING_ONLY]: 1, // Building only
-    [props.coverageTypeEnum.CONTENTS_ONLY]: 2, // Contents only
-    [props.coverageTypeEnum.BUILDING_AND_CONTENTS]: 3, // Building and Contents
-    [props.coverageTypeEnum.BUILDING_CONTENTS_PERSONAL_BELONGINGS]: 4, // Building, Contents, and Personal Belongings
-    [props.coverageTypeEnum.CONTENTS_PERSONAL_BELONGINGS]: 5, // Contents and Personal Belongings
+    building: 1, // Building only
+    contents: 2, // Contents only
+    building_contents: 3, // Building and Contents
+    building_contents_personal_belongings: 4, // Building, Contents, and Personal Belongings
+    contents_personal_belongings: 5, // Contents and Personal Belongings
   };
 
-  const caseNumber = coverageCaseMap[coverage.id];
+  const caseNumber = coverageCaseMap[coverage.code];
 
   switch (caseNumber) {
     case 1: // Building only
