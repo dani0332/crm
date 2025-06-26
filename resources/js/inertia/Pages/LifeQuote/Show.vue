@@ -267,6 +267,35 @@ const sendOCAEmail = () => {
 };
 
 const downloadComparisionPdf = () => {
+  const hiddenPlans = selectedPlans.value.filter(plan => plan.isDisabled);
+  if (hiddenPlans.length > 0) {
+    notification.error({
+      title: 'You cannot select a hidden plan',
+      position: 'top',
+    });
+    loader.value.download = false;
+    return;
+  }
+
+  if (selectedPlans.value.length < 1) {
+    notification.error({
+      title: 'Minimum 1 plan should be selected',
+      position: 'top',
+    });
+    loader.value.download = false;
+    return;
+  }
+
+  if (selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Maximum 5 plans can be selected',
+      position: 'top',
+    });
+    loader.value.download = false;
+    return;
+  }
+
+  
   loader.value.download = true;
 
   axios
@@ -316,6 +345,7 @@ const downloadComparisionPdf = () => {
       });
     });
 };
+
 
 const getPaymentTermTitle = months => {
   const mapping = {
