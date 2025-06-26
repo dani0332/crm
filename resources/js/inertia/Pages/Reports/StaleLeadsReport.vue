@@ -17,6 +17,7 @@ const validProdcuts = reactive([
   'Pet',
   'Yacht',
   'Cycle',
+  'Savings',
 ]);
 
 const advisorOptions = ref([]);
