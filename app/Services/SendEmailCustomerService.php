@@ -346,7 +346,7 @@ class SendEmailCustomerService extends BaseService
 
             if ($emailAttachments) {
                 LoggerService::info('fn: sendRenewalsOcbEmail - emailAttachments exists');
-                
+
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
                     $attachments[] = [
@@ -358,7 +358,7 @@ class SendEmailCustomerService extends BaseService
 
             if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 LoggerService::info('fn: sendRenewalsOcbEmail - pdfAttachment exists');
-                
+
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
