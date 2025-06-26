@@ -207,11 +207,12 @@ class BikeAllocationService extends AllocationService
             return 0;
         }
     }
-    
+
     public function findTier($bikeLead): ?Tier
     {
         if (empty($bikeLead->bikeQuote)) {
-            LoggerService::error('Bike Quote is missing for lead ID: ' . $bikeLead->id);
+            LoggerService::error('Bike Quote is missing for lead ID: '.$bikeLead->id);
+
             return $this->fetchTierL($bikeLead->id, 'Bike Quote is missing');
         }
 
@@ -243,23 +244,23 @@ class BikeAllocationService extends AllocationService
         return $tier;
     }
 
-
     private function fetchTierL(int $leadId, string $reason): ?Tier
     {
-        LoggerService::info($reason . '. Assigning default tier for lead ID: ' . $leadId);
+        LoggerService::info($reason.'. Assigning default tier for lead ID: '.$leadId);
+
         return Tier::where('is_active', 1)
-                    ->where('name', TiersEnum::TIER_L)
-                    ->first();
+            ->where('name', TiersEnum::TIER_L)
+            ->first();
     }
 
     private function fetchTierByPrice(float $bikeValue, int $leadId): ?Tier
     {
-        LoggerService::info('Bike value from AXA valuation for lead ID ' . $leadId . ' is: ' . $bikeValue);
+        LoggerService::info('Bike value from AXA valuation for lead ID '.$leadId.' is: '.$bikeValue);
 
         return Tier::where('is_active', 1)
-                    ->where('min_price', '<=', $bikeValue)
-                    ->where('max_price', '>=', $bikeValue)
-                    ->first();
+            ->where('min_price', '<=', $bikeValue)
+            ->where('max_price', '>=', $bikeValue)
+            ->first();
     }
 
     private function getBikeValueFromAxa(array $valuations): float
@@ -268,6 +269,7 @@ class BikeAllocationService extends AllocationService
 
         if (empty($axaProviderId)) {
             LoggerService::info('AXA insurance provider not found.');
+
             return 0;
         }
 
