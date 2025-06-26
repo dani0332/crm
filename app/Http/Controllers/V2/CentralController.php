@@ -272,7 +272,7 @@ class CentralController extends Controller
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
         $validatedData = $bookPolicyRequest->validated();
-        
+
         try {
             LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
