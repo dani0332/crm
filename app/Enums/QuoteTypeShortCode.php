@@ -22,6 +22,7 @@ final class QuoteTypeShortCode extends Enum
     const PET = 'PET';
     const CYC = 'CYC';
     const JSK = 'JSK';
+    const SAV = 'SAV';
 
     public static function getName($value)
     {
@@ -37,6 +38,26 @@ final class QuoteTypeShortCode extends Enum
             9 => QuoteTypeShortCode::PET,
             10 => QuoteTypeShortCode::CYC,
             11 => QuoteTypeShortCode::JSK,
+            18 => QuoteTypeShortCode::SAV,
+        ];
+
+        return $types[$value] ?? 'Unknown';
+    }
+
+    public static function getId($value)
+    {
+        $types = [
+            QuoteTypeShortCode::CAR => 1,
+            QuoteTypeShortCode::HOM => 2,
+            QuoteTypeShortCode::HEA => 3,
+            QuoteTypeShortCode::LIF => 4,
+            QuoteTypeShortCode::BUS => 5,
+            QuoteTypeShortCode::BIK => 6,
+            QuoteTypeShortCode::YAC => 7,
+            QuoteTypeShortCode::TRA => 8,
+            QuoteTypeShortCode::PET => 9,
+            QuoteTypeShortCode::CYC => 10,
+            QuoteTypeShortCode::JSK => 11,
         ];
 
         return $types[$value] ?? 'Unknown';

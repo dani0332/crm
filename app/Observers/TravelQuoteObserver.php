@@ -5,13 +5,16 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\SIBService;
@@ -102,6 +105,14 @@ class TravelQuoteObserver
             }
         }
 
+        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+            try {
+                EmbeddedProductRepository::cancelEmbeddedProducts($travelQuote->id, quoteTypeCode::Travel);
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - cancel embedded products failed', [], $e, ['ref_id' => $travelQuote->uuid]);
+            }
+        }
+
         if (
             isset($dirty['quote_status_id']) &&
             in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
@@ -112,6 +123,13 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+
+            try {
+                EmbeddedProductRepository::capturePayment($travelQuote->id, quoteTypeCode::Travel);
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - capture embedded products failed', [], $e, ['ref_id' => $travelQuote->uuid]);
+            }
         }
 
         if (
@@ -120,7 +138,7 @@ class TravelQuoteObserver
         ) {
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
-
+            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
         }
     }
 
