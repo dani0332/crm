@@ -60,7 +60,7 @@ class CarEmailService extends BaseService
             if (isset($pdf['error'])) {
                 info('Failed to generate PDF for UUID in car email service: '.$lead->uuid.' Error: '.$pdf['error']);
             } else {
-                $validationResult = $this->validatePdfFileSize($pdf['pdf'], $lead->uuid);
+                $validationResult = $this->validatePdfFileSize($pdf['pdf']);
 
                 if (!$validationResult['isValid']) {
                     LoggerService::error(self::class." - PDF validation failed for UUID: {$lead->uuid} | {$validationResult['message']}");
@@ -128,19 +128,17 @@ class CarEmailService extends BaseService
         return $responseCode;
     }
 
-    private function validatePdfFileSize($pdfObject, string $uuid): array
+    private function validatePdfFileSize($pdfObject): array
     {
         try {
-            // Get PDF content and calculate size
             $pdfContent = $pdfObject->output();
             $fileSizeBytes = strlen($pdfContent);
-            $fileSizeKB = round($fileSizeBytes / 1024, 2);
             $fileSizeMB = round($fileSizeBytes / (1024 * 1024), 2);
 
             // Set maximum file size to 20MB
             $maxSizeBytes = 20 * 1024 * 1024; // 20MB
 
-            $sizeMessage = "Size: {$fileSizeBytes} bytes ({$fileSizeKB} KB / {$fileSizeMB} MB)";
+            $sizeMessage = "Size: {$fileSizeMB} MB";
 
             if ($fileSizeBytes > $maxSizeBytes) {
                 return [
