@@ -1113,8 +1113,11 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => $attachments ?? null,
             ];
+
+            if (count($attachments) > 0) {
+                $body['attachment'] = $attachments;
+            }
 
             $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || isset($emailData->isGroupMedical);
 
@@ -1166,6 +1169,8 @@ class SendEmailCustomerService extends BaseService
                     'name' => 'life@insurancemarket.ae',
                 ];
             }
+
+            LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
 
             $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(

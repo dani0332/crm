@@ -1307,13 +1307,14 @@ class SendUpdateLogService
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business]) && ! $quoteTypeId == QuoteTypeId::Savings) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
+            // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
                 DocumentTypeCode::SEND_UPDATE_RECEIPT,
                 DocumentTypeCode::PAYMENT_RECEIPT,
