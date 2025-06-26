@@ -1000,6 +1000,7 @@ class HealthQuoteService extends BaseService
         $jobs = [];
 
         foreach ($leadsIds as $leadId) {
+            $currentJobChains = [];
             $lead = $this->getEntityPlain($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
