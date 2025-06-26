@@ -51,7 +51,7 @@ class CarEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
-            info('Inside plans of count: '.$lead->uuid.'    ');
+            LoggerService::info('Inside plans of count: ');
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
@@ -63,7 +63,7 @@ class CarEmailService extends BaseService
                 $validationResult = $this->validatePdfFileSize($pdf['pdf']);
 
                 if (! $validationResult['isValid']) {
-                    LoggerService::error(self::class." - PDF validation failed for UUID: {$lead->uuid} | {$validationResult['message']}");
+                    LoggerService::error(self::class." - PDF validation failed: {$validationResult['message']}");
 
                     return;
                 }
