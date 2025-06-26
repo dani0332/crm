@@ -928,7 +928,7 @@
             <td class="footer-td" style="width: 30%;">
                 <div class="footer-box" style="margin-top: 16px; padding: 5px 10px">
                     <div class="advisor-section">
-                        @if(/*$quote->advisor*/ FALSE)
+                        @if($quote->advisor)
                             <div class="advisor-photo-container">
                                 <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}"
                                      alt="Advisor Photo" class="advisor-photo">
@@ -963,7 +963,7 @@
                             </div>
                         @else
                             <div class="advisor-photo-container">
-                                <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}"
+                                <img src="{{ public_path('images/headset-with-bg.png') }}"
                                      alt="Alfred Image" class="alfred-photo">
                             </div>
                             <div class="alfred-details ">
