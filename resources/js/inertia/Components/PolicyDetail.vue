@@ -220,9 +220,13 @@ const calculateVatAmount = (isVatAmountRecalculated = false) => {
   }
 };
 const quoteType = page.props.quoteType.toLowerCase();
-const isLifeQuote = quoteType == quoteTypeCodeEnum.Life.toLowerCase();
+
+const isPriceVatApplicableEnabled =
+  quoteType == quoteTypeCodeEnum.Life.toLowerCase() ||
+  quoteType == quoteTypeCodeEnum.SAVINGS.toLowerCase();
+
 const isPriceVatApplicableRequired = computed(() => {
-  if (isLifeQuote) {
+  if (isPriceVatApplicableEnabled) {
     return true;
   } else if (
     [
@@ -251,7 +255,7 @@ const rules = {
   },
   price_vat_applicable: v => {
     //for life, price vat applicable is not required
-    if (isLifeQuote) return true;
+    if (isPriceVatApplicableEnabled) return true;
     if (v) {
       return (
         /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
@@ -261,7 +265,7 @@ const rules = {
   },
   price_vat_not_applicable: v => {
     //for life, price vat not applicable is required
-    if (isLifeQuote) {
+    if (isPriceVatApplicableEnabled) {
       if (v) {
         return (
           /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
@@ -674,6 +678,7 @@ const FieldLoader = defineComponent({
                   :disabled="
                     !policyDetailsState.isEditing ||
                     (page.props.quoteType != quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.SAVINGS &&
                       page.props.quoteType != quoteTypeCodeEnum.Business &&
                       page.props.quoteType != quoteTypeCodeEnum.Health)
                   "
@@ -748,7 +753,8 @@ const FieldLoader = defineComponent({
                     class="w-full"
                     :disabled="
                       !policyDetailsState.isEditing ||
-                      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+                      ((page.props.quoteType == quoteTypeCodeEnum.Life ||
+                        page.props.quoteType == quoteTypeCodeEnum.SAVINGS) &&
                         page.props.quoteType != quoteTypeCodeEnum.Business &&
                         page.props.quoteType != quoteTypeCodeEnum.Health)
                     "
