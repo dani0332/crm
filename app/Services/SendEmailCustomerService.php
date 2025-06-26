@@ -1093,6 +1093,8 @@ class SendEmailCustomerService extends BaseService
                 'templateId' => $emailTemplateId,
             ]);
 
+            $emailData->attachment = $attachments ?? null;
+
             $body = [
                 'sender' => [
                     'email' => $senderEmail,
