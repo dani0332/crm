@@ -2580,7 +2580,7 @@ class SageApiService
     public function isEmbeddedTransactionStatusReadyForSage($quote, $quoteTypeId)
     {
         $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
-        if($this->isLobAllowedForEmbeddedProductBooking($quoteTypeId) && $sukoonMedXTransaction){
+        if ($this->isLobAllowedForEmbeddedProductBooking($quoteTypeId) && $sukoonMedXTransaction) {
             return $sukoonMedXTransaction->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
         }
 
