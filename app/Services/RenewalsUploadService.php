@@ -291,18 +291,20 @@ class RenewalsUploadService
         LoggerService::info($logPrefix.' QuoteCreation started');
 
         try {
-            $jobs = null;
+            $jobs = [];
+            $delayCounter = 0;
 
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = (new CreateRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
+                    $jobs[] = (new CreateRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter++;
                 }
             });
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 Bus::batch($jobs)
                     ->onQueue('renewals')
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -334,18 +336,20 @@ class RenewalsUploadService
         LoggerService::info($logPrefix.' Quote update started');
 
         try {
-            $jobs = null;
+            $jobs = [];
+            $delayCounter = 0;
 
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = (new UpdateRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
+                    $jobs[] = (new UpdateRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter++;
                 }
             });
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 Bus::batch($jobs)
                     ->onQueue('renewals')
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -405,7 +409,7 @@ class RenewalsUploadService
         LoggerService::info($logPrefix.'  Fetch plans started');
 
         try {
-            $jobs = null;
+            $jobs = [];
             $totalSkipped = 0;
 
             $query = RenewalQuoteProcess::where([
@@ -416,10 +420,12 @@ class RenewalsUploadService
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->with(['renewalUploadLead', 'carQuote']);
 
-            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+            $delayCounter = 0;
+            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped, &$delayCounter) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
-                        $jobs[] = (new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess))->delay(now()->addSeconds(10));
+                        $jobs[] = (new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess))->delay(now()->addSeconds(10 + $delayCounter));
+                        $delayCounter++;
                     } else {
                         LoggerService::info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
@@ -433,7 +439,7 @@ class RenewalsUploadService
                 LoggerService::info($logPrefix.' total leads for skipped plans ('.$totalSkipped.')');
             }
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 LoggerService::info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
                 Bus::batch($jobs)
@@ -2255,16 +2261,18 @@ class RenewalsUploadService
         $logPrefix = 'Renewals OCB email ';
 
         try {
-            $jobs = null;
+            $jobs = [];
+            $delayCounter = 0;
 
             $this->getOcbLeadsQuery($batch)
-                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
+                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail, &$delayCounter) {
                     foreach ($leads as $lead) {
-                        $jobs[] = (new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead))->delay(now()->addSeconds(1));
+                        $jobs[] = (new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead))->delay(now()->addSeconds(1 + $delayCounter));
+                        $delayCounter++;
                     }
                 });
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 LoggerService::info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
                 Bus::batch($jobs)
                     ->onQueue('renewals')
@@ -2404,18 +2412,20 @@ class RenewalsUploadService
         LoggerService::info($logPrefix.' QuoteCreation started');
 
         try {
-            $jobs = null;
+            $jobs = [];
+            $delayCounter = 0;
 
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
-            ])->chunkById(50, function ($leads) use (&$jobs) {
+            ])->chunkById(50, function ($leads) use (&$jobs, &$delayCounter) {
                 foreach ($leads as $lead) {
-                    $jobs[] = (new CreateTravelRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
+                    $jobs[] = (new CreateTravelRenewalQuotesJob($lead))->delay(now()->addSeconds(2 + $delayCounter));
+                    $delayCounter++;
                 }
             });
 
-            if ($jobs != null && count($jobs)) {
+            if (count($jobs) > 0) {
                 LoggerService::info('the value of $jobs is : '.count($jobs));
                 Bus::batch($jobs)
                     ->onQueue('renewals')
