@@ -834,8 +834,6 @@ class SageApiEmbeddedProductService
             $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV_REV;
         }
 
-
-
         return [
             'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,
