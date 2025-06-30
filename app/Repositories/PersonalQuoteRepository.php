@@ -17,6 +17,7 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
+use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
@@ -61,6 +62,12 @@ class PersonalQuoteRepository extends BaseRepository
             }
 
             $quote->update($quoteData);
+
+            $centralService = app(CentralService::class);
+            if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+                $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
+                $centralService->sendQuoteJourneyToCapi($quote->uuid, $quoteTypeId);
+            }
 
             if ($previousStatusId != $data['quote_status_id']) {
                 $quote['previousStatusIdChanged'] = true;

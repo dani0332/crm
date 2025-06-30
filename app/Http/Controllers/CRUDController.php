@@ -1863,10 +1863,15 @@ class CRUDController extends Controller
             $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
+        $centralService = app(CentralService::class);
+        if ($entity->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
+            $centralService->sendQuoteJourneyToCapi($entity->uuid, $quoteTypeId);
+        }
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         // Update payment allocation status
-        app(CentralService::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
+        $centralService->updatePaymentAllocation($request->modelType, $request->quote_uuid);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }

@@ -18,6 +18,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteJourney;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -1187,6 +1188,7 @@ class CentralService extends BaseService
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now(),
                         ]);
+                        $this->sendQuoteJourneyToCapi($quote->uuid, $quoteTypeId);
                     }
                     LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
                 }
@@ -1482,5 +1484,27 @@ class CentralService extends BaseService
         }
 
         return $paymentGatewayIds;
+    }
+
+     /**
+     * Call CAPI v1-quote-journey
+     */
+    public function sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId)
+    {
+        LoggerService::startQuoteLogging($quoteUUID);
+        LoggerService::info('Sending quote journey to CAPI', ['quoteTypeId' => $quoteTypeId]);
+        $payload = [
+            'quoteUUID' => $quoteUUID,
+            'quoteTypeId' => $quoteTypeId,
+            'quoteJourneyEntries' => [
+                [
+                    'status' => QuoteJourney::COMPLETED,
+                    'text' => QuoteJourney::POLICY_ISSUANCE
+                ]
+            ],
+        ];
+        LoggerService::info('Sending quote journey to CAPI Payload ', extra: ['payload' => $payload]);
+        $response = Capi::request('/api/v1-quote-journey', 'post', $payload);
+        LoggerService::info('Received response from CAPI for quote journey', extra: ['response' => $response]);
     }
 }
