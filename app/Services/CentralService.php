@@ -1188,7 +1188,7 @@ class CentralService extends BaseService
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now(),
                         ]);
-                        $this->sendQuoteJourneyToCapi($quote->uuid, $quoteTypeId);
+                        (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     }
                     LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
                 }

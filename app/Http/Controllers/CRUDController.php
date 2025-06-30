@@ -27,6 +27,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
+use App\Enums\QuoteJourney;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -99,6 +100,7 @@ use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
+use App\Services\QuoteJourneyService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
@@ -1863,15 +1865,14 @@ class CRUDController extends Controller
             $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
-        $centralService = app(CentralService::class);
         if ($entity->quote_status_id == QuoteStatusEnum::PolicyIssued) {
             $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
-            $centralService->sendQuoteJourneyToCapi($entity->uuid, $quoteTypeId);
+            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId);
         }
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         // Update payment allocation status
-        $centralService->updatePaymentAllocation($request->modelType, $request->quote_uuid);
+        app(CentralService::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }

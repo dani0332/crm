@@ -22,6 +22,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Services\QuoteJourneyService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -63,10 +64,10 @@ class PersonalQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
-            $centralService = app(CentralService::class);
+            
             if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
                 $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-                $centralService->sendQuoteJourneyToCapi($quote->uuid, $quoteTypeId);
+                (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
             }
 
             if ($previousStatusId != $data['quote_status_id']) {
