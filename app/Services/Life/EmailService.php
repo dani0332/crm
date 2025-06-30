@@ -79,7 +79,7 @@ class EmailService
             // Lead-related data
             'quoteUID' => $lead->uuid,
             'uuid' => $lead->uuid,
-            'customerEmail' => 'osama.ashfaq@myalfred.com',
+            'customerEmail' => $lead->email,
             'customerFullName' => $customerFullName,
             'customerName' => $customerFullName,
             'refID' => $lead->code,
