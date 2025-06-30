@@ -48,7 +48,7 @@ class LegacyPolicyController extends Controller
     {
         $policy = InslyDetailRepository::getBy('_id', $mongoId);
 
-        return inertia('LegacyPolicy/Show', ['policy' => $policy, 'mongoId' => $mongoId]);
+        return inertia('LegacyPolicy/Show', ['policy' => $policy, 'legacyPolicyId' => $mongoId]);
     }
 
     public function moveToImcrm(Request $request)
@@ -61,7 +61,7 @@ class LegacyPolicyController extends Controller
 
     public function getS3TempUrl(Request $request)
     {
-        LoggerService::info('getS3TempUrl', ['mongo-id' => $request->mongoId, 'file-name' => $request->fileName]);
+        LoggerService::info('getS3TempUrl', ['legacyPolicyId' => $request->legacyPolicyId, 'file-name' => $request->fileName]);
         
         try {
             $expiryDate = now()->addMinutes(40);
@@ -77,7 +77,7 @@ class LegacyPolicyController extends Controller
                 return response()->json(['error' => 'File does not exists on server']);
             }
         } catch (\Exception $e) {
-            LoggerService::info('getS3TempUrl exception', ['mongo-id' => $request->mongoId, 'file-name' => $request->fileName, 'error' => $e->getMessage()]);
+            LoggerService::info('getS3TempUrl exception', ['legacyPolicyId' => $request->legacyPolicyId, 'file-name' => $request->fileName, 'error' => $e->getMessage()]);
         }
     }
 
