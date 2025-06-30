@@ -58,8 +58,12 @@ class OCRService
         string $fileMimeType
     ) {
         $providerCode = null;
-        if (isset($quote->insuranceProvider) && ! empty($quote->insuranceProvider->code)) {
-            $providerCode = $quote->insuranceProvider->code;
+
+        if ($quote->payments && $quote->payments->isNotEmpty()) {
+            $latestPayment = $quote->payments->first();
+            if ($latestPayment && $latestPayment->insuranceProvider) {
+                $providerCode = $latestPayment->insuranceProvider->code;
+            }
         }
 
         LoggerService::info('Provider Code', extra: [
