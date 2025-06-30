@@ -227,6 +227,10 @@ const epTable = reactive({
       value: 'payment_status',
     },
     {
+      text: 'Policy Status',
+      value: 'policy_status',
+    },
+    {
       text: 'Actions',
       value: 'actions',
     },
@@ -569,6 +573,13 @@ const onAddDocumentSubmit = event => {
                 getFirstPriceWithTransaction(prices)?.transactions[0]
                   ?.payment_status_id,
               )
+            }}
+          </template>
+
+          <template #item-policy_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.policy_status ?? '-'
             }}
           </template>
 
