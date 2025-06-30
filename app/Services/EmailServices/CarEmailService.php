@@ -93,40 +93,48 @@ class CarEmailService extends BaseService
             }
         }
 
-        $responseCode = null;
+        $response = null;
 
         if (! $triggerOnlyWorkflow) {
             if ($lead->registration_type == CarRegistrationType::COMPANY && $lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                info(self::class." -s ending company car ocb intro email- Ref ID: {$lead->uuid} | Time: ".now());
-                CompanyCarOCBJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(1));
-
-                if (empty($lead->nb_flow_executed_at)) {
-                    $companyCarFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::COMPANY_CAR_FOLLOWUP_DELAY_DURATION)->first();
-                    $companyCarFollowupDelayDuration = ! empty($companyCarFollowupDelayDuration->value) ? $companyCarFollowupDelayDuration->value : 24;
-                    CompanyCarFollowupJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes((int) $companyCarFollowupDelayDuration));
-                    info('CompanyCarFollowupJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
-                }
-
-                return $responseCode;
+                return $this->sendCarCompanyOCBIntroEmail($lead);
             }
             if ($lead->advisor_id) {
-                $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+                $response = $this->sendEmailCustomerService->sendCarIntroEmailWithAdvisor($lead);
 
                 $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
                 $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
-                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
-                info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+                NBMotorFollowupEmailJob::dispatch(arguments: $lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
+
+                LoggerService::info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+
+
             } else {
-                info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-                $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
-                if ($responseCode) {
+                LoggerService::info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
+                
+                $response = $this->sendEmailCustomerService->sendCarIntroEmailWithoutAdvisor($lead);
+                if ($response) {
                     $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
                     // after 24 hour email is being triggered from KEN api using bird flow
                 }
             }
         }
 
-        return $responseCode;
+        return $response;
+    }
+
+    private function  sendCarCompanyOCBIntroEmail($lead)
+    {
+        LoggerService::info(self::class." -sendCarCompanyOCBIntroEmail company car ocb intro email- Ref ID: {$lead->uuid} ");
+        CompanyCarOCBJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(1));
+
+        if (empty($lead->nb_flow_executed_at)) {
+            $companyCarFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::COMPANY_CAR_FOLLOWUP_DELAY_DURATION)->first();
+            $companyCarFollowupDelayDuration = ! empty($companyCarFollowupDelayDuration->value) ? $companyCarFollowupDelayDuration->value : 24;
+            CompanyCarFollowupJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes((int) $companyCarFollowupDelayDuration));
+            LoggerService::info('CompanyCarFollowupJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+        }
+        return null;
     }
 
     private function validatePdfFileSize($pdfObject): array
