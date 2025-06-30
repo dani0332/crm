@@ -441,7 +441,7 @@ class SageApiService
 
                 $quoteTypeId = $preparedData['sendUpdateLog']->quote_type_id;
                 $quote = $this->getQuoteObjectBy($request->quoteType, $preparedData['sendUpdateLog']->uuid);
-  
+
                 $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
                 $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
                 $isTapPaymentGateway = $preparedData['payment']->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
@@ -452,6 +452,7 @@ class SageApiService
                     'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
                     'sukoonMedXTransaction' => $sukoonMedXTransaction?->code,
                     'isTapPaymentGateway' => $isTapPaymentGateway,
+                    'epBookingLogCount' => count($epTransSageLogArray),
                 ]);
                 if ($isLobAllowedForEmbeddedProductBooking && $sukoonMedXTransaction && $isTapPaymentGateway && count($epTransSageLogArray) > 0) {
                     $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->quoteType, $preparedData['payment'], $quote, $preparedData['splitPayments']);
