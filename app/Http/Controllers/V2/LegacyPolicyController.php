@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Facades\Capi;
 use App\Http\Controllers\Controller;
 use App\Repositories\InslyDetailRepository;
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -47,7 +48,7 @@ class LegacyPolicyController extends Controller
     {
         $policy = InslyDetailRepository::getBy('_id', $mongoId);
 
-        return inertia('LegacyPolicy/Show', ['policy' => $policy]);
+        return inertia('LegacyPolicy/Show', ['policy' => $policy, 'mongoId' => $mongoId]);
     }
 
     public function moveToImcrm(Request $request)
@@ -60,17 +61,23 @@ class LegacyPolicyController extends Controller
 
     public function getS3TempUrl(Request $request)
     {
-        $expiryDate = now()->addMinutes(40);
-        $fileName = $request->fileName;
-        $temporaryUrl = null;
-        if (Storage::disk('insly_documents')->has($fileName)) {
-            $temporaryUrl = Storage::disk('insly_documents')->temporaryUrl($fileName, $expiryDate);
-        }
-        // Check if a temporary URL was generated
-        if ($temporaryUrl) {
-            return response()->json(['url' => $temporaryUrl]);
-        } else {
-            return response()->json(['error' => 'File does not exists on server']);
+        LoggerService::info('getS3TempUrl', ['mongo-id' => $request->mongoId, 'file-name' => $request->fileName]);
+        
+        try {
+            $expiryDate = now()->addMinutes(40);
+            $fileName = $request->fileName;
+            $temporaryUrl = null;
+            if (is_string($fileName) && ! empty($fileName) && Storage::disk('insly_documents')->has($fileName)) {
+                $temporaryUrl = Storage::disk('insly_documents')->temporaryUrl($fileName, $expiryDate);
+            }
+            // Check if a temporary URL was generated
+            if ($temporaryUrl) {
+                return response()->json(['url' => $temporaryUrl]);
+            } else {
+                return response()->json(['error' => 'File does not exists on server']);
+            }
+        } catch (\Exception $e) {
+            LoggerService::info('getS3TempUrl exception', ['mongo-id' => $request->mongoId, 'file-name' => $request->fileName, 'error' => $e->getMessage()]);
         }
     }
 
