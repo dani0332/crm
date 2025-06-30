@@ -1087,7 +1087,7 @@ class SukoonMedexService
     public function uploadDocument($docName, $content, $dir)
     {
         try {
-            $fileNameAzure = uniqid()."_{$this->currentQuote->uuid}_$docName}";
+            $fileNameAzure = uniqid()."_{$this->currentQuote->uuid}_{$docName}";
             $docUrl = "{$dir}/{$fileNameAzure}";
             $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
 
