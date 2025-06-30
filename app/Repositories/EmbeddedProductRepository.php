@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
+use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
@@ -21,6 +22,7 @@ use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
+use App\Jobs\SukoonMedexPurchaseFlowJob;
 use App\Models\ApplicationStorage;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
@@ -32,7 +34,9 @@ use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
@@ -229,7 +233,10 @@ class EmbeddedProductRepository extends BaseRepository
                     $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
                     $item->sync_document_button = $documentCount < 5;
                 }
+            } elseif (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
 
+                $isSukoonEpReadyForSage = $transaction[0]->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+                $item->sync_document_button = (! $isSukoonEpReadyForSage) && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -298,11 +305,11 @@ class EmbeddedProductRepository extends BaseRepository
         ];
     }
 
-    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
+    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $callPurchaseFlow = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
-            return false;
+            return ['success' => false, 'message' => 'Only car, bike, home & travel lob are allowed'];
         }
 
         $epTransaction = EmbeddedTransaction::where([
@@ -322,54 +329,112 @@ class EmbeddedProductRepository extends BaseRepository
             $epTransaction = $epTransaction->whereIn('product_id', $optionsIds);
         }
 
-        if ($resendEmail) {
-            $epTransaction->whereHas('product.embeddedProduct', function ($query) {
-                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
-            });
+        $epTransaction = $epTransaction->get();
+        if ($epTransaction->isEmpty()) {
+            return ['success' => false, 'message' => 'Record not found'];
         }
 
-        $epTransaction = $epTransaction->get();
+        $response = ['success' => false];
+        foreach ($epTransaction as $item) {
+            $product_id = $item->product_id;
+            $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
 
-        if ($epTransaction->isNotEmpty()) {
-            foreach ($epTransaction as $item) {
-                $product_id = $item->product_id;
-                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+            $isDocPresent = $item->documents->count() > 0;
+            if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
+                $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                ProcessSyncAlfredProtect::dispatch($quoteObject);
+                $response = ['success' => true];
 
-                $isDocPresent = $item->documents->count() > 0;
-                if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
-                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    ProcessSyncAlfredProtect::dispatch($quoteObject);
+            } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+            && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
 
-                } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
+                $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
+                $response = ['success' => true];
 
-                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
+            } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
+                && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
+
+                $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
+
+                if ($callPurchaseFlow) {
+                    // Sukoon Medex Purchase Flow
+                    SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                    LoggerService::info("SukoonMedexPurchaseFlowJob dispatched, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
+                    $response = ['success' => true];
 
                 } else {
+                    try {
+                        $savedDocumentTypes = $item->documents->pluck('document_type_code')->toArray();
+                        $sukoonInitialDocTypes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
 
-                    // EP Send documents
-                    $data = [];
-                    $data['quoteId'] = $leadId;
-                    $data['modelType'] = $modelType;
-                    $data['epId'] = $embedded_product_id;
-                    $data['regenerate'] = $resendEmail;
-                    $this->fetchSendDocument($data);
+                        // check all email-required documents are saved
+                        if (empty(array_diff($sukoonInitialDocTypes, $savedDocumentTypes))) {
+
+                            $sukoonMedexService = app(SukoonMedexService::class);
+                            $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
+                            $sukoonMedexService->sendDocuments($savedDocumentTypes);
+
+                            $response = ['success' => true];
+                        } else {
+                            $response = ['success' => false, 'message' => 'Required documents are not saved, please sync documents first'];
+                        }
+
+                    } catch (Exception $e) {
+                        $response = ['success' => false, 'message' => $e->getMessage()];
+                    }
                 }
             }
         }
+
+        return $response;
     }
 
     public function fetchSyncDocument($data)
     {
+        $epId = $data['epId'];
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
+
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
-            return 'Quote not found';
+            return ['success' => false, 'message' => 'Quote not found'];
         }
 
-        ProcessSyncAlfredProtect::dispatch($quoteObject);
+        $ep = $this->where('id', $epId)->first();
+        if (empty($ep)) {
+            return ['success' => false, 'message' => 'Embedded Product not found'];
+        }
+
+        $shortCode = $ep->short_code;
+        if (EmbeddedProductStrategy::checkAlfredProtect($shortCode)) {
+            ProcessSyncAlfredProtect::dispatch($quoteObject);
+        } elseif (EmbeddedProductStrategy::checkSukoonMedex($shortCode)) {
+
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $quoteObject->load('embeddedTransactions.product.embeddedProduct');
+
+            $shortCodes = EmbeddedProductEnum::getSukoonMedexCodes() ?? [];
+            $transaction = $this->fetchTransaction($modelType, $quoteId, $ep, shortCodes: $shortCodes)
+                ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+                ->first();
+            if (empty($transaction)) {
+                LoggerService::info("No transaction found, ref_id: {$quoteObject->code}");
+
+                return ['success' => false, 'message' => 'No transaction found'];
+            }
+
+            try {
+                $sukoonMedexService = app(SukoonMedexService::class);
+                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
+                $sukoonMedexService->processPurchaseFlow();
+            } catch (Exception $e) {
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
+        }
+
+        return ['success' => true];
     }
 
     public function fetchSendDocument($data)
@@ -377,7 +442,6 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
-        $regenerate = $data['regenerate'];
 
         $ep = $this->where('id', $epId)->first();
         if (! $ep) {
@@ -406,8 +470,9 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-        } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
-            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep, $regenerate);
+        } elseif (EmbeddedProductStrategy::checkSukoonMedex($short_code)) {
+            return $this->sendMedexEmailV3($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep);
+            // return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep, $data['regenerate']);
         }
     }
 
@@ -453,7 +518,7 @@ class EmbeddedProductRepository extends BaseRepository
         return $advisorData;
     }
 
-    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true)
+    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
     {
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -465,6 +530,12 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($selected) {
             $transactions = $transactions->where('is_selected', true);
+        }
+
+        if (! empty($shortCodes)) {
+            $transactions = $transactions->whereHas('product.embeddedProduct', function ($query) use ($shortCodes) {
+                $query->whereIn('short_code', $shortCodes);
+            });
         }
 
         return $transactions->get();
@@ -505,18 +576,18 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep, $regenerate)
+    private function sendMedexEmailV3($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep)
     {
-        $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType, $regenerate);
+        $documents = $transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get();
         $certificatesConfig = config('embedded-products.certificates');
 
-        if ($pdf) {
+        foreach ($documents as $document) {
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-            $url = $websiteURL.$pdf->doc_url;
+            $url = $websiteURL.$document->doc_url;
             $file = file_get_contents($url);
             $attachments[] = [
                 'Content' => base64_encode($file),
-                'Name' => 'Salama_Certificate.pdf',
+                'Name' => $document->original_name,
                 'ContentType' => 'application/pdf',
             ];
         }
@@ -546,6 +617,49 @@ class EmbeddedProductRepository extends BaseRepository
 
         return 'Certificate sent successfully';
     }
+
+    // TODO:: remove this function after testing
+    // private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep, $regenerate)
+    // {
+    //     $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType, $regenerate);
+    //     $certificatesConfig = config('embedded-products.certificates');
+
+    //     if ($pdf) {
+    //         $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+    //         $url = $websiteURL.$pdf->doc_url;
+    //         $file = file_get_contents($url);
+    //         $attachments[] = [
+    //             'Content' => base64_encode($file),
+    //             'Name' => 'Salama_Certificate.pdf',
+    //             'ContentType' => 'application/pdf',
+    //         ];
+    //     }
+
+    //     $body = json_encode([
+    //         'From' => config('constants.IM_FROM_EMAIL'),
+    //         'ReplyTo' => $advisorData['email'] ?? null,
+    //         'To' => $quoteObject->email,
+    //         'Cc' => $advisorData['email'] ?? '',
+    //         'Tag' => '',
+    //         'TemplateAlias' => $certificatesConfig[$short_code]['email_template_alias'],
+    //         'Attachments' => $attachments,
+    //         'TemplateModel' => [
+    //             'params' => [
+    //                 'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
+    //                 'isMedex' => strtoupper($short_code) == EmbeddedProductEnum::MDX,
+    //                 'productName' => $ep->product_name,
+    //                 'productDescription' => $ep->description,
+    //                 'advisor' => (object) $advisorData,
+    //             ],
+    //             'subject' => 'Thank you for your purchase of '.$ep->product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
+    //         ],
+    //         'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
+    //     ], JSON_UNESCAPED_SLASHES);
+
+    //     SendEPDocumentsJob::dispatch($body);
+
+    //     return 'Certificate sent successfully';
+    // }
 
     private function handleAjaxResponse($message, $status)
     {

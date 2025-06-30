@@ -130,16 +130,24 @@ class EmbeddedProductController extends Controller
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
-        EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
+        $result = EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
 
-        return redirect()->back()->with('success', 'Certificate send Successfully');
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message'] ?? 'Certificate send successfully');
+        } else {
+            return redirect()->back()->with('error', $result['message'] ?? 'Certificate send failed');
+        }
     }
 
     public function syncDocument(AlfredProtectDocumentSyncRequest $request)
     {
-        EmbeddedProductRepository::syncDocument($request->validated());
+        $result = EmbeddedProductRepository::syncDocument($request->validated());
 
-        return redirect()->back()->with('success', 'Re-gerating resquest processing');
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message'] ?? 'Re-gerating request processing');
+        } else {
+            return redirect()->back()->with('error', $result['message'] ?? 'Re-gerating request failed');
+        }
     }
 
     /**
