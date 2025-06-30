@@ -345,6 +345,8 @@ class SendEmailCustomerService extends BaseService
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
             if ($emailAttachments) {
+                LoggerService::info('fn: sendRenewalsOcbEmail - emailAttachments exists');
+
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
                     $attachments[] = [
@@ -355,6 +357,8 @@ class SendEmailCustomerService extends BaseService
             }
 
             if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+                LoggerService::info('fn: sendRenewalsOcbEmail - pdfAttachment exists');
+
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -377,6 +381,8 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
+
+            LoggerService::info('fn: attachments count: '.count($attachments));
 
             $ccAdvisor = [];
             if (isset($emailData->advisorEmail) && isset($emailData->advisorName)) {
@@ -1107,8 +1113,11 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => $attachments ?? null,
             ];
+
+            if (count($attachments) > 0) {
+                $body['attachment'] = $attachments;
+            }
 
             $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || isset($emailData->isGroupMedical);
 
