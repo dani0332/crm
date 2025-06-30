@@ -62,7 +62,7 @@ class LegacyPolicyController extends Controller
     public function getS3TempUrl(Request $request)
     {
         LoggerService::info('getS3TempUrl', ['legacyPolicyId' => $request->legacyPolicyId, 'file-name' => $request->fileName]);
-        
+
         try {
             $expiryDate = now()->addMinutes(40);
             $fileName = $request->fileName;
