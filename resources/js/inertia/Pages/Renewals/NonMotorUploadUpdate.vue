@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 const notification = useToast();
 const page = usePage();
 const uploadForm = useForm({
@@ -8,6 +8,7 @@ const uploadForm = useForm({
 });
 let file = '';
 let files = [];
+let isUploading = ref(false);
 defineProps({
   azureStorageUrl: String,
   azureStorageContainer: String,
@@ -18,7 +19,181 @@ let errors = {
   type: '',
   step: '',
 };
+
+// table for home
 const tableData = [
+  {
+    id: 1,
+    name: 'Customer Name',
+    description: 'Customer name',
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 2,
+    name: 'Customer Email',
+    description: 'Customer email',
+    required: 'No',
+    maxSize: 255,
+  },
+  {
+    id: 3,
+    name: 'Customer Number',
+    description: 'Customer mobile number',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 4,
+    name: 'Insurance Type',
+    description: 'Insurer type code',
+    required: 'Yes',
+    maxSize: 10,
+  },
+  {
+    id: 5,
+    name: 'Current Insurance Provider',
+    description: 'Currently insured with',
+    required: 'Yes',
+    maxSize: 20,
+  },
+  {
+    id: 6,
+    name: 'Advisor Email',
+    description: 'Advisor email',
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 7,
+    name: 'Policy Number',
+    description: 'Previous policy number',
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 8,
+    name: 'Policy Start Date',
+    description: 'Previous policy start date',
+    required: 'No',
+    maxSize: 10,
+  },
+  {
+    id: 9,
+    name: 'Policy End Date',
+    description: 'Previous policy expiry date',
+    required: 'Yes',
+    maxSize: 10,
+  },
+  {
+    id: 10,
+    name: 'You are a',
+    description: 'Ownership status',
+    required: 'Yes',
+    maxSize: 150,
+  },
+  {
+    id: 11,
+    name: 'I live in a',
+    description: 'Type of property',
+    required: 'Yes',
+    maxSize: 25,
+  },
+  {
+    id: 12,
+    name: 'Occupancy Status for Owners',
+    description: "Type of owner's occupancy",
+    required: 'No',
+    maxSize: 150,
+  },
+  {
+    id: 13,
+    name: 'Location Area',
+    description: 'Location Area',
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 14,
+    name: 'Cover required',
+    description: 'Type of coverage you need',
+    required: 'Yes',
+    maxSize: 50,
+  },
+  {
+    id: 15,
+    name: 'Contents',
+    description: 'Contents AED',
+    required: 'No',
+    maxSize: 50,
+  },
+  {
+    id: 16,
+    name: 'Personal Belongings',
+    description: 'Personal belongings AED',
+    required: 'No',
+    maxSize: 25,
+  },
+  {
+    id: 17,
+    name: 'Building',
+    description: ' Building AED',
+    required: 'no',
+    maxSize: 25,
+  },
+  {
+    id: 18,
+    name: 'Insurance Provider',
+    description: 'Provider name',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 19,
+    name: 'Plan Name',
+    description: 'Plan name',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 20,
+    name: 'Claims History',
+    description: 'Claims history',
+    required: 'Yes',
+    maxSize: 10,
+  },
+  {
+    id: 21,
+    name: 'Premium',
+    description: 'Renewal premium',
+    required: 'No',
+    maxSize: 20,
+  },
+  {
+    id: 22,
+    name: 'Insurer Quote No.',
+    description: 'Insurer Quote No.',
+    required: 'No',
+    maxSize: 20,
+  },
+  {
+    id: 23,
+    name: 'Previous Advisor Email',
+    description: 'Previous advisor',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 24,
+    name: 'Notes',
+    description: 'Additional notes',
+    required: 'No',
+    maxSize: 100,
+  },
+];
+
+// table for health
+const tableDataHealth = [
   {
     id: 1,
     name: 'Customer Name',
@@ -154,12 +329,13 @@ function handleFileUpload(event) {
 }
 function onSubmit(isValid) {
   if (isValid) {
+    isUploading.value = true;
     let formData = new FormData();
     formData.append('file_name', file);
     formData.append('lob', uploadForm.lob);
     formData.append('renewals_upload_type', 'update');
     axios
-      .post('/renewals/upload-update', formData, {
+      .post('/renewals/non-motor/upload-update', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -185,6 +361,9 @@ function onSubmit(isValid) {
           position: 'top',
         });
         console.log('FAILURE!!');
+      })
+      .finally(() => {
+        isUploading.value = false;
       });
   }
 }
@@ -201,7 +380,15 @@ const quoteTypesOptions = computed(() => {
   return quoteTypesOptions;
 });
 
-uploadForm.lob = page.props.lobs.Health;
+// Computed property to determine which table data to display based on selected LoB
+const currentTableData = computed(() => {
+  return uploadForm.lob === page.props.lobs.Health
+    ? tableDataHealth
+    : tableData;
+});
+
+// Set default LoB
+uploadForm.lob = page.props.lobs.Home;
 </script>
 
 <template>
@@ -268,10 +455,57 @@ uploadForm.lob = page.props.lobs.Health;
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="submit"
+          :disabled="isUploading"
+        >
+          <template v-if="isUploading">
+            <div class="flex items-center gap-2">
+              <svg
+                class="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span>Uploading...</span>
+            </div>
+          </template>
+          <template v-else> Upload </template>
+        </x-button>
       </div>
       <div class="flex items-center my-4">
+        <!-- Home LOB download button -->
         <x-button
+          v-if="uploadForm.lob === page.props.lobs.Home"
+          :href="
+            azureStorageUrl +
+            azureStorageContainer +
+            '/renewals/renewals_home_upload_update_m4.xlsx'
+          "
+          color="green"
+          icon-right="cells"
+        >
+          Download Sample XLSX
+        </x-button>
+        <!-- Health LOB download button -->
+        <x-button
+          v-if="uploadForm.lob === page.props.lobs.Health"
           :href="
             azureStorageUrl +
             azureStorageContainer +
@@ -298,7 +532,7 @@ uploadForm.lob = page.props.lobs.Health;
               </tr>
             </thead>
             <tbody class="vue3-easy-data-table__body">
-              <tr v-for="(row, index) in tableData" :key="index">
+              <tr v-for="(row, index) in currentTableData" :key="index">
                 <td>{{ row.id }}</td>
                 <td>{{ row.name }}</td>
                 <td>{{ row.description }}</td>

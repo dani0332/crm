@@ -83,6 +83,7 @@ const filters = reactive({
   insurance_provider_ids: [],
   plan_name: [],
   travel_start_date: '',
+  private_client: 'all',
 });
 
 const loader = reactive({
@@ -149,6 +150,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -340,14 +342,25 @@ function onAssignLead(isValid) {
   }
 }
 
-function setQueryFilters() {
-  for (const [key] of Object.entries(params)) {
+function setQueryStringFilters() {
+  for (const [key, value] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+      filters[key.substring(0, key.length - 2)] = value;
     } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
+      // Handle different data types appropriately
+      if (key.includes('_id') && !isNaN(parseInt(value))) {
+        // ID fields should be integers
+        filters[key] = parseInt(value);
+      } else if (key === 'page' && !isNaN(parseInt(value))) {
+        // Page should be integer
+        filters[key] = parseInt(value);
+      } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+        // Boolean-like fields
+        filters[key] = parseInt(value);
+      } else {
+        // Keep as string for dates, text fields, etc.
+        filters[key] = value;
+      }
     }
   }
 }
@@ -1028,6 +1041,19 @@ const insurerAMLStatusOption = computed(() => {
           v-model="filters.travel_start_date"
           label="Travel Start Date"
           format="dd-MM-yyyy"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

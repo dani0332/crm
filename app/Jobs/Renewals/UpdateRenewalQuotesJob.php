@@ -3,6 +3,8 @@
 namespace App\Jobs\Renewals;
 
 use App\Exceptions\RenewalProcessException;
+use App\Enums\RenewalProcessStatuses;
+use App\Models\RenewalsUploadLeads;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Batchable;
