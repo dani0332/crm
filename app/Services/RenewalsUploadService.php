@@ -75,10 +75,10 @@ use App\Models\FtcEmailLog;
 use App\Models\HealthPlan;
 use App\Models\HealthPlanCoPayment;
 use App\Models\HealthQuote;
-use App\Models\MemberCategory;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
+use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
 use App\Models\QuoteAdditionalDetail;
@@ -583,7 +583,7 @@ class RenewalsUploadService
                 // start file import
                 if ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HEA) {
                     $renewalsUpload = new UploadAndUpdateHealthImport($renewalsUploadLead);
-                } else if ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+                } elseif ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HOM) {
                     $renewalsUpload = new UploadAndUpdateHomeImport($renewalsUploadLead);
                 } else {
                     $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
@@ -2135,7 +2135,7 @@ class RenewalsUploadService
                     }
                 }
                 // If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
-                if (($lead->quote_type != quoteTypeCode::TRA && $lead->quote_type != QuoteTypeShortCode::HEA && $lead->quote_type != QuoteTypeShortCode::HOM ) || ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->quote_type == QuoteTypeShortCode::HEA)) {
+                if (($lead->quote_type != quoteTypeCode::TRA && $lead->quote_type != QuoteTypeShortCode::HEA && $lead->quote_type != QuoteTypeShortCode::HOM) || ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->quote_type == QuoteTypeShortCode::HEA)) {
                     if (! $leadData->insurer) {
                         $leadValidationErrors->push('Insurance Provider is required');
                     } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {

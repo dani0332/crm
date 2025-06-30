@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
