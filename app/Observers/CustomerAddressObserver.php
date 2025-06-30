@@ -7,7 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\CustomerAddress;
-use App\Services\CarQuoteService;
+use App\Services\CustomerAddressService;
 use Illuminate\Support\Facades\Log;
 
 class CustomerAddressObserver
@@ -41,7 +41,7 @@ class CustomerAddressObserver
                             'landmark' => $customerAddress->landmark,
                         ];
                         info('Sending address notification to customer for lead in CustomerAddressObserver : '.$carQuote->uuid);
-                        app(CarQuoteService::class)->triggerBirdFlow($carQuote, $address, BirdFlowStatusEnum::ADDRESS_UPDATED);
+                        app(CustomerAddressService::class)->triggerBirdFlow($carQuote, $address, BirdFlowStatusEnum::ADDRESS_UPDATED, QuoteTypeId::Car);
                     }
                 }
             }
