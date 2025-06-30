@@ -2149,7 +2149,7 @@ class RenewalsUploadService
                     }
                 }
 
-                if ($lead->quote_type != QuoteTypeShortCode::HEA && $lead->quote_type != QuoteTypeShortCode::HOM && $lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->product_type) {
+                if (! in_array($lead->quote_type, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM])  && $lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->product_type) {
                     $leadValidationErrors->push('Product Type is Required');
                 }
                 if ($leadData->advisor && $isSIC == 0 && ! User::where('email', $leadData->advisor)->first()) {
