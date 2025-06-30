@@ -46,7 +46,6 @@ class SageApiEmbeddedProductService
         $quoteTypeId = $sageRequest->quoteTypeId;
 
         $sageLogArray = $sendUpdateLog->sageApiLogs->keyBy('step')->toArray();
-
         // Create AR Commission and Premium Invoice
         $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal([$sendUpdateLog, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray], true);
         if (! $createARInvoicePremAndComm['status']) {
