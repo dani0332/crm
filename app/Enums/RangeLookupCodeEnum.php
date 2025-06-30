@@ -2,14 +2,14 @@
 
 namespace App\Enums;
 
-enum RangeLookupIdEnums: int
+enum RangeLookupCodeEnum: string
 {
-    case LANDLORD_RENTING_OUT = 2;
+    case LANDLORD_RENTING_OUT = 'landlord_renting_out';
 
     /**
      * Get the value of an enum case
      */
-    public function value(): int
+    public function value(): string
     {
         return $this->value;
     }
