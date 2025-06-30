@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ActivityApiRequest extends FormRequest
 {
@@ -44,5 +46,10 @@ class ActivityApiRequest extends FormRequest
             'activityType.required' => 'Activity Type Required',
             'activityType.string' => 'Activity Type must be a string',
         ];
+    }
+
+    public function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json(['message' => $validator->errors()], 422));
     }
 }
