@@ -360,8 +360,8 @@ class EmbeddedProductRepository extends BaseRepository
 
                 if ($callPurchaseFlow) {
                     // Sukoon Medex Purchase Flow
+                    LoggerService::info("SukoonMedexPurchaseFlowJob, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
                     SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
-                    LoggerService::info("SukoonMedexPurchaseFlowJob dispatched, ref_id: {$quoteObject->code}, embedded_transaction_id: {$item->id}");
                     $response = ['success' => true];
 
                 } else {
