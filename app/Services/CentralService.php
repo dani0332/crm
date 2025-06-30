@@ -1485,26 +1485,4 @@ class CentralService extends BaseService
 
         return $paymentGatewayIds;
     }
-
-    /**
-     * Call CAPI v1-quote-journey
-     */
-    public function sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId)
-    {
-        LoggerService::startQuoteLogging($quoteUUID);
-        LoggerService::info('Sending quote journey to CAPI', ['quoteTypeId' => $quoteTypeId]);
-        $payload = [
-            'quoteUUID' => $quoteUUID,
-            'quoteTypeId' => $quoteTypeId,
-            'quoteJourneyEntries' => [
-                [
-                    'status' => QuoteJourney::COMPLETED,
-                    'text' => QuoteJourney::POLICY_ISSUANCE,
-                ],
-            ],
-        ];
-        LoggerService::info('Sending quote journey to CAPI Payload ', extra: ['payload' => $payload]);
-        $response = Capi::request('/api/v1-quote-journey', 'post', $payload);
-        LoggerService::info('Received response from CAPI for quote journey', extra: ['response' => $response]);
-    }
 }
