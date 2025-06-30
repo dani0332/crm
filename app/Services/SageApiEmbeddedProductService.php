@@ -141,7 +141,7 @@ class SageApiEmbeddedProductService
 
         LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Embedded Product Booking Process Completed for : '.$sukoonMedXTransaction->code);
 
-        return ['status' => true, 'message' => 'Embedded Product is Booked for EP Code : ' . $sukoonMedXTransaction->code];
+        return ['status' => true, 'message' => 'Embedded Product is Booked for EP Code : '.$sukoonMedXTransaction->code];
     }
 
     private function createARPrepaymentReceipt($sageRequestDataArray): array
@@ -356,7 +356,7 @@ class SageApiEmbeddedProductService
             return $this->sageApiService->logErrorAndReturn([$sukoonMedXEPTransaction, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
         }
         $returnMessage['status'] = true;
-        $returnMessage['message'] = 'AR Premium and Commission invoice created on sage for EP Code '. $sukoonMedXEPTransaction->code;
+        $returnMessage['message'] = 'AR Premium and Commission invoice created on sage for EP Code '.$sukoonMedXEPTransaction->code;
 
         return $returnMessage;
 
@@ -470,7 +470,7 @@ class SageApiEmbeddedProductService
         LoggerService::info(' End of Upfront createAPInvoicePrem for : '.$quote->code.' ');
 
         $returnMessage['status'] = true;
-        $returnMessage['message'] = 'AP Premium invoice created on sage for EP Code ' . $sukoonMedXEPTransaction->code;
+        $returnMessage['message'] = 'AP Premium invoice created on sage for EP Code '.$sukoonMedXEPTransaction->code;
 
         return $returnMessage;
     }
@@ -575,7 +575,7 @@ class SageApiEmbeddedProductService
             return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
         }
         $returnMessage['status'] = true;
-        $returnMessage['message'] = 'Reversal of AR Premium and Commission invoice created on sage for SendUpdate Code : '.$sendUpdateLog->code . ' EP code: '.$sukoonMedXEPTransaction->code;
+        $returnMessage['message'] = 'Reversal of AR Premium and Commission invoice created on sage for SendUpdate Code : '.$sendUpdateLog->code.' EP code: '.$sukoonMedXEPTransaction->code;
 
         return $returnMessage;
 
@@ -689,7 +689,7 @@ class SageApiEmbeddedProductService
         LoggerService::info(' End of Upfront createAPInvoicePrem for : SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$sukoonMedXEPTransaction->code);
 
         $returnMessage['status'] = true;
-        $returnMessage['message'] = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$sukoonMedXEPTransaction->code .' AP Premium invoice created on sage';
+        $returnMessage['message'] = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$sukoonMedXEPTransaction->code.' AP Premium invoice created on sage';
 
         return $returnMessage;
     }
@@ -719,7 +719,7 @@ class SageApiEmbeddedProductService
 
         if (isset($postedResponse['error'])) {
             $errorMessage = ' EP code: '.$sukoonMedXEPTransaction->code.' Error while making split prepayments to sage';
-            $message = ' EP code: '.$sukoonMedXEPTransaction->code. ' createPaymentReceiptOneInvoice failed';
+            $message = ' EP code: '.$sukoonMedXEPTransaction->code.' createPaymentReceiptOneInvoice failed';
 
             return $this->sageApiService->logErrorAndReturn([$sukoonMedXEPTransaction, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
         }
