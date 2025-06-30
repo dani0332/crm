@@ -5,6 +5,9 @@ const props = defineProps({
   quoteStatusCode: Object,
   amlDecisionStatusCode: Object,
   quoteObject: Object,
+  customerTypeEnum: Object,
+  insured: Object,
+  customerId: Number,
 });
 
 const page = usePage();
@@ -13,6 +16,9 @@ const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const isScreeningIndividual = computed(() => {
+  return props.aml?.search_type == props.customerTypeEnum.Individual;
+});
 
 const amlResults = ref(props.amlResults);
 const loader = reactive({
@@ -44,6 +50,62 @@ const passingDecisions = [
   props.amlDecisionStatusCode.FALSE_POSITIVE,
   props.amlDecisionStatusCode.TRUE_MATCH_ACCEPT_RISK,
 ];
+
+const complianceComponent = reactive({
+  insured_id: props.insured?.id ?? null,
+  customer_id: props.customerId ?? null,
+  pep: props.insured?.insured_kyc?.pep ?? null,
+  financial_sanctions: props.insured?.insured_kyc?.financial_sanctions ?? null,
+  dual_nationality: props.insured?.insured_kyc?.dual_nationality ?? null,
+  in_sanction_list: props.insured?.insured_kyc?.in_sanction_list ?? null,
+  deal_sanction_list: props.insured?.insured_kyc?.deal_sanction_list ?? null,
+  is_operation_high_risk:
+    props.insured?.insured_kyc?.is_operation_high_risk ?? null,
+  transaction_pattern: props.insured?.insured_kyc?.transaction_pattern ?? null,
+  // individual
+  is_partner: props.insured?.insured_kyc?.is_partner ?? null,
+  // entity
+  is_sanction_match: props.insured?.insured_kyc?.is_sanction_match ?? null,
+  in_fatf: props.insured?.insured_kyc?.in_fatf ?? null,
+  is_owner_high_risk: props.insured?.insured_kyc?.is_owner_high_risk ?? null,
+  transaction_volume: props.insured?.insured_kyc?.transaction_volume ?? null,
+  transaction_activities:
+    props.insured?.insured_kyc?.transaction_activities ?? null,
+});
+
+const transactionVolumeOptions = [
+  {
+    value: 'less-than-3-in-month',
+    label: 'Less than 3 transactions in a month',
+  },
+  { value: '4-7-in-month', label: '4 to 7 transactions in a month' },
+  {
+    value: 'more-than-8-in-month',
+    label: 'More than 8 transactions in a month',
+  },
+];
+const transactionActivitiesOptions = [
+  {
+    value: 'less_expected_annual_activity',
+    label: 'Less than expected Annual Activity',
+  },
+  {
+    value: 'near_expected_annual_activity',
+    label: 'Near to expected Annual Activity',
+  },
+  {
+    value: 'more_expected_annual_activity',
+    label: 'More than expected Annual Activity',
+  },
+];
+const transactionPatternOptions = [
+  { value: 'count_pattern_changes', label: 'Yes - Count Pattern Changes' },
+  { value: 'behaviour_changes', label: 'Yes - Behaviour Changes' },
+  { value: 'business_model_changes', label: 'Yes - Business Model Changes' },
+  { value: 'no_changes', label: 'No Changes' },
+  { value: 'not_applicable', label: 'Not Applicable' },
+];
+
 const decisionTitles = {
   FalsePositive: 'False Positive',
   TrueMatchAcceptRisk: 'True Match - Accept Risk',
@@ -66,12 +128,26 @@ function submitDecision(decision) {
     let quoteStatusCode = passingDecisions.includes(decision)
       ? props.quoteStatusCode.AMLScreeningCleared
       : props.quoteStatusCode.AMLScreeningFailed;
-    let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}
-    /quoteStatusUpdate/${quoteStatusCode}?notes=${decisionNotes.value}&in_adverse_media=${in_adverse_media.value}&is_owner_pep=${is_owner_pep.value}&is_controlling_pep=${is_controlling_pep.value}&aml_id=${props.aml.id}&aml_decision=${decision}
-    &decisonsForUpdatePortal=[${JSON.stringify(decisionSelected.value)}]&result_id=${JSON.parse(props.aml.results)[0].ResultID}`;
+    let url = route('quoteStatusUpdate', {
+      quoteTypeId: props.aml.quote_type_id,
+      quoteRequestId: props.aml.quote_request_id,
+      quoteTypeCode: quoteStatusCode,
+    });
 
     axios
-      .get(url)
+      .get(url, {
+        params: {
+          notes: decisionNotes.value,
+          in_adverse_media: in_adverse_media.value,
+          is_owner_pep: is_owner_pep.value,
+          is_controlling_pep: is_controlling_pep.value,
+          aml_id: props.aml.id,
+          aml_decision: decision,
+          decisonsForUpdatePortal: `[${JSON.stringify(decisionSelected.value)}]`,
+          result_id: JSON.parse(props.aml.results)[0].ResultID,
+          complianceComponent: complianceComponent,
+        },
+      })
       .then(response => {
         submitDecisionLoading.value = false;
         decisionNotesModal.value = false;
@@ -90,6 +166,11 @@ function submitDecision(decision) {
       })
       .catch(err => {
         console.log(err);
+      })
+      .finally(() => {
+        router.reload({
+          only: ['insured'],
+        });
       });
   }
 }
@@ -247,7 +328,7 @@ function fieldValidationsperson() {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Quote Request ID</dt>
             <Link
-              :href="`${aml.quote_type_id}/details/${aml.quote_request_id}`"
+              :href="`/kyc/aml/${aml.quote_type_id}/details/${aml.quote_request_id}`"
               class="text-primary-500 hover:underline"
             >
               {{ aml.quote_request_id }}
@@ -369,7 +450,7 @@ function fieldValidationsperson() {
           {{ aml.search_type }}
         </template>
       </DataTable>
-      <div v-if="amlResults.length" class="flex justify-end">
+      <div v-if="amlResults.length" class="flex justify-end mb-4">
         <x-button
           class="mt-2 ml-2"
           color="emerald"
@@ -404,6 +485,12 @@ function fieldValidationsperson() {
           True Match - Accept Risk
         </x-button>
       </div>
+
+      <AuditLogs
+        :title="'KYC Audit Logs'"
+        :type="`App\\Models\\InsuredKyc`"
+        :id="props.insured?.insured_kyc?.id"
+      />
       <x-modal
         v-model="decisionNotesModal"
         :title="`${decisionModalHeading}`"
@@ -498,6 +585,224 @@ function fieldValidationsperson() {
             />
           </div>
         </div>
+
+        <!-- Compliance Section: For Compliance Use Only (migrated from KYCDetails.vue) -->
+        <x-label>Is the customer a PEP?</x-label>
+        <div class="grid md:grid-cols-2 mb-4 mt-2">
+          <x-select
+            v-model="complianceComponent.pep"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 2, label: 'No' },
+            ]"
+            placeholder="Select Result"
+            class="w-full"
+            size="xs"
+            :error="fieldRequiredowner"
+          />
+        </div>
+        <x-label>
+          Is the customer or business subjected to financial sanctions / or
+          connected with prescribed terrorist organizations?
+        </x-label>
+        <div class="grid md:grid-cols-2 mb-4 mt-2">
+          <x-select
+            v-model="complianceComponent.financial_sanctions"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 2, label: 'No' },
+            ]"
+            placeholder="Select Result"
+            class="w-full"
+            size="xs"
+            :error="fieldRequiredowner"
+          />
+        </div>
+        <x-label>Does the customer have dual nationality?</x-label>
+        <div class="grid md:grid-cols-2 mb-4 mt-2">
+          <x-select
+            v-model="complianceComponent.dual_nationality"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 2, label: 'No' },
+            ]"
+            placeholder="Select Result"
+            class="w-full"
+            size="xs"
+            :error="fieldRequiredowner"
+          />
+        </div>
+        <x-label v-if="isScreeningIndividual"
+          >Is the Natural Person listed in any Sanction/OOL/SIP list?</x-label
+        >
+        <x-label v-else
+          >Does the Company name or Subsidiary/Affiliate entities feature in any
+          sanction list?</x-label
+        >
+        <div class="grid md:grid-cols-2 mb-4 mt-2">
+          <x-select
+            v-model="complianceComponent.in_sanction_list"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 2, label: 'No' },
+            ]"
+            placeholder="Select Result"
+            class="w-full"
+            size="xs"
+            :error="fieldRequiredowner"
+          />
+        </div>
+        <x-label v-if="isScreeningIndividual"
+          >Does the Natural Person intend to provide professional services in
+          any sanctions-listed country/ies?</x-label
+        >
+        <x-label v-else
+          >Does the customer intend to deal with any country listed in the
+          Sanctions List?</x-label
+        >
+        <div class="grid md:grid-cols-2 mb-4 mt-2">
+          <x-select
+            v-model="complianceComponent.deal_sanction_list"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 2, label: 'No' },
+            ]"
+            placeholder="Select Result"
+            class="w-full"
+            size="xs"
+            :error="fieldRequiredowner"
+          />
+        </div>
+        <x-label v-if="isScreeningIndividual"
+          >Is the Natural Person controlling/involved in any business listed in
+          High-Risk Countries?</x-label
+        >
+        <x-label v-else
+          >Do the customer or subsidiary/ affiliate entities have operations in
+          any High-Risk Countries?</x-label
+        >
+        <div class="grid md:grid-cols-2 mb-4 mt-2">
+          <x-select
+            v-model="complianceComponent.is_operation_high_risk"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 2, label: 'No' },
+            ]"
+            placeholder="Select Result"
+            class="w-full"
+            size="xs"
+            :error="fieldRequiredowner"
+          />
+        </div>
+        <template v-if="isScreeningIndividual">
+          <x-label
+            >Is the Natural Person an Owner/Shareholder/Partner in any
+            Organization?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="complianceComponent.is_partner"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 2, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredowner"
+            />
+          </div>
+        </template>
+        <template v-else>
+          <x-label
+            >Is There A Sanction Match On The Owner/Partners/Bod, Senior
+            Management, Group Company, Holding Company Or Related Company
+            Names?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="complianceComponent.is_sanction_match"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 2, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredowner"
+            />
+          </div>
+          <x-label
+            >Does the company have any subsidiary, affiliate, branch, or
+            group/holding company in FATF-listed high-risk monitored
+            jurisdiction?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="complianceComponent.in_fatf"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 2, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredowner"
+            />
+          </div>
+          <x-label
+            >Is the owner/ Shareholder/ Partner/Director of the company from
+            High-Risk countries?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="complianceComponent.is_owner_high_risk"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 2, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredowner"
+            />
+          </div>
+        </template>
+        <x-divider class="mb-4 mt-1" />
+        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+          <template v-if="!isScreeningIndividual">
+            <x-field label="Transaction Volume">
+              <x-select
+                v-model="complianceComponent.transaction_volume"
+                :options="transactionVolumeOptions"
+                placeholder="Transaction Volume"
+                class="w-full"
+                :single="true"
+                :error="fieldRequiredowner"
+              />
+            </x-field>
+            <x-field label="Transaction Activities">
+              <x-select
+                v-model="complianceComponent.transaction_activities"
+                :options="transactionActivitiesOptions"
+                placeholder="Transaction Activities"
+                class="w-full"
+                :single="true"
+                :error="fieldRequiredowner"
+              />
+            </x-field>
+          </template>
+          <x-field label="Transaction Pattern Changes">
+            <x-select
+              v-model="complianceComponent.transaction_pattern"
+              :options="transactionPatternOptions"
+              placeholder="Transaction Pattern Changes"
+              class="w-full"
+              :single="true"
+              :error="fieldRequiredowner"
+            />
+          </x-field>
+        </dl>
         <x-textarea
           v-model="decisionNotes"
           placeholder="Notes"

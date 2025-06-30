@@ -19,8 +19,8 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
+use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
-use App\Models\QuoteType;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
@@ -69,10 +69,6 @@ class ReportService extends BaseService
                 $isGroupMedical = true;
             }
 
-            $quoteTypeCode = QuoteType::where('id', '=', $request->quote_type_id)->value('code');
-            $model = 'App\Models\\'.$quoteTypeCode.'Quote';
-            $quoteRequestTable = strtolower($quoteTypeCode).'_quote_request';
-
             $groupByOne = $request->group_by_one;
             $groupByTwo = $request->group_by_two;
             $dateRange = $request->date_range;
@@ -81,11 +77,11 @@ class ReportService extends BaseService
                 $groupBy[] = $groupByTwo;
             }
 
-            $query = $model::query()->select(
+            $query = PersonalQuote::query()->select(
                 'utm_source',
                 'utm_medium',
                 'utm_campaign',
-                DB::raw('COUNT('.$quoteRequestTable.'_detail.id) as leads_count'),
+                DB::raw('COUNT(personal_quote_details.id) as leads_count'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
                 DB::raw('COUNT(CASE  WHEN quote_status_id = '.QuoteStatusEnum::PolicyBooked.' THEN 1 ELSE NULL END) as booked_policies'),
@@ -93,8 +89,9 @@ class ReportService extends BaseService
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
                 DB::raw('sum(CASE WHEN quote_status_id = '.QuoteStatusEnum::PolicyBooked.' THEN price_with_vat ELSE 0 END) as total_sum'),
             )
-                ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy)
-                ->whereNotIn($quoteRequestTable.'.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+                ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')->groupBy($groupBy)
+                ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+                ->where('personal_quotes.quote_type_id', $request->quote_type_id);
 
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
@@ -110,7 +107,7 @@ class ReportService extends BaseService
                 $dateFrom = date('Y-m-d 00:00:00', strtotime($dateRange[0]));
                 $dateTo = date('Y-m-d 23:59:59', strtotime($dateRange[1]));
 
-                $query->whereBetween($quoteRequestTable.'.created_at', [$dateFrom, $dateTo]);
+                $query->whereBetween('personal_quotes.created_at', [$dateFrom, $dateTo]);
             }
 
             $records = $query->get();
@@ -124,7 +121,7 @@ class ReportService extends BaseService
             });
         }
 
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS])->get();
         $lobs->push([
             'id' => 999,
             'text' => 'Group Medical',
@@ -254,6 +251,7 @@ class ReportService extends BaseService
             QuoteTypes::PET,
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
+            QuoteTypes::SAVINGS,
         ];
 
         $allowedLOBs = [];
@@ -327,7 +325,7 @@ class ReportService extends BaseService
             Carbon::parse(now())->startOfDay()->format($dateFormat),
             Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS])->get();
 
         return [
             'tiers' => $tiers,
@@ -351,6 +349,7 @@ class ReportService extends BaseService
             QuoteTypes::PET,
             QuoteTypes::CYCLE,
             QuoteTypes::CORPLINE,
+            QuoteTypes::SAVINGS,
         ];
 
         $productsName = $products->pluck('name')->toArray();
@@ -381,17 +380,19 @@ class ReportService extends BaseService
 
         $totalOp = $request->filter_by === 'total_opportunity';
 
-        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::SAVINGS->value) {
             $pqs = [
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
                 QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
                 QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
+                QuoteTypes::SAVINGS->value => QuoteTypeId::Savings,
             ];
 
             $qtCode = [
                 QuoteTypes::PET->value => quoteTypeCode::Pet,
                 QuoteTypes::CYCLE->value => quoteTypeCode::Cycle,
                 QuoteTypes::YACHT->value => quoteTypeCode::Yacht,
+                QuoteTypes::SAVINGS->value => quoteTypeCode::SAVINGS,
             ];
 
             $userIds = $this->walkTree($authUserId, $qtCode[$lob]);
@@ -538,7 +539,7 @@ class ReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS])->get();
 
         return [
             'teams' => $teams,
@@ -618,6 +619,7 @@ class ReportService extends BaseService
             quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
             quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
             quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
+            quoteTypeCode::SAVINGS => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Savings],
         ];
 
         $quoteTypes = [
@@ -632,6 +634,7 @@ class ReportService extends BaseService
             QuoteTypes::PET,
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
+            QuoteTypes::SAVINGS,
         ];
 
         $allowedLOBs = [];
