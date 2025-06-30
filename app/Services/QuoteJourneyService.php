@@ -11,23 +11,23 @@ class QuoteJourneyService
 {
     /**
      * Generate dynamic quote journey templates based on quote type ID
-    */
-    public function generateQuoteJourneyTemplates($quoteTypeId){
+     */
+    public function generateQuoteJourneyTemplates($quoteTypeId)
+    {
         $quoteTypeName = QuoteTypes::getName(1)->value;
 
         return [
             'leadCreated' => "Information for $quoteTypeName insurance quote provided",
             'planSelected' => "Plan selected for $quoteTypeName insurance",
-            'paymentMade' => "Add-on selected and payment made",
-            'documentUpload' => "Documents upload",
-            'policyIssued' => "Policy issuance"
+            'paymentMade' => 'Add-on selected and payment made',
+            'documentUpload' => 'Documents upload',
+            'policyIssued' => 'Policy issuance',
         ];
     }
 
-
     /**
      * Call CAPI v1-quote-journey
-    */
+     */
     public function sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId, $quoteJourneyEntries)
     {
         LoggerService::startQuoteLogging($quoteUUID);
@@ -35,7 +35,7 @@ class QuoteJourneyService
         $payload = [
             'quoteUUID' => $quoteUUID,
             'quoteTypeId' => $quoteTypeId,
-            'quoteJourneyEntries' => $quoteJourneyEntries
+            'quoteJourneyEntries' => $quoteJourneyEntries,
         ];
         LoggerService::info('Sending quote journey to CAPI Payload ', extra: ['payload' => $payload]);
         $response = Capi::request('/api/v1-quote-journey', 'post', $payload);
@@ -44,15 +44,15 @@ class QuoteJourneyService
 
     /**
      * Policy Issued Quote Journey
-    */
+     */
     public function policyIssuedQuoteJourney($quoteUUID, $quoteTypeId)
     {
         $quoteJourneyTemplates = $this->generateQuoteJourneyTemplates($quoteTypeId);
         $quoteJourneyEntries = [
             [
                 'status' => QuoteJourney::COMPLETED,
-                'text' => $quoteJourneyTemplates['policyIssued']
-            ]
+                'text' => $quoteJourneyTemplates['policyIssued'],
+            ],
         ];
         $this->sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId, $quoteJourneyEntries);
     }
