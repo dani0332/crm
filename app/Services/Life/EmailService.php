@@ -73,8 +73,7 @@ class EmailService
         $workflowType = WorkflowTypeEnum::LIFE_OCA_EMAIL;
         $planIds = isset($data['plan_ids']) && is_array($data['plan_ids']) ? implode(',', $data['plan_ids']) : ($data['plan_ids'] ?? '');
         $dataSource = 'Life-Insurance-UAT'; 
-
-        $instantAlfredLink = config('constants.AFIA_WEBSITE_DOMAIN'). "/life-insurance/quote/$lead->uuid?getLatestRating=true";
+        $instantAlfredLink = config('constants.AFIA_WEBSITE_DOMAIN'). "/life-insurance/quote/$lead->uuid??IA=true";
 
         return (object) [
             // Lead-related data
