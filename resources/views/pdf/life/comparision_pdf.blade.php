@@ -755,7 +755,7 @@
                     @foreach($displayPlans as $planId)
                         <th>
                             <p class="text-center" style="text-align: center; margin: 0; padding: 2px;">
-                                <a class="btn-buy" href="{{($websitURL . '/life-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $plans[$planId]->planId)}}">
+                                <a class="btn-buy" href="{{($websitURL . '/life-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $plans[$planId]->planId) . '&version='. $quote->version}}">
                                     APPLY NOW<br />@php $priceWithVat = $plans[$planId]->isApi ?  number_format($plans[$planId]->actualPremium + $plans[$planId]->vat) : number_format(($plans[$planId]->totalPrice + $plans[$planId]->vat) ?? '0.0'); @endphp
                                     <span style="font-size: 10px; font-weight: normal">AED</span> <strong>{{ $priceWithVat }}</strong>
                                 </a>
@@ -945,7 +945,7 @@
                 <tr>
                     <td colspan="{{ count($displayPlans) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
-                            href="{{ $websitURL . '/life-insurance/quote/' . $quote->uuid }}">
+                            href="{{ $websitURL . '/life-insurance/quote/' . $quote->uuid }}?getLatestRating=true">
                             View all quotes
                             <div style="position: absolute; right: 50px; top: 8px;">
                                 <img src="{{ isset($imageData['quote_plans_pages/ecom_home/open_in_new_icon.png']) ? $imageData['quote_plans_pages/ecom_home/open_in_new_icon.png'] : public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
@@ -965,7 +965,7 @@
 
     </main>
 
-     {{-- PDF Page Footer --}}
+    {{-- PDF Page Footer --}}
     <div class="footer">
         <h4 class="footer-header">
             InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC

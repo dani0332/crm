@@ -1808,12 +1808,6 @@ const editPaymentModal = async (
   initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
   handleCollectionTypeChange();
   handleFrequencyChange(false);
-
-  // Additional frequency change trigger for life quotes to ensure payment schedule updates
-  if (props.quoteType === quoteTypeCodeEnum.Life) {
-    handleFrequencyChange(false);
-  }
-
   handleApprovalReasonChange(false);
   handleDiscountChange();
   handleDeclinedReasonChange();
@@ -3028,7 +3022,6 @@ const isChildPaymentDeletable = computed(() => {
 });
 
 const getPlanName = computed(() => {
-  console.log(props.quoteRequest);
   const plan = planDetail.value;
   if (props.quoteType === quoteTypeCodeEnum.Bike) {
     return plan ? props.quoteRequest.car_plan.text : 'Not Available';
@@ -3091,10 +3084,8 @@ const providerName = computed(() => {
     ecomQuoteType.includes(props.quoteType) &&
     plan.insurance_provider
   ) {
-    console.log('Inside condition', plan.insurance_provider.text);
     return plan ? plan.insurance_provider.text : 'Not Available';
   } else {
-    console.log('Outside condition', plan.text);
     return plan ? plan.text : 'Not Available';
   }
 });

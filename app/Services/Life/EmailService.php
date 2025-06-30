@@ -53,15 +53,6 @@ class EmailService
         }
     }
 
-    private function getPlans(PersonalQuote $quote)
-    {
-        $quotePlans = app(LifeQuoteService::class)->getQuotePlans($quote->uuid);
-        $lifePlans = $quotePlans->quotes->plans;
-
-        return $lifePlans;
-    }
-
-
     protected function scheduleFileDeletion($filePath)
     {
         // Use a job to handle file deletion
@@ -72,6 +63,7 @@ class EmailService
     {
         return ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW)->value('value');
     }
+
     private function mapOCAEmailData($lead, $data)
     {
         $firstName = $lead->first_name;
@@ -79,12 +71,16 @@ class EmailService
         $customerFullName = trim("{$firstName} {$lastName}");
         $advisor = $lead->advisor;
         $workflowType = WorkflowTypeEnum::LIFE_OCA_EMAIL;
+        $planIds = isset($data['plan_ids']) && is_array($data['plan_ids']) ? implode(',', $data['plan_ids']) : ($data['plan_ids'] ?? '');
+        $dataSource = 'Life-Insurance-UAT'; 
+
+        $instantAlfredLink = config('constants.AFIA_WEBSITE_DOMAIN'). "/life-insurance/quote/$lead->uuid?getLatestRating=true";
 
         return (object) [
             // Lead-related data
             'quoteUID' => $lead->uuid,
             'uuid' => $lead->uuid,
-            'customerEmail' => $lead->email,
+            'customerEmail' => 'osama.ashfaq@myalfred.com',
             'customerFullName' => $customerFullName,
             'customerName' => $customerFullName,
             'refID' => $lead->code,
@@ -101,13 +97,15 @@ class EmailService
             'mobilePhone' => $advisor?->mobile_no ?? null,
             'whatsAppNumber' => $advisor?->mobile_no ? formatMobileNo($advisor->mobile_no) : null,
             'mobileNoWithoutSpaces' => $advisor?->mobile_no ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : null,
+            'planIds' => $planIds,
 
-            'planIds' => $data['plan_ids'] ?? null,
             // Workflow-related data
             'workflowType' => $workflowType,
+            'instantAlfredLink' => $instantAlfredLink,
+            'dataSource' => $dataSource,
         ];
     }
-
+    
     private function getQuote(string $quoteUID): PersonalQuote
     {
         return PersonalQuote::where([
