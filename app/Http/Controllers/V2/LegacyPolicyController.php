@@ -44,11 +44,11 @@ class LegacyPolicyController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($mongoId)
+    public function show($legacyPolicyId)
     {
-        $policy = InslyDetailRepository::getBy('_id', $mongoId);
+        $policy = InslyDetailRepository::getBy('_id', $legacyPolicyId);
 
-        return inertia('LegacyPolicy/Show', ['policy' => $policy, 'legacyPolicyId' => $mongoId]);
+        return inertia('LegacyPolicy/Show', ['policy' => $policy, 'legacyPolicyId' => $legacyPolicyId]);
     }
 
     public function moveToImcrm(Request $request)
