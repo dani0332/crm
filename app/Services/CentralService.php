@@ -1486,7 +1486,7 @@ class CentralService extends BaseService
         return $paymentGatewayIds;
     }
 
-     /**
+    /**
      * Call CAPI v1-quote-journey
      */
     public function sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId)
@@ -1499,8 +1499,8 @@ class CentralService extends BaseService
             'quoteJourneyEntries' => [
                 [
                     'status' => QuoteJourney::COMPLETED,
-                    'text' => QuoteJourney::POLICY_ISSUANCE
-                ]
+                    'text' => QuoteJourney::POLICY_ISSUANCE,
+                ],
             ],
         ];
         LoggerService::info('Sending quote journey to CAPI Payload ', extra: ['payload' => $payload]);
