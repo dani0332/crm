@@ -58,7 +58,7 @@ class OCRService
         string $fileMimeType
     ) {
         $providerCode = null;
-        if (isset($quote->insuranceProvider) && !empty($quote->insuranceProvider->code)) {
+        if (isset($quote->insuranceProvider) && ! empty($quote->insuranceProvider->code)) {
             $providerCode = $quote->insuranceProvider->code;
         }
 
