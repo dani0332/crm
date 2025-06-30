@@ -282,11 +282,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Customer::class);
     }
 
-    public function embeddedTransactions()
-    {
-        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
-    }
-
     // TODO: Remove this function and use latestInsured() instead
     public function lastInsured()
     {
