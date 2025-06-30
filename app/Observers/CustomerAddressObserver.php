@@ -9,6 +9,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\CustomerAddress;
 use App\Services\CarQuoteService;
 use Illuminate\Support\Facades\Log;
+use App\Services\CustomerAddressService;
 
 class CustomerAddressObserver
 {
@@ -41,7 +42,7 @@ class CustomerAddressObserver
                             'landmark' => $customerAddress->landmark,
                         ];
                         info('Sending address notification to customer for lead in CustomerAddressObserver : '.$carQuote->uuid);
-                        app(CarQuoteService::class)->triggerBirdFlow($carQuote, $address, BirdFlowStatusEnum::ADDRESS_UPDATED);
+                        app(CustomerAddressService::class)->triggerBirdFlow($carQuote, $address, BirdFlowStatusEnum::ADDRESS_UPDATED, QuoteTypeId::Car);
                     }
                 }
             }
