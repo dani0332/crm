@@ -723,6 +723,7 @@ class LifeQuoteService extends BaseService
         $pdf = PDF::setOption([
             'isHtml5ParserEnabled' => true,
             'dpi' => 150,
+            'isRemoteEnabled' => true,
         ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
 
         return ['pdf' => $pdf, 'name' => $this->generatePdfFilename($quote)];
