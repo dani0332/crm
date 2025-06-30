@@ -134,6 +134,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByPrivateClient(request('private_client'))
             ->when($this->hasFilterValue('previous_quote_policy_number', $requestParams), function ($query) use ($requestParams) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', requestParams: $requestParams)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', requestParams: $requestParams));
+            })
             ->filterByDate('travel_end_date', 'end_date', false)
             ->filterBy('assignment_type', ignoreAll: true)
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
