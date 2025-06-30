@@ -39,9 +39,10 @@ class LifeAllocation extends BaseAllocation
         $emails = [];
 
         $rules = app(RuleService::class)->getUsersByLeadSourceRules($this->lead->source, $this->lead->quote_type_id);
-        if(count($rules) > 0){
+        if (count($rules) > 0) {
             $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
             $emails = User::whereIn('id', $userIds)->pluck('email')->toArray();
+
             return $emails;
         }
 

@@ -6,6 +6,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\BuyLeadRequest;
+use App\Models\HealthQuote;
 use App\Models\Team;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
@@ -14,7 +15,6 @@ use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Closure;
-use App\Models\HealthQuote;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
@@ -26,7 +26,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
      */
     public function handle(AllocationRequest $request, Closure $next)
     {
-        $this->setRequest( $request);
+        $this->setRequest($request);
 
         $advisor = $this->fetchAvailableAdvisor();
 
@@ -51,31 +51,35 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $next($request);
     }
 
-    private function getTeamId(){
+    private function getTeamId()
+    {
         $parentTeamId = Team::where('name', TeamNameEnum::HEALTH)->active()->where('type', TeamTypeEnum::PRODUCT)->value('id');
         $teamId = Team::where('name', $this->lead->health_team_type)->active()->where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $parentTeamId)->value('id');
+
         return $teamId;
     }
     protected function fetchAvailableAdvisor()
     {
         $teamId = $this->getTeamId();
-        $advisors = $this->fetchEligibleAdvisors(true, $teamId );
+        $advisors = $this->fetchEligibleAdvisors(true, $teamId);
         $availableAdvisorIds = $advisors->pluck('user_id')->toArray() ?? [];
         $rules = $this->allocationRequest->get('rules') ?? [];
-        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules,   $teamId);
- 
+        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules, $teamId);
+
         $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
-       
-        $advisor = User::find($advisorId); 
+
+        $advisor = User::find($advisorId);
+
         return $advisor;
     }
 
-    protected function fetchEligibleAdvisors(bool $onlineStatus = true, $teamId = null){
+    protected function fetchEligibleAdvisors(bool $onlineStatus = true, $teamId = null)
+    {
         $advisors = [];
 
         if ($this->lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
             $advisors = $this->fetchAdvisorByType('getBLAdvisorsByStatus', $teamId);
-          
+
         }
 
         if (count($advisors) < 1) {
@@ -93,7 +97,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $eligibleUsers = $this->{$methodName}($status, $teamId);
         }
 
-        return  $eligibleUsers;
+        return $eligibleUsers;
     }
 
     protected function getBLAdvisorsByStatus($status, $teamId = null)
@@ -117,9 +121,10 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             ->get();
 
         if (count($advisors) > 0) {
-                $this->allocationRequest->set('hasBuyLeadAdvisors', true);
-                LoggerService::info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray()).' found');
+            $this->allocationRequest->set('hasBuyLeadAdvisors', true);
+            LoggerService::info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray()).' found');
         }
+
         return $advisors;
     }
 
@@ -131,14 +136,13 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             ->where('la.normal_allocation_enabled', true)
             ->logRawSql()
             ->get();
-        
 
         return $advisors;
     }
 
     private function determineFinalAdvisorIdsBasedOnRules(HealthQuote $lead, $availableUserIds, $rules, $teamId): mixed
     {
-        
+
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
@@ -147,7 +151,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
-       
+
             LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
@@ -160,7 +164,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
             LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
-          
+
         return $finalEligibleUserIds;
     }
     private function getUserIdsFromRuleRecords($matchedRuleRecords): array
@@ -199,7 +203,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 $advisorId,
                 $this->lead->isValueLead(),
             );
-          
+
             if ($buyLeadRequest) {
                 $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
 

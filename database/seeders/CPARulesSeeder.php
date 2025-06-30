@@ -51,11 +51,11 @@ class CPARulesSeeder extends Seeder
         if (empty($ruleDetail)) {
             // Create rule details
             RuleDetail::create([
-            'rule_id' => $rule->id,
-            'car_make_id' => null,
-            'car_model_id' => null,
-            'lead_source_id' => $leadSource->id,
-        ]);
+                'rule_id' => $rule->id,
+                'car_make_id' => null,
+                'car_model_id' => null,
+                'lead_source_id' => $leadSource->id,
+            ]);
         }
 
     }

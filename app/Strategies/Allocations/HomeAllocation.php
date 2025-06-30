@@ -8,11 +8,11 @@ use App\Enums\TeamNameEnum;
 use App\Models\HomeQuote;
 use App\Models\RangeLookup;
 use App\Models\Team;
+use App\Models\User;
+use App\Services\RuleService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Services\RuleService;
-use App\Models\User;
 
 class HomeAllocation extends BaseAllocation
 {
@@ -192,12 +192,12 @@ class HomeAllocation extends BaseAllocation
             return [];
         }
         $rules = app(RuleService::class)->getUsersByLeadSourceRules($this->lead->source, $this->lead->quote_type_id);
-        if(count($rules) > 0){
+        if (count($rules) > 0) {
             $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
             $emails = User::whereIn('id', $userIds)->pluck('email')->toArray();
+
             return $emails;
         }
-      
 
         if ($this->isValueLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a value lead, fetching value advisors');

@@ -49,11 +49,12 @@ class PetAllocation extends BaseAllocation
         }
 
         $rules = app(RuleService::class)->getUsersByLeadSourceRules($this->lead->source, $this->lead->quote_type_id);
-        if(count($rules) > 0){
+        if (count($rules) > 0) {
             $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
             $advisorEmails = User::whereIn('id', $userIds)->pluck('email')->toArray();
             if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $advisorEmails)) {
-                LoggerService::info(self::class." - eligible pet advisor found with status: {$statusOrder}, user id: {$advisor->id}, rule condition: true");  
+                LoggerService::info(self::class." - eligible pet advisor found with status: {$statusOrder}, user id: {$advisor->id}, rule condition: true");
+
                 return $advisor;
             }
         }

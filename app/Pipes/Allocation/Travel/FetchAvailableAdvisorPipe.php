@@ -4,14 +4,13 @@ namespace App\Pipes\Allocation\Travel;
 
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Models\BuyLeadRequest;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
-use App\Services\RuleService;
-use App\Models\BuyLeadRequest;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
@@ -29,8 +28,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $this->setRequest($request);
 
         $advisor = $this->fetchAvailableAdvisor();
-        
-        if (!$advisor) {
+
+        if (! $advisor) {
             LoggerService::info(self::class.' - No advisor found');
 
             $this->allocationRequest->markAsFailed();
@@ -107,7 +106,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequested;
 
         $teamId = null;
-       
+
         // Apply team assignment rules
         if ($isAIGWithInstantAlfred) {
             // Rule 1: AIG leads from Instant Alfred go to default team
@@ -125,7 +124,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         } else {
             // Rule 4: Default - all other leads have no specific team
             $teamId = self::DEFAULT_TEAM_ID;
-          
+
             $reason = 'Default case - no specific team';
         }
 
@@ -138,6 +137,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
             'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
         ]);
+
         return $teamId;
     }
 
@@ -165,6 +165,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
+
         return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
             ->when(! $teamId, function ($q) {
                 $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -181,10 +182,10 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     private function determineFinalAdvisorIdsBasedOnRules(TravelQuote $lead, $availableUserIds, $rules, $teamId): mixed
     {
-        if(!$teamId){
+        if (! $teamId) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
-        
+
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
@@ -193,7 +194,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
-       
+
             LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
@@ -206,7 +207,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
             LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
-          
+
         return $finalEligibleUserIds;
     }
 
