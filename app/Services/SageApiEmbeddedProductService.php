@@ -42,10 +42,9 @@ class SageApiEmbeddedProductService
             'quote_uuid' => $quote->uuid, 'status' => 'passed', 'execution_method' => 'viewQuotePolicy',  'call_type' => 'EmbeddedProduct',
         ])->latest()->first();
 
-        
-        $createARInvoiceForEPLog = $sukoonMedXTransaction?->sageApiLogs?->where('sage_request_type',SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV)->first();
+        $createARInvoiceForEPLog = $sukoonMedXTransaction?->sageApiLogs?->where('sage_request_type', SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV)->first();
         $createEPARPayload = json_decode($createARInvoiceForEPLog->sage_payload, true);
-        $sageRequest->customerId =  $createEPARPayload['Invoices'][0]['CustomerNumber'];
+        $sageRequest->customerId = $createEPARPayload['Invoices'][0]['CustomerNumber'];
 
         $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($sukoonMedXTransaction, $viewQuotePolicyApiLog);
         $quoteTypeId = $sageRequest->quoteTypeId;
