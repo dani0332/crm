@@ -6,6 +6,8 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\RolesEnum;
 use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
+use App\Models\User;
 
 class GroupMedicalAllocation extends BaseAllocation
 {
@@ -34,6 +36,13 @@ class GroupMedicalAllocation extends BaseAllocation
 
             return null;
         }
+        $rules = app(RuleService::class)->getUsersByLeadSourceRules($this->lead->source, $this->lead->quote_type_id);
+        if(count($rules) > 0){
+            $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
+            $emails = User::whereIn('id', $userIds)->pluck('email')->toArray();
+            LoggerService::info(self::class." - Applied rules users for Group Medical Advisors: ".implode(',', $userIds)." | quote Ref-ID: {$this->lead->uuid} ");
+            return $emails;
+        }
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();
         if (empty($this->lead->number_of_employees)) {
             LoggerService::warning(self::class." - Number of employees is empty | quote Ref-ID: {$this->lead->uuid} | time: ".now());
@@ -41,6 +50,7 @@ class GroupMedicalAllocation extends BaseAllocation
             return null;
         }
         $team = $this->getTeamByCriteria($planType, $this->lead->number_of_employees);
+
 
         LoggerService::info(self::class." - group medical team: {$team} | plan type: {$planType} | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |
          quote Ref-ID: {$this->lead->uuid} | time: ".now());

@@ -28,12 +28,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        $advisors = $this->fetchEligibleAdvisors();
-        $rules = $this->allocationRequest->get('rules');
-        $availableAdvisorIds = $advisors->pluck('user_id')->toArray();
-        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules, $this->evaluateTeamId($this->lead));
-        $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
-        $advisor = User::find($advisorId);
+        $advisor = $this->fetchAvailableAdvisor();
         
         if (!$advisor) {
             LoggerService::info(self::class.' - No advisor found');
@@ -52,13 +47,14 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     private function fetchAvailableAdvisor()
     {
-        $teamId = $this->evaluateTeamId($this->lead);
+        $advisors = $this->fetchEligibleAdvisors();
+        $rules = $this->allocationRequest->get('rules') ?? [];
+        $availableAdvisorIds = $advisors->pluck('user_id')->toArray();
+        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules, $this->evaluateTeamId($this->lead));
+        $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
+        $advisor = User::find($advisorId);
 
-        if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
-            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-        }
-
-        return $this->findAvailableAdvisor($teamId);
+        return $advisor;
     }
 
     protected function getAdvisorByStatus($onlineStatus, $teamId)
@@ -234,27 +230,27 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     private function getFinalAdvisorId($finalEligibleUserIds)
     {
         if ($this->allocationRequest->get('hasBuyLeadAdvisors')) {
-            return $this->evaluateBuyLeadAdvisor($finalEligibleUserIds, $this->allocationRequest->getTier());
+            return $this->evaluateBuyLeadAdvisor($finalEligibleUserIds);
         }
 
         // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
     }
 
-    private function evaluateBuyLeadAdvisor($finalEligibleUserIds, Tier $tier)
+    private function evaluateBuyLeadAdvisor($finalEligibleUserIds)
     {
         foreach ($finalEligibleUserIds as $advisorId) {
             $buyLeadRequest = BuyLeadRequest::getRequest(
                 $this->allocationRequest->getQuoteType(),
                 $this->allocationRequest->isSIC(),
                 $advisorId,
-                $tier->isValue()
+                $this->lead->isValueLead(),
             );
 
             if ($buyLeadRequest) {
                 $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
 
-                LoggerService::info("Buy Lead Request {$buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id}");
+                LoggerService::info("Buy Lead Request {$buyLeadRequest->id} found for advisor ID: {$advisorId}  ");
                 $this->allocationRequest->getBuyLeadRequest()->startProcessing();
 
                 return $advisorId;
