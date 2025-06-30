@@ -39,7 +39,6 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
 </script>
 
 <template>
@@ -93,9 +92,10 @@ const permissionsEnum = page.props.permissionsEnum;
         {{ uploaded_by }}
       </template>
       <template #item-actions="{ id, cannot_upload, status }">
-        <x-button 
-          onclick="return confirm('Are you sure you want to retry this lead?');" 
-          :disabled="cannot_upload <= 0 || status == 'In Progress'"   :href="route('renewals.retry', id)"
+        <x-button
+          onclick="return confirm('Are you sure you want to retry this lead?');"
+          :disabled="cannot_upload <= 0 || status == 'In Progress'"
+          :href="route('renewals.retry', id)"
         >
           Retry
         </x-button>

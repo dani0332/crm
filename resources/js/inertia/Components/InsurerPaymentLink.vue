@@ -109,9 +109,14 @@ defineExpose({
   quotePaymentLinkChanged,
 });
 
-
 const ButtonCondition = computed(() => {
-  if(isLinkChanged.value || (page.props.quote.source == 'Renewal_upload' && props.paymentForm.status == 'edit' && (props.paymentForm.insurerPaymentLink != '' || props.paymentForm.insurerPaymentLink != null))){
+  if (
+    isLinkChanged.value ||
+    (page.props.quote.source == 'Renewal_upload' &&
+      props.paymentForm.status == 'edit' &&
+      (props.paymentForm.insurerPaymentLink != '' ||
+        props.paymentForm.insurerPaymentLink != null))
+  ) {
     return 'Send Insurer Payment Link';
   } else {
     return 'Updates';

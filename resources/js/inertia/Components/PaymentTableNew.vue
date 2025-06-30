@@ -2327,7 +2327,10 @@ const addPayment = isValid => {
 
   // Send FTC email if the payment is edited and the insurer payment link is changed or if the payment is created from renewal upload
   var sendFtcEmail = false;
-  if(page.props.quote.source == 'Renewal_upload' && paymentMethodsForm.status == 'edit') {
+  if (
+    page.props.quote.source == 'Renewal_upload' &&
+    paymentMethodsForm.status == 'edit'
+  ) {
     sendFtcEmail = true;
   } else {
     sendFtcEmail = insurerPaymentLinkChanged?.value ?? false;
