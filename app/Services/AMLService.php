@@ -1536,8 +1536,8 @@ class AMLService
         // Sort by customer name with nulls at the end (optimized single-pass sorting)
         $data = $data->sortBy(function ($item) {
             // Create a composite sort key for efficient sorting with null handling
-            $firstName = $item->customer_first_name ?? 'zzz_null';
-            $lastName = $item->customer_last_name ?? 'zzz_null';
+            $firstName = $item->first_name ?? 'zzz_null';
+            $lastName = $item->last_name ?? 'zzz_null';
 
             return strtolower($firstName.'|'.$lastName);
         })->values(); // Re-index the collection
@@ -1565,6 +1565,7 @@ class AMLService
             'pqr.policy_start_date',
             'pqr.policy_expiry_date',
             'pqr.premium',
+            'pqr.price_with_vat',
             'pqr.policy_number',
             'pqr.quote_status_id',
             'pqr.insurance_provider_id',
@@ -1766,7 +1767,7 @@ class AMLService
 
         // Get customer_type from insured table
         $insuredData = DB::table('insured as i')
-            ->select(['i.id', 'i.customer_type'])
+            ->select(['i.id', 'i.customer_type', 'i.first_name', 'i.last_name'])
             ->whereIn('i.id', $insuredIds)
             ->get()
             ->keyBy('id');
@@ -1782,10 +1783,8 @@ class AMLService
                     $insuredRecord = $insuredData[$record->insured_id] ?? null;
                 }
 
-                $chunk[$index]->first_name = $kycRecord->first_name ?? null;
-                $chunk[$index]->last_name = $kycRecord->last_name ?? null;
-                $chunk[$index]->customer_first_name = $kycRecord->first_name ?? null;
-                $chunk[$index]->customer_last_name = $kycRecord->last_name ?? null;
+                $chunk[$index]->first_name = $kycRecord->first_name ?? $insuredRecord->first_name ?? null;
+                $chunk[$index]->last_name = $kycRecord->last_name ?? $insuredRecord->last_name ?? null;
                 $chunk[$index]->emirates_id = $kycRecord->id_number ?? null;
                 $chunk[$index]->customer_type = $insuredRecord->customer_type ?? CustomerTypeEnum::Individual;
                 $chunk[$index]->residential_status = $kycRecord->residential_status ?? null;
