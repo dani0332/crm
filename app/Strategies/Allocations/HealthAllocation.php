@@ -15,6 +15,7 @@ use App\Pipes\Allocation\Health\VerifyLeadPreChecksPipe;
 use App\Services\AllocationService;
 use Exception;
 use Illuminate\Support\Facades\Pipeline;
+use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 
 class HealthAllocation implements Allocation
 {
@@ -36,6 +37,7 @@ class HealthAllocation implements Allocation
                 VerifyAlreadyInProgressAllocationPipe::class,
                 ValidateNationalityConfigPipe::class,
                 AssignTeamPipe::class,
+                ApplyRuleExclusionPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,

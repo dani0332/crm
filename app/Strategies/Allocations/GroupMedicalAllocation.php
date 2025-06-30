@@ -36,12 +36,10 @@ class GroupMedicalAllocation extends BaseAllocation
 
             return null;
         }
-        $rules = app(RuleService::class)->getUsersByLeadSourceRules($this->lead->source, $this->lead->quote_type_id);
-        if (count($rules) > 0) {
-            $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
-            $emails = User::whereIn('id', $userIds)->pluck('email')->toArray();
-            LoggerService::info(self::class.' - Applied rules users for Group Medical Advisors: '.implode(',', $userIds)." | quote Ref-ID: {$this->lead->uuid} ");
-
+    
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+        if (count($emails) > 0) {
+            LoggerService::info(self::class." - Applied rules users for Group Medical Advisors:  | quote Ref-ID: {$this->lead->uuid} ");
             return $emails;
         }
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();

@@ -11,6 +11,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use stdClass;
+use App\Models\User;
 
 class RuleService extends BaseService
 {
@@ -224,19 +225,23 @@ class RuleService extends BaseService
 
     public function getUserIdsFromRuleRecords($matchedRuleRecords): array
     {
-        // Get the lead source users from the first matched rule record.
         $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
-
-        // Check if the lead source users contain a comma (,) indicating multiple users.
         if (str_contains($leadSourceUsers, ',')) {
-            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
             $userIds = array_map('intval', explode(',', $leadSourceUsers));
         } else {
-            // If there's only one user, cast it to an integer and store it in a single-element array.
             $userIds = [(int) $leadSourceUsers];
         }
-
-        // Return the array of user IDs.
         return $userIds;
+    }
+
+    public function getEmailsByLeadSource($leadSource, $quoteTypeId){
+        $rules = app(RuleService::class)->getUsersByLeadSourceRules($leadSource, $quoteTypeId);
+        if (count($rules) > 0) {
+            $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
+            $emails = User::whereIn('id', $userIds)->pluck('email')->toArray();
+
+            return $emails;
+        }
+        return [];
     }
 }

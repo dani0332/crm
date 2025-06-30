@@ -48,17 +48,16 @@ class PetAllocation extends BaseAllocation
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
-        $rules = app(RuleService::class)->getUsersByLeadSourceRules($this->lead->source, $this->lead->quote_type_id);
-        if (count($rules) > 0) {
-            $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
-            $advisorEmails = User::whereIn('id', $userIds)->pluck('email')->toArray();
-            if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $advisorEmails)) {
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+        if (count($emails) > 0) {
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails] );
+            if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $emails)) {
                 LoggerService::info(self::class." - eligible pet advisor found with status: {$statusOrder}, user id: {$advisor->id}, rule condition: true");
-
                 return $advisor;
             }
         }
 
+       
         $petAdvisorEmails = $this->getAdvisorEmails(ApplicationStorageEnums::PET_ADVISORS);
         if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $petAdvisorEmails)) {
             return $advisor;
