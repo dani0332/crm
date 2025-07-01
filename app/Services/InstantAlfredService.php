@@ -40,154 +40,236 @@ class InstantAlfredService extends BaseService
 
     private function buildQueryByModel($quoteTypeId)
     {
-        $aliases = [];
-
-        // Define segment constants for better maintainability
-        $SEGMENT_NON_SIC = 'NON-SIC';
-        $SEGMENT_SIC_REVIVAL = 'SIC-REVIVAL';
-        $SEGMENT_AIG = 'AIG';
-        $SEGMENT_SIC = 'SIC';
-
-        // Define revival sources for better maintainability
-        $REVIVAL_SOURCES = [
-            LeadSourceEnum::REVIVAL,
-            LeadSourceEnum::REVIVAL_REPLIED,
-            LeadSourceEnum::REVIVAL_PAID,
-        ];
-
-        $subQuery = DB::table('quote_tags as qt')
-            ->select(
-                'qt.quote_uuid',
-                DB::raw('GROUP_CONCAT(qt.name) as tags')
-            )
-            ->where('qt.quote_type_id', $quoteTypeId)
-            ->groupBy('qt.quote_uuid');
-
-        $this->personalQuery = DB::table('personal_quotes as pqr')
-            ->select(
-                'pqr.uuid',
-                'pqr.id',
-                'pqr.email',
-                'pqr.code',
-                'pqr.payment_status_id',
-                'pqr.plan_id',
-                'pqr.quote_status_id',
-                'pqr.quote_batch_id',
-                'pqr.insurance_provider_id',
-                'pqr.premium as total_price',
-                DB::raw($this->getLeadAssignmentTriggerSelect($quoteTypeId)),
-                'pqrd.chat_initiated_at',
-                'qs.text AS quote_status_id_text',
-                'qb.name as quote_batch_id_text',
-                'lu.text as transaction_type_text',
-                'ps.text AS payment_status',
-                DB::raw('DATE_FORMAT(pqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
-                DB::raw('DATE_FORMAT(pqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
-                DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
-                DB::raw("
-                    CASE 
-                        -- Handle NULL tags first (most common case)
-                        WHEN qt.tags IS NULL THEN '{$SEGMENT_NON_SIC}'
-                        
-                        -- Handle AIG cases first (most specific tag)
-                        WHEN qt.tags LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN '{$SEGMENT_AIG}'
-                        
-                        -- Handle SIC-REVIVAL cases (requires both tag and source match)
-                        WHEN (
-                            (qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' OR qt.tags LIKE '%".QuoteSegmentEnum::SIC_REVIVAL->tag()."%')
-                            AND pqr.source IN ('".implode("','", $REVIVAL_SOURCES)."')
-                        ) THEN '{$SEGMENT_SIC_REVIVAL}'
-                        
-                        -- Handle SIC cases (excluding SIC-REVIVAL)
-                        WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN '{$SEGMENT_SIC}'
-                        
-                        -- Handle NON-SIC cases explicitly (tags exist but don't contain SIC or AIG)
-                        WHEN (
-                            qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' 
-                            AND qt.tags NOT LIKE '%".QuoteSegmentEnum::AIG->tag()."%'
-                        ) THEN '{$SEGMENT_NON_SIC}'
-                        
-                        -- Default case (any other unexpected cases)
-                        ELSE '{$SEGMENT_NON_SIC}'
-                    END as segment
-                "),
-            )
-            ->where('pqr.quote_type_id', $quoteTypeId)
-            ->leftJoin('payments as py', function ($join) {
-                $join->on('py.paymentable_id', '=', 'pqr.id')
-                    ->where('py.paymentable_type', '=', PersonalQuote::class);
-            })
-            ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
-            ->leftJoinSub($subQuery, 'qt', function ($join) {
-                $join->on('qt.quote_uuid', '=', 'pqr.uuid');
-            })
-            ->leftJoin('lookups as lu', 'lu.id', '=', 'pqr.transaction_type_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
-            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
-            ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) {
-                $query->leftJoin('car_quote_request as cqr', 'cqr.uuid', '=', 'pqr.uuid');
-            })
-            ->when($quoteTypeId == QuoteTypeId::Health, function ($query) {
-                $query->leftJoin('health_quote_request as hqr', 'hqr.uuid', '=', 'pqr.uuid');
-            })
-            ->when($quoteTypeId == QuoteTypeId::Travel, function ($query) {
-                $query->leftJoin('travel_quote_request as tqr', 'tqr.uuid', '=', 'pqr.uuid');
-            })
-            ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) use ($quoteTypeId) {
-                $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
-                    $join->on('cp.id', '=', 'pqr.plan_id')
-                        ->where('cp.quote_type_id', '=', $quoteTypeId);
+        $request = request();
+        
+        // Check if we need full data or can use optimized query
+        $needsFullData = $this->shouldUseFullQuery($request);
+        
+        if (!$needsFullData) {
+            // Optimized query for initial page load - only basic fields
+            $this->personalQuery = DB::table('personal_quotes as pqr')
+                ->select(
+                    'pqr.uuid',
+                    'pqr.id', 
+                    'pqr.code',
+                    'pqrd.chat_initiated_at'
+                )
+                ->where('pqr.quote_type_id', $quoteTypeId)
+                ->when($request->email, function ($query) use ($request) {
+                    $query->where('pqr.email', '=', $request->email);
+                })
+                ->when($request->mobile_no, function ($query) use ($request) {
+                    $query->where('pqr.mobile_no', '=', $request->mobile_no);
+                })
+                ->when($request->quoteId, function ($query) use ($request) {
+                    $query->where('pqr.code', '=', $request->quoteId);
+                })
+                ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
+                ->when(!empty($request->chat_initiated_at), function ($query) use ($request) {
+                    $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
+                    $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
+                    $query->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
+                })
+                ->when(isset($request->sortType), function ($query) use ($request) {
+                    $query->orderBy('pqrd.chat_initiated_at', $request->sortType);
                 });
-                $query->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id');
-                $query->addSelect([
-                    'cp.text AS plan_id_text',
-                    'cpip.code as plan_provider_code',
-                    'cpip.text as provider_name',
-                    'cp.repair_type as plan_type',
-                    'cp.text as plan_name',
-                ]);
-            })
-            ->when($quoteTypeId == QuoteTypeId::Health, function ($query) {
-                $query->leftJoin('health_plan as hp', 'hp.id', '=', 'pqr.plan_id');
-                $query->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hp.plan_type_id');
-                $query->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id');
-                $query->addSelect([
-                    'hp.plan_type_id as plan_type_id',
-                    'ihp.text as provider_name',
-                    'hpt.text as plan_type',
-                    'hp.text as plan_name',
-                ]);
-            })
-            ->when($quoteTypeId == QuoteTypeId::Travel, function ($query) {
-                $query->leftJoin('travel_plan as tp', 'tp.id', '=', 'pqr.plan_id');
-                $query->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id');
-                $query->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
-                    $join->on('pqr.uuid', '=', 'tqpd.quote_uuid')
-                        ->whereColumn('pqr.plan_id', '=', 'tqpd.plan_id');
+        } else {
+            // Full query with all joins and data when filters/reports are needed
+            $aliases = [];
+
+            // Define segment constants for better maintainability
+            $SEGMENT_NON_SIC = 'NON-SIC';
+            $SEGMENT_SIC_REVIVAL = 'SIC-REVIVAL';
+            $SEGMENT_AIG = 'AIG';
+            $SEGMENT_SIC = 'SIC';
+
+            // Define revival sources for better maintainability
+            $REVIVAL_SOURCES = [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+            ];
+
+            $subQuery = DB::table('quote_tags as qt')
+                ->select(
+                    'qt.quote_uuid',
+                    DB::raw('GROUP_CONCAT(qt.name) as tags')
+                )
+                ->where('qt.quote_type_id', $quoteTypeId)
+                ->groupBy('qt.quote_uuid');
+
+            $this->personalQuery = DB::table('personal_quotes as pqr')
+                ->select(
+                    'pqr.uuid',
+                    'pqr.id',
+                    'pqr.email',
+                    'pqr.code',
+                    'pqr.payment_status_id',
+                    'pqr.plan_id',
+                    'pqr.quote_status_id',
+                    'pqr.quote_batch_id',
+                    'pqr.insurance_provider_id',
+                    'pqr.premium as total_price',
+                    DB::raw($this->getLeadAssignmentTriggerSelect($quoteTypeId)),
+                    'pqrd.chat_initiated_at',
+                    'qs.text AS quote_status_id_text',
+                    'qb.name as quote_batch_id_text',
+                    'lu.text as transaction_type_text',
+                    'ps.text AS payment_status',
+                    DB::raw('DATE_FORMAT(pqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                    DB::raw('DATE_FORMAT(pqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                    DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
+                    DB::raw("
+                        CASE 
+                            -- Handle NULL tags first (most common case)
+                            WHEN qt.tags IS NULL THEN '{$SEGMENT_NON_SIC}'
+                            
+                            -- Handle AIG cases first (most specific tag)
+                            WHEN qt.tags LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN '{$SEGMENT_AIG}'
+                            
+                            -- Handle SIC-REVIVAL cases (requires both tag and source match)
+                            WHEN (
+                                (qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' OR qt.tags LIKE '%".QuoteSegmentEnum::SIC_REVIVAL->tag()."%')
+                                AND pqr.source IN ('".implode("','", $REVIVAL_SOURCES)."')
+                            ) THEN '{$SEGMENT_SIC_REVIVAL}'
+                            
+                            -- Handle SIC cases (excluding SIC-REVIVAL)
+                            WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN '{$SEGMENT_SIC}'
+                            
+                            -- Handle NON-SIC cases explicitly (tags exist but don't contain SIC or AIG)
+                            WHEN (
+                                qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' 
+                                AND qt.tags NOT LIKE '%".QuoteSegmentEnum::AIG->tag()."%'
+                            ) THEN '{$SEGMENT_NON_SIC}'
+                            
+                            -- Default case (any other unexpected cases)
+                            ELSE '{$SEGMENT_NON_SIC}'
+                        END as segment
+                    "),
+                )
+                ->where('pqr.quote_type_id', $quoteTypeId)
+                ->when($request->email, function ($query) use ($request) {
+                    $query->where('pqr.email', '=', $request->email);
+                })
+                ->when($request->mobile_no, function ($query) use ($request) {
+                    $query->where('pqr.mobile_no', '=', $request->mobile_no);
+                })
+                ->when($request->quoteId, function ($query) use ($request) {
+                    $query->where('pqr.code', '=', $request->quoteId);
+                })
+                ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
+                ->when(!empty($request->chat_initiated_at), function ($query) use ($request) {
+                    $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
+                    $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
+                    $query->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
+                })
+                ->leftJoin('payments as py', function ($join) {
+                    $join->on('py.paymentable_id', '=', 'pqr.id')
+                        ->where('py.paymentable_type', '=', PersonalQuote::class);
+                })
+                ->leftJoinSub($subQuery, 'qt', function ($join) {
+                    $join->on('qt.quote_uuid', '=', 'pqr.uuid');
+                })
+                ->leftJoin('lookups as lu', 'lu.id', '=', 'pqr.transaction_type_id')
+                ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
+                ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
+                ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
+                ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) {
+                    $query->leftJoin('car_quote_request as cqr', 'cqr.uuid', '=', 'pqr.uuid');
+                })
+                ->when($quoteTypeId == QuoteTypeId::Health, function ($query) {
+                    $query->leftJoin('health_quote_request as hqr', 'hqr.uuid', '=', 'pqr.uuid');
+                })
+                ->when($quoteTypeId == QuoteTypeId::Travel, function ($query) {
+                    $query->leftJoin('travel_quote_request as tqr', 'tqr.uuid', '=', 'pqr.uuid');
+                })
+                ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) use ($quoteTypeId) {
+                    $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
+                        $join->on('cp.id', '=', 'pqr.plan_id')
+                            ->where('cp.quote_type_id', '=', $quoteTypeId);
+                    });
+                    $query->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id');
+                    $query->addSelect([
+                        'cp.text AS plan_id_text',
+                        'cpip.code as plan_provider_code',
+                        'cpip.text as provider_name',
+                        'cp.repair_type as plan_type',
+                        'cp.text as plan_name',
+                    ]);
+                })
+                ->when($quoteTypeId == QuoteTypeId::Health, function ($query) {
+                    $query->leftJoin('health_plan as hp', 'hp.id', '=', 'pqr.plan_id');
+                    $query->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hp.plan_type_id');
+                    $query->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id');
+                    $query->addSelect([
+                        'hp.plan_type_id as plan_type_id',
+                        'ihp.text as provider_name',
+                        'hpt.text as plan_type',
+                        'hp.text as plan_name',
+                    ]);
+                })
+                ->when($quoteTypeId == QuoteTypeId::Travel, function ($query) {
+                    $query->leftJoin('travel_plan as tp', 'tp.id', '=', 'pqr.plan_id');
+                    $query->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id');
+                    $query->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
+                        $join->on('pqr.uuid', '=', 'tqpd.quote_uuid')
+                            ->whereColumn('pqr.plan_id', '=', 'tqpd.plan_id');
+                    });
+                    $query->addSelect([
+                        'tp.text AS plan_id_text',
+                        'tpip.text AS travel_plan_provider_text',
+                        'tp.travel_type as plan_type',
+                        'tqpd.provider_name',
+                        'tqpd.plan_name',
+                    ]);
+                })
+                ->when($quoteTypeId == QuoteTypeId::Home, function ($query) {
+                    $query->leftJoin('quote_customer_plans as qcp', 'qcp.quote_uuid', '=', 'pqr.uuid');
+                    $query->addSelect([
+                        DB::raw("JSON_UNQUOTE(qcp.plan->'$.providerName') as provider_name"),
+                        DB::raw("JSON_UNQUOTE(qcp.plan->'$.name') as plan_name"),
+                    ]);
+                })
+                ->groupBy('pqr.id')
+                ->when(isset($request->sortType), function ($query) use ($request) {
+                    $query->orderBy('pqrd.chat_initiated_at', $request->sortType);
                 });
-                $query->addSelect([
-                    'tp.text AS plan_id_text',
-                    'tpip.text AS travel_plan_provider_text',
-                    'tp.travel_type as plan_type',
-                    'tqpd.provider_name',
-                    'tqpd.plan_name',
-                ]);
-            })
-            ->when($quoteTypeId == QuoteTypeId::Home, function ($query) {
-                $query->leftJoin('quote_customer_plans as qcp', 'qcp.quote_uuid', '=', 'pqr.uuid');
-                $query->addSelect([
-                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.providerName') as provider_name"),
-                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.name') as plan_name"),
-                ]);
-            })
-            ->groupBy('pqr.id')
-            ->when(isset(request()->sortType), function ($query) {
-                $query->orderBy('pqrd.chat_initiated_at', request()->sortType);
-            });
+        }
+
         $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
 
         return $aliases;
+    }
+
+    /**
+     * Determine if we should use the full query or optimized simple query
+     */
+    private function shouldUseFullQuery($request): bool
+    {
+        // Use full query if report type is specified (needed for exports)
+        if (!empty($request->report)) {
+            return true;
+        }
+
+        // Use full query if any complex filters are applied that need additional data
+        $complexFilters = [
+            'transaction_type_id',
+            'quote_batch_id', 
+            'quote_status_id',
+            'payment_status_id',
+            'sale_leads',
+            'segment',
+            'assignment_type'
+        ];
+
+        foreach ($complexFilters as $filter) {
+            if (!empty($request->$filter)) {
+                return true;
+            }
+        }
+
+        // Use simple query for basic filters (these only need uuid, code, chat_initiated_at)
+        return false;
     }
 
     public function processSqlChatFilters(Request $request)
@@ -208,37 +290,8 @@ class InstantAlfredService extends BaseService
 
         $partialQuery->whereNotNull('chat_initiated_at');
 
-        $quoteId = null;
-        if ($request->has('quoteId') && $request->quoteId != null) {
-            if (strpos($request->quoteId, '-') !== false) {
-                $quote = explode('-', $request->quoteId);
-                $quoteId = $quote[1];
-            } else {
-                $quoteId = $request->quoteId;
-            }
-        }
-
-        if (isset($quoteId) && $quoteId != '') {
-            $partialQuery->where('pqr.uuid', $quoteId);
-        }
-
-        if (isset($request->email) && $request->email != '') {
-            $partialQuery->where('pqr.email', $request->email);
-        }
-
-        if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $partialQuery->where('pqr.mobile_no', $request->mobile_no);
-        }
-
-        if (! empty($request->chat_initiated_at) && $request->email == null && $request->mobile_no == null && $quoteId == null) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
-
-            $partialQuery->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
-        }
-
-        if ($request->email == null && $request->mobile_no == null && $quoteId == null && empty($request->chat_initiated_at)) {
-            // Default to last 30 days if no dates are provided
+        if ($request->email == null && $request->mobile_no == null && $request->quoteId == null && empty($request->chat_initiated_at)) {
+            // Default to current day if no dates are provided
             $dateFrom = now()->startOfDay();
             $dateTo = now()->endOfDay();
 

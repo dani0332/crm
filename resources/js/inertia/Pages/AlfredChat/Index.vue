@@ -142,7 +142,8 @@ watch(
   },
 );
 
-function onSubmit() {
+function onSubmit(isValid) {
+  if (!isValid) return;
   if (filters.quoteId || filters.email || filters.mobile_no) {
     filters.chat_initiated_at = [];
   }
