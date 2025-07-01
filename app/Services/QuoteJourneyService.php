@@ -56,4 +56,35 @@ class QuoteJourneyService
         ];
         $this->sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId, $quoteJourneyEntries);
     }
+
+    /**
+     * Lead Created Quote Journey
+    */
+    public function leadCreatedQuoteJourney($quoteUUID, $quoteTypeId)
+    {
+        $quoteJourneyTemplates = $this->generateQuoteJourneyTemplates($quoteTypeId);
+        $quoteJourneyEntries = [
+            [
+                'status' => QuoteJourney::COMPLETED,
+                'text' => $quoteJourneyTemplates['leadCreated']
+            ],
+            [
+                'status' => QuoteJourney::IN_PROCESS,
+                'text' => $quoteJourneyTemplates['planSelected']
+            ],
+            [
+                'status' => QuoteJourney::PENDING,
+                'text' => $quoteJourneyTemplates['paymentMade']
+            ],
+            [
+                'status' => QuoteJourney::PENDING,
+                'text' => $quoteJourneyTemplates['documentUpload']
+            ],
+            [
+                'status' => QuoteJourney::PENDING,
+                'text' => $quoteJourneyTemplates['policyIssued']
+            ]
+        ];
+        $this->sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId, $quoteJourneyEntries);
+    }
 }
