@@ -6,6 +6,7 @@ defineProps({
   advisors: Array,
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  quoteSegments: Object,
 });
 
 const page = usePage();
@@ -14,6 +15,8 @@ let params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const cleanObj = obj => useCleanObj(obj);
+const quoteSegments = page.props.quoteSegments;
+const quoteSegmentsLife = quoteSegments.filter(segment => segment.value === 'fic' || segment.value === 'non-fic');
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -71,6 +74,7 @@ const filters = reactive({
   advisor_assigned_date: null,
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  segment_filter: '',
 });
 
 const loader = reactive({
@@ -678,7 +682,15 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-
+        <x-select
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegmentsLife"
+          filterable
+          filterPlaceholder="Filter Segment...."
+          :single="true"
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"

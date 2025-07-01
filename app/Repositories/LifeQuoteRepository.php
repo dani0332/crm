@@ -89,6 +89,7 @@ class LifeQuoteRepository extends BaseRepository
                 });
             })
             ->filter()
+            ->filterBySegment('life_quote_request')
             ->withFakeLeadCriteria()
             ->select([
                 '*',
