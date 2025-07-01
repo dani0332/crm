@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
@@ -89,6 +90,8 @@ class CarQuoteObserver
         }
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+
             try {
                 EmbeddedProductRepository::cancelEmbeddedProducts($lead->id, quoteTypeCode::Car);
             } catch (Exception $e) {
@@ -103,6 +106,7 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
             MAWelcomeJob::dispatch(
                 $lead->customer,
@@ -125,6 +129,7 @@ class CarQuoteObserver
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             SendPolicyIssueWhatsappMessageJob::dispatch($lead, QuoteTypes::CAR->id())->onQueue('insly');
+            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));

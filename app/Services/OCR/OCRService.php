@@ -3,6 +3,7 @@
 namespace App\Services\OCR;
 
 use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Models\DocumentType;
@@ -56,12 +57,27 @@ class OCRService
         OCRDocumentTypeEnum $docType,
         string $fileMimeType
     ) {
+        $providerCode = null;
+
+        if ($quote->payments && $quote->payments->isNotEmpty()) {
+            $latestPayment = $quote->payments->first();
+            if ($latestPayment && $latestPayment->insuranceProvider) {
+                $providerCode = $latestPayment->insuranceProvider->code;
+            }
+        }
+
+        LoggerService::info('Provider Code', extra: [
+            'provider_code' => $providerCode,
+            'uuid' => $quote->uuid,
+        ]);
+
         $response = $this->sendRequest('/process-document', [
             'ref_id' => $quote->code,
             'uuid' => $quote->uuid,
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
             'doc_type' => $docType->value,
+            'providerCode' => $providerCode,
 
             // for now image would be false on the basis of Hamas Request
             'image' => false,
@@ -145,7 +161,13 @@ class OCRService
                     $docType,
                     $data
                 );
-                (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
+
+                $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
+                if ($isQuoteStatusTransectionApproved) {
+                    (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
+                } else {
+                    event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
+                }
 
                 // Send end notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types when processing completes successfully
                 if ($this->requiresOcrNotifications($docType) && $dataFilledResponse) {

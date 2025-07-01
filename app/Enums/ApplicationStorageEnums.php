@@ -227,5 +227,12 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_UNIVERSAL_SEARCH = 'ENABLE_UNIVERSAL_SEARCH';
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
+
+    /* Savings Book Policy Template */
+    public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
+
+    /* Savings Send Policy Template */
+    public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
+    public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';
     public const OCR_ENABLED = 'OCR_ENABLED';
 }
