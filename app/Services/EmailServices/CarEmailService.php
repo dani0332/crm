@@ -108,10 +108,9 @@ class CarEmailService extends BaseService
 
                 LoggerService::info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
 
-
             } else {
                 LoggerService::info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-                
+
                 $response = $this->sendEmailCustomerService->sendCarIntroEmailWithoutAdvisor($lead);
                 if ($response) {
                     $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
@@ -123,7 +122,7 @@ class CarEmailService extends BaseService
         return $response;
     }
 
-    private function  sendCarCompanyOCBIntroEmail($lead)
+    private function sendCarCompanyOCBIntroEmail($lead)
     {
         LoggerService::info(self::class." -sendCarCompanyOCBIntroEmail company car ocb intro email- Ref ID: {$lead->uuid} ");
         CompanyCarOCBJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(1));
@@ -134,6 +133,7 @@ class CarEmailService extends BaseService
             CompanyCarFollowupJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes((int) $companyCarFollowupDelayDuration));
             LoggerService::info('CompanyCarFollowupJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
         }
+
         return null;
     }
 

@@ -3,15 +3,14 @@
 namespace App\Jobs;
 
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\CarQuote;
-use App\Services\Logger\LoggerService;
 
 class IntroEmailJob implements ShouldQueue
 {
