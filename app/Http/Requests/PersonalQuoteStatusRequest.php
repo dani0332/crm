@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
@@ -68,9 +70,10 @@ class PersonalQuoteStatusRequest extends FormRequest
             ];
 
             if(request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-                $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski];
+                $quoteTypeIds = [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Home, QuoteTypeId::Jetski];
                 if(in_array($quoteObject->quote_type_id, $quoteTypeIds) && method_exists($quoteObject, 'hasInsurerPaymentLink') && $quoteObject->hasInsurerPaymentLink() && ! $quoteObject->canUpdateToTransactionApproved() && ! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
                     $validator->errors()->add('value', 'Cannot update to Transaction Approved status. Quote must have payment initiated and payment link sent to customer.');
+                }
             }
 
             if (in_array(null, $customerProfileDetails) && request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {
