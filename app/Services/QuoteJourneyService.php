@@ -59,31 +59,31 @@ class QuoteJourneyService
 
     /**
      * Lead Created Quote Journey
-    */
+     */
     public function leadCreatedQuoteJourney($quoteUUID, $quoteTypeId)
     {
         $quoteJourneyTemplates = $this->generateQuoteJourneyTemplates($quoteTypeId);
         $quoteJourneyEntries = [
             [
                 'status' => QuoteJourney::COMPLETED,
-                'text' => $quoteJourneyTemplates['leadCreated']
+                'text' => $quoteJourneyTemplates['leadCreated'],
             ],
             [
                 'status' => QuoteJourney::IN_PROCESS,
-                'text' => $quoteJourneyTemplates['planSelected']
+                'text' => $quoteJourneyTemplates['planSelected'],
             ],
             [
                 'status' => QuoteJourney::PENDING,
-                'text' => $quoteJourneyTemplates['paymentMade']
+                'text' => $quoteJourneyTemplates['paymentMade'],
             ],
             [
                 'status' => QuoteJourney::PENDING,
-                'text' => $quoteJourneyTemplates['documentUpload']
+                'text' => $quoteJourneyTemplates['documentUpload'],
             ],
             [
                 'status' => QuoteJourney::PENDING,
-                'text' => $quoteJourneyTemplates['policyIssued']
-            ]
+                'text' => $quoteJourneyTemplates['policyIssued'],
+            ],
         ];
         $this->sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId, $quoteJourneyEntries);
     }
