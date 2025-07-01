@@ -40,7 +40,9 @@ class GroupMedicalAllocation extends BaseAllocation
         if (count($emails) > 0) {
             LoggerService::info(self::class." - Applied rules users for Group Medical Advisors:  | quote Ref-ID: {$this->lead->uuid} ");
 
-            return $emails;
+            return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::GMAdvisor])
+                ->whereIn('users.email', $emails)
+                ->first();
         }
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();
         if (empty($this->lead->number_of_employees)) {

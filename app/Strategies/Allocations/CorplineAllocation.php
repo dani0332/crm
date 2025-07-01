@@ -16,7 +16,12 @@ class CorplineAllocation extends BaseAllocation
         if (count($emails) > 0) {
             LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
 
-            return $emails;
+            return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CorpLineAdvisor])
+                ->whereIn('users.id', function ($q) {
+                    $q->select('business_type_of_insurance_user.user_id')->from('business_type_of_insurance_user')->where('business_type_of_insurance_user.business_type_of_insurance_id', $this->lead->business_type_of_insurance_id);
+                })
+                ->whereIn('users.email', $emails)
+                ->first();
         }
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CorpLineAdvisor])

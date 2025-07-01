@@ -17,7 +17,9 @@ class CycleAllocation extends BaseAllocation
         if (count($emails) > 0) {
             LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
 
-            return $emails;
+            return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CycleAdvisor])
+                ->whereIn('users.email', $emails)
+                ->first();
         }
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CycleAdvisor])

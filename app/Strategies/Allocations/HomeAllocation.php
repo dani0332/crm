@@ -37,9 +37,9 @@ class HomeAllocation extends BaseAllocation
                 'uuid' => $this->lead->uuid ?? null,
             ]);
             // return $this->fetchCorpLineAdvisor($onlineStatus);
-            Log::info('HomeAllocation: Corp advisors logic not implemented, returning empty array');
+            Log::info('HomeAllocation: Corp advisors logic not implemented, returning null');
 
-            return []; // Corp advisors logic is not implemented yet so returning empty array and lead should be unassigned in this case
+            return null; // Corp advisors logic is not implemented yet so returning null and lead should be unassigned in this case
         }
 
         // Default behavior: Fetch value or volume advisors (Home Advisors)
