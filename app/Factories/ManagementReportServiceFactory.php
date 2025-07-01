@@ -107,19 +107,41 @@ class ManagementReportServiceFactory
     public static function createExport($reportCategory, $requestParams = [])
     {
         $exportMap = [
-            ManagementReportCategoriesEnum::SALE_SUMMARY => SaleSummaryReportExport::class,
-            ManagementReportCategoriesEnum::SALE_DETAIL => SaleDetailReportExport::class,
-            ManagementReportCategoriesEnum::ENDING_POLICIES => EndingPoliciesReportExport::class,
-            ManagementReportCategoriesEnum::TRANSACTION => TransactionReportExport::class,
-            ManagementReportCategoriesEnum::ACTIVE_POLICIES => ActivePoliciesReportExport::class,
-            ManagementReportCategoriesEnum::ENDORSEMENT => EndorsementReportExport::class,
-            ManagementReportCategoriesEnum::INSTALLMENT => InstallmentReportExport::class,
+            ManagementReportCategoriesEnum::SALE_SUMMARY => [
+                'class' => SaleSummaryReportExport::class,
+                'service' => 'saleSummaryReportService',
+            ],
+            ManagementReportCategoriesEnum::SALE_DETAIL => [
+                'class' => SaleDetailReportExport::class,
+                'service' => 'saleDetailReportService',
+            ],
+            ManagementReportCategoriesEnum::ENDING_POLICIES => [
+                'class' => EndingPoliciesReportExport::class,
+                'service' => 'endingPoliciesReportService',
+            ],
+            ManagementReportCategoriesEnum::TRANSACTION => [
+                'class' => TransactionReportExport::class,
+                'service' => 'transactionReportService',
+            ],
+            ManagementReportCategoriesEnum::ACTIVE_POLICIES => [
+                'class' => ActivePoliciesReportExport::class,
+                'service' => 'activePoliciesReportService',
+            ],
+            ManagementReportCategoriesEnum::ENDORSEMENT => [
+                'class' => EndorsementReportExport::class,
+                'service' => 'endorsementReportService',
+            ],
+            ManagementReportCategoriesEnum::INSTALLMENT => [
+                'class' => InstallmentReportExport::class,
+                'service' => 'installmentReportService',
+            ],
             // Add other report categories and their corresponding export classes here
         ];
 
         if (isset($exportMap[$reportCategory])) {
             $service = self::createStrategy($reportCategory);
-            return app()->make($exportMap[$reportCategory], ['saleSummaryReportService' => $service, 'requestParams' => $requestParams]);
+            $config = $exportMap[$reportCategory];
+            return app()->make($config['class'], [$config['service'] => $service, 'requestParams' => $requestParams]);
         }
 
         return null;
