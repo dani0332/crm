@@ -14,7 +14,7 @@ class QuoteJourneyService
      */
     public function generateQuoteJourneyTemplates($quoteTypeId)
     {
-        $quoteTypeName = QuoteTypes::getName(1)->value;
+        $quoteTypeName = QuoteTypes::getName($quoteTypeId)->value;
 
         return [
             'leadCreated' => "Information for $quoteTypeName insurance quote provided",
