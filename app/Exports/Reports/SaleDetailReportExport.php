@@ -144,18 +144,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             $quote->pcp_tag_formatted ?? 'N/A',
         ]);
 
-        LoggerService::endLogging();
-
         foreach ($this->columnTotals as $index => $field) {
-            //            logger()->debug("index: ".$index);
-            //            logger()->debug("field: ".$field);
-            //            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($index, 0));
-            //            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
-
-            //            logger()->debug("field: ".print_r([
-            //                //'$field' => $field,
-            //                'total_policies' => $numericValues->get('total_policies'),
-            //                ], true));
 
             $sumColumns = [10, 11, 12, 13, 14, 15, 16, 17, 24];
             if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {

@@ -101,7 +101,14 @@ class EndorsementReportExport implements CsvExportableInterface
 
     public function map($quote): array
     {
-        $paymentRefId = property_exists($quote, 'payment_ref_id') && $quote->payment_ref_id ? ($quote->payment_ref_id . (property_exists($quote, 'split_sr_no') && $quote->split_sr_no ? '-' . $quote->split_sr_no : '')) : 'N/A';
+        if (isset($quote->payment_ref_id)) {
+            $paymentRefId = $quote->payment_ref_id;
+            if (isset($quote->split_sr_no) && $quote->split_sr_no) {
+                $paymentRefId .= '-' . $quote->split_sr_no;
+            }
+        } else {
+            $paymentRefId = 'N/A';
+        }
 
         $row = collect([
             $quote->main_lead_code ?? 'N/A',

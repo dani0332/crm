@@ -96,8 +96,6 @@ class SaleSummaryReportExport implements CsvExportableInterface
             }
         });
 
-        $cols = $this->map($processedData[0] ?? (object) []);
-
         // Write totals rows to file which were calculated during map()
         $this->postDataRows($stream);
 
@@ -171,18 +169,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             'total_price' => $this->resolveNumberFormat($quote->total_price ?? 0),
         ]);
 
-        LoggerService::endLogging();
-
         foreach ($this->columnTotals->keys() as $field) {
-            //            logger()->debug("field: ".$field);
-            //            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($field, 0));
-            //            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
-
-            //            logger()->debug("field: ".print_r([
-            //                //'$field' => $field,
-            //                'total_policies' => $numericValues->get('total_policies'),
-            //                ], true));
-
             $this->columnTotals->put($field, $this->columnTotals->get($field, 0) + ($numericValues->get($field) ?? 0));
         }
 

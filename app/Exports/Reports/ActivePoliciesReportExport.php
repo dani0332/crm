@@ -75,18 +75,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
             $this->resolveNumberFormat($quote->price_without_vat ?? 0),
         ]);
 
-        LoggerService::endLogging();
-
         foreach ($this->columnTotals as $index => $field) {
-            //            logger()->debug("index: ".$index);
-            //            logger()->debug("field: ".$field);
-            //            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($index, 0));
-            //            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
-
-            //            logger()->debug("field: ".print_r([
-            //                //'$field' => $field,
-            //                'total_policies' => $numericValues->get('total_policies'),
-            //                ], true));
 
             $sumColumns = [3,4,5];
 
