@@ -90,7 +90,13 @@ const sendDocumentLoader = ref(false);
 const viewDocumentLoader = ref(false);
 const downloadDocumentLoader = ref(false);
 const addDocumentLoader = ref(false);
+const bookEPOnSageLoader = ref(false);
 const sendDocumentForm = useForm({
+  quoteId: props.quote.id,
+  modelType: props.modelType,
+  isInertia: true,
+});
+const bookEPOnSageForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
   isInertia: true,
@@ -196,6 +202,25 @@ const viewDocument = id => {
       viewDocumentLoader.value = false;
     });
 };
+const rescheduleEPBooking = item => {
+  bookEPOnSageLoader.value = true;
+  let epTransactionId = getFirstPriceWithTransaction(item.prices)?.transactions[0]?.id;
+  bookEPOnSageForm
+    .transform(data => ({
+      ...data,
+      epTransactionId: epTransactionId,
+      insuranceProviderId: item.insurance_provider_id,
+    }))
+    .post(route('embedded-products.reschedule-sage-booking'), {
+      preserveScroll: true,
+      onSuccess: () => {
+        bookEPOnSageLoader.value = false;
+      },
+      onError: () => {
+        bookEPOnSageLoader.value = false;
+      },
+    });
+};
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -229,6 +254,14 @@ const epTable = reactive({
     {
       text: 'Policy Status',
       value: 'policy_status',
+    },
+    {
+      text: 'Sage Receipt ID',
+      value: 'payment_sage_receipt_id',
+    },
+    {
+      text: 'Sage Status',
+      value: 'sage_status',
     },
     {
       text: 'Actions',
@@ -576,6 +609,19 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
+          <template #item-payment_sage_receipt_id="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.payment_sage_receipt_id ?? '-'
+            }}
+          </template>
+          <template #item-sage_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.sage_status ?? '-'
+            }}
+          </template>
+
           <template #item-policy_status="{ prices }">
             {{
               getFirstPriceWithTransaction(prices)?.transactions[0]
@@ -677,6 +723,19 @@ const onAddDocumentSubmit = event => {
                 @click.prevent="voidPaymentFormAction(item)"
               >
                 Void Payment
+              </x-button>
+               <!--  v-if="
+                  item.can_book_embedded_product &&
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.payment_gateway_id ==
+                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+                " -->
+              <x-button
+                size="xs"
+                color="emerald"
+                @click.prevent="rescheduleEPBooking(item)"
+              >
+                Book Embedded Product
               </x-button>
             </div>
           </template>

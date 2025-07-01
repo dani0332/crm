@@ -14,7 +14,9 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SageEnum;
 use App\Enums\RolesEnum;
 use App\Facades\Marshall;
 use App\Jobs\EP\CancelEPJob;
@@ -24,6 +26,7 @@ use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Jobs\SukoonMedexPurchaseFlowJob;
 use App\Models\ApplicationStorage;
+use App\Models\SageProcess;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
@@ -242,6 +245,7 @@ class EmbeddedProductRepository extends BaseRepository
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
             $item->can_void_payment = $this->canVoidPayment($transaction->first());
+            $item->can_book_embedded_product = $this->canBookEmbeddedProduct($transaction->first(),$quoteObject, $item);
         });
 
         return $ep;
@@ -279,6 +283,16 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return false;
+    }
+
+    private function canBookEmbeddedProduct($transaction, $quote, $ep)
+    {
+        $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
+        $isMedXEP = in_array($ep->short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
+        $epTranSageStatusFailed = $transaction?->sage_status_id == SageEmbeddedProductEnum::BOOKING_FAILED;
+        $sageProcess = SageProcess::where([ 'model_type' => $quote::class,'model_id' => $quote->id])->first();
+        $isSageProcessFailed = $sageProcess?->status == SageEnum::SAGE_PROCESS_FAILED_STATUS;
+        return $isPolicyBooked && $isMedXEP && ($epTranSageStatusFailed || $isSageProcessFailed);
     }
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
