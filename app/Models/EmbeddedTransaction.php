@@ -14,7 +14,6 @@ class EmbeddedTransaction extends Model
     use HasFactory;
 
     protected $guarded = [];
-
     protected $appends = [
         'sage_status', // for sukoon medx
     ];

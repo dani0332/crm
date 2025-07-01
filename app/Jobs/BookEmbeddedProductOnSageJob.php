@@ -3,12 +3,13 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\SageEnum;
 use App\Enums\SageEmbeddedProductEnum;
+use App\Enums\SageEnum;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
-use App\Services\SageApiService;
 use App\Services\SageApiEmbeddedProductService;
+use App\Services\SageApiService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,7 +17,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Carbon;
 use Throwable;
-use App\Traits\GenericQueriesAllLobs;
 
 class BookEmbeddedProductOnSageJob implements ShouldQueue
 {
@@ -58,21 +58,21 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
 
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, $this->logFor);
- 
-            $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote ,$this->sageRequest, $this->epTransaction]);
+
+            $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage([$quote, $this->sageRequest, $this->epTransaction]);
 
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
                     LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->epTransaction->code.' - sage conflict - updating status to pending');
-                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message,$this->logFor);
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
                 } else {
                     LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->epTransaction->code.' - booking failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
                 }
             } else {
                 LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - EP Booked - updating status to completed');
-                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null,  $this->logFor);
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, $this->logFor);
             }
             LoggerService::info('EP Booking : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - Finished', extra : ['Response' => json_encode($response)]);
         } else {
