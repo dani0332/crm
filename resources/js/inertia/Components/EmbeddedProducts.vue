@@ -204,7 +204,8 @@ const viewDocument = id => {
 };
 const rescheduleEPBooking = item => {
   bookEPOnSageLoader.value = true;
-  let epTransactionId = getFirstPriceWithTransaction(item.prices)?.transactions[0]?.id;
+  let epTransactionId = getFirstPriceWithTransaction(item.prices)
+    ?.transactions[0]?.id;
   bookEPOnSageForm
     .transform(data => ({
       ...data,
@@ -724,7 +725,7 @@ const onAddDocumentSubmit = event => {
               >
                 Void Payment
               </x-button>
-               <!--  v-if="
+              <!--  v-if="
                   item.can_book_embedded_product &&
                   getFirstPriceWithTransaction(item.prices)?.transactions[0]
                     ?.payments[0]?.payment_gateway_id ==
