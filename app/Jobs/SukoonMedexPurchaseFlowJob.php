@@ -49,6 +49,6 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
+        LoggerService::info('Sukoon Medex Purchase-Flow Job failed. Job Failed. Error: '.$exception->getMessage());
     }
 }
