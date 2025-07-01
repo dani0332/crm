@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteJourney;
+use App\Enums\QuoteJourneyEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Services\Logger\LoggerService;
@@ -50,7 +50,7 @@ class QuoteJourneyService
         $quoteJourneyTemplates = $this->generateQuoteJourneyTemplates($quoteTypeId);
         $quoteJourneyEntries = [
             [
-                'status' => QuoteJourney::COMPLETED,
+                'status' => QuoteJourneyEnum::COMPLETED,
                 'text' => $quoteJourneyTemplates['policyIssued'],
             ],
         ];
@@ -65,23 +65,23 @@ class QuoteJourneyService
         $quoteJourneyTemplates = $this->generateQuoteJourneyTemplates($quoteTypeId);
         $quoteJourneyEntries = [
             [
-                'status' => QuoteJourney::COMPLETED,
+                'status' => QuoteJourneyEnum::COMPLETED,
                 'text' => $quoteJourneyTemplates['leadCreated'],
             ],
             [
-                'status' => QuoteJourney::IN_PROCESS,
+                'status' => QuoteJourneyEnum::IN_PROCESS,
                 'text' => $quoteJourneyTemplates['planSelected'],
             ],
             [
-                'status' => QuoteJourney::PENDING,
+                'status' => QuoteJourneyEnum::PENDING,
                 'text' => $quoteJourneyTemplates['paymentMade'],
             ],
             [
-                'status' => QuoteJourney::PENDING,
+                'status' => QuoteJourneyEnum::PENDING,
                 'text' => $quoteJourneyTemplates['documentUpload'],
             ],
             [
-                'status' => QuoteJourney::PENDING,
+                'status' => QuoteJourneyEnum::PENDING,
                 'text' => $quoteJourneyTemplates['policyIssued'],
             ],
         ];

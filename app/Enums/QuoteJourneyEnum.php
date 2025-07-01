@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-final class QuoteJourney extends Enum
+final class QuoteJourneyEnum extends Enum
 {
     public const COMPLETED = 'COMPLETED';
     public const IN_PROCESS = 'IN_PROCESS';
