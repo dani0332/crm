@@ -299,7 +299,7 @@ class EmbeddedProductController extends Controller
 
             $epTransaction = EmbeddedTransaction::where('id', $request->epTransactionId)->first();
 
-            $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+            $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->modelType, $payment, $quote, $paymentSplits);
             $sageRequest->userId = auth()->user()->id;
             $sageRequest->insurerID = $request->insuranceProviderId;
             $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST;
