@@ -41,16 +41,16 @@ class InstantAlfredService extends BaseService
     private function buildQueryByModel($quoteTypeId)
     {
         $request = request();
-        
+
         // Check if we need full data or can use optimized query
         $needsFullData = $this->shouldUseFullQuery($request);
-        
-        if (!$needsFullData) {
+
+        if (! $needsFullData) {
             // Optimized query for initial page load - only basic fields
             $this->personalQuery = DB::table('personal_quotes as pqr')
                 ->select(
                     'pqr.uuid',
-                    'pqr.id', 
+                    'pqr.id',
                     'pqr.code',
                     'pqrd.chat_initiated_at'
                 )
@@ -65,7 +65,7 @@ class InstantAlfredService extends BaseService
                     $query->where('pqr.code', '=', $request->quoteId);
                 })
                 ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
-                ->when(!empty($request->chat_initiated_at), function ($query) use ($request) {
+                ->when(! empty($request->chat_initiated_at), function ($query) use ($request) {
                     $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
                     $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
                     $query->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
@@ -158,7 +158,7 @@ class InstantAlfredService extends BaseService
                     $query->where('pqr.code', '=', $request->quoteId);
                 })
                 ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
-                ->when(!empty($request->chat_initiated_at), function ($query) use ($request) {
+                ->when(! empty($request->chat_initiated_at), function ($query) use ($request) {
                     $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
                     $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
                     $query->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
@@ -247,23 +247,23 @@ class InstantAlfredService extends BaseService
     private function shouldUseFullQuery($request): bool
     {
         // Use full query if report type is specified (needed for exports)
-        if (!empty($request->report)) {
+        if (! empty($request->report)) {
             return true;
         }
 
         // Use full query if any complex filters are applied that need additional data
         $complexFilters = [
             'transaction_type_id',
-            'quote_batch_id', 
+            'quote_batch_id',
             'quote_status_id',
             'payment_status_id',
             'sale_leads',
             'segment',
-            'assignment_type'
+            'assignment_type',
         ];
 
         foreach ($complexFilters as $filter) {
-            if (!empty($request->$filter)) {
+            if (! empty($request->$filter)) {
                 return true;
             }
         }
