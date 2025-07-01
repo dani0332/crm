@@ -25,6 +25,7 @@ final class QuoteTypeId extends Enum
     const Jetski = 11;
     const Corpline = 101;
     const GroupMedical = 102;
+    const Savings = 18;
     const CompanyCar = 15;
 
     public static function getOptions()
