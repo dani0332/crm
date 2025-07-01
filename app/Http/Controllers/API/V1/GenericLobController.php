@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ExportPlansPdfLinkRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Storage;
-use App\Jobs\DeleteTempOCBPDFFileJob;
-use App\Enums\QuoteTypes;
-use App\Http\Requests\ExportPlansPdfLinkRequest;
-use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
+use Illuminate\Validation\ValidationException;
 
 class GenericLobController extends Controller
 {
