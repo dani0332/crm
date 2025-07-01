@@ -265,7 +265,7 @@ class EndorsementReportService extends ManagementReport
         $query = $query->orderBy('id', 'desc');
 
 
-        logger()->debug('toRawSql: '.$query->toRawSql());
+        // logger()->debug('toRawSql: '.$query->toRawSql());
 
         return $query;
     }

@@ -137,7 +137,7 @@ class SaleSummaryReportService extends ManagementReport
         }
         $this->applyFilters($query, $request, false, true);
 
-        logger()->debug('toRawSql: '.$query->toRawSql());
+        // logger()->debug('toRawSql: '.$query->toRawSql());
 
         return $query;
     }
@@ -371,8 +371,6 @@ class SaleSummaryReportService extends ManagementReport
 
         $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
         $endorsementsQuery = $query->unionAll($reversalQuery);
-
-        logger()->debug('endorsmentDat-toRawSql: '.$endorsementsQuery->toRawSql());
 
         $data = $endorsementsQuery->get();
 

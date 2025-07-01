@@ -109,7 +109,7 @@ class SaleDetailReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        logger()->debug('toRawSql: '.$query->toRawSql());
+        // logger()->debug('toRawSql: '.$query->toRawSql());
 
         return $query;
     }

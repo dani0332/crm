@@ -42,7 +42,7 @@ class ActivePoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request, isSSR: true);
 
-        logger()->debug('toRawSql: '.$query->toRawSql());
+        // logger()->debug('toRawSql: '.$query->toRawSql());
 
         return $query;
     }

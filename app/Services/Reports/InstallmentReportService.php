@@ -100,7 +100,7 @@ class InstallmentReportService extends ManagementReport
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
 
-        logger()->debug('toRawSql: '.$query->toRawSql());
+        // logger()->debug('toRawSql: '.$query->toRawSql());
 
         return $query;
     }
