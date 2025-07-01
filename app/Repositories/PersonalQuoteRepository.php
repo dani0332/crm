@@ -64,7 +64,6 @@ class PersonalQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
-            
             if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
                 $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
                 (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
