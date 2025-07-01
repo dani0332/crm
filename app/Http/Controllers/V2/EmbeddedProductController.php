@@ -287,7 +287,7 @@ class EmbeddedProductController extends Controller
         try{
             $quoteTypeId = QuoteTypes::getIdFromValue($request->modelType);
             $quote = $this->getQuoteObjectBy($request->modelType, $request->quoteId);
-    
+
             $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
             $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
             if ($isDuplicateOrCIRLead && empty($payment)) {
@@ -297,28 +297,28 @@ class EmbeddedProductController extends Controller
                 ])->mainLeadPayment()->with('paymentSplits')->first();
             }
             $paymentSplits = $payment->paymentSplits;
-    
+
             $epTransaction = EmbeddedTransaction::where('id', $request->epTransactionId)->first();
-    
+
             $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
             $sageRequest->userId = auth()->user()->id;
             $sageRequest->insurerID = $request->insuranceProviderId;
             $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST;
             $sageRequest->epTransactionId = $request->epTransactionId;
             $sageRequest->epInsuranceProviderId = $request->insuranceProviderId;
-            $sageRequest->qyoteType = $request->modelType;
+            $sageRequest->qouteType = $request->modelType;
             $sageRequest->quoteId = $request->modequoteIdlType;
-    
+
             $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
-            $sageRequest->customerId = (new SageApiService)->verifySageCustomer($quote->customer_id, $data, $quote, 15); 
-            
-    
+            $sageRequest->customerId = (new SageApiService)->verifySageCustomer($quote->customer_id, $data, $quote, 15);
+
+
             $scheduledResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct([$quote, $epTransaction, $sageRequest, $request->all()]);
-    
+
             return redirect()->back()->with('success', $scheduledResponse['message'] ?? 'Certificate send successfully');
         }catch(Exception $e){
             return redirect()->back()->with('error', $e->getMessage());
-        }    
-        
+        }
+
     }
 }
