@@ -5,7 +5,6 @@ namespace App\Strategies\Allocations;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\RolesEnum;
-use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
 
@@ -36,10 +35,11 @@ class GroupMedicalAllocation extends BaseAllocation
 
             return null;
         }
-    
+
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
         if (count($emails) > 0) {
             LoggerService::info(self::class." - Applied rules users for Group Medical Advisors:  | quote Ref-ID: {$this->lead->uuid} ");
+
             return $emails;
         }
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();

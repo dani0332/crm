@@ -7,11 +7,11 @@ use App\Models\LeadSource;
 use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use stdClass;
-use App\Models\User;
 
 class RuleService extends BaseService
 {
@@ -231,10 +231,12 @@ class RuleService extends BaseService
         } else {
             $userIds = [(int) $leadSourceUsers];
         }
+
         return $userIds;
     }
 
-    public function getEmailsByLeadSource($leadSource, $quoteTypeId){
+    public function getEmailsByLeadSource($leadSource, $quoteTypeId)
+    {
         $rules = app(RuleService::class)->getUsersByLeadSourceRules($leadSource, $quoteTypeId);
         if (count($rules) > 0) {
             $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
@@ -242,6 +244,7 @@ class RuleService extends BaseService
 
             return $emails;
         }
+
         return [];
     }
 }

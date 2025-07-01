@@ -4,9 +4,8 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
-use App\Models\User;
-use App\Services\RuleService;
 use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
 
 class LifeAllocation extends BaseAllocation
 {
@@ -41,7 +40,8 @@ class LifeAllocation extends BaseAllocation
 
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
         if (count($emails) > 0) {
-            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ",extra: ['emails' => $emails] );
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", extra: ['emails' => $emails]);
+
             return $emails;
         }
 
