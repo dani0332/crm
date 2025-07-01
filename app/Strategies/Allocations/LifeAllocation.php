@@ -26,7 +26,7 @@ class LifeAllocation extends BaseAllocation
     protected function getAdvisorEmails($storageKey = null)
     {
         $category = $this->evaluateCategory();
-        $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
+        $amount = $this->lead->currency?->convertToAED((float) $this->lead?->sum_insured_value ?? 0);
 
         if ($this->lead->isFIC(QuoteTypes::LIFE)) {
             LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');

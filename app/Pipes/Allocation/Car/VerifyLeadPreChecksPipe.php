@@ -48,14 +48,8 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized, continuing assignment');
             }
             $continueAssignment = true;
-        } elseif (($isSICFlowDisabled || ! $isAIG) && ! $lead->isRenewalUpload()) {
-            if ($isSICFlowDisabled) {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, continuing assignment');
-            } elseif (! $isAIG) {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead is not AIG and not Renewal Upload, continuing assignment');
-            } else {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead meets other criteria and not Renewal Upload, continuing assignment');
-            }
+        } elseif ($isSICFlowDisabled && ! $isAIG && ! $lead->isRenewalUpload()) {
+            LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled, is not AIG, and not Renewal Upload, continuing assignment');
             $continueAssignment = true;
         } elseif ($lead->isRenewalTierEmailSent()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead has renewal tier email sent, skipping assignment');

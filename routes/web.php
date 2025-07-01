@@ -56,6 +56,7 @@ use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
+use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
@@ -84,6 +85,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
@@ -145,6 +147,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::post('instant-alfred/chats', [AlfredChatController::class, 'chats']);
     Route::get('instant-alfred/export', [AlfredChatController::class, 'exportChat'])->name('exportChatData');
+    Route::post('instant-alfred/export-email', [AlfredChatController::class, 'exportChatToEmail'])->name('instant-alfred.export-email');
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
@@ -190,6 +193,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('home/{quoteId}/plan_details/{planId}', [HomeQuoteController::class, 'planDetails'])->name('home_plan_details');
     Route::post('/home-plan-manual-update-process', [HomeQuoteController::class, 'homePlanUpdateManualProcess']);
 
+    // savings routes without check_route_access middleware
+    Route::post('/savings-plan-manual-update-process', [SavingsQuoteController::class, 'savingsPlanUpdateManualProcess'])->name('savingsPlanUpdate');
+    Route::get('savings/{quoteId}/plan_details/{planId}', [SavingsQuoteController::class, 'planDetails'])->name('savings_plan_details');
+    Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -218,6 +226,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
+        Route::prefix('personal-quotes')->group(function () {
+            Route::resource('/savings', SavingsQuoteController::class)->names(generateRouteNames('savings-quotes'));
+        });
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
 
         Route::group(['prefix' => 'quotes/'], function () {
@@ -261,6 +272,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
             Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
         });
+    });
+
+    // Non Motor
+    Route::group(['prefix' => 'renewals'], function () {
+        Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
+        Route::post('non-motor/upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update-non-motor')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
+        Route::get('non-motor-batches', [RenewalsUploadController::class, 'listRenewalBatchesNonMotor'])->name('renewals-batches-nonmotor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
+
+        // plan processes page non motor
+        Route::get('batches-non-motor/{id}/{quoteType}/plans-processes', [RenewalsUploadController::class, 'plansProcessesNonMotor'])->name('batch-plans-processes.non.motor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
+        Route::get('batches-non-motor/{id}/{quoteType}/fetch-plans', [RenewalsUploadController::class, 'fetchPlansNonMotor'])->name('batch-fetch-plans.non.motor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
+
     });
 
     Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
@@ -401,9 +424,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update');
         Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses'])->name('batch-plans-processes');
+
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');
         Route::get('batches/{batch}/schedule-renewals-ocb', [RenewalsUploadController::class, 'scheduleRenewalsOcb'])->name('run-batch-process');
+
         Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed'])->name('renewal-validation-failed');
         Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed'])->name('validation-failed-download');
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
@@ -499,6 +524,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             });
         });
 
+        Route::prefix('private-client-config')->group(function () {
+            Route::get('show', [PrivateClientConfigController::class, 'show'])->name('admin.private-client-config.show');
+            Route::post('upsert', [PrivateClientConfigController::class, 'upsert'])->name('admin.private-client-config.upsert');
+        });
+
         Route::prefix('benchmarker')->group(function () {
             Route::prefix('query')->group(function () {
                 Route::get('show', [QueryBenchmarkerController::class, 'show'])->name('admin.benchmarker.query.show');
@@ -530,13 +560,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         })->where('id', '[A-Z0-9]+')->name('quotes.home.show');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
-        // Route::resource('home', CRUDController::class)->except(['show']);
-        // Route::resource('business', CRUDController::class);
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);
 
-        // Route::resource('travel', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -652,11 +679,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
         Route::get('get-insured-details', [AMLController::class, 'getInsuredDetails'])->name('get-insured-details');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
-        // Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
-        // Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
         Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
         Route::post('temp-skip-bridger-aml', [AMLController::class, 'tempSkipBridgerAML'])->name('temp-skip-bridger-aml');
+        Route::post('aml-ctf-report-export', [AMLController::class, 'amlCtfReportExport'])->name('aml-ctf-report-export')->middleware(SetReadDbConnection::class);
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
@@ -677,7 +703,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/send-update-cancel', 'sendUpdateCancel')->name('send-update-cancel');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
-    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
         Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
@@ -721,7 +746,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('update-insured-kyc', [AMLController::class, 'insuredKycDetailsUpdate'])->name('update-insured-kyc');
     Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
     Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
-    // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
@@ -786,6 +810,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
         ->name('admin.nationality-allocation-config.audit-logs');
 
+    // Allocation Configuration Routes
+    Route::get('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'index'])
+        ->name('admin.allocation-configuration.index');
+    Route::post('allocation-configuration/fetch', [\App\Http\Controllers\AllocationConfigurationController::class, 'fetchConfiguration'])
+        ->name('admin.allocation-configuration.fetch');
+    Route::post('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'store'])
+        ->name('admin.allocation-configuration.store');
+    Route::put('allocation-configuration/{allocationConfiguration}', [\App\Http\Controllers\AllocationConfigurationController::class, 'update'])
+        ->name('admin.allocation-configuration.update');
+
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;
         $addBtchNuimber->handle();
@@ -793,11 +827,42 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    // Route::get('/run-policy-bulk-send', function () {
-    //     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+    Route::get('/run-policy-bulk-send', function () {
 
-    //     return 'Command executed successfully!';
-    // });
+        // Check if user has admin role
+        if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+
+        // Use cache lock to prevent multiple servers from executing simultaneously
+        $lockKey = 'policy_bulk_send_lock';
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 600); // 10 minutes lock
+
+        if (! $lock->get()) {
+            return response()->json([
+                'error' => 'Command is already running on another server. Please wait.',
+                'status' => 'locked',
+            ], 423); // 423 Locked
+        }
+
+        try {
+            // Execute the command
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+
+            return response()->json([
+                'message' => 'Command executed successfully!',
+                'status' => 'completed',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Command execution failed: '.$e->getMessage(),
+                'status' => 'failed',
+            ], 500);
+        } finally {
+            // Always release the lock
+            $lock->release();
+        }
+    })->name('run-policy-bulk-send');
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously
@@ -809,12 +874,3 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
     });
 });
-
-// Migration Not Required For Now 21 Nov 24
-// Route::get('run-insly-email-fix', function () {
-
-//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-//         Artisan::queue('InslyEmailFix:cron');
-//     }
-
-// });

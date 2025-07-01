@@ -67,6 +67,7 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   isAllianceProvider: Boolean,
+  customerAddressData: Object,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -1210,13 +1211,14 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
@@ -1571,6 +1573,44 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const fullAddress = computed(() => {
+  const address = page.props?.customerAddressData;
+
+  if (!address) {
+    return null; // Return null if customerAddressData is null or undefined
+  }
+
+  const {
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  } = address;
+
+  const parts = [
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  ];
+
+  // Check if all parts are null or undefined
+  const allPartsAreNull = parts.every(part => part == null);
+
+  if (allPartsAreNull) {
+    return null;
+  }
+
+  // Filter out null or undefined parts and join the rest with comma and space
+  return parts.filter(part => part).join(', ');
+});
 </script>
 
 <template>
@@ -1582,6 +1622,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
     >
       <h2 class="text-xl font-semibold">
         Travel Detail
+        <x-button
+          v-if="quote?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
         <span
           class="inline-flex items-center rounded-md bg-yellow-300 px-2 py-1 text-xs font-medium text-yellow-900 ring-1 ring-inset ring-yellow-300/10"
           v-if="isEmbeddedProduct(quote.code)"
@@ -2081,6 +2129,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">API ISSUANCE STATUS</dt>
                 <dd>{{ quote.api_issuance_status }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -2093,7 +2148,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -2164,7 +2219,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2253,11 +2308,30 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     />
                   </dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
+                </div>
               </dl>
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2350,6 +2424,21 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
               </dl>
               <div class="flex justify-end">
@@ -2459,7 +2548,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     </x-modal>
 
     <div
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
       <Collapsible :expanded="sectionExpanded">
@@ -2698,7 +2787,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     </div>
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -3425,7 +3514,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
       :quote="quote"
-      :modelType="quoteType"
+      :modelType="modelType.toLowerCase()"
       :expanded="sectionExpanded"
     />
 

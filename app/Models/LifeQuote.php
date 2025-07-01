@@ -10,7 +10,6 @@ use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -40,6 +39,9 @@ class LifeQuote extends Model implements AuditableContract
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
+    ];
+    protected $appends = [
+        'pc_qualified_formatted',
     ];
 
     protected static function booted()
@@ -187,16 +189,30 @@ class LifeQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
-    public function insured(): HasOneThrough
+    // Get all insured records for this quote (multiple AML screenings)
+    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // personal_quotes.id
+            'insured_id' // customer_insured.insured_id
+        );
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id, relation between life_quote and customer_insured.
+            'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // life_quote_request.id
+            'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Life);
+        )->latest('customer_insured.updated_at');
     }
 
     public function scopeFilterBySegment($query, $alias = 'lqr')

@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendFICEmailForLife;
@@ -32,6 +33,7 @@ trait PersonalQuoteObservable
 
             if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $this->handlePolicyBookedOrSentToCustomer($personalQuote);
+                event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             }
 
             // For now PolicyCancelled Handling is only for Bike
@@ -43,6 +45,7 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
+            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
         }
 
         $this->handleStaleRemovalFromLeads($personalQuote);
@@ -53,46 +56,43 @@ trait PersonalQuoteObservable
         $personalQuote->markLeadAllocationPassed();
 
         if ($personalQuote->isBike()) {
-            $oldAdvisorId = $personalQuote->getOriginal('advisor_id');
             event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
         }
-        if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle()) {
-            info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
-            if ($oldAdvisorId != $personalQuote->advisor_id) {
-                $this->IntroAndReassignEmail($personalQuote, $oldAdvisorId);
-            } else {
-                info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
-            }
+
+        if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle() || $personalQuote->isSavings()) {
+            $this->IntroAndReassignEmail($personalQuote, $oldAdvisorId);
         }
         if ($personalQuote->isLife()) {
             if ($personalQuote->isFIC(quoteType: QuoteTypes::LIFE)) {
                 SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             }
         }
+
+        $this->handleIntroEmails($personalQuote, $oldAdvisorId);
     }
 
     protected function handleIntroEmails(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
 
         if ($personalQuote->isHome()) {
-            info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
+            info(self::class." - sending home intro email for quote: {$personalQuote->uuid}");
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
-            info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
-            info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+            info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid);
+            info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
             if ($personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
                 if ($oldAdvisorId != $personalQuote->advisor_id) {
-                    info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+                    info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
 
                     $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-                    info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid} | Time: ".now());
+                    info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid}");
                     app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, QuoteTypes::HOME->value, $oldAdvisorId);
-                    info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid} | Time: ".now());
+                    info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid}");
                 } else {
-                    info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+                    info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id}");
                 }
 
             } else {
-                info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+                info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id}");
             }
         }
     }
@@ -165,14 +165,20 @@ trait PersonalQuoteObservable
 
     private function IntroAndReassignEmail(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
-        if ($personalQuote->source != LeadSourceEnum::IMCRM) {
-            $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
-            info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid} | Time: ".now());
-            $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-            info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid} | Time: ".now());
-            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
-            info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid} | Time: ".now());
+        $isEligibleForEmail = $personalQuote->source != LeadSourceEnum::IMCRM;
 
+        // for Savings, we need to send email to customer even if the source is IMCRM
+        if ($personalQuote->isSavings()) {
+            $isEligibleForEmail = true;
+        }
+
+        if ($isEligibleForEmail) {
+            $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
+            info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid}");
+            $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+            info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
+            info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
         }
     }
 

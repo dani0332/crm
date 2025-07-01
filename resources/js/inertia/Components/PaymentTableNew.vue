@@ -213,12 +213,14 @@ const capturePaymentValidationErrorMessage = ref('');
 const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
+const selectedPaymentForEdit = ref(null);
 
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.Travel,
+  quoteTypeCodeEnum.SAVINGS,
 ];
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -226,6 +228,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
@@ -286,7 +289,11 @@ const isPaymentAuthorized = computed(() => {
     );
     if (hasNotPaidPayments) {
       return payments.some(payment =>
-        payment.payment_splits.some(item => item.payment_method.code === 'CC'),
+        payment.payment_splits.some(
+          item =>
+            item.payment_method.code === 'CC' &&
+            item.payment_status_id == paymentStatusEnum.AUTHORISED,
+        ),
       );
     }
   }
@@ -336,6 +343,8 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -1005,8 +1014,9 @@ const handlePaymentTypes = count => {
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
     if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-      // need to fix this for payments
-      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+      isMultiPaymentEnabled = selectedPaymentForEdit.value
+        ? selectedPaymentForEdit.value?.isMultiplePaymentsEnabled
+        : isMultiPaymentEnabled;
     }
     const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
@@ -1655,6 +1665,7 @@ const addPaymentModal = () => {
     quoteTypeCodeEnum.Pet,
     quoteTypeCodeEnum.Cycle,
     quoteTypeCodeEnum.Yacht,
+    quoteTypeCodeEnum.SAVINGS,
   ];
 
   if (
@@ -1725,6 +1736,7 @@ const editPaymentModal = async (
   capture_approval,
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
+  selectedPaymentForEdit.value = payment;
 
   if (
     sr_no === 0 &&
@@ -2976,6 +2988,10 @@ const getPlanName = computed(() => {
     return homePlanText.value || 'Not Available';
   }
 
+  if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+    return props.quoteRequest?.insurance_provider_plan?.text || 'Not Available';
+  }
+
   return quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
     : 'Not Available';
@@ -3003,6 +3019,9 @@ const providerId = computed(() => {
 const providerName = computed(() => {
   const plan = planDetail.value;
   if (props.quoteType == quoteTypeCodeEnum.Home) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
+  if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     return props.quoteRequest.insurance_provider?.text || 'Not Available';
   }
   const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
@@ -3066,6 +3085,10 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
+  } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
@@ -3307,7 +3330,7 @@ const isEditPaymentEnabled = payment => {
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
   if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+    isMultiPaymentEnabled = payment?.isMultiplePaymentsEnabled;
   }
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
