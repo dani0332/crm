@@ -53,14 +53,17 @@ class SageApiEmbeddedProductService
         if ($sageProcess) {
             if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
                 $sageProcess->update($sageProcessData);
+
                 /* $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id()); */
                 return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$sukoonMedXTransaction->code];
             }
+
             return ['status' => true, 'message' => 'Embedded Product Booking Process is already scheduled/booked for EP Code: '.$sukoonMedXTransaction->code];
         } else {
             $sageProcessData['model_type'] = $sukoonMedXTransaction::class;
             $sageProcessData['model_id'] = $sukoonMedXTransaction->id;
             SageProcess::create($sageProcessData);
+
             /* $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id()); */
             return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$sukoonMedXTransaction->code];
         }
