@@ -80,7 +80,7 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        $rule = Rule::with('ruleType')->with('ruleUsers')->findOrFail($id);
+        $rule = Rule::with('ruleType')->with(['ruleUsers',  'quoteType'])->findOrFail($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
             'rule' => $rule,
@@ -101,6 +101,7 @@ class RulesController extends Controller
                 'ruleUsers',
                 'ruleType',
                 'leadSource',
+                'quoteType',
             ]),
         ]);
     }

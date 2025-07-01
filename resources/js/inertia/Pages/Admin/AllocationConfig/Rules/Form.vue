@@ -18,7 +18,7 @@ const ruleForm = useForm({
   is_active: props.rule?.is_active ? true : false,
   rule_users: props.rule?.rule_users.map(x => x.id) ?? [],
   rule_type: props.rule?.rule_type.id ?? null,
-  quote_type_id: props.rule?.quote_type?.id ?? null,
+  quote_type_id: props.rule?.quote_type.id ?? '',
 });
 
 const ruleUsers = computed(() => {
@@ -62,6 +62,11 @@ const selectedUsers = computed(() => {
 const selectedRuleType = computed(() => {
   return props.rule && props.rule.rule_type ? props.rule.rule_type.id : null;
 });
+
+const selectedQuoteType = computed(() => {
+  return props.rule && props.rule.quote_type ? props.rule.quote_type.id : null;
+});
+
 
 function onSubmit(isValid) {
   if (isValid) {
