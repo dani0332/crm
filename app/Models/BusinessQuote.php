@@ -9,6 +9,7 @@ use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -165,5 +166,13 @@ class BusinessQuote extends Model implements AuditableContract
     public function quoteDetail()
     {
         return $this->hasOne(BusinessQuoteRequestDetail::class);
+    }
+
+    /**
+     * Get all of the model's ftc email logs.
+     */
+    public function ftcEmailLogs(): MorphMany
+    {
+        return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 }
