@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\ExportPlansPdfLinkRequest;
+use App\Services\CarQuoteService;
+use App\Services\EmailServices\CarEmailService;
 
 class GenericLobController extends Controller
 {
@@ -65,51 +67,16 @@ class GenericLobController extends Controller
 
     public function exportPlansPdfLink($quoteType, ExportPlansPdfLinkRequest $request)
     {
-        try {
-
-            $response = $this->getExportPdf($quoteType, $request);
-
-            if (isset($response['error'])) {
-                vAbort($response['error']);
-            }
-
-            $pdf = $response['pdf'];
-
-            // Generate a unique temporary file path
-            $tempFilePath = 'temp/'.uniqid().'.pdf';
-            Storage::disk('azureIM')->put($tempFilePath, $pdf->output());
-
-            // Generate a public URL
-            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
-                $tempFilePath,
-                now()->addMinutes(60)
-            );
-    
-            // Use a job to handle file deletion
-            DeleteTempOCBPDFFileJob::dispatch($tempFilePath)->delay(now()->addMinutes(60));
-
-            return response()->json(['publicUrl' => $publicUrl, 'name' => $response['name']]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => $e->getMessage() ?: 'Validation error occurred',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to generate PDF. '.$e->getMessage(),
-                'errors' => ['error' => [$e->getMessage()]],
-            ], 500);
+        $quoteType = QuoteTypes::from(ucfirst($quoteType));
+        switch ($quoteType) {
+            case QuoteTypes::CAR:
+                $pdfUrl = app(CarEmailService::class)->attachCarOCBPDF($request->quote_uuid);
+                return response()->json(['pdf_url' => $pdfUrl]);
+            break;
+            default:
+                return response()->json(['error' => 'Invalid quote type'], 400);
         }
     }
 
-    private function getExportPdf($quoteType, $request){
-        $service = app('App\\Services\\'.ucfirst($quoteType).'QuoteService');
-
-        if($quoteType == strtolower(QuoteTypes::LIFE->value)) {
-            $service = app('App\\Services\\Life\\LifeQuoteService');
-        }
-
-        return $service->exportPlansPdf($quoteType, $request->validated());
-    }
 
 }

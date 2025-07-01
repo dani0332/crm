@@ -665,7 +665,7 @@ class CarEmailService extends BaseService
         try {
             LoggerService::info('Sending Company Car OCB email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $pdfUrl = $this->attachCarCompanyOCBPDFToEmail($lead->uuid, $lead->code);
+            $pdfUrl = $this->attachCarOCBPDF($lead->uuid, $lead->code);
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::COMPANY_CAR_OCB, pdfUrl: $pdfUrl);
 
             $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
@@ -689,10 +689,10 @@ class CarEmailService extends BaseService
         }
     }
 
-    public function attachCarCompanyOCBPDFToEmail($quoteUID, $code = null)
+    public function attachCarOCBPDF($quoteUID, $code = null)
     {
         try {
-            LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - Generating PDF Ref-ID: '.$quoteUID);
+            LoggerService::info(self::class.' - attachCarOCBPDF - Generating PDF Ref-ID: '.$quoteUID);
 
             $quotePlans = app(CarQuoteService::class)->getQuotePlans($quoteUID);
 
@@ -710,7 +710,7 @@ class CarEmailService extends BaseService
             }
 
             if (empty($planIds)) {
-                LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - No plans found for Ref-ID: '.$quoteUID);
+                LoggerService::info(self::class.' - attachCarOCBPDF - No plans found for Ref-ID: '.$quoteUID);
 
                 return '';
             }
@@ -731,14 +731,14 @@ class CarEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
+            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
 
             return $publicUrl;
         } catch (\Exception $e) {
             // Log the error details
-            LoggerService::error(self::class." - Error: attachCarCompanyOCBPDFToEmail - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
+            LoggerService::error(self::class." - Error: attachCarOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
 
-            return false;
+            return '';
         }
     }
     protected function scheduleFileDeletion($filePath)
@@ -753,7 +753,7 @@ class CarEmailService extends BaseService
         try {
             LoggerService::info(self::class.' - Sending Car Company Commercial OCB email');
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $pdfUrl = $this->attachCarCompanyOCBPDFToEmail($lead->uuid, $lead->code);
+            $pdfUrl = $this->attachCarOCBPDF($lead->uuid, $lead->code);
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::CAR_COMMERCIAL_OCB, pdfUrl: $pdfUrl);
 
             $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
