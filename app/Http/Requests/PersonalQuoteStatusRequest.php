@@ -67,6 +67,12 @@ class PersonalQuoteStatusRequest extends FormRequest
                 'emirates_id_expiry_date' => $customer->emirates_id_expiry_date ?? null,
             ];
 
+            if(request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski];
+                if(in_array($quoteObject->quote_type_id, $quoteTypeIds) && method_exists($quoteObject, 'hasInsurerPaymentLink') && $quoteObject->hasInsurerPaymentLink() && ! $quoteObject->canUpdateToTransactionApproved() && ! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+                    $validator->errors()->add('value', 'Cannot update to Transaction Approved status. Quote must have payment initiated and payment link sent to customer.');
+            }
+
             if (in_array(null, $customerProfileDetails) && request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {
                 $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
             }
