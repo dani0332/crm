@@ -187,14 +187,15 @@ watch(
   },
 );
 
-const calculateVatAmount = (isVatAmountRecalculated = false) => {
+// We can recalculate vat amount if the vat amount is not set or if the vat amount is 0
+const calculateVatAmount = (isVatAmountRecalculated = false, isInitialLoad = false) => {
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
 
   // if price vat applicable and not applicable both are there
   if (priceVatApplicable > 0 && priceVatNotApplicable > 0) {
     let vat = policyDetailsForm.vat;
-    if (isVatAmountRecalculated) {
+    if (isVatAmountRecalculated || (isInitialLoad && vat == 0)) {
       vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
       policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
     }
@@ -203,7 +204,7 @@ const calculateVatAmount = (isVatAmountRecalculated = false) => {
     ).toFixed(2);
   } else if (priceVatApplicable > 0) {
     let vat = policyDetailsForm.vat;
-    if (isVatAmountRecalculated) {
+    if (isVatAmountRecalculated || (isInitialLoad && vat == 0)) {
       vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
       policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
     }
@@ -397,7 +398,7 @@ const onUpdatePolicyDetails = isValid => {
 };
 
 onBeforeMount(() => {
-  calculateVatAmount(true);
+  calculateVatAmount(false, true);
 });
 
 watch(
