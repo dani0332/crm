@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypeShortCode;
 use App\Models\RenewalsUploadLeads;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -29,9 +30,13 @@ class RenewalsUploadRequest extends FormRequest
             'renewals_upload_type' => 'required',
         ];
 
-        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update') {
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && request()->lob != QuoteTypeShortCode::HOM) {
             $rules['skip_plans'] = 'required';
             $rules['is_sic'] = 'required';
+        }
+
+        if (request()->lob == QuoteTypeShortCode::HOM) {
+            $rules['lob'] = 'required';
         }
 
         return $rules;

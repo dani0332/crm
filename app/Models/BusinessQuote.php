@@ -171,6 +171,32 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class);
     }
 
+    // Get all insured records for this quote (multiple AML screenings)
+    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // personal_quotes.id
+            'insured_id' // customer_insured.insured_id
+        );
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // personal_quotes.id
+            'insured_id' // customer_insured.insured_id
+        )->latest('customer_insured.updated_at');
+    }
+
     /**
      * Get all quote status logs for this model
      *

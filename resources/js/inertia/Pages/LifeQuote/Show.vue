@@ -350,15 +350,17 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
-  insured_first_name: page.props.quote?.insured[0]?.first_name || '',
-  insured_last_name: page.props.quote?.insured[0]?.last_name || '',
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
@@ -524,97 +526,110 @@ const applyEmiratesIdNumMasking = emiratesId =>
 <template>
   <div>
     <Head title="Life Quotes" />
-
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Life Detail</h2>
-      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
-        <Link
-          v-if="quote.life_quote_request_detail?.insly_id"
-          :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <Link
-          v-else-if="
-            quote.source == leadSource.RENEWAL_UPLOAD &&
-            canAny([
-              permissionsEnum.VIEW_LEGACY_DETAILS,
-              permissionsEnum.VIEW_ALL_LEADS,
-            ])
-          "
-          :href="
-            route(
-              'view-legacy-policy.renewal-uploads',
-              quote.previous_quote_policy_number,
-            )
-          "
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Life Detail</h2>
         <x-button
-          class="ml-2"
+          v-if="quote.customer?.pcp_tag == true"
           size="sm"
-          color="#ff5e00"
-          @click.prevent="openDuplicate"
+          color="#BFA100"
+          tag="div"
         >
-          Duplicate Lead
+          Private Client
         </x-button>
-        <Link
-          v-if="can(permissionsEnum.LifeQuotesList)"
-          :href="route('life-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
-        </Link>
-        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+      </template>
+      <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+        <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
           <Link
-            v-if="!isDisabled"
-            :href="route('life-quotes-edit', quote.uuid)"
+            v-if="quote.life_quote_request_detail?.insly_id"
+            :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
+            preserve-scroll
           >
-            <x-button size="sm" tag="div">Edit</x-button>
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
-            >Edit</x-button
+          <Link
+            v-else-if="
+              quote.source == leadSource.RENEWAL_UPLOAD &&
+              canAny([
+                permissionsEnum.VIEW_LEGACY_DETAILS,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                quote.previous_quote_policy_number,
+              )
+            "
+            preserve-scroll
           >
-        </LeadEditBtnTemplate>
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <x-button
+            class="ml-2"
+            size="sm"
+            color="#ff5e00"
+            @click.prevent="openDuplicate"
+          >
+            Duplicate Lead
+          </x-button>
+          <Link
+            v-if="can(permissionsEnum.LifeQuotesList)"
+            :href="route('life-quotes-list')"
+            preserve-scroll
+          >
+            <x-button size="sm" color="primary" tag="div">
+              Life Quotes
+            </x-button>
+          </Link>
+          <LeadEditBtnTemplate v-slot="{ isDisabled }">
+            <Link
+              v-if="!isDisabled"
+              :href="route('life-quotes-edit', quote.uuid)"
+            >
+              <x-button size="sm" tag="div">Edit</x-button>
+            </Link>
+            <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+              >Edit</x-button
+            >
+          </LeadEditBtnTemplate>
 
-        <x-tooltip
-          v-if="lockLeadSectionsDetails.lead_details"
-          placement="bottom"
-        >
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.LifeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-            :isDisabled="true"
-          />
-          <template #tooltip
-            >This lead is now locked as the policy has been booked. If changes
-            are needed, go to 'Send Update', select 'Add Update', and choose
-            'Correction of Policy'</template
+          <x-tooltip
+            v-if="lockLeadSectionsDetails.lead_details"
+            placement="bottom"
           >
-        </x-tooltip>
-        <template v-else>
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.LifeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-          />
-        </template>
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.LifeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+              :isDisabled="true"
+            />
+            <template #tooltip
+              >This lead is now locked as the policy has been booked. If changes
+              are needed, go to 'Send Update', select 'Add Update', and choose
+              'Correction of Policy'</template
+            >
+          </x-tooltip>
+          <template v-else>
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.LifeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+            />
+          </template>
+        </div>
       </div>
-    </div>
+    </StickyHeader>
 
     <x-modal
       v-model="modalsDuplicate"
@@ -698,7 +713,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -776,6 +791,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
@@ -847,7 +869,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -868,7 +890,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -973,11 +995,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   <dt class="font-medium">IS SMOKER</dt>
                   <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
               </dl>
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -1179,7 +1205,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     </x-modal>
 
     <MemberDetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -1189,7 +1215,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     />
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -1625,6 +1651,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 

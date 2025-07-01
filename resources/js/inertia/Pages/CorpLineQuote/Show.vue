@@ -573,13 +573,15 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
+
+const enabledCustomerType =
+  page.props.quote.customer_type ?? page.props.customerTypeEnum.Entity;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name:
     page.props.quote.insured_first_name ??
     page.props.quote.customer_insured_first_name ??
@@ -919,7 +921,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
@@ -1165,10 +1167,16 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                     />
                   </dd>
                 </div>
+                <div>
+                  <EntityRiskRatingScoreDetails
+                    :quote="quote"
+                    :modelType="quoteType"
+                  />
+                </div>
               </dl>
               <div
-                class="flex justify-end"
                 v-if="readOnlyMode.isDisable === true"
+                class="flex justify-end"
               >
                 <x-button
                   v-if="isProfileUpdateAllow"
@@ -1182,23 +1190,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 </x-button>
               </div>
             </div>
-            <dl></dl>
-            <div class="flex justify-end">
-              <x-button
-                v-if="isProfileUpdateAllow"
-                class="mt-4"
-                color="emerald"
-                size="sm"
-                :loading="customerProfileForm.processing"
-                type="submit"
-              >
-                Update Profile
-              </x-button>
-            </div>
-            <EntityRiskRatingScoreDetails
-              :quote="quote"
-              :modelType="quoteType"
-            />
           </x-form>
         </template>
       </Collapsible>
@@ -1283,7 +1274,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </x-modal>
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -1754,6 +1745,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured_kyc_id"
       :expanded="sectionExpanded"
     />
 
