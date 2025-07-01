@@ -9,6 +9,7 @@ use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteTag;
+use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
@@ -29,6 +30,43 @@ class SageApiEmbeddedProductService
     public function __construct()
     {
         $this->sageApiService = new SageApiService;
+    }
+
+    public function scheduleBookingOfEmbeddedProduct($sageRequestDataArray)
+    {
+        [$quote, $sukoonMedXTransaction, $sageRequest, $request] = $sageRequestDataArray;
+        $sageProcessData = [
+            'user_id' => $sageRequest->userId,
+            'insurance_provider_id' => $sageRequest->insurerID,
+            'request' => json_encode([
+                'sagePayload' => $sageRequest,
+                'requestPayload' => $request,
+            ]),
+            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
+        ];
+
+        $sageProcess = SageProcess::where([
+            'model_type' => $sukoonMedXTransaction::class,
+            'model_id' => $sukoonMedXTransaction->id,
+        ])->first();
+
+        if ($sageProcess) {
+            if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
+                $sageProcess->update($sageProcessData);
+
+                /* $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id()); */
+                return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$sukoonMedXTransaction->code];
+            }
+
+            return ['status' => true, 'message' => 'Embedded Product Booking Process is already scheduled/booked for EP Code: '.$sukoonMedXTransaction->code];
+        } else {
+            $sageProcessData['model_type'] = $sukoonMedXTransaction::class;
+            $sageProcessData['model_id'] = $sukoonMedXTransaction->id;
+            SageProcess::create($sageProcessData);
+
+            /* $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id()); */
+            return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$sukoonMedXTransaction->code];
+        }
     }
 
     public function bookReversalOfEmbeddedProductOnSage($sageRequestDataArray)
@@ -1442,11 +1480,12 @@ class SageApiEmbeddedProductService
         ];
     }
 
-    public function updateAndLogEPBookingStatus($embeddedTransaction, $status)
+    public function updateAndLogEPBookingStatus($embeddedTransaction, $status, $logFor = null)
     {
-        LoggerService::info(self::CLASSNAME.' fun:'.__FUNCTION__.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status);
+        $logFor = $logFor ?? self::CLASSNAME.' fun:'.__FUNCTION__;
+        LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status);
         $embeddedTransaction->update(['sage_status_id' => $status]);
-        LoggerService::info(self::CLASSNAME.' fun:'.__FUNCTION__.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
+        LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
     }
 
 }

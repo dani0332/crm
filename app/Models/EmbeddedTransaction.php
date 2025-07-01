@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\RolesEnum;
+use App\Enums\SageEmbeddedProductEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,9 @@ class EmbeddedTransaction extends Model
     use HasFactory;
 
     protected $guarded = [];
+    protected $appends = [
+        'sage_status', // for sukoon medx
+    ];
 
     public function quoteType()
     {
@@ -156,5 +160,10 @@ class EmbeddedTransaction extends Model
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function getSageStatusAttribute()
+    {
+        return $this->sage_status_id ? SageEmbeddedProductEnum::getStatusById($this->sage_status_id) : null;
     }
 }

@@ -9,7 +9,7 @@ enum SageEmbeddedProductEnum: string
     case BOOKING_COMPLETED = 'Booked';
     case BOOKING_CANCELLED = 'Cancelled';
 
-    public function id(): ?string
+    public function id()
     {
         return self::getId($this) ?? null;
     }
