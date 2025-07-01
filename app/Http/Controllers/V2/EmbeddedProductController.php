@@ -305,8 +305,8 @@ class EmbeddedProductController extends Controller
             $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST;
             $sageRequest->epTransactionId = $request->epTransactionId;
             $sageRequest->epInsuranceProviderId = $request->insuranceProviderId;
-            $sageRequest->qouteType = $request->modelType;
-            $sageRequest->quoteId = $request->modequoteIdlType;
+            $sageRequest->quoteType = $request->modelType;
+            $sageRequest->quoteId = $request->quoteId;
 
             $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
             $sageRequest->customerId = (new SageApiService)->verifySageCustomer($quote->customer_id, $data, $quote, 15);
