@@ -188,6 +188,8 @@ watch(
 );
 
 // We can recalculate vat amount if the vat amount is not set or if the vat amount is 0
+// We can recalculate on page load if the vat amount is 0
+// Second we can recalculate vat when the price vat applicable changes
 const calculateVatAmount = (isVatAmountRecalculated = false, isInitialLoad = false) => {
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
