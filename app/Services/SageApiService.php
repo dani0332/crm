@@ -319,8 +319,8 @@ class SageApiService
         LoggerService::info(self::class.'fun:'.__FUNCTION__.' SendUpdateType Checks before triggering of Reversal Of EP Booking  :  Quote Code for '.$preparedData['sendUpdateLog']->code, extra : [
             'sendUpdateCode' => $preparedData['sendUpdateLog'],
             'categoryCode' => $categoryCode,
-            'optionCode' => $optionCode, 
-            'isSendUpdateTypePolicyCancelled' => $isSendUpdateTypeCancelled, 
+            'optionCode' => $optionCode,
+            'isSendUpdateTypePolicyCancelled' => $isSendUpdateTypeCancelled,
         ]);
         if ($isSendUpdateTypeCancelled) {
             $quoteTypeId = $preparedData['sendUpdateLog']->quote_type_id;
@@ -328,7 +328,7 @@ class SageApiService
             $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
             $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
             $isTapPaymentGateway = $preparedData['payment']->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
-    
+
             $epTransSageLogArray = $sukoonMedXTransaction?->sageApiLogs?->whereIn('sage_request_type', [SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV, SageEnum::EP_SRT_CREATE_AP_PREM_INV])->keyBy('step')->toArray();
             LoggerService::info(self::class.'fun:'.__FUNCTION__.' Reversal Of EP Booking checks :  Quote Code for '.$quote->code, extra : [
                 'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
@@ -347,10 +347,9 @@ class SageApiService
                 if (! $embeddedProductSageBookingResponse['status']) {
                     return $embeddedProductSageBookingResponse;
                 }
-    
+
             }
         }
-        
 
         LoggerService::info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Completed on Sage - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
 
