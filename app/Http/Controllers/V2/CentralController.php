@@ -72,7 +72,6 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\PaymentRepository;
-use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
@@ -115,6 +114,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
         ])) {
             if ($request['exportType'] == 'email') {
@@ -271,8 +271,9 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        $validatedData = $bookPolicyRequest->validated();
+
         try {
-            $validatedData = $bookPolicyRequest->validated();
             LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
             $paymentInformation = [
@@ -312,6 +313,11 @@ class CentralController extends Controller
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
+            $paymentCode = $validatedData['payment_code'] ?? '';
+            LoggerService::info('Quote Code: '.$paymentCode.' fn: updateBookingPolicy error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -320,7 +326,6 @@ class CentralController extends Controller
     {
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
-        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
         LoggerService::info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 

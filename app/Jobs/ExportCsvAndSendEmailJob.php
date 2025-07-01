@@ -109,6 +109,11 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             return app($this->exportClass, ['quoteType' => $quoteType]);
         }
 
+        // Handle AmlCftReportExport which needs requestParams in constructor
+        if ($this->exportClass === 'App\\Exports\\AmlCftReportExport') {
+            return app($this->exportClass, ['requestParams' => $this->requestParams]);
+        }
+
         // For other export classes, use default instantiation
         return app($this->exportClass);
     }
