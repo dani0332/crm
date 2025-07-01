@@ -101,9 +101,9 @@ class InstantAlfredService extends BaseService
             $this->personalQuery = DB::table('personal_quotes as pqr')
                 ->select($this->getBaseSelectFields($quoteTypeId))
                 ->where('pqr.quote_type_id', $quoteTypeId)
-                ->when(!empty($request->email), fn($query) => $query->where('pqr.email', '=', $request->email))
-                ->when(!empty($request->mobile_no), fn($query) => $query->where('pqr.mobile_no', '=', $request->mobile_no))
-                ->when(!empty($request->quoteId), fn($query) => $query->where('pqr.code', '=', $request->quoteId))
+                ->when(! empty($request->email), fn ($query) => $query->where('pqr.email', '=', $request->email))
+                ->when(! empty($request->mobile_no), fn ($query) => $query->where('pqr.mobile_no', '=', $request->mobile_no))
+                ->when(! empty($request->quoteId), fn ($query) => $query->where('pqr.code', '=', $request->quoteId))
                 ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
                 ->when(! empty($request->chat_initiated_at), function ($query) use ($request) {
                     $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
@@ -111,24 +111,24 @@ class InstantAlfredService extends BaseService
                     $query->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
                 })
                 ->when($this->needsTagsData($request), function ($query) use ($subQuery) {
-                    $query->leftJoinSub($subQuery, 'qt', fn($join) => $join->on('qt.quote_uuid', '=', 'pqr.uuid'))
-                          ->addSelect([DB::raw($this->getSegmentCaseStatement())]);
+                    $query->leftJoinSub($subQuery, 'qt', fn ($join) => $join->on('qt.quote_uuid', '=', 'pqr.uuid'))
+                        ->addSelect([DB::raw($this->getSegmentCaseStatement())]);
                 })
                 ->when($this->needsTransactionTypeData($request), function ($query) {
                     $query->leftJoin('lookups as lu', 'lu.id', '=', 'pqr.transaction_type_id')
-                          ->addSelect(['lu.text as transaction_type_text']);
+                        ->addSelect(['lu.text as transaction_type_text']);
                 })
                 ->when($this->needsPaymentStatusData($request), function ($query) {
                     $query->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
-                          ->addSelect(['ps.text AS payment_status']);
+                        ->addSelect(['ps.text AS payment_status']);
                 })
                 ->when($this->needsQuoteStatusData($request), function ($query) {
                     $query->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
-                          ->addSelect(['qs.text AS quote_status_id_text']);
+                        ->addSelect(['qs.text AS quote_status_id_text']);
                 })
                 ->when($this->needsQuoteBatchData($request), function ($query) {
                     $query->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
-                          ->addSelect(['qb.name as quote_batch_id_text']);
+                        ->addSelect(['qb.name as quote_batch_id_text']);
                 })
                 ->when($this->needsQuoteTypeSpecificJoins($quoteTypeId, $request), function ($query) use ($quoteTypeId) {
                     $this->addQuoteTypeSpecificJoins($query, $quoteTypeId);
@@ -138,7 +138,7 @@ class InstantAlfredService extends BaseService
                     $this->addPlanJoins($query, $quoteTypeId);
                 })
                 ->groupBy('pqr.id')
-                ->when(isset($request->sortType), fn($query) => $query->orderBy('pqrd.chat_initiated_at', $request->sortType));
+                ->when(isset($request->sortType), fn ($query) => $query->orderBy('pqrd.chat_initiated_at', $request->sortType));
         }
 
         $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
@@ -235,7 +235,7 @@ class InstantAlfredService extends BaseService
         if (isset($request->segment) && $request->segment != 'all' && $request->segment != '') {
             $partialQuery->having('segment', '=', $request->segment);
         }
-        
+
         return $partialQuery;
     }
 
@@ -691,7 +691,7 @@ class InstantAlfredService extends BaseService
      */
     private function needsTagsData($request): bool
     {
-        return !empty($request->segment) || !empty($request->report);
+        return ! empty($request->segment) || ! empty($request->report);
     }
 
     /**
@@ -699,7 +699,7 @@ class InstantAlfredService extends BaseService
      */
     private function needsTransactionTypeData($request): bool
     {
-        return !empty($request->transaction_type_id) || !empty($request->report);
+        return ! empty($request->transaction_type_id) || ! empty($request->report);
     }
 
     /**
@@ -707,7 +707,7 @@ class InstantAlfredService extends BaseService
      */
     private function needsPaymentStatusData($request): bool
     {
-        return !empty($request->payment_status_id) || !empty($request->report);
+        return ! empty($request->payment_status_id) || ! empty($request->report);
     }
 
     /**
@@ -715,7 +715,7 @@ class InstantAlfredService extends BaseService
      */
     private function needsQuoteStatusData($request): bool
     {
-        return !empty($request->quote_status_id) || !empty($request->report);
+        return ! empty($request->quote_status_id) || ! empty($request->report);
     }
 
     /**
@@ -723,7 +723,7 @@ class InstantAlfredService extends BaseService
      */
     private function needsQuoteBatchData($request): bool
     {
-        return !empty($request->quote_batch_id) || !empty($request->report);
+        return ! empty($request->quote_batch_id) || ! empty($request->report);
     }
 
     /**
@@ -732,11 +732,11 @@ class InstantAlfredService extends BaseService
     private function needsQuoteTypeSpecificJoins($quoteTypeId, $request): bool
     {
         return in_array($quoteTypeId, [
-            QuoteTypeId::Car, 
-            QuoteTypeId::Bike, 
-            QuoteTypeId::Health, 
-            QuoteTypeId::Travel
-        ]) && !empty($request->report);
+            QuoteTypeId::Car,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Health,
+            QuoteTypeId::Travel,
+        ]) && ! empty($request->report);
     }
 
     /**
@@ -764,12 +764,12 @@ class InstantAlfredService extends BaseService
     private function needsPlanData($quoteTypeId, $request): bool
     {
         return in_array($quoteTypeId, [
-            QuoteTypeId::Car, 
-            QuoteTypeId::Bike, 
-            QuoteTypeId::Health, 
-            QuoteTypeId::Travel, 
-            QuoteTypeId::Home
-        ]) && !empty($request->report);
+            QuoteTypeId::Car,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Health,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Home,
+        ]) && ! empty($request->report);
     }
 
     /**
@@ -782,52 +782,52 @@ class InstantAlfredService extends BaseService
             case QuoteTypeId::Bike:
                 $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
                     $join->on('cp.id', '=', 'pqr.plan_id')
-                         ->where('cp.quote_type_id', '=', $quoteTypeId);
+                        ->where('cp.quote_type_id', '=', $quoteTypeId);
                 })
-                ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-                ->addSelect([
-                    'cp.text AS plan_id_text',
-                    'cpip.code as plan_provider_code',
-                    'cpip.text as provider_name',
-                    'cp.repair_type as plan_type',
-                    'cp.text as plan_name',
-                ]);
+                    ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+                    ->addSelect([
+                        'cp.text AS plan_id_text',
+                        'cpip.code as plan_provider_code',
+                        'cpip.text as provider_name',
+                        'cp.repair_type as plan_type',
+                        'cp.text as plan_name',
+                    ]);
                 break;
 
             case QuoteTypeId::Health:
                 $query->leftJoin('health_plan as hp', 'hp.id', '=', 'pqr.plan_id')
-                ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hp.plan_type_id')
-                ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
-                ->addSelect([
-                    'hp.plan_type_id as plan_type_id',
-                    'ihp.text as provider_name',
-                    'hpt.text as plan_type',
-                    'hp.text as plan_name',
-                ]);
+                    ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hp.plan_type_id')
+                    ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
+                    ->addSelect([
+                        'hp.plan_type_id as plan_type_id',
+                        'ihp.text as provider_name',
+                        'hpt.text as plan_type',
+                        'hp.text as plan_name',
+                    ]);
                 break;
 
             case QuoteTypeId::Travel:
                 $query->leftJoin('travel_plan as tp', 'tp.id', '=', 'pqr.plan_id')
-                ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
-                ->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
-                    $join->on('pqr.uuid', '=', 'tqpd.quote_uuid')
-                         ->whereColumn('pqr.plan_id', '=', 'tqpd.plan_id');
-                })
-                ->addSelect([
-                    'tp.text AS plan_id_text',
-                    'tpip.text AS travel_plan_provider_text',
-                    'tp.travel_type as plan_type',
-                    'tqpd.provider_name',
-                    'tqpd.plan_name',
-                ]);
+                    ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
+                    ->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
+                        $join->on('pqr.uuid', '=', 'tqpd.quote_uuid')
+                            ->whereColumn('pqr.plan_id', '=', 'tqpd.plan_id');
+                    })
+                    ->addSelect([
+                        'tp.text AS plan_id_text',
+                        'tpip.text AS travel_plan_provider_text',
+                        'tp.travel_type as plan_type',
+                        'tqpd.provider_name',
+                        'tqpd.plan_name',
+                    ]);
                 break;
 
             case QuoteTypeId::Home:
                 $query->leftJoin('quote_customer_plans as qcp', 'qcp.quote_uuid', '=', 'pqr.uuid')
-                ->addSelect([
-                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.providerName') as provider_name"),
-                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.name') as plan_name"),
-                ]);
+                    ->addSelect([
+                        DB::raw("JSON_UNQUOTE(qcp.plan->'$.providerName') as provider_name"),
+                        DB::raw("JSON_UNQUOTE(qcp.plan->'$.name') as plan_name"),
+                    ]);
                 break;
         }
     }
