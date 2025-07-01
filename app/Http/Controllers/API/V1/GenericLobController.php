@@ -62,7 +62,7 @@ class GenericLobController extends Controller
         dispatch(new CarRenewalEmailJob($lead));
     }
 
-    public function exportPlansPdfLink($quoteType, ExportPlansPdfLinkRequest $request)
+    public function getPlansPdfUrl($quoteType, ExportPlansPdfLinkRequest $request)
     {
         $quoteType = QuoteTypes::from(ucfirst($quoteType));
         switch ($quoteType) {
