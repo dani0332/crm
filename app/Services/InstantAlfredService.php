@@ -235,8 +235,7 @@ class InstantAlfredService extends BaseService
         if (isset($request->segment) && $request->segment != 'all' && $request->segment != '') {
             $partialQuery->having('segment', '=', $request->segment);
         }
-
-        // dd($partialQuery->get());
+        
         return $partialQuery;
     }
 
