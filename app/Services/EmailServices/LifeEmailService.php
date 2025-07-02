@@ -90,7 +90,7 @@ class LifeEmailService extends BaseService
             // Subtract 15 days to get the notification date
             $notifyDate = $birthday->subDays(15);
             $notifyBirthdayDate = [
-                'advanceBirthdayDate' => $notifyDate->timestamp,
+                'advanceBirthdayDate' =>(string) $notifyDate->timestamp,
                 'advanceBirthdayDateString' => $notifyDate->format('Y-m-d'),
              ];
         
@@ -125,7 +125,7 @@ class LifeEmailService extends BaseService
             $birthday = Carbon::createFromFormat('m-d',  $dateOfBirth);
        
             $notifyBirthdayDate =[
-                'birthdayDate' => $birthday->timestamp,
+                'birthdayDate' => (string) $birthday->timestamp,
                 'birthdayDateString' => $birthday->format('Y-m-d'),
             ];
             $emailData->workflowType = WorkflowTypeEnum::LIFE_BIRTHDAY_WISH_EMAIL;
