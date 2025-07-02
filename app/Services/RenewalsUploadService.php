@@ -181,10 +181,9 @@ class RenewalsUploadService
     public function uploadRenewalsFile($isTravel = false)
     {
         $path = 'renewals';
-        $timestamp = Carbon::now()->timestamp;
 
         // Getting original file name
-        $fileName = $timestamp.'-'.request()->file('file_name')->getClientOriginalName();
+        $fileName = request()->file('file_name')->getClientOriginalName();
 
         // Generating name for file for azure usage
         $azureFileName = get_guid().'_'.$fileName;
