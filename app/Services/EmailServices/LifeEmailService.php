@@ -90,7 +90,7 @@ class LifeEmailService extends BaseService
             // Subtract 15 days to get the notification date
             $notifyDate = $birthday->subDays(15);
             $notifyBirthdayDate = [
-                'advanceBirthdayDate' =>(string) $notifyDate->timestamp,
+                'advanceBirthdayDate' => (string) $notifyDate->timestamp,
                 'advanceBirthdayDateString' => $notifyDate->format('Y-m-d'),
             ];
 
@@ -122,9 +122,9 @@ class LifeEmailService extends BaseService
         $dateOfBirth = $personalQuote->dob;
         if ($dateOfBirth) {
             $dateOfBirth = Carbon::parse($dateOfBirth)->format('m-d');
-            $birthday = Carbon::createFromFormat('m-d',  $dateOfBirth);
-       
-            $notifyBirthdayDate =[
+            $birthday = Carbon::createFromFormat('m-d', $dateOfBirth);
+
+            $notifyBirthdayDate = [
                 'birthdayDate' => (string) $birthday->timestamp,
                 'birthdayDateString' => $birthday->format('Y-m-d'),
             ];
