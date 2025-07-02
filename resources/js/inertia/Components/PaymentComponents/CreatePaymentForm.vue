@@ -2467,6 +2467,7 @@ defineExpose({
   isBrokerHavePermission,
   updateTotalPayments,
   updatePaymentForm,
+	updatePremiumToCapture,
 });
 
 // Watch for changes in paymentMethodsForm.collection_date
