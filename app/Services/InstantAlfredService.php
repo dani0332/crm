@@ -20,6 +20,24 @@ class InstantAlfredService extends BaseService
 {
     private $personalQuery;
 
+    /**
+     * Get the appropriate lead_assignment_trigger select statement based on quote type
+     */
+    private function getLeadAssignmentTriggerSelect($quoteTypeId): string
+    {
+        switch ($quoteTypeId) {
+            case QuoteTypeId::Car:
+            case QuoteTypeId::Bike:
+                return 'COALESCE(cqr.lead_assignment_trigger, pqr.lead_assignment_trigger) as lead_assignment_trigger';
+            case QuoteTypeId::Health:
+                return 'COALESCE(hqr.lead_assignment_trigger, pqr.lead_assignment_trigger) as lead_assignment_trigger';
+            case QuoteTypeId::Travel:
+                return 'COALESCE(tqr.lead_assignment_trigger, pqr.lead_assignment_trigger) as lead_assignment_trigger';
+            default:
+                return 'pqr.lead_assignment_trigger as lead_assignment_trigger';
+        }
+    }
+
     private function buildQueryByModel($quoteTypeId)
     {
         $aliases = [];
@@ -57,12 +75,7 @@ class InstantAlfredService extends BaseService
                 'pqr.quote_batch_id',
                 'pqr.insurance_provider_id',
                 'pqr.premium as total_price',
-                DB::raw('CASE 
-                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Car.' THEN cqr.lead_assignment_trigger
-                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Health.' THEN hqr.lead_assignment_trigger
-                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Travel.' THEN tqr.lead_assignment_trigger
-                    ELSE pqr.lead_assignment_trigger
-                END as lead_assignment_trigger'),
+                DB::raw($this->getLeadAssignmentTriggerSelect($quoteTypeId)),
                 'pqrd.chat_initiated_at',
                 'qs.text AS quote_status_id_text',
                 'qb.name as quote_batch_id_text',
@@ -112,9 +125,15 @@ class InstantAlfredService extends BaseService
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
-            ->leftJoin('car_quote_request as cqr', 'cqr.uuid', '=', 'pqr.uuid')
-            ->leftJoin('health_quote_request as hqr', 'hqr.uuid', '=', 'pqr.uuid')
-            ->leftJoin('travel_quote_request as tqr', 'tqr.uuid', '=', 'pqr.uuid')
+            ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) {
+                $query->leftJoin('car_quote_request as cqr', 'cqr.uuid', '=', 'pqr.uuid');
+            })
+            ->when($quoteTypeId == QuoteTypeId::Health, function ($query) {
+                $query->leftJoin('health_quote_request as hqr', 'hqr.uuid', '=', 'pqr.uuid');
+            })
+            ->when($quoteTypeId == QuoteTypeId::Travel, function ($query) {
+                $query->leftJoin('travel_quote_request as tqr', 'tqr.uuid', '=', 'pqr.uuid');
+            })
             ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) use ($quoteTypeId) {
                 $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
                     $join->on('cp.id', '=', 'pqr.plan_id')
@@ -153,6 +172,13 @@ class InstantAlfredService extends BaseService
                     'tp.travel_type as plan_type',
                     'tqpd.provider_name',
                     'tqpd.plan_name',
+                ]);
+            })
+            ->when($quoteTypeId == QuoteTypeId::Home, function ($query) {
+                $query->leftJoin('quote_customer_plans as qcp', 'qcp.quote_uuid', '=', 'pqr.uuid');
+                $query->addSelect([
+                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.providerName') as provider_name"),
+                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.name') as plan_name"),
                 ]);
             })
             ->groupBy('pqr.id')

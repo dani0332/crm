@@ -134,7 +134,11 @@ onMounted(() => {
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Renewal Batch Number</div>
                   <div>
-                    {{ props?.quote?.renewal_batch_model?.name ?? 'N/A' }}
+                    {{
+                      props?.quote?.renewal_batch_model?.name ??
+                      props?.quote?.renewal_batch ??
+                      'N/A'
+                    }}
                   </div>
                 </div>
 

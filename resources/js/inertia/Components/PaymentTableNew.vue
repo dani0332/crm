@@ -146,6 +146,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
@@ -234,6 +235,8 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -435,6 +438,7 @@ const addPaymentModal = async () => {
     quoteTypeCodeEnum.Pet,
     quoteTypeCodeEnum.Cycle,
     quoteTypeCodeEnum.Yacht,
+    quoteTypeCodeEnum.SAVINGS,
   ];
 
   if (
@@ -700,6 +704,10 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
+  } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
