@@ -16,7 +16,10 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments;
-const quoteSegmentsLife = quoteSegments.filter(segment => segment.value === 'fic' || segment.value === 'non-fic');
+const quoteSegmentsLife = [
+  { value: '', label: 'All' },
+  ...quoteSegments.filter(segment => segment.value === 'fic' || segment.value === 'non-fic')
+];
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
