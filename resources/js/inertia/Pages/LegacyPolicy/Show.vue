@@ -4,6 +4,7 @@ import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
 
 const props = defineProps({
   policy: Object,
+  legacyPolicyId: String,
 });
 
 const page = usePage();
@@ -17,6 +18,7 @@ const getS3TempUrl = async file => {
   try {
     const response = await axios.post('/legacy-policy/get-s3-temp-url', {
       fileName: file,
+      legacyPolicyId: props.legacyPolicyId,
     });
     // Check if the request was successful and the response contains the URL
     if (response.status === 200 && response.data.url) {
