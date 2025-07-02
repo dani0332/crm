@@ -17,7 +17,6 @@ enum QuoteFlowType: int
     case LIFE_ADVANCE_BIRTHDAY_WISH = 13;
     case LIFE_BIRTHDAY_WISH = 14;
 
-
     public function label(): string
     {
         return match ($this) {
