@@ -17,7 +17,7 @@ const rolesEnum = page.props.rolesEnum;
 const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments;
 const quoteSegmentsLife = [
-  { value: '', label: 'All' },
+  { value: 'all', label: 'All' },
   ...quoteSegments.filter(segment => segment.value === 'fic' || segment.value === 'non-fic')
 ];
 
