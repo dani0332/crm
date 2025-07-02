@@ -584,8 +584,10 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
 
   return axios
     .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
-    .then(res => {
+    .then(async res => {
       if (res?.data?.response?.status == paymentCaptureValidationEnum.SUCCESS) {
+        createPaymentModal.value = true;
+        await new Promise(resolve => setTimeout(resolve, 200));
         createPaymentFormRef.value.updatePremiumToCapture(
           res?.data?.response?.premiumAmount,
         );
