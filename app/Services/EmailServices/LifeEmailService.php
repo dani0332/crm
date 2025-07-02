@@ -65,4 +65,9 @@ class LifeEmailService extends BaseService
 
         return (object) $data;
     }
+
+    public function sendEmailAdvanceBirthdayWishToCustomer(PersonalQuote $personalQuote)
+    {
+        $dateOfBirth = $personalQuote->dob;
+    }
 }
