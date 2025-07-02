@@ -292,6 +292,7 @@ class EmbeddedProductRepository extends BaseRepository
         $epTranSageStatusFailed = $transaction?->sage_status_id == SageEmbeddedProductEnum::BOOKING_FAILED->id();
         $sageProcess = SageProcess::where(['model_type' => $quote::class, 'model_id' => $quote->id])->first();
         $isSageProcessFailed = $sageProcess?->status == SageEnum::SAGE_PROCESS_FAILED_STATUS;
+
         return $isPolicyBooked && $isMedXEP && $epTranSageStatusFailed && $isSageProcessFailed;
     }
 

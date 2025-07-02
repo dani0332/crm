@@ -4,20 +4,19 @@ namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTagEnums;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
-use App\Enums\QuoteTypes;
 use App\Factories\SagePayloadFactory;
+use App\Models\EmbeddedTransaction;
 use App\Models\InsurerRequestResponse;
+use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
-use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
-use App\Models\Payment;
-use App\Models\EmbeddedTransaction;
 use Carbon\Carbon;
 use stdClass;
 
@@ -88,6 +87,7 @@ class SageApiEmbeddedProductService
                 $sageProcess->update($sageProcessData);
                 $this->sageApiService->scheduleSageProcesses($sageRequest->insurerID);
                 $this->updateAndLogEPBookingStatus($epTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id());
+
                 return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$epTransaction->code];
             }
 
@@ -98,6 +98,7 @@ class SageApiEmbeddedProductService
             SageProcess::create($sageProcessData);
             $this->sageApiService->scheduleSageProcesses($sageRequest->insurerID);
             $this->updateAndLogEPBookingStatus($epTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id());
+
             return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$epTransaction->code];
         }
     }
@@ -1517,8 +1518,8 @@ class SageApiEmbeddedProductService
     public function updateAndLogEPBookingStatus($embeddedTransaction, $status, $logFor = null)
     {
         $logFor = $logFor ?? self::CLASSNAME.' fun:'.__FUNCTION__;
-        LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status . ' - Current Status: '. $embeddedTransaction->sage_status_id);
-        if($embeddedTransaction->sage_status_id != $status){
+        LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status.' - Current Status: '.$embeddedTransaction->sage_status_id);
+        if ($embeddedTransaction->sage_status_id != $status) {
             $embeddedTransaction->update(['sage_status_id' => $status]);
             LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
         }

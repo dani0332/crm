@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Storage;
 
 class EmbeddedProductController extends Controller
 {
-
     public function __construct()
     {
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
@@ -278,6 +277,7 @@ class EmbeddedProductController extends Controller
     {
         try {
             $scheduledResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request->all());
+
             return response()->json([
                 'success' => true,
                 'message' => $scheduledResponse['message'],
@@ -286,7 +286,7 @@ class EmbeddedProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ]); 
+            ]);
         }
 
     }
