@@ -68,12 +68,12 @@ class GenericLobController extends Controller
         switch ($quoteType) {
             case QuoteTypes::CAR:
                 $pdfUrl = app(CarEmailService::class)->attachCarOCBPDF($request->quote_uuid);
+
                 return response()->json(['pdf_url' => $pdfUrl]);
-            break;
+                break;
             default:
                 return response()->json(['error' => 'Invalid quote type'], 400);
         }
     }
-
 
 }
