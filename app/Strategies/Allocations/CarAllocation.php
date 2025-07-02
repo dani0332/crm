@@ -13,13 +13,13 @@ use App\Pipes\Allocation\Car\FinalizeEligibleAdvisorPipe;
 use App\Pipes\Allocation\Car\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
 use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use Exception;
 use Illuminate\Support\Facades\Pipeline;
-use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
 
 class CarAllocation implements Allocation
 {

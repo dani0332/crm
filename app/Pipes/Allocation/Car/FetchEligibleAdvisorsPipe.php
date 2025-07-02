@@ -26,7 +26,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        if($this->allocationRequest->get('dontRetryAdvisor', false)) {
+        if ($this->allocationRequest->get('dontRetryAdvisor', false)) {
             return $next($request);
         }
 

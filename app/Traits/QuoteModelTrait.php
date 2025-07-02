@@ -7,6 +7,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
@@ -25,7 +26,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
-use App\Enums\PaymentStatusEnum;
 
 trait QuoteModelTrait
 {

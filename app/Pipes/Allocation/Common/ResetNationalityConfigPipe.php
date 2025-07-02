@@ -14,7 +14,7 @@ class ResetNationalityConfigPipe extends BaseAllocationPipe
 
         if ($this->allocationRequest->hasNationalityConfig() && empty($eligibleAdvisors)) {
             $this->allocationRequest->resetNationalityConfig();
-        }else{
+        } else {
             $this->allocationRequest->set('dontRetryAdvisor', true);
         }
 
