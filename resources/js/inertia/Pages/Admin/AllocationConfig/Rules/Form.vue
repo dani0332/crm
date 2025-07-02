@@ -18,7 +18,7 @@ const ruleForm = useForm({
   is_active: props.rule?.is_active ? true : false,
   rule_users: props.rule?.rule_users.map(x => x.id) ?? [],
   rule_type: props.rule?.rule_type.id ?? null,
-  quote_type_id: props.rule?.quote_type.id ?? '',
+  quote_type_id: props.rule?.quote_type?.id.toString() ?? '',
 });
 
 const ruleUsers = computed(() => {
@@ -41,9 +41,9 @@ const ruleTypes = computed(() => {
   });
 });
 
-const quoteTypes = computed(() => {
-  let quoteTypes = Object.values(props.quoteTypes);
-  return quoteTypes.map(quoteType => {
+const quoteTypesOptions = computed(() => {
+  let quoteTypesList = Object.values(props.quoteTypes);
+  return quoteTypesList.map(quoteType => {
     return {
       value: quoteType.id,
       label: quoteType.name,
@@ -104,6 +104,7 @@ function onSubmit(isValid) {
     </div>
   </div>
   <x-divider class="my-4" />
+
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-input
@@ -129,7 +130,7 @@ function onSubmit(isValid) {
       <x-select
         v-model="ruleForm.quote_type_id"
         label="Quote Type"
-        :options="quoteTypes"
+        :options="quoteTypesOptions"
         :error="ruleForm.errors.quote_type_id"
         filterable
         filterPlaceholder="Filter Quote Type...."
