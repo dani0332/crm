@@ -131,6 +131,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
   lostReason: page.props.quoteDetails.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || ''
 });
 
 const leadStatusOptions = computed(() => {

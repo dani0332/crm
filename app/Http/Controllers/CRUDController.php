@@ -1864,7 +1864,7 @@ class CRUDController extends Controller
             $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
-        if ($entity->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        if ($request->current_quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::PolicyIssued) {
             $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
             (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId);
         }
