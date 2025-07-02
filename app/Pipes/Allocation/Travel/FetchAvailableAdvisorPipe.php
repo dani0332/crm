@@ -46,11 +46,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     private function fetchAvailableAdvisor()
     {
         $teamId = $this->evaluateTeamId($this->lead);
-
-        if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
-            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-        }
-
         return $this->findAvailableAdvisor($teamId);
     }
 
@@ -90,48 +85,52 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
      */
     private function evaluateTeamId(TravelQuote $lead)
     {
-        // Extract lead properties with null safety
         $isSIC = $this->checkLeadMethod($lead, 'isSIC', [$this->allocationRequest->getQuoteType()]);
         $isAIG = $this->checkLeadMethod($lead, 'isAIG', [$this->allocationRequest->getQuoteType()]);
-        $isPaymentAuthorizedOrLinkRequested = $this->checkLeadMethod($lead, 'isPaymentAuthorizedOrLinkRequested');
+        $isPaymentAuthorizedOnly = $this->checkLeadMethod($lead, 'isPaymentAuthorizedOnly');
+        $isPaymentLinkRequested = $this->checkLeadMethod($lead, 'isPaymentLinkRequested');
         $isLeadFromInstantAlfred = $this->checkLeadMethod($lead, 'isLeadFromInstantAlfred');
 
         $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
-        // Determine team assignment based on business rules
         $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
-        $isSICOrAIGWithPayment = (($isSIC && ! $isAIG) || $isAIG) && $isPaymentAuthorizedOrLinkRequested;
-        $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequested;
 
         $teamId = null;
+        $reason = '';
 
-        // Apply team assignment rules
         if ($isAIGWithInstantAlfred) {
             // Rule 1: AIG leads from Instant Alfred go to default team
             $teamId = self::DEFAULT_TEAM_ID;
             $reason = 'AIG and Lead from Instant Alfred';
-        } elseif ($isSICOrAIGWithPayment) {
-            // Rule 2: SIC or AIG leads with payment authorized or link requested
+        } elseif ($isAIG && ($isPaymentAuthorizedOnly || $isPaymentLinkRequested)) {
+            // Rule 2: AIG leads with payment authorized or link requested
             $teamId = $sicUnassistedTeamId;
-            $reason = $isAIG ? 'AIG with payment authorized or link requested' :
-                              'SIC with payment authorized or link requested';
-        } elseif ($isNonSICNonAIGWithPayment) {
-            // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
+            $reason = 'AIG with payment authorized or link requested';
+        } elseif ($isSIC && $isPaymentAuthorizedOnly && !$isPaymentLinkRequested) {
+            // Rule 3: SIC lead with payment authorized only (not payment link requested)
+            $teamId = $sicUnassistedTeamId;
+            $reason = 'SIC travel lead with payment authorized only';
+        } elseif ($isSIC && $isPaymentLinkRequested) {
+            // Rule 4: SIC lead with payment link requested
+            $teamId = null;
+            $reason = 'SIC travel lead with payment link requested';
+        } elseif (!$isSIC && !$isAIG && ($isPaymentAuthorizedOnly || $isPaymentLinkRequested)) {
+            // Rule 5: Non-SIC, Non-AIG leads with payment authorized or link requested
             $teamId = $sicUnassistedTeamId;
             $reason = 'Non-SIC, Non-AIG lead with payment authorized or link requested';
         } else {
-            // Rule 4: Default - all other leads have no specific team
+            // Rule 6: Default - all other leads have no specific team
             $teamId = self::DEFAULT_TEAM_ID;
             $reason = 'Default case - no specific team';
         }
 
-        // Log the final team assignment using debug with extra parameter
         LoggerService::debug('Team assigned for Travel Allocation', extra: [
             'reason' => $reason,
             'teamId' => $teamId,
             'isSIC' => $isSIC,
             'isAIG' => $isAIG,
-            'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
+            'isPaymentAuthorizedOnly' => $isPaymentAuthorizedOnly,
+            'isPaymentLinkRequested' => $isPaymentLinkRequested,
             'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
         ]);
 
