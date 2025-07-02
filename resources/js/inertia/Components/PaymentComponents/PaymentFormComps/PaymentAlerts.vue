@@ -8,6 +8,7 @@ const props = defineProps({
   isPaymentLocked: Boolean,
   paymentMethodsForm: Object,
   fileErrorMessage: String,
+  isFileError: Boolean,
 });
 </script>
 

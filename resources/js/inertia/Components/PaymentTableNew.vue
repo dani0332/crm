@@ -407,9 +407,8 @@ const addPaymentModal = async () => {
     return;
   }
 
-  // DONE TEMPORARY SOLUTION AS REF NOT WORKING
   createPaymentModal.value = true;
-  await new Promise(resolve => setTimeout(resolve, 10));
+  await new Promise(resolve => setTimeout(resolve, 200));
   createPaymentFormRef.value.resetPaymentMethodsForm();
   const paymentFormUpdateData = {};
   paymentFormUpdateData.payment_method = 'CHQ';
@@ -554,7 +553,7 @@ const editPaymentModal = async (
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
   createPaymentModal.value = true;
-  await new Promise(resolve => setTimeout(resolve, 10));
+  await new Promise(resolve => setTimeout(resolve, 200));
   createPaymentFormRef.value.resetPaymentForm();
   createPaymentFormRef.value.initializePaymentForm(
     payment,
@@ -654,7 +653,6 @@ watch(
 );
 
 onMounted(() => {
-  console.log('REFACTORING CHANGES LOADED');
   if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
   }
@@ -938,8 +936,6 @@ const closeVoidPaymentModal = () => {
 watch(
   () => createPaymentFormRef.value?.paymentMethodsForm,
   newVal => {
-    // console.clear();
-    console.log(' newVal : ', newVal);
     paymentMethodsFormReplicated.value = newVal ?? {};
   },
 );

@@ -1443,7 +1443,7 @@ const calculateTotalAmount = async (avoidDelay = false) => {
     emit('update-total-amount', props.totalPrice - discount);
   }
   if (avoidDelay) {
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
   calculatePaymentBreakup(false);
 };
@@ -1556,7 +1556,6 @@ const processPaymentSplits = payment => {
 
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
-    console.log('split : ', split);
     readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
     if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
@@ -2263,8 +2262,6 @@ const resetTotalPayments = () => {
 
 const getPlanName = computed(() => {
   const plan = props.planDetail;
-  // console.clear();
-  // console.log("PLAN", props.quoteTypesToCheck, props.quoteTypesToCheck.includes(props.quoteType) && plan, plan, props.planDetail)
   if (props.quoteType === quoteTypeCodeEnum.Bike) {
     return plan ? props.quoteRequest.car_plan.text : 'Not Available';
   }
@@ -2333,7 +2330,6 @@ const updatePaymentForm = (updates = {}) => {
   Object.entries(updates).forEach(([key, value]) => {
     paymentMethodsForm[key] = value;
   });
-  console.log('-----paymentMethodsForm', paymentMethodsForm);
 };
 
 const resetPaymentMethodsForm = () => {
@@ -2582,6 +2578,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :isPaymentLocked="isPaymentLocked"
       :paymentMethodsForm="paymentMethodsForm"
       :fileErrorMessage="fileErrorMessage"
+			:isFileError="isFileError"
     />
 
     <PaymentFormScheduleTable

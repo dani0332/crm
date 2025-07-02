@@ -86,7 +86,7 @@ const masterPaymentStatusFormat = computed(() => {
 
 const discountProofDocument = props.paymentDocument.find(
   item => item.text === 'Discount Proof',
-);
+) || {};
 
 const totalAmountFormat = computed(() => {
   return formatAmount(props.totalAmount);
@@ -504,7 +504,7 @@ const isMasterPaymentPaid = computed(() => {
           isFieldReadonly
             ? discountReasons.find(
                 item => item.value === paymentMethodsForm.discount_reason,
-              ).tooltip
+              )?.tooltip
             : paymentTooltipEnum.DISCOUNT_REASON
         "
         :required="!isFieldReadonly"
@@ -514,7 +514,7 @@ const isMasterPaymentPaid = computed(() => {
           {{
             discountReasons.find(
               item => item.value === paymentMethodsForm.discount_reason,
-            ).label
+            )?.label
           }}
         </span>
       </x-field>
