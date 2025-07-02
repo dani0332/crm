@@ -55,7 +55,7 @@ class EmailStatusService extends BaseService
             case QuoteTypeId::Life:
                 $quote = PersonalQuote::where('uuid', $request->uuid)->first();
                 break;
-           
+
             default:
                 $quote = null;
                 break;
