@@ -1164,7 +1164,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'INSTAXINVAMT',
-                'Value' => (string)$sageRequest->premiumWithTax,
+                'Value' => (string) $sageRequest->premiumWithTax,
             ],
             [
                 'OptionalField' => 'INSTAXINVNO',
