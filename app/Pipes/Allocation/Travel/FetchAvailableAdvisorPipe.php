@@ -46,6 +46,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     private function fetchAvailableAdvisor()
     {
         $teamId = $this->evaluateTeamId($this->lead);
+
         return $this->findAvailableAdvisor($teamId);
     }
 
@@ -106,7 +107,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             // Rule 2: AIG leads with payment authorized or link requested
             $teamId = $sicUnassistedTeamId;
             $reason = 'AIG with payment authorized or link requested';
-        } elseif ($isSIC && $isPaymentAuthorizedOnly && !$isPaymentLinkRequested) {
+        } elseif ($isSIC && $isPaymentAuthorizedOnly && ! $isPaymentLinkRequested) {
             // Rule 3: SIC lead with payment authorized only (not payment link requested)
             $teamId = $sicUnassistedTeamId;
             $reason = 'SIC travel lead with payment authorized only';
@@ -114,7 +115,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             // Rule 4: SIC lead with payment link requested
             $teamId = null;
             $reason = 'SIC travel lead with payment link requested';
-        } elseif (!$isSIC && !$isAIG && ($isPaymentAuthorizedOnly || $isPaymentLinkRequested)) {
+        } elseif (! $isSIC && ! $isAIG && ($isPaymentAuthorizedOnly || $isPaymentLinkRequested)) {
             // Rule 5: Non-SIC, Non-AIG leads with payment authorized or link requested
             $teamId = $sicUnassistedTeamId;
             $reason = 'Non-SIC, Non-AIG lead with payment authorized or link requested';
