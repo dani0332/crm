@@ -25,6 +25,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
+use App\Enums\PaymentStatusEnum;
 
 trait QuoteModelTrait
 {
@@ -329,7 +330,7 @@ trait QuoteModelTrait
     public static function formattedPcQualifiedCase(): string
     {
         return "
-            CASE 
+            CASE
                 WHEN pc_qualified = 1 THEN 'Yes'
                 ELSE 'No'
             END
@@ -408,5 +409,10 @@ trait QuoteModelTrait
         }
 
         return implode(', ', $matchedSegments);
+    }
+
+    public function isPaymentAuthorizedOnly(): bool
+    {
+        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
     }
 }
