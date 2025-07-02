@@ -344,6 +344,7 @@ class SukoonMedexService
      * @param  array  $data  The data to send with the request.
      * @param  array  $headers  The headers to include with the request.
      * @return mixed The response from the API.
+     *
      * @throws Exception When API request fails or returns error responses
      */
     private function request($endPoint, $method = 'post', $payload = [], $headers = [])
@@ -374,13 +375,13 @@ class SukoonMedexService
                 throw new Exception("API Error, Response: {$responseData}");
             }
 
-
             if ($responseData['has_errors'] ?? null) {
                 $this->fetchErrors($responseData);
-                throw new Exception("API Request has errors");
+                throw new Exception('API Request has errors');
             }
 
             $this->logRequest('passed', 'Request Successful', $payload, $endPoint, $responseData, $parentFunction);
+
             return $response;
 
         } catch (Exception $e) {
