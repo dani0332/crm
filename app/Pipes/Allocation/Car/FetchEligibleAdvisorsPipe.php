@@ -26,6 +26,10 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if($this->allocationRequest->get('dontRetryAdvisor', false)) {
+            return $next($request);
+        }
+
         $tierUserIds = $request->get('tierUserIds');
         $lead = $request->getLead();
         $tier = $request->getTier();

@@ -19,6 +19,7 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use Exception;
 use Illuminate\Support\Facades\Pipeline;
+use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
 
 class CarAllocation implements Allocation
 {
@@ -51,6 +52,8 @@ class CarAllocation implements Allocation
                 EvaluateTeamPipe::class,
                 FetchTierUsersPipe::class,
                 ApplyRuleExclusionPipe::class,
+                FetchEligibleAdvisorsPipe::class,
+                ResetNationalityConfigPipe::class,
                 FetchEligibleAdvisorsPipe::class,
                 FinalizeEligibleAdvisorPipe::class,
                 AssignLeadPipe::class,
