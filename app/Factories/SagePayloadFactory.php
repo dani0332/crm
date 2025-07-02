@@ -1162,6 +1162,14 @@ class SagePayloadFactory
                 'OptionalField' => 'ENDORSEMENT',
                 'Value' => $sageRequest->sendUpdateEndorsementNumber ?? 'N/A',
             ],
+            [
+                'OptionalField' => 'INSTAXINVAMT',
+                'Value' => (string)$sageRequest->premiumWithTax,
+            ],
+            [
+                'OptionalField' => 'INSTAXINVNO',
+                'Value' => $sageRequest->originalInsurerPremiumNumber,
+            ],
         ];
 
         return $optionalArray;
