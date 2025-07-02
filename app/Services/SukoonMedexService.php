@@ -476,6 +476,7 @@ class SukoonMedexService
     private function logFailure($operation, $message, $data = [])
     {
         LoggerService::info($this->logPrefix.' Failure', context: [
+            'ref_id' => $this->currentQuote->code,
             'operation' => $operation,
             'message' => $message,
             'data' => $data,
@@ -768,7 +769,7 @@ class SukoonMedexService
                 'get',
                 ['confirm' => 'true'],
                 ['x-session-id' => $this->sessionId]
-            );
+            )->json();
 
             $responsePolicyData = $response['policy_data'] ?? [];
             if (empty($responsePolicyData['quote_number'] ?? null) || empty($responsePolicyData['policy_status'] ?? null)) {
@@ -999,7 +1000,7 @@ class SukoonMedexService
         try {
             $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', $this->quoteTypeId)->first();
             if (empty($documentType)) {
-                $this->logFailure('DocumentType is missing', "DocumentType is not available for doc_code: {$docCode} & quote_type_id: {$this->quoteTypeId}", ['ref_id' => $quote->code]);
+                $this->logFailure('DocumentType is missing', "DocumentType is not available for doc_code: {$docCode} & quote_type_id: {$this->quoteTypeId}");
 
                 return false;
             }
@@ -1013,7 +1014,7 @@ class SukoonMedexService
             // Handle the case where the content is empty or contains the specific response message
             if (empty($content) || preg_match($pattern, $content)) {
                 $message = 'Document is not available on Sukoon';
-                $this->logFailure($message.' doc_code: '.$docCode, $message, ['ref_id' => $quote->code]);
+                $this->logFailure($message.' doc_code: '.$docCode, $message);
 
                 return false;
             }
@@ -1038,7 +1039,7 @@ class SukoonMedexService
 
                 if (! ($uploadedDocument->success ?? false)) {
                     $message = 'Document is not uploaded';
-                    $this->logFailure($message.' doc_code: '.$docCode, $message, ['ref_id' => $quote->code]);
+                    $this->logFailure($message.' doc_code: '.$docCode, $message);
 
                     return false;
                 }
@@ -1067,7 +1068,7 @@ class SukoonMedexService
                 return $result;
             } else {
                 $message = 'Unable to determine filename from the response headers.';
-                $this->logFailure($message.' doc_code : '.$docCode, $message, ['ref_id' => $quote->code, 'embeddedTransaction' => $embeddedTransaction]);
+                $this->logFailure($message.' doc_code : '.$docCode, $message);
 
                 return false;
             }
