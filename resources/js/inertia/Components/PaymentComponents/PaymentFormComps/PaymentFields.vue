@@ -84,9 +84,8 @@ const masterPaymentStatusFormat = computed(() => {
   return formatString(props.masterPaymentStatus);
 });
 
-const discountProofDocument = props.paymentDocument.find(
-  item => item.text === 'Discount Proof',
-) || {};
+const discountProofDocument =
+  props.paymentDocument.find(item => item.text === 'Discount Proof') || {};
 
 const totalAmountFormat = computed(() => {
   return formatAmount(props.totalAmount);

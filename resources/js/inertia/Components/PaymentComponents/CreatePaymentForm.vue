@@ -2578,7 +2578,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :isPaymentLocked="isPaymentLocked"
       :paymentMethodsForm="paymentMethodsForm"
       :fileErrorMessage="fileErrorMessage"
-			:isFileError="isFileError"
+      :isFileError="isFileError"
     />
 
     <PaymentFormScheduleTable
