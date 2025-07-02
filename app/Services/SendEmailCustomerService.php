@@ -1728,6 +1728,8 @@ class SendEmailCustomerService extends BaseService
 
     public function buildEmailDataForBirdFlow($lead, $advisor, $workflowType)
     {
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+
         return (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
@@ -1738,6 +1740,7 @@ class SendEmailCustomerService extends BaseService
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorDetails' => $advisor ?? null,
+            'documentUrl' => $documentUrl ?? null,
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
             'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
