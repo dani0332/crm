@@ -166,7 +166,7 @@ const familyEmployeDiscount = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.Travel,
-	quoteTypeCodeEnum.SAVINGS,
+  quoteTypeCodeEnum.SAVINGS,
 ];
 
 const documentForm = useForm({
@@ -755,7 +755,7 @@ const providerName = computed(() => {
   if (props.quoteType == quoteTypeCodeEnum.Home) {
     return props.quoteRequest.insurance_provider?.text || 'Not Available';
   }
-	if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     return props.quoteRequest.insurance_provider?.text || 'Not Available';
   }
   const ecomQuoteType = [...props.quoteTypesToCheck, quoteTypeCodeEnum.Bike];
@@ -2279,7 +2279,7 @@ const getPlanName = computed(() => {
     return homePlanText.value || 'Not Available';
   }
 
-	if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+  if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
     return props.quoteRequest?.insurance_provider_plan?.text || 'Not Available';
   }
 
