@@ -1109,6 +1109,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
         element.copayName = value.text;
+        element.copayCode = value.code;
       }
     });
   });
@@ -2229,16 +2230,16 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote.details }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ADDITIONAL NOTES</dt>
-                <dd>{{ quote.additional_notes }}</dd>
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ quote.enquiry_count }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                <dd>{{ quote.transaction_approved_at }}</dd>
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote.additional_notes }}</dd>
               </div>
               <div
                 class="grid sm:grid-cols-2"
@@ -3427,7 +3428,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
 
               <template
-                #item-providerName="{ providerName, isManualPlan, isHidden }"
+                #item-providerName="{
+                  providerName,
+                  isManualPlan,
+                  isHidden,
+                  id,
+                  copayCode,
+                  planCode,
+                }"
               >
                 <p>
                   {{ providerName }}
@@ -3456,6 +3464,16 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     class="mt-0.5 text-[10px]"
                   >
                     Currently Online
+                  </x-tag>
+                  <x-tag
+                    v-if="
+                      copayCode == quote.renewal_upload_copay_code &&
+                      planCode == quote.renewal_upload_plan_code
+                    "
+                    size="xs"
+                    class="mt-0.5 text-[10px] bg-red-500 text-white"
+                  >
+                    Renewal
                   </x-tag>
                 </div>
               </template>

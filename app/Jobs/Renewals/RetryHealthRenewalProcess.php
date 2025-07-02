@@ -6,27 +6,25 @@ use App\Exceptions\RenewalProcessException;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Batchable;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
-class UpdateRenewalQuotesJob implements ShouldQueue
+class RetryHealthRenewalProcess implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 60;
+    public $timeout = 180;
     public $backoff = 10;
     public $tries = 3;
     protected $renewalQuoteProcess;
 
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct($renewalQuoteProcess)
     {
@@ -36,15 +34,14 @@ class UpdateRenewalQuotesJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
-    public function handle(RenewalsUploadService $renewalsUploadService)
+    public function handle(): void
     {
         try {
-            $renewalsUploadService->updateQuote($this->renewalQuoteProcess);
-        } catch (Throwable $e) {
-            throw $e; // Re-throw to mark job as failed
+            $renewalUploadService = app(RenewalsUploadService::class);
+            $renewalUploadService->retryRenewalQuoteProcess($this->renewalQuoteProcess);
+        } catch (\Throwable $th) {
+            throw $th;
         }
     }
 
@@ -63,6 +60,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
+
         $renewalsUploadService = app(RenewalsUploadService::class);
         $errors = [];
         $step = null;
@@ -74,11 +72,14 @@ class UpdateRenewalQuotesJob implements ShouldQueue
             $errors = ['Unexpected error: '.$exception->getMessage()];
         }
 
-        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
-            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+        LoggerService::error('Retry Health Renewal Process Failed', [
+            'quote_process_id' => $this->renewalQuoteProcess->id,
             'step' => $step,
             'errors' => $errors,
-        ], exception: $exception);
+            'exception' => get_class($exception),
+            'message' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+        ]);
 
         $renewalsUploadService->updateRenewalQuoteProcess(
             $this->renewalQuoteProcess,
