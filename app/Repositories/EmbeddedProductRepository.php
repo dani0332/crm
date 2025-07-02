@@ -289,11 +289,10 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
         $isMedXEP = in_array($ep->short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
-        $epTranSageStatusFailed = $transaction?->sage_status_id == SageEmbeddedProductEnum::BOOKING_FAILED;
+        $epTranSageStatusFailed = $transaction?->sage_status_id == SageEmbeddedProductEnum::BOOKING_FAILED->id();
         $sageProcess = SageProcess::where(['model_type' => $quote::class, 'model_id' => $quote->id])->first();
         $isSageProcessFailed = $sageProcess?->status == SageEnum::SAGE_PROCESS_FAILED_STATUS;
-
-        return $isPolicyBooked && $isMedXEP && ($epTranSageStatusFailed || $isSageProcessFailed);
+        return $isPolicyBooked && $isMedXEP && $epTranSageStatusFailed && $isSageProcessFailed;
     }
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)

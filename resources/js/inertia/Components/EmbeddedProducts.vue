@@ -95,12 +95,7 @@ const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
   isInertia: true,
-});
-const bookEPOnSageForm = useForm({
-  quoteId: props.quote.id,
-  modelType: props.modelType,
-  isInertia: true,
-});
+}); 
 
 const addDocumentForm = useForm({
   epId: null,
@@ -202,25 +197,38 @@ const viewDocument = id => {
       viewDocumentLoader.value = false;
     });
 };
-const rescheduleEPBooking = item => {
-  bookEPOnSageLoader.value = true;
+const rescheduleEPBooking = async ( item ) => {
+ 
   let epTransactionId = getFirstPriceWithTransaction(item.prices)
     ?.transactions[0]?.id;
-  bookEPOnSageForm
-    .transform(data => ({
-      ...data,
-      epTransactionId: epTransactionId,
-      insuranceProviderId: item.insurance_provider_id,
-    }))
-    .post(route('embedded-products.reschedule-sage-booking'), {
-      preserveScroll: true,
-      onSuccess: () => {
-        bookEPOnSageLoader.value = false;
-      },
-      onError: () => {
-        bookEPOnSageLoader.value = false;
-      },
-    });
+    try {
+      bookEPOnSageLoader.value = true;
+      const response = await axios.post(route('embedded-products.reschedule-sage-booking'), {
+        quoteId: props.quote.id,
+        modelType: props.modelType, 
+        epTransactionId: epTransactionId,
+        insuranceProviderId: item.insurance_provider_id,
+      });
+      bookEPOnSageLoader.value = false;
+      if (response.data.success) { 
+        notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+        router.visit(location.href);
+      } else {
+        notification.error({
+          title:  response.data.message,
+          position: 'top',
+        });
+        router.visit(location.href);
+      }
+    } catch (err) {
+      notification.error({
+        title: 'Embedded Product Booking Failed',
+        position: 'top',
+      });
+    }
 };
 
 const dateFormat = date =>

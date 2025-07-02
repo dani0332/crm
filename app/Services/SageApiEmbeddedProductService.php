@@ -211,6 +211,7 @@ class SageApiEmbeddedProductService
 
             LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Embedded Product Booked for : '.$quote->code.' ');
         } else {
+            $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id());
             LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Embedded Product Booked Already for : '.$quote->code.' ');
         }
 
@@ -1516,9 +1517,11 @@ class SageApiEmbeddedProductService
     public function updateAndLogEPBookingStatus($embeddedTransaction, $status, $logFor = null)
     {
         $logFor = $logFor ?? self::CLASSNAME.' fun:'.__FUNCTION__;
-        LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status);
-        $embeddedTransaction->update(['sage_status_id' => $status]);
-        LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
+        LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Updating Sage Booking Status to : '.$status . ' - Current Status: '. $embeddedTransaction->sage_status_id);
+        if($embeddedTransaction->sage_status_id != $status){
+            $embeddedTransaction->update(['sage_status_id' => $status]);
+            LoggerService::info($logFor.' Sage Booking - Embedded Product : EP Transaction Code : '.$embeddedTransaction->code.', - Sage Booking Status Updated to : '.$status);
+        }
     }
 
 }

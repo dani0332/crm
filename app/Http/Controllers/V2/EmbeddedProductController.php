@@ -278,13 +278,15 @@ class EmbeddedProductController extends Controller
     {
         try {
             $scheduledResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request->all());
-            if($scheduledResponse['status']){
-                return redirect()->back()->with('success', $scheduledResponse['message'] );
-            }else{
-                return redirect()->back()->with('error', $scheduledResponse['message'] );
-            }
+            return response()->json([
+                'success' => true,
+                'message' => $scheduledResponse['message'],
+            ]);
         } catch (Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]); 
         }
 
     }
