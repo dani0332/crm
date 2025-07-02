@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -120,10 +119,10 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'insuranceProvider',
-                'insured' => function ($q) use ($quoteTypeId) {
+                'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'insured.insuredKyc:id,insured_id',
+                'latestInsured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable',
                         'paymentSplits.paymentStatus',
@@ -149,21 +148,16 @@ class YachtQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                \DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Yacht.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
             ])
             ->firstOrFail();
 
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
-        if (isset($data['insured'][0])) {
-            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        if (isset($data['latest_insured'])) {
+            $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
 
         return $quote;
@@ -189,6 +183,10 @@ class YachtQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'quoteDetail',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::YACHT->id());
+            },
+            'customer',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -202,6 +200,7 @@ class YachtQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',

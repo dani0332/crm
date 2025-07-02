@@ -22,22 +22,6 @@ class InsuredKycRequest extends FormRequest
     }
 
     /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation()
-    {
-        // Get the insured record to determine customer type
-        /*if ($this->has('insured_id') && $this->insured_id) {
-            $insured = Insured::find($this->insured_id);
-            if ($insured) {
-                $this->customerType = $insured->customer_type;
-            }
-        }*/
-
-        // TODO:: Need to add validation if customer type entity then trade license is required
-    }
-
-    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
