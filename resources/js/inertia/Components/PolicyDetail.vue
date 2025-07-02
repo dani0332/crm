@@ -541,8 +541,13 @@ const calculateTotalPrice = () => {
   const priceVatApplicable = useRoundIt(
     policyDetailsForm.price_vat_applicable,
   ).toFixed(2);
+  // Ensure priceVatNotApplicable is always a number, default to 0 if null/empty
+  const priceVatNotApplicable = useRoundIt(
+    Number(policyDetailsForm.price_vat_notapplicable) || 0
+  ).toFixed(2);
+  // Add priceVatNotApplicable to amountWithVat only if greater than zero
   const amountWithVat = useRoundIt(
-    Number(vat) + Number(priceVatApplicable),
+    Number(vat) + Number(priceVatApplicable) + (Number(priceVatNotApplicable) > 0 ? Number(priceVatNotApplicable) : 0)
   ).toFixed(2);
   policyDetailsForm.amount_with_vat = amountWithVat;
   policyDetailsForm.vat = vat;
@@ -673,7 +678,7 @@ const FieldLoader = defineComponent({
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.price_vat_notapplicable"
-                  @change="calculateVatAmount(true)"
+                  @change="calculateVatAmount()"
                   :rules="[rules.price_vat_not_applicable]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
