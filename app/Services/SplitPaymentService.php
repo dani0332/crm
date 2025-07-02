@@ -517,6 +517,8 @@ class SplitPaymentService
                 return DocumentTypeCode::CYCPD_RECEIPT;
             case QuoteTypes::GROUP_MEDICAL->value:
                 return DocumentTypeCode::GMQPD_RECEIPT;
+            case QuoteTypes::SAVINGS->value:
+                return DocumentTypeCode::SPD_RECEIPT;
             default:
                 return DocumentTypeCode::CPD_RECEIPT;
         }
@@ -1030,6 +1032,7 @@ class SplitPaymentService
     {
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
+        LoggerService::info('fn: calculateCommissionSplit - Payment Code: '.$payment->code.' - Total Price Vat Applicable: '.$totalPriceVatApplicable);
 
         return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commission);
     }

@@ -452,7 +452,10 @@ const calculateCommission = () => {
     bpForm.total_commission = 0;
   }
 };
-let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
+
+let isComissionVatApplicableEnabled =
+  page.props.quoteType == quoteTypeCodeEnum.Life ||
+  page.props.quoteType == quoteTypeCodeEnum.SAVINGS;
 let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
@@ -461,7 +464,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
     return bpForm.disabledCommissionTooltip;
   }*/
   if (bpForm.commission_vat_applicable > 0) {
-    if (isLifeLead) {
+    if (isComissionVatApplicableEnabled) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
     } else if (isBusinessLead) {
       let insuranceBusinessType =
@@ -486,7 +489,7 @@ const commissionVatApplicableTooltip = computed(() => {
     return bpForm.disabledCommissionTooltip;
   }*/
   if (bpForm.commission_vat_not_applicable > 0) {
-    if (isLifeLead) {
+    if (isComissionVatApplicableEnabled) {
       toolTip =
         productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE_FILLED;
     } else if (isBusinessLead) {
@@ -508,7 +511,7 @@ const commissionVatApplicableTooltip = computed(() => {
 });
 
 const disableCommissionVatNotApplicable = computed(() => {
-  if (isLifeLead) {
+  if (isComissionVatApplicableEnabled) {
     return !bp.isEditing || bpForm.commission_vat_applicable > 0;
   } else if (isBusinessLead) {
     let insuranceBusinessType = page.props.quote?.business_type_of_insurance_id;

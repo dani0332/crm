@@ -345,6 +345,7 @@ const exportReport = async (exportType = 'download') => {
             { label: 'Health', value: 'Health' },
             { label: 'Travel', value: 'Travel' },
             { label: 'Bike', value: 'Bike' },
+            { label: 'Home', value: 'Home' },
           ]"
           placeholder="Select a Quote Type"
           class="w-full"
