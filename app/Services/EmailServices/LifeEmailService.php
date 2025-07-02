@@ -84,13 +84,15 @@ class LifeEmailService extends BaseService
         $dateOfBirth = $personalQuote->dob;
         if ($dateOfBirth) {
             // Parse the birthday (defaults to current year)
-            $birthday = Carbon::createFromFormat('m-d',  $dateOfBirth);
+            $dateOfBirth = Carbon::parse($dateOfBirth)->format('m-d');
+            $birthday = Carbon::createFromFormat('m-d', $dateOfBirth);
             // Subtract 15 days to get the notification date
              $notifyDate = $birthday->subDays(15);
              $notifyBirthdayDate =[
                 'advanceBirthdayDate' => $notifyDate->timestamp,
                 'advanceBirthdayDateString' => $notifyDate->format('Y-m-d'),
              ];
+        
              $emailData->workflowType = WorkflowTypeEnum::LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL;
              $emailData = array_merge((array) $emailData, $notifyBirthdayDate);
              $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
@@ -117,7 +119,9 @@ class LifeEmailService extends BaseService
 
         $dateOfBirth = $personalQuote->dob;
         if ($dateOfBirth) {
+            $dateOfBirth = Carbon::parse($dateOfBirth)->format('m-d');
             $birthday = Carbon::createFromFormat('m-d',  $dateOfBirth);
+       
             $notifyBirthdayDate =[
                 'birthdayDate' => $birthday->timestamp,
                 'birthdayDateString' => $birthday->format('Y-m-d'),
