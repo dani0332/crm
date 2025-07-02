@@ -34,9 +34,9 @@ class SendFICEmailForLife implements ShouldQueue
     public function handle(): void
     {
         $lifeFICSwitch = getAppStorageValueByKey(ApplicationStorageEnums::FIC_LIFE_EMAIL_SWITCH, useCache: true);
-       
+
         $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid)->where('quote_type_id', QuoteTypeId::Life)->first();
-    
+
         LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($personalQuote->uuid));
         if ($lifeFICSwitch && $lifeFICSwitch == 1) {
             app(LifeEmailService::class)->sendFICEmail($personalQuote);

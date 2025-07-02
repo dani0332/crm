@@ -92,11 +92,11 @@ class LifeEmailService extends BaseService
             $notifyBirthdayDate = [
                 'advanceBirthdayDate' =>(string) $notifyDate->timestamp,
                 'advanceBirthdayDateString' => $notifyDate->format('Y-m-d'),
-             ];
-        
-             $emailData->workflowType = WorkflowTypeEnum::LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL;
-             $emailData = array_merge((array) $emailData, $notifyBirthdayDate);
-             $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+            ];
+
+            $emailData->workflowType = WorkflowTypeEnum::LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL;
+            $emailData = array_merge((array) $emailData, $notifyBirthdayDate);
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
 
             if ($response && $response->status_code === 200) {
                 LoggerService::info('sendEmailAdvanceBirthdayWishToCustomer - Successfully triggered event');
