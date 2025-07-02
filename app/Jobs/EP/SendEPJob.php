@@ -40,12 +40,12 @@ class SendEPJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            LoggerService::info("Sent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} ---- ");
+            LoggerService::info("SendEPJob started - quoteId: {$this->quoteId} - modelType: {$this->modelType} - epId: {$this->epId} ---- ");
             EmbeddedProductRepository::sendDocumentsByLead($this->quoteId, $this->modelType, $this->epId, callPurchaseFlow: true);
-            LoggerService::info("Sent EP completed - {$this->quoteId} - {$this->modelType} - {$this->epId} ---- ");
+            LoggerService::info("SendEPJob completed - quoteId: {$this->quoteId} - modelType: {$this->modelType} - epId: {$this->epId} ---- ");
 
         } catch (Exception $e) {
-            Log::error("Sent EP ERROR - {$this->quoteId} - {$this->modelType} - {$this->epId} - ".$e->getMessage());
+            LoggerService::error("SendEPJob ERROR - quoteId: {$this->quoteId} - modelType: {$this->modelType} - epId: {$this->epId} - ".$e->getMessage());
         }
     }
 }

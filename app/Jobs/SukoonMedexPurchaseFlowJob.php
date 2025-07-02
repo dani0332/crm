@@ -39,7 +39,8 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
      */
     public function handle(): void
     {
-        LoggerService::info("SukoonMedexPurchaseFlowJob, ref_id: {$this->quoteObject->code}, et_id: {$this->transaction->id}");
+        LoggerService::startQuoteLogging($this->quoteObject);
+        LoggerService::info("SukoonMedexPurchaseFlowJob - quoteTypeId: {$this->quoteTypeId} - etId: {$this->transaction->id} - isSendEmail: {$this->isSendEmail}");
 
         $sukoonMedexService = app(SukoonMedexService::class);
         $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
