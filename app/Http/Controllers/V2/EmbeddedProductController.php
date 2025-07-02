@@ -5,10 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\SageEnum;
 use App\Exports\EmbeddedProductReport;
-use App\Factories\SagePayloadFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
@@ -16,18 +13,14 @@ use App\Http\Requests\EmbeddedProductRequest;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
-use App\Models\Payment;
 use App\Repositories\EmbeddedProductRepository;
 use App\Services\SageApiEmbeddedProductService;
-use App\Services\SageApiService;
-use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class EmbeddedProductController extends Controller
 {
-    use GenericQueriesAllLobs;
 
     public function __construct()
     {
@@ -284,36 +277,12 @@ class EmbeddedProductController extends Controller
     public function scheduleEPSageBooking(Request $request)
     {
         try {
-            $quoteTypeId = QuoteTypes::getIdFromValue($request->modelType);
-            $quote = $this->getQuoteObjectBy($request->modelType, $request->quoteId);
-
-            $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
-            $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
-            if ($isDuplicateOrCIRLead && empty($payment)) {
-                $payment = Payment::where([
-                    'paymentable_id' => $quote->id,
-                    'paymentable_type' => $quote->getMorphClass(),
-                ])->mainLeadPayment()->with('paymentSplits')->first();
+            $scheduledResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request->all());
+            if($scheduledResponse['status']){
+                return redirect()->back()->with('success', $scheduledResponse['message'] );
+            }else{
+                return redirect()->back()->with('error', $scheduledResponse['message'] );
             }
-            $paymentSplits = $payment->paymentSplits;
-
-            $epTransaction = EmbeddedTransaction::where('id', $request->epTransactionId)->first();
-
-            $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->modelType, $payment, $quote, $paymentSplits);
-            $sageRequest->userId = auth()->user()->id;
-            $sageRequest->insurerID = $request->insuranceProviderId;
-            $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST;
-            $sageRequest->epTransactionId = $request->epTransactionId;
-            $sageRequest->epInsuranceProviderId = $request->insuranceProviderId;
-            $sageRequest->quoteType = $request->modelType;
-            $sageRequest->quoteId = $request->quoteId;
-
-            $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
-            $sageRequest->customerId = (new SageApiService)->verifySageCustomer($quote->customer_id, $data, $quote, 15);
-
-            $scheduledResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct([$quote, $epTransaction, $sageRequest, $request->all()]);
-
-            return redirect()->back()->with('success', $scheduledResponse['message'] ?? 'Certificate send successfully');
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

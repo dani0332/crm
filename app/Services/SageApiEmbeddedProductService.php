@@ -6,14 +6,18 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\SagePayloadFactory;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
+use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
+use App\Models\Payment;
+use App\Models\EmbeddedTransaction;
 use Carbon\Carbon;
 use stdClass;
 
@@ -32,9 +36,38 @@ class SageApiEmbeddedProductService
         $this->sageApiService = new SageApiService;
     }
 
-    public function scheduleBookingOfEmbeddedProduct($sageRequestDataArray)
+    public function scheduleBookingOfEmbeddedProduct($request)
     {
-        [$quote, $sukoonMedXTransaction, $sageRequest, $request] = $sageRequestDataArray;
+        $user = auth()->user();
+        $quoteTypeId = QuoteTypes::getIdFromValue($request['modelType']);
+        $quote = $this->getQuoteObjectBy($request['modelType'], $request['quoteId']);
+
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
+        }
+        $paymentSplits = $payment->paymentSplits;
+
+        $epTransaction = EmbeddedTransaction::where('id', $request['epTransactionId'])->first();
+
+        $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request['modelType'], $payment, $quote, $paymentSplits);
+        $sageRequest->userId = $user->id;
+        $sageRequest->insurerID = $request['insuranceProviderId'];
+        $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST;
+        $sageRequest->epTransactionId = $request['epTransactionId'];
+        $sageRequest->epInsuranceProviderId = $request['insuranceProviderId'];
+        $sageRequest->quoteType = $request['modelType'];
+        $sageRequest->quoteId = $request['quoteId'];
+        $sageRequest->quoteTypeId = $quoteTypeId;
+        $sageRequest->quoteCode = $quote->code;
+
+        $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
+        $sageRequest->customerId = $this->sageApiService->verifySageCustomer($quote->customer_id, $data, $quote, 15);
+
         $sageProcessData = [
             'user_id' => $sageRequest->userId,
             'insurance_provider_id' => $sageRequest->insurerID,
@@ -46,26 +79,26 @@ class SageApiEmbeddedProductService
         ];
 
         $sageProcess = SageProcess::where([
-            'model_type' => $sukoonMedXTransaction::class,
-            'model_id' => $sukoonMedXTransaction->id,
+            'model_type' => $epTransaction::class,
+            'model_id' => $epTransaction->id,
         ])->first();
 
         if ($sageProcess) {
             if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
                 $sageProcess->update($sageProcessData);
-
-                /* $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id()); */
-                return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$sukoonMedXTransaction->code];
+                $this->sageApiService->scheduleSageProcesses($sageRequest->insurerID);
+                $this->updateAndLogEPBookingStatus($epTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id());
+                return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$epTransaction->code];
             }
 
-            return ['status' => true, 'message' => 'Embedded Product Booking Process is already scheduled/booked for EP Code: '.$sukoonMedXTransaction->code];
+            return ['status' => false, 'message' => 'Embedded Product Booking Process is already scheduled/booked for EP Code: '.$epTransaction->code];
         } else {
-            $sageProcessData['model_type'] = $sukoonMedXTransaction::class;
-            $sageProcessData['model_id'] = $sukoonMedXTransaction->id;
+            $sageProcessData['model_type'] = $epTransaction::class;
+            $sageProcessData['model_id'] = $epTransaction->id;
             SageProcess::create($sageProcessData);
-
-            /* $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id()); */
-            return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$sukoonMedXTransaction->code];
+            $this->sageApiService->scheduleSageProcesses($sageRequest->insurerID);
+            $this->updateAndLogEPBookingStatus($epTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id());
+            return ['status' => true, 'message' => 'Embedded Product Booking Process is scheduled for EP Code: '.$epTransaction->code];
         }
     }
 

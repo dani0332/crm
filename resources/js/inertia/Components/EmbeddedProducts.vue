@@ -732,6 +732,12 @@ const onAddDocumentSubmit = event => {
                     paymentGatewayEnum.PAYMENT_GATEWAY_TAP
                 " -->
               <x-button
+                v-if="
+                  item.can_book_embedded_product &&
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.payment_gateway_id ==
+                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+                "
                 size="xs"
                 color="emerald"
                 @click.prevent="rescheduleEPBooking(item)"
