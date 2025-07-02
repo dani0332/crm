@@ -2,11 +2,13 @@
 
 namespace App\Jobs;
 
+use App\Services\Logger\LoggerService;
 use App\Services\SukoonMedexService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class SyncSukoonDocumentsJob implements ShouldQueue
 {
@@ -34,5 +36,13 @@ class SyncSukoonDocumentsJob implements ShouldQueue
         $sukoonMedexService = app(SukoonMedexService::class);
         $sukoonMedexService->initiatePurchaseFlow($this->quote, $this->quoteTypeId, $this->transaction);
         $sukoonMedexService->syncSukoonDocuments();
+    }
+
+    /**
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        LoggerService::info('SyncSukoonDocumentsJob failed. Error: '.$exception->getMessage());
     }
 }

@@ -180,7 +180,13 @@ class SukoonMedexService
             $this->syncSukoonDocuments();
 
             if ($isSendEmail) {
-                $this->sendDocuments();
+                $missingEmailDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $this->transaction->documents->pluck('document_type_code')->toArray());
+
+                if (empty($missingEmailDocTypes)) {
+                    $this->sendDocuments();
+                } else {
+                    LoggerService::info("{$this->logPrefix} Email documents are not saved, skipping sendDocuments");
+                }
             }
 
             $missingReqDocTypes = $this->getMissingReqDocTypes();
@@ -190,10 +196,6 @@ class SukoonMedexService
             }
 
         } catch (Exception $e) {
-            $this->logFailure("{$this->logPrefix} processPurchaseFlow Failed", $e->getMessage(), [
-                'quote_uuid' => $this->currentQuote->uuid ?? null,
-                'error_messages' => $this->errorMessages,
-            ]);
             throw $e;
         }
     }
@@ -280,10 +282,7 @@ class SukoonMedexService
             $this->syncSukoonCommissions();
 
         } catch (Exception $e) {
-            $this->logFailure("{$this->logPrefix} syncSukoonDocuments Failed", $e->getMessage(), [
-                'quote_uuid' => $this->currentQuote->uuid ?? null,
-                'error_messages' => ! empty($this->errorMessages) ? $this->errorMessages : $e->getMessage(),
-            ]);
+            throw $e;
         }
     }
 
@@ -345,6 +344,7 @@ class SukoonMedexService
      * @param  array  $data  The data to send with the request.
      * @param  array  $headers  The headers to include with the request.
      * @return mixed The response from the API.
+     * @throws Exception When API request fails or returns error responses
      */
     private function request($endPoint, $method = 'post', $payload = [], $headers = [])
     {
@@ -352,42 +352,35 @@ class SukoonMedexService
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $parentFunction = isset($backtrace[1]['function']) ? $backtrace[1]['function'] : 'Unknown';
 
+        $contentType = null;
         $responseData = null;
 
         try {
             $client = Http::withHeaders($headers);
-            $response = $client->withBody(json_encode($payload), 'application/json')->send($method, $sukoonEndPoint)->onError(function ($response) use ($payload, $endPoint, $parentFunction) {
+            $response = $client->withBody(json_encode($payload), 'application/json')->send($method, $sukoonEndPoint)->onError(function ($response) use ($contentType, $responseData) {
                 $contentType = $response->header('Content-Type');
+                $responseData = str_contains($contentType, 'text/html') ? $response->body() : $response->json();
 
                 if (str_contains($contentType, 'application/json')) {
                     $this->fetchErrors($response->json());
-                    throw new Exception("{$this->logPrefix} API Request Exception");
-                } else {
-                    $this->logRequest('failed', "API Exception Successful, Content Type: {$contentType}", $payload, $endPoint, $response->body(), $parentFunction);
-
-                    return $response;
+                    throw new Exception("API Error, Response: {$responseData}");
                 }
             });
 
             $contentType = $response->header('Content-Type');
+            $responseData = str_contains($contentType, 'text/html') ? $response->body() : $response->json();
 
-            if (! str_contains($contentType, 'application/json')) {
-                $this->logRequest('passed', "Request Successful, Content Type: {$contentType}", $payload, $endPoint, parentFunction: $parentFunction);
-
-                return $response;
+            if (str_contains($contentType, 'text/html')) {
+                throw new Exception("API Error, Response: {$responseData}");
             }
 
-            $responseData = $response->json();
 
             if ($responseData['has_errors'] ?? null) {
                 $this->fetchErrors($responseData);
-                $this->logRequest('failed', 'Request Error', $payload, $endPoint, $responseData, $parentFunction);
-
-                return $response;
+                throw new Exception("API Request has errors");
             }
 
             $this->logRequest('passed', 'Request Successful', $payload, $endPoint, $responseData, $parentFunction);
-
             return $response;
 
         } catch (Exception $e) {
@@ -469,7 +462,7 @@ class SukoonMedexService
         }
 
         $stepNumber = SukoonMedexEnum::getStepNumber($parentFunction);
-        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['message' => $message, 'endPoint' => Str::limit($endPoint ?? '', 50), ...$logData]);
+        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['ref_id' => $this->currentQuote->code, 'message' => $message, 'endPoint' => Str::limit($endPoint ?? '', 50), ...$logData]);
     }
 
     /**
@@ -650,7 +643,7 @@ class SukoonMedexService
                 'Accept' => 'application/json',
             ])->json();
 
-            if (! empty(array_diff(['policy_number', 'policy_status'], array_keys($result)))) {
+            if (empty($result['policy_number'] ?? null) || empty($result['policy_status'] ?? null)) {
                 throw new Exception('Step: #6 submitPlan - Missing (policy_number, policy_status) in response');
             }
 
@@ -778,7 +771,7 @@ class SukoonMedexService
             );
 
             $responsePolicyData = $response['policy_data'] ?? [];
-            if (! empty(array_diff(['quote_number', 'policy_status'], array_keys($responsePolicyData)))) {
+            if (empty($responsePolicyData['quote_number'] ?? null) || empty($responsePolicyData['policy_status'] ?? null)) {
                 throw new Exception('Step: #7 reviewSubmittedData - Missing (quote_number, policy_status) in response');
             }
 
