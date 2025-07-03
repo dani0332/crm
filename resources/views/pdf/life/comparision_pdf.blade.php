@@ -649,7 +649,7 @@
                 <div class="header-text">
                     <strong class="raleway-font" style="font-weight: 600 !important;">Life Insurance Comparison Table</strong>
                     <span class="separator">|</span>
-                    <span class="header-text-highlight">{{ $quote->customer->first_name }} {{ $quote->customer->last_name }}</span>
+                    Name: <span class="header-text-highlight">{{ $quote->customer->first_name }} {{ $quote->customer->last_name }}</span>
                 </div>
             
                 <!-- Right Side Quote Number -->
