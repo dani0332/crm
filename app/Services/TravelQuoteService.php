@@ -497,7 +497,6 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
-        $travelQuote->dob = $request->dob;
         if (
             $travelQuote->days_cover_for != $request->days_cover_for ||
             $travelQuote->destination_id != $request->destination_id ||

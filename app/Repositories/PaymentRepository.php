@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
@@ -118,8 +119,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => $masterPaymentStatus,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
+                'created_by' => $request->user()->id ?? null,
+                'updated_by' => $request->user()->id ?? null,
                 'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
             ];
 
@@ -225,7 +226,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
                 'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
                 'credit_approval' => $masterPayment->credit_approval,
-                'updated_by' => $request->user()->id,
+                'updated_by' => $request->user()->id ?? null,
             ];
 
             if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
@@ -251,7 +252,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_methods_code' => $masterPayment->payment_methods,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-                'updated_by' => $request->user()->id,
+                'updated_by' => $request->user()->id ?? null,
                 'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
             ];
 
@@ -279,8 +280,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
             $quoteUUID = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? null : $quoteModel->uuid;
+            $isRenewalLead = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? false : $quoteModel->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
-            $this->updatePaymentSplits($request, $payment, $quoteUUID);
+            $this->updatePaymentSplits($request, $payment, $quoteUUID, $isRenewalLead);
 
             LoggerService::info("Payment update process completed for code: {$request->paymentCode}");
 
@@ -312,7 +314,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $isPaymentLinkNotNull = collect($masterPayment->payment_splits)->filter(function ($split) {
             return isset($split['insurer_payment_link']) && $split['insurer_payment_link'] !== null;
         })->isNotEmpty();
-        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull;
+        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull && $request->sendFTCEmail;
         $totalSplitPayments = count($masterPayment->payment_splits);
 
         // Calculate discount if applicable
@@ -391,7 +393,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         LoggerService::info("Completed split payment creation for {$quoteID}");
     }
 
-    public function updatePaymentSplits($request, $payment, $quoteUUID)
+    public function updatePaymentSplits($request, $payment, $quoteUUID, $isRenewalLead = false)
     {
         LoggerService::info("Starting update payment splits for payment code: {$request->paymentCode}");
         $masterPayment = (object) $request->payment;
@@ -492,8 +494,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     LoggerService::info("Creating new payment split #{$serialNo} for payment {$request->paymentCode}");
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
-                    LoggerService::info("Updating payment split #{$serialNo} for payment {$request->paymentCode}");
-                    $index == $insurerPaymentLinkIndex && $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink && $splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false;
+                    if ($index == $insurerPaymentLinkIndex) {
+                        $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink
+                            && $request->sendFTCEmail
+                            && ($splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link || $isRenewalLead);
+                    }
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 // add document references
