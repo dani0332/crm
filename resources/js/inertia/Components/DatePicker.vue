@@ -127,4 +127,8 @@ const iconPosition = computed(() => {
 .dp__cell_disabled {
   @apply opacity-20;
 }
+
+.dp--clear-btn {
+  top: 50% !important;
+}
 </style>
