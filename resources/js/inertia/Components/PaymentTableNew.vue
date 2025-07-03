@@ -259,7 +259,8 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Life) {
   initialAmount.value =
-    props.quoteRequest.premium * props.quoteRequest.life_quote.payment_term;
+    props.quoteRequest.premium *
+    (props.quoteRequest?.life_quote?.payment_term || 1);
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -1700,7 +1701,7 @@ const addPaymentModal = () => {
       1: paymentFrequencyEnum.UPFRONT,
     };
     paymentMethodsForm.frequency =
-      paymentTermToFrequency[props.quoteRequest.life_quote.payment_term] ||
+      paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
       paymentFrequencyEnum.UPFRONT;
   } else {
     paymentMethodsForm.frequency = paymentFrequencyEnum.UPFRONT;
@@ -1937,7 +1938,7 @@ const initializePaymentForm = (
       1: paymentFrequencyEnum.UPFRONT,
     };
     paymentMethodsForm.frequency =
-      paymentTermToFrequency[props.quoteRequest.life_quote.payment_term] ||
+      paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
       paymentFrequencyEnum.UPFRONT;
   } else {
     paymentMethodsForm.frequency = payment.frequency;
@@ -3124,7 +3125,7 @@ const setPaymentInitialPrice = () => {
     } else if (props.quoteType === quoteTypeCodeEnum.Life) {
       initialAmount.value =
         props.quoteRequest.premium *
-        props.quoteRequest.life_quote.payment_term;
+        props.quoteRequest?.life_quote?.payment_term;
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium

@@ -2019,7 +2019,7 @@ const totalAnnualPrice = computed(() => {
                       onCopyText(
                         ecomLifeInsuranceQuoteUrl +
                           quote.uuid +
-                          `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                          `/payment/?providerCode=${item.providerCode}&planId=${item.planId}&version=${item.version}`,
                       )
                     "
                   >
