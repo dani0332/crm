@@ -507,7 +507,8 @@ const checkInsurerReceiptNumber = () => {
     insurerReceiptNumberCheckInProcess.value = true;
     axios
       .post(`/payments/${props.quoteType}/check-insurer-receipt-number`, {
-        insurer_receipt_number: paymentMethodsFormReplicated.value.insurer_receipt_number,
+        insurer_receipt_number:
+          paymentMethodsFormReplicated.value.insurer_receipt_number,
       })
       .then(res => {
         if (res.data.status) {
@@ -1202,10 +1203,15 @@ watch(
               isTransactionCaptureButtonEnabled
             "
             :selectedPaymentForEdit="selectedPaymentForEdit"
-            :showInsurerReceiptNumberInputField="showInsurerReceiptNumberInputField"
-            :insurerReceiptNumberCheckInProcess="insurerReceiptNumberCheckInProcess"
-            :isInsurerReceiptNumberExistsModalOpen="isInsurerReceiptNumberExistsModalOpen"
-
+            :showInsurerReceiptNumberInputField="
+              showInsurerReceiptNumberInputField
+            "
+            :insurerReceiptNumberCheckInProcess="
+              insurerReceiptNumberCheckInProcess
+            "
+            :isInsurerReceiptNumberExistsModalOpen="
+              isInsurerReceiptNumberExistsModalOpen
+            "
             @cancel-modal="createPaymentModal = !createPaymentModal"
             @aml-verification="openAmlVerificationModal"
             @update-plan-detail="updatePlanDetail"
@@ -1217,7 +1223,9 @@ watch(
             @update-total-amount="value => (totalAmount = value)"
             @update-total-price="value => (totalPrice = value)"
             @check-insurer-receipt-number="checkInsurerReceiptNumber"
-            @close-insurer-receipt-number-exists-modal="closeInsurerReceiptNumberExistsModal"
+            @close-insurer-receipt-number-exists-modal="
+              closeInsurerReceiptNumberExistsModal
+            "
           />
 
           <!-- Image Gallery Modal -->

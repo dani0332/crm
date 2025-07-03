@@ -102,10 +102,8 @@ const deleteDocument = (docName, count, docId) => {
       <div class="w-1/2 px-2" v-if="showInsurerReceiptNumberInputField">
         <div>
           <x-tooltip class="tooltip-display">
-            <span
-              class="border-b-2 border-dotted border-black text-sm"
-              >INSURER RECEIPT NUMBER
-              <sup class="text-red-500">*</sup></span
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >INSURER RECEIPT NUMBER <sup class="text-red-500">*</sup></span
             >
             <template #tooltip>
               <span>{{

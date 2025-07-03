@@ -99,7 +99,7 @@ const props = defineProps({
   insurerReceiptNumberCheckInProcess: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 const emit = defineEmits([
@@ -109,7 +109,7 @@ const emit = defineEmits([
   'cancel-modal',
   'aml-verification',
   'update-from-insurer-payment-link',
-  'check-insurer-receipt-number'
+  'check-insurer-receipt-number',
 ]);
 
 const handleCancelClick = () => {
@@ -249,7 +249,7 @@ const handleCancelModalClick = () => {
                   (isCreditApprovalView && !isDeclineClicked)) &&
                 isTransactionCaptureButtonEnabled
               "
-              >
+            >
               <x-button
                 v-if="isCreditApprovalView && isCreditCardView"
                 class="mr-2 focus:outline-black"
