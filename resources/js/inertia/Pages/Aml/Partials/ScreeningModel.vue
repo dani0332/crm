@@ -1,4 +1,6 @@
 <script setup>
+import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
+import AdditionalDriverDetails from './AdditionalDriverDetails.vue';
 import KYCDetails from './KYCDetails.vue';
 import MembersDetails from './MembersDetails.vue';
 import { computed, ref, watch } from 'vue';
@@ -201,6 +203,40 @@ const screeningFormDetails = useForm({
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.chassis_number
       : quoteRequest?.bike_quote?.chassis_number) ?? null,
+  
+    // Additional Vehicle and Transaction Details (only for Car/Bike)
+  ...((page.props.quoteType.id === page.props.quoteTypeIdEnum.Car || page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) ? {
+    rtaTransactionType: '',
+    plateCode: '',
+    plateNumber: '',
+    trafficCodeNumber: '',
+    engineNumber: '',
+    rtaPlateCategory: '',
+    vehicleColor: 'green',
+    plateColor: 'alloy',
+    bankLoan: 'no',
+    bankName: '',
+    firstRegistrationDate: '2025-09-06',
+    policyEffectiveDate: '2025-09-06',
+    policyExpiryDate: '2026-10-05',
+    certificateStartDate: '2025-09-06',
+    certificateEndDate: '2026-10-05',
+    annualMileageEstimate: '',
+    
+    // Additional Driver Details
+    isInsuredAndDriverSame: 'yes',
+    driverFirstName: '',
+    driverLastName: '',
+    driverDob: '',
+    driverGender: '',
+    driverLicenseNumber: '',
+    licenseIssuePlace: '',
+    licenseIssueDate: '',
+    licenseExpiryDate: '',
+    uaeDrivingExperience: '',
+    homeCountryLicenseIssuance: '',
+    homeCountryDrivingExperience: '',
+  } : {}),
   // Entity Type
   // entity_id: page.props.entityDetails?.entity?.id ?? null,
   entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
@@ -330,6 +366,22 @@ const chassisNumberDisabled = computed(() => {
     page.props.quoteStatusEnums.PolicyBooked,
   ];
   return disallowedStatus.includes(page.props?.quoteRequest?.quote_status_id);
+});
+
+const shouldShowAdditionalDetails = computed(() => {
+  // Show additional vehicle and driver details for Car and Bike insurance only
+  return page.props.quoteType.id === page.props.quoteTypeIdEnum.Car || 
+         page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike;
+});
+
+const shouldShowVehicleDetails = computed(() => {
+  // Show vehicle details for Car and Bike insurance
+  return shouldShowAdditionalDetails.value;
+});
+
+const shouldShowDriverDetails = computed(() => {
+  // Show driver details for Car insurance (can be customized separately if needed)
+  return shouldShowAdditionalDetails.value;
 });
 const individualSearchValidation = computed(() => {
   if (
@@ -1018,8 +1070,24 @@ const handleModalClose = () => {
         </x-field>
       </div>
     </dl>
-    <x-divider class="mb-4 mt-1" />
+
+    <!-- Additional Vehicle Details - Only for Car/Bike Insurance -->
+    <template v-if="shouldShowVehicleDetails">
+      <AdditionalVehicleTransactionDetails
+        :formData="screeningFormDetails"
+      />
+      <x-divider class="mb-4 mt-1" />
+    </template>
+    
+    <!-- Additional Driver Details - Only for Car/Bike Insurance -->
+    <template v-if="shouldShowDriverDetails">
+      <AdditionalDriverDetails
+        :formData="screeningFormDetails"
+      />
+      <x-divider class="mb-4 mt-1" />
+    </template>
     <!-- This Component is used for Members and UBO Details -->
+     
     <MembersDetails
       :customerType="
         isScreeningIndividual
