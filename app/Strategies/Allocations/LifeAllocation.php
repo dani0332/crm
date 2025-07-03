@@ -22,7 +22,7 @@ class LifeAllocation extends BaseAllocation
     protected function getAdvisorEmails($storageKey = null)
     {
         $category = $this->evaluateCategory();
-        $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
+        $amount = $this->lead->currency?->convertToAED((float) $this->lead?->sum_insured_value ?? 0);
 
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
         $karuna = 'karuna.ramesh@insurancemarket.ae';

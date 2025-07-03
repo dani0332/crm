@@ -2,6 +2,7 @@
 import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import PaymentNotification from '../Components/PaymentNotification.vue';
+import OcrNotification from '../Components/OcrNotification.vue';
 const page = usePage();
 
 const createLink = link => {

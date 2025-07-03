@@ -15,14 +15,13 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
-use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
 use App\Exports\CarQuoteExportWithEmailMobile;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
+use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
-use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
@@ -73,7 +72,6 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\PaymentRepository;
-use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
@@ -116,13 +114,14 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
         ])) {
             if ($request['exportType'] == 'email') {
-                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List', $request->all());
+                return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $request->all());
             }
 
-            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
+            return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->download($quoteType.'_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
@@ -144,19 +143,12 @@ class CentralController extends Controller
 
                 return app(LifeQuotesExport::class)->download('life_leads');
 
-            case QuoteTypes::HOME->value:
-                if ($request['exportType'] == 'email') {
-                    return app(HomeQuoteExport::class)->emailCSV('Home-List', $request->all());
-                }
-
-                return app(HomeQuoteExport::class)->download('home_leads');
-
             case QuoteTypes::AMT->value:
                 if ($request['exportType'] == 'email') {
-                    return app(AmtQuoteExport::class)->emailCSV('AMT-List', $request->all());
+                    return app(GroupMedicalExport::class)->emailCSV('Group-Medical-List', $request->all());
                 }
 
-                return app(AmtQuoteExport::class)->download('amt_leads');
+                return app(GroupMedicalExport::class)->download('group_medical_leads');
 
             case QuoteTypes::BUSINESS->value:
                 if ($request['exportType'] == 'email') {
@@ -235,6 +227,7 @@ class CentralController extends Controller
             ], [
                 'customer_id' => $customerProfileRequest->customer_id,
                 'insured_id' => $insuredPersonDetails->id,
+                'updated_at' => now(),
             ]);
         }
 
@@ -278,8 +271,9 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        $validatedData = $bookPolicyRequest->validated();
+
         try {
-            $validatedData = $bookPolicyRequest->validated();
             LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
             $paymentInformation = [
@@ -319,6 +313,11 @@ class CentralController extends Controller
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
+            $paymentCode = $validatedData['payment_code'] ?? '';
+            LoggerService::info('Quote Code: '.$paymentCode.' fn: updateBookingPolicy error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -327,7 +326,6 @@ class CentralController extends Controller
     {
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
-        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
         LoggerService::info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 

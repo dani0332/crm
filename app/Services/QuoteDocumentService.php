@@ -62,7 +62,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::GroupMedical, quoteTypeCode::Business];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::GroupMedical, quoteTypeCode::Business, quoteTypeCode::SAVINGS];
 
         return in_array($quoteModelType, $enabledLOBs);
     }
@@ -427,6 +427,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
+            QuoteTypeId::Savings => ['SPD', 'SPDR', 'SDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
@@ -486,21 +487,28 @@ class QuoteDocumentService extends BaseService
     public function getAppDownloadLink($modelType, $quote)
     {
         $appDownloadLink = '';
+        LoggerService::info('getAppDownloadLink called for quote code: '.$quote->code);
         if (ucfirst($modelType) == quoteTypeCode::Health) {
             $plan = $quote->plan;
-            $code = $plan->insuranceProvider->code.'_HEALTH_DOC';
+
+            $healthNetwork = $plan->healthNetwork;
+            $code = str_replace(' ', '_', trim($healthNetwork->text)).'_HEALTH_DOC';
+            LoggerService::info('Trying health network doc for quote code: '.$quote->code.' with key: '.$code);
             $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
-            // If no document found against provider  will check health network document
+
+            // If no document found network provider  will check provider document
             if ($providerHealthDoc == null) {
-                $healthNetwork = $plan->healthNetwork;
-                $code = str_replace(' ', '_', $healthNetwork->text).'_HEALTH_DOC';
+                $code = trim($plan->insuranceProvider->code).'_HEALTH_DOC';
+                LoggerService::info('Provider doc for quote code: '.$quote->code.' with key: '.$code);
                 $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
             }
             // If these two documents then we send complete url
             if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
+                LoggerService::info('Direct link used for quote code: '.$quote->code.' with key: '.$code);
                 $appDownloadLink = $providerHealthDoc;
             } else {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
+                LoggerService::info('Base URL prepended for quote code: '.$quote->code.' with key: '.$code);
                 $appDownloadLink = $baseUrl.$providerHealthDoc;
             }
         }
@@ -803,6 +811,19 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
+    public function getDocumentUrl($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    {
+        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+
+        if (Storage::disk($storageDisk)->exists($fileName)) {
+            $encodedFileName = urlencode($fileName);
+
+            return Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Generate a temporary URL for a document stored in a specified storage disk.
      *
@@ -813,19 +834,11 @@ class QuoteDocumentService extends BaseService
      */
     public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
     {
-        // Calculate the expiry time for the temporary URL
-        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
 
-        // Check if the file exists in the specified storage disk
-        if (Storage::disk($storageDisk)->exists($fileName)) {
-            // Generate the temporary URL
-            $encodedFileName = urlencode($fileName);
-            $temporaryUrl = Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
-
-            // Return the temporary URL if generated
-            return response()->json(['url' => $temporaryUrl]);
+        if ($url) {
+            return response()->json(['url' => $url]);
         } else {
-            // Return an error message if the file does not exist
             return response()->json(['error' => 'File does not exist on server']);
         }
     }
