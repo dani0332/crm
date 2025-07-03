@@ -9,9 +9,6 @@ const props = defineProps({
   }
 })
 
-// Emits
-const emit = defineEmits(['save'])
-
 // Reactive state
 const isCollapsed = ref(false)
 
@@ -57,10 +54,6 @@ const bankNameOptions = computed(() => [
 // Methods
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
-}
-
-const handleSave = () => {
-  emit('save', props.formData)
 }
 </script>
 
@@ -214,17 +207,6 @@ const handleSave = () => {
           />
         </x-field>
       </dl>
-      
-      <!-- Save Button -->
-      <div class="flex justify-end mt-6">
-        <x-button 
-          @click="handleSave"
-          color="primary"
-          size="sm"
-        >
-          Save
-        </x-button>
-      </div>
     </div>
   </div>
 </template>

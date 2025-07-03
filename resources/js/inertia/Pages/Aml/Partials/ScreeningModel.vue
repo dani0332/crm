@@ -360,6 +360,17 @@ const entityTypes = computed(() => {
     { value: 'SubEntity', label: 'Sub Entity' },
   ];
 });
+
+const showVehicleAndDrvicerDetails = computed(() => {
+  return (
+    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
+    [
+      page.props.insuranceProviderCodeEnum.RSA,
+      page.props.insuranceProviderCodeEnum.AXA,
+    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code)
+  );
+});
+
 const chassisNumberDisabled = computed(() => {
   let disallowedStatus = [
     page.props.quoteStatusEnums.PolicySentToCustomer,
@@ -368,21 +379,6 @@ const chassisNumberDisabled = computed(() => {
   return disallowedStatus.includes(page.props?.quoteRequest?.quote_status_id);
 });
 
-const shouldShowAdditionalDetails = computed(() => {
-  // Show additional vehicle and driver details for Car and Bike insurance only
-  return page.props.quoteType.id === page.props.quoteTypeIdEnum.Car || 
-         page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike;
-});
-
-const shouldShowVehicleDetails = computed(() => {
-  // Show vehicle details for Car and Bike insurance
-  return shouldShowAdditionalDetails.value;
-});
-
-const shouldShowDriverDetails = computed(() => {
-  // Show driver details for Car insurance (can be customized separately if needed)
-  return shouldShowAdditionalDetails.value;
-});
 const individualSearchValidation = computed(() => {
   if (
     screeningFormDetails.screening_id_type === '' ||
@@ -1024,8 +1020,9 @@ const handleModalClose = () => {
     <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
       <div
         v-if="
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike
+          (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
+          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
+          !showVehicleAndDrvicerDetails
         "
       >
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
@@ -1072,22 +1069,16 @@ const handleModalClose = () => {
     </dl>
 
     <!-- Additional Vehicle Details - Only for Car/Bike Insurance -->
-    <template v-if="shouldShowVehicleDetails">
+    <template v-if="showVehicleAndDrvicerDetails">
       <AdditionalVehicleTransactionDetails
         :formData="screeningFormDetails"
       />
       <x-divider class="mb-4 mt-1" />
-    </template>
-    
-    <!-- Additional Driver Details - Only for Car/Bike Insurance -->
-    <template v-if="shouldShowDriverDetails">
       <AdditionalDriverDetails
         :formData="screeningFormDetails"
       />
-      <x-divider class="mb-4 mt-1" />
     </template>
-    <!-- This Component is used for Members and UBO Details -->
-     
+
     <MembersDetails
       :customerType="
         isScreeningIndividual
