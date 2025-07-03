@@ -56,8 +56,11 @@ const props = defineProps({
   isLackingPayment: Boolean,
   planText: String,
   isTransactionCaptureButtonEnabled: Boolean,
+	showInsurerReceiptNumberInputField: Boolean,
+	insurerReceiptNumberCheckInProcess: Boolean,
   capturePaymentValidationErrorMessage: String,
   selectedPaymentForEdit: Object,
+	isInsurerReceiptNumberExistsModalOpen: Boolean,
 });
 
 const fileUploadModels = ref([]);
@@ -133,6 +136,7 @@ const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
 const homePlanText = ref();
+const paymentForm = ref();
 const totalPayments = ref([{ value: '1', label: '1' }]);
 const paymentTypes = ref(
   props.paymentMethods.filter(
@@ -451,6 +455,7 @@ const handleCreditApproval = () => {
 };
 
 const addPayment = isValid => {
+	emit('close-insurer-receipt-number-exists-modal');
   if (
     insurerPaymentLinkIndex.value >= 0 &&
     paymentMethodsForm.insurerPaymentLink
@@ -2304,6 +2309,10 @@ const isAnyPaid = payment => {
   );
 };
 
+const submitPaymentForm = () => {
+	paymentForm.value?.$el?.requestSubmit();
+}
+
 const isPolicyIssuanceDiscount = computed(() => {
   if (
     can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
@@ -2468,6 +2477,7 @@ defineExpose({
   updateTotalPayments,
   updatePaymentForm,
   updatePremiumToCapture,
+	submitPaymentForm,
 });
 
 // Watch for changes in paymentMethodsForm.collection_date
@@ -2514,7 +2524,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
 </script>
 
 <template>
-  <x-form @submit="addPayment" :auto-focus="false">
+  <x-form @submit="addPayment" :auto-focus="false" ref="paymentForm">
     <PaymentFormFields
       :isFieldReadonly="isFieldReadonly"
       :paymentMethodsForm="paymentMethodsForm"
@@ -2672,6 +2682,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :isApprovedDocumentNotUploaded="isApprovedDocumentNotUploaded"
       :approvedDocumentModel="approvedDocumentModel"
       :readOnlyPayments="readOnlyPayments"
+			:showInsurerReceiptNumberInputField="showInsurerReceiptNumberInputField"
       :rules="rules"
       @upload-document="uploadDocument"
       @open-inner-modal="openInnerModal"
@@ -2703,6 +2714,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :payments="props.payments"
       :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
       :paymentMethodsForm="paymentMethodsForm"
+			:insurerReceiptNumberCheckInProcess="insurerReceiptNumberCheckInProcess"
       @cancel="handleCancelChanges"
       @decline="handleDeclinedChange"
       @approve="isApproveClicked = !isApproveClicked"
@@ -2711,6 +2723,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       @update-from-insurer-payment-link="
         (e, f, g) => updateFromInsurerPaymentLink(e, f, g)
       "
+			@check-insurer-receipt-number="emit('check-insurer-receipt-number')"
     />
     <div
       class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
@@ -2801,6 +2814,77 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
         </div>
       </div>
     </div>
+		<div
+		class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+		v-if="isInsurerReceiptNumberExistsModalOpen"
+		>
+			<div
+				class="modal-confirm-container receipt-number-exists-modal-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+			>
+				<div class="modal-confirm-header text-base text-white bg-white">
+					<div
+						class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+					>
+						<div class="flex items-center space-x-2">
+							Duplicate Insurer Receipt Number Detected
+						</div>
+						<div class="flex items-center space-x-2">
+							<span
+								@click="emit('close-insurer-receipt-number-exists-modal')"
+								class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									tabindex="0"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									class="w-4 h-4 text-gray-800"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									></path>
+								</svg>
+							</span>
+						</div>
+					</div>
+				</div>
+				<div class="w-full h-full mt-2 flex flex-col items-center">
+					<div
+						class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
+					>
+						<div class="text-left text-md">
+							<span class="text-sm">
+								The insurer receipt number you entered already exists in
+								the system. Do you want to proceed with using the same
+								receipt number again?
+							</span>
+						</div>
+					</div>
+					<div class="w-full mt-4 flex justify-center gap-4">
+						<x-button
+							size="lg"
+							@click="emit('close-insurer-receipt-number-exists-modal')"
+							class="px-6 py-2 bg-white text-orange-600 border border-orange-500 hover:bg-orange-50"
+						>
+							<span>No</span>
+						</x-button>
+
+						<x-button
+							size="lg"
+							type="submit"
+							color="orange"
+							class="px-6 py-2"
+						>
+							<span>Yes</span>
+						</x-button>
+					</div>
+				</div>
+			</div>
+		</div>
   </x-form>
 </template>
 <style scoped>

@@ -41,6 +41,7 @@ const can = permission => useCan(permission);
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 
 const { filterCCPayments } = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
@@ -501,16 +502,16 @@ const closeInsurerReceiptNumberExistsModal = () => {
 const checkInsurerReceiptNumber = () => {
   if (
     showInsurerReceiptNumberInputField.value &&
-    paymentMethodsForm.insurer_receipt_number
+    paymentMethodsFormReplicated.value.insurer_receipt_number
   ) {
     insurerReceiptNumberCheckInProcess.value = true;
     axios
       .post(`/payments/${props.quoteType}/check-insurer-receipt-number`, {
-        insurer_receipt_number: paymentMethodsForm.insurer_receipt_number,
+        insurer_receipt_number: paymentMethodsFormReplicated.value.insurer_receipt_number,
       })
       .then(res => {
         if (res.data.status) {
-          paymentForm.value?.$el?.requestSubmit();
+          createPaymentFormRef.value?.submitPaymentForm();
         } else {
           isInsurerReceiptNumberExistsModalOpen.value = true;
         }
@@ -527,7 +528,7 @@ const checkInsurerReceiptNumber = () => {
         insurerReceiptNumberCheckInProcess.value = false;
       });
   } else {
-    paymentForm.value?.$el?.requestSubmit();
+    createPaymentFormRef.value?.submitPaymentForm();
   }
 };
 
@@ -578,6 +579,20 @@ const editPaymentModal = async (
       timeout: 10000,
     });
     return false;
+  }
+
+  // Check and enable insurer receipt number input field
+  if (split_payment_id) {
+    const splitPayment = payment?.payment_splits?.find(
+      split => split.id === split_payment_id,
+    );
+    if (
+      payment.collection_type === 'insurer' &&
+      splitPayment &&
+      splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment
+    ) {
+      showInsurerReceiptNumberInputField.value = true;
+    }
   }
 
   isTransactionCaptureButtonEnabled.value = true;
@@ -1187,6 +1202,10 @@ watch(
               isTransactionCaptureButtonEnabled
             "
             :selectedPaymentForEdit="selectedPaymentForEdit"
+            :showInsurerReceiptNumberInputField="showInsurerReceiptNumberInputField"
+            :insurerReceiptNumberCheckInProcess="insurerReceiptNumberCheckInProcess"
+            :isInsurerReceiptNumberExistsModalOpen="isInsurerReceiptNumberExistsModalOpen"
+
             @cancel-modal="createPaymentModal = !createPaymentModal"
             @aml-verification="openAmlVerificationModal"
             @update-plan-detail="updatePlanDetail"
@@ -1197,6 +1216,8 @@ watch(
             @update-create-payment-modal="value => (createPaymentModal = value)"
             @update-total-amount="value => (totalAmount = value)"
             @update-total-price="value => (totalPrice = value)"
+            @check-insurer-receipt-number="checkInsurerReceiptNumber"
+            @close-insurer-receipt-number-exists-modal="closeInsurerReceiptNumberExistsModal"
           />
 
           <!-- Image Gallery Modal -->
