@@ -69,7 +69,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
                 (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
             }
-            
+
             if ($quote->quote_status_id != $data['current_quote_status_id'] && in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
                 $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
                 (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId, QuoteJourneyEnum::PENDING);
