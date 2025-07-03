@@ -113,7 +113,6 @@ class PersonalQuotesExport implements CsvExportableInterface
 
     public function headings(): array
     {
-        info('Export: '.ucfirst($this->quoteType).' Types: '.json_encode($this->quoteTypes));
         if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getHeadings($this->quoteType);
         } else {
