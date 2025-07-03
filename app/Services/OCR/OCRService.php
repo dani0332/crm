@@ -77,7 +77,7 @@ class OCRService
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
             'doc_type' => $docType->value,
-            'providerCode' => $providerCode,
+            'provider_code' => $providerCode,
 
             // for now image would be false on the basis of Hamas Request
             'image' => false,
