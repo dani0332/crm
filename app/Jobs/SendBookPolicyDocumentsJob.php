@@ -82,7 +82,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             return;
         }
 
-        $handBookDocuments = [];
+        $handBookDocuments = $policyWordingDoc = [];
 
         try {
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
@@ -107,6 +107,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
         if ($modelType == quoteTypeCode::Health) {
             $planName = $quote->plan->text;
+        } elseif ($modelType == quoteTypeCode::SAVINGS) {
+            $planName = $quote?->insuranceProviderPlan?->text ?? '';
+
+            // TODO : need to discuss this, because file size is exceed.
+            $policyWordingDoc = [
+                'watermarked_doc_url' => $quote->insuranceProviderPlan?->policyWordings?->link,
+                'document_type_text' => 'Policy Wording/handbook',
+            ];
         }
 
         $quote->load('advisor');
@@ -119,9 +127,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData = new \stdClass;
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
+            $emailData->customerId = $quote->customer_id;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->clientFirstName = $quote->first_name;
             $emailData->policy_number = $quote->policy_number;
+            $emailData->policyNumber = $quote->policy_number;
             $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
             $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
             $emailData->quoteDocuments = $docs;
@@ -162,6 +172,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
+            $emailData->quoteTypeId = $quoteTypeId;
+            $emailData->quoteId = $quote->id;
+            $emailData->policyWordingHandbook = $policyWordingDoc;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));

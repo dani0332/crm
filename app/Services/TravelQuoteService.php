@@ -16,6 +16,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
@@ -351,6 +352,11 @@ class TravelQuoteService extends BaseService
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
+
+            $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
+            if ($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
+                app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $response->quoteUID);
+            }
         }
 
         return $response;
@@ -491,7 +497,6 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
-        $travelQuote->dob = $request->dob;
         if (
             $travelQuote->days_cover_for != $request->days_cover_for ||
             $travelQuote->destination_id != $request->destination_id ||
@@ -536,6 +541,13 @@ class TravelQuoteService extends BaseService
 
         $travelQuote->details = $request->details;
         $travelQuote->save();
+
+        $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);
+        if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
+            app(CustomerAddressService::class)->sendAddressNotificationToCustomer($travelQuote, $request->input('addressObj'), QuoteTypeId::Travel);
+            app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $travelQuote->uuid);
+            SyncCourierQuoteWithMacrm::dispatch($travelQuote, QuoteTypeId::Travel);
+        }
 
         if (! empty($request->destination_ids)) {
             $travelQuote->load('travelDestinations');
