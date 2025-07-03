@@ -84,6 +84,7 @@ const filters = reactive({
   plan_name: [],
   travel_start_date: '',
   private_client: 'all',
+  age_group: [],
 });
 
 const loader = reactive({
@@ -150,6 +151,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name' },
+  { text: 'Age Group', value: 'age_group' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
@@ -596,6 +598,21 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+const calculateAge = (dateOfBirth) => {
+  if (!dateOfBirth) return 0;
+
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+};
 </script>
 
 <template>
@@ -1055,6 +1072,19 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           :single="true"
         />
+        <ComboBox
+          v-model="filters.age_group"
+          label="Age group"
+          placeholder="Search by age group"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: '0_64', label: '0 - 64' },
+            { value: '65_plus', label: '65 and above' },
+            { value: 'both', label: 'Both' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -1248,6 +1278,17 @@ const insurerAMLStatusOption = computed(() => {
       </template>
       <template #item-aml_status="{ aml_status }">
         <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
+      </template>
+      <template #item-age_group="item">
+        <span v-if="item.child || item.parent">
+          Both
+        </span>
+        <span v-else-if="calculateAge(item.dob) < 65">
+          0 - 64
+        </span>
+        <span v-else-if="calculateAge(item.dob) >= 65">
+          65 and above
+        </span>
       </template>
     </DataTable>
 

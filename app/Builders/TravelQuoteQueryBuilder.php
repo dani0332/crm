@@ -69,6 +69,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'start_date',
             'end_date',
             'lead_assignment_trigger',
+            'parent_id',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -85,6 +86,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan:id,text',
             'currentlyLocatedIn:id,text',
             'renewalBatch:id,name',
+            'parent:id,code',
+            'child:id,code,parent_id',
         ]);
     }
 
@@ -201,7 +204,41 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $this->hasFilterValue('sortBy', $requestParams),
                 fn ($q) => $q->orderBy($this->getOrderByColumn(), $this->getFilterValue('sortType', $requestParams)),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
-            );
+            )
+            ->when($this->hasFilterValue('age_group', $requestParams), function ($q) use ($requestParams) {
+                $ageGroups = (array) $this->getFilterValue('age_group', $requestParams);
+
+                // If 'all' is selected, no filtering is needed
+                if (in_array('all', $ageGroups)) {
+                    return;
+                }
+
+                // Define parent-child relationship subquery once to avoid duplication
+                $parentChildRelationshipIds = function ($subQuery) {
+                    $subQuery->select('parent_id as id')
+                        ->from('travel_quote_request')
+                        ->whereNotNull('parent_id')
+                        ->union(
+                            DB::table('travel_quote_request')
+                                ->select('id')
+                                ->whereNotNull('parent_id')
+                        );
+                };
+
+                if (in_array('both', $ageGroups)) {
+                    // Show only records with parent-child relationships
+                    $q->whereIn('id', $parentChildRelationshipIds);
+                } else {
+                    // Exclude records with parent-child relationships
+                    $q->whereNotIn('id', $parentChildRelationshipIds);
+
+                    if (in_array('0_64', $ageGroups)) {
+                        $q->whereRaw('TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 65');
+                    } elseif (in_array('65_plus', $ageGroups)) {
+                        $q->whereRaw('TIMESTAMPDIFF(YEAR, dob, CURDATE()) >= 65');
+                    }
+                }
+            });
     }
 
     /**

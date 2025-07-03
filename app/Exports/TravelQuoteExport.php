@@ -11,6 +11,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
 class TravelQuoteExport implements CsvExportableInterface
 {
@@ -52,6 +53,7 @@ class TravelQuoteExport implements CsvExportableInterface
             'TRAVEL START DATE',
             'LAST MODIFIED DATE',
             'DOB',
+            'AGE GROUP',
             'TRANSAPP CODE',
             'LOST REASON',
             'SOURCE',
@@ -82,6 +84,7 @@ class TravelQuoteExport implements CsvExportableInterface
 
     public function map($quote): array
     {
+        $ageGroup = $this->getAgeGroup($quote);
         return [
             $quote->code,
             $quote->first_name,
@@ -98,6 +101,7 @@ class TravelQuoteExport implements CsvExportableInterface
             $quote->start_date ?? '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
+            $ageGroup,
             optional($quote->travelQuoteRequestDetail)->transapp_code,
             optional($quote->travelQuoteRequestDetail)->lostReason?->text,
             $quote->source,
@@ -139,5 +143,15 @@ class TravelQuoteExport implements CsvExportableInterface
             'quoteTypeId' => 8, // QuoteTypeId::Travel
             'exportType' => 'travel_quotes',
         ];
+    }
+
+    private function getAgeGroup($quote)
+    {
+        if ($quote->child || $quote->parent) {
+            return 'Both';
+        }
+
+        $age = Carbon::parse($quote->dob)->age;
+        return $age < 65 ? '0 - 64' : '65 and above';
     }
 }
