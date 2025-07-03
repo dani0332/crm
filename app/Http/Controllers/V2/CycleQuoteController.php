@@ -309,7 +309,9 @@ class CycleQuoteController extends Controller
             QuoteStatusEnum::FollowedUp => 2,
             QuoteStatusEnum::PaymentPending => 3,
             QuoteStatusEnum::TransactionApproved => 4,
-            QuoteStatusEnum::PolicyIssued => 5,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::PolicyIssued => 7,
         ];
 
         if ($areBothTeamsPresent || $isManagerOrDeputy) {
