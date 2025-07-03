@@ -9,7 +9,7 @@ class RenewalQuoteProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status', 'renewal_batch_id'];
+    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status', 'renewal_batch_id', 'step', 'retry_count', 'last_step_attempted'];
     protected $casts = [
         'data' => 'array',
         'validation_errors' => 'array',
@@ -44,6 +44,14 @@ class RenewalQuoteProcess extends Model
     public function renewalBatch()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function healthQuote()
+    {
+        return $this->belongsTo(HealthQuote::class, 'quote_id');
     }
 
     /**
