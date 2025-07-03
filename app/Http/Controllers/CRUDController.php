@@ -27,6 +27,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
+use App\Enums\QuoteJourneyEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -1868,6 +1869,12 @@ class CRUDController extends Controller
             $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
             (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId);
         }
+
+        if ($request->current_quote_status_id != $entity->quote_status_id && in_array($entity->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
+            $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
+            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::PENDING);
+        }
+
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         // Update payment allocation status

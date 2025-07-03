@@ -45,12 +45,12 @@ class QuoteJourneyService
     /**
      * Policy Issued Quote Journey
      */
-    public function policyIssuedQuoteJourney($quoteUUID, $quoteTypeId)
+    public function policyIssuedQuoteJourney($quoteUUID, $quoteTypeId, $status = QuoteJourneyEnum::COMPLETED)
     {
         $quoteJourneyTemplates = $this->generateQuoteJourneyTemplates($quoteTypeId);
         $quoteJourneyEntries = [
             [
-                'status' => QuoteJourneyEnum::COMPLETED,
+                'status' => $status,
                 'text' => $quoteJourneyTemplates['policyIssued'],
             ],
         ];
