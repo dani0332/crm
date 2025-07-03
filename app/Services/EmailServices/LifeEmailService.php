@@ -32,7 +32,7 @@ class LifeEmailService extends BaseService
             $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_FIC_EMAIL);
 
             $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-          
+
             if ($response && $response->status_code === 200) {
                 LoggerService::info('sendFICEmail - Successfully triggered event');
             } else {
@@ -140,7 +140,8 @@ class LifeEmailService extends BaseService
         }
     }
 
-    public function sendAutomatedLifeFollowup(PersonalQuote $personalQuote){
+    public function sendAutomatedLifeFollowup(PersonalQuote $personalQuote)
+    {
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::FIC_LIFE_EMAIL)->first();
 
         LoggerService::info('| sendAutomatedLifeFollowup - Initiating process');
