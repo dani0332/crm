@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
+use App\Enums\EnvEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -27,6 +28,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
+use App\Models\PersonalQuote;
 use App\Models\Rule;
 use App\Models\Team;
 use App\Models\Tier;
@@ -72,8 +74,7 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.buy_lead_allocation_count as BLAllocationCount',
                 'lead_allocation.buy_lead_status as BLStatus',
                 'lead_allocation.normal_allocation_enabled as normalAllocationEnabled',
-                'lead_allocation.buy_lead_reset_capacity as blResetCap',
-            ])
+                'lead_allocation.buy_lead_reset_capacity as blResetCap'])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
@@ -90,7 +91,30 @@ class LeadAllocationService extends BaseService
                 $query->whereIn('lead_allocation.user_id', $userIds);
             }
 
-            return $query->get();
+            $results = $query->get();
+
+            $userIds = $results->pluck('userId')->toArray();
+
+            $healthQuoteCounts = PersonalQuote::where('quote_type_id', QuoteTypes::HEALTH->id())
+                ->whereIn('advisor_id', $userIds)
+                ->where('source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%')
+                ->whereHas('quoteDetail', function ($query) {
+                    $query->whereBetween('advisor_assigned_date', [
+                        now()->startOfDay(),
+                        now()->endOfDay(),
+                    ]);
+                })
+                ->select('advisor_id', DB::raw('COUNT(*) as count'))
+                ->groupBy('advisor_id')
+                ->pluck('count', 'advisor_id')
+                ->toArray();
+
+            // Add the counts to the results
+            foreach ($results as $result) {
+                $result->im_total_assigned_leads = $healthQuoteCounts[$result->userId] ?? 0;
+            }
+
+            return $results;
         } catch (\Exception $e) {
             LoggerService::error('Error getting grid data: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),

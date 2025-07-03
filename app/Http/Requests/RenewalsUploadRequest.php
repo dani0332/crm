@@ -28,9 +28,10 @@ class RenewalsUploadRequest extends FormRequest
         $rules = [
             'file_name' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
             'renewals_upload_type' => 'required',
+            'lob' => 'nullable',
         ];
 
-        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && request()->lob != QuoteTypeShortCode::HOM) {
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && ! in_array(request()->lob, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM])) {
             $rules['skip_plans'] = 'required';
             $rules['is_sic'] = 'required';
         }
