@@ -52,6 +52,11 @@ final class PolicyIssuanceEnum extends Enum
     const GIG_CAR_GENERATE_POLICY = 'GeneratePolicy';
     const GIG_CAR_GENERATE_POLICY_DOCUMENTS = 'GeneratePolicyDocuments';
 
+    // const GIG_CAR_UPLOAD_POLICY_DOCUMENTS_TO_INSURER = 'SendPolicyDocumentsToInsurer';
+    // const GIG_CAR_ISSUE_POLICY = 'IssuePolicy';
+    // const GIG_CAR_UPLOAD_POLICY_DOCUMENTS = 'UploadPolicyDocuments'; // upload policy documents to imcrm
+    // const GIG_CAR_UPLOAD_POLICY_CERTIFICATE_OF_INSURANCE = 'UploadPolicyCertificateOfInsurance';
+
     /* GIG Car Response Status */
     const GIG_CAR_UPLOAD_DOCUMENTS_FAILED_STATUS_ID = 1;
     const GIG_CAR_GENERATE_POLICY_FAILED_STATUS_ID = 2;

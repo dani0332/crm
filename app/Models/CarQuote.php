@@ -520,4 +520,10 @@ class CarQuote extends BaseModel
         )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
             ->latest('customer_insured.updated_at');
     }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
 }
