@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+const { isRequired } = useRules();
 
 // Props
 const props = defineProps({
@@ -28,33 +29,18 @@ const licenseIssuePlaceOptions = computed(() => [
   { value: 'umm_al_quwain', label: 'Umm Al Quwain' },
 ])
 
-const uaeDrivingExperienceOptions = computed(() => [
-  { value: '0', label: 'No Experience' },
-  { value: '1', label: '1 Year' },
-  { value: '2', label: '2 Years' },
-  { value: '3', label: '3 Years' },
-  { value: '4', label: '4 Years' },
-  { value: '5', label: '5 Years' },
-  { value: '6', label: '6 Years' },
-  { value: '7', label: '7 Years' },
-  { value: '8', label: '8 Years' },
-  { value: '9', label: '9 Years' },
-  { value: '10+', label: '10+ Years' },
-])
-
-const homeCountryDrivingExperienceOptions = computed(() => [
-  { value: '0', label: 'No Experience' },
-  { value: '1', label: '1 Year' },
-  { value: '2', label: '2 Years' },
-  { value: '3', label: '3 Years' },
-  { value: '4', label: '4 Years' },
-  { value: '5', label: '5 Years' },
-  { value: '6', label: '6 Years' },
-  { value: '7', label: '7 Years' },
-  { value: '8', label: '8 Years' },
-  { value: '9', label: '9 Years' },
-  { value: '10+', label: '10+ Years' },
-])
+const drivingExperienceOptions = computed(() => {
+  const options = [{ value: '0', label: 'No Experience' }]
+  
+  for (let i = 1; i <= 50; i++) {
+    options.push({
+      value: i.toString(),
+      label: i === 1 ? '1 Year' : `${i} Years`
+    })
+  }
+  
+  return options
+});
 
 // Methods
 const toggleCollapse = () => {
@@ -78,51 +64,56 @@ const toggleCollapse = () => {
     <div v-show="!isCollapsed">
       <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
         <!-- Is Insured and Driver Same -->
-        <x-field label="Is the Insured and Driver the same?">
-          <x-form-group v-model="props.formData.isInsuredAndDriverSame">
+        <x-field label="Is the Insured and Driver the same?" required>
+          <x-form-group v-model="props.formData.isInsuredAndDriverSame" :rules="[isRequired]">
             <x-radio value="yes" label="Yes" />
             <x-radio value="no" label="No" />
           </x-form-group>
         </x-field>
         
         <!-- Driver Name -->
-        <x-field label="Driver First Name">
+        <x-field label="Driver First Name" required>
           <x-input 
             v-model="props.formData.driverFirstName" 
+            :rules="[isRequired]"
             placeholder="Driver First Name"
             type="text"
           />
         </x-field>
         
-        <x-field label="Driver Last Name">
+        <x-field label="Driver Last Name" required>
           <x-input 
             v-model="props.formData.driverLastName" 
+            :rules="[isRequired]"
             placeholder="Driver Last Name"
             type="text"
           />
         </x-field>
         
         <!-- Driver DOB -->
-        <x-field label="Driver DOB">
+        <x-field label="Driver DOB" required>
           <DatePicker
             v-model="props.formData.driverDob"
+            :rules="[isRequired]"
             placeholder="Driver DOB"
           />
         </x-field>
         
         <!-- Driver Gender -->
-        <x-field label="Driver Gender">
+        <x-field label="Driver Gender" required>
           <x-select 
             v-model="props.formData.driverGender" 
+            :rules="[isRequired]"
             :options="driverGenderOptions"
             placeholder="Select Driver Gender"
           />
         </x-field>
         
         <!-- Driver License Number -->
-        <x-field label="Driver License Number">
+        <x-field label="Driver License Number" required>
           <x-input 
             v-model="props.formData.driverLicenseNumber" 
+            :rules="[isRequired]"
             placeholder="Driver License Number"
             type="text"
           />
@@ -154,28 +145,32 @@ const toggleCollapse = () => {
         </x-field>
         
         <!-- UAE Driving Experience -->
-        <x-field label="UAE Driving Experience">
+        <!-- TODO: Required only if 'Driver same as Client?' is NO -->
+        <x-field label="UAE Driving Experience" required>
           <x-select 
             v-model="props.formData.uaeDrivingExperience" 
-            :options="uaeDrivingExperienceOptions"
+            :rules="[isRequired]"
+            :options="drivingExperienceOptions"
             placeholder="Select UAE License Years"
           />
         </x-field>
         
         <!-- Home Country License Issuance -->
-        <x-field label="Home Country License Issuance">
+        <x-field label="Home Country License Issuance" required>
           <x-input 
             v-model="props.formData.homeCountryLicenseIssuance" 
+            :rules="[isRequired]"
             placeholder="License Home Country"
             type="text"
           />
         </x-field>
         
         <!-- Home Country Driving Experience -->
-        <x-field label="Home Country Driving Experience">
+        <x-field label="Home Country Driving Experience" required>
           <x-select 
             v-model="props.formData.homeCountryDrivingExperience" 
-            :options="homeCountryDrivingExperienceOptions"
+            :rules="[isRequired]"
+            :options="drivingExperienceOptions"
             placeholder="Select Driver Years Home Country"
           />
         </x-field>

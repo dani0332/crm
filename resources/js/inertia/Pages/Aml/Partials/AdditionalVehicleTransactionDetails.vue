@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+const { isRequired } = useRules();
 
 // Props
 const props = defineProps({
@@ -72,56 +73,63 @@ const toggleCollapse = () => {
     
     <div v-show="!isCollapsed">
       <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-        <!-- Row 1 -->
-        <x-field label="RTA Transaction Type">
+      <!-- Row 1 -->
+        <x-field label="RTA Transaction Type" required>
           <x-select 
             v-model="props.formData.rtaTransactionType" 
+            :rules="[isRequired]"
             :options="rtaTransactionTypeOptions"
             placeholder="Select RTA Transaction Type"
+            :error="props.formData.errors.rtaTransactionType"
           />
         </x-field>
         
-        <x-field label="Plate Code">
+        <x-field label="Plate Code" required>
           <x-input 
             v-model="props.formData.plateCode" 
-            placeholder="Reg Txt"
+            :rules="[isRequired]"
+            placeholder="Plate Code"
             type="text"
           />
         </x-field>
         
-        <x-field label="Plate Number">
+        <x-field label="Plate Number" required>
           <x-input 
             v-model="props.formData.plateNumber" 
-            placeholder="Reg Number"
+            :rules="[isRequired]"
+            placeholder="Plate Number"
             type="text"
           />
         </x-field>
         
-        <x-field label="Traffic Code Number">
+        <x-field label="Traffic Code Number" required>
           <x-input 
             v-model="props.formData.trafficCodeNumber" 
-            placeholder="TCF Number"
+            :rules="[isRequired]"
+            placeholder="Traffic Code Number"
             type="text"
           />
         </x-field>
         
-        <x-field label="Chassis Number">
+        <x-field label="Chassis Number" required>
           <x-input 
             v-model="props.formData.chassisNumber" 
+            :rules="[isRequired]"
             placeholder="Chassis Number"
             type="text"
           />
         </x-field>
         
-        <x-field label="Engine Number">
+        <x-field label="Engine Number" required>
           <x-input 
             v-model="props.formData.engineNumber" 
+            :rules="[isRequired]"
             placeholder="Engine Number"
             type="text"
           />
         </x-field>
-        
-        <!-- Row 2 -->
+      
+      <!-- Row 2 -->
         <x-field label="RTA Plate Category">
           <x-select 
             v-model="props.formData.rtaPlateCategory" 
@@ -130,9 +138,10 @@ const toggleCollapse = () => {
           />
         </x-field>
         
-        <x-field label="Vehicle Color">
+        <x-field label="Vehicle Color" required>
           <x-select 
             v-model="props.formData.vehicleColor" 
+            :rules="[isRequired]"
             :options="vehicleColorOptions"
             placeholder="Select Vehicle Color"
           />
@@ -146,8 +155,8 @@ const toggleCollapse = () => {
           />
         </x-field>
         
-        <x-field label="Bank Loan?">
-          <x-form-group v-model="props.formData.bankLoan">
+        <x-field label="Bank Loan?" required>
+          <x-form-group v-model="props.formData.bankLoan" :rules="[isRequired]">
             <x-radio value="yes" label="Yes" />
             <x-radio value="no" label="No" />
           </x-form-group>
@@ -161,47 +170,53 @@ const toggleCollapse = () => {
             placeholder="Select Bank Name"
           />
         </x-field>
-        
-        <!-- Row 3 - Dates -->
-        <x-field label="First Registration Date">
+      
+      <!-- Row 3 - Dates -->
+        <x-field label="First Registration Date" required>
           <DatePicker
             v-model="props.formData.firstRegistrationDate"
+            :rules="[isRequired]"
             placeholder="First Registration Date"
           />
         </x-field>
         
-        <x-field label="Policy Effective Date">
+        <x-field label="Policy Effective Date" required>
           <DatePicker
             v-model="props.formData.policyEffectiveDate"
+            :rules="[isRequired]"
             placeholder="Policy Effective Date"
           />
         </x-field>
         
-        <x-field label="Policy Expiry Date">
+        <x-field label="Policy Expiry Date" required>
           <DatePicker
             v-model="props.formData.policyExpiryDate"
+            :rules="[isRequired]"
             placeholder="Policy Expiry Date"
           />
         </x-field>
         
-        <x-field label="Certificate Start Date">
+        <x-field label="Certificate Start Date" required>
           <DatePicker
             v-model="props.formData.certificateStartDate"
+            :rules="[isRequired]"
             placeholder="Certificate Start Date"
           />
         </x-field>
         
-        <x-field label="Certificate End Date">
+        <x-field label="Certificate End Date" required>
           <DatePicker
             v-model="props.formData.certificateEndDate"
+            :rules="[isRequired]"
             placeholder="Certificate End Date"
           />
         </x-field>
-        
-        <!-- Row 4 - Mileage -->
-        <x-field label="Annual Mileage Estimate">
+      
+      <!-- Row 4 - Mileage -->
+        <x-field label="Annual Mileage Estimate" required>
           <x-input 
             v-model="props.formData.annualMileageEstimate" 
+            :rules="[isRequired]"
             placeholder="Mileage"
             type="number"
           />

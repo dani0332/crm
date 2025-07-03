@@ -174,6 +174,16 @@ const customerTypeOptions = computed(() => {
   ];
 });
 
+const showVehicleAndDrvicerDetails = computed(() => {
+  return (
+    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
+    [
+      page.props.insuranceProviderCodeEnum.RSA,
+      page.props.insuranceProviderCodeEnum.AXA,
+    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code)
+  );
+});
+
 const screeningFormDetails = useForm({
   customer_type: null,
   customer_id: quoteRequest.customer_id,
@@ -204,27 +214,27 @@ const screeningFormDetails = useForm({
       ? quoteRequest?.car_quote_request_detail?.chassis_number
       : quoteRequest?.bike_quote?.chassis_number) ?? null,
   
-    // Additional Vehicle and Transaction Details (only for Car/Bike)
-  ...((page.props.quoteType.id === page.props.quoteTypeIdEnum.Car || page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) ? {
+    // Additional Vehicle and Transaction Details (only for Car LIVA/GIG)
+  ...((showVehicleAndDrvicerDetails.value) ? {
     rtaTransactionType: '',
     plateCode: '',
     plateNumber: '',
     trafficCodeNumber: '',
     engineNumber: '',
     rtaPlateCategory: '',
-    vehicleColor: 'green',
-    plateColor: 'alloy',
-    bankLoan: 'no',
+    vehicleColor: '',
+    plateColor: '',
+    bankLoan: '',
     bankName: '',
-    firstRegistrationDate: '2025-09-06',
-    policyEffectiveDate: '2025-09-06',
-    policyExpiryDate: '2026-10-05',
-    certificateStartDate: '2025-09-06',
-    certificateEndDate: '2026-10-05',
+    firstRegistrationDate: '',
+    policyEffectiveDate: '',
+    policyExpiryDate: '',
+    certificateStartDate: '',
+    certificateEndDate: '',
     annualMileageEstimate: '',
     
     // Additional Driver Details
-    isInsuredAndDriverSame: 'yes',
+    isInsuredAndDriverSame: '',
     driverFirstName: '',
     driverLastName: '',
     driverDob: '',
@@ -359,16 +369,6 @@ const entityTypes = computed(() => {
     { value: 'Parent', label: 'Parent' },
     { value: 'SubEntity', label: 'Sub Entity' },
   ];
-});
-
-const showVehicleAndDrvicerDetails = computed(() => {
-  return (
-    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
-    [
-      page.props.insuranceProviderCodeEnum.RSA,
-      page.props.insuranceProviderCodeEnum.AXA,
-    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code)
-  );
 });
 
 const chassisNumberDisabled = computed(() => {
