@@ -74,6 +74,9 @@ class PersonalQuoteController extends Controller
 
         app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
 
+        // Policy issuance automation process initialized
+        app(CentralService::class)->processPolicyIssuanceAutomation($request->quote_type, $quoteId);
+
         return back()->with('message', 'All files uploaded successfully');
     }
 

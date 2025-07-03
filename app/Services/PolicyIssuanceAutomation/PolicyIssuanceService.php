@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use Carbon\Carbon;
 
@@ -21,6 +22,10 @@ class PolicyIssuanceService
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
                 InsuranceProvidersEnum::ALNC => new AllianceInsuranceService,
+                default => null,
+            },
+            QuoteTypes::CAR->value => match ($insurerCode) {
+                InsuranceProvidersEnum::AXA => new GIGInsuranceService,
                 default => null,
             },
             default => null,

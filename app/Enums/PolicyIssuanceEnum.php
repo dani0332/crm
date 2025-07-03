@@ -47,12 +47,26 @@ final class PolicyIssuanceEnum extends Enum
     const ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS = 'FillPolicyBookingDetails';
     const ALLIANCE_TRAVEL_BOOK_POLICY = 'BookPolicy';
 
+    /* GIG Car Steps */
+    const GIG_CAR_UPLOAD_DOCUMENTS = 'UploadDocuments';
+    const GIG_CAR_GENERATE_POLICY = 'GeneratePolicy';
+    const GIG_CAR_GENERATE_POLICY_DOCUMENTS = 'GeneratePolicyDocuments';
+
+    /* GIG Car Response Status */
+    const GIG_CAR_UPLOAD_DOCUMENTS_FAILED_STATUS_ID = 1;
+    const GIG_CAR_GENERATE_POLICY_FAILED_STATUS_ID = 2;
+    const GIG_CAR_GENERATE_POLICY_DOCUMENTS_FAILED_STATUS_ID = 3;
+
     /* Alliance Travel Steps */
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
                 InsuranceProvidersEnum::ALNC => self::getTravelAlliancePolicyIssuanceSteps(),
+                default => null,
+            },
+            QuoteTypes::CAR->value => match ($insurerCode) {
+                InsuranceProvidersEnum::AXA => self::getGIGCarPolicyIssuanceSteps(),
                 default => null,
             },
             default => null,
@@ -106,5 +120,14 @@ final class PolicyIssuanceEnum extends Enum
         }
 
         return $status ? $statuses[$status] : '';
+    }
+
+    public static function getGIGCarPolicyIssuanceSteps()
+    {
+        return [
+            self::GIG_CAR_UPLOAD_DOCUMENTS,
+            self::GIG_CAR_GENERATE_POLICY,
+            self::GIG_CAR_GENERATE_POLICY_DOCUMENTS,
+        ];
     }
 }

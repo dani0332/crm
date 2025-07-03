@@ -4,12 +4,15 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
@@ -45,6 +48,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
+use App\Models\QuoteDocument;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
@@ -55,6 +59,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -1482,5 +1487,96 @@ class CentralService extends BaseService
         }
 
         return $paymentGatewayIds;
+    }
+
+    public function validationChecks($insuranceProviderCode, $quoteType, $quoteId)
+    {
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Validation checks for policy issuance automation');
+
+        $automatedProviders = [InsuranceProvidersEnum::AXA];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value];
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $payment = $quote->payments->first();
+        $splitPayment = $payment?->paymentSplits?->first();
+
+        // 1. Quote type should be car
+        if (! in_array($quoteType, $allowedQuoteTypes)) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote type not supported for GIG Car automation');
+
+            return ['status' => false, 'message' => 'Quote type not supported for automation'];
+        }
+
+        // 2. Insurance provider should be AXA
+        if (! in_array($insuranceProviderCode, $automatedProviders)) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Insurance provider not supported');
+
+            return ['status' => false, 'message' => 'Insurance provider not supported'];
+        }
+
+        // 3. All required documents should be uploaded
+        $policyAutomationDocumentsCheck = $this->policyAutomationDocumentsCheck($quoteTypeId, $quote, InsuranceProvidersEnum::ADNIC);
+        if (! $policyAutomationDocumentsCheck['status']) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ADNIC required documents not uploaded for policy issuance automation');
+
+            return $policyAutomationDocumentsCheck;
+        }
+
+        return ['status' => true, 'message' => 'Validation checks passed for policy issuance automation'];
+    }
+
+    public function policyAutomationDocumentsCheck($quoteTypeId, $quote, $insuranceProviderCode)
+    {
+        $requiredDocs = [
+            InsuranceProvidersEnum::AXA => [
+                DocumentTypeCode::HPD,
+                DocumentTypeCode::LPD,
+                DocumentTypeCode::HOMPD
+            ],
+        ];
+
+        $quoteDocuments = QuoteDocument::where('quote_documentable_type', get_class($quote))
+            ->where('quote_documentable_id', $quote->id)
+            ->whereHas('documentType', function ($query) use ($quoteTypeId) {
+                $query->where([
+                    'category' => DocumentTypeCode::QUOTE,
+                    'quote_type_id' => $quoteTypeId,
+                    'is_active' => 1,
+                ]);
+            })
+            ->pluck('document_type_code')
+            ->toArray();
+
+        $isRequiredDocsUploaded = count(array_intersect($requiredDocs[$insuranceProviderCode], $quoteDocuments)) === count($requiredDocs[$insuranceProviderCode]);
+        if (! $isRequiredDocsUploaded) {
+            return ['status' => false, 'message' => 'GIG required documents not uploaded for policy issuance automation'];
+        }
+
+        return ['status' => true, 'message' => 'GIG required documents uploaded for policy issuance automation'];
+    }
+
+    public function processPolicyIssuanceAutomation($quoteType, $quoteId)
+    {
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
+
+        $validationChecks = $this->validationChecks(InsuranceProvidersEnum::AXA, $quoteType, $quoteId);
+        if (! $validationChecks['status']) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Validation checks failed for policy issuance automation');
+
+            return $validationChecks;
+        }
+
+        $payment = $quote->payments->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        if ($insuranceProvider) {
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
+                $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
+            }
+        }
+
+        return ['status' => true, 'message' => 'Policy issuance automation triggered successfully'];
     }
 }
