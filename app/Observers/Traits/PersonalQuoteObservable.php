@@ -20,6 +20,10 @@ use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\BirdService;
+use App\Enums\QuoteFlowType;
+use App\Services\Logger\LoggerService;
+use App\Jobs\SendAutomatedLifeFollowup;
 
 trait PersonalQuoteObservable
 {
@@ -66,6 +70,15 @@ trait PersonalQuoteObservable
             if ($personalQuote->isFIC(quoteType: QuoteTypes::LIFE)) {
                 SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             }
+            $isFollowupExecuted = app(BirdService::class)
+            ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value);
+
+            if ($isFollowupExecuted) {
+                LoggerService::info(self::class." - LIFE_AUTOMATED_FOLLOWUPS - Followup already executed {$personalQuote->uuid}");
+
+                return;
+            }
+            SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
         }
 
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);

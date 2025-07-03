@@ -228,6 +228,7 @@ final class ApplicationStorageEnums extends Enum
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
     public const FIC_LIFE_EMAIL = 'FIC_LIFE_EMAIL';
     public const FIC_LIFE_EMAIL_SWITCH = 'FIC_LIFE_EMAIL_SWITCH';
+    public const AUTOMATED_LIFE_FOLLOWUP_SWITCH = 'AUTOMATED_LIFE_FOLLOWUP_SWITCH';
 
     /* Savings Book Policy Template */
     public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
