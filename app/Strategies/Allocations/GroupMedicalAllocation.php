@@ -4,10 +4,10 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
-use App\Enums\QuoteTypeId;
 
 class GroupMedicalAllocation extends BaseAllocation
 {
@@ -37,7 +37,6 @@ class GroupMedicalAllocation extends BaseAllocation
             return null;
         }
 
-        
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();
         if (empty($this->lead->number_of_employees)) {
             LoggerService::warning(self::class." - Number of employees is empty | quote Ref-ID: {$this->lead->uuid} | time: ".now());
