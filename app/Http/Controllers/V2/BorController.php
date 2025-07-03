@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\V2;
 
 use App\Http\Requests\Bor\BorFormRequest;
 use App\Models\BorLog;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
-use App\Services\BorEmailService;
-use App\Services\BorPdfService;
+use App\Services\Bor\BorEmailService;
+use App\Services\Bor\BorPdfService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +22,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Enums\BorStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Http\Controllers\Controller;
 
 class BorController extends Controller
 {
@@ -38,9 +39,37 @@ class BorController extends Controller
     }
 
     /**
+     * Get BOR logs for a specific lead
+     */
+    public function index(Request $request, $leadId): JsonResponse
+    {
+        try {
+            $logs = BorLog::where('lead_id', $leadId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch BOR logs', [
+                'lead_id' => $leadId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch BOR logs',
+            ], 500);
+        }
+    }
+
+
+    /**
      * Create a new BOR request
      */
-    public function createBorRequest(BorFormRequest $request): RedirectResponse
+    public function store(BorFormRequest $request): RedirectResponse
     {
         try {
             $validated = $request->validated();
@@ -98,33 +127,7 @@ class BorController extends Controller
         }
     }
 
-    /**
-     * Get BOR logs for a specific lead
-     */
-    public function getBorLogs(Request $request, $leadId): JsonResponse
-    {
-        try {
-            $logs = BorLog::where('lead_id', $leadId)
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $logs,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to fetch BOR logs', [
-                'lead_id' => $leadId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch BOR logs',
-            ], 500);
-        }
-    }
+    
 
 
 

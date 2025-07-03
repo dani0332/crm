@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Bor;
 
 use App\Models\BorLog;
 use App\Models\PersonalQuote;

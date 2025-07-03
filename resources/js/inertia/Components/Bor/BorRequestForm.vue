@@ -322,7 +322,7 @@ onMounted(() => {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <!-- Customer Type -->
               <x-select
-                label="CUSTOMER TYPE *"
+                label="CUSTOMER TYPE"
                 v-model="form.customer_type"
                 :options="customerTypeOptions"
                 placeholder="Select customer type"
@@ -333,7 +333,7 @@ onMounted(() => {
               <!-- Customer Name (Individual) -->
               <x-input
                 v-if="form.customer_type === 'Individual'"
-                label="CUSTOMER NAME *"
+                label="CUSTOMER NAME"
                 v-model="form.customer_name"
                 placeholder="Enter customer name"
                 :error="form.errors.customer_name"
@@ -343,7 +343,7 @@ onMounted(() => {
               <!-- Company Name (Entity) -->
               <x-input
                 v-if="form.customer_type === 'Entity'"
-                label="COMPANY NAME *"
+                label="COMPANY NAME"
                 v-model="form.company_name"
                 placeholder="Enter company name"
                 :error="form.errors.company_name"
@@ -352,7 +352,7 @@ onMounted(() => {
 
               <!-- Insurance Provider -->
               <x-select
-                label="INSURANCE PROVIDER *"
+                label="INSURANCE PROVIDER"
                 v-model="form.insurance_provider_id"
                 :options="availableInsurers"
                 placeholder="Select insurance provider"

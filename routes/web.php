@@ -65,6 +65,7 @@ use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\BorController;
 use App\Http\Controllers\V2\BuyLeadConfigController;
 use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
@@ -94,7 +95,6 @@ use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -813,7 +813,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // BOR (Broker on Record) Routes
     Route::group(['prefix' => 'bor'], function () {
         // BOR Request Management
-        Route::post('requests', [BorController::class, 'createBorRequest'])->name('bor.requests.store');
+        Route::resource('requests', BorController::class)->names('bor.requests');
+        // Route::post('requests', [BorController::class, 'createBorRequest'])->name('bor.requests.store');
         Route::get('logs/{leadId}', [BorController::class, 'getBorLogs'])->name('bor.logs.index');
         
         // BOR Status and Action Management (CRM Interface)

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Bor;
 
 use App\Mail\Bor\BorRequestMail;
 use App\Mail\Bor\BorCompletionMail;
@@ -10,7 +10,7 @@ use App\Models\BorLog;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 
-class BorEmailService extends BaseService
+class BorEmailService
 {
     /**
      * Send BOR request email to customer
