@@ -1872,7 +1872,7 @@ class CRUDController extends Controller
 
         if ($request->current_quote_status_id != $entity->quote_status_id && in_array($entity->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
             $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
-            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::PENDING);
+            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
         }
 
         // courtesy email
