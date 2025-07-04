@@ -448,6 +448,10 @@ class SukoonMedexService
                 throw new Exception('API Request has errors');
             }
 
+            if (str_contains($contentType, 'application/json') && isset($responseData['status']) && $this->checkIsErrorMessage($responseData['status'])) {
+                throw new Exception("API Error, Response status: ". $responseData['status'] ?? '');
+            }
+
             $this->logRequest('passed', 'Request Successful', $payload, $endPoint, $responseData, $parentFunction);
 
             return $response;
@@ -738,6 +742,15 @@ class SukoonMedexService
         }
 
         return [];
+    }
+
+    public function checkIsErrorMessage($message)
+    {
+        $errorMessages = [
+            'Service is temporarily unavailable'
+        ];
+
+        return in_array($message, $errorMessages);
     }
 
     /**
