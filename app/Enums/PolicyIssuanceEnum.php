@@ -49,18 +49,10 @@ final class PolicyIssuanceEnum extends Enum
 
     /* GIG Car Steps */
     const GIG_CAR_UPLOAD_DOCUMENTS = 'UploadDocuments';
-    const GIG_CAR_GENERATE_POLICY = 'GeneratePolicy';
-    const GIG_CAR_GENERATE_POLICY_DOCUMENTS = 'GeneratePolicyDocuments';
-
-    // const GIG_CAR_UPLOAD_POLICY_DOCUMENTS_TO_INSURER = 'SendPolicyDocumentsToInsurer';
-    // const GIG_CAR_ISSUE_POLICY = 'IssuePolicy';
-    // const GIG_CAR_UPLOAD_POLICY_DOCUMENTS = 'UploadPolicyDocuments'; // upload policy documents to imcrm
-    // const GIG_CAR_UPLOAD_POLICY_CERTIFICATE_OF_INSURANCE = 'UploadPolicyCertificateOfInsurance';
-
+    const GIG_CAR_ISSUE_POLICY = 'IssuePolicy';
+    const GIG_CAR_GET_POLICY_DOCUMENTS = 'GetPolicyDocument';
+    const GIG_CAR_BOOK_POLICY = 'BookPolicy';
     /* GIG Car Response Status */
-    const GIG_CAR_UPLOAD_DOCUMENTS_FAILED_STATUS_ID = 1;
-    const GIG_CAR_GENERATE_POLICY_FAILED_STATUS_ID = 2;
-    const GIG_CAR_GENERATE_POLICY_DOCUMENTS_FAILED_STATUS_ID = 3;
 
     /* Alliance Travel Steps */
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
@@ -71,7 +63,7 @@ final class PolicyIssuanceEnum extends Enum
                 default => null,
             },
             QuoteTypes::CAR->value => match ($insurerCode) {
-                InsuranceProvidersEnum::AXA => self::getGIGCarPolicyIssuanceSteps(),
+                InsuranceProvidersEnum::AXA => self::getCarPolicyAutomationSteps($insurerCode),
                 default => null,
             },
             default => null,
@@ -127,12 +119,17 @@ final class PolicyIssuanceEnum extends Enum
         return $status ? $statuses[$status] : '';
     }
 
-    public static function getGIGCarPolicyIssuanceSteps()
+    public static function getCarPolicyAutomationSteps($insurerCode)
     {
-        return [
-            self::GIG_CAR_UPLOAD_DOCUMENTS,
-            self::GIG_CAR_GENERATE_POLICY,
-            self::GIG_CAR_GENERATE_POLICY_DOCUMENTS,
+        $steps = [
+            InsuranceProvidersEnum::AXA => [
+                self::GIG_CAR_UPLOAD_DOCUMENTS,
+                self::GIG_CAR_ISSUE_POLICY,
+                self::GIG_CAR_GET_POLICY_DOCUMENTS,
+                self::GIG_CAR_BOOK_POLICY,
+            ],
         ];
+
+        return $steps[$insurerCode] ?? [];
     }
 }

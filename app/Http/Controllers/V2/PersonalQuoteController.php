@@ -11,9 +11,11 @@ use App\Http\Requests\PersonalQuotePaymentRequest;
 use App\Http\Requests\PersonalQuotePolicyRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Http\Requests\QuotesDocumentRequest;
+use App\Models\PolicyIssuance;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\CentralService;
 use App\Services\CustomerService;
+use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
@@ -42,6 +44,10 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
+        $policyProcess = PolicyIssuance::where('id', 1095)->first();
+        $response = app(GIGInsuranceService::class)->executeSteps($policyProcess);
+        dd($response);
+
         // $files = request()->file('files');
         // $responses = collect();
 
