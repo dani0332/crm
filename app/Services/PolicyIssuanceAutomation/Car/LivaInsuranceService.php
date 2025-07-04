@@ -50,6 +50,90 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return Http::timeout(20)->withHeaders($this->headers)->post($url, $payload);
     }
 
+    public function updateQuoteRequest($quote)
+    {
+        $endPoint = 'quote/update/v2';
+        $payload = [
+            'QuotationRequest' => [
+                'CustomerDetails' => [
+                    'Gender' => 'M',
+                    'DOB' => "1993-01-01 04:00:00",
+                    'Nationality' => "29",
+                    'MobileNo' => "898989899",
+                    'EmailId' => "hitesh.motwani@afia.ae",
+                    'FirstName' => "Hitesh",
+                    'LastName' => "Motwani",
+                    'NationalId' => "898-8888-8988888-8",
+                    'CustomerCategory' => 1,
+                ], 
+                'VehicleDetails' => [
+                    'CC' => "2400",
+                    'PlaceOfRegn' => "2",
+                    'NcbYears' => 99,
+                    'DateOfRegn' => "2016-09-01 00:00:00",
+                    'YearOfManf' => "2016",
+                    'InsuredValue' => 16094,
+                    'VehicleDescCode' => "86281",
+                    'VehicleDesc' => "GL 2.0 L 4 Cyls SUV 5 DOORS 5 SEATS",
+                    'Seats' => 4,
+                    'UseCode' => "2",
+                    'BodyType' => "10",
+                    'MakeCode' => "36",
+                    'ModelCode' => "17",
+                    'NoOfCyl' => 4,
+                    'EstimatedAnnualMileage' => "1",
+                    'VehicleSpecification' => "1",
+                    'vehHP' => 999,
+                    'NoOfDoors' => 5,
+                    'DrivenWheel' => "ALL WHEEL DRIVE",
+                    'modelSpecification' => "GL",
+                    'ColorCode' => "221",
+                    'RegistrationType' => "1",
+                    'RtaTransactionType' => "40",
+                    'RegnNoText' => "Y",
+                    'RegnNoNumber' => "5656",
+                    'ChassisNo' => "TMAJ381B2GJ118019",
+                    'EngineNo' => "G4KJFA742720",
+                    'TcfNo' => "13146379",
+                ],
+                'TransactionDetails' => [
+                    'PolicyTypeCode' => "1",
+                    'EffectiveDate' => "2025-01-06 21:09:00",
+                    'SchemeCode' => "13",
+                    'TariffCode' => "17",
+                    'PartnerTrnReferenceNumber' => "123456",
+                ],
+                'OptionalCovers' => [ // multiple optional covers can be added here
+                    [
+                        'CoverIncluded' => true,
+                        'CoverMappingCode' => "2-1-0",
+                    ],
+                ],
+                'DriverDetails' => [ // TODO: also should be multiple array.
+                    [
+                        'DriverName' => "Bala R",
+                        'MainDriverInd' => "Y",
+                        'DriverDOB' => "1983-01-01 00:00:00",
+                        'DriverGender' => "M",
+                        'FirstDrvLicCountry' => "4",
+                        'LocalLicense' => "1",
+                        'OtherLicense' => "0",
+                        'LicenseNo' => null,
+                    ],
+                ],
+                'QuotationNo' => "3496810",
+                'PolicyId' => "5157349",
+                'EndtId' => "0",
+                'ProposalForm' => false,
+                'UserComments' => "Create Quote Request",
+            ]
+        ];
+
+        $response = $this->livaHttpCall($endPoint, $payload);
+
+        return $response;
+    }
+    
     public function retrieveQuoteRequest()
     {
         $endPoint = 'transactions/retrieve/v2';
@@ -62,7 +146,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
 
         $response = $this->livaHttpCall($endPoint, $payload);
-        dd($response->object());
 
         return $response;
     }
