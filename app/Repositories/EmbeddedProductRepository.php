@@ -239,7 +239,9 @@ class EmbeddedProductRepository extends BaseRepository
             } elseif (EmbeddedProductStrategy::checkSukoonMedex($item->short_code) && count($transaction) > 0) {
 
                 $isSukoonEpReadyForSage = $transaction[0]->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
-                $item->sync_document_button = (! $isSukoonEpReadyForSage) && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+                $canSendDocuments = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction)
+                    || $this->canSendSukoonMedexDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+                $item->sync_document_button = (! $isSukoonEpReadyForSage) && $canSendDocuments;
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -302,6 +304,27 @@ class EmbeddedProductRepository extends BaseRepository
             if (
                 $productCategory == EpCategoryEnum::STAND_ALONE ||
                 ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * canSendSukoonMedexDocuments - this is only used for Policy Issued status
+     * 
+     * @param mixed $productCategory
+     * @param mixed $quoteStatusId
+     * @param mixed $transaction
+     * @return void
+     */
+    private function canSendSukoonMedexDocuments($productCategory, $quoteStatusId, $transaction)
+    {
+        if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            if ($productCategory == EpCategoryEnum::BOLT_ON && 
+                $quoteStatusId == QuoteStatusEnum::PolicyIssued && 
+                in_array($transaction->first()->policy_status, [EmbeddedTransactionEnum::STATUS_BOOKED, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE]  )) {
                 return true;
             }
         }
@@ -388,7 +411,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                             $sukoonMedexService = app(SukoonMedexService::class);
                             $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
-                            $sukoonMedexService->sendDocuments($savedDocumentTypes);
+                            $sukoonMedexService->sendDocuments();
 
                             $response = ['success' => true];
                         } else {
@@ -464,6 +487,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $short_code = $ep->short_code;
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
+        $isSukoonMedex = EmbeddedProductStrategy::checkSukoonMedex($short_code);
 
         [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect);
 
@@ -475,7 +499,9 @@ class EmbeddedProductRepository extends BaseRepository
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
 
-        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction) 
+            || ($isSukoonMedex && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
+
         if (! $canSendDocuments) {
             info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
 
@@ -484,7 +510,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-        } elseif (EmbeddedProductStrategy::checkSukoonMedex($short_code)) {
+        } elseif ($isSukoonMedex) {
             return $this->sendMedexEmailV3($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep);
             // return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep, $data['regenerate']);
         }

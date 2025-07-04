@@ -7,8 +7,10 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SukoonMedexEnum;
 use App\Jobs\SyncSukoonDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -45,6 +47,7 @@ class SukoonMedexService
     private $amountDisclaimerText;
     private array $sukoonReqDocTypeCodes;
     private $providerId;
+    private $modelType;
     private string $logPrefix = 'Sukoon Medex Service:';
     private array $errorMessages = [];
 
@@ -79,6 +82,7 @@ class SukoonMedexService
 
             $this->currentQuote = $quote;
             $this->quoteTypeId = $quoteTypeId;
+            $this->modelType = QuoteTypes::getName($this->quoteTypeId)->value;
             $this->transaction = $transaction;
 
             $this->policyStatus = $transaction->policy_status ?? '';
@@ -205,8 +209,9 @@ class SukoonMedexService
         LoggerService::info("{$this->logPrefix} sendDocuments in process");
         EmbeddedProductRepository::sendDocument([
             'epId' => $this->transaction->product->embeddedProduct->id ?? null,
-            'modelType' => QuoteTypes::getName($this->quoteTypeId)->value,
+            'modelType' => $this->modelType,
             'quoteId' => $this->currentQuote->id,
+            'forceSendEmail' => true,
         ]);
     }
 
@@ -220,9 +225,73 @@ class SukoonMedexService
             $viewQuotePolicyResponse = $this->viewQuotePolicy();
 
             $this->updateTransaction($this->transaction, $viewQuotePolicyResponse, $savedDocTypes);
+
+            $this->handleJobSuccess();
+
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    private function handleJobSuccess()
+    {
+        $response = [];
+
+        $quoteStatusId = $this->currentQuote->quote_status_id;
+        $epPolicyStatus = $this->transaction->policy_status;
+
+        LoggerService::info("{$this->logPrefix} Begin handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}");
+
+        if ($epPolicyStatus == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE) {
+            $response = match ($quoteStatusId) {
+                QuoteStatusEnum::PolicyIssued => $this->callSageBookingProcess(),
+                QuoteStatusEnum::PolicyBooked => $this->scheduleSageBookingForSukoonEp(),
+                default => ['status' => true, 'message' => 'Sage booking is not called'],
+            };
+        }
+
+        LoggerService::info("{$this->logPrefix} Finish handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}", extra: ['response' => $response]);
+        return $response;
+    }
+
+
+    private function callSageBookingProcess()
+    {
+        $sageApiService = (new SageApiService);
+        $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+
+        $request = new \stdClass;
+        $request->quote_id = $this->currentQuote->id;
+        $request->modelType = $this->modelType;
+        $request->model_type = $this->modelType;
+        $request->is_send_policy = false;
+        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+        $request->transaction_payment_status = null;
+
+        $createSageProcessResponse = $sageApiService->postBookPolicyToSage($request, $this->currentQuote);
+
+        // your logic
+
+        if (! $createSageProcessResponse['status']) {
+            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, null);
+        }
+
+        return $createSageProcessResponse;
+    }
+
+
+    private function scheduleSageBookingForSukoonEp() 
+    {        
+        $request = [
+            'epTransactionId' => $this->transaction->id, // Embedded transaction id
+            'insuranceProviderId' => $this->providerId, // embedded product's provider id
+            'modelType' => $this->modelType, // main lead quote type
+            'quoteId' => $this->currentQuote->id, // main lead quote id
+        ];
+
+        $scheduledBookingResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request);
+
+        return $scheduledBookingResponse;
     }
 
     private function fetchPaymentToken()

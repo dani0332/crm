@@ -5,6 +5,8 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\EpCategoryEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -61,6 +63,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\CustomerInsured;
+use App\Models\EmbeddedTransaction;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -71,6 +74,7 @@ use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
@@ -347,6 +351,41 @@ class CentralController extends Controller
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
+            }
+
+            $quoteType = $this->getQuoteCodeType($quote);
+            $quoteTypeId = QuoteTypes::getNameShortCode($quoteType)?->id();
+
+            $captureableEmbeddedTransactions = EmbeddedTransaction::where([
+                ['quote_type_id', $quoteTypeId],
+                ['quote_request_id', $quote->id],
+                ['is_selected', 1],
+                ['payment_status_id', PaymentStatusEnum::AUTHORISED],
+            ])
+            ->whereHas('product.embeddedProduct', function ($query) {
+                $query->where('product_category', EpCategoryEnum::BOLT_ON)
+                    ->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes() ?? []);
+            })->select('code', 'payment_status_id', 'policy_status')->get();
+
+            if ($captureableEmbeddedTransactions->isNotEmpty()) {
+                try {
+                    EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType));
+
+                    LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin', 
+                        extra: $captureableEmbeddedTransactions->toArray()
+                    );
+                    return response()->json(['message' => 'The embedded product payment is being captured, once done, the booking process will begin.'], 200);
+
+                } catch (Exception $e) {
+                    LoggerService::error('Embedded Product payment capture failed', [
+                        'error' => $e->getMessage(),
+                        'uuid' => $quote->uuid,
+                    ]);
+
+                    return response()->json(['errors' => [
+                        'message' => 'Embedded Product payment capture failed',
+                    ]], 403);
+                }
             }
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
