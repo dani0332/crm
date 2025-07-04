@@ -2,12 +2,29 @@
 
 namespace Database\Seeders;
 
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\InsuranceProvider;
 use App\Models\Lookup;
+use App\Services\Logger\LoggerService;
 use Illuminate\Database\Seeder;
 
-class CarAdditionalDetailsSeeder extends Seeder
+class CarAdditionalDetailsForLivaSeeder extends Seeder
 {
+    private $insuranceProviderId;
+
+    public function __construct()
+    {
+        $this->insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)
+            ->select(['id', 'code'])
+            ->first()->id;
+
+        LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
+            'insurance_provider_id' => $this->insuranceProviderId,
+            'insurance_provider_code' => InsuranceProvidersEnum::RSA,
+        ]);
+    }
+
     /**
      * Run the database seeds.
      */
@@ -22,70 +39,77 @@ class CarAdditionalDetailsSeeder extends Seeder
     private function rtaTransactionType()
     {
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'registration-of-new-vehicle',
             'code' => '10',
             'text' => 'Registration of new vehicle',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'changing-vehicle-ownership-current-valid',
             'code' => '20',
             'text' => 'Changing vehicle ownership (current registration valid)',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'changing-vehicle-ownership-to-expire',
             'code' => '30',
             'text' => 'Changing vehicle ownership (current registration to expire)',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'renewal-with-current-plate',
             'code' => '40',
             'text' => 'Renewal of vehicle (with current number plate)',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'renewal-with-new-plate',
             'code' => '50',
             'text' => 'Renewal of vehicle (with new number plate)',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'update-registration-information',
             'code' => '60',
             'text' => 'Update Registration Information',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'export-certificate',
             'code' => '70',
             'text' => 'Export Certificate',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
@@ -95,60 +119,66 @@ class CarAdditionalDetailsSeeder extends Seeder
     private function rtaPlateCategory()
     {
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'private',
             'code' => '14',
             'text' => 'Private',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'motorcycle',
             'code' => '18',
             'text' => 'Motorcycle',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'delegate',
             'code' => '39',
             'text' => 'Delegate',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'consulate-authority',
             'code' => '42',
             'text' => 'Consulate Authority',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'classical',
             'code' => '45',
             'text' => 'Classical',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'dubai-flag',
             'code' => '36',
             'text' => 'Dubai Flag',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
@@ -158,90 +188,99 @@ class CarAdditionalDetailsSeeder extends Seeder
     private function vehicleColor()
     {
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'white',
             'code' => '1',
             'text' => 'WHITE',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'black',
             'code' => '2',
             'text' => 'BLACK',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'red',
             'code' => '3',
             'text' => 'RED',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'blue',
             'code' => '4',
             'text' => 'BLUE',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'yellow',
             'code' => '5',
             'text' => 'YELLOW',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'green',
             'code' => '6',
             'text' => 'GREEN',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'brown',
             'code' => '7',
             'text' => 'Brown',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'silver',
             'code' => '8',
             'text' => 'SILVER',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         Lookup::createOrFirst([
-            'qutoe_type_id' => QuoteTypeId::Car,
+            'quote_type_id' => QuoteTypeId::Car,
             'key' => 'bronze',
             'code' => '9',
             'text' => 'Bronze',
+            'insurance_provider_id' => $this->insuranceProviderId,
         ], [
             'created_at' => now(),
             'updated_at' => now(),
@@ -495,17 +534,17 @@ class CarAdditionalDetailsSeeder extends Seeder
 
         foreach ($banks as $bank) {
             Lookup::createOrFirst([
-                'qutoe_type_id' => QuoteTypeId::Car,
+                'quote_type_id' => QuoteTypeId::Car,
                 'key' => $bank[1],
                 'code' => $bank[0],
                 'text' => $bank[2],
+                'insurance_provider_id' => $this->insuranceProviderId,
             ], [
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
     }
-
 
     //TODO: add columns to car_quote_requeset_detail table.
     

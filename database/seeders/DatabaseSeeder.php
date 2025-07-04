@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
-            CarAdditionalDetailsSeeder::class,
+            CarAdditionalDetailsForLivaSeeder::class,
         ]);
     }
 }
