@@ -960,7 +960,7 @@
         @endif
 
         <p class="disclaimer-text">
-            <strong>Disclaimer: </strong>This is a comparison table for illustrative purposes only. The prices and benefits are subject to change without prior notice. Please refer to the official terms and conditions of the insurance provider for the most accurate and current information.
+            <strong>Disclaimer: </strong>The quotations presented are based on standard rates, assuming the applicant is in good health. It is crucial to accurately and fully disclose all relevant information, including any existing medical conditions, occupational risks, travel history, or participation in hazardous activities, for accurate coverage. If there are differences, the insurer's policy terms will apply. Please check your policy once issued to ensure it meets your needs.
         </p>
 
     </main>
