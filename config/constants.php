@@ -159,4 +159,11 @@ return [
     'OCR_API_ENDPOINT' => env('OCR_API_ENDPOINT', ''),
     'OCR_API_KEY' => env('OCR_API_KEY', ''),
     'OCR_API_TIMEOUT' => env('OCR_API_TIMEOUT', 90),
+    /* Liva API Credentials */
+    'LIVA_API_BASE_URL' => env('LIVA_API_BASE_URL', ''),
+    'LIVA_BASIC_AUTH' => env('LIVA_BASIC_AUTH', ''),
+    'LIVA_PARENT_ID' => env('LIVA_PARENT_ID', ''),
+    'LIVA_LOCATION' => env('LIVA_LOCATION', ''),
+    'LIVA_AUTHENTICATION' => env('LIVA_AUTHENTICATION', ''),
+    'LIVA_SUBSCRIPTION_KEY' => env('LIVA_SUBSCRIPTION_KEY', ''),
 ];
