@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
@@ -40,7 +41,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
     {
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'registration-of-new-vehicle',
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '10',
             'text' => 'Registration of new vehicle',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -51,7 +52,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'changing-vehicle-ownership-current-valid',
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '20',
             'text' => 'Changing vehicle ownership (current registration valid)',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -62,7 +63,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'changing-vehicle-ownership-to-expire',
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '30',
             'text' => 'Changing vehicle ownership (current registration to expire)',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -73,7 +74,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'renewal-with-current-plate',
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '40',
             'text' => 'Renewal of vehicle (with current number plate)',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -84,7 +85,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'renewal-with-new-plate',
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '50',
             'text' => 'Renewal of vehicle (with new number plate)',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -95,7 +96,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'update-registration-information',
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '60',
             'text' => 'Update Registration Information',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -106,7 +107,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'export-certificate',
+            'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '70',
             'text' => 'Export Certificate',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -120,7 +121,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
     {
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'private',
+            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '14',
             'text' => 'Private',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -131,7 +132,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'motorcycle',
+            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '18',
             'text' => 'Motorcycle',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -142,7 +143,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'delegate',
+            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '39',
             'text' => 'Delegate',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -153,7 +154,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'consulate-authority',
+            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '42',
             'text' => 'Consulate Authority',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -164,7 +165,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'classical',
+            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '45',
             'text' => 'Classical',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -175,7 +176,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'dubai-flag',
+            'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '36',
             'text' => 'Dubai Flag',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -189,7 +190,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
     {
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'white',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '1',
             'text' => 'WHITE',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -200,7 +201,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'black',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '2',
             'text' => 'BLACK',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -211,7 +212,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'red',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '3',
             'text' => 'RED',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -222,7 +223,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'blue',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '4',
             'text' => 'BLUE',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -233,7 +234,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'yellow',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '5',
             'text' => 'YELLOW',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -244,7 +245,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'green',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '6',
             'text' => 'GREEN',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -255,7 +256,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'brown',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '7',
             'text' => 'Brown',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -266,7 +267,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'silver',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '8',
             'text' => 'SILVER',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -277,7 +278,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
         Lookup::createOrFirst([
             'quote_type_id' => QuoteTypeId::Car,
-            'key' => 'bronze',
+            'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '9',
             'text' => 'Bronze',
             'insurance_provider_id' => $this->insuranceProviderId,
@@ -535,7 +536,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         foreach ($banks as $bank) {
             Lookup::createOrFirst([
                 'quote_type_id' => QuoteTypeId::Car,
-                'key' => $bank[1],
+                'key' => LookupsEnum::BANK_NAME,
                 'code' => $bank[0],
                 'text' => $bank[2],
                 'insurance_provider_id' => $this->insuranceProviderId,
