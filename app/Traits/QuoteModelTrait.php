@@ -416,7 +416,7 @@ trait QuoteModelTrait
         if (method_exists($lead, 'quoteTags') && $lead->relationLoaded('quoteTags')) {
             return collect($lead->quoteTags ?? [])
                 ->pluck('name')
-                ->map(fn($name) => strtolower($name))
+                ->map(fn ($name) => strtolower($name))
                 ->toArray();
 
         }
@@ -425,7 +425,7 @@ trait QuoteModelTrait
         return QuoteTag::where('quote_uuid', $lead->uuid)
             ->where('quote_type_id', $quoteTypeId)
             ->pluck('name')
-            ->map(fn($name) => strtolower($name))
+            ->map(fn ($name) => strtolower($name))
             ->toArray();
     }
 }
