@@ -16,7 +16,7 @@ class PolicyIssuancePreChecksService
 
     public function validationChecks($insuranceProvider, $quoteType, $quote)
     {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Validation checks for '. $insuranceProvider->text . ' policy issuance automation');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Validation checks for '.$insuranceProvider->text.' policy issuance automation');
         $allowedQuoteTypes = [QuoteTypes::CAR->value];
         $allowedInsuranceProviders = [InsuranceProvidersEnum::AXA];
         $payment = $quote->payments->first();
@@ -45,6 +45,7 @@ class PolicyIssuancePreChecksService
 
         if (! $validationChecks['status']) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Validation checks failed for '.$insuranceProvider->text.' automation');
+
             return $validationChecks;
         }
 
@@ -63,9 +64,9 @@ class PolicyIssuancePreChecksService
         $requiredDocs = [
             DocumentTypeCode::HPD,
             DocumentTypeCode::LPD,
-            DocumentTypeCode::HOMPD
+            DocumentTypeCode::HOMPD,
         ];
-        
+
         // 1. IM AML Screening should be done and Cleared
         if ($quote->aml_status !== AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' -  IM AML Screening status not cleared');

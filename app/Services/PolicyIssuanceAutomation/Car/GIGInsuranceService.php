@@ -15,7 +15,6 @@ use App\Enums\QuoteTypeId;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
-use App\Models\HealthInsurerRequestResponse;
 use App\Models\PolicyIssuanceLog;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
