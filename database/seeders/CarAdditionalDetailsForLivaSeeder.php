@@ -545,33 +545,5 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             ]);
         }
     }
-
-    //TODO: add columns to car_quote_requeset_detail table.
-    
-    // rta_transaction_type -> numeric_value
-    // plate_code -> string_value
-    // plate_number -> string_value
-    // traffic_code_number -> string_value
-    // engine_number -> string_value
-    // rta_plate_category -> string_value
-    // vehicle_color -> string_value
-    // plate_color -> string_value
-    // bank_loan -> boolean_value
-    // bank_name -> string_value
-    // first_registration_date -> date_value
-    // policy_effective_date -> date_value
-    // certificate_start_date -> date_value
-    // certificate_end_date -> date_value
     // annual_mileage_estimate -> numeric_value // need to confirm dropdown or text input
-    // driver_first_name -> string_value
-    // driver_last_name -> string_value
-    // driver_dob -> date_value
-    // driver_gender -> string_value
-    // driver_license_number -> string_value
-    // driver_license_issue_place -> string_value
-    // driver_license_issue_date -> date_value
-    // driver_license_expiry_date -> date_value
-    // driver_uae_driving_experience -> numeric_value
-    // home_country_license_issuance -> string_value
-    // home_country_driving_experience -> numeric_value
 }
