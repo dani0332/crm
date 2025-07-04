@@ -23,6 +23,10 @@ const licenseIssuePlaceOptions = computed(() => {
   return useGenerateOptions(lookups.issuance_place, 'code', 'text');
 });
 
+const nationalitiesOptions = computed(() => {
+  return useGenerateOptions(page.props.nationalities, 'code', 'text');
+});
+
 const drivingExperienceOptions = computed(() => {
   const options = [{ value: '0', label: 'No Experience' }]
   
@@ -49,16 +53,21 @@ const drivingExperienceOptions = computed(() => {
       <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
         <!-- Is Insured and Driver Same -->
         <x-field label="Is the Insured and Driver the same?" required>
-          <x-form-group v-model="props.formData.isInsuredAndDriverSame" :rules="[isRequired]">
-            <x-radio value="yes" label="Yes" />
-            <x-radio value="no" label="No" />
-          </x-form-group>
+          <x-select 
+            v-model="props.formData.is_insured_and_driver_same" 
+            :rules="[isRequired]"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 0, label: 'No' }
+            ]"
+            placeholder="Select Is Insured and Driver Same"
+          />
         </x-field>
         
         <!-- Driver Name -->
         <x-field label="Driver First Name" required>
           <x-input 
-            v-model="props.formData.driverFirstName" 
+            v-model="props.formData.driver_first_name" 
             :rules="[isRequired]"
             placeholder="Driver First Name"
             type="text"
@@ -67,7 +76,7 @@ const drivingExperienceOptions = computed(() => {
         
         <x-field label="Driver Last Name" required>
           <x-input 
-            v-model="props.formData.driverLastName" 
+            v-model="props.formData.driver_last_name" 
             :rules="[isRequired]"
             placeholder="Driver Last Name"
             type="text"
@@ -77,7 +86,7 @@ const drivingExperienceOptions = computed(() => {
         <!-- Driver DOB -->
         <x-field label="Driver DOB" required>
           <DatePicker
-            v-model="props.formData.driverDob"
+            v-model="props.formData.driver_dob"
             :rules="[isRequired]"
             placeholder="Driver DOB"
           />
@@ -86,7 +95,7 @@ const drivingExperienceOptions = computed(() => {
         <!-- Driver Gender -->
         <x-field label="Driver Gender" required>
           <x-select 
-            v-model="props.formData.driverGender" 
+            v-model="props.formData.driver_gender" 
             :rules="[isRequired]"
             :options="driverGenderOptions"
             placeholder="Select Driver Gender"
@@ -96,7 +105,7 @@ const drivingExperienceOptions = computed(() => {
         <!-- Driver License Number -->
         <x-field label="Driver License Number" required>
           <x-input 
-            v-model="props.formData.driverLicenseNumber" 
+            v-model="props.formData.driver_license_number" 
             :rules="[isRequired]"
             placeholder="Driver License Number"
             type="text"
@@ -106,7 +115,7 @@ const drivingExperienceOptions = computed(() => {
         <!-- License Issue Place -->
         <x-field label="License Issue Place">
           <x-select 
-            v-model="props.formData.licenseIssuePlace" 
+            v-model="props.formData.license_issue_place" 
             :options="licenseIssuePlaceOptions"
             placeholder="Select License Issue Place"
           />
@@ -115,7 +124,7 @@ const drivingExperienceOptions = computed(() => {
         <!-- License Issue Date -->
         <x-field label="License Issue Date">
           <DatePicker
-            v-model="props.formData.licenseIssueDate"
+            v-model="props.formData.license_issue_date"
             placeholder="License Issue Date"
           />
         </x-field>
@@ -123,7 +132,7 @@ const drivingExperienceOptions = computed(() => {
         <!-- License Expiry Date -->
         <x-field label="License Expiry Date">
           <DatePicker
-            v-model="props.formData.licenseExpiryDate"
+            v-model="props.formData.license_expiry_date"
             placeholder="License Expiry Date"
           />
         </x-field>
@@ -132,7 +141,7 @@ const drivingExperienceOptions = computed(() => {
         <!-- TODO: Required only if 'Driver same as Client?' is NO -->
         <x-field label="UAE Driving Experience" required>
           <x-select 
-            v-model="props.formData.uaeDrivingExperience" 
+            v-model="props.formData.uae_driving_experience" 
             :rules="[isRequired]"
             :options="drivingExperienceOptions"
             placeholder="Select UAE License Years"
@@ -141,18 +150,20 @@ const drivingExperienceOptions = computed(() => {
         
         <!-- Home Country License Issuance -->
         <x-field label="Home Country License Issuance" required>
-          <x-input 
-            v-model="props.formData.homeCountryLicenseIssuance" 
+          <ComboBox
+            :single="true"
+            v-model="props.formData.home_country_license_issuance"
             :rules="[isRequired]"
-            placeholder="License Home Country"
-            type="text"
+            placeholder="Select License Home Country"
+            :options="nationalitiesOptions"
+            class="w-full"
           />
         </x-field>
         
         <!-- Home Country Driving Experience -->
         <x-field label="Home Country Driving Experience" required>
           <x-select 
-            v-model="props.formData.homeCountryDrivingExperience" 
+            v-model="props.formData.home_country_driving_experience" 
             :rules="[isRequired]"
             :options="drivingExperienceOptions"
             placeholder="Select Driver Years Home Country"

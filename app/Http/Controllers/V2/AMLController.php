@@ -441,7 +441,13 @@ class AMLController extends Controller
                 }
             }
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+            if (
+                isset(request()->insurance_provider_code) &&
+                $AMLCheckRequest->quote_type == QuoteTypes::CAR->value &&
+                request()->insurance_provider_code == InsuranceProvidersEnum::RSA
+            ) {
+                app(AMLService::class)->saveCarDetails($AMLCheckRequest, $updateQuote);
+            } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
             }
 
