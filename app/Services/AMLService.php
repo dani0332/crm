@@ -886,9 +886,17 @@ class AMLService
             ->orderBy('created_at', 'asc')->get();
     }
 
-    public function getAMLLookups()
+    public function getAMLLookups($insuranceProviderId = null, $lookupsKeys = [])
     {
         LoggerService::info('fn:getAMLLookups - AMLService');
+
+        if ($insuranceProviderId && ! empty($lookupsKeys)) {
+            return Lookup::whereIn('key', $lookupsKeys)
+                ->where('insurance_provider_id', $insuranceProviderId)
+                ->get()
+                ->groupBy('key')
+            ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
+        }
 
         $lookupsForAML = [
             LookupsEnum::RESIDENT_STATUS,

@@ -10,8 +10,8 @@ const props = defineProps({
   }
 })
 
-// Reactive state
-const isCollapsed = ref(false)
+const page = usePage();
+const lookups = page.props.lookups;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -19,15 +19,9 @@ const driverGenderOptions = computed(() => [
   { value: 'female', label: 'Female' },
 ])
 
-const licenseIssuePlaceOptions = computed(() => [
-  { value: 'abu_dhabi', label: 'Abu Dhabi' },
-  { value: 'dubai', label: 'Dubai' },
-  { value: 'sharjah', label: 'Sharjah' },
-  { value: 'ajman', label: 'Ajman' },
-  { value: 'fujairah', label: 'Fujairah' },
-  { value: 'ras_al_khaimah', label: 'Ras Al Khaimah' },
-  { value: 'umm_al_quwain', label: 'Umm Al Quwain' },
-])
+const licenseIssuePlaceOptions = computed(() => {
+  return useGenerateOptions(lookups.issuance_place, 'code', 'text');
+});
 
 const drivingExperienceOptions = computed(() => {
   const options = [{ value: '0', label: 'No Experience' }]
@@ -41,11 +35,6 @@ const drivingExperienceOptions = computed(() => {
   
   return options
 });
-
-// Methods
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-}
 </script>
 
 <template>
@@ -54,14 +43,9 @@ const toggleCollapse = () => {
       <h3 class="font-semibold text-primary-800 text-lg">
         Additional Driver Details
       </h3>
-      <button @click="toggleCollapse" class="text-gray-400 hover:text-gray-600">
-        <svg class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': isCollapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
     </div>
     
-    <div v-show="!isCollapsed">
+    <div>
       <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
         <!-- Is Insured and Driver Same -->
         <x-field label="Is the Insured and Driver the same?" required>

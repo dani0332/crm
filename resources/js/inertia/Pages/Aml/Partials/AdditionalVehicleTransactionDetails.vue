@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue'
 const { isRequired } = useRules();
 
-// Props
 const props = defineProps({
   formData: {
     type: Object,
@@ -10,52 +9,34 @@ const props = defineProps({
   }
 })
 
-// Reactive state
-const isCollapsed = ref(false)
+const page = usePage();
+const lookups = page.props.lookups;
 
 // Computed options for dropdowns
-const rtaTransactionTypeOptions = computed(() => [
-  { value: 'new_registration', label: 'New Registration' },
-  { value: 'renewal', label: 'Renewal' },
-  { value: 'transfer', label: 'Transfer' },
-])
+const rtaTransactionTypeOptions = computed(() => {
+  return useGenerateOptions(lookups.rta_transaction_type, 'code', 'text');
+});
 
-const rtaPlateCategoryOptions = computed(() => [
-  { value: 'private', label: 'Private' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'government', label: 'Government' },
-])
 
-const vehicleColorOptions = computed(() => [
-  { value: 'green', label: 'Green' },
-  { value: 'white', label: 'White' },
-  { value: 'black', label: 'Black' },
-  { value: 'blue', label: 'Blue' },
-  { value: 'red', label: 'Red' },
-  { value: 'silver', label: 'Silver' },
-  { value: 'gray', label: 'Gray' },
-])
+const rtaPlateCategoryOptions = computed(() => {
+  return useGenerateOptions(lookups.rta_plate_category, 'code', 'text');
+});
 
-const plateColorOptions = computed(() => [
-  { value: 'alloy', label: 'Alloy' },
-  { value: 'white', label: 'White' },
-  { value: 'yellow', label: 'Yellow' },
-  { value: 'green', label: 'Green' },
-])
+const vehicleColorOptions = computed(() => {
+  return useGenerateOptions(lookups.vehicle_color, 'code', 'text');
+});
 
-const bankNameOptions = computed(() => [
-  { value: 'emirates_nbd', label: 'Emirates NBD' },
-  { value: 'adcb', label: 'ADCB' },
-  { value: 'fab', label: 'FAB' },
-  { value: 'rakbank', label: 'RAKBANK' },
-  { value: 'mashreq', label: 'Mashreq Bank' },
-  { value: 'cbd', label: 'CBD' },
-])
+const plateColorOptions = computed(() => {
+  return useGenerateOptions(lookups.vehicle_color, 'code', 'text');
+});
 
-// Methods
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-}
+const bankNameOptions = computed(() => {
+  return useGenerateOptions(lookups.bank_name, 'code', 'text');
+});
+
+const annualMileageEstimateOptions = computed(() => {
+  return useGenerateOptions(lookups.annual_mileage_estimate, 'code', 'text');
+});
 </script>
 
 <template>
@@ -64,14 +45,9 @@ const toggleCollapse = () => {
       <h3 class="font-semibold text-primary-800 text-lg">
         Additional Vehicle and Transaction Details
       </h3>
-      <button @click="toggleCollapse" class="text-gray-400 hover:text-gray-600">
-        <svg class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': isCollapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
     </div>
     
-    <div v-show="!isCollapsed">
+    <div>
       <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
       <!-- Row 1 -->
         <x-field label="RTA Transaction Type" required>
@@ -214,11 +190,11 @@ const toggleCollapse = () => {
       
       <!-- Row 4 - Mileage -->
         <x-field label="Annual Mileage Estimate" required>
-          <x-input 
+          <x-select 
             v-model="props.formData.annualMileageEstimate" 
             :rules="[isRequired]"
-            placeholder="Mileage"
-            type="number"
+            :options="annualMileageEstimateOptions"
+            placeholder="Select Annual Mileage Estimate"
           />
         </x-field>
       </dl>
