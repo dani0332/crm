@@ -495,9 +495,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
                     if ($index == $insurerPaymentLinkIndex) {
-                        $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink
-                            && $request->sendFTCEmail
-                            && ($splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link || $isRenewalLead);
+                        $sendFTCEmail = ($splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink
+                            && (
+                                $isRenewalLead // Renewal leads with InsurerPaymentLink always send FTC email
+                                ||
+                                ($request->sendFTCEmail && ($splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link)) // Regular leads need both conditions
+                            ));
                     }
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
