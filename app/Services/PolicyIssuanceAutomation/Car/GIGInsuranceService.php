@@ -51,7 +51,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $this->className = 'GIGInsuranceService';
         $this->partnerId = config('constants.GIG_PARTNER_ID');
         $this->partnerReferenceNo = config('constants.GIG_PARTNER_REFERENCE_NO');
-        $this->baseUrl = config('constants.GIG_API_BASE_URL', '').'/dev/CarProductAPI/CarAPI.svc/API/Car';
+        $this->baseUrl = config('constants.GIG_API_BASE_URL', '').'/apis/gulf-motor-v3-vs/motor/v3/quotes';
         $this->authParam = [
             'Authorization' => config('constants.GIG_AUTHORIZATION_TOKEN'),
             'Ocp-Apim-Subscription-Key' => config('constants.GIG_SUBSCRIPTION_KEY'),

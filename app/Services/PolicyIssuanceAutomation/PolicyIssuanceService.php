@@ -3,6 +3,7 @@
 namespace App\Services\PolicyIssuanceAutomation;
 
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
@@ -10,10 +11,13 @@ use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
 class PolicyIssuanceService
 {
+    use GenericQueriesAllLobs;
+
     private string $className = 'policyIssuanceService';
     public function __construct() {}
 
@@ -204,6 +208,29 @@ class PolicyIssuanceService
         $insurerPolicyAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Completed processing for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
+    }
+
+    public function processPolicyIssuanceAutomation($quoteType, $quoteId)
+    {
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
+
+        $payment = $quote->payments->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        if ($insuranceProvider) {
+            $validationChecks = app(PolicyIssuancePreChecksService::class)->validationChecks($insuranceProvider, $quoteType, $quote);
+            if (! $validationChecks['status']) {
+                return $validationChecks;
+            }
+
+            $insuranceProviderAutomation = $this->init($quoteType, $insuranceProvider->code);
+            if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
+                $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
+            }
+        }
+
+        return ['status' => true, 'message' => 'Policy issuance automation triggered successfully'];
     }
 
 }
