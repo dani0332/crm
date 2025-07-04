@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -56,6 +57,12 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         try {
             // Instantiate the export class with constructor parameters if needed
             $exportInstance = $this->instantiateExportClass();
+
+            if(empty($this->requestParams['user']) && !empty($this->requestParams['user_id'])){
+                $this->requestParams['user'] = User::with(['permissions', 'roles.permissions'])->find($this->requestParams['user_id']);
+            }else{
+                logger()->error(__CLASS__." User Not Found");
+            }
 
             // Process CSV and send email
             $exportInstance->sendEmailWithCSVAttachment(

@@ -329,7 +329,7 @@ trait QuoteModelTrait
     public static function formattedPcQualifiedCase(): string
     {
         return "
-            CASE 
+            CASE
                 WHEN pc_qualified = 1 THEN 'Yes'
                 ELSE 'No'
             END
@@ -356,9 +356,8 @@ trait QuoteModelTrait
             return $segment->label();
         }
 
-        // Fetch all relevant tags in one query
-        $tagNames = QuoteTag::where('quote_uuid', $lead->uuid)
-            ->where('quote_type_id', $quoteTypeId)
+        // Use preloaded relationship instead of database query
+        $tagNames = collect($lead->quoteTags ?? [])
             ->pluck('name')
             ->map(fn ($name) => strtolower($name))
             ->toArray();
