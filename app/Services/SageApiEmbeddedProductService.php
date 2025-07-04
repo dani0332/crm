@@ -54,7 +54,7 @@ class SageApiEmbeddedProductService
         $epTransaction = EmbeddedTransaction::where('id', $request['epTransactionId'])->first();
 
         $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request['modelType'], $payment, $quote, $paymentSplits);
-        $sageRequest->userId = $user->id;
+        $sageRequest->userId = $user?->id;
         $sageRequest->insurerID = $request['insuranceProviderId'];
         $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST;
         $sageRequest->epTransactionId = $request['epTransactionId'];
