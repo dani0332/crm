@@ -531,7 +531,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             ['60094', 'ali-sons-holdings-llc', 'Ali & Sons Holdings LLC'],
             ['51064', 'united-arab-bank', 'United Arab Bank'],
             ['51106', 'al-futtaim-motors', 'Al Futtaim Motors'],
-            ['51114', 'general-navigation-and-commerce-company-llc', 'General Navigation And Commerce Company Llc']
+            ['51114', 'general-navigation-and-commerce-company-llc', 'General Navigation And Commerce Company Llc'],
         ];
 
         foreach ($banks as $bank) {

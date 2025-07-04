@@ -896,7 +896,7 @@ class AMLService
                 ->where('insurance_provider_id', $insuranceProviderId)
                 ->get()
                 ->groupBy('key')
-            ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
+                ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
         }
 
         $lookupsForAML = [
