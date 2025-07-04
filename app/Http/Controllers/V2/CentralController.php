@@ -362,18 +362,19 @@ class CentralController extends Controller
                 ['is_selected', 1],
                 ['payment_status_id', PaymentStatusEnum::AUTHORISED],
             ])
-            ->whereHas('product.embeddedProduct', function ($query) {
-                $query->where('product_category', EpCategoryEnum::BOLT_ON)
-                    ->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes() ?? []);
-            })->select('code', 'payment_status_id', 'policy_status')->get();
+                ->whereHas('product.embeddedProduct', function ($query) {
+                    $query->where('product_category', EpCategoryEnum::BOLT_ON)
+                        ->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes() ?? []);
+                })->select('code', 'payment_status_id', 'policy_status')->get();
 
             if ($captureableEmbeddedTransactions->isNotEmpty()) {
                 try {
                     EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType));
 
-                    LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin', 
+                    LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
                         extra: $captureableEmbeddedTransactions->toArray()
                     );
+
                     return response()->json(['message' => 'The embedded product payment is being captured, once done, the booking process will begin.'], 200);
 
                 } catch (Exception $e) {

@@ -251,9 +251,9 @@ class SukoonMedexService
         }
 
         LoggerService::info("{$this->logPrefix} Finish handleJobSuccess: QuoteStatusId: {$quoteStatusId}, EpPolicyStatus: {$epPolicyStatus}", extra: ['response' => $response]);
+
         return $response;
     }
-
 
     private function callSageBookingProcess()
     {
@@ -279,9 +279,8 @@ class SukoonMedexService
         return $createSageProcessResponse;
     }
 
-
-    private function scheduleSageBookingForSukoonEp() 
-    {        
+    private function scheduleSageBookingForSukoonEp()
+    {
         $request = [
             'epTransactionId' => $this->transaction->id, // Embedded transaction id
             'insuranceProviderId' => $this->providerId, // embedded product's provider id

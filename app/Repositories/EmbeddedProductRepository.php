@@ -313,18 +313,18 @@ class EmbeddedProductRepository extends BaseRepository
 
     /**
      * canSendSukoonMedexDocuments - this is only used for Policy Issued status
-     * 
-     * @param mixed $productCategory
-     * @param mixed $quoteStatusId
-     * @param mixed $transaction
+     *
+     * @param  mixed  $productCategory
+     * @param  mixed  $quoteStatusId
+     * @param  mixed  $transaction
      * @return void
      */
     private function canSendSukoonMedexDocuments($productCategory, $quoteStatusId, $transaction)
     {
         if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            if ($productCategory == EpCategoryEnum::BOLT_ON && 
-                $quoteStatusId == QuoteStatusEnum::PolicyIssued && 
-                in_array($transaction->first()->policy_status, [EmbeddedTransactionEnum::STATUS_BOOKED, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE]  )) {
+            if ($productCategory == EpCategoryEnum::BOLT_ON &&
+                $quoteStatusId == QuoteStatusEnum::PolicyIssued &&
+                in_array($transaction->first()->policy_status, [EmbeddedTransactionEnum::STATUS_BOOKED, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE])) {
                 return true;
             }
         }
@@ -499,7 +499,7 @@ class EmbeddedProductRepository extends BaseRepository
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
 
-        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction) 
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)
             || ($isSukoonMedex && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
 
         if (! $canSendDocuments) {
