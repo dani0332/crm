@@ -65,6 +65,7 @@ const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
 const modelClass = 'App\\Models\\LifeQuote';
+const personalModelClass = 'App\\Models\\PersonalQuote';
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const quoteStatusEnum = page.props.quoteStatuses;
@@ -2291,7 +2292,7 @@ const totalAnnualPrice = computed(() => {
       "
       :quote="quote"
       quoteType="life"
-      :modelClass="modelClass"
+      :modelClass="personalModelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
