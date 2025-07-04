@@ -190,7 +190,10 @@ watch(
 // We can recalculate vat amount if the vat amount is not set or if the vat amount is 0
 // We can recalculate on page load if the vat amount is 0
 // Second we can recalculate vat when the price vat applicable changes
-const calculateVatAmount = (isVatAmountRecalculated = false, isInitialLoad = false) => {
+const calculateVatAmount = (
+  isVatAmountRecalculated = false,
+  isInitialLoad = false,
+) => {
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
 
@@ -543,11 +546,13 @@ const calculateTotalPrice = () => {
   ).toFixed(2);
   // Ensure priceVatNotApplicable is always a number, default to 0 if null/empty
   const priceVatNotApplicable = useRoundIt(
-    Number(policyDetailsForm.price_vat_notapplicable) || 0
+    Number(policyDetailsForm.price_vat_notapplicable) || 0,
   ).toFixed(2);
   // Add priceVatNotApplicable to amountWithVat only if greater than zero
   const amountWithVat = useRoundIt(
-    Number(vat) + Number(priceVatApplicable) + (Number(priceVatNotApplicable) > 0 ? Number(priceVatNotApplicable) : 0)
+    Number(vat) +
+      Number(priceVatApplicable) +
+      (Number(priceVatNotApplicable) > 0 ? Number(priceVatNotApplicable) : 0),
   ).toFixed(2);
   policyDetailsForm.amount_with_vat = amountWithVat;
   policyDetailsForm.vat = vat;
