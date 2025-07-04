@@ -100,6 +100,7 @@ class TravelQuoteService extends BaseService
             'tp.text AS plan_id_text',
             // 'tp.id as plan_new_id_text',
             'tpip.text AS travel_plan_provider_text',
+            'tpip.code AS plan_provider_code',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
