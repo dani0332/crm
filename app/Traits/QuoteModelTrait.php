@@ -356,9 +356,9 @@ trait QuoteModelTrait
             return $segment->label();
         }
 
-    // Strategy 1: Use preloaded relationship if available
-    // Strategy 2: Fallback to original database query
-    $tagNames = $this->getTagNames($lead, $quoteTypeId);
+        // Strategy 1: Use preloaded relationship if available
+        // Strategy 2: Fallback to original database query
+        $tagNames = $this->getTagNames($lead, $quoteTypeId);
 
         $leadSource = $lead->source;
 
@@ -414,20 +414,22 @@ trait QuoteModelTrait
     {
         // Strategy 1: Use preloaded relationship if available (optimized)
         if (method_exists($lead, 'quoteTags') && $lead->relationLoaded('quoteTags')) {
-            info("getTagNames: using preloaded relationship");
+            info('getTagNames: using preloaded relationship');
+
             return collect($lead->quoteTags ?? [])
                 ->pluck('name')
-                ->map(fn($name) => strtolower($name))
+                ->map(fn ($name) => strtolower($name))
                 ->toArray();
 
         }
 
-        info("getTagNames: using original database");
+        info('getTagNames: using original database');
+
         // Strategy 2: Fallback to original database query (backward compatible)
         return QuoteTag::where('quote_uuid', $lead->uuid)
             ->where('quote_type_id', $quoteTypeId)
             ->pluck('name')
-            ->map(fn($name) => strtolower($name))
+            ->map(fn ($name) => strtolower($name))
             ->toArray();
     }
 }
