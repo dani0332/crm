@@ -111,6 +111,9 @@ class LifeEmailService extends BaseService
                 LoggerService::info("sendEmailAdvanceBirthdayWishToCustomer - Error triggering event having response status code: {$response?->status_code}");
             }
         }
+        else {
+            LoggerService::info(self::class." - sendEmailAdvanceBirthdayWishToCustomer - Date of birth is not set for quote: {$personalQuote->uuid}");
+        }
     }
 
     public function sendEmailBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData, $workflowUrl)
@@ -150,6 +153,9 @@ class LifeEmailService extends BaseService
             } else {
                 LoggerService::info("sendEmailBirthdayWishToCustomer - Error triggering event having response status code: {$response?->status_code}");
             }
+        }
+        else {
+            LoggerService::info(self::class." - sendEmailBirthdayWishToCustomer - Date of birth is not set for quote: {$personalQuote->uuid}");
         }
     }
 
