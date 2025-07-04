@@ -356,9 +356,9 @@ trait QuoteModelTrait
             return $segment->label();
         }
 
-    // Strategy 1: Use preloaded relationship if available
-    // Strategy 2: Fallback to original database query
-    $tagNames = $this->getTagNames($lead, $quoteTypeId);
+        // Strategy 1: Use preloaded relationship if available
+        // Strategy 2: Fallback to original database query
+        $tagNames = $this->getTagNames($lead, $quoteTypeId);
 
         $leadSource = $lead->source;
 
