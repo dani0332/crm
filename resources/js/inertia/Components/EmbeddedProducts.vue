@@ -263,7 +263,7 @@ const epTable = reactive({
       value: 'payment_status',
     },
     {
-      text: 'Policy Status',
+      text: 'Api Status',
       value: 'policy_status',
     },
     {
