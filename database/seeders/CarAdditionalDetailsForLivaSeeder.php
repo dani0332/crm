@@ -35,6 +35,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         $this->rtaPlateCategory();
         $this->vehicleColor();
         $this->bankName();
+        $this->annualMileageEstimate();
     }
 
     private function rtaTransactionType()
@@ -546,5 +547,73 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             ]);
         }
     }
-    // annual_mileage_estimate -> numeric_value // need to confirm dropdown or text input
+
+    private function annualMileageEstimate()
+    {
+        Lookup::createOrFirst([
+            'quote_type_id' => QuoteTypeId::Car,
+            'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            'code' => '1',
+            'text' => 'Less than 8,000 KM',
+            'insurance_provider_id' => $this->insuranceProviderId,
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::createOrFirst([
+            'quote_type_id' => QuoteTypeId::Car,
+            'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            'code' => '2',
+            'text' => '8,000- 20,000 KM',
+            'insurance_provider_id' => $this->insuranceProviderId,
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::createOrFirst([
+            'quote_type_id' => QuoteTypeId::Car,
+            'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            'code' => '3',
+            'text' => '20,000- 40,000 KM',
+            'insurance_provider_id' => $this->insuranceProviderId,
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::createOrFirst([
+            'quote_type_id' => QuoteTypeId::Car,
+            'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            'code' => '4',
+            'text' => '40,000- 60,000 KM',
+            'insurance_provider_id' => $this->insuranceProviderId,
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::createOrFirst([
+            'quote_type_id' => QuoteTypeId::Car,
+            'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            'code' => '5',
+            'text' => '60,000 -100,000 KM',
+            'insurance_provider_id' => $this->insuranceProviderId,
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::createOrFirst([
+            'quote_type_id' => QuoteTypeId::Car,
+            'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            'code' => '6',
+            'text' => '> 100,000 KM',
+            'insurance_provider_id' => $this->insuranceProviderId,
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 }

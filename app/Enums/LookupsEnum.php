@@ -57,4 +57,5 @@ enum LookupsEnum: string
     case RTA_PLATE_CATEGORY = 'rta-plate-category';
     case VEHICLE_COLOR = 'vehicle-color';
     case BANK_NAME = 'bank-name';
+    case ANNUAL_MILEAGE_ESTIMATE = 'annual-mileage-estimate';
 }
