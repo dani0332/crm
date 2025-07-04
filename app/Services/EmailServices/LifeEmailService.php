@@ -91,6 +91,7 @@ class LifeEmailService extends BaseService
             // Check if the notification date is in the future
             if ($notifyDate->isPast()) {
                 LoggerService::info(self::class." - sendEmailAdvanceBirthdayWishToCustomer - Notification date is in the past for quote: {$personalQuote->uuid}, notify date: {$notifyDate->format('Y-m-d')}");
+
                 return;
             }
             $notifyBirthdayDate = [
@@ -131,6 +132,7 @@ class LifeEmailService extends BaseService
             // Check if the notification date is in the future
             if ($birthday->isPast()) {
                 LoggerService::info(self::class." - sendEmailBirthdayWishToCustomer - Notification date is in the past for quote: {$personalQuote->uuid}, notify date: {$birthday->format('Y-m-d')}");
+
                 return;
             }
 
