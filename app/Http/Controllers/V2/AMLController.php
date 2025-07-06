@@ -60,6 +60,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -863,6 +864,10 @@ class AMLController extends Controller
 
     public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
     {
+
+        app(LivaInsuranceService::class)->updateQuoteRequest('test');
+
+        dd('working');
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');

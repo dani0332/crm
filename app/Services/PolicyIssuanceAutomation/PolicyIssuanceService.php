@@ -23,6 +23,10 @@ class PolicyIssuanceService
                 InsuranceProvidersEnum::ALNC => new AllianceInsuranceService,
                 default => null,
             },
+            QuoteTypes::CAR->value => match ($insurerCode) {
+                // InsuranceProvidersEnum::LIVAN => new LiveIss,
+                default => null,
+            },
             default => null,
         };
     }
