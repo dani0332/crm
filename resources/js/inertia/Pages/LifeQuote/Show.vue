@@ -882,7 +882,7 @@ const confirmSendEmail = () => {
   const last_name = page.props.quote.last_name || '';
 };
 
-const selectPlan = (planId, quoteId, version, planUuid) => {
+const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
   const loaderKey = `${planId}-${version}`;
   selectPlanLoader.value[planUuid] = true;
   axios
@@ -890,6 +890,7 @@ const selectPlan = (planId, quoteId, version, planUuid) => {
       planId: planId,
       quoteId: quoteId,
       version: version,
+      isUW: isUW,
     })
     .then(response => {
       selectPlanLoader.value[planUuid] = false;
@@ -2061,6 +2062,7 @@ const totalAnnualPrice = computed(() => {
                           page.props.quote.uuid,
                           item.version,
                           item._id,
+                          item.isUnderwritten,
                         )
                       "
                     >
