@@ -520,4 +520,10 @@ class CarQuote extends BaseModel
         )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
             ->latest('customer_insured.updated_at');
     }
+
+    public function carQuotePlanDetail()
+    {
+        return $this->hasOne(CarQuotePlanDetail::class, 'quote_uuid', 'uuid')
+            ->where('plan_id', $this->plan_id);
+    }
 }

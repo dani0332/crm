@@ -52,85 +52,132 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function updateQuoteRequest($quote)
     {
+        LoggerService::startQuoteLogging($quote->code, LoggerFeatureEnum::POLICY_AUTOMATION);
+
+        $livaMapping = app(LivaInsurancePayloadMapping::class);
+
+        $nationalityId = $livaMapping->nationalityList($quote->latestInsured->nationality->text);
+        if (! $nationalityId) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Nationality not found on LIVA', extra: [
+                'nationality' => $quote->latestInsured->nationality->text,
+            ]);
+        }
+
+        $homeCountryLicenseIssuance = $livaMapping->nationalityList($quote?->carQuoteRequestDetail?->home_country_license_issuance);
+        if (! $homeCountryLicenseIssuance) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Home Country License Issuance nationality not found on LIVA', extra: [
+                'nationality' => $quote?->carQuoteRequestDetail?->home_country_license_issuance,
+            ]);
+        }
+
+        $vehicleMakeId = $livaMapping->vehicleMakeList(strtoupper($quote?->carMake?->text));
+        if (! $vehicleMakeId) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Vehicle Make not found on LIVA', extra: [
+                'vehicleMake' => strtoupper($quote?->carMake?->text),
+            ]);
+        }
+
+        $vehicleModelList = $this->getVehicleModelId($vehicleMakeId);
+
+        if (empty($vehicleModelList) || ! isset($vehicleModelList[strtoupper($quote?->carModel?->text)])) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Vehicle Model not found on LIVA', extra: [
+                'vehicleModel' => $quote?->carModel?->text,
+                'vehicleMake' => $quote?->carMake?->text,
+            ]);
+        }
+
+        $vehicleModelId = $vehicleModelList[strtoupper($quote?->carModel?->text)];
+
+        $vehicleVariants = $this->getVehicleVariants($quote->latestInsured->dob, $quote->mobile_no, $vehicleMakeId, $vehicleModelId, $quote->year_of_manufacture, $quote->code);
+
+        $closestVariant = $this->matchClosestVehicleVariant($vehicleVariants, [
+            'cc' => $quote?->carModelDetail?->cubic_capacity,
+            'noOfDoors' => $quote?->carModelDetail?->no_of_doors,
+            'noOfCyl' => $quote?->cylinder,
+            'bodyType' => $quote?->vehicleType->text,
+            'trim' => $quote?->carQuoteRequestDetail?->insurer_trim,
+        ]);
+
         $endPoint = 'quote/update/v2';
         $payload = [
             'QuotationRequest' => [
                 'CustomerDetails' => [
                     'Gender' => 'M',
-                    'DOB' => "1993-01-01 04:00:00",
-                    'Nationality' => "29",
-                    'MobileNo' => "898989899",
-                    'EmailId' => "hitesh.motwani@afia.ae",
-                    'FirstName' => "Hitesh",
-                    'LastName' => "Motwani",
-                    'NationalId' => "898-8888-8988888-8",
+                    'DOB' => $quote->latestInsured->dob.' 00:00:00',
+                    'Nationality' => $nationalityId,
+                    'MobileNo' => $quote->mobile_no,
+                    'EmailId' => $quote->email,
+                    'FirstName' => $quote->latestInsured->first_name,
+                    'LastName' => $quote->latestInsured->last_name,
+                    'NationalId' => $quote->id_number,
                     'CustomerCategory' => 1,
                 ], 
                 'VehicleDetails' => [
-                    'CC' => "2400",
-                    'PlaceOfRegn' => "2",
+                    'CC' => $quote?->carModelDetail?->cubic_capacity,
+                    'PlaceOfRegn' => $quote->year_of_first_registration,
                     'NcbYears' => 99,
-                    'DateOfRegn' => "2016-09-01 00:00:00",
-                    'YearOfManf' => "2016",
-                    'InsuredValue' => 16094,
-                    'VehicleDescCode' => "86281",
-                    'VehicleDesc' => "GL 2.0 L 4 Cyls SUV 5 DOORS 5 SEATS",
-                    'Seats' => 4,
-                    'UseCode' => "2",
-                    'BodyType' => "10",
-                    'MakeCode' => "36",
-                    'ModelCode' => "17",
-                    'NoOfCyl' => 4,
-                    'EstimatedAnnualMileage' => "1",
-                    'VehicleSpecification' => "1",
-                    'vehHP' => 999,
-                    'NoOfDoors' => 5,
-                    'DrivenWheel' => "ALL WHEEL DRIVE",
-                    'modelSpecification' => "GL",
-                    'ColorCode' => "221",
-                    'RegistrationType' => "1",
-                    'RtaTransactionType' => "40",
-                    'RegnNoText' => "Y",
-                    'RegnNoNumber' => "5656",
-                    'ChassisNo' => "TMAJ381B2GJ118019",
-                    'EngineNo' => "G4KJFA742720",
-                    'TcfNo' => "13146379",
+                    'DateOfRegn' => $quote?->carQuoteRequestDetail?->first_registration_date ? ($quote?->carQuoteRequestDetail?->first_registration_date.' 00:00:00') : '',
+                    'YearOfManf' => $quote?->year_of_manufacture,
+                    'InsuredValue' => $quote?->car_value,
+                    'VehicleDescCode' => $closestVariant->VehicleDescCode,
+                    'VehicleDesc' => $quote?->carQuoteRequestDetail?->insurer_trim,
+                    'Seats' => $quote?->seat_capacity,
+                    'UseCode' => "2", // TODO: need to ask
+                    'BodyType' => $closestVariant->BodyTypeCode,
+                    'MakeCode' => $vehicleMakeId,
+                    'ModelCode' => $vehicleModelId,
+                    'NoOfCyl' => $quote?->cylinder,
+                    'EstimatedAnnualMileage' => $quote?->carQuoteRequestDetail?->annual_mileage_estimate,
+                    'VehicleSpecification' => $quote?->is_gcc_standard,
+                    'vehHP' => $closestVariant->HP,
+                    'NoOfDoors' => $quote?->carModelDetail?->no_of_doors,
+                    'DrivenWheel' => $closestVariant->DrivenWheel,
+                    'modelSpecification' => $closestVariant->ModelSpecification,
+                    'ColorCode' => $quote?->carQuoteRequestDetail?->vehicle_color,
+                    'RegistrationType' => "1", //TODO: need to ask, no UI available
+                    'RtaTransactionType' => $quote?->carQuoteRequestDetail?->rta_transaction_type,
+                    'RegnNoText' => $quote->carQuoteRequestDetail?->plate_code,
+                    'RegnNoNumber' => $quote->carQuoteRequestDetail?->plate_number,
+                    'ChassisNo' => $quote->carQuoteRequestDetail?->chassis_number,
+                    'EngineNo' => $quote->carQuoteRequestDetail?->engine_number,
+                    'TcfNo' => $quote->carQuoteRequestDetail?->traffic_code_number,
                 ],
                 'TransactionDetails' => [
-                    'PolicyTypeCode' => "1",
-                    'EffectiveDate' => "2025-01-06 21:09:00",
+                    'PolicyTypeCode' => "1", // TODO: need to ask
+                    'EffectiveDate' => "2025-01-06 21:09:00", // TODO: need to ask
                     'SchemeCode' => "13",
-                    'TariffCode' => "17",
-                    'PartnerTrnReferenceNumber' => "123456",
+                    'TariffCode' => "17", // TODO: need to ask
+                    'PartnerTrnReferenceNumber' => $quote->code,
                 ],
                 'OptionalCovers' => [ // multiple optional covers can be added here
                     [
                         'CoverIncluded' => true,
-                        'CoverMappingCode' => "2-1-0",
+                        'CoverMappingCode' => "2-1-0", // TODO: need to ask
                     ],
                 ],
-                'DriverDetails' => [ // TODO: also should be multiple array.
+                'DriverDetails' => [
                     [
-                        'DriverName' => "Bala R",
-                        'MainDriverInd' => "Y",
-                        'DriverDOB' => "1983-01-01 00:00:00",
-                        'DriverGender' => "M",
-                        'FirstDrvLicCountry' => "4",
-                        'LocalLicense' => "1",
-                        'OtherLicense' => "0",
-                        'LicenseNo' => null,
+                        'DriverName' => $quote?->latestInsured->first_name.' '.$quote?->latestInsured->last_name,
+                        'MainDriverInd' => $quote?->carQuoteRequestDetail?->is_insured_and_driver_same ? "Y" : "N",
+                        'DriverDOB' => $quote?->carQuoteRequestDetail?->driver_dob.' 00:00:00',
+                        'DriverGender' => str_starts_with(strtoupper($quote?->carQuoteRequestDetail?->driver_gender ?? ''), 'M') ? "M" : "F",
+                        'FirstDrvLicCountry' => $homeCountryLicenseIssuance,
+                        'LocalLicense' => $quote?->carQuoteRequestDetail?->driver_uae_driving_experience,
+                        'OtherLicense' => $quote?->carQuoteRequestDetail?->home_country_driving_experience,
+                        'LicenseNo' => $quote?->carQuoteRequestDetail?->driver_license_number,
                     ],
                 ],
-                'QuotationNo' => "3496810",
-                'PolicyId' => "5157349",
+                'QuotationNo' => $quote?->carQuotePlanDetail?->insurer_quote_no,
+                'PolicyId' => $quote?->carQuotePlanDetail?->insurer_quote_no,
                 'EndtId' => "0",
                 'ProposalForm' => false,
-                'UserComments' => "Create Quote Request",
+                'UserComments' => "Update Quote Request",
             ]
         ];
 
+
         $response = $this->livaHttpCall($endPoint, $payload);
-        // dd($response->object());
+        dd($response->object());
 
         return $response;
     }
@@ -149,6 +196,55 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $response = $this->livaHttpCall($endPoint, $payload);
 
         return $response;
+    }
+
+    public function getVehicleModelId($makeCode)
+    {
+        $payload = [
+            'MDRequest' => [
+                'dropdowns' => [
+                    'dropdown-name' => 'getVehicleModelListFromMakePartner',
+                    'dropdown-criteria' => [
+                        [
+                            'criteria-name' => 'makeCode',
+                            'criteria-value' => $makeCode,
+                        ],
+                        [
+                            'criteria-name' => 'partnerID',
+                            'criteria-value' => config('constants.LIVA_PARENT_ID'),
+                        ],
+                        [
+                            'criteria-name' => 'schemeCode',
+                            'criteria-value' => "13",
+                        ],
+                    ]
+                ]
+            ]
+        ];
+
+        $livaMapping = $this->livaHttpCall('v2/masterservices', $payload);
+
+        return collect($livaMapping->object()->getVehicleModelListFromMake->items)
+            ->pluck('value', 'name')
+            ->mapWithKeys(fn($value, $key) => [strtoupper(trim($key)) => $value]);
+    }
+
+    public function getVehicleVariants($dob, $mobileNo, $makeCode, $modelCode, $modelYear, $refId)
+    {
+        $payload = [
+            'VehicleVariantsRequest' => [
+                'DOB' => $dob.' 00:00:00',
+                'MobileNo' => $mobileNo,
+                'MakeCode' => (int) $makeCode,
+                'ModelCode' => (int) $modelCode,
+                'ModelYear' => (int) $modelYear,
+                'PartnerTrnReferenceNumber' => $refId,
+            ]
+        ];
+
+        $livaMapping = $this->livaHttpCall('vehicle/variants/v2', $payload);
+
+        return collect($livaMapping->object()->VehicleVariantsResponse->Variants);
     }
 
     public function createPolicyIssuanceSchedule($quote, $insurer)
@@ -377,4 +473,127 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         return $response;
     } */
+
+    private function matchClosestVehicleVariant($vehicleVariants, $searchCriteria)
+    {
+        if (empty($vehicleVariants)) {
+            return null;
+        }
+
+        $closestVariant = null;
+        $highestScore = 0;
+
+        foreach ($vehicleVariants as $variant) {
+            $score = $this->calculateVariantMatchScore($variant, $searchCriteria);
+            
+            if ($score > $highestScore) {
+                $highestScore = $score;
+                $closestVariant = $variant;
+            }
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Best match found with score: '.$highestScore, extra: [
+            'variant' => $closestVariant,
+            'criteria' => $searchCriteria
+        ]);
+
+        return $closestVariant;
+    }
+
+    private function calculateVariantMatchScore($variant, $searchCriteria): float
+    {
+        $score = 0;
+        $maxScore = 0;
+
+        // CC (Engine Capacity) - Weight: 30%
+        if (isset($searchCriteria['cc']) && $searchCriteria['cc'] !== null) {
+            $ccScore = $this->calculateNumericScore($variant->CC ?? 0, $searchCriteria['cc']);
+            $score += $ccScore * 0.3;
+        }
+        $maxScore += 0.3;
+
+        // Number of Cylinders - Weight: 20%
+        if (isset($searchCriteria['noOfCyl']) && $searchCriteria['noOfCyl'] !== null) {
+            $cylScore = $this->calculateNumericScore($variant->NoOfCyl ?? 0, $searchCriteria['noOfCyl']);
+            $score += $cylScore * 0.2;
+        }
+        $maxScore += 0.2;
+
+        // Number of Doors - Weight: 20%
+        if (isset($searchCriteria['noOfDoors']) && $searchCriteria['noOfDoors'] !== null) {
+            $doorScore = $this->calculateNumericScore($variant->NoOfDoors ?? 0, $searchCriteria['noOfDoors']);
+            $score += $doorScore * 0.2;
+        }
+        $maxScore += 0.2;
+
+        // Body Type - Weight: 20%
+        if (isset($searchCriteria['bodyType']) && $searchCriteria['bodyType'] !== null) {
+            $bodyTypeScore = $this->calculateStringScore($variant->BodyType ?? '', $searchCriteria['bodyType']);
+            $score += $bodyTypeScore * 0.2;
+        }
+        $maxScore += 0.2;
+
+        // Variant Name - Weight: 10%
+        if (isset($searchCriteria['trim']) && $searchCriteria['trim'] !== null) {
+            $nameScore = $this->calculateStringScore($variant->ModelSpecification ?? '', $searchCriteria['trim']);
+            $score += $nameScore * 0.1;
+        }
+        $maxScore += 0.1;
+
+        // Normalize score to 0-100 range
+        return $maxScore > 0 ? ($score / $maxScore) * 100 : 0;
+    }
+
+    private function calculateNumericScore($value1, $value2): float
+    {
+        $val1 = (float) $value1;
+        $val2 = (float) $value2;
+
+        if ($val1 == $val2) {
+            return 1.0; // Perfect match
+        }
+
+        if ($val1 == 0 || $val2 == 0) {
+            return 0.0; // No match if one is zero
+        }
+
+        $difference = abs($val1 - $val2);
+        $average = ($val1 + $val2) / 2;
+        $percentageDifference = ($difference / $average) * 100;
+
+        // Return score based on percentage difference
+        return match (true) {
+            $percentageDifference <= 5 => 0.95,   // Very close
+            $percentageDifference <= 10 => 0.85,  // Close
+            $percentageDifference <= 20 => 0.70,  // Moderate
+            $percentageDifference <= 30 => 0.50,  // Fair
+            $percentageDifference <= 50 => 0.30,  // Poor
+            default => 0.10                       // Very poor
+        };
+    }
+
+    private function calculateStringScore($string1, $string2): float
+    {
+        $str1 = strtolower(trim($string1));
+        $str2 = strtolower(trim($string2));
+
+        if ($str1 === $str2) {
+            return 1.0; // Perfect match
+        }
+
+        if (empty($str1) || empty($str2)) {
+            return 0.0; // No match if either is empty
+        }
+
+        // Check if one string contains the other
+        if (str_contains($str1, $str2) || str_contains($str2, $str1)) {
+            return 0.8; // High score for partial match
+        }
+
+        // Calculate similarity percentage
+        $similarity = 0;
+        similar_text($str1, $str2, $similarity);
+        
+        return $similarity / 100;
+    }
 }
