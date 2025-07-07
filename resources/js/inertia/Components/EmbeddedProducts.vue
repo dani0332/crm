@@ -316,6 +316,11 @@ const onCopyText = () => {
     page.props.quoteTypeCodeEnum.Bike.toLowerCase()
   ) {
     providerCode = props.quote.car_plan?.insurance_provider?.code;
+  } else if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Home.toLowerCase()
+  ) {
+    providerCode = props.quote.insurance_provider?.code;
   }
 
   let paymentLink =
