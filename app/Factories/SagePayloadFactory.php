@@ -1770,12 +1770,12 @@ class SagePayloadFactory
         return $receiptsAndAdjustmentsData;
     }
 
-    private static function createAppliedReceiptsAdjustmentsForSplitPaymentsForAP($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)
+    private static function createAppliedReceiptsAdjustmentsForSplitPaymentsForAP($splitPaymentRecords, $vendorNumber, $paymentRecord)
     {
         $receiptsAndAdjustmentsData = [];
         foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
             if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
-                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAP($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAP($splitPaymentRecord, $vendorNumber, $paymentRecord, $index + 1);
                 $receiptsAndAdjustmentsData[] = $singleReceiptData;
                 $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
             }
@@ -1785,11 +1785,11 @@ class SagePayloadFactory
         return $receiptsAndAdjustmentsData;
     }
 
-    private static function createAppliedReceiptsAdjustmentsForNonSplitPaymentsForAP($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord)
+    private static function createAppliedReceiptsAdjustmentsForNonSplitPaymentsForAP($firstSplitPaymentRecord, $vendorNumber, $paymentRecord)
     {
         $receiptsAndAdjustmentsData = [];
         if (self::isPaymentProcessed($firstSplitPaymentRecord->payment_status_id)) {
-            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptDataForAP($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAP($firstSplitPaymentRecord, $vendorNumber, $paymentRecord);
             $receiptsAndAdjustmentsData[] = $singleReceiptData;
             $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
         }
