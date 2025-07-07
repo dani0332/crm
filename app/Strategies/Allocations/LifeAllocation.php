@@ -2,6 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
 
@@ -9,6 +10,11 @@ class LifeAllocation extends BaseAllocation
 {
     private const CAT_A = 'categoryA';
     private const CAT_B = 'categoryB';
+
+    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false, public bool $hasDuplicateLead = false, public ?string $existingRecordUuid = null)
+    {
+        parent::__construct($quoteType, $uuid, $teamId, $overrideAdvisorId, $isReAssignment, $hasDuplicateLead, $existingRecordUuid);
+    }
 
     protected function fetchAdvisor(int $onlineStatus)
     {

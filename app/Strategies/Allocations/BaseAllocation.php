@@ -17,6 +17,7 @@ use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
@@ -27,7 +28,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected array $advisorIDs = [];
     protected array $excludedAdvisorIds = [];
 
-    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
+    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false, public bool $hasDuplicateLead = false, public ?string $existingRecordUuid = null) {}
 
     private function getQuoteTypeId()
     {
@@ -50,7 +51,18 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 LoggerService::info(self::class.' - execute: Lead not found');
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
-                $advisor = $this->fetchAvailableAdvisor();
+                $advisor = null;
+                if ($this->hasDuplicateLead && $this->shouldHandleDuplicateLead()) {
+                    $advisor = $this->handleDuplicateLeadAssignment();
+                    LoggerService::info(self::class.' - execute: Duplicate lead handling result', [
+                        'found_advisor' => $advisor ? true : false,
+                        'advisor_id' => $advisor?->id,
+                    ]);
+                }
+
+                if (!$advisor) {
+                    $advisor = $this->fetchAvailableAdvisor();
+                }
 
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
@@ -275,5 +287,86 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
         $this->lead->touch('non_advisor_email_sent_at');
         LoggerService::info(self::class.' - Non Advisor Email sent to customer');
+    }
+
+    protected function shouldHandleDuplicateLead(): bool
+    {
+        $eligibleTypes = [
+            QuoteTypes::HOME,
+            QuoteTypes::CORPLINE,
+            QuoteTypes::PET,
+            QuoteTypes::YACHT,
+            QuoteTypes::CYCLE,
+            QuoteTypes::GROUP_MEDICAL,
+            QuoteTypes::LIFE,
+        ];
+
+        return in_array($this->quoteType, $eligibleTypes);
+    }
+
+    protected function handleDuplicateLeadAssignment()
+    {
+        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Starting duplicate lead check', [
+            'quote_type' => $this->quoteType->value,
+            'existing_record_uuid' => $this->existingRecordUuid,
+        ]);
+
+        if (empty($this->existingRecordUuid)) {
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No existingRecordUuid provided');
+            return null;
+        }
+
+        $previousLead = $this->quoteType->model()
+            ->where('uuid', $this->existingRecordUuid)
+            ->first();
+
+        if (!$previousLead) {
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No previous lead found with UUID', [
+                'existing_record_uuid' => $this->existingRecordUuid,
+            ]);
+            return null;
+        }
+
+        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Found previous lead', [
+            'previous_lead_id' => $previousLead->id,
+            'previous_lead_uuid' => $previousLead->uuid,
+            'previous_advisor_id' => $previousLead->advisor_id,
+        ]);
+
+        if (empty($previousLead->advisor_id)) {
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous lead has no advisor assigned');
+            return null;
+        }
+
+        $advisor = User::find($previousLead->advisor_id);
+        if (!$advisor) {
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor not found');
+            return null;
+        }
+
+        if (!$advisor->is_active) {
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor is not active');
+            return null;
+        }
+
+        $validStatuses = [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+        $isOnLeave = !in_array($advisor->status, $validStatuses);
+        if ($isOnLeave) {
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor is on leave, will use ILA logic', [
+                'advisor_id' => $advisor->id,
+                'advisor_name' => $advisor->name,
+                'advisor_status' => $advisor->status,
+                'valid_statuses' => $validStatuses
+            ]);
+            return null;
+        }
+
+        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Will assign to previous advisor', [
+            'advisor_id' => $advisor->id,
+            'advisor_name' => $advisor->name,
+            'advisor_status' => $advisor->status
+        ]);
+
+        return $advisor;
     }
 }
