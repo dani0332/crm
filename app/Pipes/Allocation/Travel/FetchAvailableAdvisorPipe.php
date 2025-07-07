@@ -48,7 +48,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $advisors = $this->fetchEligibleAdvisors();
         $rules = $this->allocationRequest->get('rules') ?? [];
-        $availableAdvisorIds = $advisors->pluck('user_id')->toArray();
+        $availableAdvisorIds = $advisors->pluck('user_id')->toArray() ?? [];
+        LoggerService::info(message: self::class." - quote id: {$this->lead->uuid} available advisor ids: ".json_encode($availableAdvisorIds) );   
+        
         $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules, $this->evaluateTeamId($this->lead));
         $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
         $advisor = User::find($advisorId);
@@ -56,8 +58,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $advisor;
     }
 
-    protected function getAdvisorByStatus($onlineStatus, $teamId)
+    protected function getAdvisorsByStatus($onlineStatus, $teamId)
     {
+        
         if ($this->allocationRequest->get('isCHSAdvisor')) {
             LoggerService::info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
 
@@ -81,7 +84,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
             ->logRawSql()
-            ->first();
+            ->get();
     }
 
     /**
@@ -158,27 +161,28 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $lead->{$methodName}(...$params);
     }
 
-    public function fetchEligibleAdvisors(bool $onlineStatus = true)
+    public function fetchEligibleAdvisors()
     {
         $teamId = $this->evaluateTeamId($this->lead);
+        $statusOrder = $this->getOnlineStatusesInOrder();
 
         if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
+        foreach ($statusOrder as $status) {
+            LoggerService::info(message: self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $teamId);
+           
+           if(count($eligibleUsers) > 0){
+            return $eligibleUsers;
+           }
+        }
 
-        return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
-            ->when(! $teamId, function ($q) {
-                $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-                if ($sicUnassistedTeamId) {
-                    $q->whereNotIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeamId));
-                }
-            })
-            ->when($this->allocationRequest->isSIC(), function ($q) {
-                $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
-            })
-            ->logRawSql()
-            ->get();
+        return [];
+       
     }
+
+   
 
     private function determineFinalAdvisorIdsBasedOnRules(TravelQuote $lead, $availableUserIds, $rules, $teamId): mixed
     {
