@@ -245,8 +245,8 @@ class SageApiEmbeddedProductService
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
             $response['documentNumber'] = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-            if (! $sukoonMedXEPTransaction->payment_sage_receipt_id) {
-                $sukoonMedXEPTransaction->update(['payment_sage_receipt_id' => $response['documentNumber']]);
+            if (! $sukoonMedXEPTransaction->sage_ar_payment_receipt_id) {
+                $sukoonMedXEPTransaction->update(['sage_ar_payment_receipt_id' => $response['documentNumber']]);
             }
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {

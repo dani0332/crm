@@ -267,8 +267,8 @@ const epTable = reactive({
       value: 'policy_status',
     },
     {
-      text: 'Sage Receipt ID',
-      value: 'payment_sage_receipt_id',
+      text: 'Sage AR Receipt ID',
+      value: 'sage_ar_payment_receipt_id',
     },
     {
       text: 'Sage Status',
@@ -625,10 +625,10 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
-          <template #item-payment_sage_receipt_id="{ prices }">
+          <template #item-sage_ar_payment_receipt_id="{ prices }">
             {{
               getFirstPriceWithTransaction(prices)?.transactions[0]
-                ?.payment_sage_receipt_id ?? '-'
+                ?.sage_ar_payment_receipt_id ?? '-'
             }}
           </template>
           <template #item-sage_status="{ prices }">
