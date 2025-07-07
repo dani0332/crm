@@ -767,9 +767,9 @@ class SageApiService
             }
 
             // Apply Prepayments
-            $applyPaymentInvoices = $this->applyPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-            if (! $applyPaymentInvoices['status']) {
-                return $applyPaymentInvoices;
+            $applyPaymentARInvoices = $this->applyPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            if (! $applyPaymentARInvoices['status']) {
+                return $applyPaymentARInvoices;
             }
 
             // create AR Prepayment Commission Receipt
@@ -1965,7 +1965,7 @@ class SageApiService
         return $returnMessage;
     }
 
-    public function applyPaymentInvoices($sageRequestDataArray)
+    public function applyPaymentARInvoices($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
@@ -1978,25 +1978,25 @@ class SageApiService
         }
         /* End: Temporary code for historic data to allow book polciy after m2 launch */
 
-        /* applyPaymentInvoices */
+        /* applyPaymentARInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {
-            return $this->applyUpfrontPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->applyUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
         } elseif ($isTotalPriceZero) {
-            LoggerService::info('########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to zero price ########## ');
+            LoggerService::info('########## applyUpfrontPaymentARInvoices skipped  for : '.$quote->code.' due to zero price ########## ');
         }
 
         $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
 
         if ($isFrequencySplitAndFirstChildPaymentPaid) {
-            return $this->applySplitPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->applySplitPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
         }
 
         $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
         $isFirstPaymentPaidOrCaptured = in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
         if (! $isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured) {
-            return $this->applyNonSplitNonUpfrontPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->applyNonSplitNonUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
         }
 
         $returnMessage['status'] = true;
@@ -2006,11 +2006,11 @@ class SageApiService
 
     }
 
-    private function applyUpfrontPaymentInvoices($sageRequestDataArray)
+    private function applyUpfrontPaymentARInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        LoggerService::info('########## Start applypaymentInvoices for : '.$quote->code.' ##########');
+        LoggerService::info('########## Start applyPaymentARInvoices for : '.$quote->code.' ##########');
         $totalSteps = 15;
         // 13
         $currentStep = 13;
@@ -2112,14 +2112,14 @@ class SageApiService
         if ($isLiveApiCallStep15) {
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $quote, $currentStep, $totalSteps);
         }
-        LoggerService::info('########## End applypaymentInvoices for : '.$quote->code.' ##########');
+        LoggerService::info('########## End applyPaymentARInvoices for : '.$quote->code.' ##########');
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'Prepayments applied on sage';
 
         return $returnMessage;
     }
 
-    private function applySplitPaymentInvoices($sageRequestDataArray)
+    private function applySplitPaymentARInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -2237,7 +2237,7 @@ class SageApiService
         return $returnMessage;
     }
 
-    private function applyNonSplitNonUpfrontPaymentInvoices($sageRequestDataArray)
+    private function applyNonSplitNonUpfrontPaymentARInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -2402,7 +2402,7 @@ class SageApiService
             if ($isPaymentFrequencySplitPayment) {
                 $paymentSplitsWithNoSageReceipt = $paymentSplits->whereNull('sage_reciept_id')->count();
                 if ($paymentSplitsWithNoSageReceipt) {
-                    LoggerService::info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    LoggerService::info('  ########## applyUpfrontPaymentARInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
                     $returnMessage['status'] = true;
                     $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
 
@@ -2413,7 +2413,7 @@ class SageApiService
             } else {
                 $firstPaymentSplitWithNoSageReceipt = $paymentSplits->where('sr_no', 1)->whereNull('sage_reciept_id')->count();
                 if ($firstPaymentSplitWithNoSageReceipt) {
-                    LoggerService::info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    LoggerService::info('  ########## applyUpfrontPaymentARInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
                     $returnMessage['status'] = true;
                     $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
 
