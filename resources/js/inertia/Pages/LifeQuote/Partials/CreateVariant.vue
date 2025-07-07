@@ -15,6 +15,9 @@ const notification = useNotifications('toast');
 
 const { isRequired } = useRules();
 
+const lifeCoverToggled = true;
+
+
 const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
@@ -730,7 +733,7 @@ const validateRiderCoverValue = (value, riderId) => {
             disabled
           />
 
-          <x-toggle color="emerald" size="lg" disabled />
+          <x-toggle color="emerald" size="lg" disabled v-model="lifeCoverToggled" />
           <x-input
             type="number"
             min="0"
