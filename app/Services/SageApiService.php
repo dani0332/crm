@@ -3066,7 +3066,7 @@ class SageApiService
             $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
             LoggerService::info('SAGE API :  Send createUpfrontApplyPaymentAPInvoice  for '.$quote->code);
-            $payLoadOptions = SagePayloadFactory::createUpfrontApplyPaymentAPInvoicePayload($quote, $sageRequest->customerId, $payment, $paymentSplits, true);
+            $payLoadOptions = SagePayloadFactory::createUpfrontApplyPaymentAPInvoicePayload($quote, $sageRequest->sageVenderId, $payment, $paymentSplits, true);
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $postedResponse = json_decode($resp, true);
         }
@@ -3181,7 +3181,7 @@ class SageApiService
         } else {
             LoggerService::info('SAGE API :  Send createSplitApplyPaymentAPInvoice  for '.$quote->code);
             // For AP split payments, we'll use the same createSplitApplyPaymentAPInvoice method
-            $readyToPostReceiptAp = SagePayloadFactory::createSplitApplyPaymentAPInvoicePayload($quote, $sageRequest->customerId, $payment, $paymentSplits, true);
+            $readyToPostReceiptAp = SagePayloadFactory::createSplitApplyPaymentAPInvoicePayload($quote, $sageRequest->sageVenderId, $payment, $paymentSplits, true);
             $resp = $this->postToSage300($readyToPostReceiptAp['endPoint'], $readyToPostReceiptAp['payload'], 'POST');
             $response = json_decode($resp, true);
         }
@@ -3298,7 +3298,7 @@ class SageApiService
             $response = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
             LoggerService::info('SAGE API : Send apSplitPrepaymentPayload  for '.$quote->code);
-            $readyToPostReceiptAp = SagePayloadFactory::createSplitApplyPaymentAPInvoicePayload($quote, $sageRequest->customerId, $payment, $paymentSplits, false);
+            $readyToPostReceiptAp = SagePayloadFactory::createSplitApplyPaymentAPInvoicePayload($quote, $sageRequest->sageVenderId, $payment, $paymentSplits, false);
             $resp = $this->postToSage300($readyToPostReceiptAp['endPoint'], $readyToPostReceiptAp['payload'], 'POST');
             $response = json_decode($resp, true);
         }

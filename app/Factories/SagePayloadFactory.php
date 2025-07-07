@@ -1598,7 +1598,7 @@ class SagePayloadFactory
         $sageRequestType = null;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
-            'BatchType' => 'CA',
+            'BatchType' => 'PY',
             'PostAllBatches' => 'Donotpostallbatches',
             'PostBatchFrom' => $batchNumber,
             'PostBatchTo' => $batchNumber,
@@ -1673,7 +1673,7 @@ class SagePayloadFactory
         $sageRequestType = null;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
-            'BatchType' => 'CA',
+            'BatchType' => 'PY',
             'PostAllBatches' => 'Donotpostallbatches',
             'PostBatchFrom' => $batchNumber,
             'PostBatchTo' => $batchNumber,
@@ -1775,7 +1775,7 @@ class SagePayloadFactory
         $receiptsAndAdjustmentsData = [];
         foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
             if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
-                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptDataForAP($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAP($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
                 $receiptsAndAdjustmentsData[] = $singleReceiptData;
                 $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
             }
@@ -1811,7 +1811,7 @@ class SagePayloadFactory
 
         $prePaymentData = [
             'BatchType' => 'PY',
-            'CustomerNumber' => $vendorNumber,
+            'VendorNumber' => $vendorNumber,
             'DocumentNumber' => $item->sage_ap_payment_receipt_id,
             'PaymentNumber' => 1,
             'TransactionType' => 'PaymentPosted',
