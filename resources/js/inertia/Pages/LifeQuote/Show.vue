@@ -8,7 +8,7 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
-import LazyEditPlan from './Partials/EditPlan.vue';
+import EditPlan from './Partials/EditPlan.vue';
 import { watch } from 'vue';
 
 const page = usePage();
@@ -1063,6 +1063,15 @@ const totalAnnualPrice = computed(() => {
           >
             Duplicate Lead
           </x-button>
+          
+          <LeadNotes
+            :documentType="noteDocumentType"
+            :notes="quoteNotes"
+            :modelType="modelType"
+            :quote="quote"
+            :cdn="cdnPath"
+          />
+
           <Link
             v-if="can(permissionsEnum.LifeQuotesList)"
             :href="route('life-quotes-list')"
@@ -2203,7 +2212,7 @@ const totalAnnualPrice = computed(() => {
     />
 
     <template>
-      <LazyEditPlan
+      <EditPlan
         v-if="modals.editPlan"
         v-model="modals.editPlan"
         :selectedPlan="selectedPlan"

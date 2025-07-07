@@ -617,6 +617,7 @@ const validateRiderCoverValue = (value, riderId) => {
     show-close
     backdrop
     is-form
+    persistent
     @submit="handleSubmit"
     @close="closeModal"
   >
