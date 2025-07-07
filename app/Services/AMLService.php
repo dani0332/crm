@@ -1909,44 +1909,56 @@ class AMLService
         return implode(' ', $cases).' ELSE "App\\\\\\\\Models\\\\\\\\PersonalQuote"';
     }
 
-    public function saveCarDetails($request, $quote)
+    public function saveAdditionalVehicleAndDriverDetails($request, $quote)
     {
-        LoggerService::info('fn:saveCarDetails - AMLService');
+        LoggerService::info(__FUNCTION__ . ' - Execution Started');
         try {
-            CarQuoteRequestDetail::where('car_quote_request_id', $quote->id)->update([
-                'chassis_number' => $request->chassis_number,
-                'rta_transaction_type' => $request->rta_transaction_type,
-                'plate_code' => $request->plate_code,
-                'plate_number' => $request->plate_number,
-                'traffic_code_number' => $request->traffic_code_number,
-                'engine_number' => $request->engine_number,
-                'rta_plate_category' => $request->rta_plate_category,
-                'vehicle_color' => $request->vehicle_color,
-                'plate_color' => $request->plate_color,
-                'bank_loan' => $request->bank_loan,
-                'bank_name' => $request->bank_name,
-                'first_registration_date' => $request->first_registration_date,
-                'policy_effective_date' => $request->policy_effective_date,
-                // 'policy_expiry_date' => $request->policy_expiry_date,
-                'certificate_start_date' => $request->certificate_start_date,
-                'certificate_end_date' => $request->certificate_end_date,
-                'annual_mileage_estimate' => $request->annual_mileage_estimate,
-                // Additional Driver Details
-                'is_insured_and_driver_same' => $request->is_insured_and_driver_same,
-                'driver_first_name' => $request->driver_first_name,
-                'driver_last_name' => $request->driver_last_name,
-                'driver_dob' => $request->driver_dob,
-                'driver_gender' => $request->driver_gender,
-                'driver_license_number' => $request->driver_license_number,
-                'driver_license_issue_place' => $request->license_issue_place,
-                'driver_license_issue_date' => $request->license_issue_date,
-                'driver_license_expiry_date' => $request->license_expiry_date,
-                'driver_uae_driving_experience' => $request->uae_driving_experience,
-                'home_country_license_issuance' => $request->home_country_license_issuance,
-                'home_country_driving_experience' => $request->home_country_driving_experience,
-            ]);
+            if($request->has('additional_vehicle_transaction_details')) {
+                $updateCarQuoteRequestDetail = [
+                    'rta_transaction_type' => $request->rta_transaction_type,
+                    'plate_code' => $request->plate_code,
+                    'plate_number' => $request->plate_number,
+                    'traffic_code_number' => $request->traffic_code_number,
+                    'chassis_number' => $request->chassis_number,
+                    'engine_number' => $request->engine_number,
+                    'rta_plate_category' => $request->rta_plate_category,
+                    'vehicle_color' => $request->vehicle_color,
+                    'plate_color' => $request->plate_color,
+                    'bank_loan' => $request->bank_loan,
+                    'bank_name' => $request->bank_name,
+                    'first_registration_date' => $request->first_registration_date,
+                    'policy_effective_date' => $request->policy_effective_date,
+                    // 'policy_expiry_date' => $request->policy_expiry_date,
+                    'certificate_start_date' => $request->certificate_start_date,
+                    'certificate_end_date' => $request->certificate_end_date,
+                    'annual_mileage_estimate' => $request->annual_mileage_estimate,
+                ];
+            } else {
+                $updateCarQuoteRequestDetail = [
+                    'is_insured_and_driver_same' => $request->is_insured_and_driver_same,
+                    'driver_first_name' => $request->driver_first_name,
+                    'driver_last_name' => $request->driver_last_name,
+                    'driver_dob' => $request->driver_dob,
+                    'driver_gender' => $request->driver_gender,
+                    'driver_license_number' => $request->driver_license_number,
+                    'driver_license_issue_place' => $request->license_issue_place,
+                    'driver_license_issue_date' => $request->license_issue_date,
+                    'driver_license_expiry_date' => $request->license_expiry_date,
+                    'driver_uae_driving_experience' => $request->uae_driving_experience,
+                    'home_country_license_issuance' => $request->home_country_license_issuance,
+                    'home_country_driving_experience' => $request->home_country_driving_experience,
+                ];
+            }
+
+            CarQuoteRequestDetail::where('car_quote_request_id', $quote->id)->update($updateCarQuoteRequestDetail);
+            $response = ['status' => true, 'message' => 'Successfully saved additional vehicle and driver details'];
+            LoggerService::info('Successfully saved additional vehicle and driver details');
+
         } catch (\Exception $ex) {
-            LoggerService::error('Error saving car details', exception: $ex);
+            LoggerService::info('Error saving additional vehicle and driver details', $ex->getMessage());
+            $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];
         }
+
+        return $response;
     }
 }

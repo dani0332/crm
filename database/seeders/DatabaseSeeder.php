@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
             CarAdditionalDetailsForLivaSeeder::class,
+            // CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class, // TODO:: Need to confirm with Denber
         ]);
     }
 }

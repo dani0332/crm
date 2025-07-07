@@ -53,37 +53,6 @@ class AMLCheckRequest extends FormRequest
 
         if ($this->quote_type == QuoteTypes::CAR->value) {
             $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
-            if (isset($this->insurance_provider_code) && $this->insurance_provider_code == InsuranceProvidersEnum::RSA) {
-                $rules['rta_transaction_type'] = 'required';
-                $rules['plate_code'] = 'required';
-                $rules['plate_number'] = 'required';
-                $rules['traffic_code_number'] = 'required';
-                $rules['engine_number'] = 'required';
-                $rules['rta_plate_category'] = 'nullable';
-                $rules['vehicle_color'] = 'required';
-                $rules['plate_color'] = 'nullable|string';
-                $rules['bank_loan'] = 'required';
-                $rules['bank_name'] = 'required_if:bank_loan,1';
-                $rules['first_registration_date'] = 'required|date';
-                $rules['policy_effective_date'] = 'required|date';
-                $rules['policy_expiry_date'] = 'required|date';
-                $rules['certificate_start_date'] = 'required|date';
-                $rules['certificate_end_date'] = 'required|date';
-                $rules['annual_mileage_estimate'] = 'required|integer';
-                // Additional Driver Details
-                $rules['is_insured_and_driver_same'] = 'required|integer';
-                $rules['driver_first_name'] = 'required|string';
-                $rules['driver_last_name'] = 'required|string';
-                $rules['driver_dob'] = 'required|date';
-                $rules['driver_gender'] = 'required|string';
-                $rules['driver_license_number'] = 'required|string';
-                $rules['license_issue_place'] = 'required';
-                $rules['license_issue_date'] = 'required';
-                $rules['license_expiry_date'] = 'required';
-                $rules['uae_driving_experience'] = 'required|integer';
-                $rules['home_country_license_issuance'] = 'required_if:is_insured_and_driver_same,0';
-                $rules['home_country_driving_experience'] = 'required|integer';
-            }
         }
 
         return $rules;
