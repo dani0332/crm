@@ -20,7 +20,7 @@ final class quoteStatusCode extends Enum
     const AMLScreeningFailed = 'AMLScreeningFailed';
     const NEW_LEAD = 'New Lead';
     const TRANSACTION_APPROVED = 'transaction_approved';
-    const NEWLEAD = 'New Lead';
+    const NEWLEAD = 'NewLead';
     const QUOTED = 'Quoted';
     const FOLLOWEDUP = 'Followed Up';
     const NEGOTIATION = 'In Negotiation';
