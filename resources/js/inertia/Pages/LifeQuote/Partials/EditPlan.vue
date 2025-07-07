@@ -446,7 +446,9 @@ const computedFinalPrice = rider =>
   });
 
 const closeModal = () => {
-  this.shown = false;
+  shown.value = false;
+  document.body.style.overflow = 'auto';
+  emit('close');
 };
 const validatePolicyTerm = value => {
   if (!value) return true;
@@ -613,14 +615,21 @@ const validateRiderCoverValue = (value, riderId) => {
     :hasActions="false"
     v-model="shown"
     size="lg"
-    :title="selectedPlan?.providerName ?? 'Edit Plan'"
-    show-close
     backdrop
     is-form
     persistent
     @submit="handleSubmit"
-    @close="closeModal"
   >
+    <template #header> 
+      
+      <div class="flex items-center justify-between w-full px-6 py-4">
+        <h3 class="text-2xl font-semibold">{{ selectedPlan?.providerName ?? 'Edit Plan' }}</h3>
+          <span  @click="closeModal" class="cursor-pointer close-icon closeTag text-2xl">&times;</span>
+        
+      </div>
+
+      
+    </template>
     <div class="w-full">
       <TabGroup>
         <TabList
