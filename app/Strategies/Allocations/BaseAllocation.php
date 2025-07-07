@@ -2,12 +2,14 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use Carbon\Carbon;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
@@ -53,7 +55,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 $advisor = null;
                 if ($this->hasDuplicateLead && $this->shouldHandleDuplicateLead()) {
                     $advisor = $this->handleDuplicateLeadAssignment();
-                    LoggerService::info(self::class.' - execute: Duplicate lead handling result', [
+                    LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
                         'found_advisor' => $advisor ? true : false,
                         'advisor_id' => $advisor?->id,
                     ]);
@@ -233,7 +235,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $emails = array_map('trim', $emails);
         $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
 
-        LoggerService::info(self::class.' - Advisor Emails fetched', ['count' => count($emails), 'advisors' => $emails]);
+        LoggerService::info(self::class.' - Advisor Emails fetched', extra: ['count' => count($emails), 'advisors' => $emails]);
 
         return $emails;
     }
@@ -305,7 +307,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function handleDuplicateLeadAssignment()
     {
-        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Starting duplicate lead check', [
+        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Starting duplicate lead check', extra: [
             'quote_type' => $this->quoteType->value,
             'existing_record_uuid' => $this->existingRecordUuid,
         ]);
@@ -321,14 +323,14 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->first();
 
         if (! $previousLead) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No previous lead found with UUID', [
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No previous lead found with UUID', extra: [
                 'existing_record_uuid' => $this->existingRecordUuid,
             ]);
 
             return null;
         }
 
-        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Found previous lead', [
+        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Found previous lead', extra: [
             'previous_lead_id' => $previousLead->id,
             'previous_lead_uuid' => $previousLead->uuid,
             'previous_advisor_id' => $previousLead->advisor_id,
@@ -353,25 +355,71 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             return null;
         }
 
-        $validStatuses = [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+        $validStatuses = $this->getValidAdvisorStatuses();
         $isOnLeave = ! in_array($advisor->status, $validStatuses);
         if ($isOnLeave) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor is on leave, will use ILA logic', [
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor status not valid for current time, will use ILA logic', extra: [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
                 'advisor_status' => $advisor->status,
                 'valid_statuses' => $validStatuses,
+                'is_business_hours' => $this->isBusinessHours(),
             ]);
 
             return null;
         }
 
-        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Will assign to previous advisor', [
+        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Will assign to previous advisor', extra: [
             'advisor_id' => $advisor->id,
             'advisor_name' => $advisor->name,
             'advisor_status' => $advisor->status,
         ]);
 
         return $advisor;
+    }
+
+    private function getValidAdvisorStatuses(): array
+    {
+        $isBusinessHours = $this->isBusinessHours();
+
+        LoggerService::info(self::class.' - getValidAdvisorStatuses: Business hours check', extra: [
+            'is_business_hours' => $isBusinessHours,
+        ]);
+
+        if ($isBusinessHours) {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE];
+        } else {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+        }
+    }
+
+    private function isBusinessHours(): bool
+    {
+        try {
+            $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+            $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+
+            $currentTime = now();
+            $isWeekend = $currentTime->isWeekend();
+            $isWithinTimeRange = $currentTime->between($startTime, $endTime);
+
+            $isBusinessHours = !$isWeekend && $isWithinTimeRange;
+
+            LoggerService::info(self::class.' - isBusinessHours: Business hours calculation', extra: [
+                'start_time' => $startTime->format('H:i'),
+                'end_time' => $endTime->format('H:i'),
+                'current_time' => $currentTime->format('H:i'),
+                'is_weekend' => $isWeekend,
+                'is_within_time_range' => $isWithinTimeRange,
+                'is_business_hours' => $isBusinessHours,
+            ]);
+
+            return $isBusinessHours;
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
+
+            // fallback to true for safety as per business hours logic
+            return true;
+        }
     }
 }
