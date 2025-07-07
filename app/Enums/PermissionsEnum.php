@@ -422,7 +422,7 @@ final class PermissionsEnum extends Enum
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
-
+    public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
     // Savings Permissions
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
     public const SAVINGS_QUOTES_CREATE = 'savings-quotes-create';

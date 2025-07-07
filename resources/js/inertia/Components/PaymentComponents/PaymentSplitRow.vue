@@ -42,6 +42,7 @@ const emit = defineEmits([
   'delete-split-payment',
   'retry-split-payment',
   'post-prepayment',
+  'post-retry-prepayment',
 ]);
 
 // Add can function for permission checks
@@ -85,6 +86,10 @@ const retrySplitPayment = () => {
 
 const postPrepayment = () => {
   emit('post-prepayment', props.splitPayment);
+};
+
+const postRetryPrePayment = () => {
+  emit('post-retry-prepayment', props.splitPayment);
 };
 
 const splitPaymentTotalPrice = (srNo, amount, discountValue) => {
@@ -149,6 +154,11 @@ const enablePostPrepaymentButton = computed(() => {
     return true;
   }
   return false;
+});
+
+const showRetryButton = computed(() => {
+  return can(permissionEnum.RETRY_PREPAYMENT_BUTTON) &&
+   props.splitPayment.prepayment_receipt_status?.showRetryButton
 });
 
 const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
@@ -331,6 +341,16 @@ const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
           @click="postPrepayment"
           outlined
           >Post</x-button
+        >
+
+        <x-button
+          v-if="showRetryButton"
+          size="xs"
+          color="red"
+          class="ml-2"
+          @click="postRetryPrePayment"
+          outlined
+          >Retry</x-button
         >
       </div>
     </td>

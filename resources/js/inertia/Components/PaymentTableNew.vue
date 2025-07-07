@@ -927,6 +927,41 @@ const triggerPostPrepayment = async splitPayment => {
   }
 };
 
+
+const triggerPostRetryPrepayment = async splitPayment => {
+  console.log(' triggerPostRetryPrepayment : ', splitPayment.id);
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  try {
+    NProgress.start();
+    const response = await axios.post(route('can-post-premium-prepayment-retry'), {
+      paymentSplitId: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
+    });
+    NProgress.done();
+    if (response.data.success) {
+      notification.success({
+        title: 'Post Retry Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  }
+};
+
+
+
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
@@ -1082,8 +1117,9 @@ watch(
                       @retry-split-payment="
                         (jobId, message) =>
                           retrySplitPaymentModal(jobId, message)
-                      "
-                      @post-prepayment="triggerPostPrepayment"
+                        "
+                        @post-prepayment="triggerPostPrepayment"
+                        @post-retry-prepayment="triggerPostRetryPrepayment"
                     />
                   </template>
                 </template>

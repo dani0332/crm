@@ -45,6 +45,7 @@ use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetryPostPrepaymentToSageRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
@@ -72,11 +73,13 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\PaymentRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
+use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -86,6 +89,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
@@ -791,8 +795,9 @@ class CentralController extends Controller
 
     public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
     {
-        try {
             $request = $postPrepaymentToSageRequest->safe();
+
+        try {
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
             $sendUpdateLog = null;
@@ -853,5 +858,25 @@ class CentralController extends Controller
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function postPrepaymentToSageRetry(RetryPostPrepaymentToSageRequest $request)
+    {
+        $data = [
+            'quote_type' => $request->quoteType,
+            'quote_request_id' => $request->quoteRequestId,
+            'payment_split_id' => $request->paymentSplitId,
+        ];
+        $result = app(PaymentService::class)->retryPrepaymentPostingToSage($data);
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+            ], 200);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => $result['message'],
+        ], 500);
     }
 }
