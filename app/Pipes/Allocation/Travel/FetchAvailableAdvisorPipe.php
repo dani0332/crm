@@ -49,8 +49,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $advisors = $this->fetchEligibleAdvisors();
         $rules = $this->allocationRequest->get('rules') ?? [];
         $availableAdvisorIds = $advisors->pluck('user_id')->toArray() ?? [];
-        LoggerService::info(message: self::class." - quote id: {$this->lead->uuid} available advisor ids: ".json_encode($availableAdvisorIds) );   
-        
+        LoggerService::info(message: self::class." - quote id: {$this->lead->uuid} available advisor ids: ".json_encode($availableAdvisorIds));
+
         $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules, $this->evaluateTeamId($this->lead));
         $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
         $advisor = User::find($advisorId);
@@ -60,7 +60,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     protected function getAdvisorsByStatus($onlineStatus, $teamId)
     {
-        
+
         if ($this->allocationRequest->get('isCHSAdvisor')) {
             LoggerService::info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
 
@@ -172,17 +172,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         foreach ($statusOrder as $status) {
             LoggerService::info(message: self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
             $eligibleUsers = $this->getAdvisorsByStatus($status, $teamId);
-           
-           if(count($eligibleUsers) > 0){
-            return $eligibleUsers;
-           }
+
+            if (count($eligibleUsers) > 0) {
+                return $eligibleUsers;
+            }
         }
 
         return [];
-       
-    }
 
-   
+    }
 
     private function determineFinalAdvisorIdsBasedOnRules(TravelQuote $lead, $availableUserIds, $rules, $teamId): mixed
     {
