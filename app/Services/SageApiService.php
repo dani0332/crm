@@ -1056,7 +1056,7 @@ class SageApiService
         }
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
-            if (! $paymentSplit->sage_reciept_id) {
+            if (! $paymentSplit->sage_ap_payment_receipt_id) {
                 $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
                 $this->handleWithDeadlockRetries(function () use ($paymentSplit, $documentNumberForReceipt) {
                     $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
