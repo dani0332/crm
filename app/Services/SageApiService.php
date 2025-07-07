@@ -1077,7 +1077,7 @@ class SageApiService
                 if (isset($readyToPostArray['error']['message']['value'])) {
                     LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments Error: Failed to post AP Prepayment Receipts batch '.$sageResponse['BatchNumber'].' Error: '.$readyToPostArray['error']['message']['value']);
 
-                    $aPReceiptBatch = $this->postToSage300("AP/APReceiptAndAdjustmentBatches(BatchRecordType='PY',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
+                    $aPReceiptBatch = $this->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchSelector='PY',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
                     LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments: Status of AP Prepayment Receipts batch: '.$aPReceiptBatch);
                     $aPReceiptBatch = json_decode($aPReceiptBatch, true);
 
