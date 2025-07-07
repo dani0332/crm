@@ -95,6 +95,10 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             LoggerService::info(self::class."::fetchAdvisorByType - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
             $eligibleUsers = $this->{$methodName}($status, $teamId);
+            if(count($eligibleUsers) > 0){
+                LoggerService::info(self::class."::fetchAdvisorByType - advisors found: ".json_encode($eligibleUsers->pluck('user_id')->toArray()));
+                return $eligibleUsers;
+            }
         }
 
         return $eligibleUsers;
@@ -136,7 +140,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             ->where('la.normal_allocation_enabled', true)
             ->logRawSql()
             ->get();
-
+            
         return $advisors;
     }
 
