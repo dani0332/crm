@@ -771,105 +771,6 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createAPPrepaymentReceiptPayload($sageRequest)
-    {
-        $entryType = SageEnum::SCT_STRAIGHT;
-
-        $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
-        $optionalFields[] = [
-            'OptionalField' => 'INSURERRCTNO',
-            'Value' => $sageRequest->insurerReceiptNumber ?? 'N/A',
-        ];
-
-
-        $vendorNumber = $sageRequest->sageVenderId;
-        $bankCode = SageEnum::BANK_CODE;
-        $paymentCode = SageEnum::PAYMENT_CODE;
-        $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount), 2);
-        $checkReceiptNumber = $sageRequest->checkDetails;
-
-        if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
-            $bankCode = SageEnum::BANK_CODE;
-            $paymentCode = SageEnum::PAYMENT_CODE;
-        } 
-        $entryDescription = 'CLIENT DIRECT PAYMENT TO ' . $sageRequest->insurerCode;
-        $payLoad = [
-            /* 'BatchRecordType' => 'CA', */
-            'BatchSelector' => 'PY',
-            'Description' => $entryDescription,
-            'BankCode' => $bankCode,
-            'ReceiptsAdjustments' => [
-                [
-                    'BatchType' => 'PY',
-                    'VendorNumber' => $vendorNumber,
-                    'EntryDescription' => $entryDescription,
-                    'PaymentTransactionType' => 'Prepayment',
-                    'BankCode' => $bankCode,
-                    'TotalPrepayVendorCurrency' => $bankReceiptAmount,
-                    'BankReceiptAmount' => $bankReceiptAmount,
-                    'CheckReceiptNumber' => $checkReceiptNumber,
-                    'PaymentCode' => $paymentCode,
-                    'ReceiptTransactionType' => 'Prepayment',
-                    'AppliedReceiptsAdjustments' => [
-                        [
-                            'BatchType' => 'PY',
-                            'VendorNumber' => $vendorNumber,
-                            'ReceiptTransactionType' => 'Prepayment',
-                            'TransactionType' => 'PrepaymentPosted',
-                        ],
-                    ],
-                    'ReceiptAdjustmentOptionalField' => $optionalFields,
-                ],
-            ],
-        ];
-
-        return [
-            'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
-            'payload' => $payLoad,
-            'sage_request_type' =>  SageEnum::SRT_CREATE_AP_PP_REC,
-            'entry_type' => $entryType,
-        ];
-    }
-
-    public static function readyToPostReceiptApPayment($batchNumber)
-    {
-        $entryType = SageEnum::SCT_STRAIGHT;
-        $payLoad = [
-            'BatchStatus' => 'ReadyToPost',
-        ];
-
-        return [
-            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchRecordType=\'PY\',BatchNumber='.$batchNumber.')',
-            'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_RTP_AP_PP_REC,
-            'entry_type' => $entryType,
-        ];
-    }
-
-    public static function aPPostReceiptsPayment($batchNumber)
-    {
-        $entryType = SageEnum::SCT_STRAIGHT;
-        $payLoad = [
-            'BatchType' => 'PY',
-            'PostAllBatches' => 'Donotpostallbatches',
-            'PostBatchFrom' => $batchNumber,
-            'PostBatchTo' => $batchNumber,
-            'ActionSelector' => 'string',
-            'UpdateOperation' => 'Unspecified',
-
-        ];
-
-        $sign = '$process';
-        $val = "('".$sign."')";
-
-        return [
-            'endPoint' => 'AP/APPostReceiptsAndAdjustments'.$val,
-            'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_POST_AP_PP_REC,
-            'entry_type' => $entryType,
-        ];
-    }
-
     public static function readyToPostReceiptAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = null;
@@ -927,6 +828,8 @@ class SagePayloadFactory
             'entry_type' => $entryType,
         ];
     }
+
+
     public static function readyToPostInvoiceAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = null;
@@ -1550,6 +1453,94 @@ class SagePayloadFactory
         }
 
         return $paymentDueDateCarbonObject->format(self::instanceData()->sage_api_date_format);
+    }
+
+    public static function createAPPrepaymentReceiptPayload($sageRequest)
+    {
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
+        $optionalFields[] = [
+            'OptionalField' => 'INSURERRCTNO',
+            'Value' => $sageRequest->insurerReceiptNumber ?? 'N/A',
+        ];
+
+        $vendorNumber = $sageRequest->sageVenderId;
+        $bankCode = SageEnum::BANK_CODE;
+        $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount), 2);
+
+        if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
+            $bankCode = SageEnum::BANK_CODE;
+        }
+        $entryDescription = 'CLIENT DIRECT PAYMENT TO ' . $sageRequest->insurerCode;
+        $payLoad = [
+            'BatchSelector' => 'PY',
+            'Description' => $entryDescription,
+            'BankCode' => $bankCode,
+            'PaymentsAdjustments' => [
+                [
+                    'BatchType' => 'PY',
+                    'VendorNumber' => $vendorNumber,
+                    'EntryDescription' => $entryDescription,
+                    'PaymentTransactionType' => 'Prepayment',
+                    'BankCode' => $bankCode,
+                    'TotalPrepayVendorCurrency' => $bankReceiptAmount,
+                    'AppliedReceiptsAdjustments' => [
+                        [
+                            'BatchType' => 'PY',
+                            'VendorNumber' => $vendorNumber,
+                            'TransactionType' => 'PrepaymentPosted',
+                        ],
+                    ]
+                ],
+                'ReceiptAdjustmentOptionalField' => $optionalFields,
+            ],
+        ];
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
+            'payload' => $payLoad,
+            'sage_request_type' =>  SageEnum::SRT_CREATE_AP_PP_REC,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function readyToPostReceiptApPayment($batchNumber)
+    {
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $payLoad = [
+            'BatchStatus' => 'ReadyToPost',
+        ];
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchRecordType=\'PY\',BatchNumber='.$batchNumber.')',
+            'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_RTP_AP_PP_REC,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function aPPostReceiptsPayment($batchNumber)
+    {
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $payLoad = [
+            'BatchType' => 'PY',
+            'PostAllBatches' => 'Donotpostallbatches',
+            'PostBatchFrom' => $batchNumber,
+            'PostBatchTo' => $batchNumber,
+            'ActionSelector' => 'string',
+            'UpdateOperation' => 'Unspecified',
+
+        ];
+
+        $sign = '$process';
+        $val = "('".$sign."')";
+
+        return [
+            'endPoint' => 'AP/APPostPaymentsAndAdjustments'.$val,
+            'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_POST_AP_PP_REC,
+            'entry_type' => $entryType,
+        ];
     }
 
     // Payment code mapping
