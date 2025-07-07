@@ -17,7 +17,6 @@ use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
@@ -60,7 +59,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                     ]);
                 }
 
-                if (!$advisor) {
+                if (! $advisor) {
                     $advisor = $this->fetchAvailableAdvisor();
                 }
 
@@ -313,6 +312,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
         if (empty($this->existingRecordUuid)) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No existingRecordUuid provided');
+
             return null;
         }
 
@@ -320,10 +320,11 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->where('uuid', $this->existingRecordUuid)
             ->first();
 
-        if (!$previousLead) {
+        if (! $previousLead) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No previous lead found with UUID', [
                 'existing_record_uuid' => $this->existingRecordUuid,
             ]);
+
             return null;
         }
 
@@ -335,36 +336,40 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
         if (empty($previousLead->advisor_id)) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous lead has no advisor assigned');
+
             return null;
         }
 
         $advisor = User::find($previousLead->advisor_id);
-        if (!$advisor) {
+        if (! $advisor) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor not found');
+
             return null;
         }
 
-        if (!$advisor->is_active) {
+        if (! $advisor->is_active) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor is not active');
+
             return null;
         }
 
         $validStatuses = [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
-        $isOnLeave = !in_array($advisor->status, $validStatuses);
+        $isOnLeave = ! in_array($advisor->status, $validStatuses);
         if ($isOnLeave) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor is on leave, will use ILA logic', [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
                 'advisor_status' => $advisor->status,
-                'valid_statuses' => $validStatuses
+                'valid_statuses' => $validStatuses,
             ]);
+
             return null;
         }
 
         LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Will assign to previous advisor', [
             'advisor_id' => $advisor->id,
             'advisor_name' => $advisor->name,
-            'advisor_status' => $advisor->status
+            'advisor_status' => $advisor->status,
         ]);
 
         return $advisor;
