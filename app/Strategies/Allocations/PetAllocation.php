@@ -25,7 +25,6 @@ class PetAllocation extends BaseAllocation
 
             if ($eligibleUser) {
                 LoggerService::info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}");
-
                 return User::find($eligibleUser->user_id);
             }
         }
@@ -49,11 +48,12 @@ class PetAllocation extends BaseAllocation
         }
 
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+
         if (count($emails) > 0) {
             LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
             if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $emails)) {
-                LoggerService::info(self::class." - eligible pet advisor found with status: {$statusOrder}, user id: {$advisor->id}, rule condition: true");
-
+                LoggerService::info(self::class." - eligible pet advisor found with  user id: {$advisor->id}, rule condition: true");
+               
                 return $advisor;
             }
         }
