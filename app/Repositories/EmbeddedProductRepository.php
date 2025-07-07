@@ -301,7 +301,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
             return false;
         }
 
@@ -341,7 +341,7 @@ class EmbeddedProductRepository extends BaseRepository
                     ProcessSyncAlfredProtect::dispatch($quoteObject);
 
                 } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home])) {
+                && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])) {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
@@ -476,8 +476,8 @@ class EmbeddedProductRepository extends BaseRepository
         $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
         $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
-        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : ($quoteObject->customer?->insured?->first_name ?? $quoteObject->customer->insured_first_name) ?? '';
-        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : ($quoteObject->customer?->insured?->last_name ?? $quoteObject->customer->insured_first_name) ?? '';
+        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : ($quoteObject->customer?->latestInsured?->first_name ?? $quoteObject->customer->insured_first_name) ?? '';
+        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : ($quoteObject->customer?->latestInsured?->last_name ?? $quoteObject->customer->insured_first_name) ?? '';
 
         info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
         $emailData = (object) [
@@ -696,7 +696,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCancelEmbeddedProducts($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
             return false;
         }
 
@@ -792,7 +792,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                     if (
                         $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                        && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home])
+                        && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Travel])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
@@ -870,7 +870,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
             return false;
         }
 

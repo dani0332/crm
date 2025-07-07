@@ -75,7 +75,7 @@ class CustomerRepository extends BaseRepository
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
-                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Car.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
@@ -91,7 +91,7 @@ class CustomerRepository extends BaseRepository
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
-                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Home.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
@@ -107,7 +107,7 @@ class CustomerRepository extends BaseRepository
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
-                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Health.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
@@ -123,7 +123,7 @@ class CustomerRepository extends BaseRepository
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
-                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Life.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
@@ -139,7 +139,7 @@ class CustomerRepository extends BaseRepository
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
-                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Business.'" as quote_type_id'),
                     'business_type_of_insurance_id'])
@@ -154,7 +154,7 @@ class CustomerRepository extends BaseRepository
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
-                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Travel.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
@@ -170,7 +170,7 @@ class CustomerRepository extends BaseRepository
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
-                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date', 'quote_type_id',
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])

@@ -67,7 +67,7 @@ const countDays = computed(() =>
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const historyLoading = ref(false);
-
+const permissionEnum = page.props.permissionsEnum;
 const { isRequired, emiratesNumber } = useRules();
 const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');
@@ -134,13 +134,12 @@ const isProfileUpdateAllow = computed(() => {
 
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: page.props.quote?.latest_insured?.customer_type,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
-  insured_first_name: page.props.quote?.insured?.first_name || '',
-  insured_last_name: page.props.quote?.insured?.last_name || '',
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
@@ -304,6 +303,17 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Stale for {{ countDays }}
         </p>
+        <div class="grid sm:grid-cols-2">
+          <x-button
+            v-if="quote?.customer?.pcp_tag == true"
+            size="sm"
+            color="#BFA100"
+            tag="div"
+            class="mr-2"
+          >
+            Private Client
+          </x-button>
+        </div>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
@@ -570,6 +580,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
@@ -641,7 +658,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                quote?.latest_insured?.customer_type ==
+                page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -662,7 +680,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  quote?.latest_insured?.customer_type ===
+                  page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -755,11 +774,16 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     />
                   </dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
               </dl>
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
+                  quote?.latest_insured?.customer_type ===
+                  page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -953,7 +977,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
     </x-modal>
 
     <MemberDetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="
+        quote?.latest_insured?.customer_type ==
+        page.props.customerTypeEnum.Individual
+      "
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -963,7 +990,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
     />
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="
+        quote?.latest_insured?.customer_type ==
+        page.props.customerTypeEnum.Entity
+      "
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -1121,6 +1151,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quote-type="quoteType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.latest_insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 

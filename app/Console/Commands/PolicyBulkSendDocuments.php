@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Jobs\WatermarkDocumentsJob;
-use App\Models\ApplicationStorage;
-use App\Models\DocumentType;
-use App\Models\PersonalQuote;
-use App\Models\QuoteType;
+use App\Models\CarQuote;
+use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
-use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 
@@ -32,95 +29,64 @@ class PolicyBulkSendDocuments extends Command
      *
      * @var string
      */
-    protected $description = 'Read a CSV file of emails, find PersonalQuote, and dispatch SendBookPolicyDocumentsJob for each.';
+    protected $description = 'Read an array of codes, find PersonalQuote, and dispatch SendBookPolicyDocumentsJob for each.';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $csvPath = 'storage/temp/sample.csv';
+        LoggerService::info('PolicyBulkSendDocuments Started');
 
-        if (! file_exists($csvPath)) {
-            $this->error("File not found: $csvPath");
+        $codes = [
+            'TRA-WAL8YDD4',
+            'TRA-VTSDBMEQ',
+            'CAR-VXCWTTXH',
+        ];
 
-            return 1;
-        }
-
-        $handle = fopen($csvPath, 'r');
-        if (! $handle) {
-            $this->error("Unable to open file: $csvPath");
-
-            return 1;
-        }
-
-        $header = fgetcsv($handle);
-        if (! $header || ! in_array('email', $header)) {
-            $this->error('CSV must have an email column.');
-            fclose($handle);
+        if (empty($codes)) {
+            $this->error('No codes provided in the $codes array.');
 
             return 1;
         }
-        $emailIndex = array_search('email', $header);
+
         $count = 0;
         $notFound = [];
-        while (($row = fgetcsv($handle)) !== false) {
-            $isProcessEnabled = ApplicationStorage::where('key_name', 'IS_AML_ENTITY_SEARCH_ENABLED')->first();
-            if ($isProcessEnabled && $isProcessEnabled->value == 0) {
-                LoggerService::info('PolicyBulkSendDocuments - IS_AML_ENTITY_SEARCH_ENABLED is set to Disabled.');
 
-                return 0;
-            }
-            $email = trim($row[$emailIndex] ?? '');
-
-            if (! $email) {
-                continue;
-            }
-
-            $personalQuote = PersonalQuote::where('email', $email)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-            if (! $personalQuote) {
-                $notFound[] = $email;
+        foreach ($codes as $code) {
+            if (! $code) {
+                LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
 
                 continue;
             }
-            $quoteType = QuoteType::select('code')->find($personalQuote->quote_type_id);
-            if (! $quoteType) {
-                $notFound[] = $email;
 
-                continue;
+            if ($code == 'CAR-VXCWTTXH') {
+                $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Car;
+            } else {
+                $quoteObject = TravelQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Travel;
             }
-            $quoteObject = $this->getQuoteObjectBy(strtolower($quoteType->code), $personalQuote->quote_id, 'id');
 
             if (! $quoteObject) {
-                $notFound[] = $email;
+                $notFound[] = $code;
+                LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
 
                 continue;
             }
-
-            foreach ($quoteObject->documents as $document) {
-                $documentType = DocumentType::where('code', $document->document_type_code)->first();
-                $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quoteObject, $documentType);
-
-                if ($personalQuote && $isWaterMarkQualifyDoc && $documentType) {
-                    WatermarkDocumentsJob::dispatchSync(
-                        $document->id, $quoteObject->uuid, $documentType->id
-                    );
-                }
-            }
-
             $payload = (object) [
-                'model_type' => strtolower($quoteType->code),
+                'model_type' => $modelType,
                 'quote_id' => $quoteObject->id,
             ];
-            SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);
-            LoggerService::info("PolicyBulkSendDocuments - Dispatched for: $email (Quote ID: {$quoteObject->code})");
-            $count++;
 
+            SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);
+            LoggerService::info("PolicyBulkSendDocuments - Dispatched for code: $code (Quote ID: {$quoteObject->code}) for count {$count}");
+            $count++;
         }
-        fclose($handle);
+
         LoggerService::info("PolicyBulkSendDocuments - Total dispatched: $count");
         if ($notFound) {
-            LoggerService::info('PolicyBulkSendDocuments - Emails not found: '.implode(', ', $notFound));
+            LoggerService::info('PolicyBulkSendDocuments - codes not found: '.implode(', ', $notFound));
         }
 
         return 0;

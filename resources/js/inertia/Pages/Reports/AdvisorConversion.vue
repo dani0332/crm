@@ -149,6 +149,10 @@ const totalLeads = reactive({
       value: 'premium',
       sortable: true,
     },
+    {
+      text: 'Private Client',
+      value: 'pcp_tag_formatted',
+    },
   ],
 });
 
@@ -877,6 +881,7 @@ const getRouteByLob = computed(() => {
     [quoteTypeCodeEnum.Cycle]: 'cycle-quotes-show',
     [quoteTypeCodeEnum.Jetski]: 'jetski-quotes-show',
     [quoteTypeCodeEnum.Yacht]: 'yacht-quotes-show',
+    [quoteTypeCodeEnum.SAVINGS]: 'savings-quotes-show',
   };
   return routeMap[filters.lob];
 });

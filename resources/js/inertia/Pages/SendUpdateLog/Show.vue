@@ -41,7 +41,6 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   insuranceProviderId: Number,
   isCommVatNotAppEnabled: Boolean,
-  isSentOrBooked: Boolean,
   disableMainBtn: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
@@ -779,7 +778,7 @@ const cancelOptionsList = computed(() => {
       :send-update-log="props.sendUpdateLog"
       :update-btn="props.updateBtn"
       :quote-type="props.quoteType"
-      :is-sent-or-booked="props.isSentOrBooked"
+      :is-endorsement-booked="isBookUpdate"
     />
 
     <LazyBookingDetails

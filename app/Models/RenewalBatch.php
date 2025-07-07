@@ -186,4 +186,31 @@ class RenewalBatch extends Model implements AuditableContract
             }
         );
     }
+
+    public static function getAllBatches($nonMotor = true)
+    {
+        return self::select('id', 'name', 'start_date', 'end_date', 'month', 'year')
+            ->when($nonMotor, fn ($q) => $q->nonMotor(), fn ($q) => $q->motor())
+            ->orderBy('id')
+            ->get()
+            ->transform(function ($batch) {
+                // Get the date display format from the configuration
+                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+                // Format the start and end dates of the batch
+                $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
+                $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
+
+                // Return an associative array with the batch 'name' and 'id'
+                return [
+                    'id' => $batch->id,
+                    'name' => "{$batch->month_name}-{$batch->name}-({$start_date} to {$end_date})",
+                ];
+            })
+            ->toArray();
+    }
+
+    public function personalQuotes()
+    {
+        return $this->hasMany(PersonalQuote::class, 'renewal_batch_id');
+    }
 }

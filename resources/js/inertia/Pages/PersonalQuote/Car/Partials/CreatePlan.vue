@@ -14,6 +14,18 @@ const isEmptyField = ref(false);
 
 const { isRequired, isNumber } = useRules();
 
+// Custom validation rule for maximum price
+const maxPrice = maxValue => {
+  return value => {
+    if (!value) return true; // Allow empty values (required rule handles that)
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return 'Must be a valid number';
+    return (
+      numValue <= maxValue || `Price cannot exceed ${maxValue.toLocaleString()}`
+    );
+  };
+};
+
 const quotePlansTable = reactive({
   columns: [
     { text: 'Provider Name', value: 'providerName' },
@@ -167,7 +179,7 @@ const getAddonVat = item => {
           label="Price without vat"
           required
           v-model="addPlanForm.actual_premium"
-          :rules="[isRequired]"
+          :rules="[isRequired, maxPrice(999999)]"
           class="w-full"
           placeholder="Enter Price without vat"
           type="number"

@@ -57,6 +57,18 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 $validator->errors()->add('error', 'Customer email is required');
             }
 
+            if ($this->sendUpdate->quote_type_id == QuoteTypeId::Savings) {
+                $uploadedDocuments = $this->sendUpdate?->documents()->pluck('document_type_code')->toArray();
+                if (
+                    ! (
+                        in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) &&
+                        (in_array(DocumentTypeCode::PAYMENT_RECEIPT, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_RECEIPT, $uploadedDocuments))
+                    )
+                ) {
+                    $validator->errors()->add('error', 'Required documents are not uploaded');
+                }
+            }
+
             $this->sendUpdateDocuemnts = $this->sendUpdate?->documents()->pluck('document_type_code');
             $category = $this->sendUpdate?->category?->code;
             $option = $this->sendUpdate?->option?->code;
@@ -143,6 +155,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                             quoteTypeCode::Cycle,
                             quoteTypeCode::Yacht,
                             quoteTypeCode::CORPLINE,
+                            quoteTypeCode::SAVINGS,
                         ]
                     )) {
                         if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(

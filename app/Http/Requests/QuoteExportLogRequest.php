@@ -22,7 +22,7 @@ class QuoteExportLogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quote_type_id' => 'required|exists:quote_type,id',
+            'quote_type_id' => request()->has('type') && (request()->type === 'instant-alfred-chat' || request()->type === 'aml-ctf-report') ? 'nullable' : 'required|exists:quote_type,id',
             'url' => 'required',
         ];
     }
