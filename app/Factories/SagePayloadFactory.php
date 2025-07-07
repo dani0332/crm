@@ -76,7 +76,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $sage_customer_number,
                     'BankCode' => SageEnum::BANK_CODE,
                     'ReceiptTransactionType' => 'Receipt',
-                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
+                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
             ],
         ];
@@ -829,7 +829,6 @@ class SagePayloadFactory
         ];
     }
 
-
     public static function readyToPostInvoiceAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = null;
@@ -1189,7 +1188,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $sage_customer_number,
                     'BankCode' => SageEnum::BANK_CODE,
                     'ReceiptTransactionType' => 'Receipt',
-                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
+                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
             ],
         ];
@@ -1202,7 +1201,7 @@ class SagePayloadFactory
         ];
     }
 
-    private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1)
+    private static function createReceiptDataForAR($item, $sage_customer_number, $payment, $paymentNumber = 1)
     {
         $documentNumber = mb_substr($payment->insurer_tax_number, -18);
         $receiptData = [
@@ -1238,13 +1237,13 @@ class SagePayloadFactory
         return [$receiptData, $prePaymentData, $discountData];
     }
 
-    public static function createAppliedReceiptsAdjustments($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
+    public static function createAppliedReceiptsAdjustmentsForAR($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
     {
         if ($isPaymentsSplit) {
-            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForSplitPaymentsForAR($splitPaymentRecords, $sageCustomerNumber, $paymentRecord);
         } else {
             $firstSplitPaymentRecord = $splitPaymentRecords[0];
-            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForNonSplitPayments($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForNonSplitPaymentsForAR($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
         }
 
         return $receiptsAndAdjustmentsData;
@@ -1471,7 +1470,7 @@ class SagePayloadFactory
         if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
             $bankCode = SageEnum::BANK_CODE;
         }
-        $entryDescription = 'CLIENT DIRECT PAYMENT TO ' . $sageRequest->insurerCode;
+        $entryDescription = 'CLIENT DIRECT PAYMENT TO '.$sageRequest->insurerCode;
         $payLoad = [
             'BatchSelector' => 'PY',
             'Description' => $entryDescription,
@@ -1500,12 +1499,12 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' =>  SageEnum::SRT_CREATE_AP_PP_REC,
+            'sage_request_type' => SageEnum::SRT_CREATE_AP_PP_REC,
             'entry_type' => $entryType,
         ];
     }
 
-    public static function readyToPostReceiptApPayment($batchNumber)
+    public static function readyToPostAPPaymentReceiptPayload($batchNumber)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -1513,14 +1512,14 @@ class SagePayloadFactory
         ];
 
         return [
-            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchRecordType=\'PY\',BatchNumber='.$batchNumber.')',
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchSelector=\'PY\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
             'sage_request_type' => SageEnum::SRT_RTP_AP_PP_REC,
             'entry_type' => $entryType,
         ];
     }
 
-    public static function aPPostReceiptsPayment($batchNumber)
+    public static function postAPPaymentReceiptPayload($batchNumber)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -1542,6 +1541,177 @@ class SagePayloadFactory
             'sage_request_type' => SageEnum::SRT_POST_AP_PP_REC,
             'entry_type' => $entryType,
         ];
+    }
+
+    public static function createUpfrontApplyPaymentAPInvoicePayload($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment = false)
+    {
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $payLoad = [
+            'BatchSelector' => 'PY',
+            'Description' => 'CLIENT PAYMENT MAPPING',
+            'BankCode' => SageEnum::BANK_CODE,
+            'PaymentsAdjustments' => [
+                [
+                    'BatchType' => 'PY',
+                    'VendorNumber' => $vendorNumber,
+                    'EntryDescription' => 'CLIENT PAYMENT MAPPING',
+                    'PaymentTransactionType' => 'Payment',
+                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAP($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment),
+                ],
+            ],
+        ];
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
+            'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function readyToPostUpfrontApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
+    {
+        $sageRequestType = null;
+        $payLoad = [
+            'BatchStatus' => 'ReadyToPost',
+        ];
+
+        $sageRequestTypes = [
+            SageEnum::SRT_CREATE_PAY_REC_ONE_INV => SageEnum::SRT_RTP_PAY_REC_ONE_INV,
+            SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_RTP_AR_SP_PRE_PAYMENT,
+        ];
+
+        if (isset($extras['sage_request_type'])) {
+            $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
+        }
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchSelector=\'PY\',BatchNumber='.$batchNumber.')',
+            'payload' => $payLoad,
+            'sage_request_type' => $sageRequestType ?? null,
+            'entry_type' => SageEnum::SCT_STRAIGHT,
+        ];
+    }
+
+    public static function postUpfrontApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
+    {
+        $sageRequestType = null;
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $payLoad = [
+            'BatchType' => 'CA',
+            'PostAllBatches' => 'Donotpostallbatches',
+            'PostBatchFrom' => $batchNumber,
+            'PostBatchTo' => $batchNumber,
+            'ActionSelector' => 'string',
+            'UpdateOperation' => 'Unspecified',
+
+        ];
+
+        $sign = '$process';
+        $val = "('".$sign."')";
+
+        $sageRequestTypes = [
+            SageEnum::SRT_CREATE_PAY_REC_ONE_INV => SageEnum::SRT_POST_PAY_REC_ONE_INV,
+            SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_POST_AR_SP_PRE_PAYMENT,
+        ];
+
+        if (isset($extras['sage_request_type'])) {
+            $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
+        }
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.$val,
+            'payload' => $payLoad,
+            'sage_request_type' => $sageRequestType ?? null,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function createSplitApplyPaymentAPInvoicePayload($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment = false)
+    {
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $payLoad = [
+            'BatchSelector' => 'PY',
+            'Description' => 'CLIENT PAYMENT MAPPING',
+            'BankCode' => SageEnum::BANK_CODE,
+            'PaymentsAdjustments' => [
+                [
+                    'BatchType' => 'PY',
+                    'VendorNumber' => $vendorNumber,
+                    'EntryDescription' => 'CLIENT PAYMENT MAPPING',
+                    'PaymentTransactionType' => 'Payment',
+                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAP($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment),
+                ],
+            ],
+        ];
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
+            'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function readyToPostSplitApplyPaymentAPInvoicePayload($batchNumber, $isCommissionReceipt = false)
+    {
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $payLoad = [
+            'BatchStatus' => 'ReadyToPost',
+        ];
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchSelector=\'PY\',BatchNumber='.$batchNumber.')',
+            'payload' => $payLoad,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::RTP_COM_PP_REC : SageEnum::SRT_RTP_PAY_REC_ONE_INV,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function postSplitApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
+    {
+        $sageRequestType = null;
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $payLoad = [
+            'BatchType' => 'CA',
+            'PostAllBatches' => 'Donotpostallbatches',
+            'PostBatchFrom' => $batchNumber,
+            'PostBatchTo' => $batchNumber,
+            'ActionSelector' => 'string',
+            'UpdateOperation' => 'Unspecified',
+
+        ];
+
+        $sign = '$process';
+        $val = "('".$sign."')";
+
+        $sageRequestTypes = [
+            SageEnum::SRT_CREATE_PAY_REC_ONE_INV => SageEnum::SRT_POST_PAY_REC_ONE_INV,
+            SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_POST_AR_SP_PRE_PAYMENT,
+        ];
+
+        if (isset($extras['sage_request_type'])) {
+            $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
+        }
+
+        return [
+            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.$val,
+            'payload' => $payLoad,
+            'sage_request_type' => $sageRequestType ?? null,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function createAppliedReceiptsAdjustmentsForAP($quote, $vendorNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
+    {
+        if ($isPaymentsSplit) {
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForSplitPaymentsForAP($splitPaymentRecords, $vendorNumber, $paymentRecord);
+        } else {
+            $firstSplitPaymentRecord = $splitPaymentRecords[0];
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForNonSplitPaymentsForAP($firstSplitPaymentRecord, $vendorNumber, $paymentRecord);
+        }
+
+        return $receiptsAndAdjustmentsData;
     }
 
     // Payment code mapping
@@ -1568,12 +1738,12 @@ class SagePayloadFactory
         return $splitPaymentsCount === 1 ? 'COD' : ($splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount);
     }
 
-    private static function createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)
+    private static function createAppliedReceiptsAdjustmentsForSplitPaymentsForAR($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)
     {
         $receiptsAndAdjustmentsData = [];
         foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
             if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
-                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptDataForAR($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
                 $receiptsAndAdjustmentsData[] = $singleReceiptData;
                 $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
                 if ($discountData) {
@@ -1585,11 +1755,11 @@ class SagePayloadFactory
 
         return $receiptsAndAdjustmentsData;
     }
-    private static function createAppliedReceiptsAdjustmentsForNonSplitPayments($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord)
+    private static function createAppliedReceiptsAdjustmentsForNonSplitPaymentsForAR($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord)
     {
         $receiptsAndAdjustmentsData = [];
         if (self::isPaymentProcessed($firstSplitPaymentRecord->payment_status_id)) {
-            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptDataForAR($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
             $receiptsAndAdjustmentsData[] = $singleReceiptData;
             $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
             if ($discountData) {
@@ -1598,6 +1768,57 @@ class SagePayloadFactory
         }
 
         return $receiptsAndAdjustmentsData;
+    }
+
+    private static function createAppliedReceiptsAdjustmentsForSplitPaymentsForAP($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)
+    {
+        $receiptsAndAdjustmentsData = [];
+        foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
+            if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
+                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptDataForAP($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                $receiptsAndAdjustmentsData[] = $singleReceiptData;
+                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+            }
+
+        }
+
+        return $receiptsAndAdjustmentsData;
+    }
+
+    private static function createAppliedReceiptsAdjustmentsForNonSplitPaymentsForAP($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord)
+    {
+        $receiptsAndAdjustmentsData = [];
+        if (self::isPaymentProcessed($firstSplitPaymentRecord->payment_status_id)) {
+            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptDataForAP($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData[] = $singleReceiptData;
+            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+        }
+
+        return $receiptsAndAdjustmentsData;
+    }
+
+    private static function createReceiptDataForAP($item, $vendorNumber, $payment, $paymentNumber = 1)
+    {
+        $documentNumber = mb_substr($payment->insurer_tax_number, -18);
+        $receiptData = [
+            'BatchType' => 'PY',
+            'VendorNumber' => $vendorNumber,
+            'DocumentNumber' => $documentNumber,
+            'PaymentNumber' => $paymentNumber,
+            'TransactionType' => 'PaymentPosted',
+            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
+        ];
+
+        $prePaymentData = [
+            'BatchType' => 'PY',
+            'CustomerNumber' => $vendorNumber,
+            'DocumentNumber' => $item->sage_ap_payment_receipt_id,
+            'PaymentNumber' => 1,
+            'TransactionType' => 'PaymentPosted',
+            'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
+        ];
+
+        return [$receiptData, $prePaymentData];
     }
 
     private static function isPaymentProcessed($paymentStatusId)
