@@ -53,6 +53,7 @@ class SukoonMedexEPFailureNotification extends Mailable
         } else {
             // Non-prod environment configuration (test, uat, staging, local)
             $from = $this->fromIM ? ['no-reply@notify.insurancemarket.ae', 'InsuranceMarket.ae'] : ['alfred@testnotify.alfred.ae'];
+
             return $this->subject($subject)
                 ->from($from)
                 ->replyTo(['test.emails@insurancemarket.ae'])
@@ -72,18 +73,18 @@ class SukoonMedexEPFailureNotification extends Mailable
     {
         $baseUrl = config('app.url', env('APP_URL'));
         $quoteId = $this->quoteObject->uuid ?? $this->quoteObject->id ?? '';
-        
+
         if (empty($quoteId)) {
             return 'N/A';
         }
-        
+
         // Generate appropriate link based on quote type
         $imcrmLink = match ($this->quoteTypeId) {
             QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
             QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
-            default => "#",     // Default link (#)
+            default => '#',     // Default link (#)
         };
-        
+
         return $imcrmLink;
     }
-} 
+}
