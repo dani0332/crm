@@ -389,7 +389,7 @@ class CentralController extends Controller
                             'message' => 'Embedded Product payment capture failed',
                         ]], 403);
                     }
-                }   
+                }
             }
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
