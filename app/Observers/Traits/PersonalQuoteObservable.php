@@ -47,6 +47,21 @@ trait PersonalQuoteObservable
             }
         }
 
+        if($personalQuote->quote_status_id == QuoteStatusEnum::Quoted && $personalQuote->isLife()){
+            $isFollowupExecuted = app(BirdService::class)
+            ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value);
+
+            if ($isFollowupExecuted) {
+                LoggerService::info(self::class." - LIFE_AUTOMATED_FOLLOWUPS - Followup already executed {$personalQuote->uuid}");
+
+                return;
+            }
+            SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+        }
+        else {
+            LoggerService::info(self::class." - Quote status is {$personalQuote->quote_status_id} for quote: {$personalQuote->uuid}");
+        }
+
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
             event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
@@ -69,16 +84,7 @@ trait PersonalQuoteObservable
         if ($personalQuote->isLife()) {
             if ($personalQuote->isFIC(quoteType: QuoteTypes::LIFE)) {
                 SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
-            }
-            $isFollowupExecuted = app(BirdService::class)
-                ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value);
-
-            if ($isFollowupExecuted) {
-                LoggerService::info(self::class." - LIFE_AUTOMATED_FOLLOWUPS - Followup already executed {$personalQuote->uuid}");
-
-                return;
-            }
-            SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            }  
         }
 
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
