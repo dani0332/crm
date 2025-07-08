@@ -1585,9 +1585,10 @@ class CarQuoteService extends BaseService
 
         $view = $quote->registration_type == CarRegistrationType::COMPANY ? 'pdf.car_comparision.company_car_pdf' : 'pdf.quote_plans';
 
+        $ecomInsuranceLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid;
         try {
             $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isPhpEnabled' => true])
-                ->loadView($view, compact('quotePlans', 'planIds', 'quote', 'addons'));
+                ->loadView($view, compact('quotePlans', 'planIds', 'quote', 'addons','ecomInsuranceLink'));
         } catch (\Throwable $e) {
             logger()->debug("Exception: " . $e->getMessage(), ['line' => $e->getLine(), 'file' => $e->getFile()]);
         }

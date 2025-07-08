@@ -613,6 +613,17 @@
         ["type" => "buy", "heading_class" => "no-border"],*/
     ];
 
+        $dirhamIcon = 'data:image/svg+xml;base64,' . base64_encode('
+        <svg viewBox="0 0 14 14" color="#333333" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.0747 6.85449L12.9829 6.76976C12.8346 6.62854 12.6581 6.55792 12.4674 6.55792H11.4788C11.4929 6.72739 11.5 6.89687 11.5 7.08045C11.5 7.26405 11.4929 7.43351 11.4788 7.61004H12.1496C12.6581 7.61004 13.0747 8.0902 13.0747 8.69041V8.95873L12.9829 8.86694C12.8346 8.73277 12.6581 8.66216 12.4674 8.66216H11.3305C10.7868 11.0418 8.88736 12.334 5.89341 12.334H2.05212C2.05212 12.334 2.57464 11.9315 2.57464 10.5828V8.66216H1.93208C1.41661 8.66216 1 8.17494 1 7.5818V7.31347L1.09886 7.39821C1.24008 7.53237 1.41661 7.61004 1.60726 7.61004H2.57464V6.55792H1.93208C1.41661 6.55792 1 6.0707 1 5.47756V5.20924L1.09886 5.30103C1.24008 5.4352 1.41661 5.50581 1.60726 5.50581H2.57464V3.66283C2.57464 2.27178 2.05212 1.83398 2.05212 1.83398H5.89341C8.80262 1.83398 10.7515 3.11206 11.3234 5.50581H12.1496C12.6581 5.50581 13.0747 5.98597 13.0747 6.58617V6.85449ZM5.75219 2.35651H4.1493V5.50581H9.53699C9.16981 3.31683 7.91997 2.35651 5.75219 2.35651ZM9.66409 7.08045C9.66409 6.89687 9.65703 6.72739 9.64996 6.55792H4.1493V7.61004H9.64996C9.65703 7.43351 9.66409 7.26405 9.66409 7.08045ZM4.1493 11.8044H5.76631C8.0612 11.7479 9.19099 10.6464 9.53699 8.66216H4.1493V11.8044Z" fill="currentColor"/>
+        </svg>
+    ');
+        $dirhamIconWhite = 'data:image/svg+xml;base64,' . base64_encode('
+        <svg viewBox="0 0 14 14" color="#ffffff" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.0747 6.85449L12.9829 6.76976C12.8346 6.62854 12.6581 6.55792 12.4674 6.55792H11.4788C11.4929 6.72739 11.5 6.89687 11.5 7.08045C11.5 7.26405 11.4929 7.43351 11.4788 7.61004H12.1496C12.6581 7.61004 13.0747 8.0902 13.0747 8.69041V8.95873L12.9829 8.86694C12.8346 8.73277 12.6581 8.66216 12.4674 8.66216H11.3305C10.7868 11.0418 8.88736 12.334 5.89341 12.334H2.05212C2.05212 12.334 2.57464 11.9315 2.57464 10.5828V8.66216H1.93208C1.41661 8.66216 1 8.17494 1 7.5818V7.31347L1.09886 7.39821C1.24008 7.53237 1.41661 7.61004 1.60726 7.61004H2.57464V6.55792H1.93208C1.41661 6.55792 1 6.0707 1 5.47756V5.20924L1.09886 5.30103C1.24008 5.4352 1.41661 5.50581 1.60726 5.50581H2.57464V3.66283C2.57464 2.27178 2.05212 1.83398 2.05212 1.83398H5.89341C8.80262 1.83398 10.7515 3.11206 11.3234 5.50581H12.1496C12.6581 5.50581 13.0747 5.98597 13.0747 6.58617V6.85449ZM5.75219 2.35651H4.1493V5.50581H9.53699C9.16981 3.31683 7.91997 2.35651 5.75219 2.35651ZM9.66409 7.08045C9.66409 6.89687 9.65703 6.72739 9.64996 6.55792H4.1493V7.61004H9.64996C9.65703 7.43351 9.66409 7.26405 9.66409 7.08045ZM4.1493 11.8044H5.76631C8.0612 11.7479 9.19099 10.6464 9.53699 8.66216H4.1493V11.8044Z" fill="currentColor"/>
+        </svg>
+    ');
+
 @endphp
 {{--First Page --}}
 <img src="{{public_path('images/quote_plans_pages/personal-car-cover.jpg')}}" class="cover-page" />
@@ -710,8 +721,10 @@
             </th>
             @foreach ($planIds as $planId)
                 <th>
-                    <p class="text-center" style="font-size: 14px">
-                        AED {{$plans[$planId]->discountPremium ?? 0 }}
+                    <p class="text-center" style="font-size: 14px;">
+                        <img src="{{$dirhamIcon}}" class=""
+                             style="width: 16px; height: 16px; position: relative; top: 3px; padding: 0px;"
+                             alt="Dirham Icon" /> {{$plans[$planId]->discountPremium ?? 0 }}
                     </p>
                 </th>
             @endforeach
@@ -724,7 +737,9 @@
             @foreach ($planIds as $planId)
                 <th>
                     <p class="text-center" style="font-size: 14px">
-                        AED {{$plans[$planId]->vat ?? 0 }}
+                        <img src="{{$dirhamIcon}}" class=""
+                             style="width: 16px; height: 16px; position: relative; top: 3px; padding: 0px;"
+                             alt="Dirham Icon" /> {{$plans[$planId]->vat ?? 0 }}
                     </p>
                 </th>
             @endforeach
@@ -752,7 +767,9 @@
                                         '">' .
                                         $buyNowText .
                                         '<br/>' .
-                                        '<span style="font-size: 10px; font-weight: normal;">AED </span>' .
+                                        '<span style="font-size: 10px; font-weight: normal;"><img src="'.$dirhamIconWhite.'" class=""
+                                 style="width: 16px; height: 16px; position: relative; top: 3px; padding: 0px;"
+                                 alt="Dirham Icon" /> </span>' .
                                         '<strong>' .
                                         $totalPriceFormatted .
                                         '</strong>' .
@@ -819,43 +836,44 @@
                 @foreach($planIds as $planId)
                     <td class="{{@$feature['col_class']}} ">
                         <p>
-                            @if($feature['type'] == 'info')
+                            @php
+                                if ($feature['type'] == 'info') {
+                                    if ($feature['code'] == 'ancillaryExcess') {
+                                        $value = $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%') : 'TBA';
+                                    } elseif ($feature['code'] == 'carValue') {
+                                        $value = $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']}, 0) : 'TBA';
+                                    } else {
+                                        $value = $plans[$planId]->{$feature['code']} ? (($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) ? formatAmount($plans[$planId]->{$feature['code']}) : 'N/A') : 'TBA';
+                                    }
+                                } elseif ($feature['type'] == 'prop') {
+                                    $value = $plans[$planId]->{$feature['code']};
+                                } elseif ($feature['type'] == 'buy') {
+                                    if ($plans[$planId]->discountPremium) {
+                                        $value = '<a target="_blank" class="btn-buy" href="' . ($websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId) . '">Buy Now</a>';
+                                    } else {
+                                        $value = 'N/A';
+                                    }
+                                } elseif (is_array($feature['type'])) {
+                                    // we need to check of value is in inclusion or exclusion object, only one value will be printed
+                                    $value = "Excluded";
+                                    foreach ($feature['type'] as $type) {
+                                        if (isset($plans[$planId]->{$type}->{$feature['code']}->value)) {
+                                            $value = $plans[$planId]->{$type}->{$feature['code']}->value;
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    $value = $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded';
+                                }
 
-                                @if($feature['code'] == 'ancillaryExcess')
-                                    {!!  $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%')  : 'TBA' !!}
-                                @elseif($feature['code'] == 'carValue')
-                                    {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']},0)  : 'TBA' !!}
-                                @else
-                                    {!!  $plans[$planId]->{$feature['code']} ? ($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) ? formatAmount($plans[$planId]->{$feature['code']}) : 'N/A'  : 'TBA' !!}
-                                @endif
+                                // Check if the value contains "AED" as a standalone word and replace it with dirham icon
+                                $dirhamIconHtml = '<img src="'.$dirhamIcon.'" class="" style="width: 16px; height: 16px; position: relative; top: 3px; padding: 0px;" alt="Dirham Icon" />';
 
-                            @elseif($feature['type'] == 'prop')
+                                // Use regex to match AED as a standalone word (with word boundaries)
+                                $value = preg_replace('/\bAED\b/', $dirhamIconHtml, $value);
+                            @endphp
 
-                                {!!  $plans[$planId]->{$feature['code']} !!}
-
-                            @elseif($feature['type'] == 'buy')
-
-                                @if($plans[$planId]->discountPremium)
-                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
-                                @else
-                                    N/A
-                                @endif
-
-                            @elseif(is_array($feature['type']))
-
-                                {{-- we need to check of value is in inclusion or exclusion object, only one value will be printed --}}
-                                @php $value = "Excluded"; @endphp
-                                @foreach($feature['type'] as $type)
-                                    @if(isset($plans[$planId]->{$type}->{$feature['code']}->value))
-                                        @php $value = $plans[$planId]->{$type}->{$feature['code']}->value; break; @endphp
-                                    @endif
-                                @endforeach
-
-                                {!! ($value)  !!}
-
-                            @else
-                                {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
-                            @endif
+                            {!! $value !!}
                         </p>
                     </td>
                 @endforeach
@@ -926,9 +944,9 @@
             </td>
 
             <td class="footer-td" style="width: 30%;">
-                <div class="footer-box" style="margin-top: 16px; padding: 5px 10px">
+                <div class="footer-box" style="margin-top: 5px; padding: 5px 10px">
                     <div class="advisor-section">
-                        @if($quote->advisor)
+                        @if(/*$quote->advisor*/ FALSE)
                             <div class="advisor-photo-container">
                                 <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}"
                                      alt="Advisor Photo" class="advisor-photo">
@@ -968,20 +986,22 @@
                             </div>
                             <div class="alfred-details ">
                                 <div class="" style="vertical-align: middle;">
-                                    <p class="title">Chat with InstantAlfred instantly </p>
+                                    <p class="title">{{ !empty($quotePlans->quotes->showRequestAdvisorButton) ? "Request for an insurance advisor" : "Chat with InstantAlfred instantly" }} </p>
 
-                                    <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
+                                    <div class="open-new-icon" style="position: absolute; right:5px; top:25px;">
                                         <a
                                             class="text-white"
-                                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
+                                            href="{{$ecomInsuranceLink.(!empty($quotePlans->quotes->showRequestAdvisorButton) ? "/?assignAdvisor=true" : "/?IA=true" )}}">
                                             <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
                                                  style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
                                         </a>
                                     </div>
                                 </div>
 
-                                <p class="" style="line-height: 0.7;">You're in the driver's seat - no advisor calls
-                                    <br>will come your way without your request</p>
+                                @if(empty($quotePlans->quotes->showRequestAdvisorButton))
+                                    <p class="" style="line-height: 0.7;">You're in the driver's seat - no advisor calls
+                                        <br>will come your way without your request</p>
+                                @endif
                             </div>
                         @endif
                     </div>
