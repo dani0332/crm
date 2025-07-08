@@ -62,9 +62,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         
         if ($this->allocationRequest->get('isCHSAdvisor')) {
-            LoggerService::info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
+            LoggerService::info(self::class.' - getAdvisorsByStatus: CHS Advisors is required');
 
-            return User::select('users.id as user_id')->chs()->first();
+            return User::select('users.id as user_id')->chs()->get();
         }
 
         if ($this->allocationRequest->get('isSICAdvisor')) {
