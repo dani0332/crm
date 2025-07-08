@@ -269,6 +269,7 @@ class BikeAllocationService extends AllocationService
 
         if (empty($axaProviderId)) {
             LoggerService::info('AXA insurance provider not found.');
+
             return 0;
         }
 
