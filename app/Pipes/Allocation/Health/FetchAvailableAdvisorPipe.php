@@ -91,6 +91,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     protected function fetchAdvisorByType(string $methodName, $teamId = null)
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
+        $eligibleUsers = [];
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class."::fetchAdvisorByType - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
