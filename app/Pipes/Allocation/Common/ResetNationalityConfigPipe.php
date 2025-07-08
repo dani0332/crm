@@ -21,6 +21,7 @@ class ResetNationalityConfigPipe extends BaseAllocationPipe
             LoggerService::info("ResetNationalityConfigPipe::handle - Going to retry advisor allocation");
         } else {
             $this->allocationRequest->set('dontRetryAdvisor', true);
+            $this->allocationRequest->set('dontRetryRuleExclusion', true);
         }
 
         return $next($request);

@@ -21,7 +21,7 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
 {
     public function handle($request, Closure $next)
     {
-        if ($request->hasNationalityConfig()) {
+        if ($request->hasNationalityConfig() || $request->get('dontRetryRuleExclusion', false)) {
             return $next($request);
         }
 

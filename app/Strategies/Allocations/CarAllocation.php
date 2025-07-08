@@ -54,6 +54,7 @@ class CarAllocation implements Allocation
                 ApplyRuleExclusionPipe::class,
                 FetchEligibleAdvisorsPipe::class,
                 ResetNationalityConfigPipe::class,
+                ApplyRuleExclusionPipe::class,
                 FetchEligibleAdvisorsPipe::class,
                 FinalizeEligibleAdvisorPipe::class,
                 AssignLeadPipe::class,
