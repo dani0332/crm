@@ -1051,13 +1051,13 @@ class SageApiService
             $sageResponse = json_decode($sageLogArray[5]['response'], true);
         } else {
 
-            $createPremiumPrepaymentResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-            $sageResponse = json_decode($createPremiumPrepaymentResponse, true);
+            $createAPPremiumPaymentReceipt = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+            $sageResponse = json_decode($createAPPremiumPaymentReceipt,true);
         }
 
-        if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+        if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
             if (! $paymentSplit->sage_ap_payment_receipt_id) {
-                $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+                $documentNumberForReceipt = $sageResponse['PaymentsAdjustments'][0]['DocumentNumber'];
                 $this->handleWithDeadlockRetries(function () use ($paymentSplit, $documentNumberForReceipt) {
                     $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
                 }, 5);

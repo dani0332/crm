@@ -1483,14 +1483,14 @@ class SagePayloadFactory
                     'PaymentTransactionType' => 'Prepayment',
                     'BankCode' => $bankCode,
                     'TotalPrepayVendorCurrency' => $bankReceiptAmount,
-                    'AppliedReceiptsAdjustments' => [
+                    'AppliedPayments' => [
                         [
                             'BatchType' => 'PY',
                             'VendorNumber' => $vendorNumber,
                             'TransactionType' => 'PrepaymentPosted',
                         ],
                     ],
-                    'ReceiptAdjustmentOptionalField' => $optionalFields,
+                    /*'ReceiptAdjustmentOptionalField' => $optionalFields,*/
                 ],
 
             ],
@@ -1556,7 +1556,7 @@ class SagePayloadFactory
                     'VendorNumber' => $vendorNumber,
                     'EntryDescription' => 'CLIENT PAYMENT MAPPING',
                     'PaymentTransactionType' => 'Payment',
-                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAP($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment),
+                    'AppliedPayments' => self::createAppliedReceiptsAdjustmentsForAP($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
             ],
         ];
@@ -1564,14 +1564,14 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
+            'sage_request_type' => SageEnum::SRT_CREATE_APPLY_PAYMENT_AP_UPFRONT_INV,
             'entry_type' => $entryType,
         ];
     }
 
     public static function readyToPostUpfrontApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
-        $sageRequestType = null;
+        $sageRequestType =  SageEnum::SRT_RTP_APPLY_PAYMENT_AP_UPFRONT_INV;
         $payLoad = [
             'BatchStatus' => 'ReadyToPost',
         ];
@@ -1588,14 +1588,14 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchSelector=\'PY\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType ?? null,
+            'sage_request_type' => $sageRequestType,
             'entry_type' => SageEnum::SCT_STRAIGHT,
         ];
     }
 
     public static function postUpfrontApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
-        $sageRequestType = null;
+        $sageRequestType =  SageEnum::SRT_POST_APPLY_PAYMENT_AP_UPFRONT_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchType' => 'PY',
@@ -1622,7 +1622,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType ?? null,
+            'sage_request_type' => $sageRequestType,
             'entry_type' => $entryType,
         ];
     }
@@ -1648,12 +1648,12 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+            'sage_request_type' => SageEnum::SRT_CREATE_APPLY_PAYMENT_AP_SPLIT_INV,
             'entry_type' => $entryType,
         ];
     }
 
-    public static function readyToPostSplitApplyPaymentAPInvoicePayload($batchNumber, $isCommissionReceipt = false)
+    public static function readyToPostSplitApplyPaymentAPInvoicePayload($batchNumber)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -1663,14 +1663,14 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchSelector=\'PY\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => $isCommissionReceipt ? SageEnum::RTP_COM_PP_REC : SageEnum::SRT_RTP_PAY_REC_ONE_INV,
+            'sage_request_type' =>   SageEnum::SRT_RTP_APPLY_PAYMENT_AP_SPLIT_INV,
             'entry_type' => $entryType,
         ];
     }
 
     public static function postSplitApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
-        $sageRequestType = null;
+        $sageRequestType =  SageEnum::SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchType' => 'PY',
@@ -1688,6 +1688,7 @@ class SagePayloadFactory
         $sageRequestTypes = [
             SageEnum::SRT_CREATE_PAY_REC_ONE_INV => SageEnum::SRT_POST_PAY_REC_ONE_INV,
             SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_POST_AR_SP_PRE_PAYMENT,
+            SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV,
         ];
 
         if (isset($extras['sage_request_type'])) {
@@ -1697,7 +1698,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType ?? null,
+            'sage_request_type' => $sageRequestType ,
             'entry_type' => $entryType,
         ];
     }
@@ -1806,7 +1807,7 @@ class SagePayloadFactory
             'DocumentNumber' => $documentNumber,
             'PaymentNumber' => $paymentNumber,
             'TransactionType' => 'PaymentPosted',
-            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
+            'PaymentAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
         ];
 
         $prePaymentData = [
@@ -1815,7 +1816,7 @@ class SagePayloadFactory
             'DocumentNumber' => $item->sage_ap_payment_receipt_id,
             'PaymentNumber' => 1,
             'TransactionType' => 'PaymentPosted',
-            'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
+            'PaymentAmount' => -roundNumber($item->payment_amount),
         ];
 
         return [$receiptData, $prePaymentData];
