@@ -1554,7 +1554,7 @@ class RenewalsUploadService
             if ($response->totalPremium && ($leadData['payment_link'] != '' || $leadData['payment_link'] != null)) {
                 $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
                 $premium = isset($ecomDetails['priceWithVAT']) && $ecomDetails['priceWithVAT'] > 0 && $ecomDetails['priceWithVAT'] != '' && $ecomDetails['priceWithVAT'] != null ? $ecomDetails['priceWithVAT'] : $response->totalPremium;
-                $this->createHealthPayment($quote, $leadData, $premium, $renewalQuoteProcess);
+                $this->createHealthPayment($quote, $leadData, $premium, $renewalQuoteProcess, $healthPlanId);
             } else {
                 // If payment link is not present, then update the renewal quote process good count
                 $this->updateRenewalQuoteProcess($renewalQuoteProcess, false, []);
@@ -1582,7 +1582,7 @@ class RenewalsUploadService
      * @param [type] $data
      * @return void
      */
-    private function createHealthPayment($quote, $data, $totalPremium, $renewalQuoteProcess)
+    private function createHealthPayment($quote, $data, $totalPremium, $renewalQuoteProcess, $healthPlanId)
     {
         try {
             $payment = $quote->payments()->latest()
@@ -1595,7 +1595,7 @@ class RenewalsUploadService
                 'quote_id' => $quote->id,
                 'code' => 'IP',
                 'paymentCode' => $payment ? $payment->code : null,
-                'plan_id' => $quote->plan_id,
+                'plan_id' => $healthPlanId,
                 'quote_type' => $quoteType,
                 'insurance_provider_id' => $quote->insurance_provider_id,
                 'modelType' => $quoteType,
