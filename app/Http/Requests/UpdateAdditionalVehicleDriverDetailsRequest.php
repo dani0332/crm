@@ -25,7 +25,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Vehicle Transaction Details and Driver Details validation for common fields
         $rules = [
             'quote_type_id' => 'required|integer',
             'quote_uuid' => 'required|string',
@@ -74,7 +73,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
      */
     public function messages(): array
     {
-        // TODO:: Need to check this messages is correct or not
         return [
             'is_insured_and_driver_same.required' => 'Please specify if the insured and driver are the same person.',
             'is_insured_and_driver_same.in' => 'Please select either Yes or No for insured and driver same.',
@@ -111,7 +109,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
      */
     public function attributes(): array
     {
-        // TODO:: Need to check this attributes is correct or not
         return [
             'is_insured_and_driver_same' => 'insured and driver same',
             'driver_first_name' => 'driver first name',
@@ -138,7 +135,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             // Additional custom validation logic can be added here
-            // TODO:: Need to validation this function is it required or not
             $this->validateDriverDetails($validator);
         });
     }

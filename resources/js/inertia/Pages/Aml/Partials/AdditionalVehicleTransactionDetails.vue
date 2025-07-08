@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 const { isRequired } = useRules();
 
 const page = usePage();
+const notification = useToast();
 const lookups = page.props.lookups;
 
 // Computed options for dropdowns
@@ -92,7 +93,7 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
     <div>
     <x-form @submit="submitAdditionalVehicleTransactionDetailsForm" :auto-focus="false">
       <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
-          <x-field label="RTA Transaction Type">
+          <x-field label="RTA Transaction Type" required>
             <x-select 
               v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type" 
               :rules="[isRequired]"
@@ -163,10 +164,11 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
             />
           </x-field>
           
-          <x-field label="Plate Color">
+          <x-field label="Plate Color" :required="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA">
             <x-select 
               v-model="additionalVehicleTransactionDetailsForm.plate_color" 
               :options="plateColorOptions"
+              :rules="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
               placeholder="Select Plate Color"
             />
           </x-field>
@@ -183,13 +185,14 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
             />
           </x-field>
           
-          <x-field label="Bank Name">
+          <x-field label="Bank Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
             <ComboBox
               :single="true"
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
               :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1"
+              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
               class="w-full"
             />
           </x-field>
