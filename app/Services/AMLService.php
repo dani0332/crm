@@ -1928,11 +1928,12 @@ class AMLService
                     'bank_name' => $request->bank_name,
                     'first_registration_date' => $request->first_registration_date,
                     'policy_effective_date' => $request->policy_effective_date,
-                    // 'policy_expiry_date' => $request->policy_expiry_date,
+                    // 'policy_expiry_date' => $request->policy_expiry_date, // TODO:: Need to check with Mirza, why it's commented
                     'certificate_start_date' => $request->certificate_start_date,
                     'certificate_end_date' => $request->certificate_end_date,
                     'annual_mileage_estimate' => $request->annual_mileage_estimate,
                 ];
+                $message = 'Additional Vehicle Transaction Details saved successfully';
             } else {
                 $updateCarQuoteRequestDetail = [
                     'is_insured_and_driver_same' => $request->is_insured_and_driver_same,
@@ -1948,14 +1949,15 @@ class AMLService
                     'home_country_license_issuance' => $request->home_country_license_issuance,
                     'home_country_driving_experience' => $request->home_country_driving_experience,
                 ];
+                $message = 'Additional Driver Details saved successfully';
             }
 
             CarQuoteRequestDetail::where('car_quote_request_id', $quote->id)->update($updateCarQuoteRequestDetail);
-            $response = ['status' => true, 'message' => 'Successfully saved additional vehicle and driver details'];
-            LoggerService::info('Successfully saved additional vehicle and driver details');
+            $response = ['status' => true, 'message' => $message];
+            LoggerService::info(__FUNCTION__ . ' - ' . $message);
 
         } catch (\Exception $ex) {
-            LoggerService::info('Error saving additional vehicle and driver details', $ex->getMessage());
+            LoggerService::info(__FUNCTION__ . ' - Error saving additional vehicle and driver details', $ex->getMessage());
             $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];
         }
 

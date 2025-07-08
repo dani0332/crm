@@ -35,6 +35,9 @@ const drivingExperienceOptions = computed(() => {
 });
 
 const additionalDriverDetailsForm = useForm({
+  quote_type_id: page.props.quoteType.id,
+  quote_uuid: page.props.quoteRequest?.uuid,
+  insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   is_insured_and_driver_same: page.props.quoteRequest?.car_quote_request_detail?.is_insured_and_driver_same ?? '',
   driver_first_name: page.props.quoteRequest?.car_quote_request_detail?.driver_first_name ?? '',
   driver_last_name: page.props.quoteRequest?.car_quote_request_detail?.driver_last_name ?? '',
@@ -70,13 +73,12 @@ const submitAdditionalDriverDetailsForm = (isValid) => {
         });
       }
     }).catch(error => {
-      console.error('Error saving driver details:', error);
       notification.error({
         title: error.response.data.message,
         position: 'top',
       });
     }).finally(() => {
-      props.formData.processing = false;
+      additionalDriverDetailsForm.processing = false;
     });
   } 
 };
