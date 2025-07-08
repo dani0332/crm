@@ -36,7 +36,8 @@ class SendHealthSICWAFollowupJob implements ShouldQueue
         $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
         LoggerService::startQuoteLogging($lead);
         if (! $lead) {
-            LoggerService::info("SendHealthSICWAFollowupJob - Lead not found ");
+            LoggerService::info('SendHealthSICWAFollowupJob - Lead not found ');
+
             return;
         }
 

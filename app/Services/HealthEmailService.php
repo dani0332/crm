@@ -338,12 +338,12 @@ class HealthEmailService extends BaseService
         ]);
 
         if (empty($response['plans'])) {
-            LoggerService::info("SIC Health Followups WA not executed because no plans found");
+            LoggerService::info('SIC Health Followups WA not executed because no plans found');
 
             return;
         }
         if (empty($response['planTypes'])) {
-            LoggerService::info("SIC Health Followups WA not executed because no plan types found");
+            LoggerService::info('SIC Health Followups WA not executed because no plan types found');
 
             return;
         }
@@ -360,7 +360,7 @@ class HealthEmailService extends BaseService
         try {
             $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
             if ($isFollowupExecuted) {
-                LoggerService::info("SIC Health Followups WA already executed");
+                LoggerService::info('SIC Health Followups WA already executed');
 
                 return;
             }
@@ -374,7 +374,7 @@ class HealthEmailService extends BaseService
 
             app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
 
-            LoggerService::info("SIC Health Followups WA executed");
+            LoggerService::info('SIC Health Followups WA executed');
 
         } catch (\Exception $exception) {
             LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);
