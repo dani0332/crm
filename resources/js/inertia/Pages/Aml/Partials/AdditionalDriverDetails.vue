@@ -1,19 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
+const { isRequired } = useRules();
 
-// Props
-const props = defineProps({
-  formData: {
-    type: Object,
-    required: true
-  }
-})
+const page = usePage();
+const notification = useToast();
 
-// Emits
-const emit = defineEmits(['save'])
-
-// Reactive state
-const isCollapsed = ref(false)
+const lookups = page.props.lookups;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -21,52 +13,75 @@ const driverGenderOptions = computed(() => [
   { value: 'female', label: 'Female' },
 ])
 
-const licenseIssuePlaceOptions = computed(() => [
-  { value: 'abu_dhabi', label: 'Abu Dhabi' },
-  { value: 'dubai', label: 'Dubai' },
-  { value: 'sharjah', label: 'Sharjah' },
-  { value: 'ajman', label: 'Ajman' },
-  { value: 'fujairah', label: 'Fujairah' },
-  { value: 'ras_al_khaimah', label: 'Ras Al Khaimah' },
-  { value: 'umm_al_quwain', label: 'Umm Al Quwain' },
-])
+const licenseIssuePlaceOptions = computed(() => {
+  return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
+});
 
-const uaeDrivingExperienceOptions = computed(() => [
-  { value: '0', label: 'No Experience' },
-  { value: '1', label: '1 Year' },
-  { value: '2', label: '2 Years' },
-  { value: '3', label: '3 Years' },
-  { value: '4', label: '4 Years' },
-  { value: '5', label: '5 Years' },
-  { value: '6', label: '6 Years' },
-  { value: '7', label: '7 Years' },
-  { value: '8', label: '8 Years' },
-  { value: '9', label: '9 Years' },
-  { value: '10+', label: '10+ Years' },
-])
+const nationalitiesOptions = computed(() => {
+  return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
+});
 
-const homeCountryDrivingExperienceOptions = computed(() => [
-  { value: '0', label: 'No Experience' },
-  { value: '1', label: '1 Year' },
-  { value: '2', label: '2 Years' },
-  { value: '3', label: '3 Years' },
-  { value: '4', label: '4 Years' },
-  { value: '5', label: '5 Years' },
-  { value: '6', label: '6 Years' },
-  { value: '7', label: '7 Years' },
-  { value: '8', label: '8 Years' },
-  { value: '9', label: '9 Years' },
-  { value: '10+', label: '10+ Years' },
-])
+const drivingExperienceOptions = computed(() => {
+  const options = [{ value: '0', label: 'No Experience' }]
+  
+  for (let i = 1; i <= 50; i++) {
+    options.push({
+      value: i.toString(),
+      label: i === 1 ? '1 Year' : `${i} Years`
+    })
+  }
+  
+  return options
+});
 
-// Methods
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-}
+const additionalDriverDetailsForm = useForm({
+  quote_type_id: page.props.quoteType.id,
+  quote_uuid: page.props.quoteRequest?.uuid,
+  insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+  is_insured_and_driver_same: page.props.quoteRequest?.car_quote_request_detail?.is_insured_and_driver_same ?? '',
+  driver_first_name: page.props.quoteRequest?.car_quote_request_detail?.driver_first_name ?? '',
+  driver_last_name: page.props.quoteRequest?.car_quote_request_detail?.driver_last_name ?? '',
+  driver_dob: page.props.quoteRequest?.car_quote_request_detail?.driver_dob ?? '',
+  driver_gender: page.props.quoteRequest?.car_quote_request_detail?.driver_gender ?? '',
+  driver_license_number: page.props.quoteRequest?.car_quote_request_detail?.driver_license_number ?? '',
+  license_issue_place: page.props.quoteRequest?.car_quote_request_detail?.license_issue_place ?? '',
+  license_issue_date: page.props.quoteRequest?.car_quote_request_detail?.license_issue_date ?? '',
+  license_expiry_date: page.props.quoteRequest?.car_quote_request_detail?.license_expiry_date ?? '',
+  uae_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.uae_driving_experience ?? '',
+  home_country_license_issuance: page.props.quoteRequest?.car_quote_request_detail?.home_country_license_issuance ?? '',
+  home_country_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.home_country_driving_experience ?? '',
+});
 
-const handleSave = () => {
-  emit('save', props.formData)
-}
+const submitAdditionalDriverDetailsForm = (isValid) => {
+  if (isValid) {
+    additionalDriverDetailsForm.processing = true;
+    axios.post('/kyc/update-additional-vehicle-driver-details', additionalDriverDetailsForm).then(response => {
+      if (response.data.success) {
+        notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+        router.reload({
+          replace: true,
+          preserveScroll: true,
+          preserveState: true,
+        });
+      } else {
+        notification.error({
+          title: response.data.message,
+          position: 'top',
+        });
+      }
+    }).catch(error => {
+      notification.error({
+        title: error.response.data.message,
+        position: 'top',
+      });
+    }).finally(() => {
+      additionalDriverDetailsForm.processing = false;
+    });
+  } 
+};
 </script>
 
 <template>
@@ -75,129 +90,132 @@ const handleSave = () => {
       <h3 class="font-semibold text-primary-800 text-lg">
         Additional Driver Details
       </h3>
-      <button @click="toggleCollapse" class="text-gray-400 hover:text-gray-600">
-        <svg class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': isCollapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
     </div>
     
-    <div v-show="!isCollapsed">
-      <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+    <x-form @submit="submitAdditionalDriverDetailsForm">
+      <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
         <!-- Is Insured and Driver Same -->
-        <x-field label="Is the Insured and Driver the same?">
-          <x-form-group v-model="props.formData.isInsuredAndDriverSame">
-            <x-radio value="yes" label="Yes" />
-            <x-radio value="no" label="No" />
-          </x-form-group>
+        <x-field label="Is the Insured and Driver the same?" required>
+          <x-select 
+            v-model="additionalDriverDetailsForm.is_insured_and_driver_same" 
+            :rules="[isRequired]"
+            :options="[
+              { value: 1, label: 'Yes' },
+              { value: 0, label: 'No' }
+            ]"
+            placeholder="Select Is Insured and Driver Same"
+          />
         </x-field>
         
         <!-- Driver Name -->
-        <x-field label="Driver First Name">
+        <x-field label="Driver First Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
           <x-input 
-            v-model="props.formData.driverFirstName" 
+            v-model="additionalDriverDetailsForm.driver_first_name" 
+            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
             placeholder="Driver First Name"
             type="text"
           />
         </x-field>
         
-        <x-field label="Driver Last Name">
+        <x-field label="Driver Last Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
           <x-input 
-            v-model="props.formData.driverLastName" 
+            v-model="additionalDriverDetailsForm.driver_last_name" 
+            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
             placeholder="Driver Last Name"
             type="text"
           />
         </x-field>
         
-        <!-- Driver DOB -->
-        <x-field label="Driver DOB">
+        <x-field label="Driver DOB" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
           <DatePicker
-            v-model="props.formData.driverDob"
+            v-model="additionalDriverDetailsForm.driver_dob"
+            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
             placeholder="Driver DOB"
           />
         </x-field>
         
-        <!-- Driver Gender -->
-        <x-field label="Driver Gender">
+        <x-field label="Driver Gender" required>
           <x-select 
-            v-model="props.formData.driverGender" 
+            v-model="additionalDriverDetailsForm.driver_gender" 
+            :rules="[isRequired]"
             :options="driverGenderOptions"
             placeholder="Select Driver Gender"
           />
         </x-field>
         
-        <!-- Driver License Number -->
-        <x-field label="Driver License Number">
+        <x-field label="Driver License Number" required>
           <x-input 
-            v-model="props.formData.driverLicenseNumber" 
+            v-model="additionalDriverDetailsForm.driver_license_number" 
+            :rules="[isRequired]"
             placeholder="Driver License Number"
             type="text"
           />
         </x-field>
         
-        <!-- License Issue Place -->
         <x-field label="License Issue Place">
           <x-select 
-            v-model="props.formData.licenseIssuePlace" 
+            v-model="additionalDriverDetailsForm.license_issue_place" 
             :options="licenseIssuePlaceOptions"
             placeholder="Select License Issue Place"
           />
         </x-field>
         
-        <!-- License Issue Date -->
         <x-field label="License Issue Date">
           <DatePicker
-            v-model="props.formData.licenseIssueDate"
+            v-model="additionalDriverDetailsForm.license_issue_date"
             placeholder="License Issue Date"
           />
         </x-field>
         
-        <!-- License Expiry Date -->
-        <x-field label="License Expiry Date">
+        <x-field label="License Expiry Date" :required="page.props.insuranceProviderCodeEnum.AXA === page.props.insuranceProviderCodeEnum.AXA">
           <DatePicker
-            v-model="props.formData.licenseExpiryDate"
+            v-model="additionalDriverDetailsForm.license_expiry_date"
             placeholder="License Expiry Date"
+            :rules="page.props.insuranceProviderCodeEnum.AXA === page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
           />
         </x-field>
         
-        <!-- UAE Driving Experience -->
-        <x-field label="UAE Driving Experience">
+        <!-- TODO: Required only if 'Driver same as Client?' is NO -->
+        <x-field label="UAE Driving Experience" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
           <x-select 
-            v-model="props.formData.uaeDrivingExperience" 
-            :options="uaeDrivingExperienceOptions"
+            v-model="additionalDriverDetailsForm.uae_driving_experience" 
+            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+            :options="drivingExperienceOptions"
             placeholder="Select UAE License Years"
           />
         </x-field>
         
-        <!-- Home Country License Issuance -->
-        <x-field label="Home Country License Issuance">
-          <x-input 
-            v-model="props.formData.homeCountryLicenseIssuance" 
-            placeholder="License Home Country"
-            type="text"
+        <x-field label="Home Country License Issuance" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+          <ComboBox
+            :single="true"
+            v-model="additionalDriverDetailsForm.home_country_license_issuance"
+            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+            placeholder="Select License Home Country"
+            :options="nationalitiesOptions"
+            class="w-full"
           />
         </x-field>
         
-        <!-- Home Country Driving Experience -->
-        <x-field label="Home Country Driving Experience">
+        <x-field label="Home Country Driving Experience" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
           <x-select 
-            v-model="props.formData.homeCountryDrivingExperience" 
-            :options="homeCountryDrivingExperienceOptions"
+            v-model="additionalDriverDetailsForm.home_country_driving_experience" 
+            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+            :options="drivingExperienceOptions"
             placeholder="Select Driver Years Home Country"
           />
         </x-field>
       </dl>
-      
-      <!-- Save Button -->
-      <div class="flex justify-end mt-6">
-        <x-button 
-          @click="handleSave"
-          color="primary"
+      <div class="flex justify-end my-5 gap-x-2">
+        <x-button
           size="sm"
+          color="orange"
+          type="submit"
+          class="px-6"
+          :loading="additionalDriverDetailsForm.processing"
         >
           Save
         </x-button>
       </div>
-    </div>
+    </x-form>
   </div>
 </template> 

@@ -9,6 +9,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -28,6 +29,7 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
+use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
@@ -247,6 +249,18 @@ class AMLController extends Controller
         })) : 0;
 
         $lookups = app(AMLService::class)->getAMLLookups();
+        if ($quoteType->code == quoteTypeCode::Car || $quoteRequest->plan?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+            $additionalLookups = app(AMLService::class)->getAMLLookups($quoteRequest?->plan?->provider_id, [
+                LookupsEnum::RTA_TRANSACTION_TYPE,
+                LookupsEnum::RTA_PLATE_CATEGORY,
+                LookupsEnum::VEHICLE_COLOR,
+                LookupsEnum::BANK_NAME,
+                LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+            ]);
+
+            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+        }
+
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
         $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
         $nationalities = NationalityRepository::withActive()->get();
@@ -430,10 +444,6 @@ class AMLController extends Controller
 
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
-            }
-
-            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-                $this->InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote);
             }
 
             // Process members (UBO or regular members)
@@ -852,6 +862,10 @@ class AMLController extends Controller
         $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
 
         if ($preparedFormData) {
+            if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+                $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+            }
+
             return response()->json(['success' => true]);
         }
 
@@ -1008,5 +1022,17 @@ class AMLController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function updateAddtionalVehicleDriverDetails(UpdateAdditionalVehicleDriverDetailsRequest $updateAdditionalVehicleDriverDetailsRequest)
+    {
+        $quoteType = QuoteTypes::getName($updateAdditionalVehicleDriverDetailsRequest->quote_type_id)->value;
+        $quote = $this->getQuoteObjectBy($quoteType, $updateAdditionalVehicleDriverDetailsRequest->quote_uuid, 'uuid');
+
+        LoggerService::startQuoteLogging($quote);
+
+        $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails($updateAdditionalVehicleDriverDetailsRequest, $quote);
+
+        return response()->json(['success' => $response['status'], 'message' => $response['message']]);
     }
 }

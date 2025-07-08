@@ -1,67 +1,86 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+const { isRequired } = useRules();
 
-// Props
-const props = defineProps({
-  formData: {
-    type: Object,
-    required: true
-  }
-})
-
-// Emits
-const emit = defineEmits(['save'])
-
-// Reactive state
-const isCollapsed = ref(false)
+const page = usePage();
+const notification = useToast();
+const lookups = page.props.lookups;
 
 // Computed options for dropdowns
-const rtaTransactionTypeOptions = computed(() => [
-  { value: 'new_registration', label: 'New Registration' },
-  { value: 'renewal', label: 'Renewal' },
-  { value: 'transfer', label: 'Transfer' },
-])
+const rtaTransactionTypeOptions = computed(() => {
+  return useGenerateOptions(lookups?.rta_transaction_type ?? [], 'code', 'text');
+});
 
-const rtaPlateCategoryOptions = computed(() => [
-  { value: 'private', label: 'Private' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'government', label: 'Government' },
-])
+const rtaPlateCategoryOptions = computed(() => {
+  return useGenerateOptions(lookups?.rta_plate_category ?? [], 'code', 'text');
+});
 
-const vehicleColorOptions = computed(() => [
-  { value: 'green', label: 'Green' },
-  { value: 'white', label: 'White' },
-  { value: 'black', label: 'Black' },
-  { value: 'blue', label: 'Blue' },
-  { value: 'red', label: 'Red' },
-  { value: 'silver', label: 'Silver' },
-  { value: 'gray', label: 'Gray' },
-])
+const vehicleColorOptions = computed(() => {
+  return useGenerateOptions(lookups?.vehicle_color ?? [], 'code', 'text');
+});
 
-const plateColorOptions = computed(() => [
-  { value: 'alloy', label: 'Alloy' },
-  { value: 'white', label: 'White' },
-  { value: 'yellow', label: 'Yellow' },
-  { value: 'green', label: 'Green' },
-])
+const plateColorOptions = computed(() => {
+  return useGenerateOptions(lookups?.vehicle_color ?? [], 'code', 'text');
+});
 
-const bankNameOptions = computed(() => [
-  { value: 'emirates_nbd', label: 'Emirates NBD' },
-  { value: 'adcb', label: 'ADCB' },
-  { value: 'fab', label: 'FAB' },
-  { value: 'rakbank', label: 'RAKBANK' },
-  { value: 'mashreq', label: 'Mashreq Bank' },
-  { value: 'cbd', label: 'CBD' },
-])
+const bankNameOptions = computed(() => {
+  return useGenerateOptions(lookups?.bank_name ?? [], 'code', 'text');
+});
 
-// Methods
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
+const annualMileageEstimateOptions = computed(() => {
+  return useGenerateOptions(lookups?.annual_mileage_estimate ?? [], 'code', 'text');
+});
+
+const additionalVehicleTransactionDetailsForm = useForm({
+  quote_type_id: page.props.quoteType.id,
+  quote_uuid: page.props.quoteRequest?.uuid,
+  insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
+  additional_vehicle_transaction_details: true,
+  rta_transaction_type: page.props.quoteRequest?.car_quote_request_detail?.rta_transaction_type?.toString() ?? '',
+  plate_code: page.props.quoteRequest?.car_quote_request_detail?.plate_code ?? '',
+  plate_number: page.props.quoteRequest?.car_quote_request_detail?.plate_number ?? '',
+  traffic_code_number: page.props.quoteRequest?.car_quote_request_detail?.traffic_code_number ?? '',
+  chassis_number: page.props.quoteRequest?.car_quote_request_detail?.chassis_number ?? '',
+  engine_number: page.props.quoteRequest?.car_quote_request_detail?.engine_number ?? '',
+  rta_plate_category: page.props.quoteRequest?.car_quote_request_detail?.rta_plate_category ?? '',
+  vehicle_color: page.props.quoteRequest?.car_quote_request_detail?.vehicle_color ?? '',
+  plate_color: page.props.quoteRequest?.car_quote_request_detail?.plate_color ?? '',
+  bank_loan: page.props.quoteRequest?.car_quote_request_detail?.bank_loan ?? '',
+  bank_name: page.props.quoteRequest?.car_quote_request_detail?.bank_name ?? '',
+  first_registration_date: page.props.quoteRequest?.car_quote_request_detail?.first_registration_date ?? '',
+  policy_effective_date: page.props.quoteRequest?.car_quote_request_detail?.policy_effective_date ?? '',
+  policy_expiry_date: page.props.quoteRequest?.car_quote_request_detail?.policy_expiry_date ?? '',
+  certificate_start_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_start_date ?? '',
+  certificate_end_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_end_date ?? '',
+  annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
+});
+
+const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
+  if (isValid) {
+    additionalVehicleTransactionDetailsForm.processing = true;
+    axios.post('/kyc/update-additional-vehicle-driver-details', additionalVehicleTransactionDetailsForm).then(response => {
+      if (response.data.success) {
+        notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+        router.reload({
+          replace: true,
+          preserveScroll: true,
+          preserveState: true,
+        });
+      } else {
+        notification.error({
+          title: response.data.message,
+          position: 'top',
+        });
+      }
+    }).finally(() => {
+      additionalVehicleTransactionDetailsForm.processing = false;
+    });
+  } 
 }
 
-const handleSave = () => {
-  emit('save', props.formData)
-}
 </script>
 
 <template>
@@ -70,161 +89,183 @@ const handleSave = () => {
       <h3 class="font-semibold text-primary-800 text-lg">
         Additional Vehicle and Transaction Details
       </h3>
-      <button @click="toggleCollapse" class="text-gray-400 hover:text-gray-600">
-        <svg class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': isCollapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
     </div>
-    
-    <div v-show="!isCollapsed">
-      <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-        <!-- Row 1 -->
-        <x-field label="RTA Transaction Type">
-          <x-select 
-            v-model="props.formData.rtaTransactionType" 
-            :options="rtaTransactionTypeOptions"
-            placeholder="Select RTA Transaction Type"
-          />
-        </x-field>
+    <div>
+    <x-form @submit="submitAdditionalVehicleTransactionDetailsForm" :auto-focus="false">
+      <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
+          <x-field label="RTA Transaction Type" required>
+            <x-select 
+              v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type" 
+              :rules="[isRequired]"
+              :options="rtaTransactionTypeOptions"
+              placeholder="Select RTA Transaction Type"
+            />
+          </x-field>
+          
+          <x-field label="Plate Code" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+            <x-input 
+              v-model="additionalVehicleTransactionDetailsForm.plate_code" 
+              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              placeholder="Plate Code"
+              type="text"
+            />
+          </x-field>
+          
+          <x-field label="Plate Number" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+            <x-input 
+              v-model="additionalVehicleTransactionDetailsForm.plate_number" 
+              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              placeholder="Plate Number"
+              type="text"
+            />
+          </x-field>
+          
+          <x-field label="Traffic Code Number" required>
+            <x-input 
+              v-model="additionalVehicleTransactionDetailsForm.traffic_code_number" 
+              :rules="[isRequired]"
+              placeholder="Traffic Code Number"
+              type="text"
+            />
+          </x-field>
+          
+          <x-field label="Chassis Number" required>
+            <x-input 
+              v-model="additionalVehicleTransactionDetailsForm.chassis_number" 
+              :rules="[isRequired]"
+              placeholder="Chassis Number"
+              type="text"
+            />
+          </x-field>
+          
+          <x-field label="Engine Number" required>
+            <x-input 
+              v-model="additionalVehicleTransactionDetailsForm.engine_number" 
+              :rules="[isRequired]"
+              placeholder="Engine Number"
+              type="text"
+            />
+          </x-field>
         
-        <x-field label="Plate Code">
-          <x-input 
-            v-model="props.formData.plateCode" 
-            placeholder="Reg Txt"
-            type="text"
-          />
-        </x-field>
+          <x-field label="RTA Plate Category">
+            <x-select 
+              v-model="additionalVehicleTransactionDetailsForm.rta_plate_category" 
+              :options="rtaPlateCategoryOptions"
+              placeholder="Select RTA Plate Category"
+            />
+          </x-field>
+          
+          <x-field label="Vehicle Color" required>
+            <x-select 
+              v-model="additionalVehicleTransactionDetailsForm.vehicle_color" 
+              :options="vehicleColorOptions"
+              :rules="[isRequired]"
+              placeholder="Select Vehicle Color"
+            />
+          </x-field>
+          
+          <x-field label="Plate Color" :required="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA">
+            <x-select 
+              v-model="additionalVehicleTransactionDetailsForm.plate_color" 
+              :options="plateColorOptions"
+              :rules="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              placeholder="Select Plate Color"
+            />
+          </x-field>
+          
+          <x-field label="Bank Loan?" required>
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.bank_loan"
+              :rules="[isRequired]"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 0, label: 'No' }
+              ]"
+              placeholder="Select Bank Loan"
+            />
+          </x-field>
+          
+          <x-field label="Bank Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+            <ComboBox
+              :single="true"
+              v-model="additionalVehicleTransactionDetailsForm.bank_name"
+              placeholder="Select Bank Name"
+              :options="bankNameOptions"
+              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1"
+              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              class="w-full"
+            />
+          </x-field>
         
-        <x-field label="Plate Number">
-          <x-input 
-            v-model="props.formData.plateNumber" 
-            placeholder="Reg Number"
-            type="text"
-          />
-        </x-field>
-        
-        <x-field label="Traffic Code Number">
-          <x-input 
-            v-model="props.formData.trafficCodeNumber" 
-            placeholder="TCF Number"
-            type="text"
-          />
-        </x-field>
-        
-        <x-field label="Chassis Number">
-          <x-input 
-            v-model="props.formData.chassisNumber" 
-            placeholder="Chassis Number"
-            type="text"
-          />
-        </x-field>
-        
-        <x-field label="Engine Number">
-          <x-input 
-            v-model="props.formData.engineNumber" 
-            placeholder="Engine Number"
-            type="text"
-          />
-        </x-field>
-        
-        <!-- Row 2 -->
-        <x-field label="RTA Plate Category">
-          <x-select 
-            v-model="props.formData.rtaPlateCategory" 
-            :options="rtaPlateCategoryOptions"
-            placeholder="Select RTA Plate Category"
-          />
-        </x-field>
-        
-        <x-field label="Vehicle Color">
-          <x-select 
-            v-model="props.formData.vehicleColor" 
-            :options="vehicleColorOptions"
-            placeholder="Select Vehicle Color"
-          />
-        </x-field>
-        
-        <x-field label="Plate Color">
-          <x-select 
-            v-model="props.formData.plateColor" 
-            :options="plateColorOptions"
-            placeholder="Select Plate Color"
-          />
-        </x-field>
-        
-        <x-field label="Bank Loan?">
-          <x-form-group v-model="props.formData.bankLoan">
-            <x-radio value="yes" label="Yes" />
-            <x-radio value="no" label="No" />
-          </x-form-group>
-        </x-field>
-        
-        <x-field label="Bank Name">
-          <x-select 
-            v-model="props.formData.bankName" 
-            :options="bankNameOptions"
-            :disabled="props.formData.bankLoan !== 'yes'"
-            placeholder="Select Bank Name"
-          />
-        </x-field>
-        
-        <!-- Row 3 - Dates -->
-        <x-field label="First Registration Date">
-          <DatePicker
-            v-model="props.formData.firstRegistrationDate"
-            placeholder="First Registration Date"
-          />
-        </x-field>
-        
-        <x-field label="Policy Effective Date">
-          <DatePicker
-            v-model="props.formData.policyEffectiveDate"
-            placeholder="Policy Effective Date"
-          />
-        </x-field>
-        
-        <x-field label="Policy Expiry Date">
-          <DatePicker
-            v-model="props.formData.policyExpiryDate"
-            placeholder="Policy Expiry Date"
-          />
-        </x-field>
-        
-        <x-field label="Certificate Start Date">
-          <DatePicker
-            v-model="props.formData.certificateStartDate"
-            placeholder="Certificate Start Date"
-          />
-        </x-field>
-        
-        <x-field label="Certificate End Date">
-          <DatePicker
-            v-model="props.formData.certificateEndDate"
-            placeholder="Certificate End Date"
-          />
-        </x-field>
-        
-        <!-- Row 4 - Mileage -->
-        <x-field label="Annual Mileage Estimate">
-          <x-input 
-            v-model="props.formData.annualMileageEstimate" 
-            placeholder="Mileage"
-            type="number"
-          />
-        </x-field>
-      </dl>
-      
-      <!-- Save Button -->
-      <div class="flex justify-end mt-6">
-        <x-button 
-          @click="handleSave"
-          color="primary"
-          size="sm"
-        >
-          Save
-        </x-button>
-      </div>
+          <x-field label="First Registration Date" required>
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
+              :rules="[isRequired]"
+              placeholder="First Registration Date"
+            />
+          </x-field>
+          
+          <x-field label="Policy Effective Date" required>
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
+              :rules="[isRequired]"
+              placeholder="Policy Effective Date"
+            />
+          </x-field>
+          
+          <x-field label="Policy Expiry Date" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
+              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              placeholder="Policy Expiry Date"
+            />
+          </x-field>
+          
+          <x-field label="Certificate Start Date" required>
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
+              :rules="[isRequired]"
+              placeholder="Certificate Start Date"
+            />
+          </x-field>
+          
+          <x-field label="Certificate End Date" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
+              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              placeholder="Certificate End Date"
+            />
+          </x-field>
+
+          <x-field label="Annual Mileage Estimate" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+            <x-input 
+              v-if="page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA"
+              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate" 
+              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              placeholder="Select Annual Mileage Estimate"
+              type="text"
+            />
+            <x-select 
+              v-else
+              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate" 
+              :rules="[isRequired]"
+              :options="annualMileageEstimateOptions"
+              placeholder="Select Annual Mileage Estimate"
+            />
+          </x-field>
+        </dl>
+        <div class="flex justify-end my-5 gap-x-2">
+          <x-button
+            size="sm"
+            color="orange"
+            type="submit"
+            class="px-6"
+            :loading="additionalVehicleTransactionDetailsForm.processing"
+          >
+            Save
+          </x-button>
+        </div>
+      </x-form>
     </div>
   </div>
 </template>

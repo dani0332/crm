@@ -174,6 +174,16 @@ const customerTypeOptions = computed(() => {
   ];
 });
 
+const showVehicleAndDrvicerDetails = computed(() => {
+  return (
+    page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
+    [
+      page.props.insuranceProviderCodeEnum.RSA,
+      page.props.insuranceProviderCodeEnum.AXA,
+    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code)
+  );
+});
+
 const screeningFormDetails = useForm({
   customer_type: null,
   customer_id: quoteRequest.customer_id,
@@ -203,40 +213,6 @@ const screeningFormDetails = useForm({
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.chassis_number
       : quoteRequest?.bike_quote?.chassis_number) ?? null,
-  
-    // Additional Vehicle and Transaction Details (only for Car/Bike)
-  ...((page.props.quoteType.id === page.props.quoteTypeIdEnum.Car || page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) ? {
-    rtaTransactionType: '',
-    plateCode: '',
-    plateNumber: '',
-    trafficCodeNumber: '',
-    engineNumber: '',
-    rtaPlateCategory: '',
-    vehicleColor: 'green',
-    plateColor: 'alloy',
-    bankLoan: 'no',
-    bankName: '',
-    firstRegistrationDate: '2025-09-06',
-    policyEffectiveDate: '2025-09-06',
-    policyExpiryDate: '2026-10-05',
-    certificateStartDate: '2025-09-06',
-    certificateEndDate: '2026-10-05',
-    annualMileageEstimate: '',
-    
-    // Additional Driver Details
-    isInsuredAndDriverSame: 'yes',
-    driverFirstName: '',
-    driverLastName: '',
-    driverDob: '',
-    driverGender: '',
-    driverLicenseNumber: '',
-    licenseIssuePlace: '',
-    licenseIssueDate: '',
-    licenseExpiryDate: '',
-    uaeDrivingExperience: '',
-    homeCountryLicenseIssuance: '',
-    homeCountryDrivingExperience: '',
-  } : {}),
   // Entity Type
   // entity_id: page.props.entityDetails?.entity?.id ?? null,
   entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
@@ -360,6 +336,7 @@ const entityTypes = computed(() => {
     { value: 'SubEntity', label: 'Sub Entity' },
   ];
 });
+
 const chassisNumberDisabled = computed(() => {
   let disallowedStatus = [
     page.props.quoteStatusEnums.PolicySentToCustomer,
@@ -368,21 +345,6 @@ const chassisNumberDisabled = computed(() => {
   return disallowedStatus.includes(page.props?.quoteRequest?.quote_status_id);
 });
 
-const shouldShowAdditionalDetails = computed(() => {
-  // Show additional vehicle and driver details for Car and Bike insurance only
-  return page.props.quoteType.id === page.props.quoteTypeIdEnum.Car || 
-         page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike;
-});
-
-const shouldShowVehicleDetails = computed(() => {
-  // Show vehicle details for Car and Bike insurance
-  return shouldShowAdditionalDetails.value;
-});
-
-const shouldShowDriverDetails = computed(() => {
-  // Show driver details for Car insurance (can be customized separately if needed)
-  return shouldShowAdditionalDetails.value;
-});
 const individualSearchValidation = computed(() => {
   if (
     screeningFormDetails.screening_id_type === '' ||
@@ -778,6 +740,13 @@ const handleModalClose = () => {
     persistent
     @submit="submitScreeningForm"
   >
+    <template v-if="showVehicleAndDrvicerDetails">
+      <AdditionalVehicleTransactionDetails />
+      <x-divider class="mb-4 mt-4" />
+      <AdditionalDriverDetails />
+      <x-divider class="mb-4 mt-4" />
+    </template>
+
     <x-field label="Customer Type" required>
       <div class="grid md:grid-cols-3" id="customer-type-field">
         <x-select
@@ -1024,8 +993,9 @@ const handleModalClose = () => {
     <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
       <div
         v-if="
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike
+          (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
+          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) && 
+          !showVehicleAndDrvicerDetails
         "
       >
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
@@ -1071,23 +1041,6 @@ const handleModalClose = () => {
       </div>
     </dl>
 
-    <!-- Additional Vehicle Details - Only for Car/Bike Insurance -->
-    <template v-if="shouldShowVehicleDetails">
-      <AdditionalVehicleTransactionDetails
-        :formData="screeningFormDetails"
-      />
-      <x-divider class="mb-4 mt-1" />
-    </template>
-    
-    <!-- Additional Driver Details - Only for Car/Bike Insurance -->
-    <template v-if="shouldShowDriverDetails">
-      <AdditionalDriverDetails
-        :formData="screeningFormDetails"
-      />
-      <x-divider class="mb-4 mt-1" />
-    </template>
-    <!-- This Component is used for Members and UBO Details -->
-     
     <MembersDetails
       :customerType="
         isScreeningIndividual

@@ -246,6 +246,16 @@ const kycFormDetails = useForm({
   transaction_activities:
     insuredDetails?.insured?.insured_kyc?.transaction_activities ?? null,
   customer_type: props.customerType,
+  // GIG Screening specific fields (Only for GIG Screening API)
+  chassis_number:
+    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
+      ? page.props.quoteRequest?.car_quote_request_detail?.chassis_number
+      : page.props.quoteRequest?.bike_quote?.chassis_number) ?? null,
+  get_quote_email_gig:
+    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
+      ? page.props.quoteRequest?.car_quote_request_detail?.insurer_quote_email
+      : page.props.quoteRequest?.quote_detail?.insurer_quote_email) ??
+    page.props.gigInsurerDefaultEmail,
 });
 function insuredKycFormValidate() {
   kycFormDetails.clearErrors();
@@ -257,9 +267,6 @@ const submitInsuredKycForm = isValid => {
 
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
-
-    // Debug customer_type value
-    // console.log('Submitting KYC form with customer_type:', kycFormDetails.customer_type);
 
     axios
       .post('/update-insured-kyc', kycFormDetails)
