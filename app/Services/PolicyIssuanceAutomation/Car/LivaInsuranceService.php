@@ -114,7 +114,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 ], 
                 'VehicleDetails' => [
                     'CC' => $quote?->carModelDetail?->cubic_capacity,
-                    'PlaceOfRegn' => $quote->year_of_first_registration,
+                    'PlaceOfRegn' => "1", // TODO: need to ask
                     'NcbYears' => 99,
                     'DateOfRegn' => $quote?->carQuoteRequestDetail?->first_registration_date ? ($quote?->carQuoteRequestDetail?->first_registration_date.' 00:00:00') : '',
                     'YearOfManf' => $quote?->year_of_manufacture,
@@ -135,7 +135,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'modelSpecification' => $closestVariant->ModelSpecification,
                     'ColorCode' => $quote?->carQuoteRequestDetail?->vehicle_color,
                     'RegistrationType' => "1", //TODO: need to ask, no UI available
-                    'RtaTransactionType' => $quote?->carQuoteRequestDetail?->rta_transaction_type,
+                    'RtaTransactionType' => (string) $quote?->carQuoteRequestDetail?->rta_transaction_type,
                     'RegnNoText' => $quote->carQuoteRequestDetail?->plate_code,
                     'RegnNoNumber' => $quote->carQuoteRequestDetail?->plate_number,
                     'ChassisNo' => $quote->carQuoteRequestDetail?->chassis_number,
@@ -147,9 +147,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'EffectiveDate' => "2025-01-06 21:09:00", // TODO: need to ask
                     'SchemeCode' => "13",
                     'TariffCode' => "17", // TODO: need to ask
-                    'PartnerTrnReferenceNumber' => $quote->code,
+                    'PartnerTrnReferenceNumber' => 'Q1aw2bvcvT', // TODO: need to ask
                 ],
-                'OptionalCovers' => [ // multiple optional covers can be added here
+                'OptionalCovers' => [
                     [
                         'CoverIncluded' => true,
                         'CoverMappingCode' => "2-1-0", // TODO: need to ask
@@ -174,6 +174,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'UserComments' => "Update Quote Request",
             ]
         ];
+
+        // dd($payload, "{$quote?->carQuoteRequestDetail?->rta_transaction_type}", (string) $quote?->carQuoteRequestDetail?->rta_transaction_type);
 
 
         $response = $this->livaHttpCall($endPoint, $payload);
