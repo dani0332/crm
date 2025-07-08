@@ -3174,7 +3174,7 @@ class RenewalsUploadService
         $data = $renewalQuoteProcess->data;
         try {
             // Start from the last failed/pending step
-            $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
+            $healthPlanId = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first()->id ?? null;
 
             switch ($renewalQuoteProcess->step) {
                 case RenewalQuoteProcessStepEnum::MEMBERS_UPDATE:
@@ -3191,9 +3191,8 @@ class RenewalsUploadService
 
                 case RenewalQuoteProcessStepEnum::SELECT_PLAN:
                     // TODO: Get health plan id and copayId from the quote
-                    $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
                     $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
-                    if (! $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
+                    if (! $this->selectHealthPlan($quote, $healthPlanId, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
                         return false;
                     }
                     break;
@@ -3201,7 +3200,7 @@ class RenewalsUploadService
                 case RenewalQuoteProcessStepEnum::CREATE_PAYMENT:
                     $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
                     $premium = $ecomDetails['priceWithVAT'];
-                    if (! $this->createHealthPayment($quote, $data, $premium, $renewalQuoteProcess, $healthPlan->id)) {
+                    if (! $this->createHealthPayment($quote, $data, $premium, $renewalQuoteProcess, $healthPlanId)) {
                         return false;
                     }
                     break;
