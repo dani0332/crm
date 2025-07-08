@@ -637,6 +637,12 @@ class EmbeddedProductRepository extends BaseRepository
             ];
         }
 
+        $driverOrRiderCover = $short_code == EmbeddedProductEnum::MDX ? 'Driver' : 'Rider';
+        $subject = match ($short_code) {
+            EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX => "Details of your {$driverOrRiderCover} cover purchase with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}",
+            default => "Thank you for your purchase of {$ep->product_name} with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}",
+        };
+
         $body = json_encode([
             'From' => config('constants.IM_FROM_EMAIL'),
             'ReplyTo' => $advisorData['email'] ?? null,
@@ -653,7 +659,7 @@ class EmbeddedProductRepository extends BaseRepository
                     'productDescription' => $ep->description,
                     'advisor' => (object) $advisorData,
                 ],
-                'subject' => 'Thank you for your purchase of '.$ep->product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
+                'subject' => $subject,
             ],
             'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
