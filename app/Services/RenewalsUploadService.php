@@ -3174,7 +3174,7 @@ class RenewalsUploadService
         $data = $renewalQuoteProcess->data;
         try {
             // Start from the last failed/pending step
-            $healthPlanId = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first()->id ?? null;
+            $healthPlanId = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first()?->id ?? null;
 
             switch ($renewalQuoteProcess->step) {
                 case RenewalQuoteProcessStepEnum::MEMBERS_UPDATE:
