@@ -446,10 +446,6 @@ class AMLController extends Controller
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
             }
 
-            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-                $this->InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote);
-            }
-
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
                 LoggerService::info('AML Screening Bridger - No Member Found for Screening, AML Screening Cleared');
@@ -866,6 +862,10 @@ class AMLController extends Controller
         $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
 
         if ($preparedFormData) {
+            if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+                $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+            }
+
             return response()->json(['success' => true]);
         }
 
