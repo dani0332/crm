@@ -31,6 +31,10 @@ const annualMileageEstimateOptions = computed(() => {
   return useGenerateOptions(lookups?.annual_mileage_estimate ?? [], 'code', 'text');
 });
 
+const plateCodeOptions = computed(() => {
+  return useGenerateOptions(lookups?.plate_code ?? [], 'code', 'text');
+});
+
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
@@ -103,11 +107,12 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
           </x-field>
           
           <x-field label="Plate Code" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.plate_code" 
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
-              placeholder="Plate Code"
-              type="text"
+            <ComboBox
+              :single="true"
+              v-model="additionalVehicleTransactionDetailsForm.plate_code"
+              placeholder="Select Plate Code"
+              :options="plateCodeOptions"
+              class="w-full"
             />
           </x-field>
           
