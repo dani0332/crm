@@ -86,13 +86,13 @@ class BirdService extends BaseService
                     'flow_id' => $runId,
                     'started_at' => now(),
                 ]);
-                LoggerService::info("- createQuoteWorkFlowDetails  run id created for lead : Ref-ID: {$lead->uuid}");
+                LoggerService::info("- createQuoteWorkFlowDetails  run id created");
             } else {
-                LoggerService::info(" - createQuoteWorkFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} ");
+                LoggerService::info(" - createQuoteWorkFlowDetails  run id not found ");
             }
         } catch (\Throwable $th) {
 
-            LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid}");
+            LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} ");
 
         }
     }

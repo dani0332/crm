@@ -338,12 +338,12 @@ class HealthEmailService extends BaseService
         ]);
 
         if (empty($response['plans'])) {
-            LoggerService::info("SIC Health Followups WA not executed for lead: {$lead->uuid} because no plans found");
+            LoggerService::info("SIC Health Followups WA not executed because no plans found");
 
             return;
         }
         if (empty($response['planTypes'])) {
-            LoggerService::info("SIC Health Followups WA not executed for lead: {$lead->uuid} because no plan types found");
+            LoggerService::info("SIC Health Followups WA not executed because no plan types found");
 
             return;
         }
@@ -357,14 +357,10 @@ class HealthEmailService extends BaseService
                 return [];
             });
 
-        LoggerService::info("Plan types mapped for lead: {$lead->uuid}", ['planTypes' => $planTypes]);
-
         try {
-            LoggerService::info('Sending SIC Health Followups WA ');
             $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
-            LoggerService::info("SIC Health Followups WA isFollowupExecuted: {$isFollowupExecuted} ");
             if ($isFollowupExecuted) {
-                LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
+                LoggerService::info("SIC Health Followups WA already executed");
 
                 return;
             }
@@ -378,7 +374,7 @@ class HealthEmailService extends BaseService
 
             app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
 
-            LoggerService::info("SIC Health Followups WA executed for lead: {$lead->uuid}");
+            LoggerService::info("SIC Health Followups WA executed");
 
         } catch (\Exception $exception) {
             LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);

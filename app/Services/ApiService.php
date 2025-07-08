@@ -460,7 +460,7 @@ class ApiService
                     if (! app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)) {
                         SendHealthSICWAFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(50));
                     } else {
-                        LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
+                        LoggerService::info("SIC Health Followups WA already executed");
 
                         return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow already executed for this lead!');
                     }
