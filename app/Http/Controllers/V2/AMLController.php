@@ -29,6 +29,7 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
+use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
@@ -442,13 +443,7 @@ class AMLController extends Controller
                 }
             }
 
-            if (
-                isset(request()->insurance_provider_code) &&
-                $AMLCheckRequest->quote_type == QuoteTypes::CAR->value &&
-                request()->insurance_provider_code == InsuranceProvidersEnum::RSA
-            ) {
-                app(AMLService::class)->saveCarDetails($AMLCheckRequest, $updateQuote);
-            } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
             }
 
@@ -1032,5 +1027,17 @@ class AMLController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function updateAddtionalVehicleDriverDetails(UpdateAdditionalVehicleDriverDetailsRequest $updateAdditionalVehicleDriverDetailsRequest)
+    {
+        $quoteType = QuoteTypes::getName($updateAdditionalVehicleDriverDetailsRequest->quote_type_id)->value;
+        $quote = $this->getQuoteObjectBy($quoteType, $updateAdditionalVehicleDriverDetailsRequest->quote_uuid, 'uuid');
+
+        LoggerService::startQuoteLogging($quote);
+
+        $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails($updateAdditionalVehicleDriverDetailsRequest, $quote);
+
+        return response()->json(['success' => $response['status'], 'message' => $response['message']]);
     }
 }

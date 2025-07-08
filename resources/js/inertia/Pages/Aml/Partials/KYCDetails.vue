@@ -258,9 +258,6 @@ const submitInsuredKycForm = isValid => {
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
 
-    // Debug customer_type value
-    // console.log('Submitting KYC form with customer_type:', kycFormDetails.customer_type);
-
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {

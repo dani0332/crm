@@ -213,41 +213,6 @@ const screeningFormDetails = useForm({
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.chassis_number
       : quoteRequest?.bike_quote?.chassis_number) ?? null,
-  
-    // Additional Vehicle and Transaction Details (only for Car LIVA/GIG)
-  ...((showVehicleAndDrvicerDetails.value) ? {
-    rta_transaction_type: quoteRequest?.car_quote_request_detail?.rta_transaction_type?.toString() ?? '',
-    plate_code: quoteRequest?.car_quote_request_detail?.plate_code ?? '',
-    plate_number: quoteRequest?.car_quote_request_detail?.plate_number ?? '',
-    traffic_code_number: quoteRequest?.car_quote_request_detail?.traffic_code_number ?? '',
-    engine_number: quoteRequest?.car_quote_request_detail?.engine_number ?? '',
-    rta_plate_category: quoteRequest?.car_quote_request_detail?.rta_plate_category ?? '',
-    vehicle_color: quoteRequest?.car_quote_request_detail?.vehicle_color ?? '',
-    plate_color: quoteRequest?.car_quote_request_detail?.plate_color ?? '',
-    bank_loan: quoteRequest?.car_quote_request_detail?.bank_loan ?? '',
-    bank_name: quoteRequest?.car_quote_request_detail?.bank_name ?? '',
-    first_registration_date: quoteRequest?.car_quote_request_detail?.first_registration_date ?? '',
-    policy_effective_date: quoteRequest?.car_quote_request_detail?.policy_effective_date ?? '',
-    policy_expiry_date: quoteRequest?.car_quote_request_detail?.policy_expiry_date ?? '',
-    certificate_start_date: quoteRequest?.car_quote_request_detail?.certificate_start_date ?? '',
-    certificate_end_date: quoteRequest?.car_quote_request_detail?.certificate_end_date ?? '',
-    annual_mileage_estimate: quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
-    
-    // Additional Driver Details
-    is_insured_and_driver_same: quoteRequest?.car_quote_request_detail?.is_insured_and_driver_same ?? '',
-    driver_first_name: quoteRequest?.car_quote_request_detail?.driver_first_name ?? '',
-    driver_last_name: quoteRequest?.car_quote_request_detail?.driver_last_name ?? '',
-    driver_dob: quoteRequest?.car_quote_request_detail?.driver_dob ?? '',
-    driver_gender: quoteRequest?.car_quote_request_detail?.driver_gender ?? '',
-    driver_license_number: quoteRequest?.car_quote_request_detail?.driver_license_number ?? '',
-    license_issue_place: quoteRequest?.car_quote_request_detail?.driver_license_issue_place ?? '',
-    license_issue_date: quoteRequest?.car_quote_request_detail?.driver_license_issue_date ?? '',
-    license_expiry_date: quoteRequest?.car_quote_request_detail?.driver_license_expiry_date ?? '',
-    uae_driving_experience: quoteRequest?.car_quote_request_detail?.driver_uae_driving_experience?.toString() ?? '',
-    home_country_license_issuance: quoteRequest?.car_quote_request_detail?.home_country_license_issuance ?? '',
-    home_country_driving_experience: quoteRequest?.car_quote_request_detail?.home_country_driving_experience?.toString() ?? '',
-    insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider?.code,
-  } : {}),
   // Entity Type
   // entity_id: page.props.entityDetails?.entity?.id ?? null,
   entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
@@ -775,6 +740,13 @@ const handleModalClose = () => {
     persistent
     @submit="submitScreeningForm"
   >
+    <template v-if="showVehicleAndDrvicerDetails">
+      <AdditionalVehicleTransactionDetails />
+      <x-divider class="mb-4 mt-4" />
+      <AdditionalDriverDetails />
+      <x-divider class="mb-4 mt-4" />
+    </template>
+
     <x-field label="Customer Type" required>
       <div class="grid md:grid-cols-3" id="customer-type-field">
         <x-select
@@ -1022,7 +994,7 @@ const handleModalClose = () => {
       <div
         v-if="
           (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
+          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) && 
           !showVehicleAndDrvicerDetails
         "
       >
@@ -1068,17 +1040,6 @@ const handleModalClose = () => {
         </x-field>
       </div>
     </dl>
-
-    <!-- Additional Vehicle Details - Only for Car/Bike Insurance -->
-    <template v-if="showVehicleAndDrvicerDetails">
-      <AdditionalVehicleTransactionDetails
-        :formData="screeningFormDetails"
-      />
-      <x-divider class="mb-4 mt-1" />
-      <AdditionalDriverDetails
-        :formData="screeningFormDetails"
-      />
-    </template>
 
     <MembersDetails
       :customerType="
