@@ -9,6 +9,9 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
 
+const retrySplitPaymentProcessing = ref(false);
+const postPrepaymentProcessing = ref(false);
+
 const {
   formatDate,
   formatAmount,
@@ -40,9 +43,7 @@ const emit = defineEmits([
   'view-payment',
   'generate-cc-link',
   'delete-split-payment',
-  'retry-split-payment',
-  'post-prepayment',
-  'post-retry-prepayment',
+  'retry-split-payment'
 ]);
 
 // Add can function for permission checks
@@ -84,12 +85,37 @@ const retrySplitPayment = () => {
   );
 };
 
-const postPrepayment = () => {
-  emit('post-prepayment', props.splitPayment);
-};
-
-const postRetryPrePayment = () => {
-  emit('post-retry-prepayment', props.splitPayment);
+const triggerPostRetryPrepayment = async () => {
+  const splitPayment = props.splitPayment;
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  try {
+    retrySplitPaymentProcessing.value = true;
+    const response = await axios.post(route('can-post-premium-prepayment-retry'), {
+      paymentSplitId: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
+    });
+    if (response.data.success) {
+      notification.success({
+        title: 'Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  } finally {
+    retrySplitPaymentProcessing.value = false;
+  }
 };
 
 const splitPaymentTotalPrice = (srNo, amount, discountValue) => {
@@ -157,8 +183,12 @@ const enablePostPrepaymentButton = computed(() => {
 });
 
 const showRetryButton = computed(() => {
-  return can(permissionEnum.RETRY_PREPAYMENT_BUTTON) &&
-   props.splitPayment.prepayment_receipt_status?.showRetryButton
+  return (
+    !enablePostPrepaymentButton.value &&
+    can(permissionEnum.RETRY_PREPAYMENT_BUTTON) &&
+    props.splitPayment.prepayment_receipt_status?.showRetryButton &&
+    props.splitPayment.payment_method !== paymentMethodsEnums.CreditCard
+  );
 });
 
 const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
@@ -202,6 +232,49 @@ const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
         position: 'top',
       });
     }
+  }
+};
+
+const triggerPostPrepayment = async () => {
+  postPrepaymentProcessing.value = true;
+
+  const splitPayment = props.splitPayment;
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
+  if (!isPolicyBooked) {
+    notification.warning({
+      title:
+        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
+      position: 'top',
+    });
+  }
+  try {
+    const response = await axios.post(route('can-post-premium-prepayment'), {
+      paymentSplitId: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
+    });
+    if (response.data.success) {
+      notification.success({
+        title: 'Post Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  } finally {
+    postPrepaymentProcessing.value = false; 
   }
 };
 </script>
@@ -320,6 +393,7 @@ const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
           >Delete</x-button
         >
 
+        <!-- Retry Payment Button For Failed CC Payment -->
         <x-button
           v-if="
             can(permissionEnum.ReApprovePayments) &&
@@ -338,18 +412,20 @@ const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
           size="xs"
           color="red"
           class="ml-2"
-          @click="postPrepayment"
+          @click="triggerPostPrepayment"
           outlined
+          :loading="postPrepaymentProcessing"
           >Post</x-button
         >
-
+        <!-- Retry Prepayment Button For Non CC Paid -->
         <x-button
           v-if="showRetryButton"
           size="xs"
           color="red"
           class="ml-2"
-          @click="postRetryPrePayment"
+          @click="triggerPostRetryPrepayment"
           outlined
+          :loading="retrySplitPaymentProcessing"
           >Retry</x-button
         >
       </div>

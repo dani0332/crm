@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\SageEnum;
 use Config;
@@ -134,16 +135,10 @@ class PaymentSplits extends Model implements Auditable
                 $prepaymentData['batchNumber'] = $batchNumber;
 
                 // Check if payment status is PAID
-                $isPaid = $this->payment_status_id == PaymentStatusEnum::PAID;
-                
-                // Count total number of Sage API logs
-                $logsCount = count($sageApiLogs);
-                
-                // Get the second last step from logs (if there are 3 or more logs)
-                $secondLastStep = $logsCount >= 2 ? array_slice($sageApiLogs, -2, 1)[0] : null;
-                $showRetryButton = ($logsCount <= 2 && $isPaid);
+                $isNonCCPaid = $this->payment_status_id == PaymentStatusEnum::PAID && $this->payment_method !== PaymentMethodsEnum::CreditCard;
+                $showRetryButton = false;
                 // Show retry button if: no logs exist and payment is paid, OR payment is paid but no second last step exists
-                if (($logsCount === 0 && $isPaid) || ($isPaid && !$secondLastStep)) {
+                if (!$isPrepaymentAlreadyPosted && $isNonCCPaid) {
                     $showRetryButton = true;
                 }
                 
