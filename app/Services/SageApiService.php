@@ -3121,7 +3121,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 LoggerService::info('SAGE API :  Check status of  AP Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aPReceiptBatch = $this->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchRecordType='PY',BatchNumber=".$batchNumber.')', [], 'GET');
+                $aPReceiptBatch = $this->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchSelector='PY',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aPReceiptBatch = json_decode($aPReceiptBatch, true);
 
                 LoggerService::info('SAGE API :  Status of  AP Prepayment Receipts batch('.$batchNumber.') : ', $aPReceiptBatch);
@@ -3237,7 +3237,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 LoggerService::info('SAGE API :  Check status of  AP Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aPReceiptBatch = $this->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchRecordType='PY',BatchNumber=".$batchNumber.')', [], 'GET');
+                $aPReceiptBatch = $this->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchSelector='PY',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aPReceiptBatch = json_decode($aPReceiptBatch, true);
 
                 LoggerService::info('SAGE API :  Status of  AP Prepayment Receipts batch('.$batchNumber.') : ', $aPReceiptBatch);
@@ -3352,7 +3352,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 LoggerService::info('SAGE API :  Check status of  AP Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aPReceiptBatch = $this->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchRecordType='PY',BatchNumber=".$batchNumber.')', [], 'GET');
+                $aPReceiptBatch = $this->postToSage300("AP/APPaymentAndAdjustmentBatches(BatchSelector='PY',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aPReceiptBatch = json_decode($aPReceiptBatch, true);
 
                 LoggerService::info('SAGE API :  Status of  AP Prepayment Receipts batch('.$batchNumber.') ', $aPReceiptBatch);

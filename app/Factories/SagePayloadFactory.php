@@ -1640,7 +1640,7 @@ class SagePayloadFactory
                     'VendorNumber' => $vendorNumber,
                     'EntryDescription' => 'CLIENT PAYMENT MAPPING',
                     'PaymentTransactionType' => 'Payment',
-                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAP($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment),
+                    'AppliedPayments' => self::createAppliedReceiptsAdjustmentsForAP($quote, $vendorNumber, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
             ],
         ];
@@ -1688,7 +1688,6 @@ class SagePayloadFactory
         $sageRequestTypes = [
             SageEnum::SRT_CREATE_PAY_REC_ONE_INV => SageEnum::SRT_POST_PAY_REC_ONE_INV,
             SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_POST_AR_SP_PRE_PAYMENT,
-            SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV,
         ];
 
         if (isset($extras['sage_request_type'])) {
