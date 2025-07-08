@@ -20,21 +20,10 @@ class ResetNationalityConfigPipe extends BaseAllocationPipe
             $this->resolveExcludedAdvisorIds();
             LoggerService::info("ResetNationalityConfigPipe::handle - Going to retry advisor allocation");
         } else {
-            $this->allocationRequest->set('dontRetryAdvisor', true);
-            $this->allocationRequest->set('dontRetryRuleExclusion', true);
+            $this->allocationRequest->set('skipAdvisorEligibilityFetch', true);
+            $this->allocationRequest->set('skipRuleExclusion', true);
         }
 
         return $next($request);
-    }
-
-    private function resolveExcludedAdvisorIds()
-    {
-        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->allocationRequest->getQuoteType());
-
-        if (empty($excludedAdvisorIds)) {
-            return;
-        }
-
-        $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
     }
 }

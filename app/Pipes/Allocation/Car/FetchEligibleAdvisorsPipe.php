@@ -10,7 +10,6 @@ use App\Models\CarQuote;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use App\Models\UserTeams;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -26,7 +25,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        if ($this->allocationRequest->get('dontRetryAdvisor', false)) {
+        if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
             return $next($request);
         }
 
