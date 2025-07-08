@@ -54,6 +54,7 @@ class FtcEmailLogController extends Controller
             }
 
             LoggerService::info('FtcEmailLogController: store: quote not found', ['quoteType' => $quoteType, 'quoteUuid' => $quoteUuid]);
+
             return response()->json(['message' => 'Quote not found.'], 404);
         } catch (\Exception $th) {
             LoggerService::error('Error creating FTC email log', [
