@@ -254,7 +254,7 @@ class ManagementReport
 
             case ManagementReportCategoriesEnum::ENDING_POLICIES:
                 if ($this->isReportType($request, ManagementReportTypeEnum::EXPIRING_POLICIES)) {
-                    $this->getDateFilter($query, $request, 'p.policy_expiry_date', 'policyExpiredDate');
+                    $this->getDateFilter($query, $request, 'personal_quotes.policy_expiry_date', 'policyExpiredDate');
                 }
                 break;
 

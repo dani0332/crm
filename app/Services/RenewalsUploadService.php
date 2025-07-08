@@ -181,10 +181,9 @@ class RenewalsUploadService
     public function uploadRenewalsFile($isTravel = false)
     {
         $path = 'renewals';
-        $timestamp = Carbon::now()->timestamp;
 
         // Getting original file name
-        $fileName = $timestamp.'-'.request()->file('file_name')->getClientOriginalName();
+        $fileName = request()->file('file_name')->getClientOriginalName();
 
         // Generating name for file for azure usage
         $azureFileName = get_guid().'_'.$fileName;
@@ -1555,7 +1554,7 @@ class RenewalsUploadService
             if ($response->totalPremium && ($leadData['payment_link'] != '' || $leadData['payment_link'] != null)) {
                 $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
                 $premium = isset($ecomDetails['priceWithVAT']) && $ecomDetails['priceWithVAT'] > 0 && $ecomDetails['priceWithVAT'] != '' && $ecomDetails['priceWithVAT'] != null ? $ecomDetails['priceWithVAT'] : $response->totalPremium;
-                $this->createHealthPayment($quote, $leadData, $premium, $renewalQuoteProcess);
+                $this->createHealthPayment($quote, $leadData, $premium, $renewalQuoteProcess, $healthPlanId);
             } else {
                 // If payment link is not present, then update the renewal quote process good count
                 $this->updateRenewalQuoteProcess($renewalQuoteProcess, false, []);
@@ -1583,7 +1582,7 @@ class RenewalsUploadService
      * @param [type] $data
      * @return void
      */
-    private function createHealthPayment($quote, $data, $totalPremium, $renewalQuoteProcess)
+    private function createHealthPayment($quote, $data, $totalPremium, $renewalQuoteProcess, $healthPlanId)
     {
         try {
             $payment = $quote->payments()->latest()
@@ -1596,7 +1595,7 @@ class RenewalsUploadService
                 'quote_id' => $quote->id,
                 'code' => 'IP',
                 'paymentCode' => $payment ? $payment->code : null,
-                'plan_id' => $quote->plan_id,
+                'plan_id' => $healthPlanId,
                 'quote_type' => $quoteType,
                 'insurance_provider_id' => $quote->insurance_provider_id,
                 'modelType' => $quoteType,
@@ -3175,6 +3174,8 @@ class RenewalsUploadService
         $data = $renewalQuoteProcess->data;
         try {
             // Start from the last failed/pending step
+            $healthPlanId = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first()?->id ?? null;
+
             switch ($renewalQuoteProcess->step) {
                 case RenewalQuoteProcessStepEnum::MEMBERS_UPDATE:
                     if (! $this->updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess)) {
@@ -3189,10 +3190,8 @@ class RenewalsUploadService
                     break;
 
                 case RenewalQuoteProcessStepEnum::SELECT_PLAN:
-                    // TODO: Get health plan id and copayId from the quote
-                    $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
                     $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
-                    if (! $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
+                    if (! $this->selectHealthPlan($quote, $healthPlanId, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
                         return false;
                     }
                     break;
@@ -3200,7 +3199,7 @@ class RenewalsUploadService
                 case RenewalQuoteProcessStepEnum::CREATE_PAYMENT:
                     $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
                     $premium = $ecomDetails['priceWithVAT'];
-                    if (! $this->createHealthPayment($quote, $data, $premium, $renewalQuoteProcess)) {
+                    if (! $this->createHealthPayment($quote, $data, $premium, $renewalQuoteProcess, $healthPlanId)) {
                         return false;
                     }
                     break;
