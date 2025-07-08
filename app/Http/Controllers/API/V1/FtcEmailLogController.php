@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\FtcEmailLogRequestStore;
 use App\Services\FtcEmailLogService;
@@ -35,8 +36,8 @@ class FtcEmailLogController extends Controller
 
     public function store($quoteType, $quoteUuid, FtcEmailLogRequestStore $request)
     {
+        LoggerService::startQuoteLogging($quoteUuid, LoggerFeatureEnum::FTC_EMAIL_LOG);
         try {
-            LoggerService::info('Creating FTC email log', '', ['feature' => 'ftc_email_log']);
             if ($quote = $this->getQuoteObject($quoteType, $quoteUuid)) {
                 $payload = [
                     'email' => $request->email,
@@ -52,6 +53,7 @@ class FtcEmailLogController extends Controller
                 return response()->json(['message' => 'Email track created successfully.', 'data' => $ftcEmailLog], Response::HTTP_CREATED);
             }
 
+            LoggerService::info('FtcEmailLogController: store: quote not found', ['quoteType' => $quoteType, 'quoteUuid' => $quoteUuid]);
             return response()->json(['message' => 'Quote not found.'], 404);
         } catch (\Exception $th) {
             LoggerService::error('Error creating FTC email log', [
@@ -60,13 +62,12 @@ class FtcEmailLogController extends Controller
 
             return response()->json(['message' => 'Internal server error.'], 500);
         }
-
     }
 
     public function update(Request $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::FTC_EMAIL_LOG);
         try {
-            LoggerService::info('Updating FTC email log', '', ['feature' => 'ftc_email_log']);
             $payload = [
                 'status' => strtolower($request->status),
             ];
