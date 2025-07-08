@@ -4,17 +4,17 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteFlowType;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use App\Enums\QuoteStatusEnum;
-use App\Models\LifeQuote;
 
 class LifeEmailService extends BaseService
 {
@@ -32,12 +32,11 @@ class LifeEmailService extends BaseService
                 LoggerService::info('sendFICEmail - Advisor not found');
             }
             $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_FIC_EMAIL);
-            if($personalQuote->quote_status_id == QuoteStatusEnum::NewLead){
+            if ($personalQuote->quote_status_id == QuoteStatusEnum::NewLead) {
                 $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 LifeQuote::where('uuid', $personalQuote->uuid)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
                 $personalQuote->save();
-            }
-            else {
+            } else {
                 LoggerService::info("sendFICEmail - Quote status is not new lead for quote: {$personalQuote->uuid}");
             }
             $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
