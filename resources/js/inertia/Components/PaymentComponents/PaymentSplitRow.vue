@@ -183,6 +183,12 @@ const enablePostPrepaymentButton = computed(() => {
 });
 
 const showRetryButton = computed(() => {
+  console.clear();
+  console.log("splitPayment", props.splitPayment.prepayment_receipt_status);
+  console.log("enablePostPrepaymentButton", enablePostPrepaymentButton.value);
+  console.log("can", can(permissionEnum.RETRY_PREPAYMENT_BUTTON));
+  console.log("showRetryButton", props.splitPayment.prepayment_receipt_status?.showRetryButton);
+  console.log("payment_method", props.splitPayment.payment_method);
   return (
     !enablePostPrepaymentButton.value &&
     can(permissionEnum.RETRY_PREPAYMENT_BUTTON) &&
