@@ -3190,7 +3190,6 @@ class RenewalsUploadService
                     break;
 
                 case RenewalQuoteProcessStepEnum::SELECT_PLAN:
-                    // TODO: Get health plan id and copayId from the quote
                     $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
                     if (! $this->selectHealthPlan($quote, $healthPlanId, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
                         return false;
