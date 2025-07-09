@@ -10,6 +10,7 @@ use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Pipes\Allocation\Travel\AssignChildLeadPipe;
 use App\Pipes\Allocation\Travel\AssignLeadPipe;
+use App\Pipes\Allocation\Travel\EvaluateTeamPipe;
 use App\Pipes\Allocation\Travel\FetchAvailableAdvisorPipe;
 use App\Pipes\Allocation\Travel\VerifyLeadPreChecksPipe;
 use App\Services\AllocationService;
@@ -34,7 +35,8 @@ class TravelAllocation implements Allocation
             return Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
-                VerifyAlreadyInProgressAllocationPipe::class,
+                // VerifyAlreadyInProgressAllocationPipe::class,
+                EvaluateTeamPipe::class,
                 ValidateNationalityConfigPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
