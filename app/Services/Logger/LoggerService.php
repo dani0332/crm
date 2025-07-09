@@ -49,7 +49,11 @@ class LoggerService
         if (! empty($extra)) {
             $extraData = is_array($extra) ? json_encode($extra) : $extra;
 
-            Context::addHidden('__extra', $extraData);
+            if (config('app.env') == 'local') {
+                Context::add('__extra', $extraData);
+            } else {
+                Context::addHidden('__extra', $extraData);
+            }
         }
     }
 
