@@ -6,7 +6,6 @@ namespace App\Http\Requests;
 
 use App\Enums\InsuranceProvidersEnum;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 {
@@ -129,7 +128,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
      * Configure the validator instance.
      *
      * @param  \Illuminate\Validation\Validator  $validator
-     * @return void
      */
     public function withValidator($validator): void
     {
@@ -143,7 +141,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
      * Additional driver details validation.
      *
      * @param  \Illuminate\Validation\Validator  $validator
-     * @return void
      */
     private function validateDriverDetails($validator): void
     {
@@ -151,7 +148,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         if ($this->filled('license_issue_date') && $this->filled('license_expiry_date')) {
             $issueDate = \Carbon\Carbon::parse($this->license_issue_date);
             $expiryDate = \Carbon\Carbon::parse($this->license_expiry_date);
-            
+
             if ($expiryDate->lte($issueDate)) {
                 $validator->errors()->add('license_expiry_date', 'License expiry date must be after the issue date.');
             }
@@ -161,10 +158,10 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         if ($this->filled('driver_dob')) {
             $dob = \Carbon\Carbon::parse($this->driver_dob);
             $age = $dob->age;
-            
+
             if ($age < 18) {
                 $validator->errors()->add('driver_dob', 'Driver must be at least 18 years old.');
             }
         }
     }
-} 
+}

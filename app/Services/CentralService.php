@@ -1499,7 +1499,7 @@ class CentralService extends BaseService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
-        if ($premiumCheckEnabled) { 
+        if ($premiumCheckEnabled) {
             // Premium check call to check if the premium is valid
             $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $payment->total_amount, $quote->code);
             $logExtra = [
@@ -1512,6 +1512,7 @@ class CentralService extends BaseService
 
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
+
                 return;
             }
 
