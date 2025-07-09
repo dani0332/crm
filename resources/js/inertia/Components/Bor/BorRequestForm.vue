@@ -304,9 +304,7 @@ onMounted(() => {
     v-model="showModal"
     :title="modalTitle"
     size="xl"
-    show-close
     backdrop
-    @close="closeModal"
   >
     <template #default>
       <x-form @submit="submitForm" :auto-focus="false">
@@ -359,7 +357,6 @@ onMounted(() => {
                 :error="form.errors.insurance_provider_id"
                 searchable
                 clearable
-                required
               />
 
               <!-- Policy Number (Only for Individual customers) -->

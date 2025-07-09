@@ -24,8 +24,7 @@ class BorFormRequest extends FormRequest
             'customer_type' => ['required', 'string', Rule::in(['Individual', 'Entity'])],
             'lead_id' => ['required', 'integer', 'exists:personal_quotes,id'],
             'lob' => ['required', 'string'],
-
-            'insurance_provider_id' => ['required', 'integer', 'exists:insurance_provider,id'],
+            'insurance_provider_id' => ['integer', 'exists:insurance_provider,id'],
         ];
 
         // Get LOB and customer type from the request

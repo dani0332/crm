@@ -278,7 +278,7 @@ onMounted(() => {
           <x-button
             size="sm"
             color="orange"
-            @click.prevent="openBorRequestForm"
+            @click="openBorRequestForm"
             :disabled="isLoading"
           >
             Request BOR
