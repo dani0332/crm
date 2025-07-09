@@ -60,6 +60,7 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
@@ -867,10 +868,9 @@ class AMLController extends Controller
                 $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
             }
 
-            // Payment capture call here
-            // 1) Validation AML, KYC and GIG AML Screening
-            // 2) Premium check - (new CentralService)->capturePaymentValidation -> Response: {success: true, premiumAmount: 1000}
-            // 3) Capture payment - PaymentRepository@fetchMasterPaymentApproveCapture -> Response: {success: true, premiumAmount: 1000} -> update status on lead level
+            if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
+                app(CentralService::class)->autoCapturePaymentProcess($quoteType, $quote);
+            }
 
             return response()->json(['success' => true]);
         }
