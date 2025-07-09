@@ -47,9 +47,9 @@ const additionalDriverDetailsForm = useForm({
   license_issue_place: page.props.quoteRequest?.car_quote_request_detail?.license_issue_place ?? '',
   license_issue_date: page.props.quoteRequest?.car_quote_request_detail?.license_issue_date ?? '',
   license_expiry_date: page.props.quoteRequest?.car_quote_request_detail?.driver_license_expiry_date ?? '',
-  uae_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.uae_driving_experience ?? '',
+  uae_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.driver_uae_driving_experience.toString() ?? '',
   home_country_license_issuance: page.props.quoteRequest?.car_quote_request_detail?.home_country_license_issuance ?? '',
-  home_country_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.driver_home_country_driving_experience ?? '',
+  home_country_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.home_country_driving_experience.toString() ?? '',
 });
 
 const submitAdditionalDriverDetailsForm = (isValid) => {
