@@ -60,18 +60,18 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
             'quoteTypeId' => $this->quoteTypeId,
             'etId' => $this->transaction->id ?? 'N/A',
             'etCode' => $this->transaction->code ?? 'N/A',
-            'exception' => $exception->getMessage()
+            'exception' => $exception->getMessage(),
         ]);
 
         // Send failure email notification
-        $message = "SukoonMedexPurchaseFlowJob - Sukoon Medex EP failure notification email";
+        $message = 'SukoonMedexPurchaseFlowJob - Sukoon Medex EP failure notification email';
         try {
             Mail::send(new SukoonMedexEPFailureNotification($this->quoteObject, $this->quoteTypeId));
             LoggerService::info("{$message} sent successfully");
 
         } catch (Throwable $emailException) {
             LoggerService::error("{$message} failed to send", extra: [
-                'exception' => $emailException->getMessage()
+                'exception' => $emailException->getMessage(),
             ]);
         }
     }
