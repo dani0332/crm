@@ -81,8 +81,6 @@ Route::prefix('v1')->group(function () {
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 
-    // testing purpose
-    Route::post('sukoon-medex-ep-failure-test-email', [EmbeddedProductController::class, 'testEmail']);
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 

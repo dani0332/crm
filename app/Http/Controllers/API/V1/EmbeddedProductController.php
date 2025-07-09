@@ -4,20 +4,14 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
-use App\Mail\SukoonMedexEPFailureNotification;
 use App\Models\CustomerAddress;
 use App\Models\EmbeddedProduct;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
-use Exception;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Mail;
 
 class EmbeddedProductController extends Controller
 {
@@ -46,38 +40,4 @@ class EmbeddedProductController extends Controller
         return apiResponse(null, Response::HTTP_OK, '');
     }
 
-    public function testEmail(Request $request)
-    {
-        $message = 'SukoonMedexPurchaseFlowJob - Medex EP failure notification email';
-
-        try {
-            $quoteType = QuoteTypes::getNameShortCode(strtoupper($request->modelType));
-            $quote = $this->getQuoteObject($quoteType?->value, $request->quoteId ?? null);
-
-            if (! $quote) {
-                throw new Exception('Quote not found');
-            }
-
-            Mail::send(new SukoonMedexEPFailureNotification($quote, $quoteType?->id()));
-            LoggerService::info("{$message} sent successfully");
-
-            return response()->json([
-                'requestBody' => $request->all(),
-                'message' => "{$message} sent successfully",
-            ], Response::HTTP_OK);
-
-        } catch (Exception $e) {
-
-            LoggerService::info("{$message} sending failed: ",
-                extra: [
-                    'exception' => $e->getMessage(),
-                ]);
-
-            return response()->json([
-                'requestBody' => $request->all(),
-                'message' => "{$message} sending failed: ",
-                'exception' => $e->getMessage(),
-            ], Response::HTTP_FORBIDDEN);
-        }
-    }
 }

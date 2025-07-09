@@ -51,7 +51,7 @@ class SukoonMedexEPFailureNotification extends Mailable
         } else {
             // Non-prod environment configuration (test, uat, staging)
             return $this->subject($subject)
-                ->from('alfred@testnotify.alfred.ae', 'Test Notify - Alfred.ae')
+                ->from('alfred@testnotify.alfred.ae')
                 ->replyTo(['test.emails@insurancemarket.ae'])
                 ->to(['rucha.keluskar@myalfred.com', 'arsalan.mughal@myalfred.com'])
                 ->cc(['diya.lekhwani@myalfred.com', 'jawad.arif@myalfred.com'])
