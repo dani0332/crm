@@ -610,5 +610,96 @@ class DocumentTypesSeeder extends Seeder
                 $document
             );
         }
+
+        $this->createClaimDocumentTypes(); // Add this line
+    }
+
+    private function createClaimDocumentTypes(): void
+    {
+        $claimDocuments = [
+            [
+                'code' => 'PR',
+                'text' => 'Police Report',
+                'description' => 'Upload a copy of the official police report for this incident.',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Car,
+                'folder_path' => 'car/claims',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 5,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 0,
+                'sort_order' => 1,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::CLAIM,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+            [
+                'code' => 'DL',
+                'text' => 'Driver\'s License (both sides)',
+                'description' => 'Please share the license (both sides) of the driver involved.',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Car,
+                'folder_path' => 'car/claims',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 5,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 0,
+                'sort_order' => 2,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::CLAIM,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+            [
+                'code' => 'MUL',
+                'text' => 'Mulkiya (both sides)',
+                'description' => 'Upload the valid registration card of your vehicle (both sides).',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Car,
+                'folder_path' => 'car/claims',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 5,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 0,
+                'sort_order' => 3,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::CLAIM,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+            [
+                'code' => 'OD',
+                'text' => 'Other documents',
+                'description' => 'Please provide any other relevant documents and pictures of the incident, if available.',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Car,
+                'folder_path' => 'car/claims',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 10,
+                'max_size' => 25,
+                'is_required' => 0,
+                'send_to_customer' => 0,
+                'sort_order' => 4,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::CLAIM,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+        ];
+
+        foreach ($claimDocuments as $document) {
+            DocumentType::firstOrCreate(
+                ['code' => $document['code'], 'quote_type_id' => $document['quote_type_id']],
+                $document
+            );
+        }
     }
 }

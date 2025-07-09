@@ -22,6 +22,8 @@ class LookupSeeder extends Seeder
         $this->createEndorsementNonFinancialSavings();
         $this->createCIRSavings();
         $this->createCISavings();
+        $this->createClaimTypes();
+        $this->createClaimSubStatuses(); // Add this line
     }
 
     private function sendUpdateCancelOptions(): void
@@ -297,5 +299,256 @@ class LookupSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function createClaimTypes(): void
+    {
+        Lookup::firstOrCreate([
+            'key' => 'claim-types',
+            'code' => 'own-damage-claim',
+            'text' => 'Own Damage Claim',
+        ], [
+            'description' => 'Claims for damage to the insured vehicle caused by the policyholder or covered under comprehensive insurance.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => 'claim-types',
+            'code' => 'recoverable-claim',
+            'text' => 'Recoverable Claim',
+        ], [
+            'description' => 'Claims that can be recovered from a third party or through subrogation.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => 'claim-types',
+            'code' => 'unknown-damage-claim',
+            'text' => 'Unknown Damage Claim',
+        ], [
+            'description' => 'Claims where the cause of damage is unknown or unclear.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => 'claim-types',
+            'code' => 'water-damage',
+            'text' => 'Water Damage',
+        ], [
+            'description' => 'Claims for damage caused by water, flooding, or water-related incidents.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => 'claim-types',
+            'code' => 'theft',
+            'text' => 'Theft',
+        ], [
+            'description' => 'Claims for stolen vehicles or vehicle parts.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => 'claim-types',
+            'code' => 'fire-arson',
+            'text' => 'Fire/Arson',
+        ], [
+            'description' => 'Claims for damage caused by fire or arson.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => 'claim-types',
+            'code' => 'windscreen-only',
+            'text' => 'Windscreen Only',
+        ], [
+            'description' => 'Claims specifically for windscreen damage or replacement.',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createClaimSubStatuses(): void
+    {
+        $claimSubStatuses = [
+            [
+                'code' => 'new-claim',
+                'text' => 'New claim',
+                'description' => 'A new claim has been created and is ready for processing.',
+                'sort_order' => 1,
+            ],
+            [
+                'code' => 'claim-initiated',
+                'text' => 'Claim initiated',
+                'description' => 'The claim process has been initiated and is under review.',
+                'sort_order' => 2,
+            ],
+            [
+                'code' => 'claim-registered-awaiting-inspection',
+                'text' => 'Claim registered and awaiting inspection',
+                'description' => 'Claim has been registered and is waiting for vehicle inspection.',
+                'sort_order' => 3,
+            ],
+            [
+                'code' => 'estimate-under-review',
+                'text' => 'Estimate under review',
+                'description' => 'The repair estimate is currently being reviewed by the insurance provider.',
+                'sort_order' => 4,
+            ],
+            [
+                'code' => 'repair-approved-work-progress',
+                'text' => 'Repair approved & work in progress',
+                'description' => 'Repair has been approved and work is currently in progress.',
+                'sort_order' => 5,
+            ],
+            [
+                'code' => 'parts-ordered',
+                'text' => 'Parts ordered',
+                'description' => 'Required parts have been ordered for the repair.',
+                'sort_order' => 6,
+            ],
+            [
+                'code' => 'parts-backorder',
+                'text' => 'Parts on backorder',
+                'description' => 'Required parts are currently on backorder and awaiting availability.',
+                'sort_order' => 7,
+            ],
+            [
+                'code' => 'parts-delayed',
+                'text' => 'Parts delayed',
+                'description' => 'There is a delay in receiving the required parts for repair.',
+                'sort_order' => 8,
+            ],
+            [
+                'code' => 'parts-arrived-work-progress',
+                'text' => 'Parts arrived & work in progress',
+                'description' => 'Required parts have arrived and repair work is in progress.',
+                'sort_order' => 9,
+            ],
+            [
+                'code' => 'hire-car-requested',
+                'text' => 'Hire car requested',
+                'description' => 'A hire car has been requested for the policyholder.',
+                'sort_order' => 10,
+            ],
+            [
+                'code' => 'hire-car-approved',
+                'text' => 'Hire car approved',
+                'description' => 'Hire car request has been approved and is being arranged.',
+                'sort_order' => 11,
+            ],
+            [
+                'code' => 'hire-car-refund-progress',
+                'text' => 'Hire car refund in progress',
+                'description' => 'Hire car refund process is currently in progress.',
+                'sort_order' => 12,
+            ],
+            [
+                'code' => 'car-ready-collection',
+                'text' => 'Car ready for collection',
+                'description' => 'Vehicle repair is complete and ready for collection by the policyholder.',
+                'sort_order' => 13,
+            ],
+            [
+                'code' => 'repair-completed-settled',
+                'text' => 'Repair completed and claim settled',
+                'description' => 'Vehicle repair has been completed and the claim has been fully settled with the policyholder.',
+                'sort_order' => 14,
+            ],
+            [
+                'code' => 'total-loss-approved',
+                'text' => 'Total loss approved',
+                'description' => 'Vehicle has been declared a total loss and the decision has been approved.',
+                'sort_order' => 15,
+            ],
+            [
+                'code' => 'total-loss-offer-letter-shared',
+                'text' => 'Total Loss Offer Letter shared',
+                'description' => 'Total loss offer letter has been shared with the policyholder.',
+                'sort_order' => 16,
+            ],
+            [
+                'code' => 'total-loss-payment-progress',
+                'text' => 'Total loss payment in progress',
+                'description' => 'Total loss payment process is currently in progress.',
+                'sort_order' => 17,
+            ],
+            [
+                'code' => 'total-loss-paid-settled',
+                'text' => 'Total loss paid and claim settled',
+                'description' => 'Vehicle has been declared a total loss and the claim amount has been paid and settled.',
+                'sort_order' => 18,
+            ],
+            [
+                'code' => 'cash-loss-approved',
+                'text' => 'Cash loss approved',
+                'description' => 'Cash loss claim has been approved for processing.',
+                'sort_order' => 19,
+            ],
+            [
+                'code' => 'cash-loss-payment-progress',
+                'text' => 'Cash loss payment inprogress',
+                'description' => 'Cash loss payment process is currently in progress.',
+                'sort_order' => 20,
+            ],
+            [
+                'code' => 'cash-loss-paid-settled',
+                'text' => 'Cash loss paid and claim settled',
+                'description' => 'Cash loss claim has been processed and payment has been made to settle the claim.',
+                'sort_order' => 21,
+            ],
+            [
+                'code' => 'claim-withdrawn',
+                'text' => 'Claim withdrawn',
+                'description' => 'The policyholder has withdrawn their claim request.',
+                'sort_order' => 22,
+            ],
+            [
+                'code' => 'claim-denied',
+                'text' => 'Claim denied',
+                'description' => 'The claim has been reviewed and denied by the insurance provider.',
+                'sort_order' => 23,
+            ],
+            [
+                'code' => 'additional-documents-awaited',
+                'text' => 'Additional documents awaited',
+                'description' => 'Additional documents are required and are being awaited from the policyholder.',
+                'sort_order' => 24,
+            ],
+            [
+                'code' => 'documents-uploaded',
+                'text' => 'Documents uploaded',
+                'description' => 'Required documents have been uploaded and are under review.',
+                'sort_order' => 25,
+            ],
+        ];
+
+        foreach ($claimSubStatuses as $status) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => QuoteTypeId::Car,
+                'key' => 'claim-sub-status',
+                'code' => $status['code'],
+                'text' => $status['text'],
+            ], [
+                'description' => $status['description'],
+                'is_active' => 1,
+                'sort_order' => $status['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
