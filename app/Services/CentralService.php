@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
@@ -1490,6 +1491,10 @@ class CentralService extends BaseService
     public function autoCapturePaymentProcess($quoteType, $quote, $premiumCheckEnabled = true)
     {
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started');
+
+        if(! app(AMLService::class)->autoCaptureValidationCheck($quote)) {
+            return ['status' => false, 'message' => 'Auto capture payment process failed'];
+        }
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
