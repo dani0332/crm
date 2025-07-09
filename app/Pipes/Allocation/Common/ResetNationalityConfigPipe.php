@@ -11,8 +11,8 @@ class ResetNationalityConfigPipe extends BaseAllocationPipe
 {
     public function handle(AllocationRequest $request, Closure $next)
     {
-        LoggerService::info('ResetNationalityConfigPipe::handle - Resetting nationality config');
         $this->setRequest($request);
+        LoggerService::info('ResetNationalityConfigPipe::handle - Resetting nationality config');
 
         if ($this->allocationRequest->hasNationalityConfig() && $this->isAdvisorNotFound()) {
             $this->allocationRequest->resetNationalityConfig();
@@ -27,6 +27,9 @@ class ResetNationalityConfigPipe extends BaseAllocationPipe
     }
 
     private function isAdvisorNotFound(){
+        LoggerService::info(self::class.' - isAdvisorNotFound' , extra: [
+            'quoteType' => $this->allocationRequest->getQuoteType(),
+        ]);
         if($this->allocationRequest->getQuoteType() == QuoteTypes::CAR){
             return empty($this->allocationRequest->get('eligibleAdvisors'));
         }
