@@ -58,7 +58,7 @@ class EmbeddedProductController extends Controller
                 throw new Exception('Quote not found');
             }
 
-            Mail::send(new SukoonMedexEPFailureNotification($quote, $quoteType?->id(), $request->fromIM ?? false));
+            Mail::send(new SukoonMedexEPFailureNotification($quote, $quoteType?->id()));
             LoggerService::info("{$message} sent successfully");
 
             return response()->json([

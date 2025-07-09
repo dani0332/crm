@@ -13,16 +13,14 @@ class SukoonMedexEPFailureNotification extends Mailable
 
     private $quoteObject;
     private $quoteTypeId;
-    private $fromIM;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($quoteObject, $quoteTypeId = null, $fromIM = false)
+    public function __construct($quoteObject, $quoteTypeId = null)
     {
         $this->quoteObject = $quoteObject;
-        $this->quoteTypeId = $quoteTypeId;
-        $this->fromIM = $fromIM;
+        $this->quoteTypeId = (int) $quoteTypeId;
     }
 
     /**
@@ -51,11 +49,9 @@ class SukoonMedexEPFailureNotification extends Mailable
                     'imcrmLink' => $imcrmLink,
                 ]);
         } else {
-            // Non-prod environment configuration (test, uat, staging, local)
-            $from = $this->fromIM ? ['no-reply@notify.insurancemarket.ae', 'InsuranceMarket.ae'] : ['alfred@testnotify.alfred.ae'];
-
+            // Non-prod environment configuration (test, uat, staging)
             return $this->subject($subject)
-                ->from($from)
+                ->from('alfred@testnotify.alfred.ae', 'Test Notify - Alfred.ae')
                 ->replyTo(['test.emails@insurancemarket.ae'])
                 ->to(['rucha.keluskar@myalfred.com', 'arsalan.mughal@myalfred.com'])
                 ->cc(['diya.lekhwani@myalfred.com', 'jawad.arif@myalfred.com'])
@@ -82,7 +78,7 @@ class SukoonMedexEPFailureNotification extends Mailable
         $imcrmLink = match ($this->quoteTypeId) {
             QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
             QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
-            default => '#',     // Default link (#)
+            default => null
         };
 
         return $imcrmLink;

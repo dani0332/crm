@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Mail\SukoonMedexEPFailureNotification;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonMedexService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class SukoonMedexPurchaseFlowJob implements ShouldQueue
@@ -52,6 +54,25 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::info('SukoonMedexPurchaseFlowJob failed. Error: '.$exception->getMessage());
+        LoggerService::info('SukoonMedexPurchaseFlowJob failed', extra: [
+            'quoteId' => $this->quoteObject->id ?? 'N/A',
+            'quoteCode' => $this->quoteObject->code ?? 'N/A',
+            'quoteTypeId' => $this->quoteTypeId,
+            'etId' => $this->transaction->id ?? 'N/A',
+            'etCode' => $this->transaction->code ?? 'N/A',
+            'exception' => $exception->getMessage()
+        ]);
+
+        // Send failure email notification
+        $message = "SukoonMedexPurchaseFlowJob - Sukoon Medex EP failure notification email";
+        try {
+            Mail::send(new SukoonMedexEPFailureNotification($this->quoteObject, $this->quoteTypeId));
+            LoggerService::info("{$message} sent successfully");
+
+        } catch (Throwable $emailException) {
+            LoggerService::error("{$message} failed to send", extra: [
+                'exception' => $emailException->getMessage()
+            ]);
+        }
     }
 }
