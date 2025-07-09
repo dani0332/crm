@@ -13,7 +13,7 @@ final class EmbeddedTransactionEnum extends Enum
     const STATUS_NEW_POLICY = 'New policy';
     const STATUS_QUOTED = 'Quoted';
     const STATUS_PAYMENT_SUCCEED = 'Payment succeeded';
-    const STATUS_BOOKED = 'Booked';
+    const STATUS_BOOKED = 'Documents retrieved';
     const STATUS_READY_FOR_SAGE = 'Ready for sage';
     const STATUS_FAILED = 'Failed';
 
