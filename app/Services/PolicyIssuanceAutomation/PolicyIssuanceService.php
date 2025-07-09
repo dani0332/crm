@@ -219,10 +219,10 @@ class PolicyIssuanceService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
         if ($insuranceProvider) {
-            // $validationChecks = app(PolicyIssuancePreChecksService::class)->validationChecks($insuranceProvider, $quoteType, $quote);
-            // if (! $validationChecks['status']) {
-            //     return $validationChecks;
-            // }
+            $validationChecks = app(PolicyIssuancePreChecksService::class)->validationChecks($insuranceProvider, $quoteType, $quote);
+            if (! $validationChecks['status']) {
+                return $validationChecks;
+            }
 
             $insuranceProviderAutomation = $this->init($quoteType, $insuranceProvider->code);
             if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
@@ -234,5 +234,7 @@ class PolicyIssuanceService
 
         return ['status' => true, 'message' => 'Policy issuance automation triggered successfully'];
     }
+
+    
 
 }

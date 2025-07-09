@@ -37,7 +37,7 @@ class PolicyIssuancePreChecksService
 
         $validationChecks = match (ucfirst($quoteType)) {
             QuoteTypes::CAR->value => match ($insuranceProvider->code) {
-                InsuranceProvidersEnum::AXA => $this->validationChecksForGIGCar($insuranceProvider, $quoteType, $quote, $payment),
+                InsuranceProvidersEnum::AXA => $this->validationChecksForGIGCar($insuranceProvider, $quote),
                 default => null,
             },
             default => null,
@@ -52,21 +52,8 @@ class PolicyIssuancePreChecksService
         return ['status' => true, 'message' => 'Validation checks passed for '.$insuranceProvider->text.' policy issuance automation'];
     }
 
-    public function validationChecksForGIGCar($insuranceProvider, $quoteType, $quote, $payment)
+    public function validationChecksForGIGCar($insuranceProvider, $quote)
     {
-        // 1. IM AML Screening should be done and Cleared
-        // 2. GIG AML Screening should be done and Cleared
-        // 3. KYC details should be available
-        // 4. Payment already captured or Paid (Before capturing payment, we should check if the premium is matching with the authorized amount)
-        // 5. All required documents should be uploaded (Driving License, Car Registration, Emirates ID/Nationality ID)
-
-        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $requiredDocs = [
-            DocumentTypeCode::HPD,
-            DocumentTypeCode::LPD,
-            DocumentTypeCode::HOMPD,
-        ];
-
         // 1. IM AML Screening should be done and Cleared
         if ($quote->aml_status !== AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' -  IM AML Screening status not cleared');
@@ -79,28 +66,6 @@ class PolicyIssuancePreChecksService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' -  GIG AML Screening status not cleared');
 
             return ['status' => false, 'message' => 'GIG AML Screening status not cleared for policy issuance automation'];
-        }
-
-        // 3. KYC details should be available
-        if (false) { // TODO: Check if KYC details are available
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' -  GIG KYC Screening status not cleared');
-
-            return ['status' => false, 'message' => 'GIG KYC Screening status not cleared for policy issuance automation'];
-        }
-
-        // 4. Payment already captured or Paid (Before capturing payment, we should check if the premium is matching with the authorized amount)
-        if (! in_array($payment->status, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' -  GIG Payment not captured or paid');
-
-            return ['status' => false, 'message' => 'GIG Payment not captured or paid for policy issuance automation'];
-        }
-
-        // 5. All required documents should be uploaded
-        $policyAutomationDocumentsCheck = $this->policyAutomationDocumentsCheck($quoteTypeId, $quote, $insuranceProvider->code, $requiredDocs);
-        if (! $policyAutomationDocumentsCheck['status']) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' -  required documents not uploaded for policy issuance automation');
-
-            return $policyAutomationDocumentsCheck;
         }
 
         return ['status' => true, 'message' => 'GIG policy issuance automation pre-checks passed'];

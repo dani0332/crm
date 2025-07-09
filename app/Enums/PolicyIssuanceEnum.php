@@ -48,6 +48,7 @@ final class PolicyIssuanceEnum extends Enum
     const ALLIANCE_TRAVEL_BOOK_POLICY = 'BookPolicy';
 
     /* GIG Car Steps */
+    const GIG_CAR_AUTO_CAPTURE = 'AutoCapture'; // Not part of GIG APIs
     const GIG_CAR_UPLOAD_DOCUMENTS = 'UploadDocuments';
     const GIG_CAR_ISSUE_POLICY = 'IssuePolicy';
     const GIG_CAR_GET_POLICY_DOCUMENTS = 'GetPolicyDocument';
@@ -123,6 +124,7 @@ final class PolicyIssuanceEnum extends Enum
     {
         $steps = [
             InsuranceProvidersEnum::AXA => [
+                self::GIG_CAR_AUTO_CAPTURE,
                 self::GIG_CAR_UPLOAD_DOCUMENTS,
                 self::GIG_CAR_ISSUE_POLICY,
                 self::GIG_CAR_GET_POLICY_DOCUMENTS,

@@ -131,7 +131,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             }
 
             $lastCompletedStep = $process->completed_step;
-            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::GIG_CAR_UPLOAD_DOCUMENTS;
+            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::GIG_CAR_AUTO_CAPTURE;
             $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
 
             $response['status'] = $executeStepSequence['status'];
@@ -151,6 +151,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     private function executeStepSequence($quote, $process, $nextStepToBeExecuted): void
     {
+        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_AUTO_CAPTURE) {
+            $this->executeAutoCaptureStep($quote, $process);
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        }
+
         if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_UPLOAD_DOCUMENTS) {
             $this->executeUploadDocumentsStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
