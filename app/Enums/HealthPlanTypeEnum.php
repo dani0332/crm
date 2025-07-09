@@ -20,4 +20,14 @@ enum HealthPlanTypeEnum: int
             4 => self::MULTI_CATEGORIES,
         };
     }
+    public static function typeText(int $type): string
+    {
+        return match ($type) {
+            self::ENTRY_LEVEL->value => 'Entry level',
+            self::GOOD->value => 'Good',
+            self::BEST->value => 'Best',
+            self::MULTI_CATEGORIES->value => 'Multi Categories',
+        };
+    }
+
 }
