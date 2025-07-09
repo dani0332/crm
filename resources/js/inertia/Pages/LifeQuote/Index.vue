@@ -882,9 +882,9 @@ const insurerAMLStatusOption = computed(() =>
               v-model="filters.sum_insured_range"
               placeholder="Value Range"
               :options="[
-                { value: 'lt500k', label: '<500K' },
-                { value: '500k-1m', label: '500K- <1M' },
-                { value: 'gte1m', label: '>/= 1M' },
+                { value: 'lt500k', label: 'Less than 500k' },
+                { value: '500k-1m', label: '500k to less than 1M' },
+                { value: 'gte1m', label: 'Greater than or equal to 1M' },
               ]"
               class="border-l-0 rounded-tl-none rounded-bl-none"
               label="&nbsp;"
