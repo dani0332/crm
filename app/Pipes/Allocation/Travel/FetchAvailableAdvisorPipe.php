@@ -22,6 +22,10 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
+            return $next($request);
+        }
+
         $advisor = $this->fetchAvailableAdvisor();
 
         if (! $advisor) {
