@@ -13,8 +13,6 @@ class EvaluateTeamPipe extends BaseAllocationPipe
     /**
      * Handle the incoming request.
      *
-     * @param  AllocationRequest  $request
-     * @param  Closure  $next
      * @return mixed
      */
     public function handle(AllocationRequest $request, Closure $next)

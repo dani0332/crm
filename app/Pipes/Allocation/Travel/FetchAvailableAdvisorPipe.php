@@ -24,6 +24,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
             LoggerService::info(self::class.' - Skipping advisor eligibility fetch');
+
             return $next($request);
         }
 
@@ -38,6 +39,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 $this->throw('Advisor not found', self::OK);
             } else {
                 LoggerService::info(self::class.' - First call - continuing to ResetNationalityConfigPipe');
+
                 return $next($request);
             }
         }
