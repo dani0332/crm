@@ -1911,9 +1911,9 @@ class AMLService
 
     public function saveAdditionalVehicleAndDriverDetails($request, $quote)
     {
-        LoggerService::info(__FUNCTION__ . ' - Execution Started');
+        LoggerService::info(__FUNCTION__.' - Execution Started');
         try {
-            if($request->has('additional_vehicle_transaction_details')) {
+            if ($request->has('additional_vehicle_transaction_details')) {
                 $updateCarQuoteRequestDetail = [
                     'rta_transaction_type' => $request->rta_transaction_type,
                     'plate_code' => $request->plate_code,
@@ -1954,10 +1954,10 @@ class AMLService
 
             CarQuoteRequestDetail::where('car_quote_request_id', $quote->id)->update($updateCarQuoteRequestDetail);
             $response = ['status' => true, 'message' => $message];
-            LoggerService::info(__FUNCTION__ . ' - ' . $message);
+            LoggerService::info(__FUNCTION__.' - '.$message);
 
         } catch (\Exception $ex) {
-            LoggerService::info(__FUNCTION__ . ' - Error saving additional vehicle and driver details', $ex->getMessage());
+            LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());
             $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];
         }
 
