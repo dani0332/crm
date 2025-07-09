@@ -1495,6 +1495,7 @@ class CentralService extends BaseService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
         if ($premiumCheckEnabled) { 
+            // Premium check call to check if the premium is valid
             $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $payment->total_amount, $quote->code);
             $logExtra = [
                 'paymentCode' => $payment->code,
