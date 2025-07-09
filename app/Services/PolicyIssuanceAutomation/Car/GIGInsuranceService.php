@@ -28,35 +28,26 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 {
     private readonly string $className;
     private readonly string $baseUrl;
-    // private readonly array $authParam;
-    // private readonly string $partnerId;
-    // private readonly string $partnerReferenceNo;
-
+    
     public const INSURER_CODE = InsuranceProvidersEnum::AXA;
     public const TYPE = quoteTypeCode::Car;
     public const TYPE_ID = QuoteTypeId::Car;
 
+    public const UPLOAD_DOCUMENTS = 'UploadDocuments';
+    public const ISSUE_POLICY = 'IssuePolicy';
+    public const GET_POLICY_DOCUMENTS = 'GetPolicyDocument';
+    public const BOOK_POLICY = 'BookPolicy';
+
     public const PAYMENT_MODE = 'CT068';
     public const PAYMENT_MODE_VALUE = 'Broker Credit';
     public const CURRENCY_CODE = 'AED';
-    // public const PAYMENT_REFERENCE_NUMBER = 'Q23UAERTA000524';
-    // public const PAYMENT_STATUS = 'SUCCEEDED';
-
-    // AXA Car Policy Issuance Steps
-    // public const UPLOAD_DOCUMENTS = 'UploadDocuments';
-    // public const GENERATE_POLICY = 'GeneratePolicy';
-    // public const GENERATE_POLICY_DOCUMENTS = 'GeneratePolicyDocuments';
-    // public const RESPONSIBLE_PERSON_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae'; // TODO:: Shereen will let us know the when business confirmed the email
-    // public const RESPONSIBLE_PERSON_DEFAULT_MOBILE = '+971505636254'; // TODO:: Shereen will let us know the when business confirmed the mobile
-
+    
     public $policyIssuance = null;
     public $currentInsurerApiStatus = null;
 
     public function __construct()
     {
         $this->className = __CLASS__;
-        // $this->partnerId = config('constants.GIG_PARTNER_ID');
-        // $this->partnerReferenceNo = config('constants.GIG_PARTNER_REFERENCE_NO');
         $this->baseUrl = config('constants.GIG_API_BASE_URL', '').'/apis/gulf-motor-v3-vs/motor';
         // $this->authParam = [
         //     'Authorization' => config('constants.GIG_AUTHORIZATION_TOKEN'),
@@ -64,25 +55,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         // ];
     }
 
-    // public function getPartnerDetails(): array
-    // {
-    //     return [
-    //         'partnerId' => $this->partnerId,
-    //         'partnerReferenceNo' => $this->partnerReferenceNo,
-    //     ];
-    // }
-
-    // public function getClassDetails(): array
-    // {
-    //     return [
-    //         'className' => $this->className,
-    //         'baseUrl' => $this->baseUrl,
-    //     ];
-    // }
-
-    public function getAPISteps(): array
+    private function getAPISteps(): array
     {
-        return PolicyIssuanceEnum::getPolicyIssuanceSteps(self::INSURER_CODE, self::TYPE);
+        return [
+            self::UPLOAD_DOCUMENTS,
+            self::ISSUE_POLICY,
+            self::GET_POLICY_DOCUMENTS,
+            self::BOOK_POLICY,
+        ];
     }
 
     public function isPolicyIssuanceAutomationEnabled(): bool
@@ -131,7 +111,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             }
 
             $lastCompletedStep = $process->completed_step;
-            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::GIG_CAR_AUTO_CAPTURE;
+            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : self::UPLOAD_DOCUMENTS;
             $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
 
             $response['status'] = $executeStepSequence['status'];

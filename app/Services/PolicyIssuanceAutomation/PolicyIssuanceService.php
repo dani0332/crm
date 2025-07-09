@@ -233,31 +233,28 @@ class PolicyIssuanceService
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Completed processing for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
     }
 
-    public function processPolicyIssuanceAutomation($quoteType, $quoteId)
-    {
-        $quote = $this->getQuoteObject($quoteType, $quoteId);
-        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
+    // public function processPolicyIssuanceAutomation($quoteType, $quoteId)
+    // {
+    //     $quote = $this->getQuoteObject($quoteType, $quoteId);
+    //     LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
 
-        $payment = $quote->payments->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+    //     $payment = $quote->payments->first();
+    //     $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
-        if ($insuranceProvider) {
-            $validationChecks = app(PolicyIssuancePreChecksService::class)->validationChecks($insuranceProvider, $quoteType, $quote);
-            if (! $validationChecks['status']) {
-                return $validationChecks;
-            }
+    //     if ($insuranceProvider) {
+    //         $validationChecks = app(PolicyIssuancePreChecksService::class)->validationChecks($insuranceProvider, $quoteType, $quote);
+    //         if (! $validationChecks['status']) {
+    //             return $validationChecks;
+    //         }
 
-            $insuranceProviderAutomation = $this->init($quoteType, $insuranceProvider->code);
-            if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
-                $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
-            }
-        }
+    //         $insuranceProviderAutomation = $this->init($quoteType, $insuranceProvider->code);
+    //         if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
+    //             $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
+    //         }
+    //     }
         
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy issuance automation triggered successfully for '.$insuranceProvider->text);
+    //     LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy issuance automation triggered successfully for '.$insuranceProvider->text);
 
-        return ['status' => true, 'message' => 'Policy issuance automation triggered successfully'];
-    }
-
-    
-
+    //     return ['status' => true, 'message' => 'Policy issuance automation triggered successfully'];
+    // }
 }
