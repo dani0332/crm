@@ -381,4 +381,13 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
     }
+
+    /**
+     * Get quote tags for this car quote
+     */
+    public function quoteTags()
+    {
+        return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Travel);
+    }
 }

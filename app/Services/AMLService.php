@@ -1911,9 +1911,9 @@ class AMLService
 
     public function saveAdditionalVehicleAndDriverDetails($request, $quote)
     {
-        LoggerService::info(__FUNCTION__ . ' - Execution Started');
+        LoggerService::info(__FUNCTION__.' - Execution Started');
         try {
-            if($request->has('additional_vehicle_transaction_details')) {
+            if ($request->has('additional_vehicle_transaction_details')) {
                 $updateCarQuoteRequestDetail = [
                     'rta_transaction_type' => $request->rta_transaction_type,
                     'plate_code' => $request->plate_code,
@@ -1954,13 +1954,28 @@ class AMLService
 
             CarQuoteRequestDetail::where('car_quote_request_id', $quote->id)->update($updateCarQuoteRequestDetail);
             $response = ['status' => true, 'message' => $message];
-            LoggerService::info(__FUNCTION__ . ' - ' . $message);
+            LoggerService::info(__FUNCTION__.' - '.$message);
 
         } catch (\Exception $ex) {
-            LoggerService::info(__FUNCTION__ . ' - Error saving additional vehicle and driver details', $ex->getMessage());
+            LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());
             $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];
         }
 
         return $response;
+    }
+
+    public function autoCaptureValidationCheck($quote)
+    {
+        if($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
+            LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - AML Screening is not cleared');
+            return false;
+        }
+
+        if($quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
+            LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - Insurer AML Screening is not cleared');
+            return false;
+        }
+
+        return true;
     }
 }
