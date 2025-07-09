@@ -112,10 +112,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'LastName' => $quote->latestInsured->last_name,
                     'NationalId' => $quote->latestInsured->id_number,
                     'CustomerCategory' => 1,
-                ], 
+                ],
                 'VehicleDetails' => [
                     'CC' => $quote?->carModelDetail?->cubic_capacity,
-                    'PlaceOfRegn' => "1", // TODO: need to ask ecom side
+                    'PlaceOfRegn' => '1', // TODO: need to ask ecom side
                     'NcbYears' => 99,
                     'DateOfRegn' => $quote?->carQuoteRequestDetail?->first_registration_date ? ($quote?->carQuoteRequestDetail?->first_registration_date.' 00:00:00') : '',
                     'YearOfManf' => $quote?->year_of_manufacture,
@@ -123,7 +123,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'VehicleDescCode' => $closestVariant->VehicleDescCode,
                     'VehicleDesc' => $quote?->carQuoteRequestDetail?->insurer_trim,
                     'Seats' => $quote?->seat_capacity,
-                    'UseCode' => "2",
+                    'UseCode' => '2',
                     'BodyType' => $closestVariant->BodyTypeCode,
                     'MakeCode' => $vehicleMakeId,
                     'ModelCode' => $vehicleModelId,
@@ -135,7 +135,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'DrivenWheel' => $closestVariant->DrivenWheel,
                     'modelSpecification' => $closestVariant->ModelSpecification,
                     'ColorCode' => $quote?->carQuoteRequestDetail?->vehicle_color,
-                    'RegistrationType' => "1", //TODO: rta transaction based
+                    'RegistrationType' => '1', // TODO: rta transaction based
                     'RtaTransactionType' => (string) $quote?->carQuoteRequestDetail?->rta_transaction_type,
                     'RegnNoText' => $quote->carQuoteRequestDetail?->plate_code,
                     'RegnNoNumber' => $quote->carQuoteRequestDetail?->plate_number,
@@ -144,24 +144,24 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'TcfNo' => $quote->carQuoteRequestDetail?->traffic_code_number,
                 ],
                 'TransactionDetails' => [
-                    'PolicyTypeCode' => "1", // TODO: need to ask api team
-                    'EffectiveDate' => "2025-01-06 21:09:00", // TODO: need to ask api team
-                    'SchemeCode' => "13",
-                    'TariffCode' => "17", // TODO: need to ask api team
+                    'PolicyTypeCode' => '1', // TODO: need to ask api team
+                    'EffectiveDate' => '2025-01-06 21:09:00', // TODO: need to ask api team
+                    'SchemeCode' => '13',
+                    'TariffCode' => '17', // TODO: need to ask api team
                     'PartnerTrnReferenceNumber' => $quote->uuid ?? 'Q1aw2bvcvT', // TODO: need to ask
                 ],
                 'OptionalCovers' => [
                     [
                         'CoverIncluded' => true,
-                        'CoverMappingCode' => "2-1-0", // TODO: need to ask
+                        'CoverMappingCode' => '2-1-0', // TODO: need to ask
                     ],
                 ],
                 'DriverDetails' => [
                     [
                         'DriverName' => $quote?->latestInsured->first_name.' '.$quote?->latestInsured->last_name,
-                        'MainDriverInd' => $quote?->carQuoteRequestDetail?->is_insured_and_driver_same ? "Y" : "N",
+                        'MainDriverInd' => $quote?->carQuoteRequestDetail?->is_insured_and_driver_same ? 'Y' : 'N',
                         'DriverDOB' => $quote?->carQuoteRequestDetail?->driver_dob.' 00:00:00',
-                        'DriverGender' => str_starts_with(strtoupper($quote?->carQuoteRequestDetail?->driver_gender ?? ''), 'M') ? "M" : "F",
+                        'DriverGender' => str_starts_with(strtoupper($quote?->carQuoteRequestDetail?->driver_gender ?? ''), 'M') ? 'M' : 'F',
                         'FirstDrvLicCountry' => $homeCountryLicenseIssuance,
                         'LocalLicense' => $quote?->carQuoteRequestDetail?->driver_uae_driving_experience,
                         'OtherLicense' => $quote?->carQuoteRequestDetail?->home_country_driving_experience,
@@ -170,10 +170,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 ],
                 'QuotationNo' => $quote?->carQuotePlanDetail?->insurer_quote_no,
                 'PolicyId' => $quote?->carQuotePlanDetail?->insurer_quote_no,
-                'EndtId' => "0",
+                'EndtId' => '0',
                 'ProposalForm' => false,
-                'UserComments' => "Update Quote Request",
-            ]
+                'UserComments' => 'Update Quote Request',
+            ],
         ];
 
         $response = $this->livaHttpCall($endPoint, $payload);
@@ -181,7 +181,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         return $response;
     }
-    
+
     public function retrieveQuoteRequest()
     {
         $endPoint = 'transactions/retrieve/v2';
@@ -207,7 +207,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $livaMapping = app(LivaInsurancePayloadMapping::class);
 
-        $requiredDocuments = array_filter($documents->toArray(), function($document) {
+        $requiredDocuments = array_filter($documents->toArray(), function ($document) {
             return in_array($document['document_type_code'], [DocumentTypeCode::DRIVING_LICENSE, DocumentTypeCode::EMIRATES_ID, DocumentTypeCode::REGISTRATION_CARD_MULKIYA]);
         });
 
@@ -221,23 +221,24 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 // Read file content and convert to base64
                 $fileContent = file_get_contents($filePath);
                 $base64Content = base64_encode($fileContent);
-                
+
                 // Get file extension
                 $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-                
+
                 // Map document type based on your business logic
                 $documentType = $livaMapping->getDocumentType($document['document_type_code'] ?? 'other');
-                
+
                 $attachments[] = [
                     'DocumentType' => $documentType,
                     'Content' => $base64Content,
                     'Extension' => $extension,
                 ];
-                
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document processed: ' . $document['document_type_text']);
-                
+
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document processed: '.$document['document_type_text']);
+
             } catch (\Exception $ex) {
                 LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error processing document', exception: $ex);
+
                 continue;
             }
         }
@@ -252,16 +253,14 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'Attachments' => $attachments,
         ];
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Payload created with ' . count($attachments) . ' attachments');
-        
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Payload created with '.count($attachments).' attachments');
+
         $response = $this->livaHttpCall('documents/upload/v2', $payload);
 
         dd($response->object());
-        
+
         return $response;
     }
-    
-    
 
     public function getVehicleModelId($makeCode)
     {
@@ -280,18 +279,18 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                         ],
                         [
                             'criteria-name' => 'schemeCode',
-                            'criteria-value' => "13",
+                            'criteria-value' => '13',
                         ],
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ];
 
         $livaMapping = $this->livaHttpCall('v2/masterservices', $payload);
 
         return collect($livaMapping->object()->getVehicleModelListFromMake->items)
             ->pluck('value', 'name')
-            ->mapWithKeys(fn($value, $key) => [strtoupper(trim($key)) => $value]);
+            ->mapWithKeys(fn ($value, $key) => [strtoupper(trim($key)) => $value]);
     }
 
     public function getVehicleVariants($dob, $mobileNo, $makeCode, $modelCode, $modelYear, $refId)
@@ -304,7 +303,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'ModelCode' => (int) $modelCode,
                 'ModelYear' => (int) $modelYear,
                 'PartnerTrnReferenceNumber' => $refId,
-            ]
+            ],
         ];
 
         $livaMapping = $this->livaHttpCall('vehicle/variants/v2', $payload);
@@ -550,7 +549,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         foreach ($vehicleVariants as $variant) {
             $score = $this->calculateVariantMatchScore($variant, $searchCriteria);
-            
+
             if ($score > $highestScore) {
                 $highestScore = $score;
                 $closestVariant = $variant;
@@ -559,7 +558,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Best match found with score: '.$highestScore, extra: [
             'variant' => $closestVariant,
-            'criteria' => $searchCriteria
+            'criteria' => $searchCriteria,
         ]);
 
         return $closestVariant;
@@ -658,7 +657,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         // Calculate similarity percentage
         $similarity = 0;
         similar_text($str1, $str2, $similarity);
-        
+
         return $similarity / 100;
     }
 }

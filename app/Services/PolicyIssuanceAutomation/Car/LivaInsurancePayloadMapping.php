@@ -6,7 +6,7 @@ class LivaInsurancePayloadMapping
 {
     public function nationalityList($name)
     {
-        return match($name) {
+        return match ($name) {
             'Afghan' => 87,
             'Albanian' => 88,
             'Algerian' => 86,
@@ -233,7 +233,7 @@ class LivaInsurancePayloadMapping
 
     public function useCode($useCode)
     {
-        return match($useCode) {
+        return match ($useCode) {
             1 => 'Social, Domestic and Pleasure',
             2 => 'Social, Domestic, Pleasure and Commuting',
             3 => 'Social, Domestic, Pleasure, Commuting and Personal Biz Use',
@@ -250,7 +250,7 @@ class LivaInsurancePayloadMapping
 
     public function vehicleMakeList($make)
     {
-        return match($make) {
+        return match ($make) {
             'ACURA' => 302,
             'ALBANY' => 446,
             'ALFA ROMEO' => 303,
@@ -428,7 +428,7 @@ class LivaInsurancePayloadMapping
      */
     public function getDocumentType($documentType): string
     {
-        return match($documentType) {
+        return match ($documentType) {
             'CEID' => '16', // Emirates ID (Front side & Back side)
             'DL' => '4', // Driving License (Front side & Back side)
             'CAR_MULKIY' => '5', // Registration card (Mulkiya)
