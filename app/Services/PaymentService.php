@@ -87,13 +87,15 @@ class PaymentService extends BaseService
     /**
      * Retry posting prepayment to Sage for a given payment split and quote.
      */
-    public function retryPrepaymentPostingToSage(array $data): array
+    public function retryCreatePrepayment(array $data): array
     {
+        $srNo = $data['sr_no'];
+        $paymentCode = $data['payment_code'];
+        LoggerService::info("retryCreatePrepayment called for payment code : {$paymentCode} and sr no : {$srNo}");
         try {
-            LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_PREPAYMENT_POSTING);
             $paymentSplit = PaymentSplits::find($data['payment_split_id']);
             if (!$paymentSplit) {
-                LoggerService::info(__METHOD__.' Payment Split not found: '.$data['payment_split_id']);
+                LoggerService::info("Payment Split not found for payment split code : {$paymentCode} and sr no : {$srNo}");
                 return [
                     'success' => false,
                     'message' => 'Payment split not found.',
@@ -101,16 +103,16 @@ class PaymentService extends BaseService
             }
             $payment = $paymentSplit->payment;
             if (!$payment) {
-                LoggerService::info(__METHOD__.' Payment not found for split: '.$paymentSplit->id);
+                LoggerService::info("Payment not found for payment split code : {$paymentCode} and sr no : {$srNo}");
                 return [
                     'success' => false,
-                    'message' => 'Payment not found for split.',
+                    'message' => 'Payment not found',
                 ];
             }
             $sendUpdateId = $payment->send_update_log_id;
             $mainLeadObject = app(CentralController::class)->getQuoteObject($data['quote_type'], $data['quote_request_id']);
             if (!$mainLeadObject) {
-                LoggerService::info(__METHOD__.' Main lead object not found for quote type: '.$data['quote_type'].' and request id: '.$data['quote_request_id']);
+                LoggerService::info("Main lead object not found for payment split code : {$paymentCode} and sr no : {$srNo}");
                 return [
                     'success' => false,
                     'message' => 'Main lead object not found.',
@@ -132,18 +134,18 @@ class PaymentService extends BaseService
                 'customer_id' => $quoteModel->customer_id,
                 'advisor_id' => $quoteModel->advisor_id,
             ]);
-            LoggerService::info(__METHOD__.' Payment Split ID: '.$paymentSplit->id.' - Start Retry Prepayment Posting of Payment split.');
-            if ((new \App\Services\SageApiService)->isSageEnabled()) {
-                $sageResponse = app(\App\Services\SplitPaymentService::class)->createSageRecipt($request, $paymentSplit, $paymentSplit->collection_amount);
+            LoggerService::info("Start Retry Prepayment Posting of Payment split for payment code : {$paymentCode} and sr no : {$srNo}");
+            if ((new SageApiService)->isSageEnabled()) {
+                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $paymentSplit, $paymentSplit->collection_amount);
                 if ($sageResponse['status'] !== 'success') {
-                    LoggerService::info(__METHOD__.' Sage response error: '.json_encode($sageResponse));
+                    LoggerService::warning("Sage response error for payment code : {$paymentCode} and sr no : {$srNo}");
                     return [
                         'success' => false,
                         'message' => 'Prepayment posting failed, please try again later.',
                     ];
                 }
                 $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                LoggerService::info(__METHOD__.' Payment Split ID: '.$paymentSplit->id.' - Sage Receipt ID: '.$paymentSplit->sage_reciept_id);
+                LoggerService::info("Sage Receipt ID created: {$paymentSplit->sage_reciept_id} for payment code : {$paymentCode} and sr no : {$srNo}");
                 $paymentSplit->save();
                 return [
                     'success' => true,
@@ -156,7 +158,7 @@ class PaymentService extends BaseService
                 'message' => 'Sage integration is not enabled.',
             ];
         } catch (\Exception $exception) {
-            LoggerService::info(__METHOD__.' Exception: '.$exception->getMessage());
+            LoggerService::warning("Exception in retryPrepaymentPostingToSage: {$exception->getMessage()} for payment code : {$paymentCode} and sr no : {$srNo}");
             return [
                 'success' => false,
                 'message' => 'Prepayment posting failed, please try again later.',

@@ -2,13 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
-class RetryPostPrepaymentToSageRequest extends FormRequest
+class RetryPrepaymentRequest extends FormRequest
 {
-    use GenericQueriesAllLobs;
-
     public function authorize(): bool
     {
         return true;
@@ -20,6 +17,8 @@ class RetryPostPrepaymentToSageRequest extends FormRequest
             'paymentSplitId' => 'required',
             'quoteRequestId' => 'required',
             'quoteType' => 'required',
+            'paymentCode' => 'required',
+            'srNo' => 'required',
             'sendUpdateId' => 'nullable',
         ];
     }

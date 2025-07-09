@@ -45,7 +45,7 @@ use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
-use App\Http\Requests\RetryPostPrepaymentToSageRequest;
+use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
@@ -860,23 +860,28 @@ class CentralController extends Controller
         }
     }
 
-    public function postPrepaymentToSageRetry(RetryPostPrepaymentToSageRequest $request)
+    public function retryPrepaymentCreation(RetryPrepaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_PREPAYMENT_POSTING);
+        $request = $request->safe();
+        $paymentCode = $request->paymentCode;
+        $srNo = $request->srNo;
+        LoggerService::info("retryPrepaymentCreation called for payment code : {$paymentCode} and sr no : {$srNo}");
         $data = [
             'quote_type' => $request->quoteType,
             'quote_request_id' => $request->quoteRequestId,
             'payment_split_id' => $request->paymentSplitId,
+            'payment_code' => $paymentCode,
+            'sr_no' => $srNo,
         ];
-        $result = app(PaymentService::class)->retryPrepaymentPostingToSage($data);
+        $result = app(PaymentService::class)->retryCreatePrepayment($data);
         if ($result['success']) {
-            return response()->json([
-                'success' => true,
-                'message' => $result['message'],
-            ], 200);
+            return redirect()->back()->with([
+                'success' => $result['message'],
+            ]);
         }
-        return response()->json([
-            'success' => false,
-            'message' => $result['message'],
-        ], 500);
+        return redirect()->back()->with([
+            'error' => $result['message'],
+        ]);
     }
 }

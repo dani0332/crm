@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import moment from 'moment';
 import { usePayment } from '../../Composables/usePayment';
+import { useForm } from '@inertiajs/vue3';
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
@@ -9,7 +10,6 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
 
-const retrySplitPaymentProcessing = ref(false);
 const postPrepaymentProcessing = ref(false);
 
 const {
@@ -85,37 +85,40 @@ const retrySplitPayment = () => {
   );
 };
 
-const triggerPostRetryPrepayment = async () => {
+const retryPrepaymentForm = useForm({
+  paymentSplitId: null,
+  quoteRequestId: null,
+  quoteType: null,
+  sendUpdateId: null,
+  paymentCode: null,
+  srNo: null,
+});
+
+const triggerPostRetryPrepayment = () => {
   const splitPayment = props.splitPayment;
-  let quoteStatusId = props.quoteRequest.quote_status_id;
-  try {
-    retrySplitPaymentProcessing.value = true;
-    const response = await axios.post(route('can-post-premium-prepayment-retry'), {
-      paymentSplitId: splitPayment.id,
-      quoteRequestId: props.quoteRequest.id,
-      quoteType: page.props.quoteType,
-      sendUpdateId: props.sendUpdate?.id,
-    });
-    if (response.data.success) {
-      notification.success({
-        title: 'Prepayment to Sage Process Started',
-        position: 'top',
-      });
+  retryPrepaymentForm.paymentSplitId = splitPayment.id;
+  retryPrepaymentForm.quoteRequestId = props.quoteRequest.id;
+  retryPrepaymentForm.quoteType = page.props.quoteType;
+  retryPrepaymentForm.sendUpdateId = props.sendUpdate?.id;
+  retryPrepaymentForm.paymentCode = props.splitPayment.code;
+  retryPrepaymentForm.srNo = props.splitPayment.sr_no;
+
+  retryPrepaymentForm.post(route('can-post-premium-prepayment-retry'), {
+    preserveScroll: true,
+    onSuccess: () => {
       router.reload({
         only: ['payments'],
       });
-    }
-  } catch (error) {
-    let errorMessages = error.response.data.errors;
-    Object.keys(errorMessages).forEach(function (key) {
-      notification.error({
-        title: errorMessages[key],
-        position: 'top',
+    },
+    onError: (errors) => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
       });
-    });
-  } finally {
-    retrySplitPaymentProcessing.value = false;
-  }
+    },
+  });
 };
 
 const splitPaymentTotalPrice = (srNo, amount, discountValue) => {
@@ -431,7 +434,7 @@ const triggerPostPrepayment = async () => {
           class="ml-2"
           @click="triggerPostRetryPrepayment"
           outlined
-          :loading="retrySplitPaymentProcessing"
+          :loading="retryPrepaymentForm.processing"
           >Retry</x-button
         >
       </div>
