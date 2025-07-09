@@ -31,6 +31,29 @@ class PolicyIssuanceService
         };
     }
 
+    public function checkAllowedAutomations($quoteType, $quote)
+    {
+        $allowedQuoteTypes = [QuoteTypes::CAR->value];
+        $allowedInsuranceProviders = [InsuranceProvidersEnum::AXA];
+
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        if (! $insuranceProvider) {
+            return false;
+        }
+
+        if (! in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            return false;
+        }
+
+        if (! in_array($insuranceProvider?->code, $allowedInsuranceProviders)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function schedulePolicyIssuance($quote, $insurer, $quoteType, $logFor)
     {
         $policyIssuance = $quote->policyIssuance;

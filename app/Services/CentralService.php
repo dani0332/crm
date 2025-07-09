@@ -11,6 +11,7 @@ use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -27,6 +28,7 @@ use App\Enums\TeamTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
+use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
@@ -53,6 +55,7 @@ use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\SavingsQuoteService;
@@ -1482,5 +1485,56 @@ class CentralService extends BaseService
         }
 
         return $paymentGatewayIds;
+    }
+
+    public function autoCapturePaymentProcess($quoteType, $quote, $premiumCheckEnabled = true)
+    {
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started');
+
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        if ($premiumCheckEnabled) { 
+            // Premium check call to check if the premium is valid
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $payment->total_amount, $quote->code);
+            $logExtra = [
+                'paymentCode' => $payment->code,
+                'quoteTypeId' => $quoteType->id,
+                'responseStatus' => isset($capturePaymentResponse['status']) ? $capturePaymentResponse['status'] : null,
+                'responseMessage' => isset($capturePaymentResponse['message']) ? $capturePaymentResponse['message'] : null,
+                'responsePremiumAmount' => isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null,
+            ];
+
+            if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
+                LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
+                return;
+            }
+
+            LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
+        }
+
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+        $paymentSplits = $payment->paymentSplits;
+        $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
+
+        $splitPaymentApprovalRequest = new SplitPaymentApproveRequest([
+            'modelType' => $quoteType->value,
+            'quote_id' => $quote->id,
+            'plan_id' => $payment->plan_id,
+            'payment_code' => $payment->code,
+            'customer_id' => $quote->customer_id,
+            'collection_amount' => $collectionAmount,
+            'is_declined' => 0,
+            'is_capture' => 1,
+            'is_approved' => 0,
+            'declined_reason' => $payment->declined_reason,
+            'send_update_id' => null,
+            'collection_type' => $payment->collection_type,
+        ]);
+
+        $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
+        LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
+
+        return $response;
     }
 }

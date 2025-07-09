@@ -60,8 +60,10 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -870,6 +872,10 @@ class AMLController extends Controller
         if ($preparedFormData) {
             if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
                 $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+            }
+
+            if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
+                app(CentralService::class)->autoCapturePaymentProcess($quoteType, $quote);
             }
 
             return response()->json(['success' => true]);
