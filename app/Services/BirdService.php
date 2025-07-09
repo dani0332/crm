@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
+use App\Models\QuoteFlowDetails;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Http;
 
@@ -63,5 +64,36 @@ class BirdService extends BaseService
         LoggerService::info('Bird Webhook Cancel Flow Run Request initiated', ['Ref-ID' => $workflow->quote_uuid, 'URL' => $cancelFlowRunUrl,  'run_id' => $workflow->flow_id, 'Method' => 'patch']);
 
         return $this->triggerWebHookRequest($cancelFlowRunUrl, ['action' => 'cancel', 'ids' => [$workflow->flow_id]], 'patch', true);
+    }
+
+    public function isFollowupExecuted($quoteUuid, $quoteTypeId, $flowType)
+    {
+        return QuoteFlowDetails::where('quote_uuid', $quoteUuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('flow_type', $flowType)
+            ->exists();
+
+    }
+    public function createQuoteWorkFlowDetails($lead, $response, $flowType = null, $quoteTypeId = null)
+    {
+        try {
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => $quoteTypeId,
+                    'flow_type' => $flowType,
+                    'flow_id' => $runId,
+                    'started_at' => now(),
+                ]);
+                LoggerService::info('- createQuoteWorkFlowDetails  run id created');
+            } else {
+                LoggerService::info(' - createQuoteWorkFlowDetails  run id not found ');
+            }
+        } catch (\Throwable $th) {
+
+            LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} ");
+
+        }
     }
 }
