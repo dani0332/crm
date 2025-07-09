@@ -974,9 +974,6 @@
                                     <a href="tel:{{ removeSpaces($quote->advisor->landline_no) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
                                         <span>{{ $quote->advisor->landline_no }}</span>
                                     </a>
-                                    <br>
-                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon">
-                                    <span>800 ALFRED (800 253 733)</span>
                                 </p>
                             </div>
                         @else
