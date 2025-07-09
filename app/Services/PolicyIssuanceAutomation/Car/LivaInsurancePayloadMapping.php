@@ -422,4 +422,17 @@ class LivaInsurancePayloadMapping
             default => null
         };
     }
+
+    /**
+     * Map document types to LIVA document type codes
+     */
+    public function getDocumentType($documentType): string
+    {
+        return match($documentType) {
+            'CEID' => '16', // Emirates ID (Front side & Back side)
+            'DL' => '4', // Driving License (Front side & Back side)
+            'CAR_MULKIY' => '5', // Registration card (Mulkiya)
+            default => null
+        };
+    }
 }

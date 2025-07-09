@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -196,6 +197,71 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         return $response;
     }
+
+    public function uploadDocument($quote)
+    {
+        $documents = $quote->documents;
+        if ($documents->isEmpty()) {
+            return ['status' => false, 'message' => 'No documents found for quote'];
+        }
+
+        $livaMapping = app(LivaInsurancePayloadMapping::class);
+
+        $requiredDocuments = array_filter($documents->toArray(), function($document) {
+            return in_array($document['document_type_code'], [DocumentTypeCode::DRIVING_LICENSE, DocumentTypeCode::EMIRATES_ID, DocumentTypeCode::REGISTRATION_CARD_MULKIYA]);
+        });
+
+        $attachments = [];
+
+        foreach ($requiredDocuments as $document) {
+            try {
+                // Get the file path (assuming documents are stored in storage)
+                $filePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$document['doc_url']; // Adjust path as needed
+
+                // Read file content and convert to base64
+                $fileContent = file_get_contents($filePath);
+                $base64Content = base64_encode($fileContent);
+                
+                // Get file extension
+                $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+                
+                // Map document type based on your business logic
+                $documentType = $livaMapping->getDocumentType($document['document_type_code'] ?? 'other');
+                
+                $attachments[] = [
+                    'DocumentType' => $documentType,
+                    'Content' => $base64Content,
+                    'Extension' => $extension,
+                ];
+                
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document processed: ' . $document['document_type_text']);
+                
+            } catch (\Exception $ex) {
+                LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error processing document', exception: $ex);
+                continue;
+            }
+        }
+
+        if (empty($attachments)) {
+            return ['status' => false, 'message' => 'No valid documents could be processed'];
+        }
+
+        $payload['UploadDocumentsRequest'] = [
+            'TransactionType' => '5',
+            'TransactionNumber' => $quote?->carQuotePlanDetail?->insurer_quote_no ?? 3513894, // Use actual quote number
+            'Attachments' => $attachments,
+        ];
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Payload created with ' . count($attachments) . ' attachments');
+        
+        $response = $this->livaHttpCall('documents/upload/v2', $payload);
+
+        dd($response->object());
+        
+        return $response;
+    }
+    
+    
 
     public function getVehicleModelId($makeCode)
     {
