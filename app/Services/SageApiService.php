@@ -327,7 +327,7 @@ class SageApiService
             $quoteTypeId = $preparedData['sendUpdateLog']->quote_type_id;
             $quote = $this->getQuoteObjectBy($request->quoteType, $preparedData['sendUpdateLog']->quote_uuid, 'uuid');
             $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
-            $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
+            $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote, $quoteTypeId);
             $isTapPaymentGateway = $preparedData['payment']->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
 
             $epTransSageLogArray = $sukoonMedXTransaction?->sageApiLogs?->whereIn('sage_request_type', [SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV, SageEnum::EP_SRT_CREATE_AP_PREM_INV])->keyBy('step')->toArray();
@@ -801,7 +801,7 @@ class SageApiService
         }
 
         $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
-        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote, $quoteTypeId);
         $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
         LoggerService::info(self::class.'fun:'.__FUNCTION__.'  EP Booking checks :  Quote Code for '.$quote->code, extra : [
             'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
@@ -2608,8 +2608,13 @@ class SageApiService
         return in_array($quoteTypeId, $lobAllowedForEmbeddedProductBooking);
     }
 
-    public function getSukoonMedXTransaction($quote)
+    public function getSukoonMedXTransaction($quote, $quoteTypeId)
     {
+        $isAllowedLod = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
+        if (! $isAllowedLod) {
+            return null;
+        }
+
         return $quote->embeddedTransactions()
             ->whereHas('product.embeddedProduct', function ($query) {
                 $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
@@ -2621,8 +2626,8 @@ class SageApiService
 
     public function isEmbeddedTransactionStatusReadyForSage($quote, $quoteTypeId)
     {
-        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote);
-        if ($this->isLobAllowedForEmbeddedProductBooking($quoteTypeId) && $sukoonMedXTransaction) {
+        $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote, $quoteTypeId);
+        if ($sukoonMedXTransaction) {
             return $sukoonMedXTransaction->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
         }
 
