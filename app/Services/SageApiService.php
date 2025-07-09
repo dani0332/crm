@@ -240,13 +240,19 @@ class SageApiService
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
-        // Execute Prepayment Post in Progress Call
+        // create AR Prepayment Premium Receipt
         if (! empty($preparedData['payment']?->send_update_log_id)) {
             $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
             if (! $createPrepayment['status']) {
                 return $createPrepayment;
             }
         }
+
+         // create AP Prepayment Premium Receipt
+         $createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
+         if (! $createPremiumPrepayment['status']) {
+             return $createPremiumPrepayment;
+         }
 
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
             if (empty($reversalInvoiceLogs)) {

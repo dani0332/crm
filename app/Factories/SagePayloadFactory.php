@@ -1490,7 +1490,7 @@ class SagePayloadFactory
                             'TransactionType' => 'PrepaymentPosted',
                         ],
                     ],
-                    /*'ReceiptAdjustmentOptionalField' => $optionalFields,*/
+                    'ReceiptAdjustmentOptionalField' => $optionalFields,
                 ],
 
             ],
