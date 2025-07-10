@@ -79,7 +79,7 @@ const validateAlphaOnly = value => {
 };
 
 const validatePhoneNumber = value => {
-  if (!value) return true; // Allow empty
+  return true; // Allow empty
 
   // Remove common formatting characters
   const cleaned = value.replace(/[\s\-()]/g, '');

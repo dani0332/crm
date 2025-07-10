@@ -334,7 +334,7 @@ class HomeEmailService extends BaseService
         // Adjust for weekend rules
         switch ($ocbDate->dayOfWeek) {
             case Carbon::SATURDAY:
-                $ocbDate->subDay(); 
+                $ocbDate->subDay();
                 break;
             case Carbon::SUNDAY:
                 $ocbDate->addDay();

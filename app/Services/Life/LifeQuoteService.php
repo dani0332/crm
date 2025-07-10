@@ -18,14 +18,15 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\ApplicationStorage;
+use App\Models\CurrencyCoverage;
 use App\Models\CurrencyType;
 use App\Models\DocumentType;
 use App\Models\InsuranceProviderPlan;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
-use App\Models\LifePlanRider;
 use App\Models\LifeQuote;
 use App\Models\LifeRider;
+use App\Models\LifeRiderOption;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -48,9 +49,6 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
-use Illuminate\Validation\ValidationException;
-use App\Models\CurrencyCoverage;
-use App\Models\LifeRiderOption;
 
 class LifeQuoteService extends BaseService
 {
@@ -72,7 +70,6 @@ class LifeQuoteService extends BaseService
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
         $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
-
 
         return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes');
     }
@@ -398,7 +395,6 @@ class LifeQuoteService extends BaseService
         $ecomLifeInsuranceQuoteUrl = config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL');
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
-      
 
         return [
             'documentTypes' => $documentTypes,
@@ -447,7 +443,7 @@ class LifeQuoteService extends BaseService
             'ecomLifeInsuranceQuoteUrl' => $ecomLifeInsuranceQuoteUrl,
             'currencies' => $currencies,
             'lifeRiders' => $lifeRiders,
-            'availablePlan' => $this->getQuotePlans($uuid)
+            'availablePlan' => $this->getQuotePlans($uuid),
         ];
     }
 
@@ -501,27 +497,70 @@ class LifeQuoteService extends BaseService
 
     public function updateLifeQuote($uuid, $data)
     {
+        $isAnyFieldChanged = false;
+
+        LoggerService::startQuoteLogging($uuid);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->getPlainQuoteBy('uuid', $uuid);
 
-            // check the columns to be updated in personal quotes.
+            // update in PersonalQuotes
             $quoteData = Arr::only($data, app(PersonalQuote::class)->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
             $quote->update($quoteData);
 
-            // check the columns to be updated in life quote request.
             if ($quote->lifeQuote) {
+
+                LoggerService::info('fn: updateLifeQuote - Life Quote Found');
+
+                $fieldsToRevisePlans = [
+                    'dob',
+                    'sum_insured_value',
+                    'nationality_id',
+                    'sum_insured_currency_id',
+                    'marital_status_id',
+                    'purpose_of_insurance_id',
+                    'number_of_years_id',
+                    'height',
+                    'weight',
+                    'age',
+                    'bmi',
+                    'is_smoker',
+                    'gender',
+                ];
+
+                // check if any field is changed, if yes then fetch the plans from ken with get latest rating - Yes
+                $lifeQuote = $quote->lifeQuote;
+                foreach ($fieldsToRevisePlans as $field) {
+                    if (isset($data[$field]) && $data[$field] != $lifeQuote->$field) {
+                        $isAnyFieldChanged = true;
+                        break;
+                    }
+                }
+
                 $lifeQuoteData = Arr::only($data, app(LifeQuote::class)->allowedColumns());
                 $quote->lifeQuote->fill($lifeQuoteData);
                 $quote->lifeQuote->save();
+
             } else {
+
+                LoggerService::info('fn: updateLifeQuote - Life Quote Not Found, Creating New One');
+
                 $lifeQuoteData = Arr::only($data, app(LifeQuote::class)->allowedColumns());
                 $lifeQuote = $quote->lifeQuote()->create($lifeQuoteData);
                 $lifeQuote->audit();
             }
 
             return $quote;
+
         });
+
+        if ($isAnyFieldChanged) {
+            $this->getQuotePlans($uuid, true);
+            LoggerService::info(message: 'fn: updateLifeQuote - Fields Changed, Plans to be revised');
+        }
+
+        return $quote;
     }
 
     public function getDuplicateEntityByCode($code)
@@ -685,7 +724,7 @@ class LifeQuoteService extends BaseService
     }
 
     /* This function will select the Plan details in the Quote */
-    public function lifePlanSelected(string $quoteId, int $planId, int $version = 0,$saveQuote = false, $isUW = false)
+    public function lifePlanSelected(string $quoteId, int $planId, int $version = 0, $saveQuote = false, $isUW = false)
     {
         // Creating Form Data
         $formData = [
@@ -701,6 +740,7 @@ class LifeQuoteService extends BaseService
         }
 
         $request = app(KenService::class)->request('/process-life-quote-plan', 'post', $formData);
+
         return $request;
     }
 
@@ -709,15 +749,16 @@ class LifeQuoteService extends BaseService
         $quotePlans = $this->quotePlans($data);
 
         $planIds = $data['plan_ids'] ?? [];
-        
+
         $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->first();
 
         if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
             LoggerService::info('fn: exportPlansPdf - No plans found for the quote');
+
             return ['pdf' => null, 'name' => null];
         }
 
-        $lifePlans = $quotePlans->quotes->plans; 
+        $lifePlans = $quotePlans->quotes->plans;
 
         $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
 
@@ -733,12 +774,12 @@ class LifeQuoteService extends BaseService
     public function getRiderDetails($planId)
     {
         return LifeRiderOption::active()
-        ->where('plan_id', $planId)
-        ->select('id','rider_id', 'plan_id')
-        ->with(['currencyCoverages' => function ($query) {
-            $query->select('life_rider_option_id', 'min_cover', 'max_cover', 'currency_id');
-        }])
-        ->get();
+            ->where('plan_id', $planId)
+            ->select('id', 'rider_id', 'plan_id')
+            ->with(['currencyCoverages' => function ($query) {
+                $query->select('life_rider_option_id', 'min_cover', 'max_cover', 'currency_id');
+            }])
+            ->get();
     }
 
     public function quotePlans($data)
@@ -763,7 +804,7 @@ class LifeQuoteService extends BaseService
 
         // Add planIds as comma-separated string if provided
         $queryParams['quoteUID'] = $quoteUuId;
-        if (!empty($planIds)) {
+        if (! empty($planIds)) {
             $queryParams['planIds'] = is_array($planIds) ? implode(',', $planIds) : $planIds;
         }
 
@@ -813,12 +854,12 @@ class LifeQuoteService extends BaseService
     public function getCurrencyCoverages($planId)
     {
         $currencyCoverages = CurrencyCoverage::active()
-        ->where('plan_id', $planId)
-        ->select('plan_id', 'min_cover', 'max_cover', 'currency_id')
-        ->with(['currency' => function ($query) {
-            $query->select('id', 'code', 'text'); // Make sure to include 'id' for relationship binding
-        }])
-        ->get();
+            ->where('plan_id', $planId)
+            ->select('plan_id', 'min_cover', 'max_cover', 'currency_id')
+            ->with(['currency' => function ($query) {
+                $query->select('id', 'code', 'text'); // Make sure to include 'id' for relationship binding
+            }])
+            ->get();
 
         return $currencyCoverages;
     }
