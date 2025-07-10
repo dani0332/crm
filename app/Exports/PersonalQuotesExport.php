@@ -128,7 +128,6 @@ class PersonalQuotesExport implements CsvExportableInterface
 
     protected function getHeadings(string $quoteType): array
     {
-        dd('inside getheading', $quoteType); 
         
         $headings = [
             QuoteTypes::BIKE->value => [
