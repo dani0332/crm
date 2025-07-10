@@ -6,8 +6,6 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import BorRequestForm from '@/inertia/Components/Bor/BorRequestForm.vue';
-import BorUploadDocument from '@/inertia/Components/Bor/BorUploadDocument.vue';
 
 defineProps({
   quote: Object,
@@ -2604,6 +2602,22 @@ const isCommercialVehicle = computed(() => {
       "
     />
 
+    <BorLogsSection
+      :borLogs="borLogs"
+      :leadId="record.id"
+      :lob="quoteType"
+      :customerType="record.customer_type"
+      :customerData="{
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -4146,23 +4160,6 @@ const isCommercialVehicle = computed(() => {
       :quoteMobile="record.mobile_no"
       :canDelete="false"
       :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
-      :expanded="sectionExpanded"
-    />
-
-    <!-- BOR (Broker on Record) Section -->
-    <BorLogsSection
-      :borLogs="borLogs"
-      :leadId="record.id"
-      :lob="'car'"
-      :customerType="record.customer_type"
-      :customerData="{
-        firstName: record.first_name,
-        lastName: record.last_name,
-        companyName: record.company_name,
-        currentlyInsuredWith: record.currently_insured_with
-      }"
-      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
-      :insuranceProviders="insuranceProviders"
       :expanded="sectionExpanded"
     />
 

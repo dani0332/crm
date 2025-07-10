@@ -984,7 +984,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <BorLogsSection
       :leadId="quote.id"
       :borLogs="borLogs"
-      :lob="'pet'"
+      :lob="quoteType"
       :customerType="quote.customer_type"
       :customerData="{
         firstName: quote.first_name,

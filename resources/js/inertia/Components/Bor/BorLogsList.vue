@@ -31,13 +31,15 @@ const selectedLog = ref(null)
 
 // DataTable configuration
 const tableHeaders = ref([
-  { text: 'Customer Type', value: 'customer_type', sortable: true },
-  { text: 'Policy Number', value: 'policy_number', sortable: true },
-  { text: 'Insurer Name', value: 'insurer_name', sortable: true },
-  { text: 'Date Created', value: 'date_created', sortable: true },
-  { text: 'Status', value: 'status', sortable: true },
-  { text: 'Email Sent', value: 'email_sent', sortable: true },
-  { text: 'Actions', value: 'actions', sortable: false }
+  { text: '#', value: 'bor_reference', sortable: false },
+  { text: 'Date Created', value: 'created_at', sortable: true },
+  { text: 'Date Signed', value: 'date_signed', sortable: true },
+  { text: 'Date Uploaded', value: 'date_created', sortable: true },
+  { text: 'Document Id', value: 'document_id', sortable: true },
+  { text: 'User agent', value: 'user_agent', sortable: true },
+  { text: 'Email Sent to UW', value: 'email_sent', sortable: false },
+  { text: 'Status', value: 'status', sortable: false },
+  { text: 'Actions', value: 'action', sortable: false }
 ])
 
 // Format data for DataTable
@@ -216,6 +218,11 @@ const canPerformAction = (log, action) => {
         border-cell
         alternating
       >
+        <template #item-bor_reference="{ bor_reference }">
+          <span class="flex w-40">
+            {{ bor_reference }}
+          </span>
+        </template>
         <!-- Status Column -->
         <template #item-status="{ status }">
           <span 

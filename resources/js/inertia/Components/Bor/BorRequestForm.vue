@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
+const notification = useNotifications('toast');
 
 const props = defineProps({
   visible: {
@@ -189,60 +190,54 @@ const closeModal = () => {
 };
 
 const validateForm = () => {
+  const errors = {
+    'customer_type': '',
+    'customer_name': '',
+    'company_name': '',
+    'insurance_provider_id': '',
+    'policy_number': '',
+    'policy_expiry': '',
+    'chassis_number': '',
+  }
+
+  let fromValid = true;
   // Basic validation before submission
   if (!form.customer_type) {
     // Use proper toast notification if available
-    if (window.toast) {
-      window.toast.error('Please select a customer type');
-    }
-    return false;
+    errors.customer_type = 'Please select a customer type';
+    fromValid = false;
   }
 
   // Customer/Company name validation
   if (form.customer_type === 'Individual' && !form.customer_name) {
-    if (window.toast) {
-      window.toast.error('Please enter customer name');
-    }
-    return false;
+    errors.customer_name = 'Please enter customer name';
+    fromValid = false;
   }
 
   if (form.customer_type === 'Entity' && !form.company_name) {
-    if (window.toast) {
-      window.toast.error('Please enter company name');
-    }
-    return false;
-  }
-
-  if (!form.insurance_provider_id) {
-    if (window.toast) {
-      window.toast.error('Please select an insurance provider');
-    }
-    return false;
+    errors.company_name = 'Please enter company name';
+    fromValid = false;
   }
 
   // LOB-specific validation
   if (requiredFields.value.policy_number && !form.policy_number) {
-    if (window.toast) {
-      window.toast.error('Policy number is required for ' + props.lob + ' insurance');
-    }
-    return false;
+    errors.policy_number = 'Policy number is required for ' + props.lob + ' insurance';
+    fromValid = false;
   }
   
   if (requiredFields.value.policy_expiry && !form.policy_expiry) {
-    if (window.toast) {
-      window.toast.error('Policy expiry is required for ' + props.lob + ' insurance');
-    }
-    return false;
+    errors.policy_expiry = 'Policy expiry is required for ' + props.lob + ' insurance';
+    fromValid = false;
   }
   
   if (requiredFields.value.chassis_number && !form.chassis_number) {
-    if (window.toast) {
-      window.toast.error('Chassis number is required for Sukoon insurance');
-    }
-    return false;
+    errors.chassis_number = 'Chassis number is required for Sukoon insurance';
+    fromValid = false;
   }
 
-  return true;
+  !fromValid && form.setError(errors);
+
+  return fromValid;
 };
 
 const submitForm = () => {
@@ -252,7 +247,6 @@ const submitForm = () => {
 
   // Submit using Inertia
   form.post(route('bor.requests.store'), {
-    preserveScroll: true,
     onBefore: () => {
       isSubmitting.value = true;
     },
@@ -355,14 +349,14 @@ onMounted(() => {
                 :options="availableInsurers"
                 placeholder="Select insurance provider"
                 :error="form.errors.insurance_provider_id"
-                searchable
+                filterable
                 clearable
               />
 
               <!-- Policy Number (Only for Individual customers) -->
               <x-input
                 v-if="form.customer_type === 'Individual'"
-                :label="`POLICY NUMBER${requiredFields.policy_number ? ' *' : ''}`"
+                label="POLICY NUMBER"
                 v-model="form.policy_number"
                 placeholder="Enter policy number"
                 :error="form.errors.policy_number"
@@ -372,7 +366,7 @@ onMounted(() => {
               <!-- Policy Expiry (Only for Individual customers) -->
               <x-input
                 v-if="form.customer_type === 'Individual'"
-                :label="`POLICY EXPIRY${requiredFields.policy_expiry ? ' *' : ''}`"
+                label="POLICY EXPIRY"
                 v-model="form.policy_expiry"
                 type="date"
                 placeholder="Select policy expiry date"
@@ -383,7 +377,7 @@ onMounted(() => {
               <!-- Chassis Number (Motor LOBs with Sukoon Insurance) -->
               <x-input
                 v-if="isMotorLob && (isSukoonInsurance || form.chassis_number)"
-                :label="`CHASSIS NUMBER${requiredFields.chassis_number ? ' *' : ''}`"
+                label="CHASSIS NUMBER"
                 v-model="form.chassis_number"
                 placeholder="Enter chassis number"
                 :error="form.errors.chassis_number"

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Bor;
 
+use App\Enums\QuoteTypes;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,7 @@ class BorFormRequest extends FormRequest
             'customer_type' => ['required', 'string', Rule::in(['Individual', 'Entity'])],
             'lead_id' => ['required', 'integer', 'exists:personal_quotes,id'],
             'lob' => ['required', 'string'],
-            'insurance_provider_id' => ['integer', 'exists:insurance_provider,id'],
+            'insurance_provider_id' => 'nullable|integer',
         ];
 
         // Get LOB and customer type from the request
@@ -45,10 +46,8 @@ class BorFormRequest extends FormRequest
         }
 
         // LOB-specific validation rules
-        $motorLobs = ['car', 'bike'];
-        $healthLobs = ['health'];
+        $motorLobs = [QuoteTypes::CAR, QuoteTypes::BIKE];
         $isMotorLob = in_array(strtolower($lob), $motorLobs);
-        $isHealthLob = in_array(strtolower($lob), $healthLobs);
 
         // Policy fields are only required for Individual customers, not Entity customers
         if ($customerType === 'Individual') {
@@ -59,18 +58,14 @@ class BorFormRequest extends FormRequest
                 
                 // Chassis number validation for Sukoon insurance (OIC code)
                 $insuranceProviderId = $this->input('insurance_provider_id');
-                if ($insuranceProviderId && $this->isSukoonInsurance($insuranceProviderId)) {
+                if ($insuranceProviderId !== null && $this->isSukoonInsurance($insuranceProviderId)) {
                     $rules['chassis_number'] = ['required', 'string', 'max:255'];
                 } else {
+                    $rules['insurance_provider_id'] = ['integer', 'exists:insurance_provider,id'];
                     $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
                 }
-            } elseif ($isHealthLob) {
-                // Health LOB typically requires policy number for Individual customers
-                $rules['policy_number'] = ['required', 'string', 'max:255'];
-                $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
-                $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
             } else {
-                // Non-motor/non-health LOBs for Individual customers - these fields are optional
+                // Non-motor LOBs for Individual customers - these fields are optional
                 $rules['policy_number'] = ['nullable', 'string', 'max:255'];
                 $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
                 $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
@@ -97,8 +92,6 @@ class BorFormRequest extends FormRequest
             'lead_id.exists' => 'The selected lead does not exist.',
             'customer_name.required' => 'Customer name is required for individual customers.',
             'company_name.required' => 'Company name is required for entity customers.',
-
-            'insurance_provider_id.required' => 'Insurance provider is required.',
             'insurance_provider_id.exists' => 'The selected insurance provider does not exist.',
             'policy_number.required' => 'Policy number is required for this type of insurance.',
             'policy_expiry.required' => 'Policy expiry date is required for this type of insurance.',
