@@ -135,6 +135,23 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     {
         LoggerService::info(self::class." - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId}");
 
+        $this->resolveNationalityConfig();
+
+        $advisor = $this->findAdvisorByStatus();
+
+        // if we want to add other Non Motor LOBs, we can add it here & remove this->quoteType === QuoteTypes check
+        if ($this->quoteType === QuoteTypes::LIFE && empty($advisor) && $this->hasNationalityConfig) {
+            LoggerService::info(self::class.' - fetchAvailableAdvisor: No advisor found with nationality configuration, resetting nationality config and trying again');
+            $this->hasNationalityConfig = false;
+            $this->resolveExcludedAdvisorIds();
+            $advisor = $this->findAdvisorByStatus();
+        }
+
+        return $advisor;
+    }
+
+    private function findAdvisorByStatus()
+    {
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
@@ -143,8 +160,6 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         if (! $this->isReAssignment) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
-
-        $this->resolveNationalityConfig();
 
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class." - trying to get advisors with current status as {$status}");
