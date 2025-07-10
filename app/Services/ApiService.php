@@ -92,7 +92,7 @@ class ApiService
 
     public function isLeadAllocationEndpointDisabled()
     {
-        return config('services.lead_allocation.disabled');
+        return config('constants.DISABLE_LEAD_ALLOCATION_ENDPOINT') == '1';
     }
 
     public function processAssignLead(AssignLeadRequest $request)
