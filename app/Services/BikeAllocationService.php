@@ -291,24 +291,14 @@ class BikeAllocationService extends AllocationService
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
-        // Define the order in which user statuses should be considered.
-        $statusOrder = [
-            UserStatusEnum::ONLINE,
-            UserStatusEnum::OFFLINE,
-        ];
-
-        if (! $isReassignmentJob) {
-            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
-        }
-
         $this->resolveNationalityConfig($bikeLead);
 
-        $eligibleUsers = $this->findEligibleUsers($statusOrder, $tierUserIds, $advisorId);
+        $eligibleUsers = $this->findEligibleUsers($tierUserIds, $advisorId, $isReassignmentJob);
 
         if (empty($eligibleUsers) && $this->hasNationalityConfig) {
             LoggerService::info(self::class.' - findEligibleUsers: No advisors found with nationality configuration, resetting nationality config and trying again');
             $this->resetNationalityConfig();
-            $eligibleUsers = $this->findEligibleUsers($statusOrder, $tierUserIds, $advisorId);
+            $eligibleUsers = $this->findEligibleUsers($tierUserIds, $advisorId, $isReassignmentJob);
         }
 
         return $eligibleUsers;
@@ -704,8 +694,18 @@ class BikeAllocationService extends AllocationService
         $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
 
-    private function findEligibleUsers($statusOrder, $tierUserIds, $advisorId)
+    private function findEligibleUsers($tierUserIds, $advisorId, $isReassignmentJob)
     {
+        // Define the order in which user statuses should be considered.
+        $statusOrder = [
+            UserStatusEnum::ONLINE,
+            UserStatusEnum::OFFLINE,
+        ];
+
+        if (! $isReassignmentJob) {
+            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
+
         // Iterate through user statuses in the specified order.
         foreach ($statusOrder as $status) {
             // Get eligible users with the specified status.
