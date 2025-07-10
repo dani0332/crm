@@ -1,5 +1,5 @@
 <script setup>
-  import _ from 'lodash';
+import _ from 'lodash';
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -77,8 +77,7 @@ const iconPosition = computed(() => {
 });
 
 function isValidDateFormat(input) {
-
-  console.log("isValidDateFormat",input);
+  console.log('isValidDateFormat', input);
   if (!_.isString(input) || _.isEmpty(input)) return false;
 
   // Regex for dd/MM/yyyy (e.g., 01/11/2023)
@@ -127,26 +126,31 @@ function isValidDateFormat(input) {
         :tooltip="props.tooltip"
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
-        @update:modelValue="($event) => {
-          console.log('onInput:', $event);
-          console.log('range:', range);
-          if (isValidDateFormat($event)) {
-            onInput($event);
-          }else{
-            console.error('Invalid Date');
+        @update:modelValue="
+          $event => {
+            console.log('onInput:', $event);
+            console.log('range:', range);
+            if (isValidDateFormat($event)) {
+              onInput($event);
+            } else {
+              console.error('Invalid Date');
+            }
           }
-        }"
-        @keydown.enter.prevent="($event) => {
-          console.log('onEnter:', value);
-          if (isValidDateFormat(value)) {
-            onEnter($event);
+        "
+        @keydown.enter.prevent="
+          $event => {
+            console.log('onEnter:', value);
+            if (isValidDateFormat(value)) {
+              onEnter($event);
+            }
           }
-        }"
-        @blur="() => {
-          console.log('onBlur:', value);
-          onBlur();
-        }"
-
+        "
+        @blur="
+          () => {
+            console.log('onBlur:', value);
+            onBlur();
+          }
+        "
         @keydown.tab="onTab"
         @paste="onPaste"
         :error="props.error"
