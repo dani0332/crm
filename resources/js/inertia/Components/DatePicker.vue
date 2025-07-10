@@ -1,4 +1,7 @@
 <script setup>
+  import _ from 'lodash';
+import { XDatepicker } from '@indielayer/ui';
+
 const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps({
@@ -73,6 +76,26 @@ const selectedData = computed({
 const iconPosition = computed(() => {
   return props.label ? '2.75rem' : '54%';
 });
+
+function isValidDateFormat(input) {
+  if (!_.isString(input) || _.isEmpty(input)) return false;
+
+  // Regex for dd/MM/yyyy (e.g., 01/11/2023)
+  const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  if (!dateRegex.test(input)) return false;
+
+  // Extract day, month, year
+  const [, day, month, year] = input.match(dateRegex);
+
+  // Validate date by creating a Date object
+  const date = new Date(`${year}-${month}-${day}`);
+  return (
+    !isNaN(date) &&
+    date.getDate() === parseInt(day) &&
+    date.getMonth() + 1 === parseInt(month) &&
+    date.getFullYear() === parseInt(year)
+  );
+}
 </script>
 <template>
   <x-datepicker
@@ -103,11 +126,25 @@ const iconPosition = computed(() => {
         :tooltip="props.tooltip"
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
+        @update:modelValue="($event) => {
+          console.log('onInput:', $event);
+          if (isValidDateFormat($event)) {
+            onInput($event);
+          }
+        }"
+        @keydown.enter.prevent="($event) => {
+          console.log('onEnter:', value);
+          if (isValidDateFormat(value)) {
+            onEnter($event);
+          }
+        }"
+        @blur="() => {
+          console.log('onBlur:', value);
+          onBlur();
+        }"
+
         @keydown.tab="onTab"
-        @change="onInput"
-        @blur="onBlur"
         @paste="onPaste"
-        @keydown.enter.prevent="onEnter"
         :error="props.error"
         :required="props.required"
       />
