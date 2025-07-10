@@ -1,6 +1,5 @@
 <script setup>
   import _ from 'lodash';
-import { XDatepicker } from '@indielayer/ui';
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -78,6 +77,8 @@ const iconPosition = computed(() => {
 });
 
 function isValidDateFormat(input) {
+
+  console.log("isValidDateFormat",input);
   if (!_.isString(input) || _.isEmpty(input)) return false;
 
   // Regex for dd/MM/yyyy (e.g., 01/11/2023)
@@ -128,8 +129,11 @@ function isValidDateFormat(input) {
         :hide-footer="props.hideFooter"
         @update:modelValue="($event) => {
           console.log('onInput:', $event);
+          console.log('range:', range);
           if (isValidDateFormat($event)) {
             onInput($event);
+          }else{
+            console.error('Invalid Date');
           }
         }"
         @keydown.enter.prevent="($event) => {
