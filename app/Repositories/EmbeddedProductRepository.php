@@ -351,15 +351,16 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $callPurchaseFlow = false)
     {
         $extra = [
-            "quoteId" => $leadId, 
-            "modelType" => $modelType, 
-            "epId" => $epId,
-            "callPurchaseFlow" => $callPurchaseFlow,
+            'quoteId' => $leadId,
+            'modelType' => $modelType,
+            'epId' => $epId,
+            'callPurchaseFlow' => $callPurchaseFlow,
         ];
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
-            LoggerService::info("fetchSendDocumentsByLead - Only car, bike, home & travel lob are allowed", extra: $extra);
+            LoggerService::info('fetchSendDocumentsByLead - Only car, bike, home & travel lob are allowed', extra: $extra);
+
             return ['success' => false, 'message' => 'Only car, bike, home & travel lob are allowed'];
         }
 
@@ -382,7 +383,8 @@ class EmbeddedProductRepository extends BaseRepository
 
         $epTransaction = $epTransaction->get();
         if ($epTransaction->isEmpty()) {
-            LoggerService::info("fetchSendDocumentsByLead - Record not found", extra: $extra);
+            LoggerService::info('fetchSendDocumentsByLead - Record not found', extra: $extra);
+
             return ['success' => false, 'message' => 'Record not found'];
         }
 
@@ -427,12 +429,12 @@ class EmbeddedProductRepository extends BaseRepository
 
                             $response = ['success' => true];
                         } else {
-                            LoggerService::info("fetchSendDocumentsByLead - Required documents are not saved, please sync documents first", extra: $extra);
+                            LoggerService::info('fetchSendDocumentsByLead - Required documents are not saved, please sync documents first', extra: $extra);
                             $response = ['success' => false, 'message' => 'Required documents are not saved, please sync documents first'];
                         }
 
                     } catch (Exception $e) {
-                        LoggerService::info("fetchSendDocumentsByLead - Failed", extra: [ ...$extra, "exception" => $e->getMessage() ]);
+                        LoggerService::info('fetchSendDocumentsByLead - Failed', extra: [...$extra, 'exception' => $e->getMessage()]);
                         $response = ['success' => false, 'message' => $e->getMessage()];
                     }
                 }

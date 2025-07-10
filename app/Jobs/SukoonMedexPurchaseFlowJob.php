@@ -24,8 +24,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     private $quoteTypeId;
     private $transaction;
     private $isSendEmail = false;
-
-    private string $logPrefix = "SukoonMedex - PurchaseFlowJob:";
+    private string $logPrefix = 'SukoonMedex - PurchaseFlowJob:';
     private array $logExtra = [];
 
     /**
@@ -39,8 +38,8 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
         $this->isSendEmail = $isSendEmail;
 
         $this->logExtra = [
-            'quoteTypeId' => $this->quoteTypeId, 
-            'etId' => $this->transaction?->id ?? '-', 
+            'quoteTypeId' => $this->quoteTypeId,
+            'etId' => $this->transaction?->id ?? '-',
             'isSendEmail' => $this->isSendEmail,
         ];
     }
@@ -63,7 +62,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::info("{$this->logPrefix} failed", extra: [ ...$this->logExtra, 'exception' => $exception->getMessage() ]);
+        LoggerService::info("{$this->logPrefix} failed", extra: [...$this->logExtra, 'exception' => $exception->getMessage()]);
 
         // Send failure email notification
         try {
