@@ -350,6 +350,10 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Activities', route('activities.index'));
         }
 
+        if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)) {
+            $nav = $nav->add('Claims', route('claims.index'));
+        }
+
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
             $nav = $nav->add('Search', route('search-leads'));
         }

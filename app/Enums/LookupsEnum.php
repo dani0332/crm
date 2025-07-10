@@ -53,4 +53,8 @@ enum LookupsEnum: string
     case SAVINGS_PURPOSE = 'savings_purpose';
     case INVESTMENT_TYPE = 'investment_type';
     case SAVINGS_TENURE = 'tenure';
+
+    // Claims
+    case CLAIM_TYPES = 'claim-types';
+    case CLAIM_SUB_STATUSES = 'claim-sub-statuses';
 }

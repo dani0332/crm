@@ -436,6 +436,13 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
     // End of Savings Permissions
 
+    // Claims Permissions
+    public const CLAIM_LIST = 'claim-list';
+    public const CLAIM_CREATE = 'claim-create';
+    public const CLAIM_EDIT = 'claim-edit';
+    public const CLAIM_SHOW = 'claim-show';
+    // End of Claims Permissions
+
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
 
     public static function getAdvisorConversionReportPermissions()
@@ -498,6 +505,16 @@ final class PermissionsEnum extends Enum
             /*self::VIEW_BULK_POLICY_BOOKING_LIST,
             self::BOOK_BULK_POLICY_ON_SAGE,*/
             self::BOOKING_FAILED_EDIT,
+        ];
+    }
+
+    public static function getClaimsPermissions()
+    {
+        return [
+            self::CLAIM_LIST,
+            self::CLAIM_CREATE,
+            self::CLAIM_EDIT,
+            self::CLAIM_SHOW,
         ];
     }
 }
