@@ -26,7 +26,7 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
         if (! $request->hasNationalityConfig()) {
             $lead = $request->getLead();
             $teamId = $request->getTeamId();
-            $rules = $request->get('rules', []);
+            $rules = $request->get('rules');
             $availableUserIds = $this->determineFinalAdvisorIdsBasedOnRules($lead, $availableUserIds, $rules, $teamId);
         }
 
