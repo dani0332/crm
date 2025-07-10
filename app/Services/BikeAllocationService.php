@@ -303,23 +303,17 @@ class BikeAllocationService extends AllocationService
 
         $this->resolveNationalityConfig($bikeLead);
 
-        // Iterate through user statuses in the specified order.
-        foreach ($statusOrder as $status) {
-            // Get eligible users with the specified status.
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId);
+        $eligibleUsers = $this->findEligibleUsers($statusOrder, $tierUserIds, $advisorId);
 
-            // If eligible users are found, log the results and return them.
-            if ($eligibleUsers && count($eligibleUsers) > 0) {
-                LoggerService::info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
-
-                return $eligibleUsers->toArray();
-            }
-            LoggerService::info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+        if (empty($eligibleUsers) && $this->hasNationalityConfig) {
+            LoggerService::info(self::class.' - findEligibleUsers: No advisors found with nationality configuration, resetting nationality config and trying again');
+            $this->resetNationalityConfig();
+            $eligibleUsers = $this->findEligibleUsers($statusOrder, $tierUserIds, $advisorId);
         }
 
-        // If no eligible users are found, return an empty array.
-        return [];
+        return $eligibleUsers;
     }
+
 
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null)
     {
@@ -709,5 +703,33 @@ class BikeAllocationService extends AllocationService
         }
 
         $this->excludedAdvisorIds = $excludedAdvisorIds;
+    }
+
+    private function findEligibleUsers($statusOrder, $tierUserIds, $advisorId)
+    {
+        // Iterate through user statuses in the specified order.
+        foreach ($statusOrder as $status) {
+            // Get eligible users with the specified status.
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId);
+
+            // If eligible users are found, log the results and return them.
+            if ($eligibleUsers && count($eligibleUsers) > 0) {
+                LoggerService::info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+
+                return $eligibleUsers->toArray();
+            }
+            LoggerService::info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+        }
+
+        // If no eligible users are found, return an empty array.
+        return [];
+    }
+
+    private function resetNationalityConfig()
+    {
+        LoggerService::info(self::class.' - resetNationalityConfig: Resetting nationality config');
+        $this->resetProps();
+
+        $this->resolveExcludedAdvisorIds();
     }
 }
