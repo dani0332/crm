@@ -350,8 +350,16 @@ class EmbeddedProductRepository extends BaseRepository
 
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $callPurchaseFlow = false)
     {
+        $extra = [
+            "quoteId" => $leadId, 
+            "modelType" => $modelType, 
+            "epId" => $epId,
+            "callPurchaseFlow" => $callPurchaseFlow,
+        ];
+
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
+            LoggerService::info("fetchSendDocumentsByLead - Only car, bike, home & travel lob are allowed", extra: $extra);
             return ['success' => false, 'message' => 'Only car, bike, home & travel lob are allowed'];
         }
 
@@ -374,13 +382,12 @@ class EmbeddedProductRepository extends BaseRepository
 
         $epTransaction = $epTransaction->get();
         if ($epTransaction->isEmpty()) {
+            LoggerService::info("fetchSendDocumentsByLead - Record not found", extra: $extra);
             return ['success' => false, 'message' => 'Record not found'];
         }
 
         $response = ['success' => false];
         foreach ($epTransaction as $item) {
-            $product_id = $item->product_id;
-            $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
 
             $isDocPresent = $item->documents->count() > 0;
             if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
@@ -420,10 +427,12 @@ class EmbeddedProductRepository extends BaseRepository
 
                             $response = ['success' => true];
                         } else {
+                            LoggerService::info("fetchSendDocumentsByLead - Required documents are not saved, please sync documents first", extra: $extra);
                             $response = ['success' => false, 'message' => 'Required documents are not saved, please sync documents first'];
                         }
 
                     } catch (Exception $e) {
+                        LoggerService::info("fetchSendDocumentsByLead - Failed", extra: [ ...$extra, "exception" => $e->getMessage() ]);
                         $response = ['success' => false, 'message' => $e->getMessage()];
                     }
                 }
@@ -1109,11 +1118,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
         $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
-
-        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        if ($canSendDocuments) {
-            $this->getPDF($ep->short_code, $quoteObject, $transaction->first(), $data['modelType']);
-        }
 
         $epDocuments = $strategy->getDocumentList($ep, $transaction);
 

@@ -48,7 +48,7 @@ class SukoonMedexService
     private array $sukoonReqDocTypeCodes;
     private $providerId;
     private $modelType;
-    private string $logPrefix = 'Sukoon Medex Service:';
+    private string $logPrefix = 'SukoonMedex - Service:';
     private array $errorMessages = [];
 
     public function __construct()
@@ -432,7 +432,7 @@ class SukoonMedexService
 
                 if (str_contains($contentType, 'application/json')) {
                     $this->fetchErrors($response->json());
-                    throw new Exception("API Error, Response: {$responseData}");
+                    throw new Exception("{$this->logPrefix} API Error, Response: {$responseData}");
                 }
             });
 
@@ -440,16 +440,16 @@ class SukoonMedexService
             $responseData = str_contains($contentType, 'text/html') ? $response->body() : $response->json();
 
             if (str_contains($contentType, 'text/html')) {
-                throw new Exception("API Error, Response: {$responseData}");
+                throw new Exception("{$this->logPrefix} API Error, Response: {$responseData}");
             }
 
             if ($responseData['has_errors'] ?? null) {
                 $this->fetchErrors($responseData);
-                throw new Exception('API Request has errors');
+                throw new Exception("{$this->logPrefix} API Request has errors");
             }
 
             if (str_contains($contentType, 'application/json') && isset($responseData['status']) && $this->checkIsErrorMessage($responseData['status'])) {
-                throw new Exception('API Error, Response status: '.$responseData['status'] ?? '');
+                throw new Exception("{$this->logPrefix} API Error, Response status: ".($responseData['status'] ?? ''));
             }
 
             $this->logRequest('passed', 'Request Successful', $payload, $endPoint, $responseData, $parentFunction);
@@ -829,9 +829,15 @@ class SukoonMedexService
      */
     private function prepareAdditionalData()
     {
+        $planOption = match ($this->quoteTypeId) {
+            QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
+            QuoteTypeId::Bike => "{$this->productSlug}-personal_sports_mc",
+            default => null
+        };
+
         return [
             'form_name' => 'plan_picker',
-            'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles',
+            'plan_option' => $planOption,
             'payment_plan' => $this->paymentPlan,
             'amount_disclaimer_text' => $this->amountDisclaimerText,
             'policy_number' => $this->quotePolicy,

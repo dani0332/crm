@@ -25,6 +25,9 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     private $transaction;
     private $isSendEmail = false;
 
+    private string $logPrefix = "SukoonMedex - PurchaseFlowJob:";
+    private array $logExtra = [];
+
     /**
      * Create a new job instance.
      */
@@ -34,6 +37,12 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
         $this->quoteTypeId = $quoteTypeId;
         $this->transaction = $transaction;
         $this->isSendEmail = $isSendEmail;
+
+        $this->logExtra = [
+            'quoteTypeId' => $this->quoteTypeId, 
+            'etId' => $this->transaction?->id ?? '-', 
+            'isSendEmail' => $this->isSendEmail,
+        ];
     }
 
     /**
@@ -42,7 +51,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
     public function handle(): void
     {
         LoggerService::startQuoteLogging($this->quoteObject);
-        LoggerService::info("SukoonMedexPurchaseFlowJob - quoteTypeId: {$this->quoteTypeId} - etId: {$this->transaction->id} - isSendEmail: {$this->isSendEmail}");
+        LoggerService::info($this->logPrefix, extra: $this->logExtra);
 
         $sukoonMedexService = app(SukoonMedexService::class);
         $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
@@ -54,23 +63,15 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::info('SukoonMedexPurchaseFlowJob failed', extra: [
-            'quoteId' => $this->quoteObject->id ?? 'N/A',
-            'quoteCode' => $this->quoteObject->code ?? 'N/A',
-            'quoteTypeId' => $this->quoteTypeId,
-            'etId' => $this->transaction->id ?? 'N/A',
-            'etCode' => $this->transaction->code ?? 'N/A',
-            'exception' => $exception->getMessage(),
-        ]);
+        LoggerService::info("{$this->logPrefix} failed", extra: [ ...$this->logExtra, 'exception' => $exception->getMessage() ]);
 
         // Send failure email notification
-        $message = 'SukoonMedexPurchaseFlowJob - Sukoon Medex EP failure notification email';
         try {
             Mail::send(new SukoonMedexEPFailureNotification($this->quoteObject, $this->quoteTypeId));
-            LoggerService::info("{$message} sent successfully");
+            LoggerService::info("{$this->logPrefix} - Send EP failure notification email successfully");
 
         } catch (Throwable $emailException) {
-            LoggerService::error("{$message} failed to send", extra: [
+            LoggerService::error("{$this->logPrefix} - Send EP failure notification email Failed", extra: [
                 'exception' => $emailException->getMessage(),
             ]);
         }
