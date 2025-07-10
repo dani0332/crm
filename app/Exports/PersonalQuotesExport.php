@@ -93,6 +93,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::CYCLE->value => CycleQuoteRepository::getData(true, requestParams: $requestParams)->get(),
             QuoteTypes::JETSKI->value => JetskiQuoteRepository::getData(true, requestParams: $requestParams)->get(),
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams)->get(),
+            QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true),
             default => abort(404),
         };
     }
@@ -127,6 +128,8 @@ class PersonalQuotesExport implements CsvExportableInterface
 
     protected function getHeadings(string $quoteType): array
     {
+        dd('inside getheading', $quoteType); 
+        
         $headings = [
             QuoteTypes::BIKE->value => [
                 self::REF_ID,
