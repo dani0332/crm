@@ -18,7 +18,6 @@ use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
-use App\Services\NationalityAllocationService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
@@ -377,16 +376,5 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->throw('Eligible Advisor is already assigned to this lead', self::OK);
         }
 
-    }
-
-    public function resolveExcludedAdvisorIds()
-    {
-        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->allocationRequest->getQuoteType());
-
-        if (empty($excludedAdvisorIds)) {
-            return;
-        }
-
-        $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
     }
 }

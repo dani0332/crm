@@ -7,7 +7,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
@@ -428,10 +427,5 @@ trait QuoteModelTrait
             ->pluck('name')
             ->map(fn ($name) => strtolower($name))
             ->toArray();
-    }
-
-    public function isPaymentAuthorizedOnly(): bool
-    {
-        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
     }
 }
