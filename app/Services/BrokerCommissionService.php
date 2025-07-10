@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BrokerCommission;
 use Illuminate\Support\Facades\Log;
@@ -58,7 +59,9 @@ class BrokerCommissionService
         // todo: confirm from denber
         // $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
 
-        $isCreditCardEnabled = $brokerCommission && ! $brokerCommission->enable_payment_link;
+        $isCreditCardEnabled = $brokerCommission 
+                                ? (!$brokerCommission->enable_payment_link && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL)
+                                : ($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL);
 
         $insurersWithoutCCRenewal = [
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
