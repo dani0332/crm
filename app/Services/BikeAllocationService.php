@@ -314,7 +314,6 @@ class BikeAllocationService extends AllocationService
         return $eligibleUsers;
     }
 
-
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null)
     {
         $excludedUserIds = $this->getExcludedUserIds();
