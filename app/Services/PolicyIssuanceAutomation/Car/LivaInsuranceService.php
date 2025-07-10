@@ -200,6 +200,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function uploadDocument($quote)
     {
+        LoggerService::startQuoteLogging($quote);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' started');
+        
         $documents = $quote->documents;
         if ($documents->isEmpty()) {
             return ['status' => false, 'message' => 'No documents found for quote'];
@@ -257,7 +260,39 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $response = $this->livaHttpCall('documents/upload/v2', $payload);
 
-        return $response;
+        $responseStatus = [];
+        $allUploadsSuccessful = true;
+
+        foreach ($response->object()->UploadDocumentsResponse->Attachments as $value) {
+            $uploadStatus = $value->UploadStatus ?? false;
+            $responseStatus[] = [
+                'DocumentType' => $value->DocumentType ?? 'Unknown',
+                'UploadStatus' => $uploadStatus,
+            ];
+            
+            if (! $uploadStatus) {
+                $allUploadsSuccessful = false;
+            }
+            
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document upload status', extra: [
+                'DocumentType' => $value->DocumentType,
+                'UploadStatus' => $uploadStatus,
+            ]);
+        }
+
+        if ($allUploadsSuccessful) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' All documents uploaded successfully', extra: [
+                'details' => $responseStatus,
+            ]);
+            $status = true;
+        } else {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Some documents failed to upload', extra: [
+                'details' => $responseStatus,
+            ]);
+            $status = false;
+        }
+
+        return $status;
     }
 
     public function getVehicleModelId($makeCode)
