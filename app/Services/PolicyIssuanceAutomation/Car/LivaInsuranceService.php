@@ -249,15 +249,13 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $payload['UploadDocumentsRequest'] = [
             'TransactionType' => '5',
-            'TransactionNumber' => $quote?->carQuotePlanDetail?->insurer_quote_no ?? 3513894, // Use actual quote number
+            'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7872837, // TODO: Use actual quote number
             'Attachments' => $attachments,
         ];
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Payload created with '.count($attachments).' attachments');
 
         $response = $this->livaHttpCall('documents/upload/v2', $payload);
-
-        dd($response->object());
 
         return $response;
     }
