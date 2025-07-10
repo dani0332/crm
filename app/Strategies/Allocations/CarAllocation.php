@@ -13,7 +13,6 @@ use App\Pipes\Allocation\Car\FinalizeEligibleAdvisorPipe;
 use App\Pipes\Allocation\Car\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
-use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
 use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -51,9 +50,6 @@ class CarAllocation implements Allocation
                 ValidateNationalityConfigPipe::class,
                 EvaluateTeamPipe::class,
                 FetchTierUsersPipe::class,
-                ApplyRuleExclusionPipe::class,
-                FetchEligibleAdvisorsPipe::class,
-                ResetNationalityConfigPipe::class,
                 ApplyRuleExclusionPipe::class,
                 FetchEligibleAdvisorsPipe::class,
                 FinalizeEligibleAdvisorPipe::class,

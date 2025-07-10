@@ -92,9 +92,4 @@ trait AllocationRequestable
     {
         return ! empty($this->getExcludedAdvisorIds());
     }
-
-    public function resetNationalityConfig()
-    {
-        $this->set('nationality_config', null);
-    }
 }
