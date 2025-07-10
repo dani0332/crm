@@ -53,6 +53,10 @@ class PersonalQuotesExport implements CsvExportableInterface
     private const ACCOMMODATION_TYPE = 'ACCOMMODATION TYPE';
     private const POSSESION_TYPE = 'POSSESION TYPE';
     private const REF_ID = 'REF-ID';
+    private const CURRENCY = 'CURRENCY';
+    private const SUM_ASSURED = 'SUM ASSURED';
+    private const SUM_ASSURED_CURRENCY = 'SUM ASSURED CURRENCY';
+    private const POLICY_SUM_ASSURED = 'POLICY SUM ASSURED';
 
     private string $quoteType = '';
     private array $quoteTypes = [];
@@ -263,113 +267,12 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
+                self::CURRENCY, 
+                self::SUM_ASSURED,
+                self::SUM_ASSURED_CURRENCY,
+                self::POLICY_SUM_ASSURED
             ],
         ];
-
-            case QuoteTypes::PET->value:
-                return [
-                    'REF-ID',
-                    'FIRST NAME',
-                    'LAST NAME',
-                    'LEAD STATUS',
-                    'ADVISOR',
-                    'CREATED DATE',
-                    'ADVISOR ASSIGNED DATE',
-                    'LAST MODIFIED DATE',
-                    'TRANSAPP CODE',
-                    'SOURCE',
-                    'LOST REASON',
-                    'PREMIUM',
-                    'POLICY NUMBER',
-                    'TYPE OF PET',
-                    'BREED OF PET',
-                    'AGE OF PET',
-                    'IS NEUTERED',
-                    'IS MICROCHIPPED',
-                    'MICROCHIP NO',
-                    'IS MIXED BREED',
-                    'HAS INJURY',
-                    'ACCOMMODATION TYPE',
-                    'POSSESION TYPE',
-                    'IS ECOMMERCE',
-                    'RENEWAL BATCH',
-                    'PREVIOUS POLICY EXPIRY DATE',
-                    'PREVIOUS POLICY PREMIUM',
-                    'PREVIOUS POLICY NUMBER',
-                    'TRANSACTION APPROVED DATE',
-                    'BOOKING DATE',
-                ];
-
-            case QuoteTypes::CYCLE->value:
-                return [
-                    'REF-ID',
-                    'FIRST NAME',
-                    'LAST NAME',
-                    'LEAD STATUS',
-                    'ADVISOR',
-                    'CREATED DATE',
-                    'ADVISOR ASSIGNED DATE',
-                    'LAST MODIFIED DATE',
-                    'PREMIUM',
-                    'POLICY NUMBER',
-                    'SOURCE',
-                    'IS ECOMMERCE',
-                    'RENEWAL BATCH',
-                    'PREVIOUS POLICY EXPIRY DATE',
-                    'PREVIOUS POLICY PREMIUM',
-                    'PREVIOUS POLICY NUMBER',
-                    'TRANSACTION APPROVED DATE',
-                    'BOOKING DATE',
-                ];
-
-            case QuoteTypes::LIFE->value:
-                return [
-                    'REF-ID',
-                    'FIRST NAME',
-                    'LAST NAME',
-                    'LEAD STATUS',
-                    'ADVISOR',
-                    'CREATED DATE',
-                    'LAST MODIFIED DATE',
-                    'TRANSAPP CODE',
-                    'PREMIUM',
-                    'POLICY NUMBER',
-                    'SOURCE',
-                    'LOST REASON',
-                    'IS ECOMMERCE',
-                    'RENEWAL BATCH',
-                    'PREVIOUS POLICY EXPIRY DATE',
-                    'PREVIOUS POLICY PREMIUM',
-                    'PREVIOUS POLICY NUMBER',
-                    'TRANSACTION APPROVED DATE',
-                    'BOOKING DATE',
-                ];
-            case QuoteTypes::HOME->value:
-                return [
-                    'REF-ID',
-                    'FIRST NAME',
-                    'LAST NAME',
-                    'LEAD STATUS',
-                    'ADVISOR',
-                    'CREATED DATE',
-                    'ADVISOR ASSIGNED DATE',
-                    'LAST MODIFIED DATE',
-                    'TRANSAPP CODE',
-                    'SOURCE',
-                    'LOST REASON',
-                    'PREMIUM',
-                    'POLICY NUMBER',
-                    'RENEWAL BATCH',
-                    'PREVIOUS POLICY EXPIRY DATE',
-                    'PREVIOUS POLICY PREMIUM',
-                    'PREVIOUS POLICY NUMBER',
-                    'TRANSACTION APPROVED DATE',
-                    'BOOKING DATE',
-                ];
-
-            default:
-                abort(404);
-        }
 
         return $headings[$quoteType] ?? [];
     }
@@ -547,6 +450,10 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                 $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                 $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                $quote->lifeQuote->sumInsuredCurrency->text,
+                $quote->lifeQuote->sum_insured_value,
+                $quote->lifeQuote->policySumAssuredCurrency->text,
+                $quote->lifeQuote->policy_sum_assured,
             ],
             default => [],
         };
