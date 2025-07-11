@@ -9,7 +9,6 @@ use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
-use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -47,7 +46,7 @@ class PolicyBulkSendDocuments extends Command
             'CAR-6XT6SVA9',
             'CAR-XQBJCYZX',
             'CAR-92HB2DPQ',
-            'CAR-QPZRVRTU'
+            'CAR-QPZRVRTU',
         ];
 
         if (empty($codes)) {
