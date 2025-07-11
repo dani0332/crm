@@ -11,6 +11,7 @@ const props = defineProps({
   currencies: Array,
   lifeRiders: Array,
   selectedPlan: Object,
+  paymentTermEnum: Object,
 });
 
 const { isRequired } = useRules();
@@ -105,11 +106,12 @@ const lifeCoverToggled = true;
 const notification = useNotifications('toast');
 
 const paymentTerms = [
-  { value: 12, label: 'Monthly' },
-  { value: 4, label: 'Quarterly' },
-  { value: 2, label: 'Semi-Annually' },
-  { value: 1, label: 'Annually' },
+  { value: props.paymentTermEnum.MONTHLY, label: 'Monthly' },
+  { value: props.paymentTermEnum.QUARTERLY, label: 'Quarterly' },
+  { value: props.paymentTermEnum.SEMI_ANNUALLY, label: 'Semi-Annually' },
+  { value: props.paymentTermEnum.ANNUALLY, label: 'Annually' },
 ];
+
 const filteredPaymentTerms = computed(() => {
   return editForm.providerId === 180
     ? paymentTerms.filter(term => ![4, 2].includes(term.value))

@@ -9,6 +9,7 @@ const props = defineProps({
   plan: Object,
   modelValue: Boolean,
   quote: Object,
+  paymentTermEnum: Object,
 });
 
 const notification = useNotifications('toast');
@@ -168,11 +169,12 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const active = ref(false);
 
 const paymentTerms = [
-  { value: 12, label: 'Monthly' },
-  { value: 4, label: 'Quarterly' },
-  { value: 2, label: 'Semi-Annually' },
-  { value: 1, label: 'Annually' },
+  { value: props.paymentTermEnum.MONTHLY, label: 'Monthly' },
+  { value: props.paymentTermEnum.QUARTERLY, label: 'Quarterly' },
+  { value: props.paymentTermEnum.SEMI_ANNUALLY, label: 'Semi-Annually' },
+  { value: props.paymentTermEnum.ANNUALLY, label: 'Annually' },
 ];
+
 
 const filteredPaymentTerms = computed(() => {
   return createForm.providerId === 180

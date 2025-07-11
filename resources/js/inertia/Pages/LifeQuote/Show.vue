@@ -2197,6 +2197,7 @@ const totalAnnualPrice = computed(() => {
       :currencies="currencies"
       :plans="computedListQuotePlans"
       :lifeRiders="lifeRiders"
+      :paymentTermEnum="page.props.paymentTerms"
       @success="onCreatePlan"
       @error="onPlanError"
     />
@@ -2209,6 +2210,7 @@ const totalAnnualPrice = computed(() => {
       :plan="variantPlan"
       :lifeRiders="lifeRiders"
       :quote="quote"
+      :paymentTermEnum="page.props.paymentTerms"
       @success="onCreateVariant"
       @error="onPlanError"
     />
@@ -2223,6 +2225,7 @@ const totalAnnualPrice = computed(() => {
         :currencies="currencies"
         :plans="computedListQuotePlans"
         :lifeRiders="lifeRiders"
+        :paymentTermEnum="page.props.paymentTerms"
         @success="onLoadAvailablePlansData"
         @error="onPlanError"
       />

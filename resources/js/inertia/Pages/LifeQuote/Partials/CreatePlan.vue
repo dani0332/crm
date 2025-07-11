@@ -7,6 +7,7 @@ const props = defineProps({
   plans: Array,
   currencies: Array,
   lifeRiders: Array,
+  paymentTermEnum: Object,
 });
 
 const { isRequired } = useRules();
@@ -273,10 +274,10 @@ const fetchProviderPlans = () => {
 };
 
 const paymentTerms = [
-  { value: 12, label: 'Monthly' },
-  { value: 4, label: 'Quarterly' },
-  { value: 2, label: 'Semi-Annually' },
-  { value: 1, label: 'Annually' },
+  { value: props.paymentTermEnum.MONTHLY, label: 'Monthly' },
+  { value: props.paymentTermEnum.QUARTERLY, label: 'Quarterly' },
+  { value: props.paymentTermEnum.SEMI_ANNUALLY, label: 'Semi-Annually' },
+  { value: props.paymentTermEnum.ANNUALLY, label: 'Annually' },
 ];
 
 const filteredPaymentTerms = computed(() => {

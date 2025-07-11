@@ -49,6 +49,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
+use App\Enums\PaymentTermEnum;
 
 class LifeQuoteService extends BaseService
 {
@@ -444,6 +445,7 @@ class LifeQuoteService extends BaseService
             'currencies' => $currencies,
             'lifeRiders' => $lifeRiders,
             'availablePlan' => $this->getQuotePlans($uuid),
+            'paymentTerms' => PaymentTermEnum::asArray(),
         ];
     }
 
@@ -457,6 +459,7 @@ class LifeQuoteService extends BaseService
             'children' => app(LifeChildrenService::class)->getActive(),
             'typeOfInsurance' => app(LifeInsuranceTenureService::class)->getActive(),
             'numberOfYears' => app(LifeNumberOfYearsService::class)->getActive(),
+            'paymentTerms' => PaymentTermEnum::asArray(),
         ];
     }
 
