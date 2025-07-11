@@ -1102,7 +1102,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         try {
-            LoggerService::info('Embedded product payment capture in process', extra: ['payload'=> $payload]);
+            LoggerService::info('Embedded product payment capture in process', extra: ['payload' => $payload]);
             Marshall::request("/payment/{$paymentGatewayEndpoint}/capture", 'post', $payload);
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
