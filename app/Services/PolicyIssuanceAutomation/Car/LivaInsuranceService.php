@@ -7,15 +7,11 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\PolicyIssuanceStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Models\Payment;
 use App\Models\PolicyIssuanceLog;
-use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -398,40 +394,40 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'time' => now()->format('Y-m-d H:i:s'),
         ]);
 
-        $myFile = fopen(__DIR__ . '/response.txt', 'r');
-        $txt = fread($myFile, filesize(__DIR__ . '/response.txt'));
+        $myFile = fopen(__DIR__.'/response.txt', 'r');
+        $txt = fread($myFile, filesize(__DIR__.'/response.txt'));
         fclose($myFile);
 
         LoggerService::info('document decode work started', extra: [
             'time' => now()->format('Y-m-d H:i:s'),
         ]);
-        
+
         $file = (base64_decode(base64_decode($txt)));
 
         // Save the decoded PDF data to a file
-        $pdfFileName = 'policy_document_' . $quote->code . '_' . date('Y-m-d_H-i-s') . '.pdf';
-        
+        $pdfFileName = 'policy_document_'.$quote->code.'_'.date('Y-m-d_H-i-s').'.pdf';
+
         // Create temp directory if it doesn't exist
         $tempDir = storage_path('temp');
-        if (!is_dir($tempDir)) {
+        if (! is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
-        
-        $pdfFilePath = $tempDir . '/' . $pdfFileName;
-        
+
+        $pdfFilePath = $tempDir.'/'.$pdfFileName;
+
         $bytesWritten = file_put_contents($pdfFilePath, base64_decode($file));
         LoggerService::info('document decode work done', extra: [
             'time' => now()->format('Y-m-d H:i:s'),
         ]);
-        
+
         if ($bytesWritten === false) {
-            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Failed to save PDF file at: ' . $pdfFilePath);
+            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Failed to save PDF file at: '.$pdfFilePath);
             throw new Exception('Failed to save PDF document');
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' PDF saved successfully', extra: [
             'file_path' => $pdfFilePath,
-            'file_size' => $bytesWritten . ' bytes'
+            'file_size' => $bytesWritten.' bytes',
         ]);
 
         // separate the pages, one page should tax invoice, 2nd should be policy schedule and 3rd should be policy document
@@ -464,7 +460,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                         'LetterToBank' => false,
                         'MotorArabicCertificate' => true,
                         'Receipt' => true,
-                    ]
+                    ],
                 ],
                 'PolicyConfirmationSMS' => false,
                 'PolicyConfirmationEmail' => false,
@@ -546,7 +542,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::startQuoteLogging($quote);
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' started');
         $endPoint = 'documents/upload/v2';
-        
+
         $documents = $quote->documents;
         if ($documents->isEmpty()) {
             return ['status' => false, 'message' => 'No documents found for quote'];
@@ -613,11 +609,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'DocumentType' => $value->DocumentType ?? 'Unknown',
                 'UploadStatus' => $uploadStatus,
             ];
-            
+
             if (! $uploadStatus) {
                 $allUploadsSuccessful = false;
             }
-            
+
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document upload status', extra: [
                 'DocumentType' => $value->DocumentType,
                 'UploadStatus' => $uploadStatus,
@@ -896,34 +892,34 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     {
         try {
             // Initialize FPDI
-            $pdf = new \setasign\Fpdi\Fpdi();
-            
+            $pdf = new \setasign\Fpdi\Fpdi;
+
             // Get the number of pages
             $pageCount = $pdf->setSourceFile($pdfFilePath);
-            
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Total pages found: ' . $pageCount);
-            
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Total pages found: '.$pageCount);
+
             // Define page mappings
             $pageMap = [
                 1 => 'tax_invoice',
-                2 => 'policy_schedule', 
-                3 => 'policy_document'
+                2 => 'policy_schedule',
+                3 => 'policy_document',
             ];
-            
+
             // Extract each page
             for ($pageNum = 1; $pageNum <= $pageCount; $pageNum++) {
                 if (isset($pageMap[$pageNum])) {
                     $this->extractSinglePage($pdfFilePath, $pageNum, $pageMap[$pageNum], $quote);
                 } else {
-                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Skipping page ' . $pageNum . ' (not mapped)');
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Skipping page '.$pageNum.' (not mapped)');
                 }
             }
-            
+
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' PDF pages separated successfully');
-            
+
         } catch (\Exception $e) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error separating PDF pages', exception: $e);
-            throw new Exception('Failed to separate PDF pages: ' . $e->getMessage());
+            throw new Exception('Failed to separate PDF pages: '.$e->getMessage());
         }
     }
 
@@ -931,34 +927,34 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     {
         try {
             // Create new PDF instance
-            $pdf = new \setasign\Fpdi\Fpdi();
-            
+            $pdf = new \setasign\Fpdi\Fpdi;
+
             // Set source file
             $pdf->setSourceFile($sourcePdfPath);
-            
+
             // Import the specific page
             $templateId = $pdf->importPage($pageNumber);
-            
+
             // Get page size
             $size = $pdf->getTemplateSize($templateId);
-            
+
             // Add page with same orientation and size
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            
+
             // Use the imported page
             $pdf->useTemplate($templateId);
-            
+
             // Generate filename
-            $filename = $documentType . '_' . $quote->code . '_' . date('Y-m-d_H-i-s') . '.pdf';
-            
+            $filename = $documentType.'_'.$quote->code.'_'.date('Y-m-d_H-i-s').'.pdf';
+
             // Create temp directory if it doesn't exist
             $tempDir = storage_path('temp');
-            if (!is_dir($tempDir)) {
+            if (! is_dir($tempDir)) {
                 mkdir($tempDir, 0755, true);
             }
-            
-            $outputPath = $tempDir . '/' . $filename;
-            
+
+            $outputPath = $tempDir.'/'.$filename;
+
             // Save the single page PDF
             $pdf->Output($outputPath, 'F');
 
@@ -970,16 +966,16 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 null,
                 true // test mode - don't validate file was uploaded via HTTP
             );
-            
+
             // Map document types to document type codes
             $documentTypeCode = $this->getDocumentTypeCode($documentType);
-            
+
             // Prepare data array for fetchUploadDocument
             $data = [
                 'document_type_code' => $documentTypeCode,
                 'quote_uuid' => $quote->uuid,
             ];
-            
+
             // Set request parameters needed by fetchUploadDocument
             request()->merge([
                 'quote_type_id' => $quote->quote_type_id ?? null,
@@ -987,40 +983,37 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'is_send_update' => false, // Set to true if this is for send update
                 // 'send_update_id' => $sendUpdateId, // Only if is_send_update is true
             ]);
-            
+
             // Get file size before uploading
             $fileSize = filesize($outputPath);
-            
+
             // Call fetchUploadDocument using PersonalQuoteRepository
             $result = PersonalQuoteRepository::uploadDocument($quote->id, $file, $data);
-            
+
             // Clean up temporary file
             if (file_exists($outputPath)) {
                 unlink($outputPath);
             }
-            
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Page ' . $pageNumber . ' extracted and uploaded successfully', extra: [
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Page '.$pageNumber.' extracted and uploaded successfully', extra: [
                 'document_type' => $documentType,
                 'document_type_code' => $documentTypeCode,
                 'upload_result' => $result,
-                'file_size' => $fileSize . ' bytes'
+                'file_size' => $fileSize.' bytes',
             ]);
-            
+
         } catch (\Exception $e) {
-            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error extracting page ' . $pageNumber, exception: $e);
-            throw new Exception('Failed to extract page ' . $pageNumber . ': ' . $e->getMessage());
+            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error extracting page '.$pageNumber, exception: $e);
+            throw new Exception('Failed to extract page '.$pageNumber.': '.$e->getMessage());
         }
     }
 
     /**
      * Map document types to document type codes
-     *
-     * @param string $documentType
-     * @return string
      */
     private function getDocumentTypeCode(string $documentType): string
     {
-        return match($documentType) {
+        return match ($documentType) {
             'tax_invoice' => 'TI',
             'policy_schedule' => 'CPS',
             'policy_document' => 'CPC',
@@ -1030,9 +1023,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Get quote type from quote object
-     *
-     * @param object $quote
-     * @return string
      */
     private function getQuoteType(object $quote): string
     {
