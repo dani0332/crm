@@ -460,8 +460,7 @@ watch(
         <DatePicker
           v-model="filters.policyBookDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -480,8 +479,7 @@ watch(
         <DatePicker
           v-model="filters.paymentDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -500,8 +498,7 @@ watch(
         <DatePicker
           v-model="filters.paymentDueDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -520,8 +517,7 @@ watch(
         <DatePicker
           v-model="filters.policyExpiredDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
