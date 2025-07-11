@@ -92,7 +92,7 @@ class ApiService
 
     public function isLeadAllocationEndpointDisabled()
     {
-        return config('services.lead_allocation.disabled');
+        return config('constants.DISABLE_LEAD_ALLOCATION_ENDPOINT') == '1';
     }
 
     public function processAssignLead(AssignLeadRequest $request)
@@ -465,7 +465,7 @@ class ApiService
                         return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow already executed for this lead!');
                     }
                 } else {
-                    return apiResponse(null, Response::HTTP_FORBIDDEN, 'WhatsApp consent not given for this lead!');
+                    return apiResponse(null, Response::HTTP_OK, 'WhatsApp consent not given for this lead!');
                 }
                 break;
             default:
