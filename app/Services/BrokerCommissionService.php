@@ -59,8 +59,8 @@ class BrokerCommissionService
         // todo: confirm from denber
         // $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
 
-        $isCreditCardEnabled = $brokerCommission 
-                                ? (!$brokerCommission->enable_payment_link && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL)
+        $isCreditCardEnabled = $brokerCommission
+                                ? (! $brokerCommission->enable_payment_link && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL)
                                 : ($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL);
 
         $insurersWithoutCCRenewal = [
