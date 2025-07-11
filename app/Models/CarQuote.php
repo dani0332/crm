@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -24,7 +26,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'api_issuance_status'];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
@@ -50,6 +52,7 @@ class CarQuote extends BaseModel
         'mobile_no' => FilterTypes::EXACT,
         'quote_batch_id' => FilterTypes::IN,
     ];
+
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
@@ -89,6 +92,21 @@ class CarQuote extends BaseModel
     {
         return $this->first_name.' '.$this->last_name;
     }
+
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    // public function getInsurerApiStatusAttribute()
+    // {
+    //     return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
+    // }
+
+    // public function getInsurerApiEmailActionAttribute()
+    // {
+    //     return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIEmailActionMessage($this->insurer_api_status_id) : null;
+    // }
 
     public function fullName()
     {

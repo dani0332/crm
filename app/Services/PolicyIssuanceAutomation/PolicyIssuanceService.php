@@ -6,9 +6,11 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
+use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
@@ -277,11 +279,82 @@ class PolicyIssuanceService
             ->pluck('document_type_code')
             ->toArray();
 
-        $isRequiredDocsUploaded = count(array_intersect($requiredDocs[$insuranceProviderCode], $quoteDocuments)) === count($requiredDocs[$insuranceProviderCode]);
+        $isRequiredDocsUploaded = count(array_diff($requiredDocs, $quoteDocuments)) === 0;
+
         if (! $isRequiredDocsUploaded) {
             return ['status' => false, 'message' => 'Required documents not uploaded for policy issuance automation'];
         }
 
         return ['status' => true, 'message' => 'Required documents uploaded for policy issuance automation'];
+    }
+
+    public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status = 'success', $policyIssuance): void
+    {
+        $log = PolicyIssuanceLog::create([
+            'policy_issuance_id' => $policyIssuance->id,
+            'model_type' => $quote->getMorphClass(),
+            'model_id' => $quote->id,
+            'step' => $step,
+            'endPoint' => $endPoint,
+            'payload' => json_encode($payload),
+            'response' => json_encode($response),
+            'status' => $status,
+        ]);
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$policyIssuance?->id.' Policy Issuance Log ID : '.$log->id);
+    }
+
+    public function updateAPIIssuanceAndInsurerStatus($quote, $newInsurerApiStatus = null, $newApiIssuanceStatus = null)
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start');
+
+        $policyIssuanceAutomation = $quote->policyIssuance;
+        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
+
+        $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
+        // $insurerApiStatus = $quote?->insurer_api_status; // this should be dynamic based on quote type and insurer code
+        $apiIssuanceStatus = $quote?->api_issuance_status;
+
+        // $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed(); // this should be dynamic based on quote type and insurer code
+        // LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Existing Insurer API Status : '.$isInsurerApiStatusAlreadyFailed);
+
+        // /* If Quote API issuance status is not already set, than set insurer api and api issuance status */
+        if (! $apiIssuanceStatus) {
+            // if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
+            //     $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+
+            // } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
+            //     if (! $insurerApiStatus) {
+            //         $newInsurerApiStatus = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
+            //     }
+            //     $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
+            // }
+        }
+        // LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code, extra: [
+        //     'insurerApiStatus' => $insurerApiStatus, 'apiIssuanceStatus' => $apiIssuanceStatus,
+        //     'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted, 'isPolicyBooked' => $isPolicyBooked,
+        //     'isPolicyBookingFailed' => $isPolicyBookingFailed, 'newInsurerApiStatus' => $newInsurerApiStatus,
+        //     'newApiIssuanceStatus' => $newApiIssuanceStatus,
+        // ]);
+
+        // $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
+        // LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' updateQuoteInsurerApiStatus executed');
+
+        // $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+        // LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' updateQuoteApiIssuanceStatus executed');
+
+        // $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
+        // LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead executed');
+
+        // LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+    }
+
+    public function getInsurerAPIStatuses($status = null)
+    {
+        // This function should be based on quote type and insurer code
+        // This function should get the insurer api steps from it's service class
+
+
     }
 }

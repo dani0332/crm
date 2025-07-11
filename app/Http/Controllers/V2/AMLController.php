@@ -48,6 +48,7 @@ use App\Models\KycLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\PolicyIssuance;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -62,6 +63,7 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
@@ -856,6 +858,12 @@ class AMLController extends Controller
 
     public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
     {
+
+        $policyProcess = PolicyIssuance::where('id', 1095)->first();
+        $response = app(GIGInsuranceService::class)->executeSteps($policyProcess);
+        dd($response);
+
+
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
@@ -864,12 +872,13 @@ class AMLController extends Controller
         $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
 
         if ($preparedFormData) {
+
             if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
                 $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
             }
 
             if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
-                app(CentralService::class)->autoCapturePaymentProcess($quoteType, $quote);
+                app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
             }
 
             return response()->json(['success' => true]);

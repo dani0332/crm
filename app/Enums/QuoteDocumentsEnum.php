@@ -44,7 +44,5 @@ final class QuoteDocumentsEnum extends Enum
     public const SAVINGS_ADDITIONAL_EMAIL_ATTACHMENTS = 'TAEA';
     // End of Savings Quote
 
-    public const CAR_EMIRATE_ID_CARD = 'EID_CAR';
-    public const CAR_DRIVING_LICENSE = 'DL_CAR';
     public const CAR_REGISTRATION_CARD = 'CAR_MULKIY';
 }

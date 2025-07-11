@@ -50,6 +50,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -1488,7 +1489,7 @@ class CentralService extends BaseService
         return $paymentGatewayIds;
     }
 
-    public function autoCapturePaymentProcess($quoteType, $quote, $premiumCheckEnabled = true)
+    public function autoCapturePaymentProcess($quoteTypeId, $quote, $premiumCheckEnabled = true)
     {
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started');
 
@@ -1496,8 +1497,9 @@ class CentralService extends BaseService
             return ['status' => false, 'message' => 'Auto capture payment process failed'];
         }
 
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
         $payment = $quote->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
 
         if ($premiumCheckEnabled) {
             // Premium check call to check if the premium is valid
@@ -1511,6 +1513,7 @@ class CentralService extends BaseService
             ];
 
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
+                // TODO:: Need to add check to failed state in lead level
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
                 return;
@@ -1524,7 +1527,7 @@ class CentralService extends BaseService
         $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
 
         $splitPaymentApprovalRequest = new SplitPaymentApproveRequest([
-            'modelType' => $quoteType->value,
+            'modelType' => $quoteType->code,
             'quote_id' => $quote->id,
             'plan_id' => $payment->plan_id,
             'payment_code' => $payment->code,
