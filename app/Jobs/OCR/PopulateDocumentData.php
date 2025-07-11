@@ -34,7 +34,9 @@ class PopulateDocumentData implements ShouldQueue
         protected string $documentPath,
         protected string $fileMimeType,
         protected int $userId,
-    ) {}
+    ) {
+        $this->onQueue('shared');
+    }
 
     private function validateMimeType()
     {
