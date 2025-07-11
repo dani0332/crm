@@ -853,15 +853,27 @@ class LifeQuoteService extends BaseService
 
     public function getCurrencyCoverages($planId)
     {
-        $currencyCoverages = CurrencyCoverage::active()
+        return CurrencyCoverage::active()
             ->where('plan_id', $planId)
             ->select('plan_id', 'min_cover', 'max_cover', 'currency_id')
             ->with(['currency' => function ($query) {
-                $query->select('id', 'code', 'text'); // Make sure to include 'id' for relationship binding
+                $query->select('id', 'code', 'text'); 
             }])
             ->get();
+    }
 
-        return $currencyCoverages;
+    function getRiders($planId)
+    {
+        return LifeRiderOption::active()
+            ->where('plan_id', $planId)
+            ->select('id', 'rider_id', 'plan_id', 'input_required')
+            ->with(['currencyCoverages' => function ($query) {
+                $query->select('life_rider_option_id', 'min_cover', 'max_cover', 'currency_id');
+            }])
+            ->with(['rider' => function ($query) {
+                $query->select('id', 'text');
+            }])
+            ->get();
     }
 
     private function generatePdfFilename($quote): string

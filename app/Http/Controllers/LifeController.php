@@ -241,4 +241,10 @@ class LifeController extends Controller
         $currencyCoverages = $this->lifeQuoteService->getCurrencyCoverages($request->planId);
         return response()->json($currencyCoverages);
     }
+
+    function riders(Request $request)
+    {
+        $riders = $this->lifeQuoteService->getRiders($request->planId);
+        return response()->json($riders);
+    }
 }
