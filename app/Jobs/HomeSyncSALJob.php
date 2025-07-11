@@ -37,7 +37,7 @@ class HomeSyncSALJob implements ShouldQueue
 
             // Check if the response contains an error
             if (is_array($response) && isset($response['error'])) {
-                throw new Exception('SAL sync failed: ' . $response['error']);
+                throw new Exception('SAL sync failed: '.$response['error']);
             }
 
             Log::info('SAL sync completed successfully.', ['quoteUID' => $this->requestData['quoteUID']]);
