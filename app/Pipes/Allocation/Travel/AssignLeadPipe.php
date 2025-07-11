@@ -23,7 +23,7 @@ class AssignLeadPipe extends BaseAllocationPipe
         $advisor = $this->allocationRequest->getAdvisor();
 
         if (! $advisor) {
-            LoggerService::error('No advisor available in AssignLeadPipe - cannot proceed with assignment');
+            LoggerService::info('No advisor available in AssignLeadPipe - cannot proceed with assignment');
             $this->allocationRequest->markAsFailed();
             $this->throw('Advisor not found', self::OK);
         }
