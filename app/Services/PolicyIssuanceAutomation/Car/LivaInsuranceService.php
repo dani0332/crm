@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
@@ -12,10 +13,14 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Models\Payment;
+use App\Models\PolicyIssuanceLog;
 use App\Repositories\PaymentRepository;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Http;
 
 class LivaInsuranceService implements PolicyIssuanceInterface
@@ -31,6 +36,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public mixed $vat = null;
     public $policyIssuance = null;
     public $currentInsurerApiStatus = null;
+
+    public const UPLOAD_DOCUMENTS = 'UploadDocuments';
+    public const ISSUE_POLICY = 'IssuePolicy';
+    public const GET_POLICY_DOCUMENTS = 'GetPolicyDocument';
+    public const BOOK_POLICY = 'BookPolicy';
+
     public function __construct()
     {
         $this->baseUrl = config('constants.LIVA_API_BASE_URL');
@@ -44,11 +55,178 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
     }
 
+    private function getAPISteps(): array
+    {
+        return [
+            self::UPLOAD_DOCUMENTS,
+            self::ISSUE_POLICY,
+            self::GET_POLICY_DOCUMENTS,
+            self::BOOK_POLICY,
+        ];
+    }
+
+    public function isPolicyIssuanceAutomationEnabled(): bool
+    {
+        return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_LIVA_CAR_POLICY_ISSUANCE);
+    }
+
+    public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
+    {
+        return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE);
+    }
+
+    public function createPolicyIssuanceSchedule($quote, $insurer)
+    {
+        LoggerService::startQuoteLogging($quote);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' started');
+
+        if ($this->isPolicyIssuanceAutomationEnabled()) {
+            $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
+        } else {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  LIVA Car Automation is disabled');
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+
+        return $this->policyIssuance;
+    }
+
+    public function executeSteps($process): array
+    {
+        $response = ['status' => false, 'error' => null, 'message' => null];
+
+        $this->policyIssuance = $process;
+        $quote = $process->model;
+
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id.' started');
+
+        try {
+            if (! $this->isPolicyIssuanceAutomationEnabled()) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - LIVA Car Automation is disabled');
+                $response['error'] = 'LIVA Car Automation is disabled';
+                $response['message'] = 'LIVA Car Automation is disabled';
+
+                return $response;
+            }
+
+            $lastCompletedStep = $process->completed_step;
+            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : self::UPLOAD_DOCUMENTS;
+            $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
+
+            $response['status'] = $executeStepSequence['status'];
+            $response['message'] = $executeStepSequence['message'];
+        } catch (Exception $e) {
+            $response['error'] = $e->getMessage();
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Exception : '.$e->getMessage());
+
+            return $response;
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' ended');
+
+        return $response;
+    }
+
+    private function executeStepSequence($quote, $process, $nextStepToBeExecuted): void
+    {
+        /* if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_AUTO_CAPTURE) {
+            $this->executeAutoCaptureStep($quote, $process);
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        }
+
+        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_UPLOAD_DOCUMENTS) {
+            $this->executeUploadDocumentsStep($quote, $process);
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        }
+
+        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_ISSUE_POLICY) {
+            $this->executeIssuePolicyStep($quote, $process);
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        }
+
+        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_GET_POLICY_DOCUMENTS) {
+            $this->executeGetPolicyDocumentsStep($quote, $process);
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        }
+
+        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_BOOK_POLICY) {
+            $this->executeBookPolicyStep($quote, $process);
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        } */
+    }
+
+    public function getNextStep($completedStep = null): ?string
+    {
+        $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(self::INSURER_CODE, self::TYPE);
+
+        if (! $completedStep) {
+            return $allSteps[0];
+        }
+
+        $completedStepIndex = array_search($completedStep, $allSteps);
+        if ($completedStepIndex === false || $completedStepIndex === count($allSteps) - 1) {
+            return null;
+        }
+
+        return $allSteps[$completedStepIndex + 1];
+    }
+
     private function livaHttpCall($endPoint, $payload)
     {
         $url = $this->baseUrl.$endPoint;
 
         return Http::timeout(20)->withHeaders($this->headers)->post($url, $payload);
+    }
+
+    private function livaHasError($response): bool
+    {
+        if ($response->failed()) {
+            return true;
+        }
+
+        $responseObject = $response->object();
+
+        if (isset($responseObject->DocumentInfo->ErrorInfo)) {
+            if (is_array($responseObject->DocumentInfo->ErrorInfo) && ! empty($responseObject->DocumentInfo->ErrorInfo)) {
+                return true;
+            }
+            if (is_string($responseObject->DocumentInfo->ErrorInfo) && ! empty($responseObject->DocumentInfo->ErrorInfo)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function extractLivaErrorMessage($response): string
+    {
+        if ($response->failed()) {
+            return $response->body() ?? 'HTTP request failed';
+        }
+
+        $responseObject = $response->object();
+
+        if (isset($responseObject->DocumentInfo->ErrorInfo)) {
+            if (is_array($responseObject->DocumentInfo->ErrorInfo)) {
+                $errorMessages = [];
+                foreach ($responseObject->DocumentInfo->ErrorInfo as $error) {
+                    if (isset($error->ErrorCode) && isset($error->ErrorMsg)) {
+                        $errorMessages[] = "Error {$error->ErrorCode}: {$error->ErrorMsg}";
+                    } elseif (is_string($error)) {
+                        $errorMessages[] = $error;
+                    }
+                }
+
+                return implode('; ', $errorMessages);
+            }
+
+            if (is_string($responseObject->DocumentInfo->ErrorInfo)) {
+                return $responseObject->DocumentInfo->ErrorInfo;
+            }
+        }
+
+        return 'Unknown error occurred';
     }
 
     public function updateQuoteRequest($quote)
@@ -198,10 +376,154 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function uploadDocument($quote)
+    private function executeCreatePolicyStep($quote, $process): void
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.PolicyIssuanceEnum::LIVA_CAR_ISSUE_POLICY);
+        $policyIssuanceResponse = $this->createPolicy($quote);
+
+        if (! $policyIssuanceResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
+            throw new Exception($policyIssuanceResponse['error']);
+        }
+
+        $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
+    }
+
+    public function createPolicy($quote)
+    {
+        // testing;
+
+        $myFile = fopen(__DIR__ . '/response.txt', 'r');
+        $txt = fread($myFile, filesize(__DIR__ . '/response.txt'));
+        fclose($myFile);
+
+        $file = (base64_decode(base64_decode($txt)));
+
+        // Save the decoded PDF data to a file
+        $pdfFileName = 'policy_document_' . $quote->code . '_' . date('Y-m-d_H-i-s') . '.pdf';
+        $pdfFilePath = __DIR__ . '/' . $pdfFileName;
+        
+        $bytesWritten = file_put_contents($pdfFilePath, base64_decode($file));
+        
+        if ($bytesWritten === false) {
+            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Failed to save PDF file at: ' . $pdfFilePath);
+            throw new Exception('Failed to save PDF document');
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' PDF saved successfully', extra: [
+            'file_path' => $pdfFilePath,
+            'file_size' => $bytesWritten . ' bytes'
+        ]);
+
+        // separate the pages, one page should tax invoice, 2nd should be policy schedule and 3rd should be policy document
+        $this->separatePdfPages($pdfFilePath, $quote->code);
+
+        dd('done');
+
+        // $documents = $issuePolicyResult?->Documents?->PolicyReportsPdf;
+
+        LoggerService::startQuoteLogging($quote);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' started');
+
+        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::LIVA_CAR_ISSUE_POLICY, 'error' => null, 'message' => null];
+        $endPoint = 'policy/create/v2';
+
+        $payload = [
+            'PolicyRequest' => [
+                'QuotationNo' => $quote?->carQuotePlanDetail?->insurer_quote_no ?? 7872837,
+                'PremiumPayable' => 840,
+                'PartnerTrnReferenceNumber' => $quote->code,
+                'Documents' => [
+                    'DocsInResponse' => true,
+                    'DocsDetails' => [
+                        'PolicySchedule' => true,
+                        'HirePurchaseLetter' => false,
+                        'ProposalForm' => false,
+                        'LetterToBank' => false,
+                        'MotorArabicCertificate' => true,
+                        'Receipt' => true,
+                    ]
+                ],
+                'PolicyConfirmationSMS' => false,
+                'PolicyConfirmationEmail' => false,
+            ],
+        ];
+
+        $issuePolicy = $this->livaHttpCall($endPoint, $payload);
+        $issuePolicyResponse = $issuePolicy->object();
+        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $this->baseUrl.$endPoint, $response['completed_step'], $this->livaHasError($issuePolicy) ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+
+        if ($this->livaHasError($issuePolicy)) {
+            $errorMessage = $this->extractLivaErrorMessage($issuePolicy);
+            $response['error'] = $errorMessage ?? 'Policy issuance failed';
+
+            return $response;
+        }
+
+        $issuePolicyResult = $issuePolicyResponse?->PolicyResponse;
+
+        $quote->update([
+            'policy_number' => $issuePolicyResult?->PolicyNumber,
+            'policy_issuance_date' => $issuePolicyResult?->PolicyCreationDate,
+            'policy_start_date' => $issuePolicyResult?->PolicyEffectiveDate,
+            'policy_expiry_date' => $issuePolicyResult?->PolicyExpiryDate,
+            'price_vat_applicable' => $issuePolicyResult?->PremiumWithoutVAT,
+            'vat' => $issuePolicyResult?->VatAmount,
+            'vat' => $issuePolicyResult?->Commission,
+        ]);
+
+        Payment::where('code', $quote->code)->update([
+            'commission_vat_applicable' => $issuePolicyResult?->Commission,
+            'commission' => $issuePolicyResult?->Commissionincldvat,
+        ]);
+
+        // move it to IMCRM.
+        $documents = $issuePolicyResult?->Documents?->PolicyReportsPdf;
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issued successfully and Quote updated');
+
+        $response['status'] = true;
+        $response['message'] = 'Policy issued successfully and Quote updated';
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+
+        return $response;
+    }
+
+    private function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status = 'success'): void
+    {
+        $log = PolicyIssuanceLog::create([
+            'policy_issuance_id' => $this->policyIssuance->id,
+            'model_type' => $quote->getMorphClass(),
+            'model_id' => $quote->id,
+            'step' => $step,
+            'endPoint' => $endPoint,
+            'payload' => json_encode($payload),
+            'response' => json_encode($response),
+            'status' => $status,
+        ]);
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$this->policyIssuance?->id.' Log ID : '.$log->id);
+    }
+
+    private function executeUploadDocumentsStep($quote, $process): void
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.PolicyIssuanceEnum::LIVA_CAR_UPLOAD_DOCUMENTS);
+        $uploadDocumentsResponse = $this->UploadDocuments($quote);
+
+        if (! $uploadDocumentsResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload failed', extra: ['response' => $uploadDocumentsResponse]);
+            throw new Exception($uploadDocumentsResponse['error']);
+        }
+
+        $process->update(['completed_step' => $uploadDocumentsResponse['completed_step']]);
+    }
+
+    public function uploadDocuments($quote)
     {
         LoggerService::startQuoteLogging($quote);
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' started');
+        $endPoint = 'documents/upload/v2';
         
         $documents = $quote->documents;
         if ($documents->isEmpty()) {
@@ -258,7 +580,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Payload created with '.count($attachments).' attachments');
 
-        $response = $this->livaHttpCall('documents/upload/v2', $payload);
+        $response = $this->livaHttpCall($endPoint, $payload);
 
         $responseStatus = [];
         $allUploadsSuccessful = true;
@@ -342,152 +664,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $livaMapping = $this->livaHttpCall('vehicle/variants/v2', $payload);
 
         return collect($livaMapping->object()->VehicleVariantsResponse->Variants);
-    }
-
-    public function createPolicyIssuanceSchedule($quote, $insurer)
-    {
-
-        LoggerService::startQuoteLogging($quote);
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
-
-        /* if ($this->isPolicyIssuanceAutomationEnabled()) {
-
-            $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
-
-        } else {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Alliance Travel Automation is disabled');
-        } */
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
-
-        return $this->policyIssuance;
-    }
-
-    public function executeSteps($process)
-    {
-        $response = ['status' => false, 'error' => null, 'message' => null];
-
-        $this->policyIssuance = $process;
-        $quote = $process->model;
-        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' started');
-
-        /* try {
-            if ($this->isPolicyIssuanceAutomationEnabled()) {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id);
-
-                $payment = PaymentRepository::mainQuotePayment($quote);
-
-                $selectedPlan = $quote->travelQuotePlanDetails()->where('plan_id', $payment->plan_id)->first();
-
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - TravelQuotePlanDetails ID : '.$selectedPlan?->id);
-
-                $travelType = TravelQuoteEnum::ALLIANCE_IN_BOUND;
-                $directionCode = $quote->direction_code;
-                if ($directionCode === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
-                    $travelType = TravelQuoteEnum::ALLIANCE_OUT_BOUND;
-                }
-
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Travel Type : '.$travelType);
-                $lastCompletedStep = $process->completed_step;
-                $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY;
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Next Step : '.$nextStepToBeExecuted);
-
-                if ($nextStepToBeExecuted) {
-                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY) {
-                        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID;
-                        $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType);
-                        if (! $policyIssuanceResponse['status']) {
-                            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - trigger fn:updateQuoteApiIssuanceStatusAndAllocate for step '.$nextStepToBeExecuted, extra: ['response' => $policyIssuanceResponse]);
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-
-                            return $policyIssuanceResponse;
-                        }
-                        $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
-                    }
-
-                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY) {
-                        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID;
-                        $policyPurchaseResponse = $this->policyPurchase($quote, $payment, $travelType);
-                        if (! $policyPurchaseResponse['status']) {
-                            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - trigger fn:updateQuoteApiIssuanceStatusAndAllocate for step '.$nextStepToBeExecuted, extra: ['response' => $policyPurchaseResponse]);
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-
-                            return $policyPurchaseResponse;
-                        }
-                        $process->update(['completed_step' => $policyPurchaseResponse['completed_step']]);
-                    }
-
-                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS) {
-                        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
-                        $uploadPolicyDocumentResponse = $this->fetchAndUploadDocument($quote, $travelType);
-                        if (! $uploadPolicyDocumentResponse['status']) {
-                            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - trigger fn:updateQuoteApiIssuanceStatusAndAllocate for step '.$nextStepToBeExecuted, extra: ['response' => $uploadPolicyDocumentResponse]);
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-
-                            return $uploadPolicyDocumentResponse;
-                        }
-                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
-                        $process->update(['completed_step' => $uploadPolicyDocumentResponse['completed_step']]);
-                    }
-
-                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS) {
-                        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
-                        $fillPolicyDetailsResponse = $this->uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment);
-                        if (! $fillPolicyDetailsResponse['status']) {
-                            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - trigger fn:updateQuoteApiIssuanceStatusAndAllocate for step '.$nextStepToBeExecuted, extra: ['response' => $fillPolicyDetailsResponse]);
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-
-                            return $fillPolicyDetailsResponse;
-                        }
-                        $process->update(['completed_step' => $fillPolicyDetailsResponse['completed_step']]);
-                    }
-
-                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_BOOK_POLICY) {
-                        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
-                        $triggerBookPolicyResponse = $this->triggerBookPolicyProcess($quote);
-                        if (! $triggerBookPolicyResponse['status']) {
-                            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - trigger fn:updateQuoteApiIssuanceStatusAndAllocate for step '.$nextStepToBeExecuted, extra: ['response' => $triggerBookPolicyResponse]);
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-
-                            return $triggerBookPolicyResponse;
-                        }
-                        $process->update(['completed_step' => $triggerBookPolicyResponse['completed_step']]);
-                    }
-                } else {
-                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Last Completed Step : '.$lastCompletedStep);
-                }
-
-                $response['status'] = true;
-                $response['message'] = 'Sage Booking of policy triggered successfully';
-            } else {
-
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Alliance Travel Automation is disabled');
-                $response['error'] = 'Alliance Travel Automation is disabled';
-                $response['message'] = 'Alliance Travel Automation is disabled';
-
-            }
-        } catch (\Exception $e) {
-            $response['error'] = $e->getMessage();
-            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Exception : '.$e->getMessage());
-
-            return $response;
-        } */
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' ended');
-
-        return $response;
     }
 
     /* public function issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType): array
@@ -692,5 +868,96 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         similar_text($str1, $str2, $similarity);
 
         return $similarity / 100;
+    }
+
+    /**
+     * Separate PDF pages into individual documents
+     *
+     * @param string $pdfFilePath Path to the main PDF file
+     * @param string $quoteCode Quote code for naming files
+     * @return void
+     */
+    private function separatePdfPages(string $pdfFilePath, string $quoteCode): void
+    {
+        try {
+            // Initialize FPDI
+            $pdf = new \setasign\Fpdi\Fpdi();
+            
+            // Get the number of pages
+            $pageCount = $pdf->setSourceFile($pdfFilePath);
+            
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Total pages found: ' . $pageCount);
+            
+            // Define page mappings
+            $pageMap = [
+                1 => 'tax_invoice',
+                2 => 'policy_schedule', 
+                3 => 'policy_document'
+            ];
+            
+            // Extract each page
+            for ($pageNum = 1; $pageNum <= $pageCount; $pageNum++) {
+                if (isset($pageMap[$pageNum])) {
+                    $this->extractSinglePage($pdfFilePath, $pageNum, $pageMap[$pageNum], $quoteCode);
+                } else {
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Skipping page ' . $pageNum . ' (not mapped)');
+                }
+            }
+            
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' PDF pages separated successfully');
+            
+        } catch (\Exception $e) {
+            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error separating PDF pages', exception: $e);
+            throw new Exception('Failed to separate PDF pages: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Extract a single page from PDF
+     *
+     * @param string $sourcePdfPath Path to source PDF
+     * @param int $pageNumber Page number to extract
+     * @param string $documentType Type of document (tax_invoice, policy_schedule, policy_document)
+     * @param string $quoteCode Quote code for naming
+     * @return void
+     */
+    private function extractSinglePage(string $sourcePdfPath, int $pageNumber, string $documentType, string $quoteCode): void
+    {
+        try {
+            // Create new PDF instance
+            $pdf = new \setasign\Fpdi\Fpdi();
+            
+            // Set source file
+            $pdf->setSourceFile($sourcePdfPath);
+            
+            // Import the specific page
+            $templateId = $pdf->importPage($pageNumber);
+            
+            // Get page size
+            $size = $pdf->getTemplateSize($templateId);
+            
+            // Add page with same orientation and size
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            
+            // Use the imported page
+            $pdf->useTemplate($templateId);
+            
+            // Generate filename
+            $filename = $documentType . '_' . $quoteCode . '_' . date('Y-m-d_H-i-s') . '.pdf';
+            $outputPath = __DIR__ . '/' . $filename;
+            
+            // Save the single page PDF
+            $pdf->Output($outputPath, 'F');
+            
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Page ' . $pageNumber . ' extracted successfully', extra: [
+                'document_type' => $documentType,
+                'output_path' => $outputPath,
+                'file_size' => filesize($outputPath) . ' bytes'
+            ]);
+            
+        } catch (\Exception $e) {
+            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error extracting page ' . $pageNumber, exception: $e);
+            throw new Exception('Failed to extract page ' . $pageNumber . ': ' . $e->getMessage());
+        }
     }
 }
