@@ -501,19 +501,20 @@ class LifeQuoteService extends BaseService
     public function updateLifeQuote($uuid, $data)
     {
         $isAnyFieldChanged = false;
+        $quote = null;
 
         LoggerService::startQuoteLogging($uuid);
 
-        return DB::transaction(function () use ($uuid, $data) {
+        [$quote, $isAnyFieldChanged] = DB::transaction(function () use ($uuid, $data) {
+            $isAnyFieldChanged = false;
+
             $quote = $this->getPlainQuoteBy('uuid', $uuid);
 
-            // update in PersonalQuotes
             $quoteData = Arr::only($data, app(PersonalQuote::class)->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
             $quote->update($quoteData);
 
             if ($quote->lifeQuote) {
-
                 LoggerService::info('fn: updateLifeQuote - Life Quote Found');
 
                 $fieldsToRevisePlans = [
@@ -529,10 +530,9 @@ class LifeQuoteService extends BaseService
                     'age',
                     'bmi',
                     'is_smoker',
-                    'gender',
+                    'gender'
                 ];
 
-                // check if any field is changed, if yes then fetch the plans from ken with get latest rating - Yes
                 $lifeQuote = $quote->lifeQuote;
                 foreach ($fieldsToRevisePlans as $field) {
                     if (isset($data[$field]) && $data[$field] != $lifeQuote->$field) {
@@ -544,9 +544,7 @@ class LifeQuoteService extends BaseService
                 $lifeQuoteData = Arr::only($data, app(LifeQuote::class)->allowedColumns());
                 $quote->lifeQuote->fill($lifeQuoteData);
                 $quote->lifeQuote->save();
-
             } else {
-
                 LoggerService::info('fn: updateLifeQuote - Life Quote Not Found, Creating New One');
 
                 $lifeQuoteData = Arr::only($data, app(LifeQuote::class)->allowedColumns());
@@ -554,13 +552,12 @@ class LifeQuoteService extends BaseService
                 $lifeQuote->audit();
             }
 
-            return $quote;
-
+            return [$quote, $isAnyFieldChanged];
         });
 
         if ($isAnyFieldChanged) {
             $this->getQuotePlans($uuid, true);
-            LoggerService::info(message: 'fn: updateLifeQuote - Fields Changed, Plans to be revised');
+            LoggerService::info('fn: updateLifeQuote - Fields Changed, Plans to be revised');
         }
 
         return $quote;
@@ -629,9 +626,9 @@ class LifeQuoteService extends BaseService
         /* End - Temporarily adding for correcting historic data */
     }
 
-    public function getQuotePlans($id)
+    public function getQuotePlans(string $uuid, bool $getLatestRating = false)
     {
-        $quoteUuId = LifeQuote::where('uuid', '=', $id)->value('uuid');
+        $quoteUuId = LifeQuote::where('uuid', '=', $uuid)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-life-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
@@ -641,7 +638,7 @@ class LifeQuoteService extends BaseService
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
-            'getLatestRating' => false,
+            'getLatestRating' => $getLatestRating,
             'lang' => 'en',
             'callSource' => 'imcrm',
         ];
