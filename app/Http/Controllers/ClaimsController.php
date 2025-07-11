@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\LookupsEnum;
-use App\Enums\PermissionsEnum;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Models\Claim;
-use App\Models\Lookup;
 use App\Services\ClaimsService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -74,7 +71,6 @@ class ClaimsController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-
 
             return Inertia::render('Claims/Index', [
                 'claims' => collect([]),

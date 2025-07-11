@@ -12,5 +12,5 @@ enum ClaimsEnum: string
 {
     // Reference ID Configuration
     case REF_ID_PREFIX = 'CLM-';
-  
+
 }

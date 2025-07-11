@@ -79,26 +79,26 @@ class ClaimStoreRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
-                'required_if:line_of_business_id,' . $this->getCarBikeLineOfBusinessIds(),
+                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
             ],
             'vehicle_make' => [
                 'nullable',
                 'string',
                 'max:100',
-                'required_if:line_of_business_id,' . $this->getCarBikeLineOfBusinessIds(),
+                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
             ],
             'vehicle_model' => [
                 'nullable',
                 'string',
                 'max:100',
-                'required_if:line_of_business_id,' . $this->getCarBikeLineOfBusinessIds(),
+                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
             ],
             'vehicle_year' => [
                 'nullable',
                 'integer',
                 'min:1900',
-                'max:' . (date('Y') + 1),
-                'required_if:line_of_business_id,' . $this->getCarBikeLineOfBusinessIds(),
+                'max:'.(date('Y') + 1),
+                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
             ],
 
             // Assignment fields

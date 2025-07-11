@@ -27,9 +27,9 @@ class ClaimsService extends BaseService
 
     /**
      * Get claims data with flexible filtering options
-     *
      */
-    public function getClaimsData(Request $request) {
+    public function getClaimsData(Request $request)
+    {
         $query = Claim::query();
 
         return $query->paginate(2);
@@ -96,7 +96,6 @@ class ClaimsService extends BaseService
         }
     }
 
-
     /**
      * Get dropdown data for forms
      */
@@ -158,11 +157,11 @@ class ClaimsService extends BaseService
         return User::whereHas('roles', function ($query) {
             $query->whereIn('name', ['Claims Manager', 'Admin', 'SuperAdmin']);
         })
-        ->select('id', 'name', 'email')
-        ->where('is_active', 1)
-        ->orderBy('name')
-        ->get()
-        ->toArray();
+            ->select('id', 'name', 'email')
+            ->where('is_active', 1)
+            ->orderBy('name')
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -246,8 +245,6 @@ class ClaimsService extends BaseService
         ];
     }
 
-
-
     /**
      * Update claim status
      */
@@ -321,7 +318,7 @@ class ClaimsService extends BaseService
                 $claim->updateClaimSubStatus($this->getSubStatusByName('Cash loss approved'));
             }
 
-            if (isset($additionalData['claim_denial_reason']) && !empty($additionalData['claim_denial_reason'])) {
+            if (isset($additionalData['claim_denial_reason']) && ! empty($additionalData['claim_denial_reason'])) {
                 $claim->claim_denial_reason = $additionalData['claim_denial_reason'];
                 $claim->updateClaimSubStatus($this->getSubStatusByName('Claim denied'));
             }
@@ -336,7 +333,6 @@ class ClaimsService extends BaseService
             throw $e;
         }
     }
-
 
     /**
      * Update complaint status
@@ -357,11 +353,10 @@ class ClaimsService extends BaseService
         }
     }
 
-
     /**
      * Search active policies by email or policy number
      */
-    public function searchActivePolicies(string $email = null, string $policyNumber = null): array
+    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null): array
     {
         // This would typically search in your policy/quotes tables
         // For now, returning empty array as placeholder

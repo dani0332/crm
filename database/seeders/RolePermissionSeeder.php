@@ -248,8 +248,8 @@ class RolePermissionSeeder extends Seeder
     private function addClaimsPermissions(): void
     {
         $adminRole = Role::where('name', RolesEnum::Admin)->first();
-        
-        if (!$adminRole) {
+
+        if (! $adminRole) {
             info('Admin role not found. Creating Admin role.');
             $adminRole = Role::create([
                 'name' => RolesEnum::Admin,
@@ -258,7 +258,7 @@ class RolePermissionSeeder extends Seeder
         }
 
         $claimsPermissions = PermissionsEnum::getClaimsPermissions();
-        
+
         foreach ($claimsPermissions as $permissionName) {
             $permission = Permission::firstOrCreate([
                 'name' => $permissionName,
@@ -268,7 +268,7 @@ class RolePermissionSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            if (!$adminRole->hasPermissionTo($permission)) {
+            if (! $adminRole->hasPermissionTo($permission)) {
                 $adminRole->givePermissionTo($permission);
                 info("Permission {$permission->name} assigned to Admin role");
             } else {
@@ -277,5 +277,4 @@ class RolePermissionSeeder extends Seeder
         }
     }
 
-    
 }
