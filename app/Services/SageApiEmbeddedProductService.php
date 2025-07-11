@@ -214,7 +214,7 @@ class SageApiEmbeddedProductService
 
             LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Embedded Product Booked for : '.$quote->code.' ');
         } else {
-            $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id() , self::CLASSNAME.' fun:'.__FUNCTION__);
+            $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fun:'.__FUNCTION__);
             LoggerService::info(self::CLASSNAME.' fn:'.__FUNCTION__.' Sage Booking - Embedded Product Booked Already for : '.$quote->code.' ');
         }
 
