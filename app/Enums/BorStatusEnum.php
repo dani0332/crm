@@ -11,6 +11,7 @@ use BenSampo\Enum\Enum;
  */
 final class BorStatusEnum extends Enum
 {
+    const PENDING_BOR_REQUEST = "PENDING_BOR_REQUEST";
     const SIGNATURE_REQUESTED = 'SIGNATURE_REQUESTED';
     const DOCUMENT_SIGNED = "DOCUMENT_SIGNED";
     const DOCUMENT_UPLOADED = "DOCUMENT_UPLOADED";

@@ -1,6 +1,8 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
+
+// Fix: Use proper notification import
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -171,6 +173,7 @@ watch(() => form.insurance_provider_id, (newProviderId) => {
 // Methods
 const resetForm = () => {
   form.reset();
+  form.clearErrors(); // Fix: Clear form errors on reset
   form.lead_id = props.leadId;
   form.lob = props.lob;
 
@@ -185,70 +188,75 @@ const resetForm = () => {
 };
 
 const closeModal = () => {
+  // Reset form state
+  isSubmitting.value = false;
   showModal.value = false;
   emit('close');
 };
 
 const validateForm = () => {
-  const errors = {
-    'customer_type': '',
-    'customer_name': '',
-    'company_name': '',
-    'insurance_provider_id': '',
-    'policy_number': '',
-    'policy_expiry': '',
-    'chassis_number': '',
-  }
+  // Fix: Clear previous errors before validation
+  form.clearErrors();
+  
+  const errors = {};
+  let isValid = true;
 
-  let fromValid = true;
   // Basic validation before submission
   if (!form.customer_type) {
-    // Use proper toast notification if available
     errors.customer_type = 'Please select a customer type';
-    fromValid = false;
+    isValid = false;
   }
 
   // Customer/Company name validation
   if (form.customer_type === 'Individual' && !form.customer_name) {
     errors.customer_name = 'Please enter customer name';
-    fromValid = false;
+    isValid = false;
   }
 
   if (form.customer_type === 'Entity' && !form.company_name) {
     errors.company_name = 'Please enter company name';
-    fromValid = false;
+    isValid = false;
   }
 
   // LOB-specific validation
   if (requiredFields.value.policy_number && !form.policy_number) {
     errors.policy_number = 'Policy number is required for ' + props.lob + ' insurance';
-    fromValid = false;
+    isValid = false;
   }
   
   if (requiredFields.value.policy_expiry && !form.policy_expiry) {
     errors.policy_expiry = 'Policy expiry is required for ' + props.lob + ' insurance';
-    fromValid = false;
+    isValid = false;
   }
   
   if (requiredFields.value.chassis_number && !form.chassis_number) {
     errors.chassis_number = 'Chassis number is required for Sukoon insurance';
-    fromValid = false;
+    isValid = false;
   }
 
-  !fromValid && form.setError(errors);
+  if (!isValid) {
+    form.setError(errors);
+  }
 
-  return fromValid;
+  return isValid;
 };
 
 const submitForm = () => {
+  // Fix: Prevent multiple submissions
+  if (isSubmitting.value) {
+    return;
+  }
+
   if (!validateForm()) {
     return;
   }
 
-  // Submit using Inertia
+  // Submit using Inertia with improved error handling
   form.post(route('bor.requests.store'), {
+    preserveScroll: true,
     onBefore: () => {
       isSubmitting.value = true;
+      form.clearErrors();
     },
     onSuccess: (page) => {
       isSubmitting.value = false;
@@ -266,19 +274,24 @@ const submitForm = () => {
       }
       
       closeModal();
-      
-      // Show success message
-      if (window.toast) {
-        window.toast.success('BOR request created successfully');
-      }
     },
     onError: (errors) => {
       isSubmitting.value = false;
       
       // Show validation errors
       const firstError = Object.values(errors)[0];
-      if (window.toast && firstError) {
-        window.toast.error(firstError);
+      if (firstError) {
+        notification.error({
+          title: 'Submission Error',
+          message: Array.isArray(firstError) ? firstError[0] : firstError,
+          timeout: 8000
+        });
+      } else {
+        notification.error({
+          title: 'Submission Error',
+          message: 'Failed to create BOR request. Please try again.',
+          timeout: 8000
+        });
       }
     },
     onFinish: () => {
@@ -301,7 +314,7 @@ onMounted(() => {
     backdrop
   >
     <template #default>
-      <x-form @submit="submitForm" :auto-focus="false">
+      <x-form :auto-focus="false">
         <div class="space-y-6">
           <!-- BOR Request Information -->
           <div class="bg-gray-50 p-6 rounded-lg">
@@ -319,6 +332,7 @@ onMounted(() => {
                 :options="customerTypeOptions"
                 placeholder="Select customer type"
                 :error="form.errors.customer_type"
+                :disabled="isSubmitting"
                 required
               />
 
@@ -329,6 +343,7 @@ onMounted(() => {
                 v-model="form.customer_name"
                 placeholder="Enter customer name"
                 :error="form.errors.customer_name"
+                :disabled="isSubmitting"
                 required
               />
 
@@ -339,6 +354,7 @@ onMounted(() => {
                 v-model="form.company_name"
                 placeholder="Enter company name"
                 :error="form.errors.company_name"
+                :disabled="isSubmitting"
                 required
               />
 
@@ -349,6 +365,7 @@ onMounted(() => {
                 :options="availableInsurers"
                 placeholder="Select insurance provider"
                 :error="form.errors.insurance_provider_id"
+                :disabled="isSubmitting"
                 filterable
                 clearable
               />
@@ -360,6 +377,7 @@ onMounted(() => {
                 v-model="form.policy_number"
                 placeholder="Enter policy number"
                 :error="form.errors.policy_number"
+                :disabled="isSubmitting"
                 :required="requiredFields.policy_number"
               />
 
@@ -371,6 +389,7 @@ onMounted(() => {
                 type="date"
                 placeholder="Select policy expiry date"
                 :error="form.errors.policy_expiry"
+                :disabled="isSubmitting"
                 :required="requiredFields.policy_expiry"
               />
 
@@ -381,6 +400,7 @@ onMounted(() => {
                 v-model="form.chassis_number"
                 placeholder="Enter chassis number"
                 :error="form.errors.chassis_number"
+                :disabled="isSubmitting"
                 :required="requiredFields.chassis_number"
               />
             </div>
@@ -457,10 +477,11 @@ onMounted(() => {
         <x-button
           @click="submitForm"
           :loading="isSubmitting"
+          :disabled="isSubmitting"
           color="orange"
           type="submit"
         >
-          Create BOR Request
+          {{ isSubmitting ? 'Creating...' : 'Create BOR Request' }}
         </x-button>
       </div>
     </template>

@@ -187,9 +187,6 @@ class PetQuoteController extends Controller
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
-        // Fetch BOR logs for this lead
-        $borLogs = \App\Models\BorLog::where('lead_id', $quote->id)->orderBy('created_at', 'desc')->get();
-        
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -237,7 +234,6 @@ class PetQuoteController extends Controller
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
-            'borLogs' => $borLogs,
         ]);
     }
 

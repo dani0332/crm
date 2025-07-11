@@ -4,6 +4,8 @@ import { usePage } from '@inertiajs/vue3'
 import BorCancelModal from './BorCancelModal.vue'
 import BorDoneModal from './BorDoneModal.vue'
 import BorViewDocumentModal from './BorViewDocumentModal.vue'
+import Pagination from '../Pagination.vue'
+
 
 const props = defineProps({
   logs: {
@@ -13,10 +15,21 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  pagination: {
+    type: Object,
+    default: () => ({
+      current_page: 1,
+      last_page: 1,
+      next_page_url: null,
+      prev_page_url: null,
+      from: 0,
+      to: 0,
+    })
   }
 })
 
-const emit = defineEmits(['upload-document', 'update-status', 'cancel-bor', 'mark-done', 'view-document', 'refresh'])
+const emit = defineEmits(['upload-document', 'update-status', 'cancel-bor', 'mark-done', 'view-document', 'refresh', 'page-change'])
 
 // Permission management
 const page = usePage()
@@ -32,9 +45,9 @@ const selectedLog = ref(null)
 // DataTable configuration
 const tableHeaders = ref([
   { text: '#', value: 'bor_reference', sortable: false },
-  { text: 'Date Created', value: 'created_at', sortable: true },
+  { text: 'Date Created', value: 'date_created', sortable: true },
   { text: 'Date Signed', value: 'date_signed', sortable: true },
-  { text: 'Date Uploaded', value: 'date_created', sortable: true },
+  { text: 'Date Uploaded', value: 'date_uploaded', sortable: true },
   { text: 'Document Id', value: 'document_id', sortable: true },
   { text: 'User agent', value: 'user_agent', sortable: true },
   { text: 'Email Sent to UW', value: 'email_sent', sortable: false },
@@ -46,7 +59,6 @@ const tableHeaders = ref([
 const tableItems = computed(() => {
   return props.logs.map(log => ({
     ...log,
-    date_created: new Date(log.date_created).toLocaleDateString(),
     email_sent: log.email_sent ? 'Yes' : 'No',
     status_badge: getStatusBadge(log.status),
     actions: log // Pass full log object for actions
@@ -208,7 +220,7 @@ const canPerformAction = (log, action) => {
         v-if="!loading && logs.length > 0"
         hide-rows-per-page
         :rows-per-page="15"
-        :hide-footer="logs.length < 15"
+        :hide-footer="true"
         :headers="tableHeaders"
         :items="tableItems"
         :loading="loading"
@@ -351,6 +363,21 @@ const canPerformAction = (log, action) => {
           Get started by creating a new BOR request.
         </p>
       </div>
+    </div>
+
+    <!-- Pagination Controls (similar to Pet Quotes) -->
+    <div  class="mt-4 px-6 pb-4">
+      <Pagination
+        :links="{
+          next: pagination.next_page_url,
+          prev: pagination.prev_page_url,
+          current: pagination.current_page,
+          from: pagination.from,
+          to: pagination.to,
+        }"
+        :api="true"
+        @navigate="(url) => emit('page-change', url)"
+      />
     </div>
 
     <!-- Modal Components -->

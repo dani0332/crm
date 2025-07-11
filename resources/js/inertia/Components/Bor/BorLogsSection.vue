@@ -7,6 +7,7 @@ import BorUploadDocument from './BorUploadDocument.vue';
 import BorCancelModal from './BorCancelModal.vue';
 import BorDoneModal from './BorDoneModal.vue';
 import BorViewDocumentModal from './BorViewDocumentModal.vue';
+import axios from 'axios'; // Added axios import
 
 const props = defineProps({
   leadId: {
@@ -29,10 +30,6 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  borLogs: {
-    type: Array,
-    default: () => [],
-  },
   expanded: {
     type: Boolean,
     required: false,
@@ -50,10 +47,10 @@ const props = defineProps({
 });
 
 const page = usePage();
-const notification = useToast();
+const notification = useNotifications('toast'); // Fix: Use consistent notification import
 
 // Reactive data
-const borLogs = ref(props.borLogs || []);
+const borLogs = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
 const showBorRequestForm = ref(false);
@@ -80,32 +77,70 @@ const toggleSection = () => {
   isCollapsed.value = !isCollapsed.value;
 };
 
-const fetchBorLogs = () => {
+const fetchBorLogs = async (page = 1) => {
   if (!props.leadId) return;
   
   isLoading.value = true;
   error.value = null;
   
-  // Use Inertia to reload the page with BOR logs data
-  router.reload({
-    only: ['borLogs'],
-    onBefore: () => (isLoading.value = true),
-    onSuccess: (page) => {
-      borLogs.value = page.props.borLogs || [];
-      isLoading.value = false;
-    },
-    onError: (errors) => {
-      console.error('Error fetching BOR logs:', errors);
-      error.value = 'Failed to load BOR logs. Please try again.';
+  try {
+    // Use simple axios call with pagination, similar to Pet Quotes approach
+    const response = await axios.get(route('bor.requests.index'), {
+      params: { page, leadId: props.leadId }
+    });
+
+    if (response.data.success) {
+      // Handle Laravel pagination response
+      const paginatedData = response.data.data;
+      borLogs.value = paginatedData.data || [];
       
-      notification.error({
-        title: 'Error',
-        message: 'Failed to load BOR logs. Please try again.',
-        position: 'top',
-      });
-      isLoading.value = false;
+      // Extract pagination info from Laravel pagination response
+      pagination.value = {
+        current_page: paginatedData.current_page,
+        last_page: paginatedData.last_page,
+        next_page_url: paginatedData.next_page_url,
+        prev_page_url: paginatedData.prev_page_url,
+        from: paginatedData.from,
+        to: paginatedData.to,
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch BOR logs');
     }
-  });
+  } catch (err) {
+    console.error('Error fetching BOR logs:', err);
+    error.value = err.response?.data?.message || 'Failed to load BOR logs. Please try again.';
+    
+    notification.error({
+      title: 'Error',
+      message: 'Failed to load BOR logs. Please try again.',
+      timeout: 5000,
+    });
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Add pagination state
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  next_page_url: null,
+  prev_page_url: null,
+  from: 0,
+  to: 0,
+});
+
+// Handle page changes
+const handlePageChange = (pageUrl) => {
+  // Extract page number from URL or use page number directly
+  let page = 1;
+  if (typeof pageUrl === 'number') {
+    page = pageUrl;
+  } else if (typeof pageUrl === 'string' && pageUrl) {
+    const urlParams = new URLSearchParams(pageUrl.split('?')[1]);
+    page = parseInt(urlParams.get('page')) || 1;
+  }
+  fetchBorLogs(page);
 };
 
 const openBorRequestForm = () => {
@@ -114,6 +149,12 @@ const openBorRequestForm = () => {
 
 const closeBorRequestForm = () => {
   showBorRequestForm.value = false;
+  
+  // Ensure scroll is restored when modal closes
+  setTimeout(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, 100);
 };
 
 const handleBorRequestSuccess = (newBorLog) => {
@@ -129,6 +170,18 @@ const handleBorRequestSuccess = (newBorLog) => {
     message: 'BOR request created successfully',
     position: 'top',
   });
+
+  // Ensure form is closed and scroll is restored
+  showBorRequestForm.value = false;
+  
+  // Force scroll restoration
+  setTimeout(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    
+    // Force a repaint to ensure scrolling works
+    window.dispatchEvent(new Event('resize'));
+  }, 150);
   
   // Expand section if collapsed
   if (isCollapsed.value) {
@@ -188,7 +241,7 @@ const handleUpdateStatus = (borLogId, newStatus) => {
       notification.error({
         title: 'Error',
         message: 'Failed to update status',
-        position: 'top',
+        timeout: 5000
       });
     }
   });
@@ -238,7 +291,7 @@ const handleActionSuccess = (updatedBorLog) => {
   notification.success({
     title: 'Success',
     message: 'BOR action completed successfully',
-    position: 'top',
+    timeout: 5000
   });
 };
 
@@ -249,14 +302,10 @@ watch(() => props.leadId, (newLeadId) => {
   }
 }, { immediate: false });
 
-// Watch for borLogs prop changes
-watch(() => props.borLogs, (newBorLogs) => {
-  borLogs.value = newBorLogs || [];
-}, { immediate: true });
-
 // Lifecycle
 onMounted(() => {
-  borLogs.value = props.borLogs || [];
+  // Always fetch BOR logs independently when component mounts
+  fetchBorLogs(1);
 });
 </script>
 
@@ -345,12 +394,14 @@ onMounted(() => {
           <BorLogsList 
             :logs="borLogs" 
             :loading="isLoading"
+            :pagination="pagination"
             @upload-document="handleUploadDocument"
             @update-status="handleUpdateStatus"
             @cancel-bor="handleCancelBor"
             @mark-done="handleMarkDone"
             @view-document="handleViewDocument"
             @refresh="fetchBorLogs"
+            @page-change="handlePageChange"
           />
         </div>
       </template>

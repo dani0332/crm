@@ -102,7 +102,7 @@ class BorRequestMail extends Mailable
                 'customer_type' => $this->borLog->customer_type,
                 'portal_link' => $portalLink,
                 'document_id' => $this->borLog->document_id,
-                'date_created' => $this->borLog->date_created->format('Y-m-d H:i:s'),
+                'date_created' => $this->borLog->date_created,
             ],
             'template_variables' => [
                 'customer_name' => $this->getCustomerName(),

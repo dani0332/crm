@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Config;
 
 class BorLog extends Model
 {
@@ -47,10 +48,7 @@ class BorLog extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'date_created' => 'datetime',
         'email_sent' => 'boolean',
-        'date_uploaded' => 'datetime',
-        'date_signed' => 'datetime',
         'policy_expiry' => 'date',
     ];
 
@@ -78,6 +76,57 @@ class BorLog extends Model
                 $borLog->bor_reference = static::generateBorId($borLog->lead_id);
             }
         });
+    }
+
+    /**
+     * @return string
+     */
+    public function getCreatedAtAttribute($date)
+    {
+        $date_time_format = config('constants.datetime_format');
+
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+
+    /**
+     * @return string
+     */
+    public function getUpdatedAtAttribute($table)
+    {
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+    }
+
+    /**
+     * @return string
+     */
+    public function getDateSignedAttribute($table)
+    {
+        if (empty($table) || $table == null) {
+            return null;
+        }
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+    }
+
+    /**
+     * @return string
+     */
+    public function getDateUploadedAttribute($table)
+    {
+        if (empty($table) || $table == null) {
+            return null;
+        }
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+    }
+
+    /**
+     * @return string
+     */
+    public function getDateCreatedAttribute($table)
+    {
+        if (empty($table) || $table == null) {
+            return null;
+        }
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
     }
 
     /**

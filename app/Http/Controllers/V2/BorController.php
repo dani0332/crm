@@ -41,52 +41,37 @@ class BorController extends Controller
     /**
      * Get BOR logs for a specific lead
      */
-    public function index(Request $request, $leadId): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        try {
-            $logs = BorLog::where('lead_id', $leadId)
-                ->orderBy('created_at', 'desc')
-                ->get();
+        $logs = BorLog::where('lead_id', $request->leadId)
+            ->orderBy('created_at', 'desc')
+            ->simplePaginate(15) // Add simple pagination
+            ->withQueryString();
 
-            return response()->json([
-                'success' => true,
-                'data' => $logs,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to fetch BOR logs', [
-                'lead_id' => $leadId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch BOR logs',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $logs,
+        ]);
     }
 
 
     /**
      * Create a new BOR request
      */
-    public function store(BorFormRequest $request): RedirectResponse
+    public function store(BorFormRequest $request)
     {
         try {
             $validated = $request->validated();
 
             DB::beginTransaction();
 
-            // Determine the customer/company name based on customer type
-            $customerName = $validated['customer_type'] === 'Entity' 
-                ? $validated['company_name'] 
-                : $validated['customer_name'];
-
             // Create BOR log entry with updated schema
             $borLog = BorLog::create([
                 'lead_id' => $validated['lead_id'],
                 'lob' => $validated['lob'],
                 'customer_type' => $validated['customer_type'],
-                'customer_name' => $customerName,
+                'company_name' => $validated['company_name'] ?? null,
+                'customer_name' => $validated['customer_name'] ?? null,
                 'insurance_provider_id' => $validated['insurance_provider_id'],
                 'policy_number' => $validated['policy_number'] ?? null,
                 'policy_expiry' => $validated['policy_expiry'] ?? null,
@@ -107,29 +92,25 @@ class BorController extends Controller
 
             DB::commit();
 
-            // Return with new BOR log data for the frontend
+            // Return successful response
             return redirect()->back()->with([
                 'success' => 'BOR request created successfully' . ($emailSent ? ' and email sent to customer.' : ', but email failed to send.'),
                 'newBorLog' => $borLog->fresh(['insuranceProvider'])
             ]);
 
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('BOR request creation failed', [
                 'error' => $e->getMessage(),
-                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['password']),
             ]);
 
-            return redirect()->back()->with('error', 'Failed to create BOR request. Please try again.');
+            return redirect()->back()->withErrors([
+                'general' => 'Failed to create BOR request. Please try again.'
+            ])->withInput();
         }
     }
-
-    
-
-
 
     /**
      * Upload BOR document leveraging existing document infrastructure
