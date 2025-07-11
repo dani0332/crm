@@ -10,6 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
 use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -80,6 +81,8 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                     VerifyAlreadyInProgressAllocationPipe::class,
                     ValidateNationalityConfigPipe::class,
                     AssignTeamPipe::class,
+                    FetchAvailableAdvisorPipe::class,
+                    ResetNationalityConfigPipe::class,
                     FetchAvailableAdvisorPipe::class,
                     AssignLeadPipe::class,
                     MakeResponsePipe::class,
