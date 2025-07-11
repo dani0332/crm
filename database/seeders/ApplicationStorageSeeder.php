@@ -100,6 +100,30 @@ class ApplicationStorageSeeder extends Seeder
         $this->savingsLOB();
 
         $this->seedOcrEnabled();
+        $this->livaCarAutomationSeed();
+    }
+
+    private function livaCarAutomationSeed()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_LIVA_CAR_POLICY_ISSUANCE],
+            [
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE],
+            [
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedBirdWorkflowUrls()
