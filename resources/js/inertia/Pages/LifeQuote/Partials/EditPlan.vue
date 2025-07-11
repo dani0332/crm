@@ -174,6 +174,32 @@ const actualPremium = computed(() => {
   return basePremium + overallLoadingValue + riderPrice;
 });
 
+
+const toggleVisiblity = () => {
+  
+  axios
+    .post('/personal-quotes/life/toggle-life-plan-visibility', {
+      quoteUID: props.uuid,
+      providerId: editForm.providerId,
+      planId: editForm.planId,
+      version: editForm.version,
+      isDisabled: editForm.isDisabled,
+    })
+    .then(res => {
+      extraAttr.loading = false;
+
+      emit('success');
+    })
+    .catch(err => {
+      emit('error', err);
+      extraAttr.loading = false;
+    })
+    .finally(() => {
+      extraAttr.loading = false;
+    });
+};
+
+
 // Update the Plan (if it is manual)
 const onSubmit = () => {
   editForm.actualPremium = Number(
@@ -479,53 +505,7 @@ const validateCoverValue = value => {
 };
 
 const hidePlan = () => {
-  editForm.actualPremium = Number(
-    parseFloat(editForm.actualPremium).toFixed(2),
-  );
-  editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
-  editForm.overallLoading = Number(
-    parseFloat(editForm.overallLoading).toFixed(2),
-  );
-
-  // Ensure riders have numeric values by converting strings to floats and preventing negative values
-  const processedRiders = ridersData.value.map(rider => ({
-    ...rider,
-    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
-    loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
-    finalPrice: Number(parseFloat(rider.finalPrice).toFixed(2)) || 0,
-    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
-  }));
-
-  editForm.riders = processedRiders;
-  editForm.hide = editForm.isDisabled;
-
-  axios
-    .post('/personal-quotes/life-plan-manual-create', {
-      quoteUID: props.uuid,
-      formData: editForm,
-    })
-    .then(res => {
-      if (res?.data?.code) {
-        notification.error({
-          title: res.data.msg,
-          position: 'top',
-        });
-
-        return;
-      }
-
-      notification.success({
-        title: 'Plan visibility updated successfully',
-        position: 'top',
-      });
-
-      emit('success');
-    })
-    .catch(err => {
-      emit('error');
-      errorMessage.value = err.response.data.message;
-    })
-    .finally(() => {});
+  toggleVisiblity()
 };
 
 const submitType = props.selectedPlan.isApi ? ref('getQuote') : ref('onSubmit');

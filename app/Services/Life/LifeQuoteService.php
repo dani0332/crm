@@ -864,6 +864,15 @@ class LifeQuoteService extends BaseService
         return $currencyCoverages;
     }
 
+    function toggleLifePlanVisibility(array $data)
+    {
+        LoggerService::info('fn: toggleLifePlanVisibility', context: [
+            'data' => $data,
+        ]);
+        $request = app(KenService::class)->request('/toggle-life-plan-visibility', 'post', $data);
+        return $request;
+    }
+
     private function generatePdfFilename($quote): string
     {
         return 'InsuranceMarket.ae™ Life Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';

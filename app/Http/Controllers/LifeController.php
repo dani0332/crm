@@ -241,4 +241,13 @@ class LifeController extends Controller
         $currencyCoverages = $this->lifeQuoteService->getCurrencyCoverages($request->planId);
         return response()->json($currencyCoverages);
     }
+
+    function toggleLifePlanVisibility(Request $request)
+    {
+        LoggerService::startQuoteLogging($request->quoteUID);
+        $this->lifeQuoteService->toggleLifePlanVisibility($request->all());
+        LoggerService::info('fn: toggleLifePlanVisibility - Life plan visibility toggled successfully');
+        
+        return response()->json(['message' => 'Life plan visibility toggled successfully']);
+    }
 }
