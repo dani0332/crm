@@ -10,9 +10,11 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendPolicyTypeEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
@@ -20,7 +22,9 @@ use App\Models\PolicyIssuanceLog;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\SageApiService;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -28,31 +32,50 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 {
     private readonly string $className;
     private readonly string $baseUrl;
+    private readonly string $authUrl;
+    private readonly string $clientId;
+    private readonly string $clientSecret;
+    private readonly string $accessToken;
     
     public const INSURER_CODE = InsuranceProvidersEnum::AXA;
+    public const POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY = InsuranceProvidersEnum::AXA.'_POLICY_ISSUANCE_API_ACCESS_TOKEN';
     public const TYPE = quoteTypeCode::Car;
     public const TYPE_ID = QuoteTypeId::Car;
 
     public const UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const ISSUE_POLICY = 'IssuePolicy';
-    public const GET_POLICY_DOCUMENTS = 'GetPolicyDocument';
+    public const GET_AND_UPLOAD_POLICY_DOCUMENTS = 'GetAndUploadPolicyDocuments';
     public const BOOK_POLICY = 'BookPolicy';
 
     public const PAYMENT_MODE = 'CT068';
     public const PAYMENT_MODE_VALUE = 'Broker Credit';
     public const CURRENCY_CODE = 'AED';
+    public const OP_CO = 'UAE';
     
     public $policyIssuance = null;
     public $currentInsurerApiStatus = null;
 
+    private const REQUEST_GET = 'GET';
+    private const REQUEST_POST = 'POST';
+    private const REQUEST_PATCH = 'PATCH';
+    private const REQUEST_AUTH = 'AUTH';
+
+    private $maxRetries = 5;
+    private $retryDelay = 10000; // 10 seconds
+
+    private const POLICY_DOC_TAX_INVOICE = 'Tax invoice';
+    private const POLICY_DOC_COMMISSION_STATEMENT = 'Commission statement';
+    private const POLICY_DOC_POLICY_SCHEDULE = 'Motor Insurance Policy Schedule';
+    private const POLICY_DOC_CERTIFICATE_OF_INSURANCE = 'Certificate of Insurance';
+
     public function __construct()
     {
         $this->className = __CLASS__;
-        $this->baseUrl = config('constants.GIG_API_BASE_URL', '').'/apis/gulf-motor-v3-vs/motor';
-        // $this->authParam = [
-        //     'Authorization' => config('constants.GIG_AUTHORIZATION_TOKEN'),
-        //     'Ocp-Apim-Subscription-Key' => config('constants.GIG_SUBSCRIPTION_KEY'),
-        // ];
+        $this->baseUrl = config('constants.GIG_API_BASE_URL').'/apis/gulf-motor-v3-vs/motor';
+        $this->authUrl = config('constants.GIG_API_AUTH_BASE_URL').'/oauth/token';
+        $this->clientId = config('constants.GIG_API_AUTH_CLIENT_ID');
+        $this->clientSecret = config('constants.GIG_API_AUTH_CLIENT_SECRET');
+        $this->accessToken = Cache::store('redis')->get(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY) ?? $this->getAccessToken();
     }
 
     private function getAPISteps(): array
@@ -60,7 +83,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return [
             self::UPLOAD_DOCUMENTS,
             self::ISSUE_POLICY,
-            self::GET_POLICY_DOCUMENTS,
+            self::GET_AND_UPLOAD_POLICY_DOCUMENTS,
             self::BOOK_POLICY,
         ];
     }
@@ -131,27 +154,22 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     private function executeStepSequence($quote, $process, $nextStepToBeExecuted): void
     {
-        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_AUTO_CAPTURE) {
-            $this->executeAutoCaptureStep($quote, $process);
-            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        }
-
-        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_UPLOAD_DOCUMENTS) {
+        if ($nextStepToBeExecuted === self::UPLOAD_DOCUMENTS) {
             $this->executeUploadDocumentsStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_ISSUE_POLICY) {
+        if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
             $this->executeIssuePolicyStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_GET_POLICY_DOCUMENTS) {
-            $this->executeGetPolicyDocumentsStep($quote, $process);
+        if ($nextStepToBeExecuted === self::GET_AND_UPLOAD_POLICY_DOCUMENTS) {
+            $this->executeGetAndUploadPolicyDocumentsStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        if ($nextStepToBeExecuted === PolicyIssuanceEnum::GIG_CAR_BOOK_POLICY) {
+        if ($nextStepToBeExecuted === self::BOOK_POLICY) {
             $this->executeBookPolicyStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
@@ -159,7 +177,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     public function getNextStep($completedStep = null): ?string
     {
-        $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(self::INSURER_CODE, self::TYPE);
+        $allSteps = $this->getAPISteps();
 
         if (! $completedStep) {
             return $allSteps[0];
@@ -173,150 +191,134 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return $allSteps[$completedStepIndex + 1];
     }
 
-    private function executeUploadDocumentsStep($quote, $process): void
+    private function executeUploadDocumentsStep($quote, $process): void 
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.PolicyIssuanceEnum::GIG_CAR_UPLOAD_DOCUMENTS);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::UPLOAD_DOCUMENTS);
         $uploadDocumentsResponse = $this->UploadDocuments($quote);
 
         if (! $uploadDocumentsResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload failed', extra: ['response' => $uploadDocumentsResponse]);
-            throw new Exception($uploadDocumentsResponse['error']);
+            // TODO:: this need to be handled properly and update the lead status to failed
+            // throw new Exception($uploadDocumentsResponse['error']);
         }
+        
         $process->update(['completed_step' => $uploadDocumentsResponse['completed_step']]);
+        $process = $process->refresh();
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$uploadDocumentsResponse['completed_step']);
     }
 
     public function UploadDocuments($quote): array
     {
-        $maxRetries = 5;
-        $retryDelay = 10; // seconds
-        $retryCount = 0;
-        $failedPayloads = [];
-        $successfulPayloads = [];
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$this->policyIssuance->id.' - Step : '.self::UPLOAD_DOCUMENTS);
+        $response = ['status' => false, 'completed_step' => self::UPLOAD_DOCUMENTS, 'error' => null, 'message' => null];
+
+        // Validation checks for document upload
+        $documentUploadValidationCheck = app(PolicyIssuanceService::class)->documentUploadPreChecks(self::TYPE_ID, $quote, self::INSURER_CODE, [
+            QuoteDocumentsEnum::CAR_REGISTRATION_CARD,
+            QuoteDocumentsEnum::CAR_EMIRATE_ID_CARD,
+            QuoteDocumentsEnum::CAR_DRIVING_LICENSE,
+        ]);
+
+        if (! $documentUploadValidationCheck['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload validation check failed', extra: ['response' => $documentUploadValidationCheck]);
+            // TODO:: this need to be handled properly and update the lead status to failed
+            // throw new Exception($documentUploadValidationCheck['message']);
+        }
+
+        $documentsToUpload = $this->documentsToUpload();
+        $quoteDocumentCodes = $this->documentsToUpload()->keys()->toArray();
+        $quoteDocuments = $quote->documents()->whereIn('document_type_code', $quoteDocumentCodes)->get();
+
         $endPoint = '/v1/insurance-documents';
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
-        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::GIG_CAR_UPLOAD_DOCUMENTS, 'error' => null, 'message' => null];
-
-        $quoteDocuments = $quote->documents()->whereIn('document_type_code', [DocumentTypeCode::HPD, DocumentTypeCode::LPD, DocumentTypeCode::HOMPD])->get();
-
-        // $policyIssuanceLog = PolicyIssuanceLog::where('model_id', $quote->id)->where([
-        //     'step' => self::UPLOAD_DOCUMENTS,
-        //     'status' => PolicyIssuanceEnum::FAILED_STATUS,
-        // ])->get();
-
-        // TODO:: those documents which are successfully uploaded should not be processed again and which are failed should be processed again and update same process log
-        // $failedPayloads = $policyIssuanceLog->pluck('payload')->toArray();
-        // $finalPayloads = array_filter($payloads, function ($payload) use ($failedPayloads) {
-        //     foreach ($failedPayloads as $failedPayload) {
-        //         $failedPayload = json_decode($failedPayload, true);
-        //         if ($failedPayload['DocumentInfo']['DocumentType'] === $payload['DocumentInfo']['DocumentType'] && $failedPayload['DocumentInfo']['DocumentName'] === $payload['DocumentInfo']['DocumentName']) {
-        //             return false;
-        //         }
-        //     }
-        //     return true;
-        // });
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Number of documents to process: '.count($quoteDocuments));
-
-        foreach ($quoteDocuments as $index => $quoteDocument) {
+        foreach ($documentsToUpload as $docTypeCode => $documentToUpload) {
+            $quoteDocument = $quoteDocuments->where('document_type_code', $docTypeCode)->first();
+            $documentFile = Storage::disk('azureIM')->get($quoteDocument->doc_url);
+            $docFileBase64 = base64_encode($documentFile);
             $payload = [
-                'documentType' => [
-                    'code' => $quoteDocument->document_type_code,
-                    'value' => $quoteDocument->document_type_code,
-                ],
                 'referenceType' => 'quotation',
-                'documentContent' => $quoteDocument->document_content,
-                'documentName' => $quoteDocument->document_name,
-                'mimeType' => $quoteDocument->document_mime_type,
-                'referenceValue' => $quote->code,
+                'referenceValue' => $quote->quotation_number,
+
+                'documentType' => [
+                    'code' => $documentToUpload['insurer_doc_code'],
+                    'value' => $documentToUpload['insurer_doc_name'],
+                ],
+                'documentContent' => $docFileBase64,
+                'documentName' => $quoteDocument->document_name, // doc_name
+                'mimeType' => $quoteDocument->document_mime_type, // doc_mime_type
             ];
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Processing document '.($index + 1).' of '.count($quoteDocuments), [ 
-                'Document Name' => $quoteDocument->document_name,
-                'Document Type' => $quoteDocument->document_type_code,
-            ]);
+            $uploadDocResponse = $this->httpCall($endPoint, $payload, [], self::REQUEST_POST);
 
-            $retryCount = 0;
-            do {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Waiting for '.$retryDelay.' seconds for document generation');
-                sleep($retryDelay);
-
-                $documents = $this->gigHttpCall($endPoint, $payload);
-                $documentsResponse = $documents->object();
-
-                if ($this->hasGigError($documents)) {
-                    $errorMessage = $this->extractGigErrorMessage($documents);
-
-                    if (str_contains($errorMessage, 'Document is still generating')) {
-                        $retryCount++;
-                        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Documents still generating, retry '.$retryCount.' of '.$maxRetries);
-                    } else {
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            } while ($retryCount < $maxRetries);
-            $isPayloadSuccessful = ! $this->hasGigError($documents);
-            $this->storePolicyIssuanceLog(
-                $quote, $payload, $documentsResponse, $this->baseUrl.$endPoint, $response['completed_step'], $this->hasGigError($documents) ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS
-            );
-
-            if ($isPayloadSuccessful) {
-
-                $successfulPayloads[] = $index + 1;
+            if ($uploadDocResponse['status']) {
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$documentToUpload['insurerDocName'].' uploaded to insurer portal');
+                $documentToUpload['uploaded'] = true;
+                $documentsToUpload->put($docTypeCode, $documentToUpload);
             } else {
-                $errorMessage = $this->extractGigErrorMessage($documents);
-                $failedPayloads[] = ['payload_index' => $index + 1, 'error' => $errorMessage];
-
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload failed, stopping further processing');
-                break;
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Message : '.$uploadDocResponse['message'].' , Error : '.$uploadDocResponse['error']);
             }
         }
-        
-        if (! empty($failedPayloads)) {
-            $errorMessages = array_map(function ($failedPayload) {
-                return 'Document '.$failedPayload['payload_index'].': '.$failedPayload['error'];
-            }, $failedPayloads);
 
-            $response['error'] = 'Document upload failed. '.implode('; ', $errorMessages);
-            $response['message'] = 'Failed documents: '.implode(', ', array_column($failedPayloads, 'payload_index')).'. Successful documents: '.implode(', ', $successfulPayloads);
+        $isAllDocumentsUploaded = $documentsToUpload->where('uploaded', false)->count() === 0;
+        if (! $isAllDocumentsUploaded) {
+            $failedToUploadDocNames = $documentsToUpload->where('uploaded', false)->pluck('insurerDocName')->toArray();
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - failed to upload documents to insurer : ', $failedToUploadDocNames);
+            $response['message'] = 'Failed to upload '.implode(',', $failedToUploadDocNames).' documents to insurer';
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Some documents failed to upload: '.$response['error']);
-        } else {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - All documents uploaded successfully');
-
-            $response['status'] = true;
-            $response['message'] = 'All documents uploaded successfully';
+            return $response;
         }
+        $uploadedDocNames = $documentsToUpload->where('uploaded', true)->pluck('insurerDocName')->toArray();
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  ended', ['Document Uploaded' => $uploadedDocNames]);
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+        $response['status'] = true;
+        $response['message'] = implode(',', $uploadedDocNames).' documents uploaded to insurer';
 
         return $response;
     }
 
+    private function documentsToUpload()
+    {
+        return collect([
+            QuoteDocumentsEnum::CAR_REGISTRATION_CARD => [
+                'code' => QuoteDocumentsEnum::CAR_REGISTRATION_CARD,
+                'insurerDocCode' => 'DT01',
+                'insurerDocName' => 'Car Registration Document',
+                'uploaded' => false,
+            ],
+            QuoteDocumentsEnum::CAR_EMIRATE_ID_CARD => [
+                'code' => QuoteDocumentsEnum::CAR_EMIRATE_ID_CARD,
+                'insurerDocCode' => 'DT02',
+                'insurerDocName' => 'National Id',
+                'uploaded' => false,
+            ],
+            QuoteDocumentsEnum::CAR_DRIVING_LICENSE => [
+                'code' => QuoteDocumentsEnum::CAR_DRIVING_LICENSE,
+                'insurerDocCode' => 'DT03',
+                'insurerDocName' => 'Driving License',
+                'uploaded' => false,
+            ],
+        ]);
+    }
+
     private function executeIssuePolicyStep($quote, $process): void
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.PolicyIssuanceEnum::GIG_CAR_ISSUE_POLICY);
-
-        // $this->currentInsurerApiStatus = PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID;
-        $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::ISSUE_POLICY);
+        $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $process);
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            throw new Exception($policyIssuanceResponse['error']);
+            // TODO:: this need to be handled properly and update the lead status to failed
+            // throw new Exception($policyIssuanceResponse['error']);
         }
-
-        $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
+        
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$policyIssuanceResponse['completed_step']);
     }
 
-    public function issuePolicyAndFillPolicyDetails($quote): array
+    public function issuePolicyAndFillPolicyDetails($quote, $process): array
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
-
-        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::GIG_CAR_ISSUE_POLICY, 'error' => null, 'message' => null];
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$this->policyIssuance->id.' - Step : '.self::ISSUE_POLICY);
+        $response = ['status' => false, 'completed_step' => self::ISSUE_POLICY, 'error' => null, 'message' => null];
         $endPoint = '/v3/policies';
-
         $payload = [
             'quoteId' => $quote->quotation_number,
             'isActive' => 'true',
@@ -326,7 +328,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     'value' => self::PAYMENT_MODE_VALUE,
                 ],
                 'paymentAmount' => [
-                    'amount' => '',
+                    'amount' => $quote->total_amount, // TODO:: this should be take from payment table
                     'currencyCode' => self::CURRENCY_CODE
                 ],
                 'paymentReferenceNumber' => '', // TODO:: Need to be confirm
@@ -334,144 +336,146 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             ]
         ];
 
-        $issuePolicy = $this->gigHttpCall($endPoint, $payload);
-        $issuePolicyResponse = $issuePolicy->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $this->baseUrl.$endPoint, $response['completed_step'], $this->hasGigError($issuePolicy) ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $issuePolicy = $this->httpCall($endPoint, $payload, [], self::REQUEST_POST);
+        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicy, $this->baseUrl.$endPoint, $response['completed_step'], $issuePolicy['status'] ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
-        if ($this->hasGigError($issuePolicy)) {
-            $errorMessage = $this->extractGigErrorMessage($issuePolicy);
-            $response['error'] = $errorMessage ?? 'Policy issuance failed';
-
-            return $response;
+        if (! $issuePolicy['status']) {
+            return $issuePolicy;
         }
 
-        $issuePolicyResult = $issuePolicyResponse?->PolicyInfo;
+        $process->data = [ $response['completed_step'] => $issuePolicy];
+        $process->completed_step = $response['completed_step'];
+        $process->save();
+        $process = $process->refresh();
 
-        $insurerInvoiceDate = $issuePolicyResult?->CommissionAmount; // TODO:: need to ask with Shereen
-        $insurerTaxInvoiceNo = $issuePolicyResult?->CommissionAmount; // TODO:: need to ask with Shereen
-        $insurerCommissionTaxInvoiceNo = $issuePolicyResult?->CommissionAmount; // TODO:: need to ask with Shereen
-        $commissionVatApplicable = $issuePolicyResult?->CommissionAmount; // TODO:: need to ask with Shereen
+        $issuePolicyResult = $issuePolicy?->PolicyInfo;
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Updating Policy Details in Quote');
 
-        // TODO:: this need to be verified with database columns
         $quote->update([
-            'insurer_invoice_date' => $insurerInvoiceDate,
-            'insurer_tax_invoice_no' => $insurerTaxInvoiceNo,
-            'insurer_commission_tax_invoice_no' => $insurerCommissionTaxInvoiceNo,
-            'commission_vat_applicable' => $commissionVatApplicable,
+            'insurer_invoice_date' => $issuePolicyResult?->CommissionAmount,
+            'insurer_tax_invoice_no' => $issuePolicyResult?->CommissionAmount,
+            'insurer_commission_tax_invoice_no' => $issuePolicyResult?->CommissionAmount,
+            'commission_vat_applicable' => $issuePolicyResult?->CommissionAmount,
+            'policy_number' => $issuePolicyResult?->PolicyNumber,
         ]);
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issued successfully and Quote updated');
-
-        $response['status'] = true;
-        $response['message'] = 'Policy issued successfully and Quote updated';
-
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
-
-        return $response;
+        return $issuePolicy;
     }
 
-    private function executeGetPolicyDocumentsStep($quote, $process): void
+    private function executeGetAndUploadPolicyDocumentsStep($quote, $process): void
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.PolicyIssuanceEnum::GIG_CAR_GET_POLICY_DOCUMENTS);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::GET_AND_UPLOAD_POLICY_DOCUMENTS);
 
-        $policyIssuanceResponse = $this->getPolicyDocuments($quote);
+        $policyIssuanceResponse = $this->getAndUploadPolicyDocuments($quote, $process);
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            throw new Exception($policyIssuanceResponse['error']);
+            // TODO:: this need to be handled properly and update the lead status to failed
+            // throw new Exception($policyIssuanceResponse['error']);
         }
 
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
     }
 
-    public function getPolicyDocuments($quote): array
+    public function getAndUploadPolicyDocuments($quote, $process): array
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$this->policyIssuance->id.' - Step : '.self::GET_AND_UPLOAD_POLICY_DOCUMENTS);
 
-        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::GIG_CAR_GET_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
+        $response = ['status' => false, 'completed_step' => self::GET_AND_UPLOAD_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
         $endPoint = '/v1/insurance-documents/document';
 
-        $getPolicyDocuments = $this->gigHttpCall($endPoint, []);
-        $getPolicyDocumentsResponse = $getPolicyDocuments->object();
-
-        // TODO:: Need to upload these documents to the quote
-
-        if ($this->hasGigError($getPolicyDocuments)) {
-            $errorMessage = $this->extractGigErrorMessage($getPolicyDocuments);
-            $response['error'] = $errorMessage ?? 'Policy documents failed';
-
+        $getPolicyIssuanceResponse = $process->data ? json_decode($process->data)?->self::ISSUE_POLICY : null;
+        if (! $getPolicyIssuanceResponse) {
+            $response['error'] = 'Policy issuance response not found in process data';
             return $response;
         }
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy documents fetched successfully');
+        $uploadedDocumentsToIMCRM = collect();
+        $policyDocuments = $getPolicyIssuanceResponse?->data->documents; 
+        foreach ($policyDocuments as $policyDocument) {
+            $quoteDocument = null;
+            $docName = $policyDocument->name;
+            $docMapping = $this->getPolicyIssuanceQuoteDocumentMapping($docName, $quote);
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document Name : '.$docName);
+            $header = [
+                'opCo' => self::OP_CO,
+                'documentType' => $policyDocument->docId,
+                'referenceType' => 'policy',
+                'referenceValue' => $quote->policy_number,
+                'Accept' => 'application/json',
+            ];
 
-        $response['status'] = true;
-        $response['message'] = 'Policy documents fetched successfully';
+            $document = $this->httpCall($endPoint, [], $header, self::REQUEST_GET);
+            if ($docMapping) {
+                if ($document['status']) {
+                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start Upload To Quote Docs : '.$docName);
+                    $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $document['data']?->document, $docMapping['code'], $docName);
+                } else {
+                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Insurer Document not found for : '.$docName, ['status' => $document['status'], 'error' => $document['error']]);
+                }
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+                $uploadedDocumentsToIMCRM->push([
+                    'name' => $docName,
+                    'uploaded' => $quoteDocument?->id ? true : false,
+                    'message' => $document['message'],
+                ]);
+            }
+        }
+
+        $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('uploaded', false)->count() === 0;
+        if (! $allDocumentsUploaded) {
+            $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('uploaded', false)->pluck('name')->toArray();
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - failed to fetch all documents from insurer : ', $docsUploadToIMCRMFailed);
+            
+            $process->update(['completed_step' => self::GET_AND_UPLOAD_POLICY_DOCUMENTS]);
+            $process = $process->refresh();
+
+            $error = 'Policy Issuance is pending as '.implode(',', $docsUploadToIMCRMFailed).' documents are not uploaded';
+            $response['error'] = $error;
+            $response['message'] = $error;
+
+            return $response;
+        } else {
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - fetched all documents from insurer and Uploaded to IMCRM ');
+            // TODO:: Don't understand why this is needed
+            $process->update(['completed_step' => PolicyIssuanceEnum::GIG_CAR_UPLOAD_POLICY_CERTIFICATE_OF_INSURANCE]);
+            $process = $process->refresh();
+
+            $response['status'] = true;
+            $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
+        }
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$process->completed_step);
 
         return $response;
     }
 
-    private function executeBookPolicyStep($quote, $process): void
+    private function getPolicyIssuanceQuoteDocumentMapping($docName, $quote): ?array
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.PolicyIssuanceEnum::GIG_CAR_BOOK_POLICY);
-        
+
+        $documentCodeMapping = [
+            self::POLICY_DOC_TAX_INVOICE => QuoteDocumentsEnum::CAR_TAX_INVOICE,
+            self::POLICY_DOC_COMMISSION_STATEMENT => QuoteDocumentsEnum::CAR_TAX_INVOICE,
+            self::POLICY_DOC_POLICY_SCHEDULE => QuoteDocumentsEnum::POLICY_SCHEDULE,
+        ];
+
+        $docCode = $documentCodeMapping[$docName] ?? null;
+        if ($docCode) {
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document Mapping found for : '.$docName, ['key' => $docName, 'code' => $docCode]);
+            return ['key' => $docName, 'code' => $docCode];
+        }
+
+        if (str_contains($docName, self::POLICY_DOC_CERTIFICATE_OF_INSURANCE)) {
+            $docCode = QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE; 
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document Name : '.$docName.' - ', ['key' => $docName, 'code' => $docCode]);
+
+            return ['key' => $docName, 'code' => $docCode];
+        }
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document Mapping not found for : '.$docName);
+
+        return null;
     }
-
-    public function bookPolicy($quote): array
-    {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
-        
-        
-    }
-
-    // private function executeGenerateDocumentsStep($quote, $process, $getQuoteDetails): void
-    // {
-    //     LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::GENERATE_POLICY_DOCUMENTS);
-
-    //     // $this->currentInsurerApiStatus = PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
-    //     $generateDocumentsResponse = $this->generatePolicyDocuments($quote, $process, $getQuoteDetails);
-
-    //     if (! $generateDocumentsResponse['status']) {
-    //         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document generation failed', extra: ['response' => $generateDocumentsResponse]);
-    //         throw new Exception($generateDocumentsResponse['error']);
-    //     }
-
-    //     $process->update(['completed_step' => $generateDocumentsResponse['completed_step']]);
-    // }
-
-    // public function generatePolicyDocuments($quote, $process, $getQuoteDetails): array
-    // {
-    //     LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
-
-    //     $response = ['status' => false, 'completed_step' => self::GENERATE_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
-
-    //     $endPoint = '/GeneratePolicyDocument';
-    //     $payload = app(ADNICPayloadsMappings::class)->createGeneratePolicyDocumentPayload($this, $process, $getQuoteDetails);
-    //     $generateDocuments = $this->adnicHttpCall($endPoint, $payload);
-
-    //     $generateDocumentsResponse = $generateDocuments->object();
-    //     $this->storePolicyIssuanceLog($quote, $payload, $generateDocumentsResponse, $this->baseUrl.$endPoint, $response['completed_step'], $generateDocuments->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
-
-    //     if ($generateDocuments->failed()) {
-    //         $response['error'] = $generateDocumentsResponse?->ErrorInfo ?? 'Document generation failed';
-
-    //         return $response;
-    //     }
-
-    //     LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Documents generated successfully');
-
-    //     $response['status'] = true;
-    //     $response['message'] = 'Documents generated successfully';
-
-    //     // TODO:: need to check with Shereen, if this is correct or not
-    //     $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
-
-    //     LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
-
-    //     return $response;
-    // }
 
     private function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null): void
     {
@@ -520,8 +524,54 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
     }
 
+    private function executeBookPolicyStep($quote, $process): void
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::BOOK_POLICY);
+        $policyIssuanceResponse = $this->bookPolicy($quote);
+
+        if (! $policyIssuanceResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
+            // TODO:: this need to be handled properly and update the lead status to failed
+            // throw new Exception($policyIssuanceResponse['error']);
+        }
+
+        $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
+    }
+
+    public function bookPolicy($quote): array
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
+
+        $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
+
+        $request = new \stdClass;
+        $request->quote_id = $quote->id;
+        $request->modelType = self::TYPE;
+        $request->model_type = self::TYPE;
+        $request->is_send_policy = false;
+        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+        $request->transaction_payment_status = null;
+
+        $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
+
+        if (! $createSageProcessResponse['status']) {
+            $response['error'] = $createSageProcessResponse['message'];
+
+            return $response;
+        }
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+
+        $response['status'] = true;
+        $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
+
+        return $response;
+    }
+
     private function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status = 'success'): void
     {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$this->policyIssuance->id.' started');
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $this->policyIssuance->id,
             'model_type' => $quote->getMorphClass(),
@@ -536,70 +586,85 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$this->policyIssuance?->id.' Log ID : '.$log->id);
     }
 
-    private function gigHttpCall($endPoint, $payload)
+    private function getAccessToken()
     {
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            // 'Ocp-Apim-Subscription-Key' => $this->authParam['Ocp-Apim-Subscription-Key'],
-            // 'Authorization' => 'Bearer '.$this->authParam['Authorization'],
+        if ($this->accessToken) {
+            return $this->accessToken;
+        }
+
+        $payload = [
+            'client_id' => $this->clientId, 'client_secret' => $this->clientSecret,  'grant_type' => 'client_credentials',  'audience' => 'integration-platform',
         ];
 
-        $url = $this->baseUrl.$endPoint;
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' URL : '.$url);
+        $header = [
+            'Content-Type' => 'application/x-www-form-urlencoded',
+        ];
+        $response = $this->httpCall($this->authUrl, $payload, $header, self::REQUEST_AUTH);
 
-        return Http::timeout(30)
-            ->withHeaders($headers)
-            ->post($url, $payload);
+        if ($response['status']) {
+            $data = $response['data'];
+
+            $accessToken = $data->access_token;
+            $expiresIn = (int) $data->expires_in;
+
+            Cache::store('redis')->put(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY, $accessToken, $expiresIn);
+            $this->accessToken = Cache::store('redis')->get(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY);
+
+            return $this->accessToken;
+        }
+
+        return $response;
     }
 
-    private function hasGigError($response): bool
+    private function httpCall($endPoint, $payload, $requestHeader = [], $method = self::REQUEST_GET)
     {
-        if ($response->failed()) {
-            return true;
-        }
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Endpoint : '.$endPoint.' , Method : '.$method);
+        $response = [
+            'status' => false, 'error' => null, 'message' => null, 'data' => null, 'completed_step' => null,
+        ];
+        $commentHeader = [
+            'Authorization' => 'Bearer '.$this->accessToken,
+            'opCo' => 'GULF',
+            'sourceApplication' => 'OLS',
+        ];
+        $header = array_merge($commentHeader, $requestHeader);
 
-        $responseObject = $response->object();
+        try {
+            $httpResponse = match ($method) {
+                self::REQUEST_PATCH => Http::retry(
+                    $this->maxRetries, 
+                    $this->retryDelay
+                )->timeout(30)->withHeaders($header)->patch($endPoint, $payload),
+                self::REQUEST_POST => Http::retry(
+                    $this->maxRetries, 
+                    $this->retryDelay
+                )->timeout(30)->withHeaders($header)->post($endPoint, $payload),
+                self::REQUEST_AUTH => Http::retry(
+                    $this->maxRetries, 
+                    $this->retryDelay
+                )->timeout(30)->withHeaders($header)->asForm()->post($endPoint, $payload),
+                default => Http::retry($this->maxRetries, $this->retryDelay)->timeout(30)->withHeaders($header)->get($endPoint, $payload),
+            };
 
-        if (isset($responseObject->DocumentInfo->ErrorInfo)) {
-            if (is_array($responseObject->DocumentInfo->ErrorInfo) && ! empty($responseObject->DocumentInfo->ErrorInfo)) {
-                return true;
-            }
-            if (is_string($responseObject->DocumentInfo->ErrorInfo) && ! empty($responseObject->DocumentInfo->ErrorInfo)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function extractGigErrorMessage($response): string
-    {
-        if ($response->failed()) {
-            return $response->body() ?? 'HTTP request failed';
-        }
-
-        $responseObject = $response->object();
-
-        if (isset($responseObject->DocumentInfo->ErrorInfo)) {
-            if (is_array($responseObject->DocumentInfo->ErrorInfo)) {
-                $errorMessages = [];
-                foreach ($responseObject->DocumentInfo->ErrorInfo as $error) {
-                    if (isset($error->ErrorCode) && isset($error->ErrorMsg)) {
-                        $errorMessages[] = "Error {$error->ErrorCode}: {$error->ErrorMsg}";
-                    } elseif (is_string($error)) {
-                        $errorMessages[] = $error;
-                    }
-                }
-
-                return implode('; ', $errorMessages);
+            if ($httpResponse->successful()) {
+                $response['status'] = true;
+                $response['data'] = $httpResponse->object();
+                $response['message'] = 'API call successfully executed.';
+            } else {
+                $response['error'] = $httpResponse->object()->error;
+                $response['message'] = $httpResponse->object()->error_description;
             }
 
-            if (is_string($responseObject->DocumentInfo->ErrorInfo)) {
-                return $responseObject->DocumentInfo->ErrorInfo;
-            }
-        }
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Status : '.$response['status'].' , Message : '.$response['message'].' , Error : '.$response['error']);
 
-        return 'Unknown error occurred';
+            return $response;
+        } catch (Exception $e) {
+            logger()->error('automation:'.$this->className.' fn:'.__FUNCTION__.' - Endpoint :  '.$endPoint.' , Error : '.$e->getMessage());
+
+            $response['error'] = $e->getMessage();
+            $response['message'] = $e->getMessage();
+
+            return $response;
+        }
     }
 }

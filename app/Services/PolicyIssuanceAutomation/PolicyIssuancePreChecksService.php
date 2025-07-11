@@ -71,25 +71,5 @@ class PolicyIssuancePreChecksService
         return ['status' => true, 'message' => 'GIG policy issuance automation pre-checks passed'];
     }
 
-    public function policyAutomationDocumentsCheck($quoteTypeId, $quote, $insuranceProviderCode, $requiredDocs)
-    {
-        $quoteDocuments = QuoteDocument::where('quote_documentable_type', get_class($quote))
-            ->where('quote_documentable_id', $quote->id)
-            ->whereHas('documentType', function ($query) use ($quoteTypeId) {
-                $query->where([
-                    'category' => DocumentTypeCode::QUOTE,
-                    'quote_type_id' => $quoteTypeId,
-                    'is_active' => 1,
-                ]);
-            })
-            ->pluck('document_type_code')
-            ->toArray();
-
-        $isRequiredDocsUploaded = count(array_intersect($requiredDocs[$insuranceProviderCode], $quoteDocuments)) === count($requiredDocs[$insuranceProviderCode]);
-        if (! $isRequiredDocsUploaded) {
-            return ['status' => false, 'message' => 'GIG required documents not uploaded for policy issuance automation'];
-        }
-
-        return ['status' => true, 'message' => 'GIG required documents uploaded for policy issuance automation'];
-    }
+    
 }

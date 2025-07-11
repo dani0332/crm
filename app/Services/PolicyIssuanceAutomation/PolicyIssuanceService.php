@@ -2,12 +2,14 @@
 
 namespace App\Services\PolicyIssuanceAutomation;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
+use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
@@ -30,6 +32,7 @@ class PolicyIssuanceService
             },
             QuoteTypes::CAR->value => match ($insurerCode) {
                 InsuranceProvidersEnum::AXA => new GIGInsuranceService,
+                
                 default => null,
             },
             default => null,
@@ -257,4 +260,28 @@ class PolicyIssuanceService
 
     //     return ['status' => true, 'message' => 'Policy issuance automation triggered successfully'];
     // }
+
+    // Validation checks for policy issuance automation
+
+    public function documentUploadPreChecks($quoteTypeId, $quote, $insuranceProviderCode, $requiredDocs)
+    {
+        $quoteDocuments = QuoteDocument::where('quote_documentable_type', get_class($quote))
+            ->where('quote_documentable_id', $quote->id)
+            ->whereHas('documentType', function ($query) use ($quoteTypeId) {
+                $query->where([
+                    'category' => DocumentTypeCode::QUOTE,
+                    'quote_type_id' => $quoteTypeId,
+                    'is_active' => 1,
+                ]);
+            })
+            ->pluck('document_type_code')
+            ->toArray();
+
+        $isRequiredDocsUploaded = count(array_intersect($requiredDocs[$insuranceProviderCode], $quoteDocuments)) === count($requiredDocs[$insuranceProviderCode]);
+        if (! $isRequiredDocsUploaded) {
+            return ['status' => false, 'message' => 'Required documents not uploaded for policy issuance automation'];
+        }
+
+        return ['status' => true, 'message' => 'Required documents uploaded for policy issuance automation'];
+    }
 }
