@@ -39,6 +39,12 @@ final class PolicyIssuanceEnum extends Enum
 
     /* Insurer API Generic Status */
 
+    // LIVA Car Steps
+    const LIVA_CAR_UPLOAD_DOCUMENTS = 'UploadDocuments';
+    const LIVA_CAR_ISSUE_POLICY = 'IssuePolicy';
+    const LIVA_CAR_GET_POLICY_DOCUMENTS = 'GetPolicyDocument';
+    const LIVA_CAR_BOOK_POLICY = 'BookPolicy';
+
     /* Alliance Travel Steps */
 
     const ALLIANCE_TRAVEL_ISSUE_POLICY = 'IssuePolicy';

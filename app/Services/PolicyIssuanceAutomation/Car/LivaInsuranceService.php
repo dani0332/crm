@@ -16,11 +16,13 @@ use App\Interfaces\PolicyIssuanceInterface;
 use App\Models\Payment;
 use App\Models\PolicyIssuanceLog;
 use App\Repositories\PaymentRepository;
+use App\Repositories\PersonalQuoteRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 
 class LivaInsuranceService implements PolicyIssuanceInterface
@@ -391,19 +393,36 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function createPolicy($quote)
     {
-        // testing;
+        LoggerService::startQuoteLogging($quote);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' started', extra: [
+            'time' => now()->format('Y-m-d H:i:s'),
+        ]);
 
         $myFile = fopen(__DIR__ . '/response.txt', 'r');
         $txt = fread($myFile, filesize(__DIR__ . '/response.txt'));
         fclose($myFile);
 
+        LoggerService::info('document decode work started', extra: [
+            'time' => now()->format('Y-m-d H:i:s'),
+        ]);
+        
         $file = (base64_decode(base64_decode($txt)));
 
         // Save the decoded PDF data to a file
         $pdfFileName = 'policy_document_' . $quote->code . '_' . date('Y-m-d_H-i-s') . '.pdf';
-        $pdfFilePath = __DIR__ . '/' . $pdfFileName;
+        
+        // Create temp directory if it doesn't exist
+        $tempDir = storage_path('temp');
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
+        $pdfFilePath = $tempDir . '/' . $pdfFileName;
         
         $bytesWritten = file_put_contents($pdfFilePath, base64_decode($file));
+        LoggerService::info('document decode work done', extra: [
+            'time' => now()->format('Y-m-d H:i:s'),
+        ]);
         
         if ($bytesWritten === false) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Failed to save PDF file at: ' . $pdfFilePath);
@@ -416,7 +435,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ]);
 
         // separate the pages, one page should tax invoice, 2nd should be policy schedule and 3rd should be policy document
-        $this->separatePdfPages($pdfFilePath, $quote->code);
+        $this->separatePdfPages($pdfFilePath, $quote);
+        LoggerService::info('document upload work done', extra: [
+            'time' => now()->format('Y-m-d H:i:s'),
+        ]);
 
         dd('done');
 
@@ -870,14 +892,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $similarity / 100;
     }
 
-    /**
-     * Separate PDF pages into individual documents
-     *
-     * @param string $pdfFilePath Path to the main PDF file
-     * @param string $quoteCode Quote code for naming files
-     * @return void
-     */
-    private function separatePdfPages(string $pdfFilePath, string $quoteCode): void
+    private function separatePdfPages($pdfFilePath, $quote): void
     {
         try {
             // Initialize FPDI
@@ -898,7 +913,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             // Extract each page
             for ($pageNum = 1; $pageNum <= $pageCount; $pageNum++) {
                 if (isset($pageMap[$pageNum])) {
-                    $this->extractSinglePage($pdfFilePath, $pageNum, $pageMap[$pageNum], $quoteCode);
+                    $this->extractSinglePage($pdfFilePath, $pageNum, $pageMap[$pageNum], $quote);
                 } else {
                     LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Skipping page ' . $pageNum . ' (not mapped)');
                 }
@@ -911,17 +926,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             throw new Exception('Failed to separate PDF pages: ' . $e->getMessage());
         }
     }
-    
-    /**
-     * Extract a single page from PDF
-     *
-     * @param string $sourcePdfPath Path to source PDF
-     * @param int $pageNumber Page number to extract
-     * @param string $documentType Type of document (tax_invoice, policy_schedule, policy_document)
-     * @param string $quoteCode Quote code for naming
-     * @return void
-     */
-    private function extractSinglePage(string $sourcePdfPath, int $pageNumber, string $documentType, string $quoteCode): void
+
+    private function extractSinglePage($sourcePdfPath, $pageNumber, $documentType, $quote): void
     {
         try {
             // Create new PDF instance
@@ -943,21 +949,94 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $pdf->useTemplate($templateId);
             
             // Generate filename
-            $filename = $documentType . '_' . $quoteCode . '_' . date('Y-m-d_H-i-s') . '.pdf';
-            $outputPath = __DIR__ . '/' . $filename;
+            $filename = $documentType . '_' . $quote->code . '_' . date('Y-m-d_H-i-s') . '.pdf';
+            
+            // Create temp directory if it doesn't exist
+            $tempDir = storage_path('temp');
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            
+            $outputPath = $tempDir . '/' . $filename;
             
             // Save the single page PDF
             $pdf->Output($outputPath, 'F');
+
+            // Create UploadedFile object from generated PDF
+            $file = new UploadedFile(
+                $outputPath,
+                $filename,
+                'application/pdf',
+                null,
+                true // test mode - don't validate file was uploaded via HTTP
+            );
             
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Page ' . $pageNumber . ' extracted successfully', extra: [
+            // Map document types to document type codes
+            $documentTypeCode = $this->getDocumentTypeCode($documentType);
+            
+            // Prepare data array for fetchUploadDocument
+            $data = [
+                'document_type_code' => $documentTypeCode,
+                'quote_uuid' => $quote->uuid,
+            ];
+            
+            // Set request parameters needed by fetchUploadDocument
+            request()->merge([
+                'quote_type_id' => $quote->quote_type_id ?? null,
+                'quote_type' => $this->getQuoteType($quote),
+                'is_send_update' => false, // Set to true if this is for send update
+                // 'send_update_id' => $sendUpdateId, // Only if is_send_update is true
+            ]);
+            
+            // Get file size before uploading
+            $fileSize = filesize($outputPath);
+            
+            // Call fetchUploadDocument using PersonalQuoteRepository
+            $result = PersonalQuoteRepository::uploadDocument($quote->id, $file, $data);
+            
+            // Clean up temporary file
+            if (file_exists($outputPath)) {
+                unlink($outputPath);
+            }
+            
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Page ' . $pageNumber . ' extracted and uploaded successfully', extra: [
                 'document_type' => $documentType,
-                'output_path' => $outputPath,
-                'file_size' => filesize($outputPath) . ' bytes'
+                'document_type_code' => $documentTypeCode,
+                'upload_result' => $result,
+                'file_size' => $fileSize . ' bytes'
             ]);
             
         } catch (\Exception $e) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error extracting page ' . $pageNumber, exception: $e);
             throw new Exception('Failed to extract page ' . $pageNumber . ': ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Map document types to document type codes
+     *
+     * @param string $documentType
+     * @return string
+     */
+    private function getDocumentTypeCode(string $documentType): string
+    {
+        return match($documentType) {
+            'tax_invoice' => 'TI',
+            'policy_schedule' => 'CPS',
+            'policy_document' => 'CPC',
+            default => 'UNKNOWN_DOCUMENT'
+        };
+    }
+
+    /**
+     * Get quote type from quote object
+     *
+     * @param object $quote
+     * @return string
+     */
+    private function getQuoteType(object $quote): string
+    {
+        // You can adjust this logic based on your quote object structure
+        return $quote->quote_type ?? 'Car';
     }
 }
