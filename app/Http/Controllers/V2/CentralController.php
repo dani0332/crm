@@ -353,8 +353,8 @@ class CentralController extends Controller
                 ]], 403);
             }
 
-            $quoteType = $this->getQuoteCodeType($quote);
-            $quoteTypeId = QuoteTypes::getNameShortCode($quoteType)?->id();
+            $quoteType = QuoteTypes::getNameShortCode($this->getQuoteCodeType($quote) ?? '');
+            $quoteTypeId = $quoteType?->id();
 
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home, QuoteTypeId::Travel])) {
 
@@ -371,7 +371,7 @@ class CentralController extends Controller
 
                 if ($captureableEmbeddedTransactions->isNotEmpty()) {
                     try {
-                        EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType));
+                        EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
 
                         LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
                             extra: $captureableEmbeddedTransactions->toArray()
