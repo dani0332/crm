@@ -2540,7 +2540,7 @@ watch(
             :showCommissionPercentageExceedsLimitAlert="
               showCommissionPercentageExceedsLimitAlert
             "
-            :bpForm="bpForm"
+            :bpForm="bookingDetailsForm"
             @modalClosed="showCommissionPercentageExceedsLimitAlert = false"
           />
         </x-form>
