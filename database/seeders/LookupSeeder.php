@@ -564,7 +564,7 @@ class LookupSeeder extends Seeder
         foreach ($claimSubStatuses as $status) {
             Lookup::firstOrCreate([
                 'quote_type_id' => $status['quote_type_id'],
-                'key' => 'claim-sub-status',
+                'key' => 'claim-sub-statuses',
                 'code' => $status['code'],
                 'text' => $status['text'],
             ], [

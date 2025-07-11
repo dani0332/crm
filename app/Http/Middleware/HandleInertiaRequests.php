@@ -34,6 +34,7 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -105,6 +106,7 @@ class HandleInertiaRequests extends Middleware
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'documentTypeEnum' => DocumentTypeEnum::asArray(),
             'sendPolicyTypeEnum' => SendPolicyTypeEnum::asArray(),
+            'quoteTypeIds' => QuoteTypeId::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),

@@ -1,0 +1,594 @@
+<script setup>
+const props = defineProps({
+  claims: Object,
+  claimDropdownOptions: Object,
+  statistics: Object,
+  filters: Object,
+});
+
+const page = usePage();
+const notification = useNotifications('toast');
+const permissionsEnum = page.props.permissionsEnum;
+const quoteTypeIds = page.props.quoteTypeIds;
+const can = permission => useCan(permission);
+
+let availableFilters = {
+  code: '',
+  first_name: '',
+  last_name: '',
+  email: '',
+  mobile_no: '',
+  created_start_date: '',
+  created_end_date: '',
+  claim_status: '',
+  claim_sub_status: '',
+  assigned_claim_manager_id: '',
+  claim_manager_id: '',
+  claim_manager_assigned_date: '',
+  line_of_business: '',
+  policy_number: '',
+  assigned_status: '',
+  next_followup_date: '',
+  plate_number: '',
+  vehicle_make: '',
+  vehicle_model: '',
+  vehicle_year: '',
+  page: 1,
+};
+
+const filters = reactive({ ...availableFilters, ...props.filters });
+const loader = reactive({
+  table: false,
+  export: false,
+});
+
+const tableHeader = [
+  { text: 'REF-ID', value: 'ref_id' },
+  { text: 'FIRST NAME', value: 'first_name' },
+  { text: 'LAST NAME', value: 'last_name' },
+  { text: 'EMAIL', value: 'email' },
+  { text: 'MOBILE', value: 'mobile_no' },
+  { text: 'LINE OF BUSINESS', value: 'line_of_business' },
+  { text: 'CLAIM TYPE', value: 'claim_type' },
+  { text: 'POLICY NUMBER', value: 'policy_number' },
+  { text: 'INSURER CLAIM NUMBER', value: 'insurer_claim_number' },
+  { text: 'PLATE NUMBER', value: 'plate_number' },
+  { text: 'VEHICLE MAKE', value: 'vehicle_make' },
+  { text: 'VEHICLE MODEL', value: 'vehicle_model' },
+  { text: 'VEHICLE YEAR', value: 'vehicle_year' },
+  { text: 'STATUS', value: 'status' },
+  { text: 'ASSIGNED TO', value: 'assigned_to' },
+  { text: 'CREATED AT', value: 'created_at' },
+  { text: 'ACTIONS', value: 'actions' },
+];
+
+const statusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+const assignedStatusOptions = [
+  { value: 'assigned', label: 'Assigned' },
+  { value: 'un-assigned', label: 'Un Assigned' },
+];
+
+const lineOfBusinessOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.lineOfBusiness?.map(qt => ({
+      value: qt.id,
+      label: qt.text,
+    })) || []
+  );
+});
+
+const claimTypeOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.claimTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
+});
+
+const claimSubStatusOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.claimSubStatuses?.map(css => ({
+      value: css.id,
+      label: css.text,
+    })) || []
+  );
+});
+
+const managersOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.claimsManagers?.map(manager => ({
+      value: manager.id,
+      label: manager.name,
+    })) || []
+  );
+});
+
+const vehicleMakeOptions = computed(() => {
+  return [];
+});
+
+const vehicleModelOptions = computed(() => {
+  return [];
+});
+
+function onSubmit(isValid) {
+  if (isValid) {
+    filters.page = 1;
+    Object.keys(filters).forEach(
+      key =>
+        (filters[key] === '' || filters[key]?.length === 0) &&
+        delete filters[key],
+    );
+
+    router.visit('/claims', {
+      method: 'get',
+      data: filters,
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.table = true),
+      onSuccess: () => (loader.table = false),
+    });
+  }
+}
+
+function onReset() {
+  router.visit('/claims', {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+}
+
+function assignManager(claimId, managerId) {
+  router.post(
+    `/claims/${claimId}/assign-manager`,
+    {
+      manager_id: managerId,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Manager assigned successfully',
+          position: 'top',
+        });
+      },
+      onError: errors => {
+        notification.error({
+          title: 'Error assigning manager',
+          position: 'top',
+        });
+      },
+    },
+  );
+}
+
+function updateStatus(claimId, status) {
+  router.post(
+    `/claims/${claimId}/update-status`,
+    {
+      status: status,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Status updated successfully',
+          position: 'top',
+        });
+      },
+      onError: errors => {
+        notification.error({
+          title: 'Error updating status',
+          position: 'top',
+        });
+      },
+    },
+  );
+}
+
+function exportClaims() {
+  loader.export = true;
+  window.location.href = '/claims/export?' + new URLSearchParams(filters);
+  setTimeout(() => {
+    loader.export = false;
+  }, 3000);
+}
+
+// Check if selected line of business is car
+const isCarLOB = computed(() => {
+  return quoteTypeIds.Car === filters.line_of_business;
+});
+
+// Watcher to clear vehicle-specific filters when line of business changes away from car/bike
+watch(
+  () => filters.line_of_business,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      console.log('Line of business changed to:', newValue);
+
+      // Check if the new selection is car
+      const isVehicleType = newValue === quoteTypeIds.Car;
+
+      console.log('Is vehicle type (Car/Bike):', isVehicleType);
+
+      // Clear vehicle-specific filters if not a vehicle type
+      if (!isVehicleType) {
+        filters.plate_number = '';
+        filters.vehicle_make = '';
+        filters.vehicle_model = '';
+        filters.vehicle_year = '';
+
+        console.log('Cleared vehicle-specific filters');
+      }
+    }
+  },
+);
+</script>
+
+<template>
+  <div>
+    <Head title="Claims Management" />
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Claims Management</h2>
+      <div class="flex gap-2">
+        <Link v-if="can(permissionsEnum.CLAIM_CREATE)" href="/claims/create">
+          <x-button size="sm" color="primary">Add New Claim</x-button>
+        </Link>
+        <x-button
+          v-if="can(permissionsEnum.CLAIM_LIST)"
+          size="sm"
+          color="success"
+          @click="exportClaims"
+          :loading="loader.export"
+        >
+          Export Claims
+        </x-button>
+      </div>
+    </div>
+    <x-divider class="my-4" />
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" v-if="statistics">
+      <div class="bg-white p-4 rounded shadow">
+        <div class="text-2xl font-bold text-blue-600">
+          {{ statistics.total_claims }}
+        </div>
+        <div class="text-sm text-gray-600">Total Claims</div>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <div class="text-2xl font-bold text-yellow-600">
+          {{ statistics.pending_claims }}
+        </div>
+        <div class="text-sm text-gray-600">Pending Claims</div>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <div class="text-2xl font-bold text-green-600">
+          {{ statistics.completed_claims }}
+        </div>
+        <div class="text-sm text-gray-600">Completed Claims</div>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <div class="text-2xl font-bold text-red-600">
+          {{ statistics.cancelled_claims }}
+        </div>
+        <div class="text-sm text-gray-600">Cancelled Claims</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <x-form @submit="onSubmit" :auto-focus="false">
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <x-input
+          v-model="filters.code"
+          type="text"
+          name="code"
+          label="Ref ID"
+          placeholder="Search by Ref ID"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.first_name"
+          type="text"
+          name="first_name"
+          label="First Name"
+          placeholder="Search by First Name"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="text"
+          name="last_name"
+          label="Last Name"
+          placeholder="Search by Last Name"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.email"
+          type="email"
+          name="email"
+          label="Email Address"
+          placeholder="Search by Email"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="text"
+          name="mobile_no"
+          label="Mobile Number"
+          placeholder="Search by Mobile Number"
+          class="w-full"
+        />
+        <!-- Date filters -->
+        <DatePicker
+          v-model="filters.created_start_date"
+          name="created_start_date"
+          label="Created Date Start "
+          placeholder="Select Date From"
+        />
+        <DatePicker
+          v-model="filters.created_end_date"
+          name="created_end_date"
+          label="Created Date End "
+          placeholder="Select Date To"
+        />
+
+        <x-select
+          v-model="filters.status"
+          label="Claim Status"
+          placeholder="Select Status"
+          :options="statusOptions"
+        />
+        <x-select
+          v-model="filters.claim_sub_status"
+          label="Claim Sub Status"
+          placeholder="Select Claim Sub Status"
+          :options="claimSubStatusOptions"
+          filterable
+          filterPlaceholder="Filter Claim Sub Status...."
+        />
+
+        <x-select
+          v-model="filters.assigned_claim_manager_id"
+          label="Assigned Claims Manager"
+          placeholder="Select Manager"
+          :options="managersOptions"
+          filterable
+          filterPlaceholder="Filter Manager...."
+        />
+        <x-select
+          v-model="filters.claim_manager_id"
+          label="Assigned Claims Lead"
+          placeholder="Select Manager"
+          :options="managersOptions"
+          filterable
+          filterPlaceholder="Filter Manager...."
+        />
+        <DatePicker
+          v-model="filters.claim_manager_assigned_date"
+          name="claim_manager_assigned_date"
+          label="Claims Manager Assigned Date "
+          placeholder="Select Assigned Date"
+        />
+
+        <x-select
+          v-model="filters.line_of_business"
+          label="Line of Business"
+          placeholder="Select Line of Business"
+          :options="lineOfBusinessOptions"
+          filterable
+          filterPlaceholder="Filter Line of Business...."
+        />
+        <x-input
+          v-model="filters.policy_number"
+          type="text"
+          name="policy_number"
+          label="Policy Number"
+          placeholder="Search by Policy Number"
+          class="w-full"
+        />
+
+        <x-select
+          v-model="filters.assigned_status"
+          label="Search by Assigment"
+          placeholder="Select  "
+          :options="assignedStatusOptions"
+          filterable
+          filterPlaceholder="Filter Claim Type...."
+        />
+
+        <DatePicker
+          v-model="filters.next_follow_up_date"
+          name="next_follow_up_date"
+          label="Next Follow Up Date"
+          placeholder="Select Assigned Date"
+        />
+
+        <template v-if="isCarLOB">
+          <!-- Vehicle specific filters -->
+          <x-input
+            v-model="filters.plate_number"
+            type="text"
+            name="plate_number"
+            label="Plate Number"
+            placeholder="Search by Plate Number"
+            class="w-full"
+          />
+          <x-select
+            v-model="filters.vehicle_make"
+            label="Vehicle Make"
+            placeholder="Select Vehicle Make"
+            :options="vehicleMakeOptions"
+            filterable
+            filterPlaceholder="Filter Vehicle Make...."
+          />
+          <x-select
+            v-model="filters.vehicle_model"
+            label="Vehicle Model"
+            placeholder="Select Vehicle Model"
+            :options="vehicleModelOptions"
+            filterable
+            filterPlaceholder="Filter Vehicle Model...."
+          />
+          <x-input
+            v-model="filters.vehicle_year"
+            type="number"
+            name="vehicle_year"
+            label="Vehicle Year"
+            placeholder="Search by Vehicle Year"
+            class="w-full"
+          />
+        </template>
+      </div>
+      <div class="flex justify-end gap-2 mb-4 mt-4">
+        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+        <x-button size="sm" color="primary" @click.prevent="onReset">
+          Reset
+        </x-button>
+      </div>
+    </x-form>
+
+    <!-- Data Table -->
+    <DataTable
+      table-class-name="tablefixed"
+      :headers="tableHeader"
+      :loading="loader.table"
+      :items="claims.data || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+    >
+      <template #item-ref_id="{ ref_id, id }">
+        <Link :href="`/claims/${id}`" class="text-primary-500 hover:underline">
+          {{ ref_id }}
+        </Link>
+      </template>
+
+      <template #item-first_name="{ first_name }">
+        {{ first_name }}
+      </template>
+
+      <template #item-last_name="{ last_name }">
+        {{ last_name }}
+      </template>
+
+      <template #item-email="{ email }">
+        {{ email }}
+      </template>
+
+      <template #item-mobile_no="{ mobile_no }">
+        {{ mobile_no }}
+      </template>
+
+      <template #item-line_of_business="{ quote_type }">
+        {{ quote_type?.title }}
+      </template>
+
+      <template #item-claim_type="{ claim_type_lookup }">
+        {{ claim_type_lookup?.text }}
+      </template>
+
+      <template #item-policy_number="{ policy_number }">
+        {{ policy_number }}
+      </template>
+
+      <template #item-insurer_claim_number="{ insurer_claim_number }">
+        {{ insurer_claim_number }}
+      </template>
+
+      <template #item-plate_number="{ plate_number }">
+        {{ plate_number }}
+      </template>
+
+      <template #item-vehicle_make="{ vehicle_make }">
+        {{ vehicle_make }}
+      </template>
+
+      <template #item-vehicle_model="{ vehicle_model }">
+        {{ vehicle_model }}
+      </template>
+
+      <template #item-vehicle_year="{ vehicle_year }">
+        {{ vehicle_year }}
+      </template>
+
+      <template #item-status="{ status }">
+        <x-tag
+          size="sm"
+          :color="
+            status === 'completed'
+              ? 'success'
+              : status === 'in_progress'
+                ? 'warning'
+                : status === 'cancelled'
+                  ? 'error'
+                  : 'info'
+          "
+        >
+          {{ status }}
+        </x-tag>
+      </template>
+
+      <template #item-assigned_to="{ assigned_manager }">
+        {{ assigned_manager?.name }}
+      </template>
+
+      <template #item-created_at="{ created_at }">
+        {{ created_at }}
+      </template>
+
+      <template #item-actions="{ id, status }">
+        <div class="flex gap-2">
+          <Link
+            v-if="can(permissionsEnum.CLAIM_VIEW)"
+            :href="`/claims/${id}`"
+            class="text-blue-600 hover:underline"
+          >
+            View
+          </Link>
+          <Link
+            v-if="can(permissionsEnum.CLAIM_UPDATE)"
+            :href="`/claims/${id}/edit`"
+            class="text-green-600 hover:underline"
+          >
+            Edit
+          </Link>
+          <button
+            v-if="can(permissionsEnum.CLAIM_DELETE)"
+            @click="deleteClaim(id)"
+            class="text-red-600 hover:underline"
+          >
+            Delete
+          </button>
+        </div>
+      </template>
+    </DataTable>
+
+    <!-- Pagination -->
+    <div class="flex justify-center mt-4" v-if="claims.links">
+      <div class="flex gap-2">
+        <Link
+          v-for="link in claims.links"
+          :key="link.label"
+          :href="link.url"
+          :class="[
+            'px-3 py-2 text-sm border rounded',
+            link.active
+              ? 'bg-blue-500 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-100',
+            !link.url ? 'opacity-50 cursor-not-allowed' : '',
+          ]"
+          v-html="link.label"
+        />
+      </div>
+    </div>
+  </div>
+</template>

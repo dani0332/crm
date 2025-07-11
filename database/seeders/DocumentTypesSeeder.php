@@ -618,7 +618,7 @@ class DocumentTypesSeeder extends Seeder
     {
         $claimDocuments = [
             [
-                'code' => 'PR',
+                'code' => 'CLM_PR',
                 'text' => 'Police Report',
                 'description' => 'Upload a copy of the official police report for this incident.',
                 'is_active' => 1,
@@ -637,7 +637,7 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'DL',
+                'code' => 'CLM_DL',
                 'text' => 'Driver\'s License (both sides)',
                 'description' => 'Please share the license (both sides) of the driver involved.',
                 'is_active' => 1,
@@ -656,7 +656,7 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'MUL',
+                'code' => 'CLM_MUL',
                 'text' => 'Mulkiya (both sides)',
                 'description' => 'Upload the valid registration card of your vehicle (both sides).',
                 'is_active' => 1,
@@ -675,7 +675,7 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'OD',
+                'code' => 'CLM_OD',
                 'text' => 'Other documents',
                 'description' => 'Please provide any other relevant documents and pictures of the incident, if available.',
                 'is_active' => 1,
