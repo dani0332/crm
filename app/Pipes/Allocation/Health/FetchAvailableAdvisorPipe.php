@@ -27,20 +27,33 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
+            LoggerService::info(self::class.' - Skipping advisor eligibility fetch');
+
+            return $next($request);
+        }
+
         $advisor = $this->fetchAvailableAdvisor();
 
         if (! $advisor) {
             LoggerService::warning('No advisors found');
 
-            $this->allocationRequest->markAsFailed();
+            if ($this->allocationRequest->get('skipAdvisorEligibilityFetch', false)) {
+                LoggerService::info(self::class.' - Second call after reset - throwing exception');
+                $this->allocationRequest->markAsFailed();
 
-            // Check if we need to send an apply now email
-            if ($this->lead->isApplicationPending() && ! $this->lead->isApplyNowEmailSent() && Carbon::parse($this->lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
-                LoggerService::info("Sending Apply Now Email as it's been 10 minutes since quote status was marked as application pending");
-                app(HealthEmailService::class)->initiateApplyNowEmail($this->lead);
+                // Check if we need to send an apply now email
+                if ($this->lead->isApplicationPending() && ! $this->lead->isApplyNowEmailSent() && Carbon::parse($this->lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
+                    LoggerService::info("Sending Apply Now Email as it's been 10 minutes since quote status was marked as application pending");
+                    app(HealthEmailService::class)->initiateApplyNowEmail($this->lead);
+                }
+
+                $this->throw('Advisor not found', self::OK);
+            } else {
+                LoggerService::info(self::class.' - First call - continuing to ResetNationalityConfigPipe');
+
+                return $next($request);
             }
-
-            $this->throw('Advisor not found', self::OK);
         }
 
         $this->allocationRequest->setAdvisor($advisor);

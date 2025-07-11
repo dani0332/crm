@@ -327,7 +327,7 @@ class AllocationService extends BaseService
         }
 
         if ($request->isAllocated() || $request->isSameAdvisor()) {
-            $message = 'Lead allocated successfully';
+            $message = 'Advisor assigned successfully!';
 
             if ($request->isSameAdvisor()) {
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
