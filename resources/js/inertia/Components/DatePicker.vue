@@ -63,60 +63,67 @@ const props = defineProps({
 });
 
 const selectedData = computed({
-  get() { return props.modelValue; },
-  set(newValue) { emit('update:modelValue', newValue); },
+  get() {
+    return props.modelValue;
+  },
+  set(newValue) {
+    emit('update:modelValue', newValue);
+  },
 });
 
 const iconPosition = computed(() => {
   return props.label ? '2.75rem' : '54%';
 });
 
-  function isValidDateFormat(input) {
-    if (!_.isString(input) || _.isEmpty(input)) return false;
+function isValidDateFormat(input) {
+  if (!_.isString(input) || _.isEmpty(input)) return false;
 
-    // Regex for dd/MM/yyyy or dd/MM/yyyy HH:mm
-    const dateRegex = props.withTime
-      ? /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/
-      : /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  // Regex for dd/MM/yyyy or dd/MM/yyyy HH:mm
+  const dateRegex = props.withTime
+    ? /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/
+    : /^(\d{2})\/(\d{2})\/(\d{4})$/;
 
-    if (!dateRegex.test(input)) return false;
+  if (!dateRegex.test(input)) return false;
 
-    const [, day, month, year, hours, minutes] = input.match(dateRegex) || [];
-    const dateString = `${year}-${month}-${day}${props.withTime ? `T${hours}:${minutes}:00` : ''}`;
-    const date = new Date(dateString);
+  const [, day, month, year, hours, minutes] = input.match(dateRegex) || [];
+  const dateString = `${year}-${month}-${day}${props.withTime ? `T${hours}:${minutes}:00` : ''}`;
+  const date = new Date(dateString);
 
-    const isValid = !isNaN(date) &&
-      date.getDate() === parseInt(day) &&
-      date.getMonth() + 1 === parseInt(month) &&
-      date.getFullYear() === parseInt(year);
+  const isValid =
+    !isNaN(date) &&
+    date.getDate() === parseInt(day) &&
+    date.getMonth() + 1 === parseInt(month) &&
+    date.getFullYear() === parseInt(year);
 
-    if (props.withTime) {
-      return isValid &&
-        date.getHours() === parseInt(hours) &&
-        date.getMinutes() === parseInt(minutes) &&
-        parseInt(hours) < 24 &&
-        parseInt(minutes) < 60;
-    }
-
-    return isValid;
+  if (props.withTime) {
+    return (
+      isValid &&
+      date.getHours() === parseInt(hours) &&
+      date.getMinutes() === parseInt(minutes) &&
+      parseInt(hours) < 24 &&
+      parseInt(minutes) < 60
+    );
   }
 
-  function isValidDateRangeFormat(input) {
-    if (!_.isString(input) || _.isEmpty(input)) return false;
+  return isValid;
+}
 
-    // Regex for dd/MM/yyyy - dd/MM/yyyy or dd/MM/yyyy HH:mm - dd/MM/yyyy HH:mm
-    const rangeDateRegex = props.withTime
-      ? /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})\s*-\s*(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/
-      : /^(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2})\/(\d{2})\/(\d{4})$/;
+function isValidDateRangeFormat(input) {
+  if (!_.isString(input) || _.isEmpty(input)) return false;
 
-    if (!rangeDateRegex.test(input)) return false;
+  // Regex for dd/MM/yyyy - dd/MM/yyyy or dd/MM/yyyy HH:mm - dd/MM/yyyy HH:mm
+  const rangeDateRegex = props.withTime
+    ? /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})\s*-\s*(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/
+    : /^(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2})\/(\d{2})\/(\d{4})$/;
 
-    // Split into first and second dates
-    const [firstDate, secondDate] = input.split(/\s*-\s*/);
+  if (!rangeDateRegex.test(input)) return false;
 
-    // Validate both dates using isValidDateFormat
-    return isValidDateFormat(firstDate) && isValidDateFormat(secondDate);
-  }
+  // Split into first and second dates
+  const [firstDate, secondDate] = input.split(/\s*-\s*/);
+
+  // Validate both dates using isValidDateFormat
+  return isValidDateFormat(firstDate) && isValidDateFormat(secondDate);
+}
 </script>
 <template>
   <x-datepicker
@@ -147,19 +154,31 @@ const iconPosition = computed(() => {
         :tooltip="props.tooltip"
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
-        @update:modelValue="($event) => {
-          console.log('onInput:', $event);
-          console.log('range:', range);
-          if (props.range ? isValidDateRangeFormat($event) : isValidDateFormat($event)) {
-            onInput($event);
-          }else{
-            console.error('Invalid Date');
+        @update:modelValue="
+          $event => {
+            console.log('onInput:', $event);
+            console.log('range:', range);
+            if (
+              props.range
+                ? isValidDateRangeFormat($event)
+                : isValidDateFormat($event)
+            ) {
+              onInput($event);
+            } else {
+              console.error('Invalid Date');
+            }
           }
-        }"
-        @keydown.enter.prevent="($event) => {
-          console.log('onEnter:', value);
-          if (props.range ? isValidDateRangeFormat(value) : isValidDateFormat(value)) {
-            onEnter($event);
+        "
+        @keydown.enter.prevent="
+          $event => {
+            console.log('onEnter:', value);
+            if (
+              props.range
+                ? isValidDateRangeFormat(value)
+                : isValidDateFormat(value)
+            ) {
+              onEnter($event);
+            }
           }
         "
         @blur="
