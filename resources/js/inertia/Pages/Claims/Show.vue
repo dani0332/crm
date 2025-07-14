@@ -36,10 +36,12 @@ const statusForm = useForm({
 });
 
 const managersOptions = computed(() => {
-  return props.dropdowns.managers?.map(manager => ({
-    value: manager.id,
-    label: manager.name,
-  })) || [];
+  return (
+    props.dropdowns.managers?.map(manager => ({
+      value: manager.id,
+      label: manager.name,
+    })) || []
+  );
 });
 
 const statusOptions = [
@@ -66,7 +68,7 @@ function assignManager() {
         position: 'top',
       });
     },
-    onError: (errors) => {
+    onError: errors => {
       notification.error({
         title: 'Error assigning manager',
         position: 'top',
@@ -92,7 +94,7 @@ function updateStatus() {
         position: 'top',
       });
     },
-    onError: (errors) => {
+    onError: errors => {
       notification.error({
         title: 'Error updating status',
         position: 'top',
@@ -111,7 +113,7 @@ function deleteClaim() {
         });
         router.visit('/claims');
       },
-      onError: (errors) => {
+      onError: errors => {
         notification.error({
           title: 'Error deleting claim',
           position: 'top',
@@ -128,14 +130,16 @@ function formatDate(date) {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
 // Check if claim is vehicle-related
 const isVehicleRelated = computed(() => {
-  return props.claim.quote_type?.title?.toLowerCase() === 'car' ||
-         props.claim.quote_type?.title?.toLowerCase() === 'bike';
+  return (
+    props.claim.quote_type?.title?.toLowerCase() === 'car' ||
+    props.claim.quote_type?.title?.toLowerCase() === 'bike'
+  );
 });
 </script>
 
@@ -227,7 +231,7 @@ const isVehicleRelated = computed(() => {
             'py-2 px-1 border-b-2 font-medium text-sm',
             activeTab === tab.key
               ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
           ]"
         >
           {{ tab.label }}
@@ -237,11 +241,9 @@ const isVehicleRelated = computed(() => {
 
     <!-- Tab Content -->
     <div class="bg-white rounded shadow">
-
       <!-- Details Tab -->
       <div v-if="activeTab === 'details'" class="p-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
           <!-- Personal Information -->
           <div>
             <h3 class="text-lg font-semibold mb-4">Personal Information</h3>
@@ -279,7 +281,9 @@ const isVehicleRelated = computed(() => {
               </div>
               <div class="grid grid-cols-2">
                 <dt class="font-medium text-gray-600">Claim Type</dt>
-                <dd class="text-gray-900">{{ claim.claim_type_lookup?.text }}</dd>
+                <dd class="text-gray-900">
+                  {{ claim.claim_type_lookup?.text }}
+                </dd>
               </div>
               <div class="grid grid-cols-2">
                 <dt class="font-medium text-gray-600">Policy Number</dt>
@@ -295,9 +299,13 @@ const isVehicleRelated = computed(() => {
                   <x-tag
                     size="sm"
                     :color="
-                      claim.status === 'completed' ? 'success' :
-                      claim.status === 'in_progress' ? 'warning' :
-                      claim.status === 'cancelled' ? 'error' : 'info'
+                      claim.status === 'completed'
+                        ? 'success'
+                        : claim.status === 'in_progress'
+                          ? 'warning'
+                          : claim.status === 'cancelled'
+                            ? 'error'
+                            : 'info'
                     "
                   >
                     {{ claim.status.replace('_', ' ').toUpperCase() }}
@@ -306,15 +314,21 @@ const isVehicleRelated = computed(() => {
               </div>
               <div class="grid grid-cols-2">
                 <dt class="font-medium text-gray-600">Assigned To</dt>
-                <dd class="text-gray-900">{{ claim.assigned_manager?.name }}</dd>
+                <dd class="text-gray-900">
+                  {{ claim.assigned_manager?.name }}
+                </dd>
               </div>
               <div class="grid grid-cols-2">
                 <dt class="font-medium text-gray-600">Incident Date</dt>
-                <dd class="text-gray-900">{{ formatDate(claim.incident_date) }}</dd>
+                <dd class="text-gray-900">
+                  {{ formatDate(claim.incident_date) }}
+                </dd>
               </div>
               <div class="grid grid-cols-2">
                 <dt class="font-medium text-gray-600">Report Date</dt>
-                <dd class="text-gray-900">{{ formatDate(claim.report_date) }}</dd>
+                <dd class="text-gray-900">
+                  {{ formatDate(claim.report_date) }}
+                </dd>
               </div>
             </dl>
           </div>
@@ -349,7 +363,9 @@ const isVehicleRelated = computed(() => {
         <div class="mt-8">
           <h3 class="text-lg font-semibold mb-4">Description</h3>
           <div class="bg-gray-50 p-4 rounded">
-            <p class="text-gray-700 whitespace-pre-wrap">{{ claim.description || 'No description provided' }}</p>
+            <p class="text-gray-700 whitespace-pre-wrap">
+              {{ claim.description || 'No description provided' }}
+            </p>
           </div>
         </div>
 
@@ -376,9 +392,7 @@ const isVehicleRelated = computed(() => {
       <div v-if="activeTab === 'documents'" class="p-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Documents</h3>
-          <x-button size="sm" color="primary">
-            Upload Document
-          </x-button>
+          <x-button size="sm" color="primary"> Upload Document </x-button>
         </div>
 
         <div v-if="documents && documents.length > 0" class="space-y-4">
@@ -389,7 +403,9 @@ const isVehicleRelated = computed(() => {
           >
             <div>
               <p class="font-medium">{{ document.name }}</p>
-              <p class="text-sm text-gray-500">{{ document.type }} - {{ formatDate(document.created_at) }}</p>
+              <p class="text-sm text-gray-500">
+                {{ document.type }} - {{ formatDate(document.created_at) }}
+              </p>
             </div>
             <div class="flex gap-2">
               <x-button size="sm" color="primary">Download</x-button>
@@ -407,12 +423,13 @@ const isVehicleRelated = computed(() => {
       <div v-if="activeTab === 'contacts'" class="p-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Additional Contacts</h3>
-          <x-button size="sm" color="primary">
-            Add Contact
-          </x-button>
+          <x-button size="sm" color="primary"> Add Contact </x-button>
         </div>
 
-        <div v-if="additionalContacts && additionalContacts.length > 0" class="space-y-4">
+        <div
+          v-if="additionalContacts && additionalContacts.length > 0"
+          class="space-y-4"
+        >
           <div
             v-for="contact in additionalContacts"
             :key="contact.id"
@@ -455,7 +472,9 @@ const isVehicleRelated = computed(() => {
             <div class="flex justify-between items-start mb-2">
               <div>
                 <p class="font-medium">{{ history.action }}</p>
-                <p class="text-sm text-gray-500">{{ formatDate(history.created_at) }}</p>
+                <p class="text-sm text-gray-500">
+                  {{ formatDate(history.created_at) }}
+                </p>
               </div>
               <div class="text-right">
                 <p class="text-sm font-medium">{{ history.user?.name }}</p>

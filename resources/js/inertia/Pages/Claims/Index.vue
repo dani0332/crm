@@ -20,7 +20,7 @@ let availableFilters = {
   phone_number: '',
   created_start_date: '',
   created_end_date: '',
-  claim_status_id: '' ,
+  claim_status_id: '',
   claim_sub_status_id: '',
   assigned_claim_manager_id: '',
   claim_manager_id: '',
@@ -100,7 +100,7 @@ const claimTypeOptions = computed(() => {
 });
 
 const claimSubStatusOptions = computed(() => {
-   return (
+  return (
     props.claimDropdownOptions?.claimSubStatuses
       ?.filter(ct => ct.quote_type_id === filters.line_of_business_id)
       ?.map(ct => ({
@@ -543,8 +543,7 @@ watch(
       </template>
 
       <template #item-claims_status="{ claims_status }">
-
-          {{ claims_status?.text }}
+        {{ claims_status?.text }}
       </template>
 
       <template #item-assigned_to="{ assigned_to }">

@@ -29,44 +29,60 @@ const claimForm = useForm({
 });
 
 const lineOfBusinessOptions = computed(() => {
-  return props.dropdowns.quote_types?.map(qt => ({
-    value: qt.id,
-    label: qt.title,
-  })) || [];
+  return (
+    props.dropdowns.quote_types?.map(qt => ({
+      value: qt.id,
+      label: qt.title,
+    })) || []
+  );
 });
 
 const claimTypeOptions = computed(() => {
-  return props.dropdowns.claim_types?.map(ct => ({
-    value: ct.id,
-    label: ct.text,
-  })) || [];
+  return (
+    props.dropdowns.claim_types?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
 });
 
 const claimSubStatusOptions = computed(() => {
-  return props.dropdowns.claim_sub_statuses?.map(css => ({
-    value: css.id,
-    label: css.text,
-  })) || [];
+  return (
+    props.dropdowns.claim_sub_statuses?.map(css => ({
+      value: css.id,
+      label: css.text,
+    })) || []
+  );
 });
 
 const vehicleMakeOptions = computed(() => {
-  return props.dropdowns.vehicle_makes?.map(vm => ({
-    value: vm.id,
-    label: vm.name,
-  })) || [];
+  return (
+    props.dropdowns.vehicle_makes?.map(vm => ({
+      value: vm.id,
+      label: vm.name,
+    })) || []
+  );
 });
 
 const vehicleModelOptions = computed(() => {
-  return props.dropdowns.vehicle_models?.map(vm => ({
-    value: vm.id,
-    label: vm.name,
-  })) || [];
+  return (
+    props.dropdowns.vehicle_models?.map(vm => ({
+      value: vm.id,
+      label: vm.name,
+    })) || []
+  );
 });
 
 // Show vehicle fields only for Car and Bike LOB
 const isVehicleRelated = computed(() => {
-  const selectedLob = props.dropdowns.quote_types?.find(qt => qt.id == claimForm.line_of_business);
-  return selectedLob && (selectedLob.title?.toLowerCase() === 'car' || selectedLob.title?.toLowerCase() === 'bike');
+  const selectedLob = props.dropdowns.quote_types?.find(
+    qt => qt.id == claimForm.line_of_business,
+  );
+  return (
+    selectedLob &&
+    (selectedLob.title?.toLowerCase() === 'car' ||
+      selectedLob.title?.toLowerCase() === 'bike')
+  );
 });
 
 function onSubmit(isValid) {
@@ -98,28 +114,34 @@ function onSubmit(isValid) {
     });
   } else {
     notification.error({
-      title: 'Error while submitting claim. Please check the form and try again',
+      title:
+        'Error while submitting claim. Please check the form and try again',
       position: 'top',
     });
   }
 }
 
 // Watch for changes in line of business and clear vehicle fields if not applicable
-watch(() => claimForm.line_of_business, (newVal) => {
-  if (!isVehicleRelated.value) {
-    claimForm.plate_number = '';
-    claimForm.vehicle_make = '';
-    claimForm.vehicle_model = '';
-    claimForm.vehicle_year = '';
-  }
-});
+watch(
+  () => claimForm.line_of_business,
+  newVal => {
+    if (!isVehicleRelated.value) {
+      claimForm.plate_number = '';
+      claimForm.vehicle_make = '';
+      claimForm.vehicle_model = '';
+      claimForm.vehicle_year = '';
+    }
+  },
+);
 </script>
 
 <template>
   <div>
     <Head :title="isEdit ? 'Edit Claim' : 'Create Claim'" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">{{ isEdit ? 'Edit Claim' : 'Create New Claim' }}</h2>
+      <h2 class="text-xl font-semibold">
+        {{ isEdit ? 'Edit Claim' : 'Create New Claim' }}
+      </h2>
       <div>
         <Link href="/claims">
           <x-button size="sm" color="#ff5e00">Claims List</x-button>
@@ -305,9 +327,7 @@ watch(() => claimForm.line_of_business, (newVal) => {
       <!-- Form Actions -->
       <div class="flex justify-end gap-3 mb-4">
         <Link href="/claims">
-          <x-button size="md" color="gray" type="button">
-            Cancel
-          </x-button>
+          <x-button size="md" color="gray" type="button"> Cancel </x-button>
         </Link>
         <x-button
           size="md"
