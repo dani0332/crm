@@ -558,7 +558,7 @@ const getRiderDetails = async planId => {
             min="0"
             :rules="
               rider.active
-                ? [isNonNegative, validateCoverValue, isRequired]
+                ? [isNonNegative, validateCoverValue, rider.inputRequired ? isRequired : null].filter(Boolean)
                 : []
             "
           />
@@ -569,7 +569,7 @@ const getRiderDetails = async planId => {
             @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.price"
-            :rules="rider.active ? [isNonNegative, isRequired] : []"
+            :rules="rider.active ? [isNonNegative, rider.inputRequired ? isRequired : null].filter(Boolean) : []"
           />
         </div>
       </div>
