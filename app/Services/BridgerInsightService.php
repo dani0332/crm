@@ -40,7 +40,7 @@ class BridgerInsightService
 
         $cacheKey = 'bridger_jwt_token';
 
-        return Cache::remember($cacheKey, 50 * 60, function () {
+        return Cache::remember($cacheKey, 50 * 60, function () {    // Cache the token for 50 minutes
             $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
             $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
             $bridgerClient = new \GuzzleHttp\Client;
