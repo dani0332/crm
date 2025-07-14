@@ -564,7 +564,7 @@ class QuoteDocumentService extends BaseService
                 'file' => $e->getFile(),
             ]);
 
-            // Incase ghostscriptWatermark() fails/throw exception. Made sure that we delete the file that it created.
+            // Incase qpdfWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
             if (file_exists($watermarkPdf ?? '')) {
                 unlink($watermarkPdf);
@@ -582,10 +582,26 @@ class QuoteDocumentService extends BaseService
             // If we can't even use the original file, re-throw the exception
             throw $e;
         } finally {
-            // after everything remove the sourceFile from storage/temp
+            // after everything remove all the temp files from storage/temp
             if (file_exists($sourceFilePath)) {
                 unlink($sourceFilePath);
             }
+
+            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt');
+            if (file_exists($qpdfLogPath)) {
+                unlink($qpdfLogPath);
+            }
+
+            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+            if (file_exists($decryptedTempPath)) {
+                unlink($decryptedTempPath);
+            }
+
+            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+            if (file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
+
         }
     }
 
@@ -603,8 +619,18 @@ class QuoteDocumentService extends BaseService
 
         if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
             $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
-            LoggerService::error("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
-            throw new \Exception('qpdf decryption failed');
+
+            if (strpos($logOutput, 'invalid password') !== false) {
+                /** PDF has password, falling back to original document*/
+
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+
+            } else {
+                throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+            }
         }
 
         // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
@@ -656,19 +682,6 @@ class QuoteDocumentService extends BaseService
 
         $pdf->Output($outputPath, 'F');
         // endregion
-
-        // Clean up temporary file
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
-        }
-
-        if (file_exists($qpdfLogPath)) {
-            unlink($qpdfLogPath);
-        }
-
-        if (file_exists($decryptedTempPath)) {
-            unlink($decryptedTempPath);
-        }
 
         // Check if the output file was created successfully
         if (! file_exists($outputPath) || filesize($outputPath) < 100) {
