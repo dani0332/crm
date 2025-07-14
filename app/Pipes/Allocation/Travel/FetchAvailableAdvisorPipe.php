@@ -53,7 +53,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     private function fetchAvailableAdvisor()
     {
-         // Use the team ID that was already evaluated in EvaluateTeamPipe
+        // Use the team ID that was already evaluated in EvaluateTeamPipe
         $teamId = $this->allocationRequest->getTeamId();
         
         $advisors = $this->fetchEligibleAdvisors($teamId);
@@ -102,7 +102,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     public function fetchEligibleAdvisors($teamId=null)
     {
-        
+
         $statusOrder = $this->getOnlineStatusesInOrder();
        
         if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
