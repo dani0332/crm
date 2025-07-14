@@ -1966,13 +1966,15 @@ class AMLService
 
     public function autoCaptureValidationCheck($quote)
     {
-        if($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
+        if ($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - AML Screening is not cleared');
+
             return false;
         }
 
-        if($quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
+        if ($quote->insurer_aml_status != AMLStatusCode::InsurerAMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - Insurer AML Screening is not cleared');
+
             return false;
         }
 
