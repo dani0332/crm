@@ -56,13 +56,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
          // Use the team ID that was already evaluated in EvaluateTeamPipe
         $teamId = $this->allocationRequest->getTeamId();
         
-        $advisors = $this->fetchEligibleAdvisors();
+        $advisors = $this->fetchEligibleAdvisors($teamId);
+      
         $rules = $this->allocationRequest->get('rules') ?? [];
         $availableAdvisorIds = $advisors->pluck('user_id')->toArray() ?? [];
         LoggerService::info(message: self::class." - quote id: {$this->lead->uuid} available advisor ids: ".json_encode($availableAdvisorIds));
-
-        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules, $this->evaluateTeamId($this->lead));
+     
+        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($availableAdvisorIds, $rules,  $teamId);
         $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
+        
         $advisor = User::find($advisorId);
 
         return $advisor;
@@ -98,17 +100,18 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     }
 
 
-    public function fetchEligibleAdvisors()
+    public function fetchEligibleAdvisors($teamId=null)
     {
         
         $statusOrder = $this->getOnlineStatusesInOrder();
-
+       
         if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
+       
         foreach ($statusOrder as $status) {
-            LoggerService::info(message: self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $teamId);
+            LoggerService::info(message: self::class." - trying to get advisors with current status as {$status}");
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $teamId );
 
             if (count($eligibleUsers) > 0) {
                 return $eligibleUsers;
@@ -119,7 +122,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     }
 
-    private function determineFinalAdvisorIdsBasedOnRules(TravelQuote $lead, $availableUserIds, $rules, $teamId): mixed
+    private function determineFinalAdvisorIdsBasedOnRules($availableUserIds, $rules, $teamId=null): mixed
     {
         if (! $teamId) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -128,9 +131,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
-
+           
             LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
-
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
@@ -169,34 +171,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     }
     private function getFinalAdvisorId($finalEligibleUserIds)
     {
-        if ($this->allocationRequest->get('hasBuyLeadAdvisors')) {
-            return $this->evaluateBuyLeadAdvisor($finalEligibleUserIds);
-        }
-
         // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
     }
 
-    private function evaluateBuyLeadAdvisor($finalEligibleUserIds)
-    {
-        foreach ($finalEligibleUserIds as $advisorId) {
-            $buyLeadRequest = BuyLeadRequest::getRequest(
-                $this->allocationRequest->getQuoteType(),
-                $this->allocationRequest->isSIC(),
-                $advisorId,
-                $this->lead->isValueLead(),
-            );
-
-            if ($buyLeadRequest) {
-                $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
-
-                LoggerService::info("Buy Lead Request {$buyLeadRequest->id} found for advisor ID: {$advisorId}  ");
-                $this->allocationRequest->getBuyLeadRequest()->startProcessing();
-
-                return $advisorId;
-            }
-        }
-
-        return 0;
-    }
+   
 }
