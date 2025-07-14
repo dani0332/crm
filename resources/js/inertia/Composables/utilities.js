@@ -533,7 +533,7 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
 };
 
 // prevent charaters, accepts only numbers, comma, and decimal point
-export const preventInvalidInputs = (event, allowComma = false) => {
+export const preventInvalidInputs = (event, allowComma = false, allowDecimal = false) => {
   const key = event.key
 
   const controlKeys = [
@@ -545,7 +545,7 @@ export const preventInvalidInputs = (event, allowComma = false) => {
   if (allowComma && key === ',') return
 
   // Allow dot (.)
-  if (key === '.') return
+  if (allowDecimal && key === '.') return
 
   // Allow digits 0-9
   if (/^[0-9]$/.test(key)) return
@@ -558,3 +558,53 @@ export const numberFormat = (price, decimals = 2) => {
   price = parseFloat(price);
   return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
+
+export const useFormattedNumberField = (source, fieldName) => {
+  return computed({
+    get() {
+      const val = source[fieldName]
+      return val != null ? Number(val).toLocaleString('en-US') : ''
+    },
+    set(newVal) {
+      const cleaned = cleanFormattedValueToFloat(newVal)
+      const num = parseFloat(cleaned)
+      source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num
+    }
+  })
+}
+
+
+// Helper function to create formatted fields for rider arrays
+export const useFormattedRiderField = (ridersArray, index, fieldName) => {
+  return computed({
+    get() {
+      const rider = ridersArray.value[index]
+      if (!rider) return ''
+      const val = rider[fieldName]
+      return val != null ? Number(val).toLocaleString('en-US') : ''
+    },
+    set(newVal) {
+      const rider = ridersArray.value[index]
+      if (!rider) return
+      const cleaned = cleanFormattedValueToFloat(newVal)
+      const num = parseFloat(cleaned)
+      rider[fieldName] = isNaN(num) || cleaned === '' ? 0 : num
+    }
+  })
+}
+
+
+export const cleanFormattedValueToFloat = (value) => {
+  if (typeof value !== 'string') return 0
+
+  // Remove commas
+  const cleaned = value.replace(/,/g, '')
+
+  // Parse to float
+  const num = parseFloat(cleaned)
+
+  // If NaN or empty, return 0
+  return isNaN(num) ? 0 : num
+}
+
+

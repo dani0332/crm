@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import { preventInvalidInputs, useFormattedNumberField, useFormattedRiderField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -28,15 +29,17 @@ const getCurrencyId = currencyCode => {
   return props.currencies.find(currency => currency.text === currencyCode)?.id;
 };
 
-const validateSumAssured = () => {
+const validateSumAssured = value => {
   if (!props.plan.isApi) return true;
 
   const currencyRange = currencyRanges.value.find(
     range => range.currency.code === createForm.currency,
   );
 
+  value = cleanFormattedValueToFloat(value);
+
   if (currencyRange) {
-    if (createForm.sumAssured < parseFloat(currencyRange.min_cover)) {
+    if (value < parseFloat(currencyRange.min_cover)) {
       return (
         'Sum assured must be between ' +
         currencyRange.min_cover +
@@ -44,7 +47,7 @@ const validateSumAssured = () => {
         currencyRange.max_cover
       );
     }
-    if (createForm.sumAssured > parseFloat(currencyRange.max_cover)) {
+    if (value > parseFloat(currencyRange.max_cover)) {
       return (
         'Sum assured must be between ' +
         currencyRange.min_cover +
@@ -87,42 +90,10 @@ watch(
   },
 );
 
-const preventInvalidInputs = (e, allowDecimals = true) => {
-  const invalidChars = ['e', '-'];
-  if (!allowDecimals) {
-    invalidChars.push('.');
-  }
-  if (invalidChars.includes(e.key)) {
-    e.preventDefault();
-    return;
-  }
-
-  // Limit to 2 decimal places
-  if (allowDecimals && e.key === '.') {
-    const value = e.target.value;
-    if (value.includes('.')) {
-      e.preventDefault();
-      return;
-    }
-  }
-
-  // Check if input would create more than 2 decimal places
-  if (allowDecimals && /^\d$/.test(e.key)) {
-    const value = e.target.value;
-    const dotIndex = value.indexOf('.');
-    if (
-      dotIndex !== -1 &&
-      value.length - dotIndex > 2 &&
-      e.target.selectionStart > dotIndex
-    ) {
-      e.preventDefault();
-    }
-  }
-};
 
 const validatePriceRange = value => {
   if (!props.plan.isManualPlan) return true;
-  const price = parseFloat(value);
+  const price = cleanFormattedValueToFloat(value);
 
   if (price < 1 || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
@@ -562,6 +533,9 @@ const validateRiderCoverValue = (value, riderId) => {
 
   return true;
 };
+
+const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured')
+const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremium')
 </script>
 
 <template>
@@ -641,7 +615,7 @@ const validateRiderCoverValue = (value, riderId) => {
               >Sum Assured <span class="text-red-500">*</span></label
             >
             <x-input
-              v-model="createForm.sumAssured"
+              v-model="formattedSumAssured"
               placeholder="Enter Sum Assured"
               :rules="[
                 isRequired,
@@ -650,10 +624,10 @@ const validateRiderCoverValue = (value, riderId) => {
                 validateSumAssured,
               ]"
               class="w-full"
-              type="number"
+              type="text"
               min="0"
               step="any"
-              @keydown="e => preventInvalidInputs(e, true)"
+              @keydown="e => preventInvalidInputs(e, true,false)"
             />
           </div>
         </div>
@@ -667,10 +641,9 @@ const validateRiderCoverValue = (value, riderId) => {
             placeholder="Enter Policy Term"
             :rules="[isRequired, isNonNegative, validatePolicyTerm]"
             class="w-full"
-            type="number"
-            min="0"
+            type="text"
             step="any"
-            @keydown="e => preventInvalidInputs(e, false)"
+            @keydown="e => preventInvalidInputs(e, true,false)"
           />
         </div>
 
@@ -693,7 +666,7 @@ const validateRiderCoverValue = (value, riderId) => {
             <span class="text-red-500">*</span></label
           >
           <x-input
-            v-model="createForm.actualPremium"
+            v-model="formattedActualPremium"
             placeholder="Enter Price"
             :rules="
               submitType === 'getQuote'
@@ -701,10 +674,9 @@ const validateRiderCoverValue = (value, riderId) => {
                 : [isRequired, isNonNegative, val => validatePriceRange(val)]
             "
             class="w-full"
-            type="number"
-            min="0"
+            type="text"
             step="any"
-            @keydown="e => preventInvalidInputs(e, true)"
+            @keydown="e => preventInvalidInputs(e, true,true)"
             :disabled="plan.isApi"
           />
         </div>

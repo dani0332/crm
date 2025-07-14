@@ -366,8 +366,8 @@ const getTotalAnnualPremium = (paymentTerm, premium) => {
     'Semi-Annually': 2,
     Annually: 1,
   };
-  // return (premium * mapping[paymentTermTitle]).toFixed(2);
-  return numberFormat(premium * mapping[paymentTermTitle]);
+  let value = premium * mapping[paymentTermTitle];
+  return numberFormat(value);
 };
 
 const onCopyText = text => {

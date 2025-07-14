@@ -1,5 +1,6 @@
 <script setup>
 import { watch } from 'vue';
+import { preventInvalidInputs, useFormattedNumberField, useFormattedRiderField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -12,39 +13,6 @@ const props = defineProps({
 
 const { isRequired } = useRules();
 
-const preventInvalidInputs = (e, allowDecimals = true) => {
-  const invalidChars = ['e', '-'];
-  if (!allowDecimals) {
-    invalidChars.push('.');
-  }
-  if (invalidChars.includes(e.key)) {
-    e.preventDefault();
-    return;
-  }
-
-  // Limit to 2 decimal places
-  if (allowDecimals && e.key === '.') {
-    const value = e.target.value;
-    if (value.includes('.')) {
-      e.preventDefault();
-      return;
-    }
-  }
-
-  // Check if input would create more than 2 decimal places
-  if (allowDecimals && /^\d$/.test(e.key)) {
-    const value = e.target.value;
-    const dotIndex = value.indexOf('.');
-    if (
-      dotIndex !== -1 &&
-      value.length - dotIndex > 2 &&
-      e.target.selectionStart > dotIndex
-    ) {
-      e.preventDefault();
-    }
-  }
-};
-
 // Add validation for non-negative numbers
 const isNonNegative = value => {
   if (value === null || value === undefined || value === '') return true;
@@ -53,7 +21,7 @@ const isNonNegative = value => {
 
 const validatePriceRange = value => {
   if (!value) return true;
-  const price = parseFloat(value);
+  const price = cleanFormattedValueToFloat(value);
   if (price < 1 || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
   }
@@ -237,24 +205,6 @@ watch(
   { immediate: true }
 );
 
-// Also watch the entire createForm to see if anything changes
-watch(
-  createForm,
-  (newForm) => {
-    console.log('CreateForm changed:', newForm);
-  },
-  { deep: true }
-);
-
-// Test with provider selection to verify watchers work
-watch(
-  () => createForm.providerId,
-  (newValue, oldValue) => {
-    console.log('Provider ID changed from', oldValue, 'to', newValue);
-  },
-  { immediate: true }
-);
-
 const fetchProviderPlans = () => {
   if (!createForm.providerId) {
     return;
@@ -309,10 +259,11 @@ const filteredPaymentTerms = computed(() => {
 });
 
 const validateCoverValue = value => {
-  if (value < 0) {
+  const cleanValue = cleanFormattedValueToFloat(value);
+  if (cleanValue < 0) {
     return 'Cover value must be non-negative';
   }
-  if (parseFloat(value) > parseFloat(createForm.sumAssured)) {
+  if (cleanValue > cleanFormattedValueToFloat(createForm.sumAssured)) {
     return `Cover value must not exceed ${createForm.sumAssured}`;
   }
   return true;
@@ -340,6 +291,10 @@ const getRiderDetails = async planId => {
     console.error('Error fetching rider details:', error);
   }
 };
+
+
+const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured')
+const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremium')
 
 </script>
 
@@ -425,12 +380,12 @@ const getRiderDetails = async planId => {
               >Sum Assured <span class="text-red-500">*</span></label
             >
             <x-input
-              v-model="createForm.sumAssured"
+              v-model="formattedSumAssured"
               placeholder="Enter Sum Assured"
               :rules="[isRequired, isNonNegative, validatePriceRange]"
               class="w-full"
-              type="number"
-              @keydown="e => preventInvalidInputs(e, true)"
+              type="text"
+              @keydown="e => preventInvalidInputs(e, true,true)"
             />
           </div>
         </div>
@@ -469,12 +424,12 @@ const getRiderDetails = async planId => {
             <span class="text-red-500">*</span></label
           >
           <x-input
-            v-model="createForm.actualPremium"
+            v-model="formattedActualPremium"
             placeholder="Enter Price"
             :rules="[isRequired, isNonNegative, validatePriceRange]"
             class="w-full"
-            type="number"
-            @keydown="e => preventInvalidInputs(e, true)"
+            type="text"
+            @keydown="e => preventInvalidInputs(e, true, true)"
           />
         </div>
 
@@ -536,7 +491,7 @@ const getRiderDetails = async planId => {
           <x-input
             type="number"
             :disabled="!rider.active"
-            @keydown="e => preventInvalidInputs(e, false)"
+            @keydown="e => preventInvalidInputs(e, true, false)"
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.coverValue"
             min="0"

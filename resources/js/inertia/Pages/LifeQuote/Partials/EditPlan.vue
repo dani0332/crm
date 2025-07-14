@@ -897,7 +897,7 @@ const validateRiderCoverValue = (value, riderId) => {
                         : []
                     "
                     type="number"
-                    @keydown="e => preventInvalidInputs(e, false)"
+                    @keydown="e => preventInvalidInputs(e, false,true)"
                     min="0"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.coverValue"
