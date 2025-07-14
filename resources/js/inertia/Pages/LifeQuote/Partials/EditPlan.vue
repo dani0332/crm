@@ -409,8 +409,7 @@ const tabs = ref([
   { index: 0, label: 'General Info' },
   { index: 1, label: 'Addons' },
   { index: 2, label: 'Inclusions' },
-  { index: 3, label: 'Exclusions' },
-  { index: 4, label: 'Policy Detail' },
+  { index: 3, label: 'Policy Detail' },
 ]);
 
 const setActiveTab = (index, selected) => {
