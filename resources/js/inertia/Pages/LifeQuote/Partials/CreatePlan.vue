@@ -145,23 +145,7 @@ const onSubmit = isValid => {
     })
     .then(res => {
       if (res.status == 200) {
-        // emit('success');
-
-        notification.success({
-          title: res.data.message,
-          position: 'top',
-        });
-
-        shown.value = false;
-
-        setTimeout(() => {
-          location.reload();
-        }, 2000);
-      } else {
-        notification.success({
-          title: res?.data?.msg ?? '',
-          position: 'top',
-        });
+        emit('success');
       }
     })
     .catch(err => {

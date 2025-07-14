@@ -388,13 +388,16 @@ const onCreatePlan = () => {
       modals.createPlan = false;
     },
     onFinish: () => {
+      onLoadAvailablePlansData(); 
+
       notification.success({
         title: 'Life Plan created successfully',
         position: 'top',
       });
-      location.reload();
     },
   });
+  
+
 };
 
 const onCreateVariant = () => {
@@ -410,9 +413,11 @@ const onCreateVariant = () => {
         title: 'Plan Variant created successfully',
         position: 'top',
       });
-      location.reload();
+
+      onLoadAvailablePlansData(); 
     },
   });
+  
 };
 
 const addVariant = plan => {

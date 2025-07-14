@@ -157,6 +157,11 @@ const toggleVisiblity = () => {
       extraAttr.loading = false;
 
       emit('success');
+
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
     })
     .catch(err => {
       emit('error', err);
@@ -203,29 +208,23 @@ const onSubmit = () => {
           title: res.data.msg,
           position: 'top',
         });
-
         return;
       }
-
+      
       notification.success({
         title: res.data.message,
         position: 'top',
       });
 
-      shown.value = false;
       emit('success');
 
-      setTimeout(() => {
-        location.reload();
-      }, 2000);
+      closeModal();
+
+
     })
     .catch(err => {
       emit('error', err);
       extraAttr.loading = false;
-      // notification.error({
-      //     title: err.response.data.message,
-      //     position: 'top',
-      // });
       errorMessage.value = err.response.data.message;
     })
     .finally(() => {

@@ -367,14 +367,8 @@ const onSubmit = () => {
         return;
       }
 
-      notification.success({
-        title: res.data.message,
-        position: 'top',
-      });
-
-      setTimeout(() => {
-        location.reload();
-      }, 2000);
+      emit('success');
+      
     })
     .catch(err => {
       emit('error');
