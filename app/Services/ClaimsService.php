@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\LookupsEnum;
+use App\Enums\ClaimsEnum;
 use App\Models\Claim;
 use App\Models\Lookup;
 use App\Models\QuoteType;
@@ -19,6 +20,7 @@ class ClaimsService extends BaseService
     use CentralTrait;
 
     protected $searchPrefix = 'claims.';
+    protected $query;
 
     public function __construct()
     {
@@ -30,9 +32,101 @@ class ClaimsService extends BaseService
      */
     public function getClaimsData(Request $request)
     {
-        $query = Claim::query();
+        $query = Claim::query()
+        ->select([
+                'id',
+                'ref_id',
+                'first_name',
+                'last_name',
+                'email_address',
+                'phone_number',
+                'policy_number',
+                'insurer_claim_number',
+                'plate_number',
+                'vehicle_make',
+                'vehicle_model',
+                'vehicle_year',
+                'claim_status',
+                'claims_status_id',
+                'created_at',
+                'line_of_business_id',
+                'claim_type_id',
+                'assigned_claims_manager_id',
+                'assigned_to_id'
+            ])
+            ->with([
+                'lineOfBusiness:id,text',
+                'claimType:id,text',
+                'assignedClaimsManager:id,name',
+                'assignedTo:id,name',
+                'claimsStatus:id,text'
+            ]);
 
-        return $query->paginate(2);
+        // Apply filters
+        $filters = $this->getFilters($request);
+
+        if (!empty($filters['ref_id'])) {
+            $query->where('ref_id', $filters['ref_id']);
+        }
+
+        if (!empty($filters['first_name'])) {
+            $query->where('first_name', 'like', '%' . $filters['first_name'] . '%');
+        }
+
+        if (!empty($filters['last_name'])) {
+            $query->where('last_name', 'like', '%' . $filters['last_name'] . '%');
+        }
+
+        if (!empty($filters['email'])) {
+            $query->where('email_address', $filters['email']);
+        }
+
+        if (!empty($filters['phone_number'])) {
+            $query->where('phone_number',  $filters['phone_number']);
+        }
+
+        if (!empty($filters['claim_status_id'])) {
+            $query->where('claims_status_id', $filters['claim_status_id']);
+        }
+
+        if (!empty($filters['claim_sub_status_id'])) {
+            $query->where('claim_sub_status_id', $filters['claim_sub_status_id']);
+        }
+
+        if (!empty($filters['assigned_claims_manager_id'])) {
+            $query->where('assigned_claims_manager_id', $filters['assigned_claims_manager_id']);
+        }
+
+        if (!empty($filters['line_of_business_id'])) {
+            $query->where('line_of_business_id', $filters['line_of_business_id']);
+        }
+
+        if (!empty($filters['policy_number'])) {
+            $query->where('policy_number', 'like', '%' . $filters['policy_number'] . '%');
+        }
+
+        if (!empty($filters['plate_number'])) {
+            $query->where('plate_number', 'like', '%' . $filters['plate_number'] . '%');
+        }
+
+        if (!empty($filters['vehicle_make'])) {
+            $query->where('vehicle_make', 'like', '%' . $filters['vehicle_make'] . '%');
+        }
+
+        if (!empty($filters['vehicle_model'])) {
+            $query->where('vehicle_model', 'like', '%' . $filters['vehicle_model'] . '%');
+        }
+
+        if (!empty($filters['vehicle_year'])) {
+            $query->where('vehicle_year', $filters['vehicle_year']);
+        }
+
+        // Date filtering - handle start date, end date, or both
+        if (!empty($filters['created_date_start']) && !empty($filters['created_date_end'])) {
+            $query->whereBetween('created_at', [$filters['created_date_start'], $filters['created_date_end']]);
+        }
+
+        return $query->paginate(25);
     }
 
     /**
@@ -106,7 +200,7 @@ class ClaimsService extends BaseService
             'claimTypes' => $this->getClaimTypes(),
             'claimSubStatuses' => $this->getClaimSubStatuses(),
             'claimsManagers' => $this->getClaimsManagers(),
-            'claimStatuses' => $this->getClaimStatuses(),
+            'claimStatuses' => ClaimsEnum::getStatuses(),
             'complaintStatuses' => $this->getComplaintStatuses(),
         ];
     }
@@ -150,6 +244,19 @@ class ClaimsService extends BaseService
     }
 
     /**
+     * Get sub-status ID by name
+     */
+    private function getSubStatusByName(string $name): ?int
+    {
+        $subStatus = Lookup::where('key', LookupsEnum::CLAIM_SUB_STATUSES->value)
+            ->where('text', $name)
+            ->where('is_active', 1)
+            ->first();
+
+        return $subStatus ? $subStatus->id : null;
+    }
+
+    /**
      * Get claims managers (users with appropriate roles)
      */
     public function getClaimsManagers(): array
@@ -162,20 +269,6 @@ class ClaimsService extends BaseService
             ->orderBy('name')
             ->get()
             ->toArray();
-    }
-
-    /**
-     * Get available claim statuses
-     */
-    public function getClaimStatuses(): array
-    {
-        return [
-            ['value' => 'pending', 'text' => 'Pending'],
-            ['value' => 'in_progress', 'text' => 'In Progress'],
-            ['value' => 'resolved', 'text' => 'Resolved'],
-            ['value' => 'closed', 'text' => 'Closed'],
-            ['value' => 'cancelled', 'text' => 'Cancelled'],
-        ];
     }
 
     /**
@@ -361,6 +454,37 @@ class ClaimsService extends BaseService
         // This would typically search in your policy/quotes tables
         // For now, returning empty array as placeholder
         return [];
+    }
+
+    public function getFilters(Request $request)
+    {
+        return $request->only([
+            'ref_id',
+            'first_name',
+            'last_name',
+            'email_address',
+            'phone_number',
+            'created_date_start',
+            'created_date_end',
+            'claim_status_id',
+            'claim_sub_status_id',
+            'assigned_claims_manager_id',
+            'claims_manager_id',
+            'claims_manager_assigned_date',
+            'line_of_business_id',
+            'plate_number',
+            'vehicle_make',
+            'vehicle_model',
+            'vehicle_year',
+            'policy_number',
+            'assigned_leads',
+            'unassigned_leads',
+            'next_follow_up_date',
+            'complaint_status',
+            'claim_type_id',
+            'assigned_to_id',
+            'created_at',
+        ]);
     }
 
 }

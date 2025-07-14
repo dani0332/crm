@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use App\Models\ClaimsAttachments;
+use App\Models\ClaimsStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -237,6 +239,11 @@ class Claim extends Model implements AuditableContract
         return $this->belongsTo(Lookup::class, 'claim_type_id');
     }
 
+    public function claimStatus(): BelongsTo
+    {
+        return $this->belongsTo(ClaimsStatus::class, 'claims_status_id');
+    }
+
     public function claimSubStatus(): BelongsTo
     {
         return $this->belongsTo(Lookup::class, 'claim_sub_status_id');
@@ -245,64 +252,64 @@ class Claim extends Model implements AuditableContract
     /**
      * Legacy Relationships (for backward compatibility)
      */
-    public function typeofinsurance(): BelongsTo
+    public function typeOfInsurance(): BelongsTo
     {
         return $this->belongsTo(TypeOfInsurance::class, 'type_of_insurances_id');
     }
 
-    public function subtypeofinsurance(): BelongsTo
+    public function subTypeOfInsurance(): BelongsTo
     {
         return $this->belongsTo(SubTypeOfInsurance::class, 'sub_type_of_insurance_id');
     }
 
-    public function carmake(): BelongsTo
+    public function carMake(): BelongsTo
     {
         return $this->belongsTo(CarMake::class, 'car_make_id');
     }
 
-    public function carmodel(): BelongsTo
+    public function carModel(): BelongsTo
     {
         return $this->belongsTo(CarModel::class, 'car_model_id');
     }
 
-    public function claimsstatus(): BelongsTo
+    public function claimsStatus(): BelongsTo
     {
         return $this->belongsTo(ClaimsStatus::class, 'claims_status_id');
     }
 
-    public function carrepaircoverage(): BelongsTo
+    public function carRepairCoverage(): BelongsTo
     {
         return $this->belongsTo(CarRepairCoverage::class, 'car_repair_coverage_id');
     }
 
-    public function carrepairtype(): BelongsTo
+    public function carRepairType(): BelongsTo
     {
         return $this->belongsTo(CarRepairType::class, 'car_repair_type_id');
     }
 
-    public function rentacar(): BelongsTo
+    public function rentACar(): BelongsTo
     {
         return $this->belongsTo(RentACar::class, 'rent_a_car_id');
     }
 
-    public function assignedto(): BelongsTo
+    public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to_id');
     }
 
-    public function modifiedby(): BelongsTo
+    public function modifiedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'modified_by_id');
     }
 
-    public function insuranceprovider(): BelongsTo
+    public function insuranceProvider(): BelongsTo
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id');
     }
 
     public function claimsAttachments(): HasMany
     {
-        return $this->hasMany(ClaimsAttachment::class, 'claim_id');
+        return $this->hasMany(ClaimsAttachments::class, 'claim_id');
     }
 
     /**

@@ -353,7 +353,15 @@ class HandleInertiaRequests extends Middleware
         }
 
         if (auth()->user()->can(PermissionsEnum::CLAIM_LIST)) {
-            $nav = $nav->add('Claims', route('claims.index'));
+            $nav = $nav->add('Services', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB),
+                        'Claims',
+                        route('claims.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {

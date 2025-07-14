@@ -32,45 +32,24 @@ class ClaimsController extends Controller
     {
         try {
             $claims = $this->claimsService->getClaimsData($request);
+
             // Get dropdown data for filters
             $claimDropdownOptions = $this->claimsService->getDropdownData();
             // Get statistics
-            $statistics = $this->claimsService->getClaimsStatistics();
+            /* $statistics = $this->claimsService->getClaimsStatistics(); */
 
             return Inertia::render('Claims/Index', [
                 'claims' => $claims,
-                'filters' => $request->only([
-                    'ref_id',
-                    'first_name',
-                    'last_name',
-                    'email',
-                    'phone_number',
-                    'created_date_start',
-                    'created_date_end',
-                    'claim_status',
-                    'claim_sub_status_id',
-                    'assigned_claims_manager_id',
-                    'claims_manager_id',
-                    'claims_manager_assigned_date',
-                    'line_of_business_id',
-                    'plate_number',
-                    'vehicle_make',
-                    'vehicle_model',
-                    'vehicle_year',
-                    'policy_number',
-                    'assigned_leads',
-                    'unassigned_leads',
-                    'next_follow_up_date',
-                    'complaint_status',
-                ]),
+                'filters' => $this->claimsService->getFilters($request),
                 'claimDropdownOptions' => $claimDropdownOptions,
-                'statistics' => $statistics,
+                'statistics' => [],
             ]);
         } catch (Exception $e) {
             Log::error('Error loading claims index', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
+            dd($e->getMessage());
 
             return Inertia::render('Claims/Index', [
                 'claims' => collect([]),
