@@ -707,7 +707,7 @@ const addPayment = isValid => {
 
   // Will remove this before merging to stage prod
   console.clear();
-  console.log("storeData", storeData);
+  console.log('storeData', storeData);
   paymentMethodsForm
     .transform(data => storeData)
     .post('/payments/' + props.quoteType + '/store-new', {
