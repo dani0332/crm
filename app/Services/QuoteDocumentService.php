@@ -939,9 +939,10 @@ class QuoteDocumentService extends BaseService
     public function bringProofDocumentForAllLobs()
     {
         $documentTypeCodes = DocumentType::where('text', DocumentTypeText::PAYMENT_PROOF)->whereNotIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Bike])->pluck('code')->toArray();
+
         return $documentTypeCodes;
     }
-    
+
     public function checkHandbookDocuments($quoteType)
     {
 
