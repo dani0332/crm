@@ -419,6 +419,8 @@ class BusinessQuoteController extends Controller
             ['id' => QuoteStatusEnum::AdditionalInformationRequested, 'title' => quoteStatusCode::ADDITIONAL_INFORMATION_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::AdditionalInformationRequested, $request)],
             ['id' => QuoteStatusEnum::QuoteRequested, 'title' => quoteStatusCode::QUOTE_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::QuoteRequested, $request)],
             ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::FinalizingTerms, 'title' => quoteStatusCode::FINALIZING_TERMS, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::FinalizingTerms, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
@@ -433,8 +435,10 @@ class BusinessQuoteController extends Controller
             QuoteStatusEnum::AdditionalInformationRequested => 3,
             QuoteStatusEnum::QuoteRequested => 4,
             QuoteStatusEnum::Quoted => 5,
-            QuoteStatusEnum::FinalizingTerms => 6,
-            QuoteStatusEnum::PolicyIssued => 7,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 6,
+            QuoteStatusEnum::PaymentInitiated => 7,
+            QuoteStatusEnum::FinalizingTerms => 8,
+            QuoteStatusEnum::PolicyIssued => 9,
         ];
 
         $renewals = [
@@ -443,8 +447,10 @@ class BusinessQuoteController extends Controller
             QuoteStatusEnum::PendingRenewalInformation => 2,
             QuoteStatusEnum::QuoteRequested => 3,
             QuoteStatusEnum::Quoted => 4,
-            QuoteStatusEnum::FinalizingTerms => 5,
-            QuoteStatusEnum::PolicyIssued => 6,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::FinalizingTerms => 7,
+            QuoteStatusEnum::PolicyIssued => 8,
         ];
 
         if ($areBothTeamsPresent || $isManagerOrDeputy) {
