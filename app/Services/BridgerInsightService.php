@@ -14,6 +14,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class BridgerInsightService
 {
@@ -36,38 +37,41 @@ class BridgerInsightService
 
     public function getJWTToken()
     {
-        LoggerService::info('fn:getJWTToken - BridgerInsightService - Token Generation started');
 
-        $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
-        $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
-        $bridgerClient = new \GuzzleHttp\Client;
-        $_return = ['status' => true];
+        $cacheKey = 'bridger_jwt_token';
 
-        try {
-            $tokenRequest = $bridgerClient->post(
-                $tokenEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'Authorization' => 'Basic '.$bridgerAuthBasic,
-                    ],
-                ]
-            );
-            if ($tokenRequest->getStatusCode() == 200) {
-                $getDecodeContents = json_decode($tokenRequest->getBody());
-                $_return['response'] = $getDecodeContents->access_token;
-                LoggerService::info('Bridger Insight Service - JWT Token Generated');
+        return Cache::remember($cacheKey, 50 * 60, function () {
+            $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
+            $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
+            $bridgerClient = new \GuzzleHttp\Client;
+            $_return = ['status' => true];
 
-                return $_return;
+            try {
+                $tokenRequest = $bridgerClient->post(
+                    $tokenEndPoint,
+                    [
+                        'headers' => [
+                            'Content-Type' => 'application/json',
+                            'Accept' => 'application/json',
+                            'Authorization' => 'Basic '.$bridgerAuthBasic,
+                        ],
+                    ]
+                );
+                if ($tokenRequest->getStatusCode() == 200) {
+                    $getDecodeContents = json_decode($tokenRequest->getBody());
+                    $_return['response'] = $getDecodeContents->access_token;
+                    LoggerService::info('Bridger Insight Service - JWT Token Generated and cached for 50 minutes');
+
+                    return $_return;
+                }
+            } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                $_return['status'] = false;
+                $responseErrorCode = $e->getResponse()->getStatusCode();
+                LoggerService::error('Bridger Insight Service - JWT Token Error: '.$responseErrorCode);
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $_return['status'] = false;
-            $responseErrorCode = $e->getResponse()->getStatusCode();
-            LoggerService::error('Bridger Insight Service - JWT Token Error: '.$responseErrorCode);
-        }
 
-        return $_return;
+            return $_return;
+        });
     }
 
     public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteDetails, $quoteTypeId, $customerType, $loginCustomerEmail, $isAutomation = false)
