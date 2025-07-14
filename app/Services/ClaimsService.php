@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\LookupsEnum;
 use App\Enums\ClaimsEnum;
+use App\Enums\LookupsEnum;
 use App\Models\Claim;
 use App\Models\Lookup;
 use App\Models\QuoteType;
@@ -33,7 +33,7 @@ class ClaimsService extends BaseService
     public function getClaimsData(Request $request)
     {
         $query = Claim::query()
-        ->select([
+            ->select([
                 'id',
                 'ref_id',
                 'first_name',
@@ -52,77 +52,77 @@ class ClaimsService extends BaseService
                 'line_of_business_id',
                 'claim_type_id',
                 'assigned_claims_manager_id',
-                'assigned_to_id'
+                'assigned_to_id',
             ])
             ->with([
                 'lineOfBusiness:id,text',
                 'claimType:id,text',
                 'assignedClaimsManager:id,name',
                 'assignedTo:id,name',
-                'claimsStatus:id,text'
+                'claimsStatus:id,text',
             ]);
 
         // Apply filters
         $filters = $this->getFilters($request);
 
-        if (!empty($filters['ref_id'])) {
+        if (! empty($filters['ref_id'])) {
             $query->where('ref_id', $filters['ref_id']);
         }
 
-        if (!empty($filters['first_name'])) {
-            $query->where('first_name', 'like', '%' . $filters['first_name'] . '%');
+        if (! empty($filters['first_name'])) {
+            $query->where('first_name', 'like', '%'.$filters['first_name'].'%');
         }
 
-        if (!empty($filters['last_name'])) {
-            $query->where('last_name', 'like', '%' . $filters['last_name'] . '%');
+        if (! empty($filters['last_name'])) {
+            $query->where('last_name', 'like', '%'.$filters['last_name'].'%');
         }
 
-        if (!empty($filters['email'])) {
+        if (! empty($filters['email'])) {
             $query->where('email_address', $filters['email']);
         }
 
-        if (!empty($filters['phone_number'])) {
-            $query->where('phone_number',  $filters['phone_number']);
+        if (! empty($filters['phone_number'])) {
+            $query->where('phone_number', $filters['phone_number']);
         }
 
-        if (!empty($filters['claim_status_id'])) {
+        if (! empty($filters['claim_status_id'])) {
             $query->where('claims_status_id', $filters['claim_status_id']);
         }
 
-        if (!empty($filters['claim_sub_status_id'])) {
+        if (! empty($filters['claim_sub_status_id'])) {
             $query->where('claim_sub_status_id', $filters['claim_sub_status_id']);
         }
 
-        if (!empty($filters['assigned_claims_manager_id'])) {
+        if (! empty($filters['assigned_claims_manager_id'])) {
             $query->where('assigned_claims_manager_id', $filters['assigned_claims_manager_id']);
         }
 
-        if (!empty($filters['line_of_business_id'])) {
+        if (! empty($filters['line_of_business_id'])) {
             $query->where('line_of_business_id', $filters['line_of_business_id']);
         }
 
-        if (!empty($filters['policy_number'])) {
-            $query->where('policy_number', 'like', '%' . $filters['policy_number'] . '%');
+        if (! empty($filters['policy_number'])) {
+            $query->where('policy_number', 'like', '%'.$filters['policy_number'].'%');
         }
 
-        if (!empty($filters['plate_number'])) {
-            $query->where('plate_number', 'like', '%' . $filters['plate_number'] . '%');
+        if (! empty($filters['plate_number'])) {
+            $query->where('plate_number', 'like', '%'.$filters['plate_number'].'%');
         }
 
-        if (!empty($filters['vehicle_make'])) {
-            $query->where('vehicle_make', 'like', '%' . $filters['vehicle_make'] . '%');
+        if (! empty($filters['vehicle_make'])) {
+            $query->where('vehicle_make', 'like', '%'.$filters['vehicle_make'].'%');
         }
 
-        if (!empty($filters['vehicle_model'])) {
-            $query->where('vehicle_model', 'like', '%' . $filters['vehicle_model'] . '%');
+        if (! empty($filters['vehicle_model'])) {
+            $query->where('vehicle_model', 'like', '%'.$filters['vehicle_model'].'%');
         }
 
-        if (!empty($filters['vehicle_year'])) {
+        if (! empty($filters['vehicle_year'])) {
             $query->where('vehicle_year', $filters['vehicle_year']);
         }
 
         // Date filtering - handle start date, end date, or both
-        if (!empty($filters['created_date_start']) && !empty($filters['created_date_end'])) {
+        if (! empty($filters['created_date_start']) && ! empty($filters['created_date_end'])) {
             $query->whereBetween('created_at', [$filters['created_date_start'], $filters['created_date_end']]);
         }
 
