@@ -349,6 +349,7 @@ if (
   initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
 
+
 let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
@@ -2510,6 +2511,8 @@ const addPayment = isValid => {
     ...data,
   };
 
+  // Will remove this before merging
+  console.log("storeData", storeData);
   paymentMethodsForm
     .transform(data => storeData)
     .post('/payments/' + props.quoteType + '/store-new', {
@@ -3080,7 +3083,7 @@ const setPlanDetail = () => {
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
-    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+    initalPlanDetails = props.quoteRequest?.car_plan;
     if (props.sendUpdate) {
       initalPlanDetails =
         props.quoteRequest.insurance_provider_details ??
