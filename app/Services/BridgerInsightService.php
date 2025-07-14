@@ -49,6 +49,7 @@ class BridgerInsightService
         $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
         $bridgerClient = new \GuzzleHttp\Client;
+        $_return = ['status' => true];
 
         try {
             $tokenRequest = $bridgerClient->post(
@@ -63,7 +64,6 @@ class BridgerInsightService
             );
             if ($tokenRequest->getStatusCode() == 200) {
                 $getDecodeContents = json_decode($tokenRequest->getBody());
-                $_return = ['status' => true];
                 $_return['response'] = $getDecodeContents->access_token;
 
                 // Only cache successful responses for 50 minutes
