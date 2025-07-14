@@ -283,7 +283,7 @@ class LifeQuote extends Model implements AuditableContract
     public function getPaymentsWithInsurerPaymentLink()
     {
         return $this->payments()
-            ->whereHas('PaymentSplits', function ($query) {
+            ->whereHas('paymentSplits', function ($query) {
                 $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
             })
             ->get();
@@ -297,7 +297,7 @@ class LifeQuote extends Model implements AuditableContract
     public function getLastPaymentWithInsurerPaymentLink()
     {
         return $this->payments()
-            ->whereHas('PaymentSplits', function ($query) {
+            ->whereHas('paymentSplits', function ($query) {
                 $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
             })
             ->latest()
