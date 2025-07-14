@@ -37,41 +37,49 @@ class BridgerInsightService
 
     public function getJWTToken()
     {
-
         $cacheKey = 'bridger_jwt_token';
 
-        return Cache::remember($cacheKey, 50 * 60, function () {    // Cache the token for 50 minutes
-            $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
-            $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
-            $bridgerClient = new \GuzzleHttp\Client;
+        // Check if we have a cached token
+        $cachedToken = Cache::get($cacheKey);
+        if ($cachedToken) {
+            return $cachedToken;
+        }
 
-            try {
-                $tokenRequest = $bridgerClient->post(
-                    $tokenEndPoint,
-                    [
-                        'headers' => [
-                            'Content-Type' => 'application/json',
-                            'Accept' => 'application/json',
-                            'Authorization' => 'Basic '.$bridgerAuthBasic,
-                        ],
-                    ]
-                );
-                if ($tokenRequest->getStatusCode() == 200) {
-                    $getDecodeContents = json_decode($tokenRequest->getBody());
-                    $_return = ['status' => true];
-                    $_return['response'] = $getDecodeContents->access_token;
-                    LoggerService::info('Bridger Insight Service - JWT Token Generated and cached for 50 minutes');
+        // Generate new token
+        $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
+        $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
+        $bridgerClient = new \GuzzleHttp\Client;
 
-                    return $_return;
-                }
-            } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-                $_return['status'] = false;
-                $responseErrorCode = $e->getResponse()->getStatusCode();
-                LoggerService::error('Bridger Insight Service - JWT Token Error: '.$responseErrorCode);
+        try {
+            $tokenRequest = $bridgerClient->post(
+                $tokenEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'Authorization' => 'Basic '.$bridgerAuthBasic,
+                    ],
+                ]
+            );
+            if ($tokenRequest->getStatusCode() == 200) {
+                $getDecodeContents = json_decode($tokenRequest->getBody());
+                $_return = ['status' => true];
+                $_return['response'] = $getDecodeContents->access_token;
+
+                // Only cache successful responses for 50 minutes
+                Cache::put($cacheKey, $_return, 50 * 60);
+                LoggerService::info('Bridger Insight Service - JWT Token Generated and cached for 50 minutes');
+
+                return $_return;
             }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            Cache::forget($cacheKey);
+            $_return['status'] = false;
+            $responseErrorCode = $e->getResponse()->getStatusCode();
+            LoggerService::error('Bridger Insight Service - JWT Token Error: '.$responseErrorCode);
+        }
 
-            return $_return;
-        });
+        return $_return;
     }
 
     public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteDetails, $quoteTypeId, $customerType, $loginCustomerEmail, $isAutomation = false)
