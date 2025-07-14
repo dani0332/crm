@@ -3710,7 +3710,12 @@ function handleOcrNotification(event) {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error"  :loading="processingOCBEmail" @click.prevent="confirmSendEmail">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmail"
+              @click.prevent="confirmSendEmail"
+            >
               Send
             </x-button>
           </div>
