@@ -55,16 +55,16 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         // Use the team ID that was already evaluated in EvaluateTeamPipe
         $teamId = $this->allocationRequest->getTeamId();
-        
+
         $advisors = $this->fetchEligibleAdvisors($teamId);
-      
+
         $rules = $this->allocationRequest->get('rules') ?? [];
         $availableAdvisorIds = $advisors->pluck('user_id')->toArray() ?? [];
         LoggerService::info(message: self::class." - quote id: {$this->lead->uuid} available advisor ids: ".json_encode($availableAdvisorIds));
-     
-        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($availableAdvisorIds, $rules,  $teamId);
+
+        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($availableAdvisorIds, $rules, $teamId);
         $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
-        
+
         $advisor = User::find($advisorId);
 
         return $advisor;
@@ -99,19 +99,18 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             ->get();
     }
 
-
-    public function fetchEligibleAdvisors($teamId=null)
+    public function fetchEligibleAdvisors($teamId = null)
     {
 
         $statusOrder = $this->getOnlineStatusesInOrder();
-       
+
         if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
-       
+
         foreach ($statusOrder as $status) {
             LoggerService::info(message: self::class." - trying to get advisors with current status as {$status}");
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $teamId );
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $teamId);
 
             if (count($eligibleUsers) > 0) {
                 return $eligibleUsers;
@@ -122,7 +121,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     }
 
-    private function determineFinalAdvisorIdsBasedOnRules($availableUserIds, $rules, $teamId=null): mixed
+    private function determineFinalAdvisorIdsBasedOnRules($availableUserIds, $rules, $teamId = null): mixed
     {
         if (! $teamId) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -131,7 +130,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
-           
+
             LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
@@ -175,5 +174,4 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
     }
 
-   
 }
