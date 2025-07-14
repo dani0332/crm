@@ -129,8 +129,8 @@ const customerTypeOptions = ref([
 // Insurance providers - use props or fetch from API
 const availableInsurers = computed(() => {
   return props.insuranceProviders.map(provider => ({
-    label: provider.text,
-    value: provider.id,
+    label: provider.text ?? provider.label,
+    value: provider.id ?? provider.value,
     code: provider.code,
     text: provider.text,
   }));

@@ -2580,6 +2580,22 @@ const isCommercialVehicle = computed(() => {
       :expanded="sectionExpanded"
     />
 
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :customerType="record.customer_type"
+      :customerData="{
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
     <UBODetails
       v-if="record.customer_type == page.props.customerTypeEnum.Entity"
       :quote="quote"
@@ -2600,22 +2616,6 @@ const isCommercialVehicle = computed(() => {
         record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
         record.source == page.props.leadSourceEnum.INSLY
       "
-    />
-
-    <BorLogsSection
-      :borLogs="borLogs"
-      :leadId="record.id"
-      :lob="quoteType"
-      :customerType="record.customer_type"
-      :customerData="{
-        firstName: record.first_name,
-        lastName: record.last_name,
-        companyName: record.company_name,
-        currentlyInsuredWith: record.currently_insured_with
-      }"
-      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
-      :insuranceProviders="insuranceProviders"
-      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

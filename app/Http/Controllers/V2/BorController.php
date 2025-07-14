@@ -47,10 +47,12 @@ class BorController extends Controller
             ->orderBy('created_at', 'desc')
             ->simplePaginate(15) // Add simple pagination
             ->withQueryString();
+        $total = BorLog::where('lead_id', $request->leadId)->count();
 
         return response()->json([
             'success' => true,
             'data' => $logs,
+            'total' => $total,
         ]);
     }
 

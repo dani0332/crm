@@ -51,6 +51,7 @@ const notification = useNotifications('toast'); // Fix: Use consistent notificat
 
 // Reactive data
 const borLogs = ref([]);
+const total = ref(0);
 const isLoading = ref(false);
 const error = ref(null);
 const showBorRequestForm = ref(false);
@@ -93,7 +94,7 @@ const fetchBorLogs = async (page = 1) => {
       // Handle Laravel pagination response
       const paginatedData = response.data.data;
       borLogs.value = paginatedData.data || [];
-      
+      total.value = response.data.total;
       // Extract pagination info from Laravel pagination response
       pagination.value = {
         current_page: paginatedData.current_page,
@@ -316,7 +317,7 @@ onMounted(() => {
         <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
             BOR (Broker on Record)
-            <x-tag size="sm">{{ borLogs.length || 0 }}</x-tag>
+            <x-tag size="sm">{{ total || 0 }}</x-tag>
           </h3>
         </div>
       </template>

@@ -2,6 +2,7 @@
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 defineProps({
   quote: Object,
@@ -988,6 +989,22 @@ const allowStatusUpdate = computed(() => {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+    />
+
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :customerType="record.customer_type"
+      :customerData="{
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <LastYearPolicyDetail

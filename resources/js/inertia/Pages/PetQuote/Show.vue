@@ -983,7 +983,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <!-- BOR (Broker on Record) Section -->
     <BorLogsSection
       :leadId="quote.id"
-      :borLogs="borLogs"
       :lob="quoteType"
       :customerType="quote.customer_type"
       :customerData="{

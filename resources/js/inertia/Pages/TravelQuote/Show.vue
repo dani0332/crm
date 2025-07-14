@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 const page = usePage();
 defineProps({
@@ -2739,6 +2740,22 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="modelType"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <LastYearPolicyDetail

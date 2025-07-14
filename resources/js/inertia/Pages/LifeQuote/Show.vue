@@ -4,6 +4,7 @@ import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 const page = usePage();
 defineProps({
@@ -1196,6 +1197,22 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <LastYearPolicyDetail

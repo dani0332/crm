@@ -7,6 +7,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 const props = defineProps({
   quote: Object,
@@ -1908,6 +1909,22 @@ const shouldShowPlanDetailsSection = computed(() => {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <LastYearPolicyDetail

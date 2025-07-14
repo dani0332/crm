@@ -1,6 +1,7 @@
 <script setup>
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 
 const props = defineProps({
   quote: {
@@ -1288,6 +1289,22 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
       :expanded="sectionExpanded"
+    />
+
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :customerType="record.customer_type"
+      :customerData="{
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <LastYearPolicyDetail
