@@ -247,7 +247,7 @@ const validateCoverValue = value => {
   if (cleanValue < 0) {
     return 'Cover value must be non-negative';
   }
-  if (cleanValue > cleanFormattedValueToFloat(createForm.sumAssured)) {
+  if (cleanValue > cleanFormattedValueToFloat(formattedSumAssured.value)) {
     return `Cover value must not exceed ${createForm.sumAssured}`;
   }
   return true;
@@ -277,7 +277,7 @@ const getRiderDetails = async planId => {
 };
 
 
-const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured')
+const formattedSumAssured =  useFormattedNumberField(createForm, 'sumAssured')
 const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremium')
 
 </script>
@@ -481,7 +481,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             min="0"
             :rules="
               rider.active
-                ? [isNonNegative, validateCoverValue, rider.inputRequired ? isRequired : null].filter(Boolean)
+                ? [isNonNegative, val => validateCoverValue(val), rider.inputRequired ? isRequired : null].filter(Boolean)
                 : []
             "
           />

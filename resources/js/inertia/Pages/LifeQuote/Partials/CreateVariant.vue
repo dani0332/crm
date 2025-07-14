@@ -486,7 +486,9 @@ const isNonNegative = value => {
 
 const validateCoverValue = value => {
   if (props.plan.isApi) return true;
-  if (parseFloat(value) > parseFloat(createForm.sumAssured)) {
+  value = cleanFormattedValueToFloat(value);
+  
+  if (parseFloat(value) > cleanFormattedValueToFloat(formattedSumAssured.value)) {
     return `Cover value must not exceed ${createForm.sumAssured}`;
   }
   return true;
@@ -732,7 +734,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
               rider.active
                 ? [
                     isNonNegative,
-                    validateCoverValue,
+                    val => validateCoverValue(val),
                     rider.inputRequired ? isRequired : () => true,
                     val => validateRiderCoverValue(val, rider.riderId),
                   ]

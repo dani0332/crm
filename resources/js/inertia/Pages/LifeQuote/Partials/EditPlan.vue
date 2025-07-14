@@ -463,9 +463,8 @@ const validateCoverValue = value => {
   if (props.selectedPlan.isApi) {
     return true;
   }
-
   // only validate for manual plans
-  if (parseFloat(value) > parseFloat(editForm.sumAssured)) {
+  if (parseFloat(value) > cleanFormattedValueToFloat(formattedSumAssured.value)) {
     return `Cover value must not exceed ${editForm.sumAssured}`;
   }
   return true;
@@ -856,7 +855,7 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
                         ? [
                             rider.inputRequired ? isRequired : () => true,
                             isNonNegative,
-                            validateCoverValue,
+                            val => validateCoverValue(val),
                             val => validateRiderCoverValue(val, rider.riderId),
                           ]
                         : []
