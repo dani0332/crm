@@ -14,10 +14,12 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
+use App\Models\InsurerRequestResponse;
 use App\Models\PolicyIssuanceLog;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -44,11 +46,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     public const UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const ISSUE_POLICY = 'IssuePolicy';
-    public const GET_AND_UPLOAD_POLICY_DOCUMENTS = 'GetAndUploadPolicyDocuments';
+    public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
     public const BOOK_POLICY = 'BookPolicy';
 
     public const PAYMENT_MODE = 'CT068';
-    public const PAYMENT_MODE_VALUE = 'Broker Credit';
+    public const PAYMENT_MODE_VALUE = 'Upfront Commission Partner Payment';
     public const CURRENCY_CODE = 'AED';
     public const OP_CO = 'UAE';
     
@@ -68,6 +70,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private const POLICY_DOC_POLICY_SCHEDULE = 'Motor Insurance Policy Schedule';
     private const POLICY_DOC_CERTIFICATE_OF_INSURANCE = 'Certificate of Insurance';
 
+    private const RTA_UPLOAD_STATUS_DONE = '1';
+    private const RTA_UPLOAD_STATUS_PENDING = '0';
+
+    const POLICY_AUTOMATION_STATUS_YES_ID = 1;
+    const POLICY_AUTOMATION_STATUS_NO_ID = 2;
+
     const UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID = 1;
     const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Document Upload API Failed';
     const UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE = 'Document Upload via API';
@@ -75,6 +83,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     const POLICY_ISSUANCE_API_FAILED_STATUS_ID = 2;
     const POLICY_ISSUANCE_API_FAILED = 'Policy Issuance API Failed';
     const POLICY_ISSUANCE_API_ACTION_MESSAGE = 'Policy Issuance via API';
+
+    const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 3;
+    const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Upload Policy Documents to IMCRM API Failed';
+    const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_ACTION_MESSAGE = 'Upload Policy Documents to IMCRM via API';
+
+    const BOOK_POLICY_API_FAILED_STATUS_ID = 4;
+    const BOOK_POLICY_API_FAILED = 'Book Policy API Failed';
+    const BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
 
     public function __construct()
     {
@@ -85,7 +101,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $this->clientSecret = config('constants.GIG_API_AUTH_CLIENT_SECRET');
         // $this->accessToken = Cache::store('redis')->get(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY) ?? $this->getAccessToken();
         // $this->accessToken = $this->getAccessToken();
-        $this->accessToken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ijg1ZDBKQ2M4TUJua2xxVlZzSUgyRyJ9.eyJodHRwczovL2d1bGYtaW5zdXJhbmNlLXBwL2VwYXIiOiI2MDM0IiwiaXNzIjoiaHR0cHM6Ly9ndWxmLWluc3VyYW5jZS1wcC5ldS5hdXRoMC5jb20vIiwic3ViIjoiakJzSTRYN2FaWjl2UjBIak5tS3lZdTM4am03Vkl1WHRAY2xpZW50cyIsImF1ZCI6ImludGVncmF0aW9uLXBsYXRmb3JtIiwiaWF0IjoxNzUyMjM5NDg1LCJleHAiOjE3NTIyNDMwODUsInNjb3BlIjoicmVhZDpleHRlcm5hbCIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyIsImF6cCI6ImpCc0k0WDdhWlo5dlIwSGpObUt5WXUzOGptN1ZJdVh0In0.tsyjG8S2Opr_5rCV1_b8AVU31xXOaGl8hEMJFyZr8mmWt0PNwUdE_57Fhh1_Oh_sNPuBmXotsWDuxvOJQdyCclI_atzP4WvvlziHrGmVk4JozkILuEuexPmCq6ppVbjBJSTLuXIkh2o3eGMnQQTFSOp6dOQTVmeKLBCgQ31v1lcbIaV0YzKI6TWmvpTvtfnlWZCH1nkMnXQg1kpZMHI2gL7-ldMi-PoQ5IlET01Lb0r9UmvCwEk6dBi6qmgmWMsjSQTHURZGOPMTw0nPZ0_EUJ-jLAIbZ3uTtdfzs4ZyrUM6VqdXnCUOKmH99IpSdnTBxS69gnWqmIOht60mNpU4Ww';
+        $this->accessToken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ijg1ZDBKQ2M4TUJua2xxVlZzSUgyRyJ9.eyJodHRwczovL2d1bGYtaW5zdXJhbmNlLXBwL2VwYXIiOiI2MDM0IiwiaXNzIjoiaHR0cHM6Ly9ndWxmLWluc3VyYW5jZS1wcC5ldS5hdXRoMC5jb20vIiwic3ViIjoiakJzSTRYN2FaWjl2UjBIak5tS3lZdTM4am03Vkl1WHRAY2xpZW50cyIsImF1ZCI6ImludGVncmF0aW9uLXBsYXRmb3JtIiwiaWF0IjoxNzUyNTAwMDk5LCJleHAiOjE3NTI1MDM2OTksInNjb3BlIjoicmVhZDpleHRlcm5hbCIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyIsImF6cCI6ImpCc0k0WDdhWlo5dlIwSGpObUt5WXUzOGptN1ZJdVh0In0.wfPECVkatylLd0Ui-GXFw5FF0lNZUjezy9nDqrm_bbkjMNoplY6E7LrnZ7QbkQh76Tvd_oZlxCcz6hGjafy0sJ4yse8TDg22GWTRjoKcr5LwrBangzhI_Xli9HkIYfgnBcixCMVZd6aW7o2PkvEAlU73rqmb1Ofab7BuD5__6GqH2bAwkcgD9ZxdT1D1FObRMrlZoTf_aUN2pfX1rEO_30SbTMe1BMuKN0_0gDceY46HVIab1QcsjGOjIQBhAaujoy0HQJtEj_xW2oSOxGIZnIiiQCTbt1TVn5Ocq9PSr9KrvuNKIvQH2K2TI6OTNAmWK39hKi6JDF_dbTWuCmsJuw';
     }
 
     private function getAPISteps(): array
@@ -93,7 +109,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return [
             self::UPLOAD_DOCUMENTS,
             self::ISSUE_POLICY,
-            self::GET_AND_UPLOAD_POLICY_DOCUMENTS,
+            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             self::BOOK_POLICY,
         ];
     }
@@ -162,7 +178,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    private function executeStepSequence($quote, $process, $nextStepToBeExecuted): void
+    private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
     {
         if ($nextStepToBeExecuted === self::UPLOAD_DOCUMENTS) {
             $this->executeUploadDocumentsStep($quote, $process);
@@ -174,8 +190,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        if ($nextStepToBeExecuted === self::GET_AND_UPLOAD_POLICY_DOCUMENTS) {
-            $this->executeGetAndUploadPolicyDocumentsStep($quote, $process);
+        if ($nextStepToBeExecuted === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            $this->executeUploadPolicyDocumentsStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
@@ -208,10 +224,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         if (! $uploadDocumentsResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload failed', extra: ['response' => $uploadDocumentsResponse]);
-            
-            $this->currentInsurerApiStatus = self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
-            // TODO:: this function need to be updated
-            // app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
         
             return $uploadDocumentsResponse;
         }
@@ -228,7 +241,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $endPoint = $this->baseUrl.'/v1/insurance-documents';
 
         // Validation checks for document upload
-        $documentUploadValidationCheck = app(PolicyIssuanceService::class)->documentUploadPreChecks(self::TYPE_ID, $quote, self::INSURER_CODE, [
+        $documentUploadValidationCheck = app(PolicyIssuanceService::class)->documentUploadPreChecks(self::TYPE_ID, $quote, [
             QuoteDocumentsEnum::CAR_REGISTRATION_CARD,
             QuoteDocumentsEnum::CAR_EMIRATE_ID,
             QuoteDocumentsEnum::DRIVING_LICENSE,
@@ -324,9 +337,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            $this->currentInsurerApiStatus = self::POLICY_ISSUANCE_API_FAILED_STATUS_ID;
-            // TODO:: this function need to be updated
-            // app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::POLICY_ISSUANCE_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
         
             return $policyIssuanceResponse;
         }
@@ -379,68 +390,80 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    private function executeGetAndUploadPolicyDocumentsStep($quote, $process)
+    private function executeUploadPolicyDocumentsStep($quote, $process)
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::GET_AND_UPLOAD_POLICY_DOCUMENTS);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
-        $getAndUploadDocumentsResponse = $this->getAndUploadPolicyDocuments($quote, $process);
+        $uploadPolicyDocumentsToIMCRMResponse = $this->uploadPolicyDocumentsToIMCRM($quote, $process);
 
-        if (! $getAndUploadDocumentsResponse['status']) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $getAndUploadDocumentsResponse]);
-            // TODO:: this need to be handled properly and update the lead status to failed
-            // throw new Exception($policyIssuanceResponse['error']);
-        
-            return $getAndUploadDocumentsResponse;
+        if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $uploadPolicyDocumentsToIMCRMResponse]);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+
+            return $uploadPolicyDocumentsToIMCRMResponse;
         }
 
-        $process->update(['completed_step' => $getAndUploadDocumentsResponse['completed_step']]);
+        $process->update(['completed_step' => $uploadPolicyDocumentsToIMCRMResponse['completed_step']]);
         $process = $process->refresh();
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$getAndUploadDocumentsResponse['completed_step']);
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$uploadPolicyDocumentsToIMCRMResponse['completed_step']);
     }
 
-    public function getAndUploadPolicyDocuments($quote, $process): array
+    public function uploadPolicyDocumentsToIMCRM($quote, $process): array
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$this->policyIssuance->id.' - Step : '.self::GET_AND_UPLOAD_POLICY_DOCUMENTS);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$this->policyIssuance->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
-        $response = ['status' => false, 'completed_step' => self::GET_AND_UPLOAD_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
-        $endPoint = '/v1/insurance-documents/document';
+        $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
+        $endPoint = $this->baseUrl.'/v1/insurance-documents/document';
+        $getDocumentDelay = 10;
+        $getPolicyIssuanceResponse = $process->policyIssuanceLogs()->where([
+            'step' => self::ISSUE_POLICY,
+            'status' => PolicyIssuanceEnum::SUCCESS_STATUS,
+        ])->latest()->first();
 
-        $getPolicyIssuanceResponse = $process->data ? json_decode($process->data)?->self::ISSUE_POLICY : null;
         if (! $getPolicyIssuanceResponse) {
             $response['error'] = 'Policy issuance response not found in process data';
             return $response;
         }
 
         $uploadedDocumentsToIMCRM = collect();
-        $policyDocuments = $getPolicyIssuanceResponse?->data->documents; 
+        $policyDocuments = json_decode($getPolicyIssuanceResponse?->response)?->data?->documents;
+        $policyId = json_decode($getPolicyIssuanceResponse?->response)?->data?->policyId;
+
         foreach ($policyDocuments as $policyDocument) {
             $quoteDocument = null;
-            $docName = $policyDocument->name;
-            $docMapping = $this->getPolicyIssuanceQuoteDocumentMapping($docName, $quote);
-            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document Name : '.$docName);
             $header = [
                 'opCo' => self::OP_CO,
                 'documentType' => $policyDocument->docId,
                 'referenceType' => 'policy',
-                'referenceValue' => $getPolicyIssuanceResponse->policyId,
+                'referenceValue' => $policyId,
                 'Accept' => 'application/json',
             ];
 
             $document = $this->httpCall($endPoint, [], $header, self::REQUEST_GET);
-            if ($docMapping) {
-                if ($document['status']) {
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start Upload To Quote Docs : '.$docName);
-                    $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $document['data']?->document, $docMapping['code'], $docName);
-                } else {
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Insurer Document not found for : '.$docName, ['status' => $document['status'], 'error' => $document['error']]);
-                }
+            sleep($getDocumentDelay);
 
-                $uploadedDocumentsToIMCRM->push([
-                    'name' => $docName,
-                    'uploaded' => $quoteDocument?->id ? true : false,
-                    'message' => $document['message'],
-                ]);
+            if ($document['status']) {
+                $docName = $document['data']?->document?->name;
+                $docMapping = $this->getPolicyIssuanceQuoteDocumentMapping($policyDocument->name, $quote);
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document Name : '.$docName);
+
+                $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $document['data']?->document?->content, $docMapping['code'], $docName);
+            } else {
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Insurer Document not found for : '.$policyDocument->name, ['status' => $document['status'], 'error' => $document['error']]);
+            }
+
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $document, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $document['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
+            $uploadedDocumentsToIMCRM->push([
+                'name' => $docName,
+                'uploaded' => $quoteDocument?->id ? true : false,
+                'message' => $document['message'],
+            ]);
+
+            if ($docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id) {
+                // $quote->update(['rta_upload_status' => self::RTA_UPLOAD_STATUS_DONE]);
+            } else {
+                // $quote->update(['rta_upload_status' => self::RTA_UPLOAD_STATUS_PENDING]);
             }
         }
 
@@ -459,7 +482,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - fetched all documents from insurer and Uploaded to IMCRM ');
         $response['status'] = true;
         $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
-        $response['completed_step'] = self::GET_AND_UPLOAD_POLICY_DOCUMENTS;
+        $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
 
@@ -468,9 +491,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     private function getPolicyIssuanceQuoteDocumentMapping($docName, $quote): ?array
     {
-
+        // TODO:: need to update this mapping
         $documentCodeMapping = [
-            self::POLICY_DOC_TAX_INVOICE => QuoteDocumentsEnum::CAR_TAX_INVOICE,
+            self::POLICY_DOC_TAX_INVOICE => QuoteDocumentsEnum::CAR_TAX_INVOICE, // TI
             self::POLICY_DOC_COMMISSION_STATEMENT => QuoteDocumentsEnum::CAR_TAX_INVOICE,
             self::POLICY_DOC_POLICY_SCHEDULE => QuoteDocumentsEnum::POLICY_SCHEDULE,
         ];
@@ -497,7 +520,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
-        $documentType = DocumentType::where(['quote_type_id' => self::TYPE_ID, 'code' => $documentCode, 'is_active' => true])->first();
+        $documentType = DocumentType::where(['quote_type_id' => self::TYPE_ID, 'code' => 'TI', 'is_active' => true])->first();
 
         if (! $documentType) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document type not found for code: '.$documentCode);
@@ -505,18 +528,18 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return;
         }
 
-        // Decode base64 content if needed
         $fileContents = base64_decode($documentContent);
         if ($fileContents === false) {
-            $fileContents = $documentContent; // Not base64 encoded
+            $fileContents = $documentContent;
         }
 
-        $docName = $originalName ?? ('health_document_'.uniqid().'.pdf');
+        $docName = $originalName ?? ('car_document_'.uniqid().'.pdf');
         $mimeType = 'application/pdf';
 
-        // Upload file to Azure
+        $docName = preg_replace('/\s+/', '_', $docName);
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
+
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
@@ -543,20 +566,19 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private function executeBookPolicyStep($quote, $process)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::BOOK_POLICY);
-        $policyIssuanceResponse = $this->bookPolicy($quote);
+        $triggerBookPolicyResponse = $this->bookPolicy($quote);
 
-        if (! $policyIssuanceResponse['status']) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            // TODO:: this need to be handled properly and update the lead status to failed
-            // throw new Exception($policyIssuanceResponse['error']);
+        if (! $triggerBookPolicyResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $triggerBookPolicyResponse]);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::BOOK_POLICY_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
             
-            return $policyIssuanceResponse;
+            return $triggerBookPolicyResponse;
         }
 
-        $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
+        $process->update(['completed_step' => $triggerBookPolicyResponse['completed_step']]);
         $process = $process->refresh();
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$policyIssuanceResponse['completed_step']);
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$triggerBookPolicyResponse['completed_step']);
     }
 
     public function bookPolicy($quote): array
@@ -564,6 +586,25 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
         $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insurer = getInsuranceProvider($payment, QuoteTypes::CAR->value);
+
+        $getQuoteCallFromInsurer = InsurerRequestResponse::where([
+            'quote_uuid' => '98M8PNSL',//$quote->uuid,
+            'call_type' => 'quoteInfo',
+            'provider_id' => $insurer->id,
+            'status' => 'passed',
+        ])->latest()->first();
+
+        if (! $getQuoteCallFromInsurer) {
+            $response['error'] = 'Get Quote call from insurer not found';
+            $response['message'] = 'Get Quote call from insurer not found';
+
+            return $response;
+        }
+
+        $getQuoteResponse = json_decode($getQuoteCallFromInsurer->response);
+        $this->updateBookingAndPolicyDetails($quote, $getQuoteResponse);
 
         $request = new \stdClass;
         $request->quote_id = $quote->id;
@@ -574,6 +615,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $request->transaction_payment_status = null;
 
         $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
+        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
 
         if (! $createSageProcessResponse['status']) {
             $response['error'] = $createSageProcessResponse['message'];
@@ -673,5 +715,43 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
             return $response;
         }
+    }
+
+    private function updateBookingAndPolicyDetails($quote, $getQuoteResponse)
+    {
+        return true;
+        // $quote->update([
+        //     'policy_number' => $getQuoteResponse->policyNumber,
+        //     'policy_start_date' => $getQuoteResponse->policyStartDate,
+        //     'policy_end_date' => $getQuoteResponse->policyEndDate,
+        //     'policy_status' => $getQuoteResponse->policyStatus,
+        // ]);
+
+        // $quote->payments()->mainLeadPayment()->update([
+        //     'policy_number' => $getQuoteResponse->policyNumber,
+        //     'policy_start_date' => $getQuoteResponse->policyStartDate,
+        //     'policy_end_date' => $getQuoteResponse->policyEndDate,
+        //     'policy_status' => $getQuoteResponse->policyStatus,
+        // ]);
+    }
+
+    public function getInsurerAPIStatuses()
+    {
+        return [
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
+            self::POLICY_ISSUANCE_API_FAILED_STATUS_ID => self::POLICY_ISSUANCE_API_FAILED,
+            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
+            self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
+        ];
+    }
+
+    public function getFailedIssuanceAPIStatuses()
+    {
+        return [
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+            self::POLICY_ISSUANCE_API_FAILED_STATUS_ID,
+            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
+            self::BOOK_POLICY_API_FAILED_STATUS_ID,
+        ];
     }
 }

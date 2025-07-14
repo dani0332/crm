@@ -13,13 +13,13 @@ class InsurerRequestResponse extends Model
     protected $primaryKey = 'id';
     protected $guarded = [];
 
-    public function carQuotePlanDetails()
-    {
-        return $this->belongsTo(CarQuotePlanDetail::class, 'provider_id', 'id');
-    }
-
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'provider_id', 'id');
+    }
+
+    public function quote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'uuid', 'uuid');
     }
 }
