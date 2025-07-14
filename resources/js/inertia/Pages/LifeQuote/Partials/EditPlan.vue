@@ -363,6 +363,7 @@ onMounted(() => {
       text: rider.text,
       loading: parseInt(rider?.loading) ?? 0,
       finalPrice: parseInt(rider?.finalPrice) ?? 0,
+      inputRequired: rider?.inputRequired ?? false,
     }));
 
     getRiderDetails(props.selectedPlan.planId);
@@ -906,7 +907,7 @@ const validateRiderCoverValue = (value, riderId) => {
                     :rules="
                       rider.active
                         ? [
-                            isRequired,
+                            rider.inputRequired ? isRequired : () => true,
                             isNonNegative,
                             validateCoverValue,
                             val => validateRiderCoverValue(val, rider.riderId),
