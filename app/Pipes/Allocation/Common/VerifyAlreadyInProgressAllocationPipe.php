@@ -19,7 +19,7 @@ class VerifyAlreadyInProgressAllocationPipe extends BaseAllocationPipe
         $this->setRequest($request);
 
         if ($this->lead->isAllocationInProgress()) {
-            LoggerService::info("Allocation is already started at {$this->lead->allocation_started_at}");
+            LoggerService::info("Allocation is already started at {$this->lead->lead_allocation_started_at}");
 
             $this->throw('Allocation is in progress', self::OK);
         }
