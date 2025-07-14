@@ -1716,7 +1716,7 @@ class SendEmailCustomerService extends BaseService
     {
         $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
         if (! empty($carIntroEmailWorkflowUrl)) {
-            $emailData = $this->buildEmailDataForBirdFlow($quote, workflowType: WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            $emailData = $this->buildEmailDataForBirdFlow($quote, null, WorkflowTypeEnum::CAR_INTRO_EMAIL);
             app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
             LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
         } else {
