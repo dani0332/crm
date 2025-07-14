@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\GenderEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
@@ -18,7 +18,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;

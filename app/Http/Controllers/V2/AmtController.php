@@ -503,10 +503,9 @@ class AmtController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::POLICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER || $item->text == quoteStatusCode::PaymentInitiated || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
         })->map(function ($item) use ($request) {
             $item->data = getDataAgainstStatus('Business', $item->id, $request);
-            
+
             return $item;
         })->toArray();
-
 
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),
