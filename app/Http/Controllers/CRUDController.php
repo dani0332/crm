@@ -2233,7 +2233,7 @@ class CRUDController extends Controller
 
         // get Car quote by uuid using model
         $carQuote = CarQuote::where('uuid', $request->quote_uuid)->first();
-      
+
         $previousAdvisor = null;
         if (! empty($carQuote->previous_advisor_id)) {
             $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
@@ -2247,8 +2247,8 @@ class CRUDController extends Controller
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
-        
-        if($carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD && $carQuote->advisor_id){
+
+        if ($carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD && $carQuote->advisor_id) {
             app(SendEmailCustomerService::class)->sendCarIntroEmailWithAdvisor($carQuote);
 
             return response()->json(['success' => 'OCB email sent to customer']);
