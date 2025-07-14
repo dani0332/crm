@@ -317,7 +317,7 @@ class BridgerInsightService
                         'X-API-Key' => $this->bridgerAPIKey,
                     ],
                     'body' => json_encode($amlUpdateData),
-                    'timeout' => 10,
+                    'timeout' => 30,
                 ]
             );
 
