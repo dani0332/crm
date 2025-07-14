@@ -74,15 +74,8 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const riders = props.lifeRiders.map(rider => ({
-  riderId: rider.id,
-  active: 0,
-  price: 0,
-  coverValue: 0,
-  text: rider.text,
-}));
 
-const ridersData = ref(riders);
+const ridersData = ref({});
 
 // Ensure rider values are always non-negative
 watch(
@@ -233,6 +226,35 @@ watch(
   },
 );
 
+// Watch for plan changes with immediate and deep options
+watch(
+  () => createForm.planId,
+  (newPlanId) => {
+    if (newPlanId) {
+      getRiderDetails(newPlanId);
+    }
+  },
+  { immediate: true }
+);
+
+// Also watch the entire createForm to see if anything changes
+watch(
+  createForm,
+  (newForm) => {
+    console.log('CreateForm changed:', newForm);
+  },
+  { deep: true }
+);
+
+// Test with provider selection to verify watchers work
+watch(
+  () => createForm.providerId,
+  (newValue, oldValue) => {
+    console.log('Provider ID changed from', oldValue, 'to', newValue);
+  },
+  { immediate: true }
+);
+
 const fetchProviderPlans = () => {
   if (!createForm.providerId) {
     return;
@@ -295,6 +317,30 @@ const validateCoverValue = value => {
   }
   return true;
 };
+
+
+const getRiderDetails = async planId => {
+  try {
+    const res = await axios.get(
+      `/personal-quotes/life/riders/${planId}`,
+    );
+  
+    // Clear existing options if needed
+    ridersData.value = res.data.map(rider => ({
+      riderId: rider.id,
+      active: 0,
+      price: 0,
+      coverValue: 0,
+      text: rider.rider.text,
+      inputRequired: rider.input_required,
+    }));
+    
+
+  } catch (error) {
+    console.error('Error fetching rider details:', error);
+  }
+};
+
 </script>
 
 <template>
@@ -496,7 +542,7 @@ const validateCoverValue = value => {
             min="0"
             :rules="
               rider.active
-                ? [isNonNegative, validateCoverValue, isRequired]
+                ? [isNonNegative, validateCoverValue, rider.inputRequired ? isRequired : null].filter(Boolean)
                 : []
             "
           />
@@ -507,7 +553,7 @@ const validateCoverValue = value => {
             @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.price"
-            :rules="rider.active ? [isNonNegative, isRequired] : []"
+            :rules="rider.active ? [isNonNegative, rider.inputRequired ? isRequired : null].filter(Boolean) : []"
           />
         </div>
       </div>

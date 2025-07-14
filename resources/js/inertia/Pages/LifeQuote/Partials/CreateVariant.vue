@@ -269,14 +269,19 @@ watch(
 
     // Handle rider data on plan change
     if (props.plan?.riders && props.plan.riders.length > 0) {
+      console.log(props.plan.riders, 'inside if first');
+
       ridersData.value = props.plan.riders.map(rider => ({
         riderId: rider.id,
         active: rider.active ?? 0,
         price: Math.max(0, parseFloat(rider.price) || 0),
         coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
         text: rider.text,
+        inputRequired: rider?.inputRequired ?? false,
       }));
+      
     } else {
+      console.log(props.plan.riders, 'inside if second');
       ridersData.value = props.lifeRiders.map(rider => ({
         riderId: rider.id,
         active: 0,
@@ -762,7 +767,7 @@ const validateRiderCoverValue = (value, riderId) => {
                 ? [
                     isNonNegative,
                     validateCoverValue,
-                    isRequired,
+                    rider.inputRequired ? isRequired : () => true,
                     val => validateRiderCoverValue(val, rider.riderId),
                   ]
                 : []
@@ -778,7 +783,7 @@ const validateRiderCoverValue = (value, riderId) => {
             type="number"
             :rules="
               rider.active && props.plan.isManualPlan
-                ? [isNonNegative, isRequired]
+                ? [isNonNegative, rider.inputRequired ? isRequired : () => true]
                 : []
             "
             step="any"

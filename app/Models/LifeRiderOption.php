@@ -17,4 +17,9 @@ class LifeRiderOption extends Model
     {
         return $this->hasMany(CurrencyCoverage::class, 'life_rider_option_id');
     }
+
+    function rider()
+    {
+        return $this->belongsTo(LifeRider::class, 'rider_id');
+    }
 }

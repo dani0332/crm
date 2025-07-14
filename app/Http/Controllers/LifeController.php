@@ -246,8 +246,14 @@ class LifeController extends Controller
     {
         LoggerService::startQuoteLogging($request->quoteUID);
         $this->lifeQuoteService->toggleLifePlanVisibility($request->all());
-        LoggerService::info('fn: toggleLifePlanVisibility - Life plan visibility toggled successfully');
+        LoggerService::info('fn: toggleLwebifePlanVisibility - Life plan visibility toggled successfully');
         
         return response()->json(['message' => 'Life plan visibility toggled successfully']);
+    }
+
+    function riders(Request $request)
+    {
+        $riders = $this->lifeQuoteService->getRiders($request->planId);
+        return response()->json($riders);
     }
 }

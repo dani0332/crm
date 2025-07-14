@@ -225,6 +225,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('personal-quotes/life/rider-details/{planId}', [LifeController::class, 'riderDetails'])->name('life-plan-rider-details');
         Route::get('personal-quotes/life/currency-coverages/{planId}', [LifeController::class, 'currencyCoverages'])->name('life-plan-currency-coverage');
         Route::post('personal-quotes/life/toggle-life-plan-visibility', [LifeController::class, 'toggleLifePlanVisibility'])->name('life-plan-toggle-visibility');
+        Route::get('personal-quotes/life/riders/{planId}', [LifeController::class, 'riders'])->name('life-plan-riders');
+        
 
         Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
         Route::post('personal-quotes/life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('life-quotes-send-oca-email');
