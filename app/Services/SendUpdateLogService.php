@@ -398,7 +398,17 @@ class SendUpdateLogService
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
-        $countChildRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)->count();
+        $countChildRecords = 0;
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)
+            ->select('id', 'code')
+            ->get();
+
+        if ($childRecords->count() > 0) {
+            $countChildRecords = count(array_filter($childRecords->toArray(), function ($item) use ($quoteObject) {
+                return str_starts_with($item['code'], $quoteObject->code);
+            }));
+        }
+
         // for travel mix.
         if ($quoteTypeCode == quoteTypeCode::Travel && (! is_null($quoteObject->child))) {
             $countChildRecords += 1;
