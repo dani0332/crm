@@ -1148,7 +1148,7 @@ const handleCollectionTypeChange = () => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
-    let checkCondition = (isCarQuote|| isTravelQuote) || !isIPLPermission;
+    let checkCondition = isCarQuote || isTravelQuote || !isIPLPermission;
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
