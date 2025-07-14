@@ -2247,7 +2247,7 @@ class CRUDController extends Controller
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
-
+        
         if($carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD && $carQuote->advisor_id){
             app(SendEmailCustomerService::class)->sendCarIntroEmailWithAdvisor($carQuote);
 
