@@ -4,7 +4,7 @@ import { errorMessages } from 'vue/compiler-sfc';
 import moment from 'moment';
 import { reactify } from '@vueuse/core';
 import { isNull } from 'lodash';
-import { numberFormat } from '@/inertia/Composables/utilities.js';
+import { numberFormat, preventInvalidInputs, useFormattedNumberField, useFormattedRiderField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -46,47 +46,13 @@ let overallLoadingState = ref(false);
 let totalPrice = props.selectedPlan.actualPremium;
 let errorMessage = ref(null);
 
-// Prevent invalid input chars for numeric fields (e, -, .)
-const preventInvalidInputs = (e, allowDecimals = true) => {
-  const invalidChars = ['e', '-'];
-  if (!allowDecimals) {
-    invalidChars.push('.');
-  }
-  if (invalidChars.includes(e.key)) {
-    e.preventDefault();
-    return;
-  }
-
-  // Limit to 2 decimal places
-  if (allowDecimals && e.key === '.') {
-    const value = e.target.value;
-    if (value.includes('.')) {
-      e.preventDefault();
-      return;
-    }
-  }
-
-  // Check if input would create more than 2 decimal places
-  if (allowDecimals && /^\d$/.test(e.key)) {
-    const value = e.target.value;
-    const dotIndex = value.indexOf('.');
-    if (
-      dotIndex !== -1 &&
-      value.length - dotIndex > 2 &&
-      e.target.selectionStart > dotIndex
-    ) {
-      e.preventDefault();
-    }
-  }
-};
-
 const formatDate = timestamp => {
   return moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
 };
 
 const validatePriceRange = value => {
   if (!value) return true;
-  const price = parseFloat(value);
+  const price = cleanFormattedValueToFloat(value);
   if ((editForm.isManualPlan && price < 1) || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
   }
@@ -593,6 +559,8 @@ const validateRiderCoverValue = (value, riderId) => {
 
   return true;
 };
+const formattedSumAssured = useFormattedNumberField(editForm, 'sumAssured')
+const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium')
 </script>
 
 <template>
@@ -713,13 +681,12 @@ const validateRiderCoverValue = (value, riderId) => {
               <div class="grid sm:grid-cols-2">
                 <dt class="mt-2">Price:</dt>
                 <x-input
-                  v-model="editForm.actualPremium"
+                  v-model="formattedActualPremium"
                   :disabled="editForm.isApi"
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
-                  @input="handleActualPremium"
                   size="sm"
-                  type="number"
-                  @keydown="e => preventInvalidInputs(e, true)"
+                  type="text"
+                  @keydown="e => preventInvalidInputs(e, true,true)"
                 />
               </div>
 
@@ -743,12 +710,12 @@ const validateRiderCoverValue = (value, riderId) => {
               <div class="grid sm:grid-cols-2">
                 <dt class="mt-2">Sum Assured:</dt>
                 <x-input
-                  v-model="editForm.sumAssured"
+                  v-model="formattedSumAssured"
                   :disabled="editForm.isApi"
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
-                  type="number"
-                  @keydown="e => preventInvalidInputs(e, true)"
+                  type="text"
+                  @keydown="e => preventInvalidInputs(e, true,false)"
                 />
               </div>
 

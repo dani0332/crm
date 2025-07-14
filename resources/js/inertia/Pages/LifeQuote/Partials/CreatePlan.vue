@@ -385,7 +385,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
               :rules="[isRequired, isNonNegative, validatePriceRange]"
               class="w-full"
               type="text"
-              @keydown="e => preventInvalidInputs(e, true,true)"
+              @keydown="e => preventInvalidInputs(e, true,false)"
             />
           </div>
         </div>

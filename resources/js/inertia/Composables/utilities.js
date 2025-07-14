@@ -559,6 +559,7 @@ export const numberFormat = (price, decimals = 2) => {
   return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
+// life lob specific function
 export const useFormattedNumberField = (source, fieldName) => {
   return computed({
     get() {
@@ -572,7 +573,6 @@ export const useFormattedNumberField = (source, fieldName) => {
     }
   })
 }
-
 
 // Helper function to create formatted fields for rider arrays
 export const useFormattedRiderField = (ridersArray, index, fieldName) => {

@@ -829,7 +829,7 @@
                     @foreach($displayPlans as $planId)
                         @if(isset($planDetails['coverage'][$planId]) && !empty($planDetails['coverage'][$planId]))
                             <td style="padding:0px !important;">
-                                <p>{{ $planDetails['coverage'][$planId]}}</p>
+                                <p>{{ number_format($planDetails['coverage'][$planId],2)}}</p>
                             </td>
                         @else
                             <td>
@@ -869,7 +869,7 @@
                     @foreach($displayPlans as $planId)
                         @if(isset($planDetails['year_of_coverage'][$planId]) && !empty($planDetails['year_of_coverage'][$planId]))
                             <td style="padding:0px !important;">
-                                <p>{{ $planDetails['year_of_coverage'][$planId]}}</p>
+                                <p>{{ $planDetails['year_of_coverage'][$planId]}} years</p>
                             </td>
                         @else
                             <td>
