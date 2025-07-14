@@ -327,7 +327,7 @@ const getRiderDetails = async planId => {
   
     // Clear existing options if needed
     ridersData.value = res.data.map(rider => ({
-      riderId: rider.id,
+      riderId: rider.rider_id,
       active: 0,
       price: 0,
       coverValue: 0,

@@ -366,7 +366,8 @@ const getTotalAnnualPremium = (paymentTerm, premium) => {
     'Semi-Annually': 2,
     Annually: 1,
   };
-  return (premium * mapping[paymentTermTitle]).toFixed(2);
+  // return (premium * mapping[paymentTermTitle]).toFixed(2);
+  return numberFormat(premium * mapping[paymentTermTitle]);
 };
 
 const onCopyText = text => {
@@ -1008,6 +1009,10 @@ const totalAnnualPrice = computed(() => {
 
   return totalPrice;
 });
+const numberFormat = (price, decimals = 2) => {
+  price = Number(price);
+  return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
 </script>
 
 <template>
@@ -1355,7 +1360,7 @@ const totalAnnualPrice = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED VALUE</dt>
-                <dd>{{ quote.life_quote?.sum_insured_value }}</dd>
+                <dd>{{ numberFormat(quote.life_quote?.sum_insured_value) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL INFORMATION</dt>
@@ -1914,12 +1919,12 @@ const totalAnnualPrice = computed(() => {
 
               <template #item-totalPrice="item">
                 <span class="copay-max">{{
-                  item.isManualPlan ? item.totalPrice : item.actualPremium
+                  item.isManualPlan ? numberFormat(item.totalPrice) : numberFormat(item.actualPremium)
                 }}</span>
               </template>
 
               <template #item-sumInsured="item">
-                <span class="copay-max">{{ parseFloat(item.sumInsured) }}</span>
+                <span class="copay-max">{{ numberFormat(item.sumInsured) }}</span>
               </template>
 
               <template #item-planTypeId="item">
@@ -1931,6 +1936,7 @@ const totalAnnualPrice = computed(() => {
                   >v.{{ item.version }}</span
                 >
               </template>
+              
               <template #item-paymentTerm="item">
                 <span class="copay-max">{{
                   getPaymentTermTitle(item.paymentTerm)
@@ -2104,15 +2110,15 @@ const totalAnnualPrice = computed(() => {
                 <dd>
                   {{
                     ecomDetail?.isManualPlan
-                      ? ecomDetail?.totalPrice
-                      : (ecomDetail?.actualPremium ?? 'N/A')
+                      ? numberFormat(ecomDetail?.totalPrice)
+                      : (numberFormat(ecomDetail?.actualPremium) ?? 'N/A')
                   }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Total Annual Price</dt>
                 <dd>
-                  {{ totalAnnualPrice }}
+                  {{ numberFormat(totalAnnualPrice) }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
