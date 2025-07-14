@@ -4,6 +4,8 @@ import { errorMessages } from 'vue/compiler-sfc';
 import moment from 'moment';
 import { reactify } from '@vueuse/core';
 import { isNull } from 'lodash';
+import { numberFormat } from '@/inertia/Composables/utilities.js';
+
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
@@ -1015,7 +1017,7 @@ const validateRiderCoverValue = (value, riderId) => {
           <div class="flex flex-row">
             <dt class="font-bold text-lg ml-4">Total Price:</dt>
             <dd class="text-lg">
-              &nbsp; AED {{ Number(actualPremium.toFixed(2)) }}
+              &nbsp; AED {{ numberFormat(actualPremium) }}
             </dd>
           </div>
 
@@ -1064,7 +1066,7 @@ const validateRiderCoverValue = (value, riderId) => {
             <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
             <div class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
-              <dd class="text-sm">&nbsp; AED {{ actualPremium.toFixed(2) }}</dd>
+              <dd class="text-sm">&nbsp; AED {{ numberFormat(actualPremium) }}</dd>
             </div>
           </div>
           <!-- Timestamps aligned to the right -->
@@ -1122,7 +1124,7 @@ const validateRiderCoverValue = (value, riderId) => {
             <div class="flex items-center">
               <span class="font-bold mr-2">Total Price:</span>
               <span class=""
-                >AED {{ parseFloat(actualPremium).toFixed(2) }}</span
+                >AED {{ numberFormat(actualPremium) }}</span
               >
             </div>
           </div>

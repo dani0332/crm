@@ -1,5 +1,5 @@
 <script setup>
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import { applyEmiratesNumberMasking, numberFormat } from '@/inertia/Composables/utilities.js';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
@@ -1009,10 +1009,7 @@ const totalAnnualPrice = computed(() => {
 
   return totalPrice;
 });
-const numberFormat = (price, decimals = 2) => {
-  price = Number(price);
-  return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
+
 </script>
 
 <template>

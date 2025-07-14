@@ -531,3 +531,30 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
     label: item[labelKey],
   }));
 };
+
+// prevent charaters, accepts only numbers, comma, and decimal point
+export const preventInvalidInputs = (event, allowComma = false) => {
+  const key = event.key
+
+  const controlKeys = [
+    'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Home', 'End'
+  ]
+  if (controlKeys.includes(key)) return
+
+  // Allow comma if specified
+  if (allowComma && key === ',') return
+
+  // Allow dot (.)
+  if (key === '.') return
+
+  // Allow digits 0-9
+  if (/^[0-9]$/.test(key)) return
+
+  // Block everything else
+  event.preventDefault()
+}
+
+export const numberFormat = (price, decimals = 2) => {
+  price = parseFloat(price);
+  return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
