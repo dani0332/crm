@@ -114,12 +114,6 @@ class CarQuote extends BaseModel
         return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
     }
 
-
-    // public function getInsurerApiEmailActionAttribute()
-    // {
-    //     return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIEmailActionMessage($this->insurer_api_status_id) : null;
-    // }
-
     public function fullName()
     {
         return $this->first_name.' '.$this->last_name;

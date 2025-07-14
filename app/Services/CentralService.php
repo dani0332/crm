@@ -1513,10 +1513,9 @@ class CentralService extends BaseService
             ];
 
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
-                // TODO:: Need to add check to failed state in lead level
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
-                return;
+                return ['status' => false, 'message' => 'Premium mismatch on Insurer portal'];
             }
 
             LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
