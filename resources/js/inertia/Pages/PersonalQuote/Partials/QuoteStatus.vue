@@ -33,7 +33,7 @@ const quoteStatusOptions = computed(() => {
       value: status.id,
       label: status.text,
       disabled: statusDisabled,
-    }
+    };
   });
 });
 

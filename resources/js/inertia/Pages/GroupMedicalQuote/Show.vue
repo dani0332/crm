@@ -134,7 +134,6 @@ const leadStatusForm = useForm({
 });
 
 const leadStatusOptions = computed(() => {
-  
   return page.props.quoteStatuses.map(status => {
     var statusDisabled = false;
     // below status are not editable by advisor
