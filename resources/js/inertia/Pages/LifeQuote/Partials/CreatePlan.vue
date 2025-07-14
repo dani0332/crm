@@ -324,10 +324,8 @@ const getRiderDetails = async planId => {
     const res = await axios.get(
       `/personal-quotes/life/riders/${planId}`,
     );
-    
-
+  
     // Clear existing options if needed
-
     ridersData.value = res.data.map(rider => ({
       riderId: rider.id,
       active: 0,
@@ -336,21 +334,7 @@ const getRiderDetails = async planId => {
       text: rider.rider.text,
       inputRequired: rider.input_required,
     }));
-
-    // Loop through the data with new format
-    // res.data.forEach(item => {
-    //   if (item.currency_coverages && Array.isArray(item.currency_coverages)) {
-    //     item.currency_coverages.forEach(coverage => {
-    //       riderOptions.value.push({
-    //         riderId: item.rider_id,
-    //         currency_id: coverage.currency_id,
-    //         range_minimum: coverage.min_cover,
-    //         range_maximum: coverage.max_cover,
-    //       });
-    //     });
-    //   }
-    // });
-    console.log()
+    
 
   } catch (error) {
     console.error('Error fetching rider details:', error);
