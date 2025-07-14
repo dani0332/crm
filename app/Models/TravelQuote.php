@@ -376,4 +376,18 @@ class TravelQuote extends Model implements AuditableContract
         )->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
             ->latest('customer_insured.updated_at');
     }
+
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
+
+    /**
+     * Get quote tags for this car quote
+     */
+    public function quoteTags()
+    {
+        return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Travel);
+    }
 }

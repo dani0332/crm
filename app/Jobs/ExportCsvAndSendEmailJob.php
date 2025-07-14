@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -57,6 +58,10 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             // Instantiate the export class with constructor parameters if needed
             $exportInstance = $this->instantiateExportClass();
 
+            if (empty($this->requestParams['user']) && ! empty($this->requestParams['user_id'])) {
+                $this->requestParams['user'] = User::with(['permissions', 'roles.permissions'])->findOrFail($this->requestParams['user_id']);
+            }
+
             // Process CSV and send email
             $exportInstance->sendEmailWithCSVAttachment(
                 $this->requestParams['recipientEmail'],
@@ -107,6 +112,11 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             $quoteType = $this->requestParams['quoteType'] ?? null;
 
             return app($this->exportClass, ['quoteType' => $quoteType]);
+        }
+
+        // Handle AmlCftReportExport which needs requestParams in constructor
+        if ($this->exportClass === 'App\\Exports\\AmlCftReportExport') {
+            return app($this->exportClass, ['requestParams' => $this->requestParams]);
         }
 
         // For other export classes, use default instantiation

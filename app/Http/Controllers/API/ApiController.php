@@ -23,6 +23,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
+use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
@@ -412,7 +413,7 @@ class ApiController extends Controller
 
             return apiResponse($data, Response::HTTP_OK);
         } catch (\Exception $e) {
-            LoggerService::error('Error', exception: $e);
+            LoggerService::error('An error occurred while completing the private client tagging exercise', exception: $e);
 
             return apiResponse(
                 $e->getMessage(),
@@ -428,6 +429,11 @@ class ApiController extends Controller
         return $this->apiService->triggerTravelAIGWorkflow($request);
     }
 
+    public function triggerSICWhatsapp(SICWhatsappRequest $request)
+    {
+        // TODO: Implement triggerSICWhatsapp
+        return $this->apiService->triggerSICWhatsapp($request);
+    }
     public function homeRenewalOCBAttachment(Request $request)
     {
         $request->validate([
