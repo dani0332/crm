@@ -110,6 +110,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->savingsLOB();
 
         $this->seedOcrEnabled();
+        $this->seedSukoonMedexProductSlug();
     }
 
     private function seedBirdWorkflowUrls()
@@ -466,6 +467,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::OCR_ENABLED],
             [
                 'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedSukoonMedexProductSlug()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG],
+            [
+                'value' => 'afia_driver_medex',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
