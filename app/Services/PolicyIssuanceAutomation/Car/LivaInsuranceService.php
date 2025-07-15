@@ -35,6 +35,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public const GET_AND_UPLOAD_POLICY_DOCUMENTS = 'GetAndUploadPolicyDocuments';
     public const BOOK_POLICY = 'BookPolicy';
 
+    public const UPLOAD_DOCUMENTS_RESPONSE = 'UploadDocumentsResponse';
+    public const POLICY_ISSUANCE_RESPONSE = 'PolicyResponse';
+
     const POLICY_AUTOMATION_STATUS_YES_ID = 1;
     const POLICY_AUTOMATION_STATUS_NO_ID = 2;
     
@@ -103,7 +106,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $this->policyIssuance;
     }
 
-    public function executeSteps($process): array
+    public function executeSteps($process)
     {
         $response = ['status' => false, 'error' => null, 'message' => null];
 
@@ -141,17 +144,21 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    private function executeStepSequence($quote, $process, $nextStepToBeExecuted): void
+    private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
     {
         if ($nextStepToBeExecuted === self::UPLOAD_DOCUMENTS) {
-            $this->executeUploadDocumentsStep($quote, $process);
+            $uploadDocumentsResponse = $this->executeUploadDocumentsStep($quote, $process);
+            if (! $uploadDocumentsResponse['status']) {
+                return $uploadDocumentsResponse;
+            }
+
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        /* if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
+        if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
             $this->executeIssuePolicyStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        } */
+        }
 
         /* if ($nextStepToBeExecuted === self::GET_AND_UPLOAD_POLICY_DOCUMENTS) {
             $this->executeGetAndUploadPolicyDocumentsStep($quote, $process);
@@ -273,8 +280,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             
             $this->currentInsurerApiStatus = self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
             // TODO:: this function need to be updated
-            // app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-        
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+
             return $uploadDocumentsResponse;
         }
 
@@ -343,14 +350,21 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $payload['UploadDocumentsRequest'] = [
             'TransactionType' => '5',
-            'TransactionNumber' => $quote?->carQuotePlanDetail?->insurer_quote_no ?? 7872837, // TODO: Use actual quote number
+            'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ??  */7872837, // TODO: Use actual quote number
             'Attachments' => $attachments,
         ];
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Payload created with '.count($attachments).' attachments');
 
-        $response = $this->httpCall($endPoint, $payload, 'UploadDocumentsResponse');
+        $response = $this->httpCall($endPoint, $payload, self::UPLOAD_DOCUMENTS_RESPONSE);
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $response, $this->baseUrl.$endPoint, self::UPLOAD_DOCUMENTS, $response['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
+
+        if (! $response['status']) {
+            $response['message'] = $response['error'];
+            $response['error'] = $response['error'];
+
+            return $response;
+        }
 
         $responseStatus = [];
         $allUploadsSuccessful = true;
@@ -376,15 +390,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' All documents uploaded successfully', extra: [
                 'details' => $responseStatus,
             ]);
-            $status = true;
+            $response['status'] = true;
         } else {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Some documents failed to upload', extra: [
                 'details' => $responseStatus,
             ]);
-            $status = false;
+            $response['status'] = false;
         }
 
-        return ['status' => $status];
+        return $response;
     }
 
     private function httpCall($endPoint, $payload, $keyAPI)
@@ -395,21 +409,17 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         try {
             $httpResponse = Http::timeout(20)->withHeaders($this->headers)->post($url, $payload);
             // TODO: statusCode: 404, message: Resource not found. if url wrong.
-
-            if ($httpResponse->successful()) {
-                if ($httpResponse->object()?->$keyAPI?->Status == false) {
-                    $response['error'] = $httpResponse->object()?->$keyAPI?->Status;
+            
+            if ($responseObject = $httpResponse->object()) {
+                if (count($responseObject->$keyAPI->errors ?? 0) > 0 || $responseObject->$keyAPI?->Status == false) {
+                    $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
-                    $response['message'] = json_encode($httpResponse->object()?->$keyAPI?->errors);
+                    $response['message'] = json_encode($responseObject->$keyAPI?->errors);
                 } else {
                     $response['status'] = true;
-                    $response['data'] = $httpResponse->object();
+                    $response['data'] = $responseObject;
                     $response['message'] = 'API call successfully executed.';
                 }
-            } else {
-                $response['error'] = $httpResponse->object()?->$keyAPI?->Status;
-                $response['status'] = false;
-                $response['message'] = json_encode($httpResponse->object()?->$keyAPI?->errors);
             }
         } catch (Exception $ex) {
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__, [
@@ -436,5 +446,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'CAR_MULKIY' => '5', // Registration card (Mulkiya)
             default => null
         };
+    }
+
+    public function getFailedIssuanceAPIStatuses()
+    {
+        return [
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+            self::POLICY_ISSUANCE_API_FAILED_STATUS_ID,
+            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
+            self::BOOK_POLICY_API_FAILED_STATUS_ID,
+        ];
     }
 }
