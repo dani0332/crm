@@ -47,10 +47,12 @@ const followUpForm = useForm({
 });
 
 const managersOptions = computed(() => {
-  return props.dropdowns.claimsManagers?.map(manager => ({
-    value: manager.id,
-    label: manager.name,
-  })) || [];
+  return (
+    props.dropdowns.claimsManagers?.map(manager => ({
+      value: manager.id,
+      label: manager.name,
+    })) || []
+  );
 });
 
 const statusOptions = computed(() => {
@@ -59,11 +61,11 @@ const statusOptions = computed(() => {
       value: parseInt(id),
       label: text,
     }),
-  ); 
+  );
 });
 
 const subStatusOptions = computed(() => {
-  
+
   return props.dropdowns.claimSubStatuses?.map(subStatus => ({
     value: subStatus.id,
     label: subStatus.text,
@@ -110,7 +112,7 @@ function assignManager() {
         position: 'top',
       });
     },
-    onError: (errors) => {
+    onError: errors => {
       notification.error({
         title: 'Error assigning manager',
         position: 'top',
@@ -136,7 +138,7 @@ function updateStatus() {
         position: 'top',
       });
     },
-    onError: (errors) => {
+    onError: errors => {
       notification.error({
         title: 'Error updating status',
         position: 'top',
@@ -253,7 +255,7 @@ function deleteClaim() {
         });
         router.visit('/claims');
       },
-      onError: (errors) => {
+      onError: errors => {
         notification.error({
           title: 'Error deleting claim',
           position: 'top',
@@ -561,7 +563,9 @@ function deleteClaim() {
                 <dt class="font-medium">NEXT FOLLOW-UP DATE</dt>
                 <dd :class="{ 'text-red-600 font-semibold': isOverdue }">
                   {{ formatDate(claim.next_follow_up_date) }}
-                  <span v-if="isOverdue" class="ml-2 text-red-500">(Overdue)</span>
+                  <span
+          v-if="isOverdue"
+          class="ml-2 text-red-500">(Overdue)</span>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2" v-if="isCarLOB">

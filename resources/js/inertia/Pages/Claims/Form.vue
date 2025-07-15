@@ -16,29 +16,33 @@ const claimForm = useForm({
   email: props.claim?.email_address || '',
   phone_number: props.claim?.phone_number || '',
   line_of_business_id: props.claim?.line_of_business_id || '',
-  
+
   // Additional Fields
   insurer_claim_number: props.claim?.insurer_claim_number || '',
   claim_type_id: props.claim?.claim_type_id || '',
   incident_date: props.claim?.incident_date || '',
   policy_number: props.claim?.policy_number || '',
-  
+
   // System Fields
   lead_source: props.claim?.lead_source || 'IMCRM',
 });
 
 const lineOfBusinessOptions = computed(() => {
-  return props.dropdowns?.lineOfBusiness?.map(lob => ({
-    value: lob.id,
-    label: lob.text,
-  })) || [];
+  return (
+    props.dropdowns?.lineOfBusiness?.map(lob => ({
+      value: lob.id,
+      label: lob.text,
+    })) || []
+  );
 });
 
 const claimTypeOptions = computed(() => {
-  return props.dropdowns?.claimTypes?.map(ct => ({
-    value: ct.id,
-    label: ct.text,
-  })) || [];
+  return (
+    props.dropdowns?.claimTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
 });
 
 function onSubmit(isValid) {
@@ -70,7 +74,8 @@ function onSubmit(isValid) {
     });
   } else {
     notification.error({
-      title: 'Error while submitting claim. Please check the form and try again',
+      title:
+        'Error while submitting claim. Please check the form and try again',
       position: 'top',
     });
   }
@@ -84,7 +89,9 @@ function onSubmit(isValid) {
     <Head :title="isEdit ? 'Edit Claim' : 'Create Claim Lead'" />
     <div class="flex justify-between items-center">
       <div>
-        <h2 class="text-xl font-semibold">{{ isEdit ? 'Edit Claim' : 'Create New Claim Lead' }}</h2>
+        <h2 class="text-xl font-semibold">
+        {{ isEdit ? 'Edit Claim' : 'Create New Claim Lead' }}
+      </h2>
         <p class="text-sm text-gray-600 mt-1" v-if="!isEdit">
           Create a new claim lead in IMCRM. Fields marked with * are mandatory.
         </p>
@@ -196,9 +203,7 @@ function onSubmit(isValid) {
       <!-- Form Actions -->
       <div class="flex justify-end gap-3 mb-4">
         <Link href="/claims">
-          <x-button size="md" color="gray" type="button">
-            Cancel
-          </x-button>
+          <x-button size="md" color="gray" type="button"> Cancel </x-button>
         </Link>
         <x-button
           size="md"
