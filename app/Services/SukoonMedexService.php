@@ -171,7 +171,7 @@ class SukoonMedexService
                     $this->syncSukoonData($this->transaction, $initPaymentResponse);
 
                     // STEP #11 completeInvoicePayment
-                    $invoicePaymentResponse = $this->completeInvoicePayment($this->transaction);
+                    $invoicePaymentResponse = $this->completeInvoicePayment();
                     $this->syncSukoonData($this->transaction, $invoicePaymentResponse);
                     $this->transaction->documents()->whereIn('document_type_code', $this->sukoonReqDocTypeCodes)->delete();
                     $this->transaction->load('documents');
@@ -361,10 +361,10 @@ class SukoonMedexService
      */
     private function updateTransaction($transaction, $transactionDetail, $savedDocTypes = [])
     {
-        $paymentData = $transactionDetail['payments'][0];
+        $paymentData = $transactionDetail['payments'][0] ?? null;
         $additionalData = $transactionDetail['additional_data'];
-        $commissionAmount = floatval($additionalData['broker_commission_amount'] ?? 0) ?: (int) ($additionalData['broker_commission_amount'] ?? 0);
-        $commissionVat = floatval($additionalData['broker_commission_vat_amount'] ?? 0) ?: (int) ($additionalData['broker_commission_vat_amount'] ?? 0);
+        $commissionAmount = floatval($additionalData['broker_commission_amount'] ?? 0);
+        $commissionVat = floatval($additionalData['broker_commission_vat_amount'] ?? 0);
 
         $data = [
             'certificate_number' => $this->certificateNumber,
