@@ -142,9 +142,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
             LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUsers).' and teamId is : '.$teamId);
 
-           
-           // Find the difference between available user IDs and rule users.
-           $finalEligibleUserIds = array_diff(
+            // Find the difference between available user IDs and rule users.
+            $finalEligibleUserIds = array_diff(
                 $availableUserIds,
                 is_array($ruleUsers) ? $ruleUsers : []
             );
