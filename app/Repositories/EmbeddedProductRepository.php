@@ -420,7 +420,7 @@ class EmbeddedProductRepository extends BaseRepository
                         $savedDocumentTypes = $item->documents->pluck('document_type_code')->toArray();
                         $sukoonInitialDocTypes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
 
-                        // check all email-required documents are saved
+                        // Check All email-required documents are saved
                         if (empty(array_diff($sukoonInitialDocTypes, $savedDocumentTypes))) {
 
                             $sukoonMedexService = app(SukoonMedexService::class);
@@ -527,8 +527,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } elseif ($isSukoonMedex) {
-            return $this->sendMedexEmailV3($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep);
-            // return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep, $data['regenerate']);
+            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep);
         }
     }
 
@@ -632,7 +631,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendMedexEmailV3($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep)
+    private function sendMedexEmail($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep)
     {
         $documents = $transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get();
         $certificatesConfig = config('embedded-products.certificates');
@@ -679,49 +678,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         return 'Certificate sent successfully';
     }
-
-    // TODO:: remove this function after testing
-    // private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep, $regenerate)
-    // {
-    //     $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType, $regenerate);
-    //     $certificatesConfig = config('embedded-products.certificates');
-
-    //     if ($pdf) {
-    //         $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-    //         $url = $websiteURL.$pdf->doc_url;
-    //         $file = file_get_contents($url);
-    //         $attachments[] = [
-    //             'Content' => base64_encode($file),
-    //             'Name' => 'Salama_Certificate.pdf',
-    //             'ContentType' => 'application/pdf',
-    //         ];
-    //     }
-
-    //     $body = json_encode([
-    //         'From' => config('constants.IM_FROM_EMAIL'),
-    //         'ReplyTo' => $advisorData['email'] ?? null,
-    //         'To' => $quoteObject->email,
-    //         'Cc' => $advisorData['email'] ?? '',
-    //         'Tag' => '',
-    //         'TemplateAlias' => $certificatesConfig[$short_code]['email_template_alias'],
-    //         'Attachments' => $attachments,
-    //         'TemplateModel' => [
-    //             'params' => [
-    //                 'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
-    //                 'isMedex' => strtoupper($short_code) == EmbeddedProductEnum::MDX,
-    //                 'productName' => $ep->product_name,
-    //                 'productDescription' => $ep->description,
-    //                 'advisor' => (object) $advisorData,
-    //             ],
-    //             'subject' => 'Thank you for your purchase of '.$ep->product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
-    //         ],
-    //         'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
-    //     ], JSON_UNESCAPED_SLASHES);
-
-    //     SendEPDocumentsJob::dispatch($body);
-
-    //     return 'Certificate sent successfully';
-    // }
 
     private function handleAjaxResponse($message, $status)
     {
