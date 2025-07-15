@@ -583,13 +583,15 @@ class EmbeddedProductRepository extends BaseRepository
     private function formatPhoneNumber($phoneNumber = '')
     {
         $prefixNumber = '';
-        if(strpos($phoneNumber, '+') !== false)
+        if (strpos($phoneNumber, '+') !== false) {
             $prefixNumber = '+';
+        }
 
         if (! str_contains($phoneNumber, ' ')) {
             $onlyNumber = str_replace('+', '', $phoneNumber);
             $phoneNumber = $prefixNumber.implode(' ', str_split($onlyNumber, 3));
         }
+
         return $phoneNumber;
     }
 
