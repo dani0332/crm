@@ -47,13 +47,13 @@ class ClaimsService extends BaseService
             'assigned_claims_manager_id',
             'assigned_to_id',
         ])
-        ->with([
-            'lineOfBusiness:id,text',
-            'claimType:id,text',
-            'assignedClaimsManager:id,name',
-            'assignedTo:id,name',
-            'claimsStatus:id,text',
-        ]);
+            ->with([
+                'lineOfBusiness:id,text',
+                'claimType:id,text',
+                'assignedClaimsManager:id,name',
+                'assignedTo:id,name',
+                'claimsStatus:id,text',
+            ]);
     }
 
     /**
@@ -63,7 +63,7 @@ class ClaimsService extends BaseService
     {
         // Apply filters
         $filters = $this->getFilters($request);
-        $query =  $this->applyFilters($this->query, $filters);
+        $query = $this->applyFilters($this->query, $filters);
 
         return $query->paginate(25);
     }

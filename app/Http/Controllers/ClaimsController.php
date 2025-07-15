@@ -48,7 +48,7 @@ class ClaimsController extends Controller
             Log::error('Error loading claims index', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-            ]); 
+            ]);
 
             return Inertia::render('Claims/Index', [
                 'claims' => collect([]),
@@ -116,7 +116,6 @@ class ClaimsController extends Controller
             // Load claim with all relationships
             $claim = $this->claimsService->getClaimById($claim->id);
 
-
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -139,20 +138,19 @@ class ClaimsController extends Controller
     /**
      * Show the form for editing the specified claim
      */
-    public function edit(Claim $claim) 
+    public function edit(Claim $claim)
     {
 
         try {
             // Load claim with relationships
             $claim = $this->claimsService->getClaimById($claim->id);
- 
 
             // Get dropdown data for the form
             $dropdownData = $this->claimsService->getDropdownData();
 
             return Inertia::render('Claims/Edit', [
                 'claim' => $claim,
-                'dropdowns' => $dropdownData, 
+                'dropdowns' => $dropdownData,
             ]);
         } catch (Exception $e) {
             Log::error('Error loading claim edit form', [
