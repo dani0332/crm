@@ -64,10 +64,10 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->epTransaction->code.' - sage conflict - updating status to pending');
+                    LoggerService::info('Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - sage conflict - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, $this->logFor);
                 } else {
-                    LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->epTransaction->code.' - booking failed - updating status to failed');
+                    LoggerService::info('Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - booking failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
                 }
             } else {
