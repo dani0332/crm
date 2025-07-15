@@ -120,6 +120,10 @@ class SendBookPolicyRequest extends FormRequest
                             $validator->errors()->add('value', 'Commission (VAT NOT APPLICABLE) OR Commission (VAT APPLICABLE) is required');
                         }
 
+                        if (empty($payment->commmission_percentage) && empty($payment->commission_vat) && empty($payment->commission)) {
+                            $validator->errors()->add('value', 'Commission percentage, Commission VAT, OR Total commission is required');
+                        }
+
                         $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
                         $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
                         $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
