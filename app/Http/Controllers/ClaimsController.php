@@ -48,15 +48,14 @@ class ClaimsController extends Controller
             Log::error('Error loading claims index', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-            ]);
-            dd($e->getMessage());
+            ]); 
 
             return Inertia::render('Claims/Index', [
                 'claims' => collect([]),
                 'filters' => [],
                 'claimDropdownOptions' => [],
                 'statistics' => [],
-                'error' => 'Failed to load claims data.',
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -68,12 +67,11 @@ class ClaimsController extends Controller
     {
         try {
             // Get dropdown data for the form
-            $dropdownData = $this->claimsService->getDropdownData();
+            $claimDropdownOptions = $this->claimsService->getDropdownData();
 
-            return Inertia::render('Claims/CreateEdit', [
-                'dropdownData' => $dropdownData,
+            return Inertia::render('Claims/Create', [
+                'dropdowns' => $claimDropdownOptions,
                 'claim' => null,
-                'mode' => 'create',
             ]);
         } catch (Exception $e) {
             Log::error('Error loading claims create form', [
@@ -112,23 +110,19 @@ class ClaimsController extends Controller
     /**
      * Display the specified claim
      */
-    public function show(Claim $claim): Response
+    public function show(Claim $claim)
     {
         try {
             // Load claim with all relationships
             $claim = $this->claimsService->getClaimById($claim->id);
 
-            if (! $claim) {
-                return redirect()->route('claims.index')
-                    ->with('error', 'Claim not found.');
-            }
 
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
             return Inertia::render('Claims/Show', [
                 'claim' => $claim,
-                'dropdownData' => $dropdownData,
+                'dropdowns' => $dropdownData,
             ]);
         } catch (Exception $e) {
             Log::error('Error loading claim details', [
@@ -145,25 +139,20 @@ class ClaimsController extends Controller
     /**
      * Show the form for editing the specified claim
      */
-    public function edit(Claim $claim): Response
+    public function edit(Claim $claim) 
     {
 
         try {
             // Load claim with relationships
             $claim = $this->claimsService->getClaimById($claim->id);
-
-            if (! $claim) {
-                return redirect()->route('claims.index')
-                    ->with('error', 'Claim not found.');
-            }
+ 
 
             // Get dropdown data for the form
             $dropdownData = $this->claimsService->getDropdownData();
 
-            return Inertia::render('Claims/CreateEdit', [
+            return Inertia::render('Claims/Edit', [
                 'claim' => $claim,
-                'dropdownData' => $dropdownData,
-                'mode' => 'edit',
+                'dropdowns' => $dropdownData, 
             ]);
         } catch (Exception $e) {
             Log::error('Error loading claim edit form', [

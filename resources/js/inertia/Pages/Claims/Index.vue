@@ -29,6 +29,7 @@ let availableFilters = {
   policy_number: '',
   assigned_status: '',
   next_followup_date: '',
+  complaint_status: '',
   plate_number: '',
   vehicle_make: '',
   vehicle_model: '',
@@ -115,6 +116,14 @@ const managersOptions = computed(() => {
     props.claimDropdownOptions?.claimsManagers?.map(manager => ({
       value: manager.id,
       label: manager.name,
+    })) || []
+  );
+});
+const complaintStatusOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.complaintStatuses?.map(status => ({
+      value: status.value,
+      label: status.text,
     })) || []
   );
 });
@@ -379,9 +388,10 @@ watch(
           filterPlaceholder="Filter Manager...."
           clearable
         />
+
         <x-select
           v-model="filters.claim_manager_id"
-          label="Assigned Claims Lead"
+          label="Claims Lead"
           placeholder="Select Manager"
           :options="managersOptions"
           filterable
@@ -421,6 +431,15 @@ watch(
           :options="assignedStatusOptions"
           filterable
           filterPlaceholder="Filter Claim Type...."
+          clearable
+        />
+        <x-select
+          v-model="filters.complaint_status"
+          label="Complaint Status"
+          placeholder="Select  "
+          :options="complaintStatusOptions"
+          filterable
+          filterPlaceholder="Filter Complaint Status...."
           clearable
         />
 
@@ -488,8 +507,8 @@ watch(
       hide-rows-per-page
       hide-footer
     >
-      <template #item-ref_id="{ ref_id, id }">
-        <Link :href="`/claims/${id}`" class="text-primary-500 hover:underline">
+      <template #item-ref_id="{ ref_id }">
+        <Link :href="`/claims/${ref_id}`" class="text-primary-500 hover:underline">
           {{ ref_id }}
         </Link>
       </template>
@@ -586,8 +605,8 @@ watch(
     <div class="flex justify-center mt-4" v-if="claims.links">
       <div class="flex gap-2">
         <Link
-          v-for="link in claims.links"
-          :key="link.label"
+          v-for="(link, index) in claims.links"
+          :key="`pagination-${index}-${link.label}`"
           :href="link.url"
           :class="[
             'px-3 py-2 text-sm border rounded',
@@ -596,8 +615,9 @@ watch(
               : 'bg-white text-gray-700 hover:bg-gray-100',
             !link.url ? 'opacity-50 cursor-not-allowed' : '',
           ]"
-          v-html="link.label"
-        />
+        >
+          {{ link.label }}
+        </Link>
       </div>
     </div>
   </div>

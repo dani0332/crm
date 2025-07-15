@@ -215,15 +215,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         // Claims Management Routes
-        Route::resource('claims', ClaimsController::class)->names([
-            'index' => 'claims.index',
-            'create' => 'claims.create',
-            'store' => 'claims.store',
-            'show' => 'claims.show',
-            'edit' => 'claims.edit',
-            'update' => 'claims.update',
-            'destroy' => 'claims.destroy',
-        ]);
+        Route::get('/claims', [ClaimsController::class, 'index'])->name('claims.index');
+        Route::get('/claims/create', [ClaimsController::class, 'create'])->name('claims.create');
+        Route::post('/claims', [ClaimsController::class, 'store'])->name('claims.store');
+        Route::get('/claims/{claim:ref_id}', [ClaimsController::class, 'show'])->name('claims.show');
+        Route::get('/claims/{claim:ref_id}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
+        Route::put('/claims/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
+        Route::patch('/claims/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
+        Route::delete('/claims/{claim:ref_id}', [ClaimsController::class, 'destroy'])->name('claims.destroy');
         /*
                     // Claims AJAX routes
             Route::post('claims/{claim}/assign-manager', [ClaimsController::class, 'assignManager'])->name('claims.assign-manager');
