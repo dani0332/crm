@@ -13,7 +13,7 @@ const notification = useNotifications('toast');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-const { isRequired } = useRules();
+const { isRequired, maxDateRangeArray } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const cleanObj = obj => useCleanObj(obj);
@@ -149,6 +149,7 @@ watch(
 );
 
 function onSubmit(isValid) {
+  console.log(isValid);
   if (!isValid) return;
   if (filters.quoteId || filters.email || filters.mobile_no) {
     filters.chat_initiated_at = [];
@@ -365,19 +366,15 @@ const exportReport = async (exportType = 'download') => {
         v-model="filters.chat_initiated_at"
         placeholder="Select Start & End Date"
         range
-        :max-range="31"
         size="md"
         model-type="yyyy-MM-dd"
         :rules="
-          filters.quoteId ||
-          filters.email ||
-          filters.mobile_no ||
-          filters.lead_created_at
+          filters.quoteId || filters.email || filters.mobile_no
             ? []
-            : [isRequired]
+            : [isRequired, maxDateRangeArray(30)]
         "
         :onlySelect="true"
-        tooltip="Date range of customer interaction with InstantAlfred"
+        tooltip="Date range of customer interaction with InstantAlfred (Maximum 30 days allowed)"
         :required="
           filters.quoteId || filters.email || filters.mobile_no ? false : true
         "
@@ -392,6 +389,8 @@ const exportReport = async (exportType = 'download') => {
         time-picker-inline
         enableTimePicker
         withTime
+        :rules="[maxDateRangeArray(30)]"
+        tooltip="Lead creation date range (Maximum 30 days allowed)"
       />
 
       <x-select
