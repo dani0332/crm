@@ -156,7 +156,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
-            $this->executeIssuePolicyStep($quote, $process);
+            $issuePolicyResponse = $this->executeIssuePolicyStep($quote, $process);
+            if (! $issuePolicyResponse['status']) {
+                return $issuePolicyResponse;
+            }
+
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
@@ -189,9 +193,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$policyIssuanceResponse['completed_step']);
     }
 
-    public function issuePolicy($quote): array
+    public function issuePolicy($quote, $process): array
     {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$this->policyIssuance->id.' - Step : '.self::ISSUE_POLICY);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::ISSUE_POLICY);
         $response = ['status' => false, 'completed_step' => self::ISSUE_POLICY, 'error' => null, 'message' => null];
 
         $endPoint = 'policy/create/v2';
@@ -218,6 +222,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
 
         $issuePolicy = $this->httpCall($endPoint, $payload, 'PolicyResponse');
+
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicy, $this->baseUrl.$endPoint, self::ISSUE_POLICY, $issuePolicy['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
 
         if (! $issuePolicy['status']) {
@@ -256,6 +261,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function getNextStep($completedStep = null): ?string
     {
+        info('testing step '.$completedStep);
         $allSteps = $this->getAPISteps();
 
         if (! $completedStep) {
@@ -411,7 +417,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             // TODO: statusCode: 404, message: Resource not found. if url wrong.
             
             if ($responseObject = $httpResponse->object()) {
-                if (count($responseObject->$keyAPI->errors ?? 0) > 0 || $responseObject->$keyAPI?->Status == false) {
+                if (
+                    (isset($responseObject->$keyAPI?->errors) && count($responseObject->$keyAPI?->errors ?? 0) > 0) ||
+                    (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false)
+                ) {
                     $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
                     $response['status'] = false;
                     $response['message'] = json_encode($responseObject->$keyAPI?->errors);
@@ -428,8 +437,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             $response['error'] = $ex->getMessage();
             $response['message'] = $ex->getMessage();
-
-            return ['status' => false, 'error' => $ex->getMessage(), 'message' => 'API call failed'];
+            $response['status'] = false;
         }
 
         return $response;
