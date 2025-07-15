@@ -249,7 +249,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
-        Route::get('customer/by-contacts', [V2CustomerController::class, 'listByContacts'])->name('customer-by-contacts');
+        Route::get('customer-by-contacts', [V2CustomerController::class, 'listByContacts'])->name('customer-by-contacts');
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
         Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');

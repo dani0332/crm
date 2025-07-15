@@ -558,7 +558,8 @@ class HandleInertiaRequests extends Middleware
                         'Uploads',
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
+                    )
+                    ->add('By Contacts', route('customer-by-contacts'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 

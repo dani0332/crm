@@ -49,7 +49,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('by-contacts', {
+    router.visit('customer-by-contacts', {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -63,7 +63,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('by-contacts', {
+  router.visit('customer-by-contacts', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
