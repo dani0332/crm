@@ -198,9 +198,16 @@ const viewDocument = id => {
     });
 };
 const rescheduleEPBooking = async item => {
-  let epTransactionId = getFirstPriceWithTransaction(item.prices)
-    ?.transactions[0]?.id;
   try {
+    let epTransactionId = getFirstPriceWithTransaction(item.prices)
+      ?.transactions[0]?.id;
+    if (!epTransactionId) {
+      notification.error({
+        title: 'System failed to schedule booking of Embedded Product',
+        position: 'top',
+      });
+      return;
+    }
     bookEPOnSageLoader.value = true;
     const response = await axios.post(
       route('embedded-products.reschedule-sage-booking'),
@@ -226,6 +233,7 @@ const rescheduleEPBooking = async item => {
       router.visit(location.href);
     }
   } catch (err) {
+    bookEPOnSageLoader.value = false;
     notification.error({
       title: 'Embedded Product Booking Failed',
       position: 'top',
@@ -740,13 +748,7 @@ const onAddDocumentSubmit = event => {
               >
                 Void Payment
               </x-button>
-              <!--  v-if="
-                  item.can_book_embedded_product &&
-                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
-                    ?.payments[0]?.payment_gateway_id ==
-                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
-                " -->
-              <x-button
+              <!--              <x-button
                 v-if="
                   item.can_book_embedded_product &&
                   getFirstPriceWithTransaction(item.prices)?.transactions[0]
@@ -758,7 +760,7 @@ const onAddDocumentSubmit = event => {
                 @click.prevent="rescheduleEPBooking(item)"
               >
                 Book Embedded Product
-              </x-button>
+              </x-button>-->
             </div>
           </template>
         </DataTable>
