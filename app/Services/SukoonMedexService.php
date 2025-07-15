@@ -145,7 +145,7 @@ class SukoonMedexService
                 LoggerService::info("{$this->logPrefix} Policy already purchased, skipping purchase flow");
             } else {
 
-                // Skipable Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
+                // Skipped API Steps (#1-init, #3-getForm, #5-preReviewSubmittedData, #9-listPaymentGateways)
                 // STEP #2 login (trigger by initiatePurchaseFlow)
 
                 if (! EmbeddedTransactionEnum::checkPolicyStatusPassed($this->policyStatus, EmbeddedTransactionEnum::STATUS_QUOTED)) {
@@ -270,8 +270,6 @@ class SukoonMedexService
 
         $createSageProcessResponse = $sageApiService->postBookPolicyToSage($request, $this->currentQuote);
 
-        // your logic
-
         if (! $createSageProcessResponse['status']) {
             $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, null);
         }
@@ -282,10 +280,10 @@ class SukoonMedexService
     private function scheduleSageBookingForSukoonEp()
     {
         $request = [
-            'epTransactionId' => $this->transaction->id, // Embedded transaction id
-            'insuranceProviderId' => $this->providerId, // embedded product's provider id
-            'modelType' => $this->modelType, // main lead quote type
-            'quoteId' => $this->currentQuote->id, // main lead quote id
+            'epTransactionId' => $this->transaction->id, // embedded_transaction_id
+            'insuranceProviderId' => $this->providerId, // embedded_product's provider_id
+            'modelType' => $this->modelType, // main-lead quote_type
+            'quoteId' => $this->currentQuote->id, // main-lead quote_id
         ];
 
         $scheduledBookingResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request);
@@ -379,7 +377,7 @@ class SukoonMedexService
             'policy_price' => $paymentData['amount_breakdown']['policy_price'] ?? null,
         ];
 
-        if (! empty($paymentData['status'])) { // SukoonPurchaseFlowEnum::STATUS_PAYMENT_SUCCEED
+        if (! empty($paymentData['status'])) {
             $this->policyStatus = $data['policy_status'] = $paymentData['status'];
         }
 
@@ -640,11 +638,11 @@ class SukoonMedexService
             'title' => $latestInsuredData->gender == 'Male' ? 'Mr' : 'Ms',
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'mobile' => '+9710502732524', // '+971505027325',
+            'mobile' => '+9710502732524',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
             'emirate' => $emirate->text ?? '',
-            'emirates_id_number' => $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '', // '784-1989-8057715-1'
+            'emirates_id_number' => $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '',
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',
             'address' => $insuredKyc?->residential_address ?? '',
@@ -779,7 +777,7 @@ class SukoonMedexService
             $requiredFields = ['payment_plan', 'amount_disclaimer_text'];
             $pluckedFieldsValue = $this->pluckFieldsValue($fields, $requiredFields);
 
-            // check required fields are present
+            // Check required fields are present in response?, sometimes required fields are not present in success response
             if (! empty(array_diff($requiredFields, array_keys($pluckedFieldsValue)))) {
                 throw new Exception('Step: #4 submitPersonalDetail - Missing (payment_plan, amount_disclaimer_text) in response');
             }

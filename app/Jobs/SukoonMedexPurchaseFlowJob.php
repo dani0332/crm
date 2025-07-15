@@ -62,7 +62,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::info("{$this->logPrefix} failed", extra: [...$this->logExtra, 'exception' => $exception->getMessage()]);
+        LoggerService::info("{$this->logPrefix} Failed", extra: [...$this->logExtra, 'exception' => $exception->getMessage()]);
 
         // Send failure email notification
         try {

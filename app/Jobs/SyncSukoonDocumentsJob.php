@@ -43,6 +43,6 @@ class SyncSukoonDocumentsJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::info('SyncSukoonDocumentsJob failed. Error: '.$exception->getMessage());
+        LoggerService::info('SyncSukoonDocumentsJob Failed. Error: '.$exception->getMessage());
     }
 }

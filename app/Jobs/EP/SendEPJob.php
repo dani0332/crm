@@ -45,11 +45,8 @@ class SendEPJob implements ShouldQueue
         ];
 
         try {
-            LoggerService::info('SendEPJob started', extra: $extra);
-
+            LoggerService::info('SendEPJob dispatch', extra: $extra);
             EmbeddedProductRepository::sendDocumentsByLead($this->quoteId, $this->modelType, $this->epId, callPurchaseFlow: true);
-            LoggerService::info('SendEPJob completed', extra: $extra);
-
         } catch (Exception $e) {
             LoggerService::error('SendEPJob ERROR', extra: [...$extra, 'exception' => $e->getMessage()]);
         }
