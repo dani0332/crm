@@ -25,6 +25,7 @@ const filters = reactive({
     useDateFormat(new Date(), 'YYYY-MM-DD').value,
     useDateFormat(new Date(), 'YYYY-MM-DD').value,
   ],
+  lead_created_at: [],
   page: 1,
   transaction_type_id: [],
   quote_batch_id: [],
@@ -118,7 +119,12 @@ const chatMessages = ref({
 
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code' },
-  { text: 'Created At', value: 'created_at', sortable: true },
+  {
+    text: 'AI Interaction Start Date',
+    value: 'chat_initiated_at',
+    sortable: true,
+  },
+  // { text: 'Lead Created At', value: 'lead_created_at', sortable: true },
   { text: 'Actions', value: 'action' },
 ]);
 
@@ -338,47 +344,55 @@ const exportReport = async (exportType = 'download') => {
         placeholder="Search by Ref-ID"
         label="Ref-ID"
       />
-      <x-field label="Quote Type" required>
-        <combo-box
-          v-model="filters.quoteType"
-          :options="[
-            { label: 'Car', value: 'Car' },
-            { label: 'Health', value: 'Health' },
-            { label: 'Travel', value: 'Travel' },
-            { label: 'Bike', value: 'Bike' },
-            { label: 'Home', value: 'Home' },
-          ]"
-          placeholder="Select a Quote Type"
-          class="w-full"
-          single
-        >
-        </combo-box>
-      </x-field>
-      <div>
-        <x-tooltip position="top">
-          <label
-            class="font-medium text-gray-800 text-sm decoration-primary-600"
-          >
-            Select Start & End Date <span class="text-red-500">*</span>
-          </label>
-          <template #tooltip> Maximum 30 days are allowed </template>
-        </x-tooltip>
-        <DatePicker
-          class="py-1"
-          v-model="filters.chat_initiated_at"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="31"
-          size="md"
-          model-type="yyyy-MM-dd"
-          :rules="
-            filters.quoteId || filters.email || filters.mobile_no
-              ? []
-              : [isRequired]
-          "
-          :onlySelect="true"
-        />
-      </div>
+      <x-select
+        v-model="filters.quoteType"
+        :options="[
+          { label: 'Car', value: 'Car' },
+          { label: 'Health', value: 'Health' },
+          { label: 'Travel', value: 'Travel' },
+          { label: 'Bike', value: 'Bike' },
+          { label: 'Home', value: 'Home' },
+        ]"
+        placeholder="Select a Quote Type"
+        class="w-full"
+        single
+        label="Quote Type"
+        required
+      />
+
+      <DatePicker
+        label="Interaction Start and End Date"
+        v-model="filters.chat_initiated_at"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="31"
+        size="md"
+        model-type="yyyy-MM-dd"
+        :rules="
+          filters.quoteId ||
+          filters.email ||
+          filters.mobile_no ||
+          filters.lead_created_at
+            ? []
+            : [isRequired]
+        "
+        :onlySelect="true"
+        tooltip="Date range of customer interaction with InstantAlfred"
+        :required="
+          filters.quoteId || filters.email || filters.mobile_no ? false : true
+        "
+      />
+      <DatePicker
+        v-model="filters.lead_created_at"
+        placeholder="Select Lead Created Start & End Date"
+        range
+        size="md"
+        label="Lead Created Start & End Date"
+        text-input
+        time-picker-inline
+        enableTimePicker
+        withTime
+      />
 
       <x-select
         v-model="filters.transaction_type_id"
@@ -606,7 +620,7 @@ const exportReport = async (exportType = 'download') => {
     hide-rows-per-page
     hide-footer
   >
-    <template #item-created_at="item">
+    <template #item-chat_initiated_at="item">
       <span>
         {{ dateFormat(item.chat_initiated_at.split(' ')[0]) }}
       </span>
