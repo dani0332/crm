@@ -568,9 +568,29 @@ class EmbeddedProductRepository extends BaseRepository
             $advisorData['email'] = $advisor->email;
             $advisorData['name'] = $advisor->name;
             $advisorData['phone'] = $advisor->mobile_no;
+
+            $advisorData['profilePhotoPath'] = $advisor->profile_photo_path ?? '';
+            $advisorData['mobileNo'] = $this->formatPhoneNumber($advisor->mobile_no ?? '');
+            $advisorData['mobileNoWithOutSpace'] = str_replace('+', '', str_replace(' ', '', $advisor->mobile_no ?? ''));
+            $advisorData['landlineNo'] = $this->formatPhoneNumber($advisor->landline_no ?? '');
+            $advisorData['landlineNoWithoutSpaces'] = str_replace('+', '', str_replace(' ', '', $advisor->landline_no ?? ''));
         }
 
         return $advisorData;
+    }
+
+    // This function is only make and use for fullfill the email template requirement, due to recentemail template ui changes
+    private function formatPhoneNumber($phoneNumber = '')
+    {
+        $prefixNumber = '';
+        if(strpos($phoneNumber, '+') !== false)
+            $prefixNumber = '+';
+
+        if (! str_contains($phoneNumber, ' ')) {
+            $onlyNumber = str_replace('+', '', $phoneNumber);
+            $phoneNumber = $prefixNumber.implode(' ', str_split($onlyNumber, 3));
+        }
+        return $phoneNumber;
     }
 
     private function fetchTransaction($modelType, $quoteId, $ep, $selected = true, $shortCodes = [])
