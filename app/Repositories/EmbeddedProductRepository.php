@@ -649,7 +649,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $driverOrRiderCover = $short_code == EmbeddedProductEnum::MDX ? 'Driver' : 'Rider';
         $subject = match ($short_code) {
-            EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX => "Details of your {$driverOrRiderCover} cover purchase with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}",
+            EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX => "Details of your {$driverOrRiderCover} medical cover purchase with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}",
             default => "Thank you for your purchase of {$ep->product_name} with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}",
         };
 
