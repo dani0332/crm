@@ -114,6 +114,7 @@ class CustomerController extends Controller
 
         //info("",$leads->first()->toArray());
 
+
         return inertia('Customer/Contacts', [
             'leads' => $leads,
             'userId' => auth()->id(),

@@ -43,9 +43,6 @@ class CustomerRepository extends BaseRepository
         $filterType = request()->get('search_type');
         $filterColumns = ['email', 'first_name', 'entity_name', 'insured_first_name', 'mobile_no', 'uuid'];
 
-
-
-
         if (in_array($filterType, $filterColumns) && (! empty($filterType) && ! empty($filterValue))) {
 
             if ($filterType == 'entity_name') {
@@ -307,21 +304,25 @@ class CustomerRepository extends BaseRepository
     {
         $customerIds = [];
 
+        // Return empty collection if no email filters are provided
+        if (empty($request['primary_email']) && empty($request['additional_email'])) {
+            return collect([]);
+        }
+
         // Check if primary_email filter is provided
-        if (!empty($request['primary_email'])) {
+        if (! empty($request['primary_email'])) {
             $primaryCustomers = Customer::where('email', $request['primary_email'])->pluck('id');
             $customerIds = array_merge($customerIds, $primaryCustomers->toArray());
         }
-
         // Check if additional_email filter is provided
-        if (!empty($request['additional_email'])) {
+        elseif (! empty($request['additional_email']) && empty($request['primary_email'])) {
             $additionalCustomers = CustomerAdditionalContact::where('key', 'email')
                 ->where('value', $request['additional_email'])
                 ->pluck('customer_id');
             $customerIds = array_merge($customerIds, $additionalCustomers->toArray());
         }
 
-        // If no filters are provided or no customer IDs found, return empty array
+        // Return empty collection if no matching customers found for the provided email filters
         if (empty($customerIds)) {
             return collect([]);
         }
@@ -330,7 +331,7 @@ class CustomerRepository extends BaseRepository
         $customerIds = array_unique($customerIds);
 
         // Query personal quotes for the found customer IDs
-        return PersonalQuote::with(['advisor', 'customer','quoteStatus'])
+        return PersonalQuote::with(['advisor', 'customer', 'quoteStatus'])
             ->whereIn('customer_id', $customerIds)
             ->select([
                 'id',
@@ -341,7 +342,7 @@ class CustomerRepository extends BaseRepository
                 'quote_status_id',
                 'source',
                 'advisor_id',
-                'created_at'
+                'created_at',
             ])
             ->orderBy('created_at', 'desc')
             ->simplePaginate()->withQueryString();

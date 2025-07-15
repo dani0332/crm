@@ -1,4 +1,6 @@
 <script setup>
+const params = useUrlSearchParams('history');
+
 const props = defineProps({
   leads: Array,
   userId: Number,
@@ -69,6 +71,21 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
+
+function setQueryStringFilters() {
+  console.log("filters",filters);
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 
 <template>
@@ -98,22 +115,26 @@ function onReset() {
           placeholder="Enter additional email address"
           class="w-full"
         />
-        <div class="flex items-end">
-          <x-button size="sm" color="#ff5e00" type="submit" class="mr-2">
+      </div>
+        <div class="flex justify-end gap-2 mb-4 mt-1">
+          <x-button size="sm" color="#ff5e00" type="submit" >
             Search
           </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
         </div>
-      </div>
+
     </x-form>
 
     <!-- Results Section -->
     <div class="mt-6">
-      <div v-if="leads && leads.length > 0" class="mb-4">
-        <p class="text-sm text-gray-600">
-          Found {{ leads.length }} lead(s) matching your search criteria.
+      <!-- Empty State -->
+      <div v-if="!leads || leads.length === 0" class="text-center py-5">
+        <p class="text-gray-500">
+          {{ filters.primary_email || filters.additional_email
+          ? 'No leads found matching your search criteria.'
+          : 'Enter an email address to search for leads.' }}
         </p>
       </div>
 
@@ -170,7 +191,7 @@ function onReset() {
 
         <template #item-created_at="{ created_at }">
           <span class="text-sm text-gray-600">
-            {{ formatDate(created_at) }}
+            {{ created_at }}
           </span>
         </template>
       </DataTable>
@@ -184,17 +205,7 @@ function onReset() {
       }"
       />
 
-      <!-- Empty State -->
-      <div v-if="!leads || leads.length === 0" class="text-center py-8">
-        <div class="text-gray-400 text-lg mb-2">
-          <i class="fas fa-search"></i>
-        </div>
-        <p class="text-gray-500">
-          {{ filters.primary_email || filters.additional_email
-             ? 'No leads found matching your search criteria.'
-             : 'Enter an email address to search for leads.' }}
-        </p>
-      </div>
+
     </div>
   </div>
 </template>
