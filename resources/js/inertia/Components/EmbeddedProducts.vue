@@ -206,6 +206,7 @@ const rescheduleEPBooking = async item => {
         title: 'System failed to schedule booking of Embedded Product',
         position: 'top',
       });
+      return;
     }
     bookEPOnSageLoader.value = true;
     const response = await axios.post(
