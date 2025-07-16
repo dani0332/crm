@@ -106,7 +106,7 @@ class CustomerController extends Controller
         return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
     }
 
-    public function listByContacts(Request $request)
+    public function listByEmail(Request $request)
     {
         $leads = CustomerRepository::getDataByContacts($request->all());
 

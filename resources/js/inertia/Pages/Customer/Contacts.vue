@@ -48,7 +48,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('customer-by-contacts', {
+    router.visit('leads-by-email', {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -62,7 +62,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('customer-by-contacts', {
+  router.visit('leads-by-email', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -172,10 +172,11 @@ onMounted(() => {
         </template>
 
         <template #item-lead_status="{ quote_status }">
+
           <x-tag
             size="sm"
           >
-            {{ quote_status?.text }}
+            {{ quote_status?.text || 'N/A' }}
           </x-tag>
         </template>
 
