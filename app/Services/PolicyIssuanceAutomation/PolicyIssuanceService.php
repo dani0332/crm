@@ -257,7 +257,7 @@ class PolicyIssuanceService
         return ['status' => true, 'message' => 'Required documents uploaded for policy issuance automation'];
     }
 
-    public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status = 'success', $policyIssuance): void
+    public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status, $policyIssuance): void
     {
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $policyIssuance->id,
@@ -282,7 +282,7 @@ class PolicyIssuanceService
         $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
 
         $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
-        $insurerApiStatus = $quote?->insurer_api_status; 
+        $insurerApiStatus = $quote?->insurer_api_status;
         $apiIssuanceStatus = $quote?->api_issuance_status;
 
         $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
@@ -306,9 +306,9 @@ class PolicyIssuanceService
         }
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code, extra: [
             'insurerApiStatus' => $insurerApiStatus, 'apiIssuanceStatus' => $apiIssuanceStatus,
-            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted, 
+            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
             'isPolicyBooked' => $isPolicyBooked,
-            'isPolicyBookingFailed' => $isPolicyBookingFailed, 
+            'isPolicyBookingFailed' => $isPolicyBookingFailed,
             'newInsurerApiStatus' => $newInsurerApiStatus,
             'newApiIssuanceStatus' => $newApiIssuanceStatus,
         ]);
@@ -356,5 +356,5 @@ class PolicyIssuanceService
         $insurerAutomation = $this->init($quoteType, $insurer->code);
 
         return $insurerAutomation->getFailedIssuanceAPIStatuses();
-    } 
+    }
 }
