@@ -12,6 +12,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
+use App\Repositories\EmbeddedProductRepository;
 
 class EmbeddedProduct
 {
@@ -255,14 +256,27 @@ class EmbeddedProduct
 
     public function getDocumentList($ep, $transaction)
     {
-        $epDocuments = $this->getPolicyWordings($ep);
+        $isSalama = false;
+        if (!$transaction->isEmpty()) {
+            $isSalama = $transaction->first()->paid_at < EmbeddedProductRepository::SALAMA_DATE;
+        }
+
+        $epDocuments = $this->getPolicyWordings($ep, $isSalama);
         $epDocuments = array_merge($epDocuments, $this->getadditionalDocuments($transaction));
 
         return $epDocuments;
     }
 
-    protected function getPolicyWordings($ep)
+    protected function getPolicyWordings($ep, $isSalama)
     {
+        if($isSalama) {
+            return [[
+                'document_type' => 'Policy Wordings',
+                'document_number' => 'Not Applicable',
+                'url' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+                'path' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+            ]];
+        }
         $epDocuments = [];
 
         // get policy wordings
