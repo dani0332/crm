@@ -539,7 +539,7 @@ class EmbeddedProductRepository extends BaseRepository
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
 
         $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        if(!$isSalama) {
+        if (! $isSalama) {
             $canSendDocuments = $canSendDocuments || ($isSukoonMedex && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
         }
 
@@ -561,7 +561,7 @@ class EmbeddedProductRepository extends BaseRepository
         $attachments = [];
         $attachmentsUrls = [];
 
-        if($isSalama) {
+        if ($isSalama) {
             $url = self::SALAMA_POLICY_WORDINGS_URL;
             $file = file_get_contents($url);
             $attachments[] = [
@@ -571,19 +571,19 @@ class EmbeddedProductRepository extends BaseRepository
             ];
 
         } else {
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = json_decode($ep->company_documents);
-            if (!empty($documents)) {
+            if (! empty($documents)) {
                 foreach ($documents as $item) {
                     $path = $item->path;
-                    $pwDoc = $path !== '' ? $websiteURL . $path : '';
-                    if (!empty($path) && !$isAlfredProtect) {
+                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                    if (! empty($path) && ! $isAlfredProtect) {
                         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
                         $file = file_get_contents($pwDoc);
                         $mimeType = $fileInfo->buffer($file);
                         $attachments[] = [
                             'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $ep->display_name . ' - Policy Wordings.pdf',
+                            'Name' => $ep->display_name.' - Policy Wordings.pdf',
                             'ContentType' => $mimeType,
                         ];
                     } else {
@@ -691,11 +691,11 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function sendMedexEmail($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep, $modelType, $isSalama)
     {
-        if($isSalama) {
+        if ($isSalama) {
             $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
             if ($pdf) {
-                $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
-                $url = $websiteURL . $pdf->doc_url;
+                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+                $url = $websiteURL.$pdf->doc_url;
                 $file = file_get_contents($url);
                 $attachments[] = [
                     'Content' => base64_encode($file),
@@ -708,8 +708,8 @@ class EmbeddedProductRepository extends BaseRepository
 
             $documents = $transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get();
             foreach ($documents as $document) {
-                $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
-                $url = $websiteURL . $document->doc_url;
+                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+                $url = $websiteURL.$document->doc_url;
                 $file = file_get_contents($url);
                 $attachments[] = [
                     'Content' => base64_encode($file),

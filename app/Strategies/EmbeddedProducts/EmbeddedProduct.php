@@ -8,11 +8,11 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\EmbeddedTransaction;
+use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
-use App\Repositories\EmbeddedProductRepository;
 
 class EmbeddedProduct
 {
@@ -257,7 +257,7 @@ class EmbeddedProduct
     public function getDocumentList($ep, $transaction)
     {
         $isSalama = false;
-        if (!$transaction->isEmpty()) {
+        if (! $transaction->isEmpty()) {
             $isSalama = $transaction->first()->paid_at < EmbeddedProductRepository::SALAMA_DATE;
         }
 
@@ -269,7 +269,7 @@ class EmbeddedProduct
 
     protected function getPolicyWordings($ep, $isSalama)
     {
-        if($isSalama) {
+        if ($isSalama) {
             return [[
                 'document_type' => 'Policy Wordings',
                 'document_number' => 'Not Applicable',
