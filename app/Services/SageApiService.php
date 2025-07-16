@@ -1037,14 +1037,14 @@ class SageApiService
                             $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quote, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                         }
                     }
-                    $postSinglePrepaymentResponse = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
+                    /*$postSinglePrepaymentResponse = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
                     if (! $postSinglePrepaymentResponse['status']) {
                         $response['status'] = $postSinglePrepaymentResponse['status'];
                         $response['message'] = $postSinglePrepaymentResponse['message'];
                         $response['error'] = $postSinglePrepaymentResponse['error'];
 
                         return $response;
-                    }
+                    }*/
                 }
             }
 
