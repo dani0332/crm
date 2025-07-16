@@ -134,15 +134,7 @@ class BorLog extends Model
      */
     public function personalQuote(): BelongsTo
     {
-        return $this->belongsTo(PersonalQuote::class, 'quote_id');
-    }
-
-    /**
-     * Alias for personalQuote relationship for backward compatibility.
-     */
-    public function lead(): BelongsTo
-    {
-        return $this->personalQuote();
+        return $this->belongsTo(PersonalQuote::class, 'lead_id', 'quote_id');
     }
 
     /**
@@ -168,7 +160,7 @@ class BorLog extends Model
      */
     public function insuranceProvider(): BelongsTo
     {
-        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id');
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
     /**
@@ -381,7 +373,7 @@ class BorLog extends Model
     public static function generateBorId(int $leadId, ?\DateTime $date = null): string
     {
         $date = $date ?? now();
-        $dateStr = $date->format('dmy');
+        $dateStr = $date->format('dmyHis');
         $maxRetries = 10;
         
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
@@ -395,7 +387,6 @@ class BorLog extends Model
                     $lastCount = static::where('lead_id', $leadId)
                         ->where('date_created', '>=', $todayStart)
                         ->where('date_created', '<=', $todayEnd)
-                        ->where('bor_reference', 'like', "IM-BOR-{$dateStr}-%")
                         ->lockForUpdate() // Prevent concurrent access
                         ->count();
                     

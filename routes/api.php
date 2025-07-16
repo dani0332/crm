@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
+use App\Http\Controllers\API\V1\BorController as V1BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
@@ -79,24 +80,7 @@ Route::prefix('v1')->group(function () {
 
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
-        // Lead-specific BOR routes
-        Route::post('leads/{id}/requests', [BorController::class, 'createBorRequest'])->name('bor.create-request');
-        Route::get('leads/{id}/logs', [BorController::class, 'getBorLogs'])->name('bor.get-logs');
-        
-        // BOR log management routes
-        Route::put('logs/{id}/status', [BorController::class, 'updateStatus'])->name('bor.update-status');
-        Route::post('logs/{id}/upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
-        
-        // BOR action routes
-        Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.cancel');
-        Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.mark-done');
-        Route::get('logs/{id}/document', [BorController::class, 'viewDocument'])->name('bor.view-document');
-        
-        // Customer portal routes (for Next.js integration)
-        Route::get('{token}', [BorController::class, 'getByToken'])->name('bor.get-by-token');
-        Route::get('{token}/preview-pdf', [BorController::class, 'generatePreviewPdf'])->name('bor.preview-pdf');
-        Route::post('{token}/validate-signature', [BorController::class, 'validateSignature'])->name('bor.validate-signature');
-        Route::post('{token}/sign', [BorController::class, 'submitSignature'])->name('bor.submit-signature');
+        Route::post('generate-pdf', [V1BorController::class, 'generatePdf'])->name('bor.generate-pdf');
     });
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

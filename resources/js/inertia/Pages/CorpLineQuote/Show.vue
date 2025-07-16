@@ -1292,14 +1292,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     />
 
     <BorLogsSection
-      :leadId="record.id"
-      :lob="quoteType"
-      :customerType="record.customer_type"
+      :leadId="quote.id"
+      lob="Business"
+      :customerType="quote.customer_type"
       :customerData="{
-        firstName: record.first_name,
-        lastName: record.last_name,
-        companyName: record.company_name,
-        currentlyInsuredWith: record.currently_insured_with
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"

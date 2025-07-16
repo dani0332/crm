@@ -37,9 +37,9 @@ const form = useForm({
   lead_id: props.leadId,
   lob: props.lob,
   customer_type: '',
-  customer_name: '',
-  company_name: '',
-  insurance_provider_id: '',
+  customer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
+  company_name: props.customerData.companyName,
+  insurance_provider_id: props.customerData.currentlyInsuredWith,
   policy_number: '',
   policy_expiry: '',
   chassis_number: '',
@@ -146,9 +146,6 @@ watch(() => props.visible, (newValue) => {
 
 // Watch for customer type changes to reset relevant fields
 watch(() => form.customer_type, (newValue) => {
-  // Clear the customer/company name when type changes
-  form.customer_name = '';
-  form.company_name = '';
   
   // Clear policy fields when switching to Entity (since they won't be visible)
   if (newValue === 'Entity') {
@@ -160,8 +157,10 @@ watch(() => form.customer_type, (newValue) => {
   // Set default customer type based on LOB
   if (isBusinessLob.value && newValue === '') {
     form.customer_type = 'Entity';
+    form.customer_name = '';
   } else if ((isMotorLob.value || isHealthLob.value) && newValue === '') {
     form.customer_type = 'Individual';
+    form.company_name = '';
   }
 });
 

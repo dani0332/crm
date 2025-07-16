@@ -66,7 +66,7 @@ class BorPdfService
     /**
      * Generate a BOR PDF document for preview (before signing)
      */
-    public function generatePreviewBorPdf(BorLog $borLog): ?string
+    public function generatePreviewBorPdf(BorLog $borLog): array|null
     {
         try {
             $lead = $borLog->personalQuote;
@@ -86,13 +86,7 @@ class BorPdfService
             // Generate filename for preview
             $filename = 'preview_' . $this->generatePdfFilename($borLog);
             
-            // Save PDF to storage
-            $pdfContent = $pdf->output();
-            $pdfPath = 'bor-documents/previews/' . $filename;
-            Storage::disk('public')->put($pdfPath, $pdfContent);
-
-            return Storage::url($pdfPath);
-
+            return ['pdf' => $pdf, 'name' => $filename];
         } catch (\Exception $e) {
             Log::error('BOR preview PDF generation failed', [
                 'bor_log_id' => $borLog->id,
@@ -112,8 +106,7 @@ class BorPdfService
             // BOR Information
             'bor_log' => $borLog,
             'bor_reference' => $borLog->bor_reference ?? Str::upper(Str::random(10)),
-            'created_date' => $borLog->created_at->format('Y-m-d'),
-            'status' => $borLog->status,
+            'created_date' => $borLog->created_at,
             
             // Customer Information
             'customer_type' => $borLog->customer_type,
@@ -130,7 +123,7 @@ class BorPdfService
             'quote_reference' => $lead->quote_reference ?? $lead->uuid,
             
             // Insurance Information
-            'insurance_company' => $borLog->insurance_company,
+            'insurance_company' => $borLog->insuranceProvider->text ?? null,
             'policy_number' => $borLog->policy_number,
             'policy_expiry' => $borLog->policy_expiry ? $borLog->policy_expiry->format('Y-m-d') : null,
             'chassis_number' => $borLog->chasis_number,
