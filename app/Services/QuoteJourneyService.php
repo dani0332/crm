@@ -19,7 +19,7 @@ class QuoteJourneyService
         return [
             'leadCreated' => "Information for $quoteTypeName insurance quote provided",
             'planSelected' => "Plan selected for $quoteTypeName insurance",
-            'paymentMade' => 'Add-on selected and payment made',
+            'paymentMade' => 'Add-ons selected and payment made',
             'documentUpload' => 'Documents upload',
             'policyIssued' => 'Policy issuance',
         ];
