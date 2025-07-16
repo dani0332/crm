@@ -184,6 +184,14 @@ function setQueryStringFilters() {
       if (!isNaN(index)) {
         filters.chat_initiated_at[index] = value.split('T')[0]; // Remove time part
       }
+    } else if (key.startsWith('lead_created_at[')) {
+      const index = parseInt(key.match(/\[(\d+)\]/)?.[1], 10);
+      if (!isNaN(index)) {
+        filters.lead_created_at[index] = useDateFormat(
+          value,
+          'YYYY-MM-DD hh:mm:ss',
+        ).value; // Remove time part
+      }
     } else if (Array.isArray(value)) {
       filters[key] = value;
     } else {

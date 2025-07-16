@@ -44,7 +44,7 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
         return [
             'QUOTE TYPE',
             'REF ID',
-            'LEAD CREATED AT',
+            'LEAD CREATED DATE',
             'DATE OF FIRST INTERACTION',
             'COMMUNICATION CHANNEL',
             'BATCH',
