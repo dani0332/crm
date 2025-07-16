@@ -27,7 +27,6 @@ const loader = reactive({
 //   business_type_of_insurance_id,
 // ) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
 
-
 const tableHeader = [
   { text: 'REF-ID', value: 'ref_id' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -114,25 +113,27 @@ onMounted(() => {
           class="w-full"
         />
       </div>
-        <div class="flex justify-end gap-2 mb-4 mt-1">
-          <x-button size="sm" color="#ff5e00" type="submit" >
-            Search
-          </x-button>
-          <x-button size="sm" color="primary" @click.prevent="onReset">
-            Reset
-          </x-button>
-        </div>
-
+      <div class="flex justify-end gap-2 mb-4 mt-1">
+        <x-button size="sm" color="#ff5e00" type="submit"> Search </x-button>
+        <x-button size="sm" color="primary" @click.prevent="onReset">
+          Reset
+        </x-button>
+      </div>
     </x-form>
 
     <!-- Results Section -->
     <div class="mt-6">
       <!-- Empty State -->
-      <div v-if="!leads.data || leads.data.length === 0" class="text-center py-5">
+      <div
+        v-if="!leads.data || leads.data.length === 0"
+        class="text-center py-5"
+      >
         <p class="text-gray-500">
-          {{ filters.primary_email || filters.additional_email
-          ? 'No leads found matching your search criteria.'
-          : 'Enter an email address to search for leads.' }}
+          {{
+            filters.primary_email || filters.additional_email
+              ? 'No leads found matching your search criteria.'
+              : 'Enter an email address to search for leads.'
+          }}
         </p>
       </div>
 
@@ -145,7 +146,7 @@ onMounted(() => {
         hide-rows-per-page
         hide-footer
       >
-        <template #item-ref_id="{ ref_id,uuid,quote_type_id, customer }">
+        <template #item-ref_id="{ ref_id, uuid, quote_type_id, customer }">
           <Link
             :href="`${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${uuid}`"
             class="text-primary-500 hover:underline"
@@ -172,10 +173,7 @@ onMounted(() => {
         </template>
 
         <template #item-lead_status="{ quote_status }">
-
-          <x-tag
-            size="sm"
-          >
+          <x-tag size="sm">
             {{ quote_status?.text || 'N/A' }}
           </x-tag>
         </template>
@@ -196,15 +194,13 @@ onMounted(() => {
       </DataTable>
       <Pagination
         :links="{
-        next: leads.next_page_url,
-        prev: leads.prev_page_url,
-        current: leads.current_page,
-        from: leads.from,
-        to: leads.to,
-      }"
+          next: leads.next_page_url,
+          prev: leads.prev_page_url,
+          current: leads.current_page,
+          from: leads.from,
+          to: leads.to,
+        }"
       />
-
-
     </div>
   </div>
 </template>
@@ -212,7 +208,6 @@ onMounted(() => {
 <script>
 export default {
   methods: {
-
     formatDate(dateString) {
       if (!dateString) return '-';
       try {
@@ -221,12 +216,12 @@ export default {
           month: 'short',
           day: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
         });
       } catch (e) {
         return dateString;
       }
-    }
-  }
+    },
+  },
 };
 </script>
