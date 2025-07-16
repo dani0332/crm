@@ -23,9 +23,6 @@ final class SukoonMedexEnum extends Enum
         self::STEP_LIST_GENERATED_DOCUMENT => 'listGeneratedDocument',
         self::STEP_DOWNLOAD_DOCUMENT => 'downloadDocument',
         self::GET_VIEW_QUOTE_POLICY => 'viewQuotePolicy',
-        // self::STEP_GET_FORM => 'getForm', // GET, Skiped
-        // self::STEP_PRE_REVIEW_SUBMITED_DATA => 'preReviewSubmittedData', // GET, Skiped
-        // self::STEP_LIST_PAYMENT_GATEWAYS => 'listPaymentGateways', // GET, Skiped
     ];
 
     /* SukoonMedex Step-Number Enums */
@@ -42,9 +39,6 @@ final class SukoonMedexEnum extends Enum
     const STEP_LIST_GENERATED_DOCUMENT = 14;
     const STEP_DOWNLOAD_DOCUMENT = 15;
     const GET_VIEW_QUOTE_POLICY = 16;
-    // const STEP_GET_FORM = 3; // GET, Skiped
-    // const STEP_PRE_REVIEW_SUBMITED_DATA = 5; // GET, Skiped
-    // const STEP_LIST_PAYMENT_GATEWAYS = 9; // GET, Skiped
 
     public static function getName(int $stepNumber): string
     {

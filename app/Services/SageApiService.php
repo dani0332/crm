@@ -330,7 +330,7 @@ class SageApiService
             $sukoonMedXTransaction = $this->getSukoonMedXTransaction($quote, $quoteTypeId);
             $isTapPaymentGateway = $preparedData['payment']->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
 
-            $epTransSageLogArray = $sukoonMedXTransaction?->sageApiLogs?->whereIn('sage_request_type', [SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV, SageEnum::EP_SRT_CREATE_AP_PREM_INV])->keyBy('step')->toArray();
+            $epTransSageLogArray = $sukoonMedXTransaction?->sageApiLogs?->whereIn('sage_request_type', [SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV, SageEnum::EP_SRT_CREATE_AP_PREM_INV])->keyBy('step')->toArray() ?? [];
             LoggerService::info(self::class.'fun:'.__FUNCTION__.' Reversal Of EP Booking checks :  Quote Code for '.$quote->code, extra : [
                 'isLobAllowedForEmbeddedProductBooking' => $isLobAllowedForEmbeddedProductBooking,
                 'sukoonMedXTransaction' => $sukoonMedXTransaction?->code,
