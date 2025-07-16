@@ -424,6 +424,8 @@ class EmbeddedProductRepository extends BaseRepository
                     $data['isSalama'] = true;
                     $this->fetchSendDocument($data);
 
+                    $response = ['success' => true];
+
                 } else {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
