@@ -143,7 +143,6 @@ const selectedPaymentForEdit = ref(null);
 const showInsurerReceiptNumberInputField = ref(false);
 const isInsurerReceiptNumberExistsModalOpen = ref(false);
 const insurerReceiptNumberCheckInProcess = ref(false);
-const paymentForm = ref();
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
