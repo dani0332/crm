@@ -32,6 +32,7 @@ class PersonalQuoteStatusRequest extends FormRequest
 
         $rules = [
             'quote_status_id' => 'required',
+            'current_quote_status_id' => 'required',
             'notes' => 'nullable',
         ];
 
