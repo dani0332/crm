@@ -284,13 +284,13 @@ const submitForm = () => {
         notification.error({
           title: 'Submission Error',
           message: Array.isArray(firstError) ? firstError[0] : firstError,
-          timeout: 8000
+          position: 'top',
         });
       } else {
         notification.error({
           title: 'Submission Error',
           message: 'Failed to create BOR request. Please try again.',
-          timeout: 8000
+          position: 'top',
         });
       }
     },

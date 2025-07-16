@@ -160,17 +160,10 @@ const closeBorRequestForm = () => {
 
 const handleBorRequestSuccess = (newBorLog) => {
   // Add the new BOR log to the list
-  borLogs.value.unshift(newBorLog);
-  
+  fetchBorLogs(1);
+
   // Close the form
   closeBorRequestForm();
-  
-  // Show success notification
-  notification.success({
-    title: 'Success',
-    message: 'BOR request created successfully',
-    position: 'top',
-  });
 
   // Ensure form is closed and scroll is restored
   showBorRequestForm.value = false;

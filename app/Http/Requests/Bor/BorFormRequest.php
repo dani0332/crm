@@ -23,7 +23,7 @@ class BorFormRequest extends FormRequest
     {
         $rules = [
             'customer_type' => ['required', 'string', Rule::in(['Individual', 'Entity'])],
-            'lead_id' => ['required', 'integer', 'exists:personal_quotes,id'],
+            'lead_id' => ['required', 'integer', 'exists:personal_quotes,quote_id'],
             'lob' => ['required', 'string'],
             'insurance_provider_id' => 'nullable|integer',
         ];

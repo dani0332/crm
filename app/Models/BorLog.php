@@ -134,7 +134,7 @@ class BorLog extends Model
      */
     public function personalQuote(): BelongsTo
     {
-        return $this->belongsTo(PersonalQuote::class, 'lead_id');
+        return $this->belongsTo(PersonalQuote::class, 'quote_id');
     }
 
     /**
