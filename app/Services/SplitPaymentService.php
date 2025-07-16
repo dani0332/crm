@@ -563,12 +563,12 @@ class SplitPaymentService
         $modelType = $request->modelType;
 
         if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
-             // Check if the transaction is an "embedded" transaction from the main website's quote flow.
+            // Check if the transaction is an "embedded" transaction from the main website's quote flow.
             $isEmbedded = EmbeddedTransaction::where('quote_request_type', $payment->paymentable_type)
-            ->where('quote_request_id', $payment->paymentable_id)
-            ->select('id')
-            ->limit(1)
-            ->exists();
+                ->where('quote_request_id', $payment->paymentable_id)
+                ->select('id')
+                ->limit(1)
+                ->exists();
 
             if ($isEmbedded) {
                 // For embedded transactions, generate a link that directs the user back to the website's payment page.
