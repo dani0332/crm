@@ -1,8 +1,10 @@
 <script setup>
+import { getQuoteType } from '../../Composables/utilities.js';
+
 const params = useUrlSearchParams('history');
 
 const props = defineProps({
-  leads: Array,
+  leads: [Array, Object],
   userId: Number,
   quoteTypes: Object,
 });
@@ -25,9 +27,6 @@ const loader = reactive({
 //   business_type_of_insurance_id,
 // ) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
 
-const getQuoteType = quoteTypeKey => {
-  return props.quoteTypes[quoteTypeKey];
-};
 
 const tableHeader = [
   { text: 'REF-ID', value: 'ref_id' },
@@ -73,7 +72,6 @@ function onReset() {
 }
 
 function setQueryStringFilters() {
-  console.log("filters",filters);
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
@@ -90,9 +88,9 @@ onMounted(() => {
 
 <template>
   <div>
-    <Head title="Leads by Contact" />
+    <Head title="Leads by Email" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Leads by Contact</h2>
+      <h2 class="text-xl font-semibold">Leads by Email</h2>
     </div>
     <x-divider class="my-4" />
 
@@ -130,7 +128,7 @@ onMounted(() => {
     <!-- Results Section -->
     <div class="mt-6">
       <!-- Empty State -->
-      <div v-if="!leads || leads.length === 0" class="text-center py-5">
+      <div v-if="!leads.data || leads.data.length === 0" class="text-center py-5">
         <p class="text-gray-500">
           {{ filters.primary_email || filters.additional_email
           ? 'No leads found matching your search criteria.'
@@ -147,9 +145,9 @@ onMounted(() => {
         hide-rows-per-page
         hide-footer
       >
-        <template #item-ref_id="{ ref_id, customer }">
+        <template #item-ref_id="{ ref_id,uuid,quote_type_id, customer }">
           <Link
-            :href="`/customer/${customer?.uuid}`"
+            :href="`${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${uuid}`"
             class="text-primary-500 hover:underline"
           >
             {{ ref_id }}

@@ -108,17 +108,11 @@ class CustomerController extends Controller
 
     public function listByContacts(Request $request)
     {
-        //die('end');
         $leads = CustomerRepository::getDataByContacts($request->all());
-        $quoteTypes = QuoteTypeId::getOptions();
-
-        //info("",$leads->first()->toArray());
-
 
         return inertia('Customer/Contacts', [
             'leads' => $leads,
             'userId' => auth()->id(),
-            'quoteTypes' => $quoteTypes,
         ]);
     }
 }

@@ -338,6 +338,8 @@ class CustomerRepository extends BaseRepository
                 'first_name',
                 'last_name',
                 'code as ref_id',
+                'uuid',
+                'quote_type_id',
                 'customer_id',
                 'quote_status_id',
                 'source',

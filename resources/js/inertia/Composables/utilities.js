@@ -328,7 +328,7 @@ export const parseDate = dateString => {
 export function getQuoteType(id, returnType = 'code') {
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
-    2: { code: 'HOM', id: 'home', link: '/quotes' },
+    2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
     4: { code: 'LIF', id: 'life', link: '/quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
@@ -337,7 +337,8 @@ export function getQuoteType(id, returnType = 'code') {
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
     9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
-    18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
+    11: { code: 'JSK', id: 'savings', link: '/personal-quotes' },
+    18: { code: 'SAV', id: 'jetski', link: '/personal-quotes' },
   };
   return types[id] ? types[id][returnType] : '';
 }
