@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\RolesEnum;
+use App\Enums\SageEmbeddedProductEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,9 @@ class EmbeddedTransaction extends Model
     use HasFactory;
 
     protected $guarded = [];
+    protected $appends = [
+        'sage_status', // for sukoon medx
+    ];
 
     public function quoteType()
     {
@@ -31,6 +35,21 @@ class EmbeddedTransaction extends Model
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    /**
+     * Get payment charges through payment splits
+     */
+    public function paymentCharges()
+    {
+        return $this->hasManyThrough(
+            PaymentCharge::class,
+            PaymentSplits::class,
+            'code', // Foreign key on payment_splits table
+            'payment_split_id', // Foreign key on payment_charges table
+            'code', // Local key on embedded_transactions table
+            'id' // Local key on payment_splits table
+        );
     }
 
     public function travelAnnualPayments()
@@ -131,5 +150,20 @@ class EmbeddedTransaction extends Model
     {
         $q->where('courier_sync_failed_at', '<=', now()->subHour());
 
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable');
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function getSageStatusAttribute()
+    {
+        return $this->sage_status_id ? SageEmbeddedProductEnum::getStatusById($this->sage_status_id) : null;
     }
 }
