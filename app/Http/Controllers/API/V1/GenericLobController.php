@@ -22,7 +22,6 @@ class GenericLobController extends Controller
         try {
             $service = app('App\\Services\\'.ucfirst($quoteType).'QuoteService');
 
-
             $response = $service->exportPlansPdf($quoteType, $request->validated());
 
             if (isset($response['error'])) {
@@ -30,7 +29,8 @@ class GenericLobController extends Controller
             }
 
             $pdf = $response['pdf'];
-// return $pdf->stream();
+
+            // return $pdf->stream();
             return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->download()), 'name' => $response['name']]);
         } catch (ValidationException $e) {
             return response()->json([
