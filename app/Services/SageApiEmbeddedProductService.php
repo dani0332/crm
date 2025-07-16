@@ -56,7 +56,7 @@ class SageApiEmbeddedProductService
         $insuranceProvider = InsuranceProvider::find($request['insuranceProviderId']);
         $isSukoonInsuranceProvider = in_array($insuranceProvider?->code, $this->sageApiService->allowedProviderForSageEPBooking());
         if (! $isSukoonInsuranceProvider) {
-            return ['status' => true, 'message' => 'Sage booking cannot be scheduled because current insurer is '.$insuranceProvider->text];
+            return ['status' => false, 'message' => 'Sage booking cannot be scheduled because current insurer is '.$insuranceProvider?->text];
         }
 
         $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request['modelType'], $payment, $quote, $paymentSplits);
