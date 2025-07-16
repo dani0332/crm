@@ -1147,6 +1147,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
