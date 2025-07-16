@@ -57,12 +57,27 @@ class OCRService
         OCRDocumentTypeEnum $docType,
         string $fileMimeType
     ) {
+        $providerCode = null;
+
+        if ($quote->payments && $quote->payments->isNotEmpty()) {
+            $latestPayment = $quote->payments->first();
+            if ($latestPayment && $latestPayment->insuranceProvider) {
+                $providerCode = $latestPayment->insuranceProvider->code;
+            }
+        }
+
+        LoggerService::info('Provider Code', extra: [
+            'provider_code' => $providerCode,
+            'uuid' => $quote->uuid,
+        ]);
+
         $response = $this->sendRequest('/process-document', [
             'ref_id' => $quote->code,
             'uuid' => $quote->uuid,
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
             'doc_type' => $docType->value,
+            'provider_code' => $providerCode,
 
             // for now image would be false on the basis of Hamas Request
             'image' => false,

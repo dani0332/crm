@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -191,5 +195,114 @@ class BusinessQuote extends Model implements AuditableContract
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
         )->latest('customer_insured.updated_at');
+    }
+
+    /**
+     * Get all quote status logs for this model
+     *
+     * @return MorphMany
+     */
+    public function quoteStatusLogs(): HasMany
+    {
+        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+    }
+
+    /**
+     * Check if quote can be updated to transaction approved status
+     * Only allowed if quote has both payment link sent and initiated status in history
+     */
+    public function canUpdateToTransactionApproved(): bool
+    {
+        return $this->hasPaymentLinkHistory();
+    }
+
+    /**
+     * Check if quote has both payment link sent and initiated status in its history
+     */
+    public function hasPaymentLinkHistory(): bool
+    {
+        // Check for PaymentLinkSentToCustomer status
+        $hasPaymentLinkSent = $this->quoteStatusLogs()
+            ->where(function ($query) {
+                $query->where('previous_quote_status_id', QuoteStatusEnum::PaymentLinkSentToCustomer)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PaymentLinkSentToCustomer);
+            })
+            ->exists();
+
+        // Check for PaymentInitiated status
+        $hasPaymentInitiated = $this->quoteStatusLogs()
+            ->where(function ($query) {
+                $query->where('previous_quote_status_id', QuoteStatusEnum::PaymentInitiated)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PaymentInitiated);
+            })
+            ->exists();
+
+        // Return true only if both statuses exist in history
+        return $hasPaymentLinkSent && $hasPaymentInitiated;
+    }
+
+    /**
+     * Check if any payment has IPL in its splits
+     */
+    public function hasInsurerPaymentLink(): bool
+    {
+        return $this->payments()
+            ->whereHas('paymentSplits', function ($query) {
+                $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+            })
+            ->exists();
+    }
+
+    /**
+     * Get all payments that have IPL splits
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getPaymentsWithInsurerPaymentLink()
+    {
+        return $this->payments()
+            ->whereHas('paymentSplits', function ($query) {
+                $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+            })
+            ->get();
+    }
+
+    /**
+     * Get the last payment with an IPL split
+     *
+     * @return \App\Models\Payment|null
+     */
+    public function getLastPaymentWithInsurerPaymentLink()
+    {
+        return $this->payments()
+            ->whereHas('paymentSplits', function ($query) {
+                $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+            })
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Get all IPL payment splits across all payments
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllInsurerPaymentLinkSplits()
+    {
+        $payments = $this->getPaymentsWithInsurerPaymentLink();
+
+        return $payments->flatMap(function ($payment) {
+            return $payment->paymentSplits()
+                ->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink)
+                ->get();
+        });
+    }
+
+    /**
+     * Get all of the model's ftc email logs.
+     */
+    public function ftcEmailLogs(): MorphMany
+    {
+        return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 }

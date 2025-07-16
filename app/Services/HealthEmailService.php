@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -70,6 +71,7 @@ class HealthEmailService extends BaseService
             'workflowType' => $workflowType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
+            'numberOfMembersCovered' => $workflowType == WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA ? $lead->customerMembers->count() : null,
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
     }
@@ -325,5 +327,69 @@ class HealthEmailService extends BaseService
 
             return false;
         }
+    }
+
+    public function sendSICHealthFollowupsWA($lead)
+    {
+        $response = Ken::request('/get-health-cheapest-plans', 'post', [
+            'quoteUID' => $lead->uuid,
+            'isRequestForPlansWithExtendedData' => false,
+            'isPlanTypes' => true,
+        ]);
+
+        if (empty($response['plans'])) {
+            LoggerService::info('SIC Health Followups WA not executed because no plans found');
+
+            return;
+        }
+        if (empty($response['planTypes'])) {
+            LoggerService::info('SIC Health Followups WA not executed because no plan types found');
+
+            return;
+        }
+        $planTypes = collect($response['planTypes'])
+            ->mapWithKeys(function ($planType) {
+                $key = $this->setPlanTypePremium($planType['text']);
+                if ($key !== null) {
+                    return [$key => $planType['calculatedDiscountPremium']];
+                }
+
+                return [];
+            });
+
+        try {
+            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            if ($isFollowupExecuted) {
+                LoggerService::info('SIC Health Followups WA already executed');
+
+                return;
+            }
+
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA);
+            $emailData->planTypes = $planTypes;
+
+            $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
+
+            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
+
+            LoggerService::info('SIC Health Followups WA executed');
+
+        } catch (\Exception $exception) {
+            LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);
+        }
+
+    }
+
+    public function setPlanTypePremium($planType)
+    {
+
+        return match ($planType) {
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::ENTRY_LEVEL->value) => 'entryLevelPremium',
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::GOOD->value) => 'goodPremium',
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::BEST->value) => 'bestPremium',
+            default => null
+        };
     }
 }

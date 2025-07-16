@@ -24,6 +24,14 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        $advisor = $this->allocationRequest->getAdvisor();
+
+        if (! $advisor) {
+            LoggerService::info('No advisor available in AssignLeadPipe - cannot proceed with assignment');
+            $this->allocationRequest->markAsFailed();
+            $this->throw('Advisor not found', self::OK);
+        }
+
         $this->assign(function ($isReAssignment, $previousAdvisorId) {
             $this->sendIntroEmail($isReAssignment, $previousAdvisorId);
         });

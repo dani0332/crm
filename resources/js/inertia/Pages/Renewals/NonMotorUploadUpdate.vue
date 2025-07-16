@@ -322,7 +322,6 @@ const tableDataHealth = [
     maxSize: 500,
   },
 ];
-
 function handleFileUpload(event) {
   files = event;
   file = event[0].file;
