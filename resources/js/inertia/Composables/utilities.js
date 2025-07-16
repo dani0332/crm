@@ -337,8 +337,8 @@ export function getQuoteType(id, returnType = 'code') {
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
     9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
-    11: { code: 'JSK', id: 'savings', link: '/personal-quotes' },
-    18: { code: 'SAV', id: 'jetski', link: '/personal-quotes' },
+    11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
+    18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
   };
   return types[id] ? types[id][returnType] : '';
 }
