@@ -245,7 +245,6 @@ if (
   initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
 
-
 let planDetail = ref(initalPlanDetails);
 
 const { copy, copied } = useClipboard();
