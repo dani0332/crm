@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -2617,7 +2618,10 @@ class SageApiService
 
         return $quote->embeddedTransactions()
             ->whereHas('product.embeddedProduct', function ($query) {
-                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
+                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])
+                ->whereHas('insuranceProvider', function ($providerQuery) {
+                    $providerQuery->where('code', InsuranceProvidersEnum::OIC);
+                });
             })
             ->where('is_selected', 1)
             ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
