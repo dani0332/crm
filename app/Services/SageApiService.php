@@ -2619,9 +2619,9 @@ class SageApiService
         return $quote->embeddedTransactions()
             ->whereHas('product.embeddedProduct', function ($query) {
                 $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])
-                ->whereHas('insuranceProvider', function ($providerQuery) {
-                    $providerQuery->where('code', InsuranceProvidersEnum::OIC);
-                });
+                    ->whereHas('insuranceProvider', function ($providerQuery) {
+                        $providerQuery->where('code', InsuranceProvidersEnum::OIC);
+                    });
             })
             ->where('is_selected', 1)
             ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
