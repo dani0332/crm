@@ -257,7 +257,7 @@ class EmbeddedProduct
     public function getDocumentList($ep, $transaction)
     {
         $isSalama = false;
-        if (!$transaction->isEmpty()) {
+        if (! $transaction->isEmpty()) {
             $paidAt = $transaction->first()->paid_at ?? null;
             $isSalama = $paidAt && Carbon::parse($paidAt)->lt(Carbon::parse(EmbeddedProductRepository::SALAMA_DATE));
         }
