@@ -110,7 +110,6 @@ class BirdService extends BaseService
                 'updated_at' => now(),
             ]);
         } catch (\Throwable $th) {
-            //throw $th;
             LoggerService::error(" - createQuoteWhatsAppFlowDetails-Error: {$th->getMessage()}  Line: {$th->getLine()}  Trace: {$th->getTraceAsString()} ");
         }
     }
