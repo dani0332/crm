@@ -411,7 +411,7 @@ class EmbeddedProductRepository extends BaseRepository
             } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
                 && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
 
-                if ($item->paid_at < self::SALAMA_DATE) {
+                if ($item->paid_at && Carbon::parse($item->paid_at)->lt(Carbon::parse(self::SALAMA_DATE))) {
 
                     $product_id = $item->product_id;
                     $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
