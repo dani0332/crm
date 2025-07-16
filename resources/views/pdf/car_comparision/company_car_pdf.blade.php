@@ -577,21 +577,6 @@
         padding: 2px 0px 10px 0px;
     }
 
-    .re_border{
-        border: 1px solid red;
-    }
-    .bl_border{
-        border: 1px solid blue;
-    }
-    .gr_border{
-        border: 1px solid green;
-    }
-    .ye_border{
-        border: 1px solid yellow;
-    }
-    .pu_border{
-        border: 1px solid magenta;
-    }
 </style>
 </head>
 

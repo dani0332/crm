@@ -488,21 +488,6 @@
             white-space: normal;
         } */
 
-        .re_border{
-            border: 1px solid red;
-        }
-        .bl_border{
-            border: 1px solid blue;
-        }
-        .gr_border{
-            border: 1px solid green;
-        }
-        .ye_border{
-            border: 1px solid yellow;
-        }
-        .pu_border{
-            border: 1px solid magenta;
-        }
     </style>
 </head>
 
@@ -888,10 +873,10 @@
         </tbody>
     </table>
 
-    <table class="tbl-dec re_border">
+    <table class="tbl-dec ">
         <tbody>
         <tr>
-            <td class="gr_border">
+            <td class="">
                 <p class="text-left text-xs">
                     <b>Disclaimer: </b>Quotes are based on the details you provided and may change after the insurer reviews your profile. If there are differences, the insurer's policy terms will apply. Please check your policy once issued to ensure it meets your needs.
 {{--                    Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>--}}
