@@ -620,7 +620,6 @@ class SageApiService
             return $returnMessage;
         }
         $quoteType = $request->model_type;
-        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
 
         $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
         /* Check EP Booking */
