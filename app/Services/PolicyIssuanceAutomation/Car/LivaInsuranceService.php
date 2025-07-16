@@ -7,11 +7,12 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Jobs\WatermarkDocumentsJob;
+use App\Models\DocumentType;
 use App\Models\Payment;
 use App\Models\PolicyIssuanceLog;
 use App\Repositories\PersonalQuoteRepository;
@@ -22,17 +23,21 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class LivaInsuranceService implements PolicyIssuanceInterface
 {
     private $className = 'livaInsuranceService';
     private readonly string $baseUrl;
+    public const INSURER_CODE = InsuranceProvidersEnum::RSA;
+    public const TYPE = quoteTypeCode::Car;
+    public const TYPE_ID = QuoteTypeId::Car;
 
     public $policyIssuance = null;
 
     public const UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const ISSUE_POLICY = 'IssuePolicy';
-    public const GET_AND_UPLOAD_POLICY_DOCUMENTS = 'GetAndUploadPolicyDocuments';
+    public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
     public const BOOK_POLICY = 'BookPolicy';
 
     public const UPLOAD_DOCUMENTS_RESPONSE = 'UploadDocumentsResponse';
@@ -75,7 +80,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return [
             self::UPLOAD_DOCUMENTS,
             self::ISSUE_POLICY,
-            self::GET_AND_UPLOAD_POLICY_DOCUMENTS,
+            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             self::BOOK_POLICY,
         ];
     }
@@ -164,15 +169,178 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        /* if ($nextStepToBeExecuted === self::GET_AND_UPLOAD_POLICY_DOCUMENTS) {
-            $this->executeGetAndUploadPolicyDocumentsStep($quote, $process);
+        if ($nextStepToBeExecuted === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+            $uploadPolicyDocumentsToIMCRMResponse = $this->executeUploadPolicyDocumentsStep($quote, $process);
+            if (isset($uploadPolicyDocumentsToIMCRMResponse['status']) && ! $uploadPolicyDocumentsToIMCRMResponse['status']) {
+                return $uploadPolicyDocumentsToIMCRMResponse;
+            }
+
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        if ($nextStepToBeExecuted === self::BOOK_POLICY) {
+        /* if ($nextStepToBeExecuted === self::BOOK_POLICY) {
             $this->executeBookPolicyStep($quote, $process);
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         } */
+    }
+
+    private function executeUploadPolicyDocumentsStep($quote, $process)
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
+        $uploadPolicyDocumentsToIMCRMResponse = $this->uploadPolicyDocumentsToIMCRM($quote, $process);
+
+        if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $uploadPolicyDocumentsToIMCRMResponse]);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+
+            return $uploadPolicyDocumentsToIMCRMResponse;
+        }
+
+        $process->update(['completed_step' => $uploadPolicyDocumentsToIMCRMResponse['completed_step']]);
+        $process = $process->refresh();
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$uploadPolicyDocumentsToIMCRMResponse['completed_step']);
+    }
+
+    public function uploadPolicyDocumentsToIMCRM($quote, $process): array
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
+
+        $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
+        $endPoint = 'transactions/retrieve/v1';
+
+        $uploadedDocumentsToIMCRM = collect();
+
+        $payload = [
+            'RetrieveRequest' => [
+                'RetrieveType' => '6',
+                'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ '31577381',
+                'PartnerTrnReferenceNumber' => "Yer7h346gfr",
+                'Documents' => [
+                    'DocsInResponse' => true,
+                    'DocsDetails' => [
+                        'DebitNote' => false,
+                        'CreditNote' => false,
+                        'PolicySchedule' => false,
+                        'MotorArabicCertificate' => false,
+                        'HirePurchaseLetter' => false,
+                        'ProposalForm' => false,
+                        'LetterToBank' => false,
+                        'Receipt' => false
+                    ],
+                ],
+                'ProposalForm' => false,
+            ],
+        ];
+
+        foreach ($this->getDocTypeCodeForIMCRM() as $keyLIVA => $imcrm) {
+            $payload['RetrieveRequest']['Documents']['DocsDetails'][$keyLIVA] = true;
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' document retreive work start for : '.$imcrm['IMNAME'], extra: [
+                'time' => now()->format('d-m-Y H:i:s'),
+                'payload' => json_encode($payload),
+            ]);
+
+            $retrieveRequest = $this->httpCall($endPoint, $payload, 'RetrieveResponse');
+            $payload['RetrieveRequest']['Documents']['DocsDetails'][$keyLIVA] = false;
+
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $retrieveRequest, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $retrieveRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+    
+            if (! $retrieveRequest['status']) {
+                $response['error'] = $retrieveRequest['error'];
+                $response['message'] = $retrieveRequest['message'];
+                $response['status'] = false;
+
+                continue;
+            }
+    
+            $retrieveResponse = $retrieveRequest['data'];
+    
+            $documentContent = $retrieveResponse?->RetrieveResponse?->Policies[0]?->PolicyResponse?->Documents?->PolicyReportsPdf[0];
+
+            $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $documentContent, $imcrm['IMKEY'], $imcrm['IMNAME'].'.pdf');
+
+            $uploadedDocumentsToIMCRM->push([
+                'name' => $imcrm['IMNAME'],
+                'uploaded' => $quoteDocument?->id ? true : false,
+                'message' => $retrieveRequest['message'],
+            ]);
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' document retreive work end', extra: [
+            'time' => now()->format('d-m-Y H:i:s'),
+        ]);
+
+        $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('uploaded', false)->count() === 0;
+        if (! $allDocumentsUploaded) {
+            $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('uploaded', false)->pluck('name')->toArray();
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - failed to fetch all documents from insurer : ', $docsUploadToIMCRMFailed);
+            
+            $error = 'Policy Issuance is pending as '.implode(',', $docsUploadToIMCRMFailed).' documents are not uploaded';
+            $response['error'] = $error;
+            $response['message'] = $error;
+            $response['status'] = false;
+
+            return $response;
+        } 
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - fetched all documents from insurer and Uploaded to IMCRM ');
+        $response['status'] = true;
+        $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
+        $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
+
+        return $response;
+    }
+
+    private function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null)
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
+
+        $documentType = DocumentType::where(['quote_type_id' => self::TYPE_ID, 'code' => $documentCode, 'is_active' => true])->first();
+
+        if (! $documentType) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document type not found for code: '.$documentCode);
+
+            return;
+        }
+
+        $fileContents = base64_decode(base64_decode($documentContent));
+        if ($fileContents === false) {
+            $fileContents = $documentContent;
+        }
+
+        $docName = $originalName ?? ('car_document_'.uniqid().'.pdf');
+        $mimeType = 'application/pdf';
+
+        $docName = preg_replace('/\s+/', '_', $docName);
+        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
+        $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
+
+        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+
+        $newDocument = $quote->documents()->create([
+            'doc_name' => $docName,
+            'original_name' => $originalName ?? $docName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => $mimeType,
+            'document_type_code' => $documentType->code,
+            'document_type_text' => $documentType->text,
+            'doc_uuid' => generateUUID(),
+        ]);
+
+        /* if ($newDocument->exists) {
+            WatermarkDocumentsJob::dispatch(
+                $newDocument->id,
+                $quote->uuid,
+                $documentType->id
+            );
+        } */
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
+
+        return $newDocument;
     }
 
     private function executeIssuePolicyStep($quote, $process)
@@ -261,7 +429,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function getNextStep($completedStep = null): ?string
     {
-        info('testing step '.$completedStep);
         $allSteps = $this->getAPISteps();
 
         if (! $completedStep) {
@@ -334,7 +501,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 $extension = pathinfo($filePath, PATHINFO_EXTENSION);
 
                 // Map document type based on your business logic
-                $documentType = $this->getDocumentType($document['document_type_code'] ?? 'other');
+                $documentType = $this->getDocTypeCodeForLIVA($document['document_type_code'] ?? 'other');
 
                 $attachments[] = [
                     'DocumentType' => $documentType,
@@ -446,7 +613,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     /**
      * Map document types to LIVA document type codes
      */
-    public function getDocumentType($documentType): string
+    public function getDocTypeCodeForLIVA($documentType): string
     {
         return match ($documentType) {
             'CEID' => '16', // Emirates ID (Front side & Back side)
@@ -454,6 +621,28 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'CAR_MULKIY' => '5', // Registration card (Mulkiya)
             default => null
         };
+    }
+
+    private function getDocTypeCodeForIMCRM(): array
+    {
+        return [
+            'DebitNote' => [
+                'IMKEY' => DocumentTypeCode::TI,
+                'IMNAME' => 'Tax Invoice',
+            ],
+            'CreditNote' => [
+                'IMKEY' => DocumentTypeCode::CTIRBB,
+                'IMNAME' => 'Tax Invoice Raised By Buyer',
+            ],
+            'PolicySchedule' => [
+                'IMKEY' => DocumentTypeCode::POLICY_SCHEDULE,
+                'IMNAME' => 'Policy Schedule',
+            ],
+            'MotorArabicCertificate' => [
+                'IMKEY' => DocumentTypeCode::POLICY_CERTIFICATE,
+                'IMNAME' => 'Policy Certificate',
+            ],
+        ];
     }
 
     public function getFailedIssuanceAPIStatuses()
