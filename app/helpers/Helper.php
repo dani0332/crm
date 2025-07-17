@@ -23,6 +23,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
@@ -242,6 +243,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
         }
+        if ($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('sum_insured_value');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -252,6 +256,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
+        if ($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->sum('sum_insured_value');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
@@ -519,6 +526,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::YACHT->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::LIFE->value,
         ]);
     }
 }
@@ -700,7 +708,7 @@ if (! function_exists('getIMLogo')) {
         $imLogo = 'images/logo-new.png';
 
         if ($latest) {
-            $imLogo = 'images/im_logo_24k-hi.png';
+            $imLogo = 'images/im_logo_25k-hi.png';
         }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
