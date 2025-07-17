@@ -167,6 +167,17 @@ const onUpdatePlan = () => {
     });
 };
 
+
+const showPriceColumn = computed(() =>
+  props.plan.listQuotePlansMembers?.some(item => item.per_member_price === true)
+);
+
+const tableHeaders = computed(() => [
+  { text: 'Member', value: 'member' },
+  { text: 'DOB', value: 'dob' },
+  ...(showPriceColumn.value ? [{ text: 'Price', value: 'premium' }] : [])
+]);
+
 // Format prices on initial load
 onMounted(() => {
   formatAllPrices();
@@ -280,11 +291,7 @@ onMounted(() => {
         <TabPanel>
           <div class="p-4">
             <x-table
-              :headers="[
-                { text: 'Member ', value: 'member' },
-                { text: 'DOB', value: 'dob' },
-                { text: 'Price', value: 'premium' },
-              ]"
+              :headers="tableHeaders"
               :items="listQuotePlansMembers || []"
             >
               <template #item-member="{ item }">
@@ -293,8 +300,10 @@ onMounted(() => {
               <template #item-dob="{ item }">
                 {{ dateFormat(item.dob) }}
               </template>
-              <template #item-gender="{ item }">
-                {{ item.premium }}
+              <template #item-premium="{ item }">
+                <template v-if="item.per_member_price == true">
+                  {{ item.premium }}
+                </template>
               </template>
             </x-table>
           </div>
