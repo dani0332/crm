@@ -50,7 +50,11 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalsUploadLeadId))->dontRelease()];
+        return [
+            (new WithoutOverlapping('ProcessRenewalsUploadCreate_'.$this->renewalsUploadLeadId))
+                ->releaseAfter(30) // Retry after 30s if overlap
+                ->expireAfter(600), // Lock expires in 10 mins
+        ];
     }
 
     /**
