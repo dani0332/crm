@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\QuoteJourneyEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Services\Logger\LoggerService;
@@ -30,16 +31,18 @@ class QuoteJourneyService
      */
     public function sendQuoteJourneyToCapi($quoteUUID, $quoteTypeId, $quoteJourneyEntries)
     {
-        LoggerService::startQuoteLogging($quoteUUID);
-        LoggerService::info('Sending quote journey to CAPI', ['quoteTypeId' => $quoteTypeId]);
-        $payload = [
-            'quoteUUID' => $quoteUUID,
-            'quoteTypeId' => $quoteTypeId,
-            'quoteJourneyEntries' => $quoteJourneyEntries,
-        ];
-        LoggerService::info('Sending quote journey to CAPI Payload ', extra: ['payload' => $payload]);
-        $response = Capi::request('/api/v1-quote-journey', 'post', $payload);
-        LoggerService::info('Received response from CAPI for quote journey', extra: ['response' => $response]);
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            LoggerService::startQuoteLogging($quoteUUID);
+            LoggerService::info('Sending quote journey to CAPI', ['quoteTypeId' => $quoteTypeId]);
+            $payload = [
+                'quoteUUID' => $quoteUUID,
+                'quoteTypeId' => $quoteTypeId,
+                'quoteJourneyEntries' => $quoteJourneyEntries,
+            ];
+            LoggerService::info('Sending quote journey to CAPI Payload ', extra: ['payload' => $payload]);
+            $response = Capi::request('/api/v1-quote-journey', 'post', $payload);
+            LoggerService::info('Received response from CAPI for quote journey', extra: ['response' => $response]);
+        }
     }
 
     /**
