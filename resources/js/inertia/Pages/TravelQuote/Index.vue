@@ -1073,7 +1073,6 @@ const insurerAMLStatusOption = computed(() => {
           label="Assignment Type"
           filterable
         />
-
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
