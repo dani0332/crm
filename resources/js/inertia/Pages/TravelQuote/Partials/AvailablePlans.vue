@@ -168,7 +168,7 @@ const onUpdatePlan = () => {
 };
 
 
-const showPriceColumn = computed(() => props.plan.per_member_price === 1);
+const showPriceColumn = computed(() => props.plan.per_member_price === true);
 
 const tableHeaders = computed(() => [
   { text: 'Member', value: 'member' },

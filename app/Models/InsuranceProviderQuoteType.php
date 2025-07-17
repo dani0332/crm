@@ -10,4 +10,7 @@ class InsuranceProviderQuoteType extends Model
     use HasFactory;
 
     protected $table = 'insurance_provider_quote_type';
+    protected $casts = [
+        'per_member_price' => 'boolean',
+    ];
 }
