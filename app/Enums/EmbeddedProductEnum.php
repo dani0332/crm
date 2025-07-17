@@ -27,4 +27,12 @@ final class EmbeddedProductEnum extends Enum
             'AP3',
         ];
     }
+
+    public static function getSukoonMedexCodes(): array
+    {
+        return [
+            self::MDX,
+            self::RDX,
+        ];
+    }
 }
