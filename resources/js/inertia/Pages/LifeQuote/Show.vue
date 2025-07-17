@@ -96,6 +96,7 @@ const loader = ref({
 });
 
 const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate);
+const isExchangeRateEditable = ref(false);
 
 const selectedProviderPlan = page.props.quote.plan_id;
 const selectedProviderPlanVersion =
@@ -174,7 +175,7 @@ const plansTable = reactive({
       sortable: true,
     },
     {
-      text: 'Exchange Rate',
+      text: 'Exchange Rate (%)',
       value: 'exchangeRate',
       sortable: true,
     },
@@ -206,6 +207,11 @@ const plansTable = reactive({
     {
       text: 'Total Annual Price',
       value: 'totalAnnualPremium',
+      sortable: true,
+    },
+    {
+      text: 'Total Annual Price (AED)',
+      value: 'totalAnnualPremiumAED',
       sortable: true,
     },
     {
@@ -382,6 +388,25 @@ const getTotalAnnualPremium = (paymentTerm, premium) => {
   };
   let value = premium * mapping[paymentTermTitle];
   return numberFormat(value);
+};
+
+const getTotalAnnualPremiumAED = (item) => {
+  if (item.currency !== 'AED' && selectedProviderPlan === item.planId) {
+    const paymentTermTitle = getPaymentTermTitle(item.paymentTerm);
+    const mapping = {
+      Monthly: 12,
+      Quarterly: 4,
+      'Semi-Annually': 2,
+      Annually: 1,
+    };
+    const totalAnnualPremiumAED = (item.actualPremium * planExchangeRate.value) * mapping[paymentTermTitle];
+    return numberFormat(totalAnnualPremiumAED);
+  } else if (item.currency === 'AED') {
+    return item.isManualPlan
+      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
+      : getTotalAnnualPremium(item.paymentTerm, item.actualPremium);
+  }
+  return 'N/A';
 };
 
 const onCopyText = text => {
@@ -1090,7 +1115,12 @@ const updateExchangeRate = (item) => {
       title: 'Exchange rate updated successfully',
       position: 'top',
     });
+    isExchangeRateEditable.value = false;
   });
+}
+
+const enableExchangeRateEdit = () => {
+  isExchangeRateEditable.value = true;
 }
 </script>
 <template>
@@ -2022,9 +2052,27 @@ const updateExchangeRate = (item) => {
               </template>
 
               <template #item-exchangeRate="item">
-                <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)">
-                  <x-input v-model="planExchangeRate" type="text" class="w-full" @keydown="e => preventInvalidInputs(e, false,true)" />
-                  <x-button size="xs" color="emerald" @click="updateExchangeRate(item)">Update</x-button>
+                <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)" class="flex items-center gap-2">
+                  <div class="relative flex-1">
+                    <x-input 
+                      v-model="planExchangeRate" 
+                      type="text" 
+                      class="w-full pr-16" 
+                      :disabled="!isExchangeRateEditable"
+                      @dblclick="enableExchangeRateEdit"
+                      @keydown="e => preventInvalidInputs(e, false,true)" 
+                      placeholder="Double click to edit"
+                    />
+                    <x-button 
+                      v-if="isExchangeRateEditable"
+                      size="xs" 
+                      color="emerald" 
+                      @click="updateExchangeRate(item)"
+                      class="absolute right-1 top-1/2 transform -translate-y-1/2"
+                    >
+                      Update
+                    </x-button>
+                  </div>
                 </div>
               </template>
 
@@ -2043,6 +2091,10 @@ const updateExchangeRate = (item) => {
                         item.actualPremium,
                       )
                 }}</span>
+              </template>
+
+              <template #item-totalAnnualPremiumAED="item">
+                <span class="copay-max">{{ getTotalAnnualPremiumAED(item) }}</span>
               </template>
 
               <template #item-providerName="{ providerName, isDisabled }">
@@ -2210,6 +2262,29 @@ const updateExchangeRate = (item) => {
                 <dt class="font-medium uppercase">Total Annual Price</dt>
                 <dd>
                   {{ numberFormat(totalAnnualPrice) }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2" v-if="ecomDetail?.currency != 'AED'">
+                <dt class="font-medium uppercase">Total Price AED</dt>
+                <dd>
+                  {{
+                    ecomDetail?.isManualPlan
+                      ? numberFormat(ecomDetail?.totalPrice * planExchangeRate)
+                      : numberFormat(ecomDetail?.actualPremium * planExchangeRate)
+                  }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2" v-if="ecomDetail?.currency != 'AED'">
+                <dt class="font-medium uppercase">Total Annual Price AED</dt>
+                <dd>
+                  {{
+                    numberFormat(
+                      (ecomDetail?.isManualPlan
+                        ? ecomDetail?.totalPrice * planExchangeRate
+                        : ecomDetail?.actualPremium * planExchangeRate) *
+                      (page.props.quote?.life_quote?.payment_term ?? 1)
+                    )
+                  }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
