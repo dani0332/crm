@@ -10,13 +10,16 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
+use App\Models\InsurerRequestResponse;
 use App\Models\Payment;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\SageApiService;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -52,6 +55,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     const BOOK_POLICY_API_FAILED_STATUS_ID = 4;
     const BOOK_POLICY_API_FAILED = 'Book Policy API Failed';
     const BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
+    public $currentInsurerApiStatus = null;
+    public $headers = [];
 
     public function __construct()
     {
@@ -144,7 +149,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     {
         if ($nextStepToBeExecuted === self::UPLOAD_DOCUMENTS) {
             $uploadDocumentsResponse = $this->executeUploadDocumentsStep($quote, $process);
-            if (! $uploadDocumentsResponse['status']) {
+            if (isset($uploadDocumentsResponse['status']) && ! $uploadDocumentsResponse['status']) {
                 return $uploadDocumentsResponse;
             }
 
@@ -153,7 +158,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
             $issuePolicyResponse = $this->executeIssuePolicyStep($quote, $process);
-            if (! $issuePolicyResponse['status']) {
+            if (isset($issuePolicyResponse['status']) && ! $issuePolicyResponse['status']) {
                 return $issuePolicyResponse;
             }
 
@@ -169,10 +174,64 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        /* if ($nextStepToBeExecuted === self::BOOK_POLICY) {
-            $this->executeBookPolicyStep($quote, $process);
+        if ($nextStepToBeExecuted === self::BOOK_POLICY) {
+            $bookPolicyResponse = $this->executeBookPolicyStep($quote, $process);
+            if (isset($bookPolicyResponse['status']) && ! $bookPolicyResponse['status']) {
+                return $bookPolicyResponse;
+            }
+
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        } */
+        }
+    }
+
+    private function executeBookPolicyStep($quote, $process)
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::BOOK_POLICY);
+        $triggerBookPolicyResponse = $this->bookPolicy($quote);
+
+        if (! $triggerBookPolicyResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $triggerBookPolicyResponse]);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::BOOK_POLICY_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            
+            return $triggerBookPolicyResponse;
+        }
+
+        $process->update(['completed_step' => $triggerBookPolicyResponse['completed_step']]);
+        $process = $process->refresh();
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$triggerBookPolicyResponse['completed_step']);
+    }
+
+    public function bookPolicy($quote): array
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
+
+        $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
+
+        $request = new \stdClass;
+        $request->quote_id = $quote->id;
+        $request->modelType = self::TYPE;
+        $request->model_type = self::TYPE;
+        $request->is_send_policy = false;
+        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+        $request->transaction_payment_status = null;
+
+        $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
+        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
+
+        if (! $createSageProcessResponse['status']) {
+            $response['error'] = $createSageProcessResponse['message'];
+
+            return $response;
+        }
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+
+        $response['status'] = true;
+        $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
+
+        return $response;
     }
 
     private function executeUploadPolicyDocumentsStep($quote, $process)
@@ -361,7 +420,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $payload = [
             'PolicyRequest' => [
-                'QuotationNo' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7872837,
+                'QuotationNo' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874240,
                 'PremiumPayable' => 840,
                 'PartnerTrnReferenceNumber' => /* $quote->code ?? */ '123456',
                 'Documents' => [
@@ -514,7 +573,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $payload['UploadDocumentsRequest'] = [
             'TransactionType' => '5',
-            'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7872837, // TODO: Use actual quote number
+            'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874240, // TODO: Use actual quote number
             'Attachments' => $attachments,
         ];
 
