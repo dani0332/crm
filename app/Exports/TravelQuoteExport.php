@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\TravelQuoteService;
@@ -50,6 +49,8 @@ class TravelQuoteExport implements CsvExportableInterface
             'INSURER API STATUS',
             'CREATED DATE',
             'TRAVEL START DATE',
+            'TRAVEL END DATE',
+            'TRAVEL DURATION',
             'LAST MODIFIED DATE',
             'DOB',
             'TRANSAPP CODE',
@@ -72,7 +73,6 @@ class TravelQuoteExport implements CsvExportableInterface
             'TRAVEL COVERAGE',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
-            'ASSIGNMENT TYPE',
             'ADVISOR REQUESTED',
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
@@ -96,6 +96,8 @@ class TravelQuoteExport implements CsvExportableInterface
             $quote->insurer_api_status ? $quote->insurer_api_status : '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             $quote->start_date ?? '',
+            $quote->end_date ?? '',
+            $quote->days_cover_for ?? '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,
@@ -118,7 +120,6 @@ class TravelQuoteExport implements CsvExportableInterface
             $quote->coverage_code,
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
             (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
             $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
