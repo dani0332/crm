@@ -65,16 +65,6 @@ class PersonalQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
-            if ($quote->quote_status_id != $data['current_quote_status_id'] && $quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
-                $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-                (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
-            }
-
-            if ($quote->quote_status_id != $data['current_quote_status_id'] && in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
-                $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-                (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
-            }
-
             if ($previousStatusId != $data['quote_status_id']) {
                 $quote['previousStatusIdChanged'] = true;
             }
