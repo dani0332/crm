@@ -407,4 +407,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id', 'sub_type_id']);
     }
+
+    function quoteCustomerPlan()
+    {
+        return $this->hasOne(QuoteCustomerPlan::class, 'quote_uuid', 'uuid');
+    }
 }

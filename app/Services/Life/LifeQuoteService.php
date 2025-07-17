@@ -278,6 +278,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)
             ->where($column, $value)
             ->with([
+                'quoteCustomerPlan',
                 'advisor',
                 'quoteStatus',
                 'nationality',
