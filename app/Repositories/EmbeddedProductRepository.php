@@ -59,6 +59,10 @@ class EmbeddedProductRepository extends BaseRepository
 {
     use GenericQueriesAllLobs;
 
+    public const SALAMA_DATE = '2025-07-15 21:00:00';
+    public const SALAMA_POLICY_WORDINGS_PATH = 'documents/embedded_products/687774f80a867_embedded_product_687774f80a862_SalamaDriverCover(MEDEX)-PolicyWordings.pdf';
+    public const SALAMA_POLICY_WORDINGS_URL = 'https://insurancemarket.blob.core.windows.net/imcrm/'.self::SALAMA_POLICY_WORDINGS_PATH;
+
     public function model()
     {
         return EmbeddedProduct::class;
@@ -407,35 +411,53 @@ class EmbeddedProductRepository extends BaseRepository
             } elseif (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])
                 && EmbeddedProductStrategy::checkSukoonMedex($item->product->embeddedProduct->short_code ?? '')) {
 
-                $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
+                if ($item->paid_at && Carbon::parse($item->paid_at)->lt(Carbon::parse(self::SALAMA_DATE))) {
 
-                if ($callPurchaseFlow) {
-                    // Sukoon Medex Purchase Flow
-                    SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                    $product_id = $item->product_id;
+                    $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+
+                    // EP Send documents
+                    $data = [];
+                    $data['quoteId'] = $leadId;
+                    $data['modelType'] = $modelType;
+                    $data['epId'] = $embedded_product_id;
+                    $data['isSalama'] = true;
+                    $this->fetchSendDocument($data);
+
                     $response = ['success' => true];
 
                 } else {
-                    try {
-                        $savedDocumentTypes = $item->documents->pluck('document_type_code')->toArray();
-                        $sukoonInitialDocTypes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
 
-                        // Check All email-required documents are saved
-                        if (empty(array_diff($sukoonInitialDocTypes, $savedDocumentTypes))) {
+                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                    $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
 
-                            $sukoonMedexService = app(SukoonMedexService::class);
-                            $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
-                            $sukoonMedexService->sendDocuments();
+                    if ($callPurchaseFlow) {
+                        // Sukoon Medex Purchase Flow
+                        SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $item, isSendEmail: true);
+                        $response = ['success' => true];
 
-                            $response = ['success' => true];
-                        } else {
-                            LoggerService::info('fetchSendDocumentsByLead - Required documents are not saved, please sync documents first', extra: $extra);
-                            $response = ['success' => false, 'message' => 'Required documents are not saved, please sync documents first'];
+                    } else {
+                        try {
+                            $savedDocumentTypes = $item->documents->pluck('document_type_code')->toArray();
+                            $sukoonInitialDocTypes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
+
+                            // Check All email-required documents are saved
+                            if (empty(array_diff($sukoonInitialDocTypes, $savedDocumentTypes))) {
+
+                                $sukoonMedexService = app(SukoonMedexService::class);
+                                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $item);
+                                $sukoonMedexService->sendDocuments();
+
+                                $response = ['success' => true];
+                            } else {
+                                LoggerService::info('fetchSendDocumentsByLead - Required documents are not saved, please sync documents first', extra: $extra);
+                                $response = ['success' => false, 'message' => 'Required documents are not saved, please sync documents first'];
+                            }
+
+                        } catch (Exception $e) {
+                            LoggerService::info('fetchSendDocumentsByLead - Failed', extra: [...$extra, 'exception' => $e->getMessage()]);
+                            $response = ['success' => false, 'message' => $e->getMessage()];
                         }
-
-                    } catch (Exception $e) {
-                        LoggerService::info('fetchSendDocumentsByLead - Failed', extra: [...$extra, 'exception' => $e->getMessage()]);
-                        $response = ['success' => false, 'message' => $e->getMessage()];
                     }
                 }
             }
@@ -495,6 +517,7 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
+        $isSalama = $data['isSalama'] ?? false;
 
         $ep = $this->where('id', $epId)->first();
         if (! $ep) {
@@ -505,7 +528,7 @@ class EmbeddedProductRepository extends BaseRepository
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
         $isSukoonMedex = EmbeddedProductStrategy::checkSukoonMedex($short_code);
 
-        [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect);
+        [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect, $isSalama);
 
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
@@ -515,8 +538,10 @@ class EmbeddedProductRepository extends BaseRepository
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
 
-        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)
-            || ($isSukoonMedex && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if (! $isSalama) {
+            $canSendDocuments = $canSendDocuments || ($isSukoonMedex && $this->canSendSukoonMedexDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction));
+        }
 
         if (! $canSendDocuments) {
             info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
@@ -527,32 +552,43 @@ class EmbeddedProductRepository extends BaseRepository
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } elseif ($isSukoonMedex) {
-            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep);
+            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
         }
     }
 
-    private function fetchAttachments($ep, $isAlfredProtect)
+    private function fetchAttachments($ep, $isAlfredProtect, $isSalama)
     {
         $attachments = [];
         $attachmentsUrls = [];
-        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-        $documents = json_decode($ep->company_documents);
 
-        if (! empty($documents)) {
-            foreach ($documents as $item) {
-                $path = $item->path;
-                $pwDoc = $path !== '' ? $websiteURL.$path : '';
-                if (! empty($path) && ! $isAlfredProtect) {
-                    $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-                    $file = file_get_contents($pwDoc);
-                    $mimeType = $fileInfo->buffer($file);
-                    $attachments[] = [
-                        'Content' => base64_encode(file_get_contents($pwDoc)),
-                        'Name' => $ep->display_name.' - Policy Wordings.pdf',
-                        'ContentType' => $mimeType,
-                    ];
-                } else {
-                    $attachmentsUrls[] = $pwDoc;
+        if ($isSalama) {
+            $url = self::SALAMA_POLICY_WORDINGS_URL;
+            $file = file_get_contents($url);
+            $attachments[] = [
+                'Content' => base64_encode($file),
+                'Name' => 'Policy Wordings.pdf',
+                'ContentType' => 'application/pdf',
+            ];
+
+        } else {
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $documents = json_decode($ep->company_documents);
+            if (! empty($documents)) {
+                foreach ($documents as $item) {
+                    $path = $item->path;
+                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                    if (! empty($path) && ! $isAlfredProtect) {
+                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+                        $file = file_get_contents($pwDoc);
+                        $mimeType = $fileInfo->buffer($file);
+                        $attachments[] = [
+                            'Content' => base64_encode(file_get_contents($pwDoc)),
+                            'Name' => $ep->display_name.' - Policy Wordings.pdf',
+                            'ContentType' => $mimeType,
+                        ];
+                    } else {
+                        $attachmentsUrls[] = $pwDoc;
+                    }
                 }
             }
         }
@@ -653,22 +689,37 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendMedexEmail($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep)
+    private function sendMedexEmail($short_code, $quoteObject, $transaction, $attachments, $advisorData, $ep, $modelType, $isSalama)
     {
-        $documents = $transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get();
-        $certificatesConfig = config('embedded-products.certificates');
+        if ($isSalama) {
+            $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
+            if ($pdf) {
+                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+                $url = $websiteURL.$pdf->doc_url;
+                $file = file_get_contents($url);
+                $attachments[] = [
+                    'Content' => base64_encode($file),
+                    'Name' => 'Salama_Certificate.pdf',
+                    'ContentType' => 'application/pdf',
+                ];
+            }
 
-        foreach ($documents as $document) {
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-            $url = $websiteURL.$document->doc_url;
-            $file = file_get_contents($url);
-            $attachments[] = [
-                'Content' => base64_encode($file),
-                'Name' => $document->original_name,
-                'ContentType' => 'application/pdf',
-            ];
+        } else {
+
+            $documents = $transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get();
+            foreach ($documents as $document) {
+                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+                $url = $websiteURL.$document->doc_url;
+                $file = file_get_contents($url);
+                $attachments[] = [
+                    'Content' => base64_encode($file),
+                    'Name' => $document->original_name,
+                    'ContentType' => 'application/pdf',
+                ];
+            }
         }
 
+        $certificatesConfig = config('embedded-products.certificates');
         $driverOrRiderCover = $short_code == EmbeddedProductEnum::MDX ? 'Driver' : 'Rider';
         $subject = match ($short_code) {
             EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX => "Details of your {$driverOrRiderCover} medical cover purchase with InsuranceMarket.ae - {$short_code}-{$quoteObject->code}",
