@@ -259,7 +259,7 @@ class LifeController extends Controller
 
     function updateExchangeRate(Request $request)
     {
-        $this->lifeQuoteService ->updateExchangeRate($request->all());
+        $this->lifeQuoteService ->updateExchangeRate($request->quoteUID, $request->exchangeRate);
         return response()->json(['message' => 'Exchange rate updated successfully']);
     }
 }

@@ -50,7 +50,6 @@ use DB;
 use Illuminate\Support\Arr;
 use PDF;
 use App\Enums\PaymentTermEnum;
-use App\Models\LifeQuoteRequest;
 
 class LifeQuoteService extends BaseService
 {
@@ -891,7 +890,7 @@ class LifeQuoteService extends BaseService
 
     function updateExchangeRate(string $quoteUID, $exchangeRate)
     {
-        $quote = LifeQuoteRequest::where('uuid', $quoteUID)->first();
+        $quote = LifeQuote::where('uuid', $quoteUID)->first();
         $quote->exchange_rate = $exchangeRate;
         return $quote->save();
     }

@@ -95,6 +95,8 @@ const loader = ref({
   download: false,
 });
 
+const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate);
+
 const selectedProviderPlan = page.props.quote.plan_id;
 const selectedProviderPlanVersion =
   page.props?.availablePlan?.quotes?.version ?? 0;
@@ -1080,7 +1082,15 @@ const emailStatusesTableColumns = computed(() => {
 });
 
 const updateExchangeRate = (item) => {
-  
+  axios.post('/personal-quotes/life/update-exchange-rate', {
+    quoteUID: page.props.quote.uuid,
+    exchangeRate: planExchangeRate.value,
+  }).then(response => {
+    notification.success({
+      title: 'Exchange rate updated successfully',
+      position: 'top',
+    });
+  });
 }
 </script>
 <template>
@@ -2012,16 +2022,16 @@ const updateExchangeRate = (item) => {
               </template>
 
               <template #item-exchangeRate="item">
-                <x-input
-                  type="text"
-                  class="w-full"
-                  @keydown="e => preventInvalidInputs(e, false,true)"
-                />
-                <x-button size="xs" color="emerald" @click.prevent="updateExchangeRate(item)">Update</x-button>
+                <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)">
+                  <x-input v-model="planExchangeRate" type="text" class="w-full" @keydown="e => preventInvalidInputs(e, false,true)" />
+                  <x-button size="xs" color="emerald" @click="updateExchangeRate(item)">Update</x-button>
+                </div>
               </template>
 
               <template #item-priceInAED="item">
-                <span class="copay-max">{{ numberFormat(item.price * (item?.exchangeRate ?? 1 )) }}</span>
+                <div class="copay-max" v-if="item.currency != 'AED' && selectedProviderPlan == item.planId"> 
+                  {{ numberFormat(item.actualPremium * (planExchangeRate)) }}
+                </div>        
               </template>
 
               <template #item-totalAnnualPremium="item">
