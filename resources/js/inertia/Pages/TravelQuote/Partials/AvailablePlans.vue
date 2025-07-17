@@ -168,9 +168,7 @@ const onUpdatePlan = () => {
 };
 
 
-const showPriceColumn = computed(() =>
-  props.plan.listQuotePlansMembers?.some(item => item.per_member_price === true)
-);
+const showPriceColumn = computed(() => props.plan.per_member_price === 1);
 
 const tableHeaders = computed(() => [
   { text: 'Member', value: 'member' },
@@ -301,7 +299,7 @@ onMounted(() => {
                 {{ dateFormat(item.dob) }}
               </template>
               <template #item-premium="{ item }">
-                <template v-if="item.per_member_price == true">
+                <template v-if="showPriceColumn">
                   {{ item.premium }}
                 </template>
               </template>

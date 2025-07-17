@@ -546,6 +546,10 @@ class TravelController extends Controller
             }
         }
 
+        $travelPlan = TravelPlan::with(['insuranceProviderQuoteType' => function ($query) {
+            $query->where('quote_type_id', QuoteTypeId::Travel);
+        }])->where('id', $planId)->first();
+
         $data = [
             'listQuotePlanName' => $listQuotePlanName ?? '',
             'providerCode' => $providerCode,
@@ -567,6 +571,7 @@ class TravelController extends Controller
             'id' => $planId,
             'vat' => $vat,
             'insurerQuoteNo' => $insurerQuoteNo,
+            'per_member_price' => $travelPlan->insuranceProviderQuoteType->per_member_price,
         ];
 
         return response()->json($data, 200);
