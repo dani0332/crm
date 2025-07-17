@@ -2,13 +2,12 @@
 
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
-use App\Http\Controllers\API\V1\BorController as V1BorController;
+use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
-use App\Http\Controllers\BorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -80,7 +79,10 @@ Route::prefix('v1')->group(function () {
 
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
-        Route::post('generate-pdf', [V1BorController::class, 'generatePdf'])->name('bor.generate-pdf');
+        Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
+
+        // Signature routes
+        Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
