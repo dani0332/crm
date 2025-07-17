@@ -240,7 +240,7 @@ class RenewalsUploadService
         LoggerService::info('UAT FN: renewalsUploadCreate File uploaded and renewals lead created');
 
         // start import process
-        ProcessRenewalsUploadCreate::dispatch($renewalsUploadLead);
+        ProcessRenewalsUploadCreate::dispatch($renewalsUploadLead->id);
 
         return true;
     }
