@@ -86,6 +86,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan:id,text',
             'currentlyLocatedIn:id,text',
             'renewalBatch:id,name',
+            'quoteTags:quote_uuid,name',
         ]);
     }
 

@@ -36,18 +36,21 @@ class CapiService
      *
      * @throws \Exception
      */
-    public function request($path, $method = 'post', $data = [])
+    public function request($path, $method = 'post', $data = [], $renewal = false)
     {
         $url = $this->baseUrl.$path;
-        $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function (Response $response) use ($data, $url) {
+        $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function (Response $response) use ($data, $url, $renewal) {
             $errorMessage = $response->json()['msg'] ?? $response->json()['message'] ?? self::CAPI_EXCEPTION_MESSAGE;
             // Only log 5XX errors
-            if ($response->status() >= 500) {
+            if ($response->status() >= 500 || $renewal) {
                 LoggerService::error(self::CAPI_EXCEPTION_MESSAGE, extra: [
                     'data' => $data,
                     'url' => $url,
                     'response_status' => $response ? $response->getStatusCode() : null,
                     'response_message' => $errorMessage,
+                    'renewal' => $renewal,
+                    'response' => $response,
+                    'jsonResponse' => $response->json(),
                 ]);
 
                 if ($errorMessage) {
