@@ -27,7 +27,7 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(RenewalsUploadLeads $renewalsUploadLeadId)
+    public function __construct($renewalsUploadLeadId)
     {
         $this->renewalsUploadLeadId = $renewalsUploadLeadId;
         $this->onQueue('renewals');
