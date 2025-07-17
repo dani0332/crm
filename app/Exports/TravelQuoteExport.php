@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\TravelQuoteService;
