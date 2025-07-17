@@ -256,4 +256,10 @@ class LifeController extends Controller
         $riders = $this->lifeQuoteService->getRiders($request->planId);
         return response()->json($riders);
     }
+
+    function updateExchangeRate(Request $request)
+    {
+        $this->lifeQuoteService ->updateExchangeRate($request->all());
+        return response()->json(['message' => 'Exchange rate updated successfully']);
+    }
 }

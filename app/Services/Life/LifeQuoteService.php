@@ -50,6 +50,7 @@ use DB;
 use Illuminate\Support\Arr;
 use PDF;
 use App\Enums\PaymentTermEnum;
+use App\Models\LifeQuoteRequest;
 
 class LifeQuoteService extends BaseService
 {
@@ -71,7 +72,7 @@ class LifeQuoteService extends BaseService
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
         $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
-
+        
         return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes');
     }
 
@@ -396,7 +397,8 @@ class LifeQuoteService extends BaseService
         $ecomLifeInsuranceQuoteUrl = config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL');
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
-
+        $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $lifeQuote->id);
+        
         return [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -446,7 +448,9 @@ class LifeQuoteService extends BaseService
             'lifeRiders' => $lifeRiders,
             'availablePlan' => $this->getQuotePlans($uuid),
             'paymentTerms' => PaymentTermEnum::asArray(),
+            'emailStatuses' => $emailStatuses,
         ];
+
     }
 
     public function getFormOptions()
@@ -883,6 +887,13 @@ class LifeQuoteService extends BaseService
         ]);
         $request = app(KenService::class)->request('/toggle-life-plan-visibility', 'post', $data);
         return $request;
+    }
+
+    function updateExchangeRate(string $quoteUID, $exchangeRate)
+    {
+        $quote = LifeQuoteRequest::where('uuid', $quoteUID)->first();
+        $quote->exchange_rate = $exchangeRate;
+        return $quote->save();
     }
 
     private function generatePdfFilename($quote): string
