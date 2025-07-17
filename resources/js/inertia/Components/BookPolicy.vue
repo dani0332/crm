@@ -230,6 +230,9 @@ const bpForm = useForm({
     page.props?.bookPolicyDetails?.disabledCommissionTooltip,
   isTapCaptureProcessStart:
     page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
+  currency: page.props.quote?.quote_customer_plan?.plan?.currency || 'AED',
+  commission_based_on_currency: '',
+  exchange_rate: '',
 });
 
 let is_lacking_payment = ref(
@@ -418,6 +421,19 @@ const calculateCommissionPercentage = (
   }
 };
 
+const calculateCommissionBasedOnCurrency = () => {
+  const exchangeRate = Number(bpForm.exchange_rate) || 0;
+  const commissionVatApplicable = Number(bpForm.commission_vat_applicable) || 0;
+  
+  if (exchangeRate > 0 && commissionVatApplicable > 0) {
+    bpForm.commission_based_on_currency = useRoundIt(
+      exchangeRate * commissionVatApplicable
+    );
+  } else {
+    bpForm.commission_based_on_currency = '';
+  }
+};
+
 const calculateCommission = () => {
   let totalPriceWithoutVat =
     Number(props.quote?.price_vat_applicable) +
@@ -450,6 +466,11 @@ const calculateCommission = () => {
     bpForm.commission_percentage = 0;
     bpForm.vat_on_commission = 0;
     bpForm.total_commission = 0;
+  }
+  
+  // Calculate commission based on currency if it's a life lead and currency is not AED
+  if (showNonAEDFields.value) {
+    calculateCommissionBasedOnCurrency();
   }
 };
 let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
@@ -529,6 +550,21 @@ const disableCommissionVatApplicable = computed(() => {
   // Enable Commission vat not applicable for all LOBs or when commission vat not applicable is  empty
   return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
+
+const showCurrencyFields = computed(() => {
+  return isLifeLead;
+});
+
+const showNonAEDFields = computed(() => {
+  return isLifeLead && bpForm.currency !== 'AED';
+});
+
+const currencyOptions = [
+  { value: 'AED', label: 'AED' },
+  { value: 'USD', label: 'USD' },
+  { value: 'GBP', label: 'GBP' },
+  { value: 'EUR', label: 'EUR' },
+];
 
 const showSendAndBookPolicyButtonBlock = computed(() => {
   if (bpForm.isTapCaptureProcessStart || !isAllPaymentAuthorized()) {
@@ -720,6 +756,16 @@ watch(
         props.bookPolicyDetails.transactionPaymentStatus;
     }
   },
+);
+
+// Watch for changes in exchange rate and commission to auto-calculate commission based on currency
+watch(
+  [() => bpForm.exchange_rate, () => bpForm.commission_vat_applicable],
+  () => {
+    if (showNonAEDFields.value) {
+      calculateCommissionBasedOnCurrency();
+    }
+  }
 );
 
 const sendPolicyConfirmation = () => {
@@ -1250,6 +1296,7 @@ const isDocTypeLoading = docType => {
                         <x-input
                           v-model="bpForm.commission_vat_applicable"
                           @change="calculateCommission"
+                          @input="calculateCommission"
                           placeholder="Commission VAT APPLICABLE"
                           class="w-full"
                           :disabled="disableCommissionVatApplicable"
@@ -1286,6 +1333,7 @@ const isDocTypeLoading = docType => {
                       <x-input
                         v-model="bpForm.commission_vat_applicable"
                         @change="calculateCommission"
+                        @input="calculateCommission"
                         placeholder="Commission VAT APPLICABLE"
                         class="w-full"
                         :disabled="disableCommissionVatApplicable"
@@ -1321,6 +1369,64 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
+              <template v-if="showCurrencyFields">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label class="border-b-2 border-dotted border-black uppercase">
+                      Currency *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-select
+                      v-model="bpForm.currency"
+                      placeholder="Select Currency"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                      :options="currencyOptions"
+                    />
+                  </dd>
+                </div>
+
+                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label class="border-b-2 border-dotted border-black uppercase">
+                      Commission based on Currency *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-input
+                      v-model="bpForm.commission_based_on_currency"
+                      placeholder="Commission based on Currency"
+                      class="w-full"
+                      type="number"
+                      step="0.01"
+                      readonly
+                      :rules="[isRequired]"
+                    />
+                  </dd>
+                </div>
+                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label class="border-b-2 border-dotted border-black uppercase">
+                      Exchange Rate *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-input
+                      v-model="bpForm.exchange_rate"
+                      @input="calculateCommissionBasedOnCurrency"
+                      @change="calculateCommissionBasedOnCurrency"
+                      placeholder="Exchange Rate"
+                      class="w-full"
+                      type="number"
+                      step="0.0001"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </dd>
+                </div>
+              </template>
             </dl>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
               <div class="w-full md:w-1/2"></div>
