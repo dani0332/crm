@@ -561,7 +561,7 @@ class RenewalsUploadService
         $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::UPDATE_LEADS, $data);
         LoggerService::info('UAU FN: renewalsUploadUpdate File uploaded and renewals lead created');
 
-        ProcessRenewalsUploadUpdate::dispatch($renewalsUploadLead);
+        ProcessRenewalsUploadUpdate::dispatch($renewalsUploadLead->id);
 
         return true;
     }

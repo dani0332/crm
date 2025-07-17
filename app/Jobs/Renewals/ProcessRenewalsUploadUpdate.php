@@ -42,7 +42,7 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
     {
         $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
 
-        return $renewalsUploadService->processUploadUpdate(renewalsUploadLead);
+        return $renewalsUploadService->processUploadUpdate($renewalsUploadLead->id);
     }
 
     /**
