@@ -18,6 +18,7 @@ class QuoteJourneyService
 
         if ($quoteTypeId != QuoteTypeId::Car) {
             LoggerService::info('Quote type ID is not Car, skipping quote journey', ['quoteTypeId' => $quoteTypeId]);
+
             return;
         }
         LoggerService::info('Sending quote journey to CAPI', ['quoteTypeId' => $quoteTypeId]);
