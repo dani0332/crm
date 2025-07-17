@@ -138,9 +138,6 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->filterByDate('travel_end_date', 'end_date', false)
             ->filterBy('assignment_type', ignoreAll: true)
-            ->when(request()->filled('previous_quote_policy_number'), function ($query) {
-                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
-            })
             ->when($this->hasFilterValue('is_renewal', $requestParams) && $this->getFilterValue('is_renewal', $requestParams) == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
             })
