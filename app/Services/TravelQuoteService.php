@@ -26,6 +26,7 @@ use App\Models\Payment;
 use App\Models\QuoteBatches;
 use App\Models\TravelDestination;
 use App\Models\TravelMemberDetail;
+use App\Models\TravelPlan;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
@@ -1243,5 +1244,18 @@ class TravelQuoteService extends BaseService
             ->where('quote_type', 'App\Models\TravelQuote')
             ->whereDate('dob', '<=', now()->subYears(65))
             ->update(['quote_id' => $newQuoteId]);
+    }
+
+    public function getPerMemberPrice($planId)
+    {
+        $travelPlan = TravelPlan::with(['insuranceProviderQuoteType' => function ($query) {
+            $query->where('quote_type_id', QuoteTypeId::Travel);
+        }])->where('id', $planId)->first();
+
+        if ($travelPlan->insuranceProviderQuoteType) {
+            return $travelPlan->insuranceProviderQuoteType->per_member_price;
+        }
+
+        return false;
     }
 }
