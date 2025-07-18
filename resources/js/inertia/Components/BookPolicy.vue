@@ -4,6 +4,7 @@ const page = usePage();
 const notification = useNotifications('toast');
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
 import NProgress from 'nprogress';
+import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
 const { isRequired } = useRules();
 import { h, defineComponent } from 'vue';
 
@@ -79,6 +80,8 @@ const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
+const commissionPercentageExceedsLimit = ref(false);
+const showCommissionPercentageExceedsLimitAlert = ref(false);
 
 const dateToYMD = date => {
   if (date) {
@@ -117,7 +120,7 @@ const dateToDMYWithTime = date => {
 };
 
 const commissionErrorMessage =
-  'The commission amount you entered is outside the permitted range.';
+  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.';
 const bp = reactive({
   isEditing: false,
   isAllowedToUpdateCommission: true,
@@ -394,18 +397,29 @@ const calculateCommissionPercentage = (
   totalCommissionWithoutVat,
   totalPriceWithoutVat,
 ) => {
+  commissionPercentageExceedsLimit.value = false;
   if (totalCommissionWithoutVat > 0) {
     let totalCommissionInPercentage =
       (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
     let brokerCommission = props.bookPolicyDetails.brokerCommission;
-    let commission_percentage_min =
-      brokerCommission?.commission_percentage_min || 0;
-    let commission_percentage_max =
-      brokerCommission?.commission_percentage_max || 0;
+    let commission_percentage_min = Math.max(
+      (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
+      0,
+    );
+    let commission_percentage_max = brokerCommission?.fixed_commission
+      ? Number(brokerCommission?.fixed_commission) + 2.5
+      : 0;
     if (commission_percentage_min != 0 && commission_percentage_max != 0) {
       if (
         totalCommissionInPercentage < commission_percentage_min ||
         totalCommissionInPercentage > commission_percentage_max
+      ) {
+        commissionPercentageExceedsLimit.value = true;
+      }
+      if (
+        (totalCommissionInPercentage < commission_percentage_min ||
+          totalCommissionInPercentage > commission_percentage_max) &&
+        !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
       ) {
         bp.isAllowedToUpdateCommission = false;
       } else {
@@ -1564,6 +1578,16 @@ const isDocTypeLoading = docType => {
                     <span>{{ 'Please update the booking details.' }}</span>
                   </template>
                 </x-tooltip>
+                <BookPolicyOverrideCommissionLimitModal
+                  :showCommissionPercentageExceedsLimitAlert="
+                    showCommissionPercentageExceedsLimitAlert
+                  "
+                  :bpForm="bpForm"
+                  @modalClosed="
+                    showCommissionPercentageExceedsLimitAlert = false
+                  "
+                />
+
                 <template v-if="is_lacking_payment || isDisabledSendPCB">
                   <x-tooltip>
                     <x-button
