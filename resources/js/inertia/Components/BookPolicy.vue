@@ -230,9 +230,9 @@ const bpForm = useForm({
     page.props?.bookPolicyDetails?.disabledCommissionTooltip,
   isTapCaptureProcessStart:
     page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
-  currency: page.props.quote?.quote_customer_plan?.plan?.currency || 'AED',
-  commission_based_on_currency: '',
-  exchange_rate: '',
+  currency: page.props?.payments[0]?.currency || 'AED',
+  commission_based_on_currency: page.props?.payments[0]?.commission_based_on_currency || '',
+  exchange_rate: page.props?.payments[0]?.exchange_rate || '',
 });
 
 let is_lacking_payment = ref(
@@ -422,15 +422,17 @@ const calculateCommissionPercentage = (
 };
 
 const calculateCommissionBasedOnCurrency = () => {
-  const exchangeRate = Number(bpForm.exchange_rate) || 0;
-  const commissionVatApplicable = Number(bpForm.commission_vat_applicable) || 0;
-  
-  if (exchangeRate > 0 && commissionVatApplicable > 0) {
-    bpForm.commission_based_on_currency = useRoundIt(
-      exchangeRate * commissionVatApplicable
-    );
-  } else {
-    bpForm.commission_based_on_currency = '';
+  if (isLifeLead && bpForm.currency !== 'AED') {
+    const exchangeRate = Number(bpForm.exchange_rate) || 0;
+    const commissionBasedOnCurrency = Number(bpForm.commission_based_on_currency) || 0;
+    
+    if (exchangeRate > 0 && commissionBasedOnCurrency > 0) {
+      bpForm.commission_vat_not_applicable = useRoundIt(
+        commissionBasedOnCurrency * exchangeRate
+      );
+    } else {
+      bpForm.commission_vat_not_applicable = '';
+    }
   }
 };
 
@@ -466,11 +468,6 @@ const calculateCommission = () => {
     bpForm.commission_percentage = 0;
     bpForm.vat_on_commission = 0;
     bpForm.total_commission = 0;
-  }
-  
-  // Calculate commission based on currency if it's a life lead and currency is not AED
-  if (showNonAEDFields.value) {
-    calculateCommissionBasedOnCurrency();
   }
 };
 let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
@@ -530,7 +527,13 @@ const commissionVatApplicableTooltip = computed(() => {
 
 const disableCommissionVatNotApplicable = computed(() => {
   if (isLifeLead) {
-    return !bp.isEditing || bpForm.commission_vat_applicable > 0;
+    if (bpForm.currency !== 'AED') {
+      return true;
+    }
+    else{
+      return false;  
+      // return !bp.isEditing || bpForm.commission_vat_applicable > 0;
+    }
   } else if (isBusinessLead) {
     let insuranceBusinessType = page.props.quote?.business_type_of_insurance_id;
     let allowedBusinessTypes = [
@@ -758,12 +761,27 @@ watch(
   },
 );
 
-// Watch for changes in exchange rate and commission to auto-calculate commission based on currency
 watch(
-  [() => bpForm.exchange_rate, () => bpForm.commission_vat_applicable],
+  [() => bpForm.exchange_rate, () => bpForm.commission_based_on_currency],
   () => {
     if (showNonAEDFields.value) {
       calculateCommissionBasedOnCurrency();
+    }
+  }
+);
+
+watch(
+  () => bpForm.currency,
+  (newCurrency) => {
+    if (isLifeLead) {
+      if (newCurrency === 'AED') {
+        // Clear calculated fields when switching to AED
+        bpForm.commission_based_on_currency = '';
+        bpForm.exchange_rate = '';
+      } else {
+        // Clear commission_vat_not_applicable when switching away from AED
+        bpForm.commission_vat_not_applicable = '';
+      }
     }
   }
 );
@@ -1181,6 +1199,66 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.commission_percentage }}%</dd>
               </div>
+              <template v-if="showCurrencyFields">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label class="border-b-2 border-dotted border-black uppercase">
+                      Currency *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-select
+                      v-model="bpForm.currency"
+                      placeholder="Select Currency"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                      :options="currencyOptions"
+                    />
+                  </dd>
+                </div>
+
+                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label class="border-b-2 border-dotted border-black uppercase">
+                      Commission based on Currency *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-input
+                      v-model="bpForm.commission_based_on_currency"
+                      @input="calculateCommissionBasedOnCurrency"
+                      @change="calculateCommissionBasedOnCurrency"
+                      placeholder="Commission based on Currency"
+                      class="w-full"
+                      type="number"
+                      step="0.01"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </dd>
+                </div>
+                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    <label class="border-b-2 border-dotted border-black uppercase">
+                      Exchange Rate *
+                    </label>
+                  </dt>
+                  <dd>
+                    <x-input
+                      v-model="bpForm.exchange_rate"
+                      @input="calculateCommissionBasedOnCurrency"
+                      @change="calculateCommissionBasedOnCurrency"
+                      placeholder="Exchange Rate"
+                      class="w-full"
+                      type="number"
+                      step="0.0001"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </dd>
+                </div>
+              </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
@@ -1369,64 +1447,7 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
-              <template v-if="showCurrencyFields">
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <label class="border-b-2 border-dotted border-black uppercase">
-                      Currency *
-                    </label>
-                  </dt>
-                  <dd>
-                    <x-select
-                      v-model="bpForm.currency"
-                      placeholder="Select Currency"
-                      class="w-full"
-                      :disabled="!bp.isEditing"
-                      :rules="[isRequired]"
-                      :options="currencyOptions"
-                    />
-                  </dd>
-                </div>
-
-                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <label class="border-b-2 border-dotted border-black uppercase">
-                      Commission based on Currency *
-                    </label>
-                  </dt>
-                  <dd>
-                    <x-input
-                      v-model="bpForm.commission_based_on_currency"
-                      placeholder="Commission based on Currency"
-                      class="w-full"
-                      type="number"
-                      step="0.01"
-                      readonly
-                      :rules="[isRequired]"
-                    />
-                  </dd>
-                </div>
-                <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <label class="border-b-2 border-dotted border-black uppercase">
-                      Exchange Rate *
-                    </label>
-                  </dt>
-                  <dd>
-                    <x-input
-                      v-model="bpForm.exchange_rate"
-                      @input="calculateCommissionBasedOnCurrency"
-                      @change="calculateCommissionBasedOnCurrency"
-                      placeholder="Exchange Rate"
-                      class="w-full"
-                      type="number"
-                      step="0.0001"
-                      :disabled="!bp.isEditing"
-                      :rules="[isRequired]"
-                    />
-                  </dd>
-                </div>
-              </template>
+             
             </dl>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
               <div class="w-full md:w-1/2"></div>

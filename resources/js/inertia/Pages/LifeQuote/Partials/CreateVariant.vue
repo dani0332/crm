@@ -124,15 +124,7 @@ const validatePolicyTerm = value => {
   return true;
 };
 
-const riders = props.lifeRiders.map(rider => ({
-  riderId: rider.id,
-  active: 0,
-  price: 0,
-  coverValue: 0,
-  text: rider.text,
-}));
-
-const ridersData = ref(riders);
+const ridersData = ref([]);
 const page = usePage();
 const emit = defineEmits(['success', 'error']);
 
@@ -251,15 +243,6 @@ watch(
         inputRequired: rider?.inputRequired ?? false,
       }));
       
-    } else {
-      console.log(props.plan.riders, 'inside if second');
-      ridersData.value = props.lifeRiders.map(rider => ({
-        riderId: rider.id,
-        active: 0,
-        price: 0,
-        coverValue: 0,
-        text: rider.text,
-      }));
     }
   },
   { deep: true },
@@ -443,7 +426,7 @@ onMounted(() => {
         ? Math.max(0, Number(props.plan.actualPremium))
         : null;
     }
-
+    
     // Handle rider data initialization
     if (
       props.plan.riders &&
@@ -460,18 +443,7 @@ onMounted(() => {
         };
         return mappedRider;
       });
-    } else {
-      ridersData.value = props.lifeRiders.map(rider => {
-        const mappedRider = {
-          riderId: rider.id,
-          active: 0,
-          price: 0,
-          coverValue: 0,
-          text: rider.text || rider.name,
-        };
-        return mappedRider;
-      });
-    }
+    } 
 
     getRiderDetails(props.plan.planId);
     exitAge.value = props.plan?.exitAge;
