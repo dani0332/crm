@@ -527,7 +527,7 @@ const commissionVatApplicableTooltip = computed(() => {
 
 const disableCommissionVatNotApplicable = computed(() => {
   if (isLifeLead) {
-    if (bpForm.currency !== 'AED') {
+    if (bpForm.currency === 'AED') {
       return true;
     }
     else{
@@ -1218,6 +1218,8 @@ const isDocTypeLoading = docType => {
                   </dd>
                 </div>
 
+                <div></div>
+
                 <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
                   <dt class="font-medium">
                     <label class="border-b-2 border-dotted border-black uppercase">
@@ -1238,6 +1240,8 @@ const isDocTypeLoading = docType => {
                     />
                   </dd>
                 </div>
+                <div></div>
+
                 <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
                   <dt class="font-medium">
                     <label class="border-b-2 border-dotted border-black uppercase">
@@ -1258,6 +1262,7 @@ const isDocTypeLoading = docType => {
                     />
                   </dd>
                 </div>
+                <div></div>
               </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">

@@ -287,6 +287,8 @@ class CentralController extends Controller
                 'commission_vat' => $validatedData['vat_on_commission'],
                 'commission' => $validatedData['total_commission'],
                 'invoice_description' => $validatedData['invoice_description'],
+
+                // for life only
                 'commission_based_on_currency' => $bookPolicyRequest?->commission_based_on_currency ?? null,
                 'exchange_rate' => $bookPolicyRequest?->exchange_rate ?? null,
                 'currency' => $bookPolicyRequest?->currency ?? null,

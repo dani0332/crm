@@ -93,9 +93,10 @@ const { copy, copied } = useClipboard();
 const loader = ref({
   link: false,
   download: false,
+  exchangeRate: false,
 });
 
-const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate);
+const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate ?? 1);
 const isExchangeRateEditable = ref(false);
 
 const selectedProviderPlan = page.props.quote.plan_id;
@@ -1107,6 +1108,8 @@ const emailStatusesTableColumns = computed(() => {
 });
 
 const updateExchangeRate = (item) => {
+  loader.value.exchangeRate = true;
+  
   axios.post('/personal-quotes/life/update-exchange-rate', {
     quoteUID: page.props.quote.uuid,
     exchangeRate: planExchangeRate.value,
@@ -1116,6 +1119,13 @@ const updateExchangeRate = (item) => {
       position: 'top',
     });
     isExchangeRateEditable.value = false;
+  }).catch(error => {
+    notification.error({
+      title: 'Failed to update exchange rate',
+      position: 'top',
+    });
+  }).finally(() => {
+    loader.value.exchangeRate = false;
   });
 }
 
@@ -2053,33 +2063,44 @@ const enableExchangeRateEdit = () => {
 
               <template #item-exchangeRate="item">
                 <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)" class="flex items-center gap-2">
-                  <div class="relative flex-1">
+                  <div class="flex-1">
                     <x-input 
                       v-model="planExchangeRate" 
                       type="text" 
-                      class="w-full pr-16" 
+                      class="w-full" 
                       :disabled="!isExchangeRateEditable"
-                      @dblclick="enableExchangeRateEdit"
                       @keydown="e => preventInvalidInputs(e, false,true)" 
-                      placeholder="Double click to edit"
+                      placeholder="Exchange rate"
                     />
-                    <x-button 
-                      v-if="isExchangeRateEditable"
-                      size="xs" 
-                      color="emerald" 
-                      @click="updateExchangeRate(item)"
-                      class="absolute right-1 top-1/2 transform -translate-y-1/2"
-                    >
-                      Update
-                    </x-button>
                   </div>
+                  <x-button 
+                    v-if="!isExchangeRateEditable"
+                    size="xs" 
+                    color="blue" 
+                    @click="enableExchangeRateEdit"
+                  >
+                    Edit
+                  </x-button>
+                  <x-button 
+                    v-if="isExchangeRateEditable"
+                    size="xs" 
+                    color="emerald" 
+                    :loading="loader.exchangeRate"
+                    :disabled="loader.exchangeRate"
+                    @click="updateExchangeRate(item)"
+                  >
+                    Update
+                  </x-button>
                 </div>
               </template>
 
               <template #item-priceInAED="item">
-                <div class="copay-max" v-if="item.currency != 'AED' && selectedProviderPlan == item.planId"> 
+                <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)" class="copay-max"> 
                   {{ numberFormat(item.actualPremium * (planExchangeRate)) }}
                 </div>        
+                <div v-else class="copay-max">  
+                  {{ numberFormat(item.actualPremium) }}
+                </div>
               </template>
 
               <template #item-totalAnnualPremium="item">
