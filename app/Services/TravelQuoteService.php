@@ -100,6 +100,7 @@ class TravelQuoteService extends BaseService
             'tp.text AS plan_id_text',
             // 'tp.id as plan_new_id_text',
             'tpip.text AS travel_plan_provider_text',
+            'tpip.code AS plan_provider_code',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
@@ -497,7 +498,6 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
-        $travelQuote->dob = $request->dob;
         if (
             $travelQuote->days_cover_for != $request->days_cover_for ||
             $travelQuote->destination_id != $request->destination_id ||

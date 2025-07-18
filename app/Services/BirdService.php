@@ -6,7 +6,9 @@ use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteFlowDetails;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class BirdService extends BaseService
 {
@@ -65,9 +67,10 @@ class BirdService extends BaseService
 
         return $this->triggerWebHookRequest($cancelFlowRunUrl, ['action' => 'cancel', 'ids' => [$workflow->flow_id]], 'patch', true);
     }
-    public function isFollowupExecuted($uuid, $quoteTypeId, $flowType)
+
+    public function isFollowupExecuted($quoteUuid, $quoteTypeId, $flowType)
     {
-        return QuoteFlowDetails::where('quote_uuid', $uuid)
+        return QuoteFlowDetails::where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
             ->where('flow_type', $flowType)
             ->exists();
@@ -85,14 +88,29 @@ class BirdService extends BaseService
                     'flow_id' => $runId,
                     'started_at' => now(),
                 ]);
-                LoggerService::info("- createQuoteWorkFlowDetails  run id created for lead : Ref-ID: {$lead->uuid}");
+                LoggerService::info('- createQuoteWorkFlowDetails  run id created');
             } else {
-                LoggerService::info(" - createQuoteWorkFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} ");
+                LoggerService::info(' - createQuoteWorkFlowDetails  run id not found ');
             }
         } catch (\Throwable $th) {
 
-            LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid}");
+            LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} ");
 
+        }
+    }
+    public function createQuoteWhatsAppFlowDetails($lead, $flowType = null, $quoteTypeId = null)
+    {
+        try {
+            DB::table('ocb_whatsapp_msg_logs')->insert([
+                'uuid' => $lead->uuid,
+                'quote_type_id' => $quoteTypeId,
+                'mobile_no' => formatMobileNoWithoutPlus($lead->mobile_no),
+                'log_message' => Str::camel($flowType),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $th) {
+            LoggerService::error(" - createQuoteWhatsAppFlowDetails-Error: {$th->getMessage()}  Line: {$th->getLine()}  Trace: {$th->getTraceAsString()} ");
         }
     }
 }
