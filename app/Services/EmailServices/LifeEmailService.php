@@ -103,7 +103,7 @@ class LifeEmailService extends BaseService
                 return;
             }
             $notifyBirthdayDate = [
-                'advanceBirthdayDate' => (string) $notifyDate->timestamp,
+                'advanceBirthdayDate' => (string) $notifyDate->startOfDay()->timestamp,
                 'advanceBirthdayDateString' => $notifyDate->format('Y-m-d'),
             ];
 
@@ -147,7 +147,8 @@ class LifeEmailService extends BaseService
             }
 
             $notifyBirthdayDate = [
-                'birthdayDate' => (string) $birthday->timestamp,
+                // Set birthdayDate to the start of the day (00:00:00) for sending the event
+                'birthdayDate' => (string) $birthday->startOfDay()->timestamp,
                 'birthdayDateString' => $birthday->format('Y-m-d'),
             ];
             $emailData->workflowType = WorkflowTypeEnum::LIFE_BIRTHDAY_WISH_EMAIL;
