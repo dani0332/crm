@@ -713,8 +713,8 @@
                         <th>
                             <p class="text-center" style="font-size: 14px">
                                 {{ $plans[$planId]->planName ?? '' }}
-                                @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
-                                    <span class="badge badge-success">Renewal Quote</span>
+                                @if(isset($plans[$planId]->version) && $plans[$planId]->version != 0)
+                                    v.{{ $plans[$planId]->version }}
                                 @endif
                             </p>
                         </th>
@@ -924,7 +924,7 @@
                             <td style="padding:0px !important;">
                                 <ul style="text-align: left; padding-left:15px;padding-top:0px;font-size:10px;line-height:1;">
                                     @foreach($riders[$planId] as $rider)
-                                        <li>{{ $rider->text }} {{ $rider->active ? '(Covered)' : '(Optional)' }}</li>
+                                        <li>{{ $rider->text }} {{ $rider->price }} {{ $rider->active ? '(Covered)' : '(Optional)' }}</li>
                                     @endforeach
                                 </ul>
                             </td>

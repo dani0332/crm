@@ -12,6 +12,9 @@ use App\Models\PersonalQuote;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\QuoteStatusEnum;
+use App\Models\LifeQuote;
+
 
 class EmailService
 {
@@ -41,7 +44,19 @@ class EmailService
         try {
 
             $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
-            
+
+            if ($response && $response->status_code == 200) {
+                if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
+                    $lead->quote_status_id = QuoteStatusEnum::Quoted;
+                    LifeQuote::where('uuid', $lead->uuid)->update([
+                        'quote_status_id' => QuoteStatusEnum::Quoted,
+                    ]);
+                $lead->save();
+                } else {
+                    LoggerService::info("sendOCAEmail - Quote status is not new lead for quote: {$lead->uuid}");
+                }
+            }
+
             LoggerService::info("$logPrefix Bird flow triggered successfully - Email sent to customer", extra: [
                 'email' => $emailData->customerEmail,
             ]);
