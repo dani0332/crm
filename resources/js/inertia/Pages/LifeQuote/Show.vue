@@ -1119,6 +1119,11 @@ const updateExchangeRate = (item) => {
       position: 'top',
     });
     isExchangeRateEditable.value = false;
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+
   }).catch(error => {
     notification.error({
       title: 'Failed to update exchange rate',
