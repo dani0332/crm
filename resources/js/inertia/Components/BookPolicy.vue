@@ -1519,11 +1519,12 @@ const isDocTypeLoading = docType => {
                               </td>
                               <td>{{ item.code }}</td>
                               <td>
+                                {{ item.commission_vat_applicable }}
                                 {{
                                   formatAmount(
-                                    item.commission_vat_applicable != 0
+                                    (item.commission_vat_applicable != null && item.commission_vat_applicable != 0)
                                       ? item.commission_vat_applicable
-                                      : item.commission_vat_not_applicable,
+                                      : item.commission_vat_not_applicable
                                   )
                                 }}
                               </td>

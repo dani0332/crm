@@ -1073,7 +1073,7 @@ const emailStatusesTable = reactive({
     },
     {
       text: 'Status',
-      value: 'status',
+      value: 'email_status',
     },
     {
       text: 'Reason',
