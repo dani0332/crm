@@ -32,7 +32,7 @@ class ConversionAsAtReportService extends BaseService
     use Reportable;
     use TeamHierarchyTrait;
 
-    public function getReportData($request)
+    public function getReportQueryBuilder($request)
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
@@ -96,13 +96,21 @@ class ConversionAsAtReportService extends BaseService
                 'page' => $request->page,
             ];
 
-            $query = $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
+            $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
 
-            $query = $query->get();
+            // logger()->debug('toRawSql: '.$query->toRawSql());
 
-            // map operation to calculate gross and net conversions of records
-            return $this->mapConversionData($query, $request);
+            return $query;
+
         }
+    }
+
+    public function getReportData(Request $request){
+
+        $query = $this->getReportQueryBuilder($request);
+
+        // map operation to calculate gross and net conversions of records
+        return $this->mapConversionData($query->get(), $request);
     }
 
     /**
