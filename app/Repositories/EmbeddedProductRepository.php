@@ -340,7 +340,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         return false;
     }
-    
+
     /**
      * canSendSukoonMedexDocuments - this is only used for Policy Issued status
      *
