@@ -290,8 +290,8 @@ const modals = reactive({
 
 let isBookingDetailsUpdated = computed(
   () =>
-    page.props.payments[0]?.commmission_percentage > 0 ||
-    page.props.payments[0]?.commission_vat > 0 ||
+    page.props.payments[0]?.commmission_percentage > 0 &&
+    page.props.payments[0]?.commission_vat > 0 &&
     page.props.payments[0]?.commission > 0,
 );
 
