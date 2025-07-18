@@ -518,13 +518,50 @@ class ReportService extends BaseService
             $query->whereIn('q.advisor_id', $request->advisors);
         }
 
-        if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
-            $query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            $query->orderBy('team', 'asc');
-        }
-
-        return $query;
+              // Define available sort columns for each LOB
+              $availableSortColumns = [
+                'team', // Available for all LOBs
+                'new_lead', 
+                'allocated', 
+                'quoted', 
+                'followed_up', 
+                'in_negotiation', 
+                'payment_pending'
+            ];
+    
+            // Add LOB-specific columns
+            if ($lob == QuoteTypes::HEALTH->value) {
+                $availableSortColumns = array_merge($availableSortColumns, [
+                    'renewal_terms_recevied',
+                    'application_pending',
+                    'application_submitted', 
+                    'missing_documents'
+                ]);
+            } elseif ($lob == QuoteTypes::CORPLINE->value) {
+                $availableSortColumns = array_merge($availableSortColumns, [
+                    'proposal_form_requested',
+                    'proposal_form_received',
+                    'pending_renewal_information',
+                    'additional_information_requested',
+                    'quotes_requested',
+                    'finalizing_terms'
+                ]);
+            }
+    
+            // Apply sorting with validation
+            if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
+                // Only apply sorting if the column exists for this LOB
+                if (in_array($request->sortBy, $availableSortColumns)) {
+                    $query->orderBy($request->sortBy, $request->sortType);
+                } else {
+                    // Fallback to default sorting if invalid column
+                    $query->orderBy('team', 'asc');
+                }
+            } else {
+                $query->orderBy('team', 'asc');
+            }
+    
+            return $query;
     }
 
     public function getDefaultFiltersForTotalPremium()
