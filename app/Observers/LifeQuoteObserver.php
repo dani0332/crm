@@ -17,7 +17,7 @@ use App\Traits\PersonalQuoteSyncTrait;
 
 class LifeQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    //use PersonalQuoteSyncTrait;
 
     public function updating(LifeQuote $quote): void
     {
@@ -60,7 +60,7 @@ class LifeQuoteObserver
                 info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
             }
         }
-        $this->syncQuote($lifeQuote, $dirty);
+        //$this->syncQuote($lifeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
