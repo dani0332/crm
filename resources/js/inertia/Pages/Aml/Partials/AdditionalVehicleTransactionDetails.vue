@@ -31,6 +31,18 @@ const annualMileageEstimateOptions = computed(() => {
   return useGenerateOptions(lookups?.annual_mileage_estimate ?? [], 'code', 'text');
 });
 
+const rules = {
+  chassisNumberCheck: v => {
+    const regex = /^[A-Za-z0-9]+$/;
+    const lengthValid = v?.length >= 8 && v?.length <= 17;
+    const isAlphanumeric = regex.test(v);
+    return (
+      (lengthValid && isAlphanumeric) ||
+      'The entered value does not meet the required length of 8 to 17 characters'
+    );
+  },
+};
+
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
@@ -54,6 +66,41 @@ const additionalVehicleTransactionDetailsForm = useForm({
   certificate_end_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_end_date ?? '',
   annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
 });
+
+const chassisNumberValidate = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      event.preventDefault();
+    }
+  }
+  if (eventType == 'blur') {
+    const lengthValid =
+      additionalVehicleTransactionDetailsForm.chassis_number?.length >= 8 &&
+      additionalVehicleTransactionDetailsForm.chassis_number?.length <= 17;
+    const isAlphanumeric = regex.test(additionalVehicleTransactionDetailsForm.chassis_number);
+    if (
+      additionalVehicleTransactionDetailsForm.chassis_number &&
+      (!lengthValid || !isAlphanumeric)
+    ) {
+      additionalVehicleTransactionDetailsForm.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+      event.preventDefault();
+      return true;
+    } else {
+      additionalVehicleTransactionDetailsForm.clearErrors('chassis_number');
+      return false;
+    }
+  }
+};
 
 const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
   if (isValid) {
@@ -132,9 +179,12 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
           <x-field label="Chassis Number" required>
             <x-input 
               v-model="additionalVehicleTransactionDetailsForm.chassis_number" 
-              :rules="[isRequired]"
+              :rules="[isRequired, rules.chassisNumberCheck]"
+              @keypress="chassisNumberValidate('keypress')"
+              @blur="chassisNumberValidate('blur')"
               placeholder="Chassis Number"
               type="text"
+              :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
             />
           </x-field>
           

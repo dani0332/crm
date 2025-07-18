@@ -628,7 +628,8 @@ function screeningFormValidate() {
   if (
     (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
-    !chassisNumberDisabled.value
+    !chassisNumberDisabled.value &&
+    !showVehicleAndDrvicerDetails.value
   ) {
     if (!screeningFormDetails.chassis_number) {
       screeningFormDetails.setError('chassis_number', 'This field is required');

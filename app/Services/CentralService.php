@@ -1493,6 +1493,7 @@ class CentralService extends BaseService
     {
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started');
 
+        dd(app(AMLService::class)->autoCaptureValidationCheck($quote));
         if(! app(AMLService::class)->autoCaptureValidationCheck($quote)) {
             return ['status' => false, 'message' => 'Auto capture payment process failed'];
         }

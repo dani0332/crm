@@ -805,6 +805,79 @@ class AMLService
                 $insurerScreeningPayload['nationalityId'] = $request['nationality_id'] ?? null;
             }
 
+            if ($quoteTypeId == QuoteTypes::CAR->id()) {
+                $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
+                $nationality = Nationality::where('code', $carQuoteRequestDetails?->home_country_license_issuance)->first();
+                $rtaTransactionType = Lookup::where([
+                    'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
+                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+                    'code' => $carQuoteRequestDetails->rta_transaction_type,
+                ])->first();
+
+                $rtaPlateCategory = Lookup::where([
+                    'key' => LookupsEnum::RTA_PLATE_CATEGORY,
+                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+                    'code' => $carQuoteRequestDetails->rta_plate_category,
+                ])->first();
+
+                $vehicleColor = Lookup::where([
+                    'key' => LookupsEnum::VEHICLE_COLOR,
+                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+                ])->whereIn('code', [$carQuoteRequestDetails->vehicle_color, $carQuoteRequestDetails->plate_color])->get()->pluck('text', 'code');
+
+                $bankName = Lookup::where([
+                    'key' => LookupsEnum::BANK_NAME,
+                    'insurance_provider_id' => $paymentDetails->insurance_provider_id,
+                    'code' => $carQuoteRequestDetails->bank_name,
+                ])->first();
+
+                $issuancePlace = Lookup::where([
+                    'key' => LookupsEnum::ISSUANCE_PLACE,
+                    'code' => $carQuoteRequestDetails->driver_license_issue_place,
+                ])->first();
+
+                $insurerScreeningPayload['rtaTransactionType'] = [
+                    'code' => $carQuoteRequestDetails->rta_transaction_type ?? null,
+                    'value' => $rtaTransactionType?->text ?? null,
+                    'authority' => 'RTA',
+                ];
+
+                $insurerScreeningPayload['plateCodeNumber'] = $carQuoteRequestDetails->plate_code.$carQuoteRequestDetails->plate_number ?? null;
+                $insurerScreeningPayload['trafficCodeNumber'] = $carQuoteRequestDetails->traffic_code_number ?? null;
+                $insurerScreeningPayload['engineNumber'] = $carQuoteRequestDetails->engine_number ?? null;
+                $insurerScreeningPayload['rtaPlateCategory'] = $rtaPlateCategory?->text ?? null;
+                $insurerScreeningPayload['vehicleColor'] = [
+                    'code' => $carQuoteRequestDetails->vehicle_color ?? null,
+                    'value' => $vehicleColor[$carQuoteRequestDetails->vehicle_color] ?? null,
+                ];
+                $insurerScreeningPayload['plateColor'] = [
+                    'code' => $carQuoteRequestDetails->plate_color ?? null,
+                    'value' => $vehicleColor[$carQuoteRequestDetails->plate_color] ?? null,
+                ];
+                $insurerScreeningPayload['bankLoan'] = (bool) $carQuoteRequestDetails->bank_loan ?? null;
+                $insurerScreeningPayload['bankName'] = [
+                    'code' => $carQuoteRequestDetails->bank_name ?? null,
+                    'value' => $bankName?->text ?? null,
+                ];
+                $insurerScreeningPayload['firstRegistrationDate'] = $carQuoteRequestDetails->first_registration_date ?? null;
+                $insurerScreeningPayload['policyEffectiveDate'] = $carQuoteRequestDetails->policy_effective_date ?? null;
+                $insurerScreeningPayload['policyExpiryDate'] = $quoteDetails->policy_expiry_date ?? null; // TODO:: Need to confirm with Denber
+                $insurerScreeningPayload['certificateStartDate'] = $carQuoteRequestDetails->certificate_start_date ?? null;
+                $insurerScreeningPayload['certificateEndDate'] = $carQuoteRequestDetails->certificate_end_date ?? null;
+                $insurerScreeningPayload['annualMilageEstimation'] = $carQuoteRequestDetails->annual_mileage_estimate ?? null;
+                $insurerScreeningPayload['driverName'] = $carQuoteRequestDetails->driver_first_name ?? null; // TODO:: Need to confirm with Denber.' '.$carQuoteRequestDetails->driver_last_name
+                $insurerScreeningPayload['driverDob'] = $carQuoteRequestDetails->driver_dob ?? null;
+                $insurerScreeningPayload['driverGender'] = strtolower($this->formatGender($carQuoteRequestDetails->driver_gender)) ?? null;
+                $insurerScreeningPayload['driverLicenseNumber'] = $carQuoteRequestDetails->driver_license_number ?? null;
+                $insurerScreeningPayload['licenseIssuePlace'] = $issuancePlace?->text ?? null;
+                $insurerScreeningPayload['licenseIssueDate'] = $carQuoteRequestDetails->driver_license_issue_date ?? null;
+                $insurerScreeningPayload['licenseExpiryDate'] = $carQuoteRequestDetails->driver_license_expiry_date ?? null;
+                $insurerScreeningPayload['uaeDrivingExperience'] = $carQuoteRequestDetails->driver_uae_driving_experience ?? null;
+                $insurerScreeningPayload['homeCountryLicenseInsurance'] = $nationality?->text ?? null;
+                $insurerScreeningPayload['homeCountryDrivingExperience'] = $carQuoteRequestDetails->home_country_driving_experience ?? null;
+                $insurerScreeningPayload['insuredAndDriverSame'] = (bool) $carQuoteRequestDetails->is_insured_and_driver_same ?? null;
+            }
+
             LoggerService::info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
 

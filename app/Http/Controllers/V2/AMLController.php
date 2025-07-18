@@ -858,21 +858,21 @@ class AMLController extends Controller
 
     public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
     {
-        $policyProcess = PolicyIssuance::where('id', 1095)->first();
-        $response = app(GIGInsuranceService::class)->executeSteps($policyProcess);
-        dd($response);
+        // $policyProcess = PolicyIssuance::where('id', 1095)->first();
+        // $response = app(GIGInsuranceService::class)->executeSteps($policyProcess);
+        // dd($response);
 
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
         LoggerService::startQuoteLogging($quote);
 
-        $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+        // $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
 
-        if ($preparedFormData) {
-            if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
-                $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
-            }
+        if (true) {
+        //     if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+        //         $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+        //     }
 
             if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
                 app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
