@@ -34,6 +34,7 @@ class PersonalQuoteStatusRequest extends FormRequest
             'quote_status_id' => 'required',
             'current_quote_status_id' => 'required',
             'notes' => 'nullable',
+            'quote_uuid' => 'required',
         ];
 
         if (! empty($data['quote_status_id'])) {
