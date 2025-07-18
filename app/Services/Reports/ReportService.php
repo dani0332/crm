@@ -560,7 +560,9 @@ class ReportService extends BaseService
               }
     
             // Apply sorting with validation
-            if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
+            if (isset($request->sortBy) && $request->sortBy !== '' 
+            && isset($request->sortType) && $request->sortType !== ''
+            && in_array($request->sortBy, $availableSortColumns)) {
                 // Only apply sorting if the column exists for this LOB
                 if (in_array($request->sortBy, $availableSortColumns)) {
                     $query->orderBy($request->sortBy, $request->sortType);
@@ -568,11 +570,9 @@ class ReportService extends BaseService
                     // Fallback to default sorting if invalid column
                     $query->orderBy('team', 'asc');
                 }
-            } else {
-                $query->orderBy('team', 'asc');
             }
-    
             return $query;
+        
     }
 
     public function getDefaultFiltersForTotalPremium()
