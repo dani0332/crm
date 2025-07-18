@@ -240,7 +240,7 @@ class RenewalsUploadService
         LoggerService::info('UAT FN: renewalsUploadCreate File uploaded and renewals lead created');
 
         // start import process
-        ProcessRenewalsUploadCreate::dispatch($renewalsUploadLead);
+        ProcessRenewalsUploadCreate::dispatch($renewalsUploadLead->id);
 
         return true;
     }
@@ -561,7 +561,7 @@ class RenewalsUploadService
         $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::UPDATE_LEADS, $data);
         LoggerService::info('UAU FN: renewalsUploadUpdate File uploaded and renewals lead created');
 
-        ProcessRenewalsUploadUpdate::dispatch($renewalsUploadLead);
+        ProcessRenewalsUploadUpdate::dispatch($renewalsUploadLead->id);
 
         return true;
     }
@@ -569,9 +569,11 @@ class RenewalsUploadService
     /**
      * @return bool
      */
-    public function processUploadUpdate(RenewalsUploadLeads $renewalsUploadLead)
+    public function processUploadUpdate($renewalsUploadLeadId)
     {
-        $logPrefix = 'UAU FN: processUploadUpdate RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name;
+        $renewalsUploadLead = RenewalsUploadLeads::find($renewalsUploadLeadId);
+
+        $logPrefix = 'UAU FN: processUploadUpdate RenewalLeadId: '.$renewalsUploadLeadId.' FileName: '.$renewalsUploadLead->file_name;
 
         try {
             LoggerService::info($logPrefix.' uploading update leads in Progress Now');
