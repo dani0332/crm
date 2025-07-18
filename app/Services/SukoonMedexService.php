@@ -579,13 +579,6 @@ class SukoonMedexService
         $idType = $insuredKyc?->id_type;
 
         $missingFields = [];
-        if ($idType != 'emiratesId' || empty($insuredKyc?->id_number)) {
-            $missingFields[] = 'emirates-id-number';
-        }
-
-        if (empty($insuredKyc?->id_expiry_date)) {
-            $missingFields[] = 'emirates-id-expiry-date';
-        }
 
         if (empty($insuredKyc?->residential_address)) {
             $missingFields[] = 'residential-address';
@@ -593,13 +586,6 @@ class SukoonMedexService
 
         if (! empty($missingFields)) {
             throw new Exception('Missing: '.implode(', ', $missingFields));
-        }
-
-        if (! $this->validateEmiratesIdAndExpiryDate(
-            $insuredKyc?->id_number,
-            $insuredKyc?->id_expiry_date
-        )) {
-            throw new Exception('Invalid emirates-id or emirates-id-expiry-date');
         }
     }
 
