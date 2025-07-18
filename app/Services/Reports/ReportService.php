@@ -560,9 +560,7 @@ class ReportService extends BaseService
               }
     
             // Apply sorting with validation
-            if (isset($request->sortBy) && $request->sortBy !== '' 
-            && isset($request->sortType) && $request->sortType !== ''
-            && in_array($request->sortBy, $availableSortColumns)) {
+            if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
                 // Only apply sorting if the column exists for this LOB
                 if (in_array($request->sortBy, $availableSortColumns)) {
                     $query->orderBy($request->sortBy, $request->sortType);
@@ -570,6 +568,9 @@ class ReportService extends BaseService
                     // Fallback to default sorting if invalid column
                     $query->orderBy('team', 'asc');
                 }
+            } else {
+                // Default sorting when no sort parameters provided
+                $query->orderBy('team', 'asc');
             }
             return $query;
         
