@@ -492,7 +492,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.price"
-            :rules="rider.active ? [isNonNegative, rider.inputRequired ? isRequired : null].filter(Boolean) : []"
+            :rules="rider.active ? [isNonNegative] : []"
           />
         </div>
       </div>

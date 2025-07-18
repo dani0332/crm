@@ -426,7 +426,7 @@ onMounted(() => {
         ? Math.max(0, Number(props.plan.actualPremium))
         : null;
     }
-    
+
     // Handle rider data initialization
     if (
       props.plan.riders &&
@@ -723,7 +723,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             type="number"
             :rules="
               rider.active && props.plan.isManualPlan
-                ? [isNonNegative, rider.inputRequired ? isRequired : () => true]
+                ? [isNonNegative]
                 : []
             "
             step="any"

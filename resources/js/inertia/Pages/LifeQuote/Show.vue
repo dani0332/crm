@@ -2200,7 +2200,7 @@ const enableExchangeRateEdit = () => {
                     >
 
                     <x-button
-                      v-else
+                      v-else-if="!(ecomDetail?.isUnderwritten && selectedProviderPlan == item.planId)"
                       size="xs"
                       color="emerald"
                       outlined
