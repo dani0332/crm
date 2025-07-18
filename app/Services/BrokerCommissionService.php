@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -30,7 +31,7 @@ class BrokerCommissionService
             return [false, null, false];
         }
 
-        if ($quoteTypeId == QuoteTypeId::Car && $quote && $quote->registration_type == 'Company') {
+        if ($quoteTypeId == QuoteTypeId::Car && $quote && strtolower($quote->registration_type) == strtolower(CarRegistrationType::COMPANY)) {
             $quoteTypeId = QuoteTypeId::CompanyCar;
         }
 
