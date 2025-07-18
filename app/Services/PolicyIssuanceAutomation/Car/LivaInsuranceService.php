@@ -182,6 +182,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
+
+        // Return success response when all steps are completed
+        return [
+            'status' => true,
+            'message' => 'All policy issuance steps completed successfully',
+        ];
     }
 
     private function executeBookPolicyStep($quote, $process)
@@ -200,6 +206,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process = $process->refresh();
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$triggerBookPolicyResponse['completed_step']);
+        
+        return $triggerBookPolicyResponse;
     }
 
     public function bookPolicy($quote): array
@@ -229,6 +237,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
 
         $response['status'] = true;
+        $response['completed_step'] = self::BOOK_POLICY;
         $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
 
         return $response;
@@ -250,6 +259,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process = $process->refresh();
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$uploadPolicyDocumentsToIMCRMResponse['completed_step']);
+        
+        return $uploadPolicyDocumentsToIMCRMResponse;
     }
 
     public function uploadPolicyDocumentsToIMCRM($quote, $process): array
@@ -264,7 +275,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'RetrieveRequest' => [
                 'RetrieveType' => '6',
-                'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ '31577381',
+                'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ '7874552',
                 'PartnerTrnReferenceNumber' => 'Yer7h346gfr',
                 'Documents' => [
                     'DocsInResponse' => true,
@@ -409,6 +420,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process = $process->refresh();
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$policyIssuanceResponse['completed_step']);
+        
+        return $policyIssuanceResponse;
     }
 
     public function issuePolicy($quote, $process): array
@@ -418,20 +431,22 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $endPoint = 'policy/create/v2';
 
+        $payment = $quote->payments()->mainLeadPayment()->first();
+
         $payload = [
             'PolicyRequest' => [
-                'QuotationNo' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874240,
-                'PremiumPayable' => 840,
+                'QuotationNo' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874552,
+                'PremiumPayable' => $payment->total_amount,
                 'PartnerTrnReferenceNumber' => /* $quote->code ?? */ '123456',
                 'Documents' => [
-                    'DocsInResponse' => true,
+                    'DocsInResponse' => false,
                     'DocsDetails' => [
-                        'PolicySchedule' => true,
+                        'PolicySchedule' => false,
                         'HirePurchaseLetter' => false,
                         'ProposalForm' => false,
                         'LetterToBank' => false,
-                        'MotorArabicCertificate' => true,
-                        'Receipt' => true,
+                        'MotorArabicCertificate' => false,
+                        'Receipt' => false,
                     ],
                 ],
                 'PolicyConfirmationSMS' => false,
@@ -502,8 +517,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload failed', extra: ['response' => $uploadDocumentsResponse]);
 
             $this->currentInsurerApiStatus = self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
-            // TODO:: this function need to be updated
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
             return $uploadDocumentsResponse;
         }
@@ -511,6 +525,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process->update(['completed_step' => $uploadDocumentsResponse['completed_step']]);
         $process = $process->refresh();
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Policy Issuance ID : '.$process->id.' - Completed Step Updated to : '.$uploadDocumentsResponse['completed_step']);
+        
+        return $uploadDocumentsResponse;
     }
 
     public function uploadDocuments($quote)
@@ -573,7 +589,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $payload['UploadDocumentsRequest'] = [
             'TransactionType' => '5',
-            'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874240, // TODO: Use actual quote number
+            'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874552, // TODO: Use actual quote number
             'Attachments' => $attachments,
         ];
 
@@ -614,6 +630,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'details' => $responseStatus,
             ]);
             $response['status'] = true;
+            $response['completed_step'] = self::UPLOAD_DOCUMENTS;
         } else {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Some documents failed to upload', extra: [
                 'details' => $responseStatus,
@@ -635,7 +652,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             if ($responseObject = $httpResponse->object()) {
                 if (
-                    (isset($responseObject->$keyAPI?->errors) && count($responseObject->$keyAPI?->errors ?? 0) > 0) ||
+                    isset($responseObject->$keyAPI?->errors) ||
                     (isset($responseObject->$keyAPI?->Status) && $responseObject->$keyAPI?->Status == false)
                 ) {
                     $response['error'] = $responseObject->$keyAPI?->Status ?? $keyAPI.' API Failed';
