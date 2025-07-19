@@ -618,6 +618,12 @@ class SukoonMedexService
 
         $quoteType = $quote->quote_type_id ?? null;
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
+        $emirateIdNumber = $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '';
+
+        if (! empty($emirateIdNumber) && ! str_contains($emirateIdNumber, '-')) {
+            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
+                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
+        }
 
         return [
             'form_name' => 'personal_details',
@@ -628,7 +634,7 @@ class SukoonMedexService
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
             'emirate' => $emirate->text ?? '',
-            'emirates_id_number' => $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '',
+            'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',
             'address' => $insuredKyc?->residential_address ?? '',
