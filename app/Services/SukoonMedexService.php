@@ -576,8 +576,6 @@ class SukoonMedexService
             throw new Exception('KYC is not found');
         }
 
-        $idType = $insuredKyc?->id_type;
-
         $missingFields = [];
 
         if (empty($insuredKyc?->residential_address)) {
@@ -589,18 +587,10 @@ class SukoonMedexService
         }
     }
 
-    private function validateEmiratesIdAndExpiryDate($idNumber, $IdExpiryDate)
-    {
-        $patternOfEID = '/^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$/';
-
-        return preg_match($patternOfEID, $idNumber) && $IdExpiryDate >= Carbon::now();
-    }
-
     /**
      * Prepares the user details array for the given quote and transaction.
      *
      * @param  mixed  $quote  The quote object.
-     * @param  mixed  $transaction  The transaction object.
      * @return array The prepared user details.
      */
     private function prepareUserDetails($quote)
@@ -644,7 +634,6 @@ class SukoonMedexService
     /**
      * Generates a unique UUID for the given document.
      *
-     * @param  string  $documentType  The type of document.
      * @return string The generated UUID.
      */
     private function generateUniqueUuid()
@@ -688,11 +677,9 @@ class SukoonMedexService
     }
 
     /**
-     * Submits a form to the Democrance system.
+     * Submits a form to the SukoonMedex system.
      *
      * @param  array  $data  The data to submit with the form.
-     * @param  mixed  $transaction  The transaction object.
-     * @param  bool  $isInitial  Indicates if this is the initial form submission.
      * @return void
      *
      * @throws Exception If form submission fails.
@@ -885,7 +872,7 @@ class SukoonMedexService
     }
 
     /**
-     * Initiates the payment process in the Democrance system.
+     * Initiates the payment process in the SukoonMedex system.
      *
      * @return void
      *
@@ -918,7 +905,7 @@ class SukoonMedexService
     }
 
     /**
-     * Completes the payment process in the Democrance system.
+     * Completes the payment process in the SukoonMedex system.
      *
      * @return void
      *
