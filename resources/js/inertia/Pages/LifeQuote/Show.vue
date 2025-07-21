@@ -96,7 +96,7 @@ const loader = ref({
   exchangeRate: false,
 });
 
-const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate ?? 1);
+const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate ?? 0);
 const isExchangeRateEditable = ref(false);
 
 const selectedProviderPlan = page.props.quote.plan_id;
@@ -2101,8 +2101,19 @@ const enableExchangeRateEdit = () => {
 
               <template #item-priceInAED="item">
                 <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)" class="copay-max"> 
-                  {{ numberFormat(item.actualPremium * (planExchangeRate)) }}
+                  
+                  <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
+                    {{ numberFormat(item.actualPremium * (planExchangeRate)) }}
+                  </div>
+
+                  <div v-else>
+                    N/A
+                  </div>
+
                 </div>        
+                <div v-else-if="item.currency != 'AED'" class="copay-max">  
+                  N/A
+                </div>
                 <div v-else class="copay-max">  
                   {{ numberFormat(item.actualPremium) }}
                 </div>
