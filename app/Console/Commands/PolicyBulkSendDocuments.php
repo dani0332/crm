@@ -5,18 +5,14 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\BusinessTypeOfInsuranceEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
-use App\Models\BusinessTypeOfInsurance;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
-use App\Services\QuoteDocumentService;
-use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 
@@ -32,20 +28,21 @@ class PolicyBulkSendDocuments extends Command
         LoggerService::info('PolicyBulkSendDocuments: Command started');
 
         $codes = $this->getCodesFromStorage();
-        
+
         if ($codes->isEmpty()) {
             LoggerService::error('PolicyBulkSendDocuments: No codes found in storage configuration');
+
             return Command::FAILURE;
         }
 
         LoggerService::info("PolicyBulkSendDocuments: Processing {$codes->count()} quote codes...");
-        
+
         $successCount = 0;
         $notFound = [];
 
         foreach ($codes as $code) {
             LoggerService::info("PolicyBulkSendDocuments: Processing code: {$code}");
-            
+
             if ($this->processCode($code)) {
                 $successCount++;
                 LoggerService::info("PolicyBulkSendDocuments: Dispatched job for code: {$code}");
@@ -56,12 +53,12 @@ class PolicyBulkSendDocuments extends Command
         }
 
         LoggerService::info("PolicyBulkSendDocuments: Successfully processed {$successCount} quotes");
-        
-        if (!empty($notFound)) {
-            LoggerService::warning("PolicyBulkSendDocuments: " . count($notFound) . " codes not found: " . implode(', ', $notFound));
+
+        if (! empty($notFound)) {
+            LoggerService::warning('PolicyBulkSendDocuments: '.count($notFound).' codes not found: '.implode(', ', $notFound));
         }
 
-        LoggerService::info("PolicyBulkSendDocuments: Command completed", [
+        LoggerService::info('PolicyBulkSendDocuments: Command completed', [
             'success_count' => $successCount,
             'not_found_count' => count($notFound),
         ]);
@@ -72,14 +69,14 @@ class PolicyBulkSendDocuments extends Command
     private function getCodesFromStorage(): \Illuminate\Support\Collection
     {
         $storage = ApplicationStorage::where('key_name', ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES)->first();
-        
-        if (!$storage || empty($storage->value)) {
+
+        if (! $storage || empty($storage->value)) {
             return collect();
         }
 
         return collect(explode(',', $storage->value))
-            ->map(fn($code) => trim($code))
-            ->filter(fn($code) => !empty($code));
+            ->map(fn ($code) => trim($code))
+            ->filter(fn ($code) => ! empty($code));
     }
 
     private function processCode(string $code): bool
@@ -89,20 +86,23 @@ class PolicyBulkSendDocuments extends Command
             ->latest()
             ->first();
 
-        if (!$quoteObject) {
+        if (! $quoteObject) {
             LoggerService::error("PolicyBulkSendDocuments: Quote not found for code in personal quote table: {$code}");
+
             return false;
         }
 
         $quoteType = QuoteType::select('code')->find($quoteObject->quote_type_id);
-        if (!$quoteType) {
+        if (! $quoteType) {
             LoggerService::error("PolicyBulkSendDocuments: Quote type not found for code: {$code}");
+
             return false;
         }
 
         $quote = $this->getQuoteObjectBy($quoteType->code, $code, 'code');
-        if (!$quote) {
+        if (! $quote) {
             LoggerService::error("PolicyBulkSendDocuments: Quote not found for code in quote table: {$code}");
+
             return false;
         }
 
@@ -120,10 +120,10 @@ class PolicyBulkSendDocuments extends Command
                 $payload->modelType = quoteTypeCode::CORPLINE;
             }
         }
-        
+
         SendBookPolicyDocumentsJob::dispatch($payload, $code, true);
         LoggerService::info("PolicyBulkSendDocuments: Job dispatched for code: {$code}");
-        
+
         return true;
     }
 }
