@@ -1686,7 +1686,7 @@ if (! function_exists('getLifeRiderInfo')) {
                         return 'Covered upto '.number_format($criteria->coverValue, 2);
                     }
                 }
-                return '(Optional)';
+                return 'Covered';
             }else if($rider->coverType == 'COVER'){
                 return 'Covered upto '.number_format($plan->sumInsured, 2); 
             }

@@ -33,8 +33,6 @@ const modals = reactive({
   member: false,
 });
 
-console.log(props.quote_type);
-
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
