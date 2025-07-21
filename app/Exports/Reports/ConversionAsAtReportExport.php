@@ -13,12 +13,17 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
     protected Collection $columnTotals;
 
+    protected Collection $headers;
+
     public function __construct(
         private ConversionAsAtReportService $conversionAsAtReportService,
         private array                       $requestParams
     )
     {
         request()->merge($this->requestParams);
+
+        // Initialize dynamic headers based on displayBy parameter
+        $this->initializeHeaders();
 
         $this->columnTotals = collect();
 
@@ -27,6 +32,42 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         $totalsRow[0] = 'Totals';
 
         $this->columnTotals = collect($totalsRow);
+    }
+
+    /**
+     * Initialize headers dynamically based on displayBy parameter
+     */
+    private function initializeHeaders()
+    {
+        $baseHeaders = [
+            'Start Date',
+            'End Date',
+            'As At Date',
+            'Total Leads',
+            'Bad Leads',
+            'Sale Leads',
+            'Gross Conversion %',
+            'Net Conversion %',
+        ];
+
+        $displayBy = $this->requestParams['displayBy'] ?? null;
+        $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
+
+        // Show title column if EITHER displayBy is set OR includeUnassignedLeads is enabled
+        if (!empty($displayBy) || $includeUnassignedLeads) {
+            if (!empty($displayBy)) {
+                // Use displayBy as header name
+                $titleHeader = str_replace('_', ' ', $displayBy);
+                $titleHeader = ucwords($titleHeader);
+            } else {
+                // Generic title when only unassigned leads is enabled
+                $titleHeader = 'Assignment Type';
+            }
+
+            $this->headers = collect([$titleHeader])->merge($baseHeaders);
+        } else {
+            $this->headers = collect($baseHeaders);
+        }
     }
 
     /**
@@ -51,7 +92,6 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         // we'll handle chunked processing through collection method
 
         return $this->conversionAsAtReportService->getReportQueryBuilder($request);
-        return null;
     }
 
     public function processChunkedQuery($query, array $requestParams, $stream): int
@@ -84,53 +124,122 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
     public function headings(): array
     {
-        return [
-            'Start Date',
-            'End Date',
-            'As At Date',
-            'Total Leads',
-            'Bad Leads',
-            'Sale Leads',
-            'Net Conversion %',
-            'Gross Conversion %',
-        ];
+        return $this->headers->toArray();
     }
 
     public function map($record): array
     {
-        $row = collect([
+        $displayBy = $this->requestParams['displayBy'] ?? null;
+        $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
+
+        $baseData = [
             $record->start_date ?? 'N/A',
             $record->end_date ?? 'N/A',
             $record->as_at_date ?? 'N/A',
             $this->resolveNumberFormat($record->total_leads ?? 0),
             $this->resolveNumberFormat($record->bad_leads ?? 0),
             $this->resolveNumberFormat($record->sale_leads ?? 0),
-            $this->resolveNumberFormat($record->net_conversion ?? 0),
             $this->resolveNumberFormat($record->gross_conversion ?? 0),
-        ]);
+            $this->resolveNumberFormat($record->net_conversion ?? 0),
+        ];
+
+        // Add title column if EITHER displayBy is set OR includeUnassignedLeads is enabled
+        if (!empty($displayBy) || $includeUnassignedLeads) {
+            if (!empty($displayBy)) {
+                // Add displayBy value
+                $titleValue = $record->{$displayBy} ?? 'N/A';
+            } else {
+                // Generic value when only unassigned leads is enabled
+                $titleValue = '';
+            }
+            $row = collect([$titleValue])->merge($baseData);
+        } else {
+            $row = collect($baseData);
+        }
 
         foreach ($this->columnTotals as $index => $field) {
-            // Sum only numeric columns: total_leads (3), bad_leads (4), sale_leads (5)
-            $sumColumns = [4, 5, 6];
-            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
-                $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
+            // Calculate offset: 1 if title column exists, 0 if not
+            $offset = (!empty($displayBy) || $includeUnassignedLeads) ? 1 : 0;
+            $sumColumns = [4 + $offset, 5 + $offset, 6 + $offset]; // total_leads, bad_leads, sale_leads
+
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
+                $this->columnTotals->put($index, ((float)$this->columnTotals->get($index, 0) + (float)($row->get($index) ?? 0)));
             }
         }
 
         return $row->values()->toArray();
     }
 
+
     private function postDataRows($stream)
     {
         $totalsRow = $this->getEmptyRow();
 
+        $request = request()->merge($this->requestParams);
+        $unassignedLeadsCount = $this->conversionAsAtReportService->getUnassignedLeadsCount($request);
 
-        logger()->debug("postDataRows: ".print_r([
-                'columnTotals' => $this->columnTotals
-            ],1));
+        // Check if we should include unassigned leads
+        $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
+        $displayBy = $this->requestParams['displayBy'] ?? null;
 
+        // Calculate offset: 1 if title column exists, 0 if not
+        $offset = (!empty($displayBy) || $includeUnassignedLeads) ? 1 : 0;
+
+        // Copy accumulated totals to totals row
         foreach ($this->columnTotals as $index => $key) {
             $totalsRow[$index] = $this->resolveNumberFormat($this->columnTotals->get($index));
+        }
+
+        // Add unassigned leads row BEFORE totals row if enabled
+        if ($includeUnassignedLeads && $unassignedLeadsCount > 0) {
+
+            // Create row with all zeros, then override specific values
+            $unassignedRow = array_fill(0, count($this->headers), 0);
+
+            // Always add title column since includeUnassignedLeads is true
+            $unassignedRow[0] = 'Unassigned Leads';
+            $unassignedRow[1] = $this->requestParams['createdAtDate'][0] ?? 'N/A';
+            $unassignedRow[2] = $this->requestParams['createdAtDate'][1] ?? 'N/A';
+            $unassignedRow[3] = $this->requestParams['asAtDate'] ?? 'N/A';
+            $unassignedRow[4] = $this->resolveNumberFormat($unassignedLeadsCount);
+            // Other indexes remain 0
+
+            fputcsv($stream, $unassignedRow);
+        }
+
+        // Calculate totals with correct column positions
+        $totalLeadsIndex = 3 + $offset;
+        $badLeadsIndex = 4 + $offset;
+        $saleLeadsIndex = 5 + $offset;
+        $grossConversionIndex = 6 + $offset;
+        $netConversionIndex = 7 + $offset;
+
+        $totalLeads = $this->columnTotals->get($totalLeadsIndex, 0);
+        $badLeads = $this->columnTotals->get($badLeadsIndex, 0);
+        $saleLeads = $this->columnTotals->get($saleLeadsIndex, 0);
+
+        // Add unassigned leads to total leads count if included
+        if ($includeUnassignedLeads && $unassignedLeadsCount > 0) {
+            $totalLeads += $unassignedLeadsCount;
+            $totalsRow[$totalLeadsIndex] = $this->resolveNumberFormat($totalLeads);
+        }
+
+        // Set totals row label in first column
+        $totalsRow[0] = 'Totals';
+
+        // Calculate Gross Conversion % = ((saleLeads / totalLeads) * 100)
+        if ($totalLeads > 0) {
+            $totalsRow[$grossConversionIndex] = $this->resolveNumberFormat(($saleLeads / $totalLeads) * 100);
+        } else {
+            $totalsRow[$grossConversionIndex] = 0;
+        }
+
+        // Calculate Net Conversion % = ((saleLeads / (totalLeads - badLeads)) * 100)
+        $validLeads = $totalLeads - $badLeads;
+        if ($validLeads > 0) {
+            $totalsRow[$netConversionIndex] = $this->resolveNumberFormat(($saleLeads / $validLeads) * 100);
+        } else {
+            $totalsRow[$netConversionIndex] = 0;
         }
 
         fputcsv($stream, $totalsRow);
@@ -138,6 +247,6 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
     private function getEmptyRow(): array
     {
-        return array_fill(0, count($this->map((object) [])), '');
+        return array_fill(0, count($this->map((object)[])), '');
     }
 }

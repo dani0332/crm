@@ -109,6 +109,10 @@ class ConversionAsAtReportService extends BaseService
 
         $query = $this->getReportQueryBuilder($request);
 
+        if(empty($query)){
+            return null;
+        }
+
         // map operation to calculate gross and net conversions of records
         return $this->mapConversionData($query->get(), $request);
     }

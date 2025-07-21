@@ -588,7 +588,7 @@ onMounted(() => {
             color="#48bb78"
             @click.prevent="onDataExport('email')"
             :disabled="loaders.export"
-            :loading="loaders.export"
+            :loading="exportLoader"
           >
             Export via email
           </x-button>
