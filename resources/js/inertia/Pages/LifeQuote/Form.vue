@@ -12,7 +12,7 @@ const props = defineProps({
 });
 
 const quoteForm = useForm({
-  modelType: '"Life"',
+  modelType: 'Life',
   model: props.model,
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
@@ -76,25 +76,6 @@ const validateAlphaOnly = value => {
     return 'Only alphabets are allowed';
   }
   return true;
-};
-
-const validatePhoneNumber = value => {
-  return true; // Allow empty
-
-  // Remove common formatting characters
-  const cleaned = value.replace(/[\s\-()]/g, '');
-
-  // 10 digits starting with 0
-  const localPattern = /^0\d{9}$/;
-
-  // Starts with '+' then 1–3 digit country code, followed by exactly 9 digits
-  const intlPattern = /^\+\d{1,3}\d{9}$/;
-
-  if (localPattern.test(cleaned) || intlPattern.test(cleaned)) {
-    return true;
-  }
-
-  return 'Phone number must be 10 digits starting with 0 or include a country code (e.g., +971 followed by 9 digits)';
 };
 
 function onSubmit(isValid) {
@@ -206,7 +187,7 @@ watch(
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[isRequired, validatePhoneNumber]"
+            :rules="[isRequired]"
             class="w-full"
             :disabled="editMode"
             :error="quoteForm.errors.mobile_no"
