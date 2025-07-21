@@ -1491,10 +1491,10 @@ class CentralService extends BaseService
 
     public function autoCapturePaymentProcess($quoteTypeId, $quote, $premiumCheckEnabled = true)
     {
+        // TODO:: Payment capture process should be executed by JOB but for now we are executing it here - Need to update this
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started');
 
-        dd(app(AMLService::class)->autoCaptureValidationCheck($quote));
-        if(! app(AMLService::class)->autoCaptureValidationCheck($quote)) {
+        if(! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
             return ['status' => false, 'message' => 'Auto capture payment process failed'];
         }
 

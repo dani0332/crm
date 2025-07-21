@@ -26,6 +26,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
@@ -98,6 +99,7 @@ use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -813,6 +815,8 @@ class CRUDController extends Controller
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
             $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
+            $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
+            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id];
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',
@@ -906,6 +910,8 @@ class CRUDController extends Controller
                 'paymentGatewayEnum',
                 'isFuncsEnabled',
                 'businessActivities',
+                'apiIssuanceStatus',
+                'insurerApiStatus',
             ]));
         }
 

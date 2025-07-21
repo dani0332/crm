@@ -24,6 +24,7 @@ use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\AmlCftReportExport;
 use App\Exports\KycLogsExport;
+use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -413,9 +414,7 @@ class AMLController extends Controller
             });
 
             session()->put('amlResponseCheck', []);
-            $insurerAMLScreeningResponse = [];
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
-
             if ($shouldApplicableForScreening) {
                 if ($isEntity) {
                     $getEntityDetailsForScreening = [
@@ -454,9 +453,6 @@ class AMLController extends Controller
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
                 LoggerService::info('AML Screening Bridger - No Member Found for Screening, AML Screening Cleared');
                 $response = app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
-                if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
-                    $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
-                }
 
                 return $response;
             }
@@ -468,12 +464,7 @@ class AMLController extends Controller
             LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
-            $response = app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
-            if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
-                $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
-            }
-
-            return $response;
+            return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
 
         return app(AMLService::class)->handleResponse(false, 'Something went wrong', $isAutomation);
@@ -862,21 +853,39 @@ class AMLController extends Controller
         // $response = app(GIGInsuranceService::class)->executeSteps($policyProcess);
         // dd($response);
 
+        app(PolicyIssuanceService::class)->executePolicyIssuanceAutomationSteps();
+        dd('done');
+
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
         LoggerService::startQuoteLogging($quote);
 
-        // $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+        // if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
+        //     app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
+        // }
 
-        if (true) {
-        //     if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
-        //         $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
-        //     }
+        dd('done');
 
-            if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
-                app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
+        $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+
+        if ($preparedFormData) {
+            if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+                $insurerAMLScreeningResponse = [];
+                $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+                // if (! empty($insurerAMLScreeningResponse)) {
+                //     $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
+                // }
+
+                // if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
+                //     $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
+                // }
+
             }
+
+            // if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
+            //     app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
+            // }
 
             return response()->json(['success' => true]);
         }
@@ -1046,5 +1055,38 @@ class AMLController extends Controller
         $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails($updateAdditionalVehicleDriverDetailsRequest, $quote);
 
         return response()->json(['success' => $response['status'], 'message' => $response['message']]);
+    }
+
+    public function getQuoteFromInsurer(Request $request)
+    {
+        try {
+            $payload = [
+                'quoteTypeId' => $request->quoteTypeId,
+                'quoteUID' => $request->quoteUID
+            ];
+
+            $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
+
+            if (isset($response['status']) && $response['status'] === true) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Quote details retrieved successfully from insurer portal',
+                    'data' => $response['data'] ?? null
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'
+                ]);
+            }
+
+        } catch (\Exception $exception) {
+            LoggerService::error('fn:getQuoteFromInsurer - Error: '.$exception->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving quote details from insurer portal'
+            ]);
+        }
     }
 }

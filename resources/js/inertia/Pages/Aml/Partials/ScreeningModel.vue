@@ -665,17 +665,6 @@ const submitScreeningForm = isValid => {
             position: 'top',
           });
         }
-        if (
-          typeof response.props.flash.info !== 'undefined' &&
-          response.props.flash.info?.length > 0
-        ) {
-          notification.error({
-            title:
-              response.props.flash.info?.message ||
-              'GIG server connection issue. Please check API logs for details of the error',
-            position: 'top',
-          });
-        }
       },
     });
   } else {

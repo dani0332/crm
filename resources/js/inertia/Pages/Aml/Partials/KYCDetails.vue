@@ -262,6 +262,51 @@ function insuredKycFormValidate() {
   let isValid = true;
   return isValid;
 }
+const syncInsurerPortalUpdates = () => {
+  const notification = useToast();
+  
+  // Make API call to get quote details from insurer portal
+  axios
+    .post('/get-quote-from-insurer', {
+      quoteTypeId: page.props.quoteType.id,
+      quoteUID: page.props.quoteRequest.uuid
+    })
+    .then(response => {
+      if (response.data.success) {
+        notification.success({
+          title: 'Quote details synced successfully from insurer portal',
+          position: 'top',
+        });
+        
+        // Update additional vehicle and driver details if data is available
+        if (response.data.data) {
+          // Handle the response data to update additional vehicle and driver details
+          // This will be populated based on the actual response structure from Ken
+          console.log('Synced data:', response.data.data);
+          
+          // Reload the page to reflect changes
+          router.reload({
+            replace: true,
+            preserveScroll: true,
+            preserveState: true,
+          });
+        }
+      } else {
+        notification.error({
+          title: response.data.message || 'Failed to sync quote details from insurer portal',
+          position: 'top',
+        });
+      }
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error syncing quote details from insurer portal',
+        position: 'top',
+      });
+      console.error('Sync error:', error);
+    });
+};
+
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
@@ -276,6 +321,15 @@ const submitInsuredKycForm = isValid => {
             title: 'KYC Document uploaded successfully',
             position: 'top',
           });
+          // TODO:: Need to verify this message
+          if (typeof response.props.flash.info !== 'undefined' && response.props.flash.info?.length > 0) {
+            notification.error({
+              title:
+                response.props.flash.info?.message ||
+                'GIG server connection issue. Please check API logs for details of the error',
+              position: 'top',
+            });
+          }
           router.reload({
             replace: true,
             preserveScroll: true,
@@ -1077,6 +1131,15 @@ watch(
       </x-field>
     </dl>
     <div class="flex justify-end my-5 gap-x-2">
+      <x-button
+        size="sm"
+        color="primary"
+        type="button"
+        class="px-6"
+        @click="syncInsurerPortalUpdates"
+      >
+        Sync
+      </x-button>
       <x-button
         v-if="kycFormDetails.insured_id"
         size="sm"

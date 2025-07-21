@@ -57,6 +57,7 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -934,6 +935,13 @@ class AMLService
 
         $quoteObject::where('id', $quoteDetails->id)->update($insurerAMLStatus);
         LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+    
+        if($quoteTypeId == QuoteTypes::CAR->id() && $insurerAMLStatus['insurer_aml_status'] == AMLStatusCode::InsurerAMLScreeningCleared) {
+            LoggerService::info(__FUNCTION__.' - Auto Capture Payment Process Triggered - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            if (app(PolicyIssuanceService::class)->checkAllowedAutomations(QuoteTypes::getName($quoteTypeId)->value, $quoteDetails)) {
+                app(CentralService::class)->autoCapturePaymentProcess($quoteTypeId, $quoteDetails);
+            }
+        }
     }
 
     private function formatGender($gender)
@@ -2037,7 +2045,7 @@ class AMLService
         return $response;
     }
 
-    public function autoCaptureValidationCheck($quote)
+    public function autoCaptureAMLValidationCheck($quote)
     {
         if($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - AML Screening is not cleared');
