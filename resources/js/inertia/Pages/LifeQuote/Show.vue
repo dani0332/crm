@@ -186,7 +186,7 @@ const plansTable = reactive({
       sortable: true,
     },
     {
-      text: 'Payment Term',
+      text: 'Payment Frequency',
       value: 'paymentTerm',
       sortable: true,
     },

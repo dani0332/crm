@@ -391,11 +391,11 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
 
         <div>
           <label class="block font-medium text-gray-700 mb-1"
-            >Payment Terms <span class="text-red-500">*</span></label
+            >Payment Frequency <span class="text-red-500">*</span></label
           >
           <x-select
             v-model="createForm.paymentTerm"
-            placeholder="Select Payment Terms"
+            placeholder="Select Payment Frequency"
             class="w-full"
             :options="filteredPaymentTerms"
             :rules="[isRequired]"

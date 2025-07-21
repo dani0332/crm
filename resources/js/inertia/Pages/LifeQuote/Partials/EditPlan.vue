@@ -730,10 +730,10 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="mt-2">Payment Term:</dt>
+                <dt class="mt-2">Payment Frequency</dt>
                 <x-select
                   v-model="editForm.paymentTerm"
-                  placeholder="Select Payment Terms"
+                  placeholder="Select Payment Frequency"
                   class="w-full"
                   :options="filteredPaymentTerms"
                   :disabled="editForm.isApi"
