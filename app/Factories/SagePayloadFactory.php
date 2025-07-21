@@ -1152,7 +1152,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'REFID',
-                'Value' => $sageRequest->quoteCode,
+                'Value' => $sageRequest->quoteCode ?? $sageRequest->quoteRefId ?? 'N/A',
             ],
             [
                 'OptionalField' => 'SUREFID',
