@@ -1519,7 +1519,6 @@ const isDocTypeLoading = docType => {
                               </td>
                               <td>{{ item.code }}</td>
                               <td>
-                                {{ item.commission_vat_applicable }}
                                 {{
                                   formatAmount(
                                     (item.commission_vat_applicable != null && item.commission_vat_applicable != 0)
