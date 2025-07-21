@@ -108,7 +108,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.mobile_no"
           type="tel"
-          :rules="[isRequired, isMobileNo]"
+          :rules="[isRequired, ...(editMode ? [] : [isMobileNo])]"
           class="w-full"
           :disabled="editMode"
           :error="quoteForm.errors.mobile_no"

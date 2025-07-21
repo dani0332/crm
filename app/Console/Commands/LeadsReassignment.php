@@ -69,7 +69,7 @@ class LeadsReassignment extends Command
             info('Bike lead reassignment job  for '.$currentIteration.' is dispatched');
 
             // Disabled Leads Auto Re Assignment for below Types as this is not needed at the moment
-            // foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+            // foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE, QuoteTypes::SAVINGS] as $quoteType) {
             //     ReAssignLeads::dispatch($quoteType);
             //     info("{$quoteType->value} lead reassignment job  for {$currentIteration} is dispatched");
             // }

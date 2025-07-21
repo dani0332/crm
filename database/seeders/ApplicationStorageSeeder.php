@@ -97,8 +97,10 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
+        $this->savingsLOB();
 
         $this->seedOcrEnabled();
+        $this->seedSukoonMedexProductSlug();
     }
 
     private function seedBirdWorkflowUrls()
@@ -416,12 +418,58 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function savingsLOB()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NEW_LEAD_POOL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_BOOK_POLICY_TEMPLATE],
+            [
+                'value' => 734,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 737,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedOcrEnabled()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::OCR_ENABLED],
             [
                 'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedSukoonMedexProductSlug()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG],
+            [
+                'value' => 'afia_driver_medex',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

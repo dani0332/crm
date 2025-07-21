@@ -520,7 +520,7 @@
         width: 70px;
     }
 
-    .advisor-photo {
+    .advisor-photo, .alfred-photo {
         width: 70px;
         height: 70px;
         border-radius: 50%;
@@ -558,16 +558,25 @@
         display: inline-block;
     }
 
-    .section-header {
-        background-color: #1D83BC !important;
-        color: white !important;
-        font-family: 'Raleway', sans-serif !important;
-        font-weight: 700;
-        font-size: 14px;
-        padding: 5px;
-        width: 100% !important;
-        text-align: left;
+    .alfred-details{
+        display: table-cell;
+        vertical-align: middle;
+        padding-top: 0px;
+        padding-left: 8px;
     }
+
+    .alfred-details p {
+        font-size: 10px;
+
+    }
+
+    .alfred-details p.title {
+        font-size: 13px;
+        margin-top: 0px;
+        line-height: 0.9;
+        padding: 2px 0px 10px 0px;
+    }
+
 </style>
 </head>
 
@@ -695,7 +704,7 @@
             <div class="header-bottom">
                 <!-- Left Side Text -->
                 <div class="header-text">
-                    <strong class="raleway-font" style="font-weight: 600 !important;">Car Insurance comparison Table</strong>
+                    <strong class="raleway-font" style="font-weight: 600 !important;">Company Car Insurance comparison Table</strong>
                     <span class="separator">|</span>
                     Company name: <span class="header-text-highlight">{{ $quote->company_name }}</span>
                     <span class="separator">|</span>
@@ -703,7 +712,7 @@
                     <span class="separator">|</span>
                     Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span>
                 </div>
-            
+
                 <!-- Right Side Quote Number -->
                 <div class="quote-number">
                     Quote reference number: <strong>CAR-{{ $quote->uuid }}</strong>
@@ -711,7 +720,7 @@
             </div>
         </div>
     </header>
-    
+
     {{-- PDF Page Inner Content --}}
     <main>
         @if(count($planIds) > 0)
@@ -882,12 +891,12 @@
                         </p>
                     </td>
                 </tr>
-                
+
                 @foreach($features as $feature)
                     @if(@$feature['code'] == 'heading' || @$feature['code'] == 'spacer')
                         @continue
                     @endif
-                    
+
                     @if(isset($feature['title']))
                     <tr style="page-break-inside: avoid;">
                         <td style="background-color: #DBEEFF; color: #5B5F60">
@@ -915,11 +924,11 @@
                                         N/A
                                     @endif
                                 @elseif(is_array($feature['type']))
-                                    @php 
-                                        $value = "Excluded"; 
+                                    @php
+                                        $value = "Excluded";
                                         foreach($feature['type'] as $type) {
                                             if(isset($plans[$planId]->{$type}->{$feature['code']}->value)) {
-                                                $value = $plans[$planId]->{$type}->{$feature['code']}->value; 
+                                                $value = $plans[$planId]->{$type}->{$feature['code']}->value;
                                                 break;
                                             }
                                         }
@@ -947,7 +956,7 @@
                             href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid }}">
                             View all quotes
                             <div style="position: absolute; right: 50px; top: 8px;">
-                                <img src="{{ isset($imageData['quote_plans_pages/ecom_home/open_in_new_icon.png']) ? $imageData['quote_plans_pages/ecom_home/open_in_new_icon.png'] : public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
+                                <img src="{{ isset($imageData['quote_plans_pages/ecom_home/open_in_new_icon.png']) ? $imageData['quote_plans_pages/ecom_home/open_in_new_icon.png'] : public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
                                     style="width: 16px; height: 16px; vertical-align: baseline; display: block;">
                             </div>
                         </a>
@@ -957,7 +966,7 @@
                 <tr>
                     <td class="disclaimer-td" colspan="{{ count($displayPlans) + 1 }}">
                         <p class="disclaimer-text">
-                            <strong>Disclaimer: </strong>This is a comparison table for illustrative purposes only. The prices and benefits are subject to change without prior notice. Please refer to the official terms and conditions of the insurance provider for the most accurate and current information.
+                            <strong>Disclaimer: </strong>Quotes are based on the details you provided and may change after the insurer reviews your profile. If there are differences, the insurer's policy terms will apply. Please check your policy once issued to ensure it meets your needs.
                         </p>
                     </td>
                 </tr>
@@ -971,7 +980,7 @@
         <h4 class="footer-header">
             InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
         </h4>
-    
+
         <table class="footer-table" align="center">
             <tr>
                 <td class="footer-td" style="width: 42%">
@@ -985,7 +994,7 @@
                         <p class="footer-content-1">Registered member of Insurance Business Group under the Dubai Chamber of Commerce and Industry, number 34774</p>
                     </div>
                 </td>
-    
+
                 <td class="footer-td" style="width: 28%">
                     <div class="footer-box" style="margin-top: 8px; line-height: 0.8; position: relative;">
                         <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
@@ -996,33 +1005,33 @@
                             <a
                             class="text-white"
                             href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
-                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
+                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
                                 style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
                             </a>
                         </div>
                     </div>
                 </td>
-    
+
                 <td class="footer-td" style="width: 30%;">
-                    <div class="footer-box" style="margin-right: 20px; padding: 5px 10px">
+                <div class="footer-box" style="margin-top: 5px; padding: 5px 10px">
                         <div class="advisor-section">
                             @if($quote->advisor)
                                 <div class="advisor-photo-container">
-                                    <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                                    <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}"
                                          alt="Advisor Photo" class="advisor-photo">
                                 </div>
                                 <div class="advisor-details">
                                     <p class="advisor-name">{{ $quote->advisor->name }}</p>
-                                    <p class="advisor-role">Insurance Advisor</p>
+                                <p class="advisor-role">Insurance Advisor</p>
                                     <p class="advisor-contact">
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon">
                                         @if (strlen($quote->advisor->email) > 35)
                                         <span style="text-decoration: underline; font-size:10px">{{ $quote->advisor->email }}</span>
                                         @else
                                         <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
                                         @endif
                                         <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon">
                                         <a href="tel:{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
                                             <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
                                         </a>
@@ -1030,26 +1039,39 @@
                                             <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
                                         </a>
                                         <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon">
                                         <a href="tel:{{ removeSpaces($quote->advisor->landline_no) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
                                             <span>{{ $quote->advisor->landline_no }}</span>
                                         </a>
                                     </p>
                                 </div>
                             @else
-                                <div style="text-align: center; width: 100%;">
-                                    <img src="{{ public_path('image/alfred-theme.png') }}"
-                                         alt="Advisor Photo" class="advisor-photo" style="margin: 0 auto; display: block;">
-                                    <p class="advisor-contact" style="text-align: center; margin-top: 8px;">
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                        <span>800 ALFRED (800 253 733)</span>
-                                    </p>
+                                <div class="advisor-photo-container">
+                                    <img src="{{ public_path('images/headset-with-bg.png') }}"
+                                         alt="Alfred Image" class="alfred-photo">
+                                </div>
+                                <div class="alfred-details ">
+                                    <div class="" style="vertical-align: middle;">
+                                        <p class="title">Chat with InstantAlfred instantly</p>
+
+                                        <div class="open-new-icon" style="position: absolute; right:25px; top:62px;">
+                                            <a
+                                                class="text-white"
+                                                href="{{$ecomInsuranceLink."/?IA=true"}}">
+                                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}"
+                                                     style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <p class="" style="line-height: 0.7;">You're in the driver's seat - no advisor calls
+                                        <br>will come your way without your request</p>
                                 </div>
                             @endif
                         </div>
                     </div>
                 </td>
-                
+
             </tr>
         </table>
     </div>
@@ -1057,7 +1079,7 @@
     {{-- Third Page --}}
     <div style="page-break-after: always;"></div>
     <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" class="full-page-image" />
-    
+
     {{-- Fourth Page --}}
     <div style="page-break-after: always;"></div>
     <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}"  class="full-page-image" />

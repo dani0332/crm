@@ -79,7 +79,7 @@ const onAdditionalContactSubmit = isValid => {
     `/customers/` + page.props.quote.customer_id + `/additional-contacts`,
     {
       preserveScroll: true,
-      onSuccess: () => {
+      onSuccess: res => {
         if (res.props.flash.success) {
           notification.success({
             title: res.props.flash.success,
