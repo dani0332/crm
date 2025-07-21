@@ -1252,7 +1252,7 @@ class TravelQuoteService extends BaseService
             $query->where('quote_type_id', QuoteTypeId::Travel);
         }])->where('id', $planId)->first();
 
-        if ($travelPlan->insuranceProviderQuoteType) {
+        if ($travelPlan && $travelPlan->insuranceProviderQuoteType) {
             return $travelPlan->insuranceProviderQuoteType->per_member_price;
         }
 
