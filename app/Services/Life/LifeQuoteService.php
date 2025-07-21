@@ -627,7 +627,6 @@ class LifeQuoteService extends BaseService
 
     public function getQuotePlans(string $uuid, bool $getLatestRating = false)
     {
-        $quoteUuId = LifeQuote::where('uuid', '=', $uuid)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-life-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
@@ -636,7 +635,7 @@ class LifeQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
-            'quoteUID' => $quoteUuId,
+            'quoteUID' => $uuid,
             'getLatestRating' => $getLatestRating,
             'lang' => 'en',
             'callSource' => 'imcrm',

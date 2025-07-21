@@ -633,10 +633,10 @@ class SendUpdateLogService
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
             $quote = $repository::getBy('uuid', $quoteUuid);
-            $payments = $quote->payments ?? null;
-            if ($payments->isEmpty()) {
+            $payments = $quote?->payments ?? null;
+            if ($payments === null || $payments->isEmpty()) {
                 $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
-                $payments = $quote->payments ?? null;
+                $payments = $quote?->payments ?? null;
             }
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
