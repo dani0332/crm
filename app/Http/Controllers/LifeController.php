@@ -151,17 +151,6 @@ class LifeController extends Controller
         return $model;
     }
 
-    public function lifePlanUpdate(Request $request): void
-    {
-
-        $request->validate([
-            'quoteUID' => 'required',
-            'formData' => 'required|array',
-        ]);
-
-        // return $this->lifeQuoteService->lifePlanUpdate($request->quoteUID, $request->formData);
-    }
-
     public function lifePlanSelected(Request $request)
     {
         LoggerService::startQuoteLogging($request->quoteId);
@@ -174,7 +163,7 @@ class LifeController extends Controller
             'version' => 'required',
         ]);
 
-        $model = $this->lifeQuoteService->lifePlanSelected($request->quoteId, $request->planId, $request->version, $request?->saveQuote, $request?->isUW);
+        $model = $this->lifeQuoteService->selectPlan($request->quoteId, $request->planId, $request->version, $request?->saveQuote, $request?->isUW);
 
         LoggerService::info('fn: lifePlanSelected -  Plan selected for life quote');
         
@@ -183,7 +172,6 @@ class LifeController extends Controller
 
     public function getLifeProviderPlan(Request $request)
     {
-        // dd($request->data);
         $providerPlan = $this->lifeQuoteService->getLifeProviderPlan($request->data);
 
         return response()->json(['providerPlan' => $providerPlan]);

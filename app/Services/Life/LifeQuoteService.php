@@ -9,6 +9,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\LifeInsurerTenure;
 use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -49,7 +50,6 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
-use App\Enums\PaymentTermEnum;
 
 class LifeQuoteService extends BaseService
 {
@@ -71,7 +71,7 @@ class LifeQuoteService extends BaseService
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
         $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
-        
+
         return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes');
     }
 
@@ -393,7 +393,7 @@ class LifeQuoteService extends BaseService
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
         $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $lifeQuote->id);
-        
+
         return [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -529,7 +529,7 @@ class LifeQuoteService extends BaseService
                     'age',
                     'bmi',
                     'is_smoker',
-                    'gender'
+                    'gender',
                 ];
 
                 $lifeQuote = $quote->lifeQuote;
@@ -713,18 +713,26 @@ class LifeQuoteService extends BaseService
 
     public function getLifeProviderPlan($data)
     {
-        LoggerService::info('fn: lifePlanCreateQuote', context: [
+        LoggerService::info('fn: getLifeProviderPlan', extra: [
             'data' => $data,
         ]);
 
-        $response = app(abstract: KenService::class)->request('/fetch-life-provider-plan', 'post', $data);
-
-        return $response;
+        return app(abstract: KenService::class)->request('/fetch-life-provider-plan', 'post', $data);
     }
 
     /* This function will select the Plan details in the Quote */
-    public function lifePlanSelected(string $quoteId, int $planId, int $version = 0, $saveQuote = false, $isUW = false)
+    public function selectPlan(string $quoteId, int $planId, int $version = 0, $saveQuote = false, $isUW = false)
     {
+        LoggerService::startQuoteLogging($quoteId);
+
+        LoggerService::info('fn: selectPlan', extra: [
+            'planId' => $planId,
+            'version' => $version,
+            'saveQuote' => $saveQuote,
+            'isUW' => $isUW,
+            'quoteTypeId' => QuoteTypes::getIdFromValue('Life'),
+        ]);
+
         // Creating Form Data
         $formData = [
             'quoteUID' => $quoteId,
@@ -738,9 +746,7 @@ class LifeQuoteService extends BaseService
             $formData['saveQuote'] = true;
         }
 
-        $request = app(KenService::class)->request('/process-life-quote-plan', 'post', $formData);
-
-        return $request;
+        return app(KenService::class)->request('/process-life-quote-plan', 'post', $formData);
     }
 
     public function exportPlansPdf(string $quoteType, array $data = [])
@@ -856,12 +862,12 @@ class LifeQuoteService extends BaseService
             ->where('plan_id', $planId)
             ->select('plan_id', 'min_cover', 'max_cover', 'currency_id')
             ->with(['currency' => function ($query) {
-                $query->select('id', 'code', 'text'); 
+                $query->select('id', 'code', 'text');
             }])
             ->get();
     }
 
-    function getRiders($planId)
+    public function getRiders($planId)
     {
         return LifeRiderOption::active()
             ->where('plan_id', $planId)
@@ -875,20 +881,32 @@ class LifeQuoteService extends BaseService
             ->get();
     }
 
-    function toggleLifePlanVisibility(array $data)
+    public function toggleLifePlanVisibility(array $data)
     {
         LoggerService::info('fn: toggleLifePlanVisibility', context: [
             'data' => $data,
         ]);
-        $request = app(KenService::class)->request('/toggle-life-plan-visibility', 'post', $data);
-        return $request;
+
+        return app(KenService::class)->request('/toggle-life-plan-visibility', 'post', $data);
     }
 
-    function updateExchangeRate(string $quoteUID, $exchangeRate)
+    public function updateExchangeRate(string $quoteUID, $exchangeRate)
     {
+        LoggerService::startQuoteLogging($quoteUID);
+
+        LoggerService::info('fn: updateExchangeRate', extra: [
+            'exchangeRate' => $exchangeRate,
+        ]);
+
         $quote = LifeQuote::where('uuid', $quoteUID)->first();
         $quote->exchange_rate = $exchangeRate;
-        return $quote->save();
+        if ($quote->save()) {
+            LoggerService::info('fn: updateExchangeRate - Exchange rate updated successfully');
+        } else {
+            LoggerService::error('fn: updateExchangeRate - Failed to update exchange rate');
+        }
+
+        return $quote;
     }
 
     private function generatePdfFilename($quote): string
