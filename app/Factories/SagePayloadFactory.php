@@ -1152,7 +1152,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'REFID',
-                'Value' => $sageRequest->quoteCode ?? $sageRequest->quoteRefId ?? 'N/A',
+                'Value' => $sageRequest->quoteCode,
             ],
             [
                 'OptionalField' => 'SUREFID',
@@ -1277,7 +1277,7 @@ class SagePayloadFactory
         if (! isset($sageRequest->mainClassInsurance)) {
             $sageRequest->mainClassInsurance = $sageRequest->quoteType;
         }
-        $sageRequest->quoteCode = $sageRequest->quoteRefId ?? $quote->code;
+        $sageRequest->quoteCode = $quote->code;
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
