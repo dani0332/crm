@@ -723,8 +723,6 @@ class LifeQuoteService extends BaseService
     /* This function will select the Plan details in the Quote */
     public function selectPlan(string $quoteId, int $planId, int $version = 0, $saveQuote = false, $isUW = false)
     {
-        LoggerService::startQuoteLogging($quoteId);
-
         LoggerService::info('fn: selectPlan', extra: [
             'planId' => $planId,
             'version' => $version,

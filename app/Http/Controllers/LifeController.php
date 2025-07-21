@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteTypes;
 use App\Http\Requests\LifeCardLoadMoreRequest;
 use App\Http\Requests\LifeQuoteRequest;
-use App\Models\PersonalQuote;
+use App\Http\Requests\LifeSendOCAEmailRequest;
+use App\Jobs\SendOCAEmailJob;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
-use PDF;
-use App\Jobs\SendOCAEmailJob;
-use App\Http\Requests\LifeSendOCAEmailRequest;
-use App\Enums\QuoteTypes;
-
 
 class LifeController extends Controller
 {
@@ -166,7 +163,7 @@ class LifeController extends Controller
         $model = $this->lifeQuoteService->selectPlan($request->quoteId, $request->planId, $request->version, $request?->saveQuote, $request?->isUW);
 
         LoggerService::info('fn: lifePlanSelected -  Plan selected for life quote');
-        
+
         return $model;
     }
 
@@ -184,25 +181,8 @@ class LifeController extends Controller
         return response()->json($riderDetails);
     }
 
-    public function comparisionPdf()
-    {
-
-        $quote = PersonalQuote::where('uuid', 'EJMPEB9K')->first();
-        $quotePlans = $this->lifeQuoteService->getQuotePlans($quote->uuid);
-        $lifePlans = $quotePlans->quotes->plans;
-        $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
-
-        $pdf = PDF::setOption([
-            'isHtml5ParserEnabled' => true,
-            'dpi' => 150,
-        ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
-
-        return $pdf->stream('Life Insurance Comparison Table.pdf');
-    }
-
     public function sendOCAEmail(LifeSendOCAEmailRequest $request)
     {
-        // Dispatch job to send OCA email
         SendOCAEmailJob::dispatch($request->quote_uuid, $request->validated());
 
         return response()->json(['message' => 'OCA Email Sent Successfully']);
@@ -217,37 +197,40 @@ class LifeController extends Controller
 
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
-            'Expires' => '0'
+            'Expires' => '0',
         ]);
     }
 
     public function currencyCoverages(Request $request)
     {
         $currencyCoverages = $this->lifeQuoteService->getCurrencyCoverages($request->planId);
+
         return response()->json($currencyCoverages);
     }
 
-    function toggleLifePlanVisibility(Request $request)
+    public function toggleLifePlanVisibility(Request $request)
     {
         LoggerService::startQuoteLogging($request->quoteUID);
         $this->lifeQuoteService->toggleLifePlanVisibility($request->all());
         LoggerService::info('fn: toggleLwebifePlanVisibility - Life plan visibility toggled successfully');
-        
+
         return response()->json(['message' => 'Life plan visibility toggled successfully']);
     }
 
-    function riders(Request $request)
+    public function riders(Request $request)
     {
         $riders = $this->lifeQuoteService->getRiders($request->planId);
+
         return response()->json($riders);
     }
 
-    function updateExchangeRate(Request $request)
+    public function updateExchangeRate(Request $request)
     {
-        $this->lifeQuoteService ->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+        $this->lifeQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+
         return response()->json(['message' => 'Exchange rate updated successfully']);
     }
 }
