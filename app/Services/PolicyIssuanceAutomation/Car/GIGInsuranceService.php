@@ -13,6 +13,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
+use App\Facades\Ken;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
@@ -806,6 +807,89 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         //     'policy_end_date' => $getQuoteResponse->policyEndDate,
         //     'policy_status' => $getQuoteResponse->policyStatus,
         // ]);
+    }
+
+    public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quoteDetails->code.' started');
+        return response()->json([
+            'success' => true,
+            'message' => 'Quote details retrieved successfully from insurer portal',
+            'data' => [
+                'additionalVehicleTransactionDetails' => [
+                    'rtaTransactionType' => '',
+                    'plateCode' => '',
+                    'plateNumber' => '123456',
+                ]
+            ]
+        ]);
+        try {
+            $payload = ['quoteTypeId' => $quoteTypeId, 'quoteUID' => $quoteDetails->uuid];
+            $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
+            $responseData = $response['data'];
+
+            $getQuoteResponseMapping = [
+                'additionalVehicleTransactionDetails' => [
+                    'rtaTransactionType' => '',
+                    'plateCode' => '',
+                    'plateNumber' => $responseData->plateNumber,
+                    'trafficCodeNumber' => '',
+                    'chassisNumber' => '',
+                    'engineNumber' => '',
+                    'rtaPlateCategory' => '',
+                    'vehicleColor' => '',
+                    'plateColor' => '',
+                    'bankLoan' => '',
+                    'bankName' => '',
+                    'firstRegistrationDate' => $responseData->policySchedule->creationDate,
+                    'policyEffectiveDate' => $responseData->policySchedule->effectiveDate,
+                    'policyExpiryDate' => $responseData->policySchedule->expirationDate,
+                    'certificateStartDate' => $responseData->certificateInceptionDate,
+                    'certificateEndDate' => $responseData->certificateEndDate,
+                    'annualMileageEstimate' => '',
+                ],
+                'additionalDriverDetails' => [
+                    'isInsuredAndDriverSame' => $responseData->isPolicyHolderDriver,
+                    'driverFirstName' => '',
+                    'driverLastName' => '',
+                    'driverDob' => '',
+                    'driverGender' => '',
+                    'driverLicenseNumber' => '',
+                    'licenseIssuePlace' => '',
+                    'licenseIssueDate' => '',
+                    'licenseExpiryDate' => '',
+                    'uaeDrivingExperience' => '',
+                    'homeCountryLicenseIssuance' => '',
+                    'homeCountryDrivingExperience' => '',
+                ],
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Quote details retrieved successfully from insurer portal',
+                'data' => $getQuoteResponseMapping ?? null
+            ]);
+
+            if (isset($response['status']) && $response['status'] === true) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Quote details retrieved successfully from insurer portal',
+                    'data' => $getQuoteResponseMapping ?? null
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'
+                ]);
+            }
+        } catch (\Exception $e) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Error: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving quote details from insurer portal'
+            ]);
+        }
     }
 
     public function getInsurerAPIStatuses()

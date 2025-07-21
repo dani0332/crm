@@ -18,10 +18,15 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const complianceDisable = ref(true);
 const patternFieldDisable = ref(true);
+const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
+
+const emit = defineEmits(['update:insurerPortalSyncData']); 
+
 const insuredDetails = page.props.insuredDetails;
 const lookups = page.props.lookups;
 const isScreeningIndividual =
   page.props.screeningType == page.props.customerTypeEnum.IndividualShort;
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 const incomeSource = computed(() => {
@@ -263,9 +268,6 @@ function insuredKycFormValidate() {
   return isValid;
 }
 const syncInsurerPortalUpdates = () => {
-  const notification = useToast();
-  
-  // Make API call to get quote details from insurer portal
   axios
     .post('/get-quote-from-insurer', {
       quoteTypeId: page.props.quoteType.id,
@@ -278,18 +280,8 @@ const syncInsurerPortalUpdates = () => {
           position: 'top',
         });
         
-        // Update additional vehicle and driver details if data is available
         if (response.data.data) {
-          // Handle the response data to update additional vehicle and driver details
-          // This will be populated based on the actual response structure from Ken
-          console.log('Synced data:', response.data.data);
-          
-          // Reload the page to reflect changes
-          router.reload({
-            replace: true,
-            preserveScroll: true,
-            preserveState: true,
-          });
+          emit('update:insurerPortalSyncData', response.data.data);
         }
       } else {
         notification.error({
@@ -1137,6 +1129,7 @@ watch(
         type="button"
         class="px-6"
         @click="syncInsurerPortalUpdates"
+        :disabled="!isSyncEnabled"
       >
         Sync
       </x-button>

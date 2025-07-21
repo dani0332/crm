@@ -2,6 +2,13 @@
 import { ref, computed } from 'vue'
 const { isRequired } = useRules();
 
+const props = defineProps({
+  insurerPortalSyncData: {
+    type: Object,
+    default: null
+  }
+});
+
 const page = usePage();
 const notification = useToast();
 
@@ -82,7 +89,15 @@ const submitAdditionalDriverDetailsForm = (isValid) => {
     });
   } 
 };
-</script>
+
+// Watch for changes in insurerPortalSyncData and update form values
+watch(() => props.insurerPortalSyncData, (newData) => {
+  if (newData) {
+    console.log('Updating Driver Details with:', newData);
+  }
+}, { deep: true });
+
+</script> 
 
 <template>
   <div>

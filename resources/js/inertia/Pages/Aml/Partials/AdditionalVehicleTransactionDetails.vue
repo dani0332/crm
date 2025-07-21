@@ -1,6 +1,13 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 const { isRequired } = useRules();
+
+const props = defineProps({
+  insurerPortalSyncData: {
+    type: Object,
+    default: null
+  }
+});
 
 const page = usePage();
 const notification = useToast();
@@ -67,6 +74,66 @@ const additionalVehicleTransactionDetailsForm = useForm({
   annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
 });
 
+// Watch for changes in insurerPortalSyncData and update form values
+watch(() => props.insurerPortalSyncData, (newData) => {
+  if (newData) {
+    console.log('Updating Additional Vehicle Transaction Details with:', newData);
+    
+    // Update form fields based on the received data
+    // if (newData.chassis_number) {
+    //   additionalVehicleTransactionDetailsForm.chassis_number = newData.chassis_number;
+    // }
+    // if (newData.engine_number) {
+    //   additionalVehicleTransactionDetailsForm.engine_number = newData.engine_number;
+    // }
+    // if (newData.plate_code) {
+    //   additionalVehicleTransactionDetailsForm.plate_code = newData.plate_code;
+    // }
+    // if (newData.plate_number) {
+    //   additionalVehicleTransactionDetailsForm.plate_number = newData.plate_number;
+    // }
+    // if (newData.traffic_code_number) {
+    //   additionalVehicleTransactionDetailsForm.traffic_code_number = newData.traffic_code_number;
+    // }
+    // if (newData.vehicle_color) {
+    //   additionalVehicleTransactionDetailsForm.vehicle_color = newData.vehicle_color;
+    // }
+    // if (newData.plate_color) {
+    //   additionalVehicleTransactionDetailsForm.plate_color = newData.plate_color;
+    // }
+    // if (newData.rta_transaction_type) {
+    //   additionalVehicleTransactionDetailsForm.rta_transaction_type = newData.rta_transaction_type.toString();
+    // }
+    // if (newData.rta_plate_category) {
+    //   additionalVehicleTransactionDetailsForm.rta_plate_category = newData.rta_plate_category;
+    // }
+    // if (newData.bank_loan !== undefined) {
+    //   additionalVehicleTransactionDetailsForm.bank_loan = newData.bank_loan;
+    // }
+    // if (newData.bank_name) {
+    //   additionalVehicleTransactionDetailsForm.bank_name = newData.bank_name;
+    // }
+    // if (newData.first_registration_date) {
+    //   additionalVehicleTransactionDetailsForm.first_registration_date = newData.first_registration_date;
+    // }
+    // if (newData.policy_effective_date) {
+    //   additionalVehicleTransactionDetailsForm.policy_effective_date = newData.policy_effective_date;
+    // }
+    // if (newData.policy_expiry_date) {
+    //   additionalVehicleTransactionDetailsForm.policy_expiry_date = newData.policy_expiry_date;
+    // }
+    // if (newData.certificate_start_date) {
+    //   additionalVehicleTransactionDetailsForm.certificate_start_date = newData.certificate_start_date;
+    // }
+    // if (newData.certificate_end_date) {
+    //   additionalVehicleTransactionDetailsForm.certificate_end_date = newData.certificate_end_date;
+    // }
+    // if (newData.annual_mileage_estimate) {
+    //   additionalVehicleTransactionDetailsForm.annual_mileage_estimate = newData.annual_mileage_estimate.toString();
+    // }
+  }
+}, { deep: true });
+
 const chassisNumberValidate = eventType => {
   const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
   if (eventType == 'keypress') {
@@ -127,6 +194,8 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
     });
   } 
 }
+
+
 
 </script>
 

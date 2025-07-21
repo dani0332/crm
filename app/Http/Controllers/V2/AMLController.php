@@ -313,6 +313,7 @@ class AMLController extends Controller
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
             'isAnyEscalated' => $isAnyEscalated,
+            'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType->id, $quoteRequest->id),
         ], $businessPayload ?? []));
     }
 
@@ -1059,34 +1060,23 @@ class AMLController extends Controller
 
     public function getQuoteFromInsurer(Request $request)
     {
-        try {
-            $payload = [
-                'quoteTypeId' => $request->quoteTypeId,
-                'quoteUID' => $request->quoteUID
-            ];
+        $quoteType = QuoteTypes::getName($request->quoteTypeId)->value;
+        $quoteDetails = $this->getQuoteObjectBy($quoteType, $request->quoteUID, 'uuid');
+        $insurerCode = getInsuranceProvider($quoteDetails->payments()->mainLeadPayment()->first(), $quoteType);
 
-            $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
-
-            if (isset($response['status']) && $response['status'] === true) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Quote details retrieved successfully from insurer portal',
-                    'data' => $response['data'] ?? null
-                ]);
-            } else {
-                return response()->json([
+        return match (ucfirst($quoteType)) {
+            QuoteTypes::CAR->value => match ($insurerCode->code) {
+                InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $quoteDetails),
+                
+                default => response()->json([
                     'success' => false,
-                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'
-                ]);
-            }
-
-        } catch (\Exception $exception) {
-            LoggerService::error('fn:getQuoteFromInsurer - Error: '.$exception->getMessage());
-            
-            return response()->json([
+                    'message' => 'Quote type not supported'
+                ]),
+            },
+            default => response()->json([
                 'success' => false,
-                'message' => 'An error occurred while retrieving quote details from insurer portal'
-            ]);
-        }
+                'message' => 'Quote type not supported'
+            ]),
+        };
     }
 }

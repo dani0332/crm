@@ -2059,4 +2059,21 @@ class AMLService
 
         return true;
     }
+
+    public function isInsurerSyncEnabled($quoteTypeId, $quoteRequestId)
+    {
+        $insuranceProvider = InsuranceProvidersEnum::AXA;
+        // where([
+        //     'quote_request_id' => $quoteRequestId,
+        //     'quote_type_id' => $quoteTypeId,
+        //     'screening_type' => $insuranceProvider,
+        // ])
+        $kycLogs = KycLog::withTrashed()->where('id', 196999)->latest()->first();
+        if(!$kycLogs) {
+            return false;
+        }
+
+        $screeningResult = json_decode($kycLogs->results);
+        return isset($screeningResult->uwApprovalStatus) && $screeningResult->uwApprovalStatus == 'Y';
+    }
 }

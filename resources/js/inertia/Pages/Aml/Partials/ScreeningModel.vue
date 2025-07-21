@@ -395,6 +395,7 @@ const entitySearchValidation = computed(() => {
 });
 const searchResultData = ref(null);
 const searchSuccessStatus = ref(false);
+const insurerPortalSyncData = ref(null);
 const searchInsuredDetails = customerType => {
   let searchInsuredValidation = [customerTypeEnum.Individual, ''].includes(
     customerType,
@@ -718,6 +719,11 @@ const handleModalClose = () => {
   screeningFormDetails.customer_type = oldCustomerType.value;
   customerTypeConfirmationModel.value = false;
 };
+
+const updateInsurerPortalSyncData = (data) => {
+  insurerPortalSyncData.value = data;
+};
+
 </script>
 <template>
   <x-modal
@@ -731,9 +737,9 @@ const handleModalClose = () => {
     @submit="submitScreeningForm"
   >
     <template v-if="showVehicleAndDrvicerDetails">
-      <AdditionalVehicleTransactionDetails />
+      <AdditionalVehicleTransactionDetails :insurerPortalSyncData="insurerPortalSyncData" />
       <x-divider class="mb-4 mt-4" />
-      <AdditionalDriverDetails />
+      <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />
       <x-divider class="mb-4 mt-4" />
     </template>
 
@@ -1068,6 +1074,7 @@ const handleModalClose = () => {
       :searchData="searchResultData"
       :searchSuccess="searchSuccessStatus"
       :customerType="screeningFormDetails.customer_type"
+      @update:insurerPortalSyncData="updateInsurerPortalSyncData"
     />
     <x-modal
       v-model="customerTypeConfirmationModel"
