@@ -111,7 +111,7 @@ class PolicyBulkSendDocuments extends Command
             'quote_id' => $quote->id,
         ];
 
-        // To handle the model type for business quote
+        // Set the correct modelType for business quotes based on business_type_of_insurance_id to ensure the right template is used.
         $modelType = $quoteType->code;
         if ($modelType == quoteTypeCode::Business) {
             if ($quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
