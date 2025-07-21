@@ -9,6 +9,7 @@ use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\EmbeddedTransaction;
+use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\Payment;
 use App\Models\QuoteTag;
@@ -52,6 +53,11 @@ class SageApiEmbeddedProductService
         $paymentSplits = $payment->paymentSplits;
 
         $epTransaction = EmbeddedTransaction::where('id', $request['epTransactionId'])->first();
+        $insuranceProvider = InsuranceProvider::find($request['insuranceProviderId']);
+        $isSukoonInsuranceProvider = in_array($insuranceProvider?->code, $this->sageApiService->allowedProviderForSageEPBooking());
+        if (! $isSukoonInsuranceProvider) {
+            return ['status' => false, 'message' => 'Sage booking cannot be scheduled because current insurer is '.$insuranceProvider?->text];
+        }
 
         $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request['modelType'], $payment, $quote, $paymentSplits);
         $sageRequest->userId = $user?->id;
@@ -955,7 +961,7 @@ class SageApiEmbeddedProductService
                             'ReceiptTransactionType' => 'Prepayment',
                         ],
                     ],
-                    'ReceiptAdjustmentOptionalField' => $optionalFields,
+                    /* 'ReceiptAdjustmentOptionalField' => $optionalFields, */
                 ],
             ],
         ];

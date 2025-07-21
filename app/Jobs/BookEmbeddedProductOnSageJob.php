@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
 use App\Models\SageProcess;
@@ -55,6 +56,17 @@ class BookEmbeddedProductOnSageJob implements ShouldQueue
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
         $quote = $this->getQuoteObjectBy($this->request->modelType, $this->request->quoteId);
+
+        $quoteTypeId = QuoteTypes::getIdFromValue($this->request->modelType);
+        $sukoonEPTransaction = (new SageApiService)->getSukoonEPTransaction($quote, $quoteTypeId);
+
+        if (! $sukoonEPTransaction) {
+            $message = 'Policy Book : BookEmbeddedProductOnSageJob - '.$this->epTransaction->code.' - can not proceed as transaction is not found';
+            LoggerService::info($message, extra : ['quote' => $quote->code]);
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
+
+            return;
+        }
 
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, $this->logFor);
