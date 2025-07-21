@@ -736,7 +736,7 @@
 
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-weight:700;">Payment term
+                        <p class="quote-info raleway-font" style="font-weight:700;">Payment Frequency
                         </p>
                     </th>
                     @foreach($displayPlans as $planId)
