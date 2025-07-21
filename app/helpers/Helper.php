@@ -1670,12 +1670,7 @@ if (! function_exists('userHasProduct')) {
 if (! function_exists('getLifeRiderInfo')) {
     function getLifeRiderInfo($rider, $plan)
     {
-
         if(!isset($rider) && !empty($rider)){
-            return 'Optional';
-        }
-        
-        if($plan->isApi){
             return 'Optional';
         }
 
@@ -1686,14 +1681,11 @@ if (! function_exists('getLifeRiderInfo')) {
 
         if(!$rider->inputRequired){
             if($rider->coverType == 'VALUE'){
-                // Check if the currency inside rider matches with the plan currency
                 foreach($rider->criteria as $criteria){
                     if(isset($criteria->currency) && isset($plan->currency) && $criteria->currency == $plan->currency && isset($criteria->coverValue)){
                         return 'Covered upto '.number_format($criteria->coverValue, 2);
                     }
                 }
-                
-                // Fallback to original logic if no currency match found
                 return '(Optional)';
             }else if($rider->coverType == 'COVER'){
                 return 'Covered upto '.number_format($plan->sumInsured, 2); 
