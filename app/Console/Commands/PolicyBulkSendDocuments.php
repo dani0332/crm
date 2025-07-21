@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BusinessTypeOfInsuranceEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessTypeOfInsurance;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 
@@ -105,8 +111,17 @@ class PolicyBulkSendDocuments extends Command
             'quote_id' => $quote->id,
         ];
 
-        SendBookPolicyDocumentsJob::dispatch($payload, $code, true);
+        // To handle the model type for business quote
+        $modelType = $quoteType->code;
+        if ($modelType == quoteTypeCode::Business) {
+            if ($quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                $payload->modelType = quoteTypeCode::GroupMedical;
+            } else {
+                $payload->modelType = quoteTypeCode::CORPLINE;
+            }
+        }
         
+        SendBookPolicyDocumentsJob::dispatch($payload, $code, true);
         LoggerService::info("PolicyBulkSendDocuments: Job dispatched for code: {$code}");
         
         return true;
