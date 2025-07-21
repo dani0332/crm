@@ -72,7 +72,6 @@ const getCurrencyCoverages = async planId => {
     );
     currencyRanges.value = res.data || [];
   } catch (error) {
-    console.error('Error fetching currency coverages:', error);
     currencyRanges.value = [];
   }
 };
@@ -232,8 +231,6 @@ watch(
 
     // Handle rider data on plan change
     if (props.plan?.riders && props.plan.riders.length > 0) {
-      console.log(props.plan.riders, 'inside if first');
-
       ridersData.value = props.plan.riders.map(rider => ({
         riderId: rider.id,
         active: rider.active ?? 0,
@@ -402,7 +399,7 @@ const getRiderDetails = async planId => {
       }
     });
   } catch (error) {
-    console.error('Error fetching rider details:', error);
+    // Handle error silently
   }
 };
 

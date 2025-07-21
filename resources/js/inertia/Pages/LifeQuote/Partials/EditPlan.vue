@@ -269,7 +269,6 @@ const generatePdf = () => {
         title: error?.response?.data?.message ?? 'something went wrong',
         position: 'top',
       });
-      console.log('error', error);
     })
     .finally(() => {
       extraAttr.generatePdfLoading = false;
@@ -330,7 +329,6 @@ const getQuote = () => {
         // No need to set actualPremium.value as it's now a computed property
         errorMessage.value = null;
       }
-      console.log('Error message', errorMessage);
 
       extraAttr.getQuoteLoading = false;
       showGetQuoteBtn.value = false;
@@ -506,17 +504,14 @@ const getRiderDetails = async planId => {
 };
 
 const handleSubmit = isValid => {
-  console.log('handleSubmit', isValid);
   if (!isValid) {
     return;
   }
 
   if (submitType.value === 'getQuote') {
     getQuote();
-    console.log('getQuote');
   } else {
     onSubmit();
-    console.log('onSubmit');
   }
 };
 const validateRiderCoverValue = (value, riderId) => {
@@ -533,8 +528,6 @@ const validateRiderCoverValue = (value, riderId) => {
     option =>
       option.riderId === riderId && option.currency_id === selectedCurrencyId,
   );
-  console.log('matchingOption', matchingOption, riderId);
-  console.log('riderOptions', riderOptions.value);
 
   if (matchingOption) {
     const numValue = parseFloat(value);
