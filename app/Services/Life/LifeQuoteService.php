@@ -126,11 +126,6 @@ class LifeQuoteService extends BaseService
                     $subQuery->where('number_of_years_id', request()->number_of_years_id);
                 });
             })
-            ->when(! empty(request()->number_of_years_id), function ($query) {
-                $query->whereHas('lifeQuote', function ($subQuery) {
-                    $subQuery->where('number_of_years_id', request()->number_of_years_id);
-                });
-            })
             ->when(! empty(request()->sum_insured_range) && ! empty(request()->sum_insured_currency_id), function ($query) {
                 $query->whereHas('lifeQuote', function ($subQuery) {
                     $subQuery->where('sum_insured_currency_id', request()->sum_insured_currency_id);

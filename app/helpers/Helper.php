@@ -1670,7 +1670,7 @@ if (! function_exists('userHasProduct')) {
 if (! function_exists('getLifeRiderInfo')) {
     function getLifeRiderInfo($rider, $plan)
     {
-        if(!isset($rider) && !empty($rider)){
+        if(!isset($rider) && empty($rider)){
             return 'Optional';
         }
 

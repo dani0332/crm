@@ -150,7 +150,7 @@ const onSubmit = isValid => {
     })
     .catch(err => {
       notification.error({
-        title: res?.data?.message ?? 'Something Went wrong',
+        title: err?.response?.data?.message ?? 'Something Went wrong',
         position: 'top',
       });
       emit('error');

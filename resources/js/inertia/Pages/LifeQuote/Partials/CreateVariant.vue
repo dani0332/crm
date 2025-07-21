@@ -363,7 +363,7 @@ const onSubmit = () => {
       }
 
       notification.error({
-        title: res.data.msg,
+        title: err?.response?.data?.message ?? 'Something went wrong',
         position: 'top',
       });
     })

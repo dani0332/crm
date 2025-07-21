@@ -81,10 +81,10 @@ class LifeQuotesExport implements CsvExportableInterface
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             $quote->customer?->pcp_tag_formatted ?? '',
-            $quote->lifeQuote->sumInsuredCurrency->text,
-            $quote->lifeQuote->sum_insured_value,
-            $quote->lifeQuote->policySumAssuredCurrency->text,
-            $quote->lifeQuote->policy_sum_assured,
+            optional($quote->lifeQuote)?->sumInsuredCurrency?->text ?? '',
+            optional($quote->lifeQuote)?->sum_insured_value ?? '',
+            optional($quote->lifeQuote)?->policySumAssuredCurrency?->text ?? '',
+            optional($quote->lifeQuote)?->policy_sum_assured ?? '',
         ];
     }
 

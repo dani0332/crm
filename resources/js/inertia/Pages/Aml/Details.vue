@@ -461,7 +461,7 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">SMOKER</dt>
-              <dd>{{ quoteRequest?.life_quote.is_smoker ? 'Yes' : 'No' }}</dd>
+              <dd>{{ quoteRequest?.life_quote?.is_smoker ? 'Yes' : 'No' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NO. OF YEARS</dt>
@@ -475,7 +475,7 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">OTHER INFO</dt>
-              <dd>{{ quoteRequest?.life_quote.others_info }}</dd>
+              <dd>{{ quoteRequest?.life_quote?.additional_notes }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>

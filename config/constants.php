@@ -160,4 +160,5 @@ return [
     'OCR_API_ENDPOINT' => env('OCR_API_ENDPOINT', ''),
     'OCR_API_KEY' => env('OCR_API_KEY', ''),
     'OCR_API_TIMEOUT' => env('OCR_API_TIMEOUT', 90),
+    'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 ];
