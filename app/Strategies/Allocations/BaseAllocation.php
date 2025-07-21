@@ -369,10 +369,24 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             return null;
         }
 
+        $isMaxCapReached = $this->isMaxCapReached($advisor);
+        if ($isMaxCapReached) {
+            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor has reached max capacity, will use normal allocation', extra: [
+                'advisor_id' => $advisor->id,
+                'advisor_name' => $advisor->name,
+                'allocation_count' => $advisor->leadAllocation->allocation_count,
+                'max_capacity' => $advisor->leadAllocation->max_capacity,
+            ]);
+
+            return null;
+        }
+
         LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Will assign to previous advisor', extra: [
             'advisor_id' => $advisor->id,
             'advisor_name' => $advisor->name,
             'advisor_status' => $advisor->status,
+            'allocation_count' => $advisor->leadAllocation->allocation_count,
+            'max_capacity' => $advisor->leadAllocation->max_capacity,
         ]);
 
         return $advisor;
@@ -421,5 +435,16 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             // fallback to true for safety as per business hours logic
             return true;
         }
+    }
+
+    private function isMaxCapReached(User $advisor): bool
+    {
+        $allocationCount = $advisor->leadAllocation->allocation_count;
+        $maxCapacity = $advisor->leadAllocation->max_capacity;
+
+        // Advisor is available if allocation_count < max_capacity OR max_capacity is -1 (unlimited)
+        $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
+
+        return !$isAdvisorAvailable;
     }
 }
