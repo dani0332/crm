@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
+use App\Models\QuoteType;
+use App\Services\ActivitiesService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -38,19 +43,15 @@ class PolicyBulkSendDocuments extends Command
     {
         LoggerService::info('PolicyBulkSendDocuments Started');
 
-        $codes = [
-            'HEA-3PJLNKL6',
-            'CAR-QK7EHTE5',
-            'CAR-UTJB3A2V',
-            'CAR-SUQGE9NJ',
-            'CAR-6XT6SVA9',
-            'CAR-XQBJCYZX',
-            'CAR-92HB2DPQ',
-            'CAR-QPZRVRTU',
-        ];
+        $bulkPolicyDocumentSendCodes = ApplicationStorage::where('key_name', ApplicationStorageEnums::BULK_POLICY_DOCUMENT_SEND_CODES)->first()->value;
+        if (empty($bulkPolicyDocumentSendCodes)) {
+            LoggerService::error('PolicyBulkSendDocuments - No codes provided in the $codes array.');
+            return 0;
+        }
+        $codes = explode(',', $bulkPolicyDocumentSendCodes);
 
         if (empty($codes)) {
-            $this->error('No codes provided in the $codes array.');
+            LoggerService::error('No codes provided in the $codes array.');
 
             return 1;
         }
@@ -65,23 +66,26 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            if ($code == 'HEA-3PJLNKL6') {
-                $quoteObject = HealthQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Health;
-            } else {
-                $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Car;
-            }
-
+            $quoteObject = PersonalQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
             if (! $quoteObject) {
                 $notFound[] = $code;
                 LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
 
                 continue;
             }
+
+            $modelType =  QuoteType::select('code')->find($quoteObject->quote_type_id);
+            if(!$modelType){
+                $notFound[] = $code;
+                LoggerService::info('PolicyBulkSendDocuments - Quote Type is not found.');
+                continue;
+            }
+
+            $quote = $this->getQuoteObjectBy($modelType->code, $code, 'code');
+
             $payload = (object) [
-                'model_type' => $modelType,
-                'quote_id' => $quoteObject->id,
+                'model_type' => $modelType->code,
+                'quote_id' => $quote->id,
             ];
 
             SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);
