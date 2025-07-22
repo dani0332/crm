@@ -12,6 +12,7 @@ use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\Life\LifeQuoteService;
+use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -80,6 +81,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::LIFE->value,
+            QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
         ];
     }
@@ -112,13 +114,13 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::JETSKI->value => JetskiQuoteRepository::getData(true, requestParams: $requestParams),
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams),
             QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true),
+            QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(forExport: true),
             default => abort(404),
         };
     }
 
     public function headings(): array
     {
-        info('Export: '.ucfirst($this->quoteType).' Types: '.json_encode($this->quoteTypes));
         if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getHeadings($this->quoteType);
         } else {
@@ -247,6 +249,25 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::PREVIOUS_POLICY_PREMIUM,
                 self::PREVIOUS_POLICY_NUMBER,
                 self::PRIVATE_CLIENT,
+            ],
+            QuoteTypes::SAVINGS->value => [
+                self::REF_ID,
+                self::FIRST_NAME,
+                self::LAST_NAME,
+                self::LEAD_STATUS,
+                self::ADVISOR,
+                self::CREATED_DATE,
+                self::ADVISOR_ASSIGNED_DATE,
+                self::LAST_MODIFIED_DATE,
+                self::PREMIUM,
+                self::POLICY_NUMBER,
+                self::SOURCE,
+                self::RENEWAL_BATCH,
+                self::PREVIOUS_POLICY_EXPIRY_DATE,
+                self::PREVIOUS_POLICY_PREMIUM,
+                self::PREVIOUS_POLICY_NUMBER,
+                self::TRANSACTION_APPROVED_DATE,
+                self::BOOKING_DATE,
             ],
             QuoteTypes::LIFE->value => [
                 self::REF_ID,
@@ -431,6 +452,25 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['transaction_approved_date'],
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
+            ],
+            QuoteTypes::SAVINGS->value => [
+                $baseFields['code'],
+                $baseFields['first_name'],
+                $baseFields['last_name'],
+                $baseFields['lead_status'],
+                $baseFields['advisor'],
+                $baseFields['created_date'],
+                $baseFields['advisor_assigned_date'],
+                $baseFields['last_modified_date'],
+                $baseFields['premium'],
+                $baseFields['policy_number'],
+                $baseFields['source'],
+                $quote->renewal_batch,
+                $baseFields['previous_policy_expiry_date'],
+                $baseFields['previous_policy_premium'],
+                $baseFields['previous_policy_number'],
+                $baseFields['transaction_approved_date'],
+                $baseFields['booking_date'],
             ],
             QuoteTypes::LIFE->value => [
                 $quote->code,

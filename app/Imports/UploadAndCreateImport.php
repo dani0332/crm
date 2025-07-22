@@ -61,7 +61,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsEmptyRows, SkipsOnFailure
 
     public function chunkSize(): int
     {
-        return 2000;
+        return 1000;
     }
 
     /**

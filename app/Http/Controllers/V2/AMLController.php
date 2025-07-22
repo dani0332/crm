@@ -107,6 +107,7 @@ class AMLController extends Controller
                     QuoteTypes::CYCLE->id(),
                     QuoteTypes::JETSKI->id(),
                     QuoteTypes::LIFE->id(),
+                    QuoteTypes::SAVINGS->id(),
                     QuoteTypes::HOME->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {

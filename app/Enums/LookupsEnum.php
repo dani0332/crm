@@ -49,4 +49,8 @@ enum LookupsEnum: string
     case OWNER_OCCUPANCY_TYPE = 'owner-occupancy-type';
     case COVERAGE_TYPE = 'coverage-type';
     case COVERAGE_POSSESSION_TYPE = 'coverage-possession-type';
+
+    case SAVINGS_PURPOSE = 'savings_purpose';
+    case INVESTMENT_TYPE = 'investment_type';
+    case SAVINGS_TENURE = 'tenure';
 }

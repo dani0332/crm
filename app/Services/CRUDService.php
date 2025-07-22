@@ -286,8 +286,9 @@ class CRUDService extends BaseService
                 }
             }
 
+            $iplLobs = [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Life), strtolower(quoteTypeCode::Business)];
             if (
-                strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+                in_array(strtolower($request->modelType), $iplLobs) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
             ) {
                 // Only allow if quote has payment link history and payment method is insurer payment link
                 if (method_exists($entity, 'hasInsurerPaymentLink') && $entity->hasInsurerPaymentLink() && ! $entity->canUpdateToTransactionApproved() && ! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {

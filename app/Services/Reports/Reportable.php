@@ -174,6 +174,7 @@ trait Reportable
             quoteTypeCode::Home => quoteTypeCode::Home,
             quoteTypeCode::CORPLINE => quoteTypeCode::CORPLINE,
             quoteTypeCode::GroupMedical => quoteTypeCode::GroupMedical,
+            quoteTypeCode::SAVINGS => quoteTypeCode::SAVINGS,
 
         ];
     }
@@ -192,6 +193,7 @@ trait Reportable
             quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
         ];
 
         // Return the filter options with their visibility settings

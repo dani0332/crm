@@ -542,7 +542,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
-            QuoteTypes::LIFE->value,
+            QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::LIFE->value,
         ]);
@@ -609,8 +609,8 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
         // Remove spaces from the mobile number
         $mobile = str_replace(' ', '', $mobile);
 
-        // If the number starts with +971, 971, 92, or 91, return it as is
-        if (preg_match('/^(?:\+?971|92|91)/', $mobile)) {
+        // If the number starts with +971, 971,+92, 92, or +91 91, return it as is
+        if (preg_match('/^(?:\+?971|971|\+?92|\+?91|92|91)/', $mobile)) {
             return ltrim($mobile, '+'); // Remove '+' if present, but keep the number unchanged
         }
 
@@ -726,7 +726,7 @@ if (! function_exists('getIMLogo')) {
         $imLogo = 'images/logo-new.png';
 
         if ($latest) {
-            $imLogo = 'images/im_logo_24k-hi.png';
+            $imLogo = 'images/im_logo_25k-hi.png';
         }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
@@ -898,6 +898,10 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
 
+        if (isset($request->quote_status_id) && $request->quote_status_id != '') {
+            $partialQuery->where('quote_status_id', $request->quote_status_id);
+        }
+
         if (isset($request->first_name) && $request->first_name != '') {
             $partialQuery->where('first_name', $request->first_name);
         }
@@ -981,6 +985,25 @@ if (! function_exists('getCardViewRequestFilters')) {
             if (! empty($advisors)) {
                 $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             }
+        }
+
+        if (isset($request->advisor_id) && $request->advisor_id != '') {
+            $partialQuery->where('advisor_id', $request->advisor_id);
+        }
+
+        // Handle policy expiry date range filter
+        if (! empty($request->policy_expiry_date) && ! empty($request->policy_expiry_date_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+
+            $partialQuery->whereBetween('policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+
+        // Handle investment frequency filter for PersonalQuote (Savings)
+        if ($modelType == PersonalQuote::class && isset($request->investment_frequency) && $request->investment_frequency != '') {
+            $partialQuery->whereHas('savingsQuote', function ($q) use ($request) {
+                $q->where('investment_criteria_id', $request->investment_frequency);
+            });
         }
 
         if ($request->has('private_client') && $request->filled('private_client')) {
@@ -1249,19 +1272,19 @@ if (! function_exists('getAssignmentTypeText')) {
                 $assignmentText = 'System Assigned';
                 break;
             case 2:
-                $assignmentText = 'System ReAssigned';
+                $assignmentText = 'System Reassigned';
                 break;
             case 3:
                 $assignmentText = 'Manual Assigned';
                 break;
             case 4:
-                $assignmentText = 'Manual ReAssigned';
+                $assignmentText = 'Manual Reassigned';
                 break;
             case 5:
                 $assignmentText = 'Bought Lead';
                 break;
             case 6:
-                $assignmentText = 'ReAssigned as Bought Lead';
+                $assignmentText = 'Reassigned as Bought Lead';
                 break;
             case 7:
                 $assignmentText = 'Self Assigned';

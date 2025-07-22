@@ -18,6 +18,7 @@ use App\Models\InslyDetail;
 use App\Models\LifeQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
+use App\Models\SavingsQuote;
 use App\Models\YachtQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
@@ -492,6 +493,16 @@ class InslyDetailRepository extends BaseRepository
                                 ['insly_id' => $policy->_id]
                             );
                             break;
+                        case QuoteTypes::SAVINGS->value:
+                            $obj->savingsQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new SavingsQuote)->fillable)
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                ['insly_id' => $policy->_id]
+                            );
+                            break;
                     }
                     $policy->moved_to_imcrm = true;
                     if ($isPersonalQuote) {
@@ -667,6 +678,10 @@ class InslyDetailRepository extends BaseRepository
         if ($user->hasRole(RolesEnum::YachtAdvisor)) {
 
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::YACHT->value]);
+        }
+        if ($user->hasRole(RolesEnum::SavingsAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::SAVINGS->value]);
         }
         if (! empty($coverage)) {
             // converted all values to lower case because some time data in mongodb have different case values.

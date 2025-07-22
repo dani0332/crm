@@ -48,6 +48,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
+use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -88,6 +89,7 @@ class AMLService
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
 
@@ -106,6 +108,7 @@ class AMLService
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id,
             QuoteTypes::YACHT->id() => $quoteRequestId,
             QuoteTypes::LIFE->id() => $quoteRequestId,
+            QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
         };
     }
@@ -124,6 +127,7 @@ class AMLService
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
         };
     }
@@ -255,6 +259,15 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::JETSKI->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::JETSKI->id())->with([
                 'jetskiQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+        } elseif ($quoteTypeId == QuoteTypes::SAVINGS->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::SAVINGS->id())->with([
+                'savingsQuote',
                 'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
@@ -1536,8 +1549,8 @@ class AMLService
         // Sort by customer name with nulls at the end (optimized single-pass sorting)
         $data = $data->sortBy(function ($item) {
             // Create a composite sort key for efficient sorting with null handling
-            $firstName = $item->customer_first_name ?? 'zzz_null';
-            $lastName = $item->customer_last_name ?? 'zzz_null';
+            $firstName = $item->first_name ?? 'zzz_null';
+            $lastName = $item->last_name ?? 'zzz_null';
 
             return strtolower($firstName.'|'.$lastName);
         })->values(); // Re-index the collection
@@ -1565,6 +1578,7 @@ class AMLService
             'pqr.policy_start_date',
             'pqr.policy_expiry_date',
             'pqr.premium',
+            'pqr.price_with_vat',
             'pqr.policy_number',
             'pqr.quote_status_id',
             'pqr.insurance_provider_id',
@@ -1623,6 +1637,68 @@ class AMLService
         }
 
         return $chunk;
+    }
+
+    public function saveKYCComplianceQuestions($complianceQuestions)
+    {
+        LoggerService::info('fn:saveKYCComplianceQuestions - AMLService', extra: [
+            'insured_id' => $complianceQuestions['insured_id'],
+        ]);
+
+        try {
+            $sameFields = [
+                'pep' => $complianceQuestions['pep'] ?? null,
+                'financial_sanctions' => $complianceQuestions['financial_sanctions'] ?? null,
+                'dual_nationality' => $complianceQuestions['dual_nationality'] ?? null,
+                'in_sanction_list' => $complianceQuestions['in_sanction_list'] ?? null,
+                'deal_sanction_list' => $complianceQuestions['deal_sanction_list'] ?? null,
+                'is_operation_high_risk' => $complianceQuestions['is_operation_high_risk'] ?? null,
+                'transaction_pattern' => $complianceQuestions['transaction_pattern'] ?? null,
+                'is_partner' => $complianceQuestions['is_partner'] ?? null,
+            ];
+
+            $kycData = array_merge($sameFields, [
+                'insured_id' => $complianceQuestions['insured_id'],
+                'is_sanction_match' => $complianceQuestions['is_sanction_match'] ?? null,
+                'in_fatf' => $complianceQuestions['in_fatf'] ?? null,
+                'is_owner_high_risk' => $complianceQuestions['is_owner_high_risk'] ?? null,
+                'transaction_volume' => $complianceQuestions['transaction_volume'] ?? null,
+                'transaction_activities' => $complianceQuestions['transaction_activities'] ?? null,
+            ]);
+
+            if ($insuredKyc = InsuredKyc::where('insured_id', $complianceQuestions['insured_id'])->first()) {
+                $insuredKyc->update($kycData);
+            } else {
+                InsuredKyc::create($kycData);
+            }
+
+            LoggerService::info('KYCComplianceQuestions updated');
+        } catch (Exception $exception) {
+            LoggerService::error('KYCComplianceQuestions failed to update', exception: $exception);
+        }
+    }
+
+    public function updateAMLStatusAgainstDecision($request, $quoteObject)
+    {
+        LoggerService::info(self::class.' - '.__FUNCTION__);
+
+        $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
+        $fetchKycLog->update([
+            'decision' => $request['aml_decision'] ?? '',
+            'notes' => isset($request['notes']) ? trim($request['notes']) : '',
+            'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
+            'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
+            'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
+        ]);
+
+        $kycLog = $fetchKycLog->first();
+        $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
+
+        $quoteObject->aml_status = $amlStatus;
+        $quoteObject->save();
+
+        return $amlStatus == AMLStatusCode::AMLScreeningCleared ?
+                            AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
     }
 
     private function addQuoteStatusData($chunk, $quoteIds, $quoteTypeId)
@@ -1704,7 +1780,7 @@ class AMLService
 
         // Get customer_type from insured table
         $insuredData = DB::table('insured as i')
-            ->select(['i.id', 'i.customer_type'])
+            ->select(['i.id', 'i.customer_type', 'i.first_name', 'i.last_name'])
             ->whereIn('i.id', $insuredIds)
             ->get()
             ->keyBy('id');
@@ -1720,10 +1796,8 @@ class AMLService
                     $insuredRecord = $insuredData[$record->insured_id] ?? null;
                 }
 
-                $chunk[$index]->first_name = $kycRecord->first_name ?? null;
-                $chunk[$index]->last_name = $kycRecord->last_name ?? null;
-                $chunk[$index]->customer_first_name = $kycRecord->first_name ?? null;
-                $chunk[$index]->customer_last_name = $kycRecord->last_name ?? null;
+                $chunk[$index]->first_name = $kycRecord->first_name ?? $insuredRecord->first_name ?? null;
+                $chunk[$index]->last_name = $kycRecord->last_name ?? $insuredRecord->last_name ?? null;
                 $chunk[$index]->emirates_id = $kycRecord->id_number ?? null;
                 $chunk[$index]->customer_type = $insuredRecord->customer_type ?? CustomerTypeEnum::Individual;
                 $chunk[$index]->residential_status = $kycRecord->residential_status ?? null;

@@ -698,10 +698,20 @@ const industryTypeOptions = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.quoteStatuses.map(status => {
+    var statusDisabled = false;
+    if (status.id == quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const allowStatusUpdate = computed(() => {
@@ -2700,7 +2710,47 @@ const enableExchangeRateEdit = () => {
       :quote-type="quoteType"
     />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div v-if="historyData === null" class="text-center py-3">
+            <x-button
+              size="sm"
+              color="primary"
+              outlined
+              @click.prevent="onLoadHistoryData"
+              :loading="historyLoading"
+            >
+              Load History Data
+            </x-button>
+          </div>
+
+          <DataTable
+            v-else
+            table-class-name="compact"
+            :headers="historyDataTable"
+            :items="historyData || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="historyData.length < 15"
+          />
+        </template>
+      </Collapsible>
+    </div>
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <AuditLogs
       :quoteType="$page.props.modelType"

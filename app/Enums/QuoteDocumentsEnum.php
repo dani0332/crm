@@ -33,4 +33,24 @@ final class QuoteDocumentsEnum extends Enum
     public const TRAVEL_TAX_INVOICE = 'TI';
     public const TRAVEL_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
     public const TRAVEL_POLICY_CERTIFICATE = 'CPC';
+
+    // Savings Quote
+    public const SAVINGS_POLICY_SCHEDULE = 'PS_SAV';
+    public const SAVINGS_POLICY_CERTIFICATE = 'PC_SAV';
+    public const SAVINGS_APPLICATION_COPY = 'AC_SAV';
+    public const SAVINGS_TAX_INVOICE = 'TI';
+    public const SAVINGS_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
+    public const SAVINGS_RECEIPT = 'SPDR';
+    public const SAVINGS_ADDITIONAL_EMAIL_ATTACHMENTS = 'TAEA';
+    // End of Savings Quote
+
+    public static function getSukoonAllDocTypes(): array
+    {
+        return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE, self::CAR_TAX_INVOICE_RAISE_BY_BUYER];
+    }
+
+    public static function getSukoonInitialDocTypes(): array
+    {
+        return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE];
+    }
 }

@@ -42,7 +42,10 @@ class GenericLobController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to generate PDF. '.$e->getMessage(),
-                'errors' => ['error' => [$e->getMessage()]],
+                'errors' => ['error' => [$e->getMessage()],
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
+                ],
             ], 500);
         }
     }

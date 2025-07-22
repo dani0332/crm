@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class InsuranceProviderPlan extends Model
 {
@@ -27,4 +28,9 @@ class InsuranceProviderPlan extends Model
     }
 
     protected $guarded = [];
+
+    public function policyWordings(): HasOne
+    {
+        return $this->hasOne(PolicyWording::class, 'plan_id');
+    }
 }

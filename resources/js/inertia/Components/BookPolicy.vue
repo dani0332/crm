@@ -4,6 +4,7 @@ const page = usePage();
 const notification = useNotifications('toast');
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
 import NProgress from 'nprogress';
+import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
 const { isRequired } = useRules();
 import { h, defineComponent } from 'vue';
 
@@ -79,6 +80,8 @@ const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
+const commissionPercentageExceedsLimit = ref(false);
+const showCommissionPercentageExceedsLimitAlert = ref(false);
 
 const dateToYMD = date => {
   if (date) {
@@ -117,7 +120,7 @@ const dateToDMYWithTime = date => {
 };
 
 const commissionErrorMessage =
-  'The commission amount you entered is outside the permitted range.';
+  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.';
 const bp = reactive({
   isEditing: false,
   isAllowedToUpdateCommission: true,
@@ -239,6 +242,8 @@ let is_lacking_payment = ref(
   page.props.bookPolicyDetails.isLackingOfPayment || false,
 );
 
+const isLifeLead = props.quoteType === quoteTypeCodeEnum.Life;
+
 watch(
   () => page.props.bookPolicyDetails.isLackingOfPayment,
   newVal => {
@@ -290,8 +295,8 @@ const modals = reactive({
 
 let isBookingDetailsUpdated = computed(
   () =>
-    page.props.payments[0]?.commmission_percentage > 0 ||
-    page.props.payments[0]?.commission_vat > 0 ||
+    page.props.payments[0]?.commmission_percentage > 0 &&
+    page.props.payments[0]?.commission_vat > 0 &&
     page.props.payments[0]?.commission > 0,
 );
 
@@ -397,18 +402,29 @@ const calculateCommissionPercentage = (
   totalCommissionWithoutVat,
   totalPriceWithoutVat,
 ) => {
+  commissionPercentageExceedsLimit.value = false;
   if (totalCommissionWithoutVat > 0) {
     let totalCommissionInPercentage =
       (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
     let brokerCommission = props.bookPolicyDetails.brokerCommission;
-    let commission_percentage_min =
-      brokerCommission?.commission_percentage_min || 0;
-    let commission_percentage_max =
-      brokerCommission?.commission_percentage_max || 0;
+    let commission_percentage_min = Math.max(
+      (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
+      0,
+    );
+    let commission_percentage_max = brokerCommission?.fixed_commission
+      ? Number(brokerCommission?.fixed_commission) + 2.5
+      : 0;
     if (commission_percentage_min != 0 && commission_percentage_max != 0) {
       if (
         totalCommissionInPercentage < commission_percentage_min ||
         totalCommissionInPercentage > commission_percentage_max
+      ) {
+        commissionPercentageExceedsLimit.value = true;
+      }
+      if (
+        (totalCommissionInPercentage < commission_percentage_min ||
+          totalCommissionInPercentage > commission_percentage_max) &&
+        !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
       ) {
         bp.isAllowedToUpdateCommission = false;
       } else {
@@ -470,7 +486,10 @@ const calculateCommission = () => {
     bpForm.total_commission = 0;
   }
 };
-let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
+
+let isComissionVatApplicableEnabled =
+  page.props.quoteType == quoteTypeCodeEnum.Life ||
+  page.props.quoteType == quoteTypeCodeEnum.SAVINGS;
 let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
@@ -479,7 +498,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
     return bpForm.disabledCommissionTooltip;
   }*/
   if (bpForm.commission_vat_applicable > 0) {
-    if (isLifeLead) {
+    if (isComissionVatApplicableEnabled) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
     } else if (isBusinessLead) {
       let insuranceBusinessType =
@@ -504,7 +523,7 @@ const commissionVatApplicableTooltip = computed(() => {
     return bpForm.disabledCommissionTooltip;
   }*/
   if (bpForm.commission_vat_not_applicable > 0) {
-    if (isLifeLead) {
+    if (isComissionVatApplicableEnabled) {
       toolTip =
         productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE_FILLED;
     } else if (isBusinessLead) {
@@ -526,14 +545,19 @@ const commissionVatApplicableTooltip = computed(() => {
 });
 
 const disableCommissionVatNotApplicable = computed(() => {
+
+  // for life only
   if (isLifeLead) {
-    if (bpForm.currency === 'AED') {
+    if (bpForm.currency !== 'AED') {
       return true;
     }
     else{
       return false;  
-      // return !bp.isEditing || bpForm.commission_vat_applicable > 0;
     }
+  }
+
+  if (isComissionVatApplicableEnabled) {
+    return !bp.isEditing || bpForm.commission_vat_applicable > 0;
   } else if (isBusinessLead) {
     let insuranceBusinessType = page.props.quote?.business_type_of_insurance_id;
     let allowedBusinessTypes = [
@@ -1693,6 +1717,16 @@ const isDocTypeLoading = docType => {
                     <span>{{ 'Please update the booking details.' }}</span>
                   </template>
                 </x-tooltip>
+                <BookPolicyOverrideCommissionLimitModal
+                  :showCommissionPercentageExceedsLimitAlert="
+                    showCommissionPercentageExceedsLimitAlert
+                  "
+                  :bpForm="bpForm"
+                  @modalClosed="
+                    showCommissionPercentageExceedsLimitAlert = false
+                  "
+                />
+
                 <template v-if="is_lacking_payment || isDisabledSendPCB">
                   <x-tooltip>
                     <x-button
