@@ -109,7 +109,7 @@ class LifeQuoteRepository extends BaseRepository
         });
     }
 
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false)
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::LIFE)->with([
             'advisor',
@@ -274,7 +274,6 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchGetShowFormOptions($quote)
     {
         $payments = $quote->payments;
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
         $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
 

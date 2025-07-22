@@ -145,6 +145,7 @@ class LifeQuoteService extends BaseService
                         $query->whereHas('lifeQuote', function ($subQuery) {
                             $subQuery->where('sum_insured_value', '>=', 1000000);
                         });
+                    default:
                         break;
                 }
             })
@@ -258,9 +259,7 @@ class LifeQuoteService extends BaseService
             'createdById' => auth()->user()->id,
         ];
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
-
-        return $response;
+        return CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
     }
 
     public function getPlainQuoteBy($column, $value)
@@ -598,24 +597,30 @@ class LifeQuoteService extends BaseService
     {
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
+
+        $error = null;
+
         if ($leadsIds == '' || $leadsIds == null) {
-            return 'Please select lead(s) to assign';
-        }
-        if (substr($leadsIds, 0, 1) == ',') {
-            $leadsIds = substr($leadsIds, 1);
-        }
-        $leadsIds = array_map('intval', explode(',', $leadsIds));
-        foreach ($leadsIds as $leadId) {
-            $entity = $this->getPlainQuoteBy('id', $leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+            $error = 'Please select lead(s) to assign';
+        } elseif ($userId == '' || $userId == null) {
+            $error = 'Please select user to assign leads';
+        } else {
+            if (substr($leadsIds, 0, 1) == ',') {
+                $leadsIds = substr($leadsIds, 1);
+            }
+
+            $leadsIds = array_map('intval', explode(',', $leadsIds));
+            foreach ($leadsIds as $leadId) {
+                $entity = $this->getPlainQuoteBy('id', $leadId);
+                if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
+                    $error = 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+                    break;
+                }
             }
         }
-        if ($userId == '' || $userId == null) {
-            return 'Please select user to assign leads';
-        }
 
-        return 'true';
+        return $error ?? 'true';
+
     }
 
     public function correctHistoricData($quote)
@@ -662,9 +667,7 @@ class LifeQuoteService extends BaseService
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
+                return json_decode($getContents);
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
@@ -705,9 +708,7 @@ class LifeQuoteService extends BaseService
             'url' => '/save-manual-life-quote-plan',
         ]);
 
-        $response = app(abstract: KenService::class)->request('/save-manual-life-quote-plan', 'post', $reqData);
-
-        return $response;
+        return app(abstract: KenService::class)->request('/save-manual-life-quote-plan', 'post', $reqData);
     }
 
     public function getLifeProviderPlan($data)
@@ -749,8 +750,6 @@ class LifeQuoteService extends BaseService
     public function exportPlansPdf(string $quoteType, array $data = [])
     {
         $quotePlans = $this->quotePlans($data);
-
-        $planIds = $data['plan_ids'] ?? [];
 
         $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->first();
 
@@ -830,9 +829,7 @@ class LifeQuoteService extends BaseService
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
+                return json_decode($getContents);
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();

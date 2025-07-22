@@ -936,7 +936,6 @@ const confirmSendEmail = () => {
 };
 
 const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
-  const loaderKey = `${planId}-${version}`;
   selectPlanLoader.value[planUuid] = true;
   axios
     .post('/personal-quotes/life-plan-selected', {

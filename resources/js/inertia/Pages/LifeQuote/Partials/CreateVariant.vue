@@ -511,7 +511,7 @@ const formattedActualPremium = useFormattedNumberField(
       </h2>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="providerId" class="block font-medium text-gray-700 mb-1"
             >Insurance Provider <span class="text-red-500">*</span></label
           >
           <x-select
@@ -526,13 +526,15 @@ const formattedActualPremium = useFormattedNumberField(
             placeholder=""
             class="w-full"
             disabled
+            id="providerId"
           />
         </div>
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="planId" class="block font-medium text-gray-700 mb-1"
             >Plan <span class="text-red-500">*</span></label
           >
           <x-select
+            id="planId"
             v-model="createForm.planId"
             placeholder="Select Plan"
             class="w-full"
@@ -549,10 +551,11 @@ const formattedActualPremium = useFormattedNumberField(
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block font-medium text-gray-700 mb-1"
+            <label for="currency" class="block font-medium text-gray-700 mb-1"
               >Currency <span class="text-red-500">*</span></label
             >
             <x-select
+              id="currency"
               v-model="createForm.currency"
               placeholder="AED"
               class="w-full"
@@ -566,7 +569,7 @@ const formattedActualPremium = useFormattedNumberField(
             />
           </div>
           <div>
-            <label class="block font-medium text-gray-700 mb-1"
+            <label for="sumAssured" class="block font-medium text-gray-700 mb-1"
               >Sum Assured <span class="text-red-500">*</span></label
             >
             <x-input
@@ -583,15 +586,17 @@ const formattedActualPremium = useFormattedNumberField(
               min="0"
               step="any"
               @keydown="e => preventInvalidInputs(e, true, false)"
+              id="sumAssured"
             />
           </div>
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="policyTerm" class="block font-medium text-gray-700 mb-1"
             >Policy Term <span class="text-red-500">*</span></label
           >
           <x-input
+            id="policyTerm"
             v-model="createForm.policyTerm"
             placeholder="Enter Policy Term"
             :rules="[isRequired, isNonNegative, validatePolicyTerm]"
@@ -603,10 +608,11 @@ const formattedActualPremium = useFormattedNumberField(
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="paymentTerm" class="block font-medium text-gray-700 mb-1"
             >Payment Frequency <span class="text-red-500">*</span></label
           >
           <x-select
+            id="paymentTerm"
             v-model="createForm.paymentTerm"
             placeholder="Select Payment Frequency"
             class="w-full"
@@ -616,11 +622,12 @@ const formattedActualPremium = useFormattedNumberField(
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="price" class="block font-medium text-gray-700 mb-1"
             >Price (VAT not applicable)
             <span class="text-red-500">*</span></label
           >
           <x-input
+            id="price"
             v-model="formattedActualPremium"
             placeholder="Enter Price"
             :rules="
@@ -637,13 +644,14 @@ const formattedActualPremium = useFormattedNumberField(
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="insurerQuoteNo" class="block font-medium text-gray-700 mb-1"
             >Insurer Quote Number</label
           >
           <x-input
             v-model="createForm.insurerQuoteNo"
             placeholder="Enter Insurer Quote Number"
             class="w-full"
+            id="insurerQuoteNo"
             :disabled="plan.isApi"
           />
         </div>

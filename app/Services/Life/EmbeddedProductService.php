@@ -59,7 +59,7 @@ class EmbeddedProductService extends BaseService
                 $item->download_document_button = $isDocPresent && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
 
                 if (auth()->user()->hasRole(RolesEnum::Engineering)) {
-                    $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
+                    $documentCount = $isDocPresent ? $transaction[0]->documents()->count() : 0;
                     $item->sync_document_button = $documentCount < 5;
                 }
 
@@ -74,12 +74,15 @@ class EmbeddedProductService extends BaseService
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
     {
-        if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            if (
+        if (
+            ! $transaction->isEmpty() &&
+            in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]) &&
+            (
                 $productCategory == EpCategoryEnum::STAND_ALONE ||
-                ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))) {
-                return true;
-            }
+                ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))
+            )
+        ) {
+            return true;
         }
 
         return false;
