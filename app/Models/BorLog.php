@@ -121,9 +121,9 @@ class BorLog extends Model
      * Get all documents related to this BOR request.
      * Uses the polymorphic relationship from quote_documents table.
      */
-    public function documents(): MorphMany
+    public function document(): BelongsTo
     {
-        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+        return $this->belongsTo(QuoteDocument::class, 'quote_document_id');
     }
 
     /**

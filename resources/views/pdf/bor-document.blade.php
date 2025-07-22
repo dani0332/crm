@@ -149,7 +149,7 @@
             <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
             
             <div class="signature-box">
-                <img src="{{ public_path(str_replace('/storage/', 'storage/', $signature_path)) }}" 
+                <img src="{{ $signature_path }}" 
                      alt="Customer Signature" 
                      class="signature-image">
             </div>

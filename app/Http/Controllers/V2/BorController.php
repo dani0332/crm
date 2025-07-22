@@ -372,6 +372,8 @@ class BorController extends Controller
 
             return response()->json([
                 'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'message' => 'Failed to generate PDF preview',
             ], 500);
         }

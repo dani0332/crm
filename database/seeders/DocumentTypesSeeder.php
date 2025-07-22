@@ -602,6 +602,16 @@ class DocumentTypesSeeder extends Seeder
                 'is_required' => 0,
                 'category' => DocumentTypeCode::QUOTE,
             ],
+            [
+                'code' => 'BOR',
+                'text' => 'Broker on Record Letter',
+                'description' => 'Please upload the BOR letter with the signature and stamp on your official company letterhead',
+                'quote_type_id' => null,
+                'is_active' => 1,
+                'folder_path' => 'bor',
+                'accepted_files' => '.pdf,.png,.jpeg,.jpg',
+                'max_files' => 5,
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {

@@ -77,7 +77,6 @@ class BorPdfService
 
             // Prepare data for PDF template (without signature)
             $data = $this->preparePdfData($borLog, $lead, false);
-
             // Generate PDF
             $pdf = Pdf::loadView('pdf.bor-document', $data)
                 ->setPaper('a4', 'portrait')
@@ -104,6 +103,39 @@ class BorPdfService
      */
     private function preparePdfData(BorLog $borLog, PersonalQuote $lead, bool $includeSignature = true): array
     {
+        $document = $borLog->document;
+        $includeSignature = isset($document) && $document != null ? true : false;
+        $temporaryUrl = null;
+        
+        if ($includeSignature && $document) {
+            try {
+                $filename = urlencode($document->doc_url);
+                $disk = Storage::disk('azureIM');
+                if (method_exists($disk, 'temporaryUrl')) {
+                    $temporaryUrl = $disk->temporaryUrl($filename, now()->addMinutes(5));
+                    
+                    // For PDF generation, we need to convert the image to base64 data URI
+                    // since DomPDF cannot access external URLs directly
+                    if ($temporaryUrl) {
+                        $signatureBase64 = $this->getSignatureImageFromUrl($temporaryUrl);
+                        if ($signatureBase64) {
+                            $temporaryUrl = $signatureBase64; // Replace URL with base64 data URI
+                        } else {
+                            $temporaryUrl = null;
+                            $includeSignature = false;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to generate temporary URL for signature', [
+                    'document_id' => $document->id,
+                    'error' => $e->getMessage()
+                ]);
+                $temporaryUrl = null;
+                $includeSignature = false;
+            }
+        }
+        
         $data = [
             // BOR Information
             'bor_log' => $borLog,
@@ -131,10 +163,10 @@ class BorPdfService
             'chassis_number' => $borLog->chasis_number,
             
             // Signature Information
-            'include_signature' => $includeSignature && $borLog->signature_path,
-            'signature_path' => $includeSignature ? $borLog->signature_path : null,
-            'signature_name' => $borLog->customer_signature_name,
-            'date_signed' => $borLog->date_signed ? $borLog->date_signed->format('Y-m-d H:i:s') : null,
+            'include_signature' => $includeSignature && $temporaryUrl,
+            'signature_path' => $includeSignature ? $temporaryUrl : null,
+            'signature_name' => $borLog->customer_signature_name ?? $borLog->insurer_name,
+            'date_signed' => $borLog->date_signed, // Already formatted as string by model accessor
             
             // Additional Information
             'current_date' => now()->format('Y-m-d'),
@@ -184,45 +216,59 @@ class BorPdfService
     }
 
     /**
-     * Generate BOR document for specific LOB
+     * Download image from Azure URL and convert to base64 data URI for PDF embedding
      */
-    public function generateLobSpecificBorPdf(BorLog $borLog, string $lob): ?string
+    private function getSignatureImageFromUrl(string $imageUrl): ?string
     {
         try {
-            $lead = $borLog->personalQuote;
-            if (!$lead) {
-                throw new \Exception('Lead information not found');
+            // Use cURL for better reliability with Azure URLs
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $imageUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For dev environments
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            
+            $imageContent = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($imageContent === false || $httpCode !== 200) {
+                Log::warning('Failed to download image from URL', [
+                    'url' => $imageUrl,
+                    'http_code' => $httpCode,
+                    'curl_error' => $curlError
+                ]);
+                return null;
             }
 
-            // Prepare LOB-specific data
-            $data = $this->preparePdfData($borLog, $lead);
-            $data['lob_specific'] = $this->getLobSpecificData($lob, $lead);
+            // Detect image type from the content
+            $imageInfo = getimagesizefromstring($imageContent);
+            if (!$imageInfo) {
+                Log::warning('Invalid image content downloaded', ['url' => $imageUrl]);
+                return null;
+            }
 
-            // Use LOB-specific template if available, otherwise use default
-            $templateName = $this->getLobSpecificTemplate($lob);
+            $mimeType = $imageInfo['mime'];
+            $base64Data = base64_encode($imageContent);
             
-            $pdf = Pdf::loadView($templateName, $data)
-                ->setPaper('a4', 'portrait')
-                ->setOption('isHtml5ParserEnabled', true)
-                ->setOption('isRemoteEnabled', true);
-
-            // Generate filename with LOB prefix
-            $filename = strtoupper($lob) . '_' . $this->generatePdfFilename($borLog);
+            // Create data URI
+            $dataUri = "data:{$mimeType};base64,{$base64Data}";
             
-            // Save PDF
-            $pdfContent = $pdf->output();
-            $pdfPath = 'bor-documents/' . strtolower($lob) . '/' . $filename;
-            Storage::disk('public')->put($pdfPath, $pdfContent);
-
-            return Storage::url($pdfPath);
-
+            Log::info('Successfully converted signature image to base64', [
+                'mime_type' => $mimeType,
+                'image_size' => strlen($imageContent)
+            ]);
+            
+            return $dataUri;
+            
         } catch (\Exception $e) {
-            Log::error('LOB-specific BOR PDF generation failed', [
-                'bor_log_id' => $borLog->id,
-                'lob' => $lob,
+            Log::error('Failed to download and convert signature image', [
+                'url' => $imageUrl,
                 'error' => $e->getMessage(),
             ]);
-
+            
             return null;
         }
     }
@@ -273,29 +319,5 @@ class BorPdfService
         }
 
         return $lobData;
-    }
-
-    /**
-     * Get LOB-specific template name
-     */
-    private function getLobSpecificTemplate(string $lob): string
-    {
-        $templateMap = [
-            'car' => 'pdf.bor-car',
-            'bike' => 'pdf.bor-bike',
-            'travel' => 'pdf.bor-travel',
-            'health' => 'pdf.bor-health',
-            'home' => 'pdf.bor-home',
-        ];
-
-        // Use LOB-specific template if it exists, otherwise use default
-        $templateName = $templateMap[strtolower($lob)] ?? 'pdf.bor-document';
-        
-        // Check if view exists, fallback to default if not
-        if (!view()->exists($templateName)) {
-            return 'pdf.bor-document';
-        }
-
-        return $templateName;
     }
 } 
