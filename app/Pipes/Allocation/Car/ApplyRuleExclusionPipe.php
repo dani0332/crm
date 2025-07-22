@@ -41,10 +41,18 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
         return $next($request);
     }
 
+    private function finalizeTierUsers($tierUserIds, $rules)
+    {
+        $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
+
+        $finalEligibleUserIds = array_intersect($tierUserIds, $ruleUserIds);
+
+        return array_values($finalEligibleUserIds);
+    }
+
     private function applyRuleExclusions($rules, $tierUserIds, $lead)
     {
         if ($rules->isEmpty()) {
-
             if ($lead->registration_type == CarRegistrationType::PERSONAL) {
                 $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: true);
             } else {
@@ -54,9 +62,9 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
             LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
             return array_diff($tierUserIds, $ruleUserIds);
+        } else {
+            return $this->finalizeTierUsers($tierUserIds, $rules);
         }
-
-        return $tierUserIds;
     }
 
     private function getRulesForLeadSource($lead)
