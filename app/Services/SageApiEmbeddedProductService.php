@@ -185,6 +185,15 @@ class SageApiEmbeddedProductService
             }
             $sageRequestEmbeddedProduct->epSageReceiptId = $arReceiptCreationResponse['documentNumber'];
 
+            // Execute AP Prepayment Receipt Post Call
+            $apReceiptCreationResponse = $this->createAPPrepaymentReceipt([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
+            if (! $apReceiptCreationResponse['status']) {
+                $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fun:'.__FUNCTION__);
+
+                return $apReceiptCreationResponse;
+            }
+            $sageRequestEmbeddedProduct->epSageAPReceiptId = $apReceiptCreationResponse['documentNumber'];
+
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $createARInvoicePremAndComm['status']) {
@@ -201,12 +210,12 @@ class SageApiEmbeddedProductService
                 return $createAPInvoicePrem;
             }
 
-            // Apply Prepayments
-            $applyPaymentInvoices = $this->applyPaymentInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
-            if (! $applyPaymentInvoices['status']) {
+            // Apply Prepayments AR Invoice
+            $applyPaymentARInvoices = $this->applyPaymentARInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
+            if (! $applyPaymentARInvoices['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fun:'.__FUNCTION__);
 
-                return $applyPaymentInvoices;
+                return $applyPaymentARInvoices;
             }
 
             $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fun:'.__FUNCTION__);
@@ -230,6 +239,118 @@ class SageApiEmbeddedProductService
     }
 
     private function createARPrepaymentReceipt($sageRequestDataArray): array
+    {
+        $response = ['status' => false, 'message' => '', 'error' => '', 'documentNumber' => null];
+        [$quote, $sukoonMedXEPTransaction, $sageRequest, $sageRequestEmbeddedProduct , $sageLogArray] = $sageRequestDataArray;
+        $quoteTypeId = $sageRequest->quoteTypeId;
+        $isAlreadyPosted = false;
+
+        $totalSteps = 3;
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code);
+
+        $payLoadOptions = self::createARPaymentReceiptsPayload($sageRequest, $sageRequestEmbeddedProduct);
+        $currentStep = 1;
+        $isLiveApiCallStep1 = true;
+        if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == SageEnum::STATUS_SUCCESS) {
+            $isLiveApiCallStep1 = false;
+            $sageResponse = json_decode($sageLogArray[1]['response'], true);
+        } else {
+
+            $createPremiumPrepaymentResponse = $this->sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+            $sageResponse = json_decode($createPremiumPrepaymentResponse, true);
+        }
+
+        if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+            $response['documentNumber'] = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+            if (! $sukoonMedXEPTransaction->sage_ar_payment_receipt_id) {
+                $sukoonMedXEPTransaction->update(['sage_ar_payment_receipt_id' => $response['documentNumber']]);
+            }
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
+            if ($isLiveApiCallStep1) {
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+            }
+            $currentStep = 2;
+            $isLiveApiCallStep2 = true;
+            $readyToPostReceiptAr = self::readyToPostARPaymentReceiptPayload($sageResponse['BatchNumber']);
+            $readyToPostResponse = $this->sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+
+            if ($readyToPostResponse !== '') {
+                $readyToPostArray = json_decode($readyToPostResponse, true);
+
+                if (isset($readyToPostArray['error']['message']['value'])) {
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' Error: '.$readyToPostArray['error']['message']['value']);
+
+                    $aRReceiptBatch = $this->sageApiService->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments: Status of AR Prepayment Receipts batch: '.$aRReceiptBatch);
+                    $aRReceiptBatch = json_decode($aRReceiptBatch, true);
+
+                    if (isset($aRReceiptBatch['BatchStatus']) && $aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $isAlreadyPosted = true;
+                    } elseif (! isset($aRReceiptBatch['BatchStatus'])) {
+                        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to get Prepayment Batch Status for AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $response['message'] = 'EP  Ref:'.$sukoonMedXEPTransaction->code.' Failed to get Prepayment Batch Status';
+
+                        return $response;
+                    } else {
+                        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $response['message'] = 'EP  Ref:'.$sukoonMedXEPTransaction->code.' Error while making ready to post to sage';
+
+                        return $response;
+                    }
+                } else {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                }
+            } else {
+                if ($isLiveApiCallStep2) {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                }
+            }
+
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' Quote Code : '.$quote->code.' post prepayment for EP Code : '.$sukoonMedXEPTransaction->code, ['BatchNumber' => $sageResponse['BatchNumber']]);
+            $isLiveApiCallStep3 = true;
+            $currentStep = 3;
+            $aRPostReceipts = self::postARPaymentReceiptPayload($sageResponse['BatchNumber']);
+            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
+                $isLiveApiCallStep3 = false;
+                $postedResponse = json_decode($sageLogArray[3]['response'], true);
+            } else {
+                $postedResponse = $this->sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+                $postedResponse = json_decode($postedResponse, true);
+            }
+
+            if ($isAlreadyPosted && isset($aRPostReceipts)) {
+                $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+            } else {
+                if (isset($postedResponse['error'])) {
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber']);
+                    $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' :  Error while posting to sage';
+                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+
+                    return $response;
+                } else {
+                    if ($isLiveApiCallStep3) {
+                        $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
+                }
+
+            }
+
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments: Successfully created receipt');
+            $response['status'] = true;
+            $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' : Prepayment created';
+        } else {
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Document number not generated from Sage');
+            $this->logSageApiCall($payLoadOptions, $sageResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+            $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' : Document number not generated from sage - Ref:'.$quote->code;
+        }
+
+        return $response;
+    }
+
+    private function createAPPrepaymentReceipt($sageRequestDataArray): array
     {
         $response = ['status' => false, 'message' => '', 'error' => '', 'documentNumber' => null];
         [$quote, $sukoonMedXEPTransaction, $sageRequest, $sageRequestEmbeddedProduct , $sageLogArray] = $sageRequestDataArray;
@@ -779,11 +900,11 @@ class SageApiEmbeddedProductService
         return $returnMessage;
     }
 
-    public function applyPaymentInvoices($sageRequestDataArray)
+    public function applyPaymentARInvoices($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$quote, $sukoonMedXEPTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
-        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.'  Start applypaymentInvoices for : '.$quote->code.' ');
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.'  Start applyPaymentARInvoices for : '.$quote->code.' ');
         $totalSteps = 12;
         $currentStep = 10;
         $isLiveApiCallStep10 = true;
@@ -883,7 +1004,7 @@ class SageApiEmbeddedProductService
         if ($isLiveApiCallStep12) {
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
         }
-        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.'  : End applypaymentInvoices for : '.$quote->code.' ');
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.'  : End applyPaymentARInvoices for : '.$quote->code.' ');
         $returnMessage['status'] = true;
         $returnMessage['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' Prepayments applied on sage';
 
@@ -933,7 +1054,7 @@ class SageApiEmbeddedProductService
 
     private static function createARPaymentReceiptsPayload($sageRequest, $sageRequestEmbeddedProduct)
     {
-        $optionalFields = self::createEPARPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct);
+        $optionalFields = self::createEPPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct);
 
         $entryType = SageEnum::SCT_STRAIGHT;
         $customerNumber = $sageRequest->customerId;
@@ -969,12 +1090,55 @@ class SageApiEmbeddedProductService
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::EP_SRT_CREATE_PP_REC,
+            'sage_request_type' => SageEnum::EP_SRT_CREATE_AR_PP_REC,
             'entry_type' => $entryType,
         ];
     }
 
-    private static function createEPARPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct)
+    private static function createAPPaymentReceiptsPayload($sageRequest, $sageRequestEmbeddedProduct)
+    {
+        $optionalFields = self::createEPPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct);
+
+        $entryType = SageEnum::SCT_STRAIGHT;
+        $customerNumber = $sageRequest->customerId;
+        $bankCode = SageEnum::BANK_CODE;
+        $paymentCode = SageEnum::PAYMENT_CODE;
+        $bankReceiptAmount = roundNumber(floatval($sageRequestEmbeddedProduct->collectionAmount));
+        $checkReceiptNumber = 'N/A';
+
+        $payLoad = [
+            'BatchRecordType' => 'CA',
+            'BankCode' => $bankCode,
+            'ReceiptsAdjustments' => [
+                [
+                    'BatchType' => 'CA',
+                    'CustomerNumber' => $customerNumber,
+                    'BankCode' => $bankCode,
+                    'BankReceiptAmount' => $bankReceiptAmount,
+                    'CheckReceiptNumber' => $checkReceiptNumber,
+                    'PaymentCode' => $paymentCode,
+                    'ReceiptTransactionType' => 'Prepayment',
+                    'AppliedReceiptsAdjustments' => [
+                        [
+                            'BatchType' => 'CA',
+                            'CustomerNumber' => $customerNumber,
+                            'ReceiptTransactionType' => 'Prepayment',
+                        ],
+                    ],
+                    'ReceiptAdjustmentOptionalField' => $optionalFields,
+                ],
+            ],
+        ];
+
+        return [
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+            'payload' => $payLoad,
+            'sage_request_type' => SageEnum::EP_SRT_CREATE_AP_PP_REC,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    private static function createEPPrepaymentOptionalFields($sageRequest, $sageRequestEmbeddedProduct)
     {
         $optionalArray = [
             [
@@ -1056,7 +1220,7 @@ class SageApiEmbeddedProductService
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::EP_SRT_RTP_PP_REC,
+            'sage_request_type' => SageEnum::EP_SRT_RTP_AR_PP_REC,
             'entry_type' => $entryType,
         ];
     }
@@ -1079,7 +1243,7 @@ class SageApiEmbeddedProductService
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::EP_SRT_POST_PP_REC,
+            'sage_request_type' => SageEnum::EP_SRT_POST_AR_PP_REC,
             'entry_type' => $entryType,
         ];
     }
