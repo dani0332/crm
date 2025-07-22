@@ -792,15 +792,15 @@ class SageApiService
             LoggerService::info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
 
             // create AR Prepayment Premium Receipt
-            $createPremiumPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
-            if (! $createPremiumPrepayment['status']) {
-                return $createPremiumPrepayment;
+            $createARPremiumPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
+            if (! $createARPremiumPrepayment['status']) {
+                return $createARPremiumPrepayment;
             }
 
             // create AP Prepayment Premium Receipt
-            $createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
-            if (! $createPremiumPrepayment['status']) {
-                return $createPremiumPrepayment;
+            $createAPPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
+            if (! $createAPPremiumPrepayment['status']) {
+                return $createAPPremiumPrepayment;
             }
 
             // Create AR Commission and Premium Invoice
