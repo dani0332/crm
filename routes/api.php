@@ -78,7 +78,7 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
     Route::post('quotes/{quoteType}/export-plans-pdf', [GenericLobController::class, 'exportPlansPdf'])->name('exportPlansPdf');
     Route::get('quotes/{quoteType}/export-plans-pdf-link', [GenericLobController::class, 'exportPlansPdfLink'])->name('exportPlansPdfLink');
-    
+
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);

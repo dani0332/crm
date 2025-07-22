@@ -13,6 +13,7 @@ enum PaymentTermEnum: int
     {
         return array_reduce(self::cases(), function ($carry, $case) {
             $carry[$case->name] = $case->value;
+
             return $carry;
         }, []);
     }

@@ -183,7 +183,7 @@ class LifeQuoteRepository extends BaseRepository
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
-            ])->with([
+        ])->with([
             'advisor',
             'quoteStatus',
             'nationality',

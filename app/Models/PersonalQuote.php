@@ -178,7 +178,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function getDobAttribute($value)
     {
-        if (isset($value) && !empty($value)) {
+        if (isset($value) && ! empty($value)) {
             $date_time_format = config('constants.DATE_FORMAT_ONLY');
 
             return Carbon::parse($value)->format($date_time_format);
@@ -448,7 +448,7 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id', 'sub_type_id']);
     }
 
-    function quoteCustomerPlan()
+    public function quoteCustomerPlan()
     {
         return $this->hasOne(QuoteCustomerPlan::class, 'quote_uuid', 'uuid');
     }

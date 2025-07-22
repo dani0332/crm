@@ -3,18 +3,16 @@
 namespace App\Services\Life;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\ApplicationStorage;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\Storage;
-use App\Enums\QuoteStatusEnum;
-use App\Models\LifeQuote;
-
 
 class EmailService
 {
@@ -25,7 +23,7 @@ class EmailService
     {
         LoggerService::startQuoteLogging($quoteUID);
 
-        $logPrefix = get_class($this). ' fn: sendOCAEmail - ';
+        $logPrefix = get_class($this).' fn: sendOCAEmail - ';
 
         LoggerService::info($logPrefix.' - Sending OCA email');
 
@@ -37,7 +35,8 @@ class EmailService
         // get bird flow url for Life from ApplicationStorage
         $flowUrl = $this->getApplicationStorage();
         if (! $flowUrl) {
-            LoggerService::info($logPrefix.' - Flow URL not found', );
+            LoggerService::info($logPrefix.' - Flow URL not found');
+
             return false;
         }
 
@@ -51,7 +50,7 @@ class EmailService
                     LifeQuote::where('uuid', $lead->uuid)->update([
                         'quote_status_id' => QuoteStatusEnum::Quoted,
                     ]);
-                $lead->save();
+                    $lead->save();
                 } else {
                     LoggerService::info("sendOCAEmail - Quote status is not new lead for quote: {$lead->uuid}");
                 }
@@ -64,6 +63,7 @@ class EmailService
             return $response ?? null;
         } catch (\Exception $e) {
             LoggerService::error("$logPrefix Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()}");
+
             return false;
         }
     }
@@ -88,7 +88,7 @@ class EmailService
         $workflowType = WorkflowTypeEnum::LIFE_OCA_EMAIL;
         $planIds = isset($data['plan_ids']) && is_array($data['plan_ids']) ? implode(',', $data['plan_ids']) : ($data['plan_ids'] ?? '');
         $dataSource = config('constants.LIFE_EMAIL_DATA_SOURCE');
-        $instantAlfredLink = config('constants.AFIA_WEBSITE_DOMAIN'). "/life-insurance/quote/$lead->uuid??IA=true";
+        $instantAlfredLink = config('constants.AFIA_WEBSITE_DOMAIN')."/life-insurance/quote/$lead->uuid??IA=true";
 
         return (object) [
             // Lead-related data
@@ -119,7 +119,7 @@ class EmailService
             'dataSource' => $dataSource,
         ];
     }
-    
+
     private function getQuote(string $quoteUID): PersonalQuote
     {
         return PersonalQuote::where([

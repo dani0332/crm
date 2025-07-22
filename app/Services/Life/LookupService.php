@@ -3,9 +3,7 @@
 namespace App\Services\Life;
 
 use App\Enums\LookupsEnum;
-use App\Enums\RangeLookUpEnum;
 use App\Models\Lookup;
-use App\Models\RangeLookup;
 use App\Services\BaseService;
 use App\Services\SendUpdateLogService;
 

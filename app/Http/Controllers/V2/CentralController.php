@@ -125,6 +125,7 @@ class CentralController extends Controller
             if ($request['exportType'] == 'email') {
                 return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $request->all());
             }
+
             return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->download($quoteType.'_leads');
         }
 

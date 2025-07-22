@@ -234,12 +234,12 @@ class LifeQuote extends Model implements AuditableContract
         )->latest('customer_insured.updated_at');
     }
 
-    function sumInsuredCurrency()
+    public function sumInsuredCurrency()
     {
         return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id');
     }
 
-    function policySumAssuredCurrency()
+    public function policySumAssuredCurrency()
     {
         return $this->belongsTo(CurrencyType::class, 'policy_sum_assured_currency_id');
     }

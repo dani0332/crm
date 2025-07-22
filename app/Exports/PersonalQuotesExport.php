@@ -130,7 +130,7 @@ class PersonalQuotesExport implements CsvExportableInterface
 
     protected function getHeadings(string $quoteType): array
     {
-        
+
         $headings = [
             QuoteTypes::BIKE->value => [
                 self::REF_ID,
@@ -290,10 +290,10 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
-                self::CURRENCY, 
+                self::CURRENCY,
                 self::SUM_ASSURED,
                 self::SUM_ASSURED_CURRENCY,
-                self::POLICY_SUM_ASSURED
+                self::POLICY_SUM_ASSURED,
             ],
         ];
 

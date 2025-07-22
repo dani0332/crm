@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ExportPlansPdfLinkRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
-use Illuminate\Validation\ValidationException;
-use App\Enums\QuoteTypes;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\DeleteTempOCBPDFFileJob;
-use App\Http\Requests\ExportPlansPdfLinkRequest;
+use Illuminate\Validation\ValidationException;
 
 class GenericLobController extends Controller
 {
@@ -32,7 +32,7 @@ class GenericLobController extends Controller
             }
 
             $pdf = $response['pdf'];
-           
+
             return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->download()), 'name' => $response['name']]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -85,7 +85,7 @@ class GenericLobController extends Controller
                 $tempFilePath,
                 now()->addMinutes(60)
             );
-    
+
             // Use a job to handle file deletion
             DeleteTempOCBPDFFileJob::dispatch($tempFilePath)->delay(now()->addMinutes(60));
 
@@ -103,10 +103,11 @@ class GenericLobController extends Controller
         }
     }
 
-    private function getExportPdf($quoteType, $request){
+    private function getExportPdf($quoteType, $request)
+    {
         $service = app('App\\Services\\'.ucfirst($quoteType).'QuoteService');
 
-        if($quoteType == strtolower(QuoteTypes::LIFE->value)) {
+        if ($quoteType == strtolower(QuoteTypes::LIFE->value)) {
             $service = app('App\\Services\\Life\\LifeQuoteService');
         }
 
