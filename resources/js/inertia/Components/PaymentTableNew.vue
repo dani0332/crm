@@ -41,8 +41,6 @@ const can = permission => useCan(permission);
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
-// for life only 
-const lifeActualPremium = ref(0);
 
 const { filterCCPayments } = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
@@ -145,12 +143,6 @@ const selectedPaymentForEdit = ref(null);
 // for life only
 const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
 
-const familyEmployeDiscount = [
-  quoteTypeCodeEnum.Car,
-  quoteTypeCodeEnum.Health,
-  quoteTypeCodeEnum.Home,
-  quoteTypeCodeEnum.Travel,
-];
 // Array of quote types to check against
 const quoteTypesToCheck = [
   quoteTypeCodeEnum.Car,
@@ -189,6 +181,7 @@ if (props.sendUpdate) {
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Life) {
+  
   if(props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
     initialAmount.value = (props.quoteRequest.premium * exchangeRate.value) * props.quoteRequest?.life_quote?.payment_term;
   } else {
@@ -386,6 +379,15 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = async () => {
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    if (exchangeRate.value == 0 && props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+      notification.error({
+        title: 'Please update the Exchange Rate in the Available Plan Section.',
+        position: 'top',
+      });
+      return;
+    }
+  }
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
@@ -735,7 +737,6 @@ const setPaymentInitialPrice = () => {
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else if (props.quoteType === quoteTypeCodeEnum.Life) {
-      
       if(props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
         initialAmount.value = (props.quoteRequest.premium * exchangeRate.value) * props.quoteRequest?.life_quote?.payment_term;
       } else {

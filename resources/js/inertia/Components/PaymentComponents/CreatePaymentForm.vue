@@ -1969,8 +1969,9 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: data => {
           let quoteTypes = props.quoteTypesToCheck.filter(
-            quoteType => quoteType !== quoteTypeCodeEnum.Home,
-            quoteType !== quoteTypeCodeEnum.Life
+            quoteType =>
+              quoteType !== quoteTypeCodeEnum.Home &&
+              quoteType !== quoteTypeCodeEnum.Life
           );
           let quoteDocuments =
             quoteTypes.includes(props.quoteType) ||
