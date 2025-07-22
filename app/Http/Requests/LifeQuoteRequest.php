@@ -25,6 +25,7 @@ class LifeQuoteRequest extends FormRequest
     public function rules()
     {
         $numericCondition = 'required|numeric|min:0';
+
         return [
             'first_name' => 'required|between:1,20',
             'last_name' => 'required|between:1,50',
