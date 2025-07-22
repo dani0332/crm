@@ -143,7 +143,6 @@ const selectedPaymentForEdit = ref(null);
 const showInsurerReceiptNumberInputField = ref(false);
 const isInsurerReceiptNumberExistsModalOpen = ref(false);
 const insurerReceiptNumberCheckInProcess = ref(false);
-const paymentForm = ref();
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -321,6 +320,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
     try {
       const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
+        quoteUuid: props.quoteRequest.uuid,
         modelType: props.quoteType,
         paymentCode: code,
         splitPaymentId: splitPaymentId,
@@ -773,7 +773,7 @@ const setPlanDetail = () => {
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
-    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+    initalPlanDetails = props.quoteRequest?.car_plan;
     if (props.sendUpdate) {
       initalPlanDetails =
         props.quoteRequest.insurance_provider_details ??

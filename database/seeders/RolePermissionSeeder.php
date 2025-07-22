@@ -29,6 +29,7 @@ class RolePermissionSeeder extends Seeder
         $this->addRenewalsUploadPermission();
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
+        $this->addOverrideCommissionPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -238,6 +239,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addOverrideCommissionPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::OVERRIDE_COMMISSION_LIMIT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

@@ -616,7 +616,7 @@ class CentralService extends BaseService
     // This method is used to update payment allocation status when lead status is updated
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {
-        $quote = $this->getQuoteObject($modelType, $quote_uuid);
+        $quote = $this->getQuoteObjectBy($modelType, $quote_uuid, 'uuid');
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             $payment = Payment::where('code', $quote->code)->with('paymentSplits')->first();
             if ($payment && $payment->paymentSplits->isNotEmpty()) {
@@ -1187,6 +1187,7 @@ class CentralService extends BaseService
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now(),
                         ]);
+                        (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     }
                     LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
                 }
