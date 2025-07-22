@@ -873,6 +873,7 @@ const showCommercialRule = computed(() => {
         <x-select
           v-if="
             filters.lob === quoteTypeCodeEnum.Car ||
+            filters.lob === quoteTypeCodeEnum.Travel ||
             filters.lob === quoteTypeCodeEnum.Health
           "
           v-model="filters.assignmentType"
