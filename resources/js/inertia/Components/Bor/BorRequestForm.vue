@@ -37,7 +37,7 @@ const form = useForm({
   lead_id: props.leadId,
   lob: props.lob,
   customer_type: '',
-  customer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
+  insurer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
   policy_number: '',
@@ -157,7 +157,7 @@ watch(() => form.customer_type, (newValue) => {
   // Set default customer type based on LOB
   if (isBusinessLob.value && newValue === '') {
     form.customer_type = 'Entity';
-    form.customer_name = '';
+    form.insurer_name = '';
   } else if ((isMotorLob.value || isHealthLob.value) && newValue === '') {
     form.customer_type = 'Individual';
     form.company_name = '';
@@ -207,8 +207,8 @@ const validateForm = () => {
   }
 
   // Customer/Company name validation
-  if (form.customer_type === 'Individual' && !form.customer_name) {
-    errors.customer_name = 'Please enter customer name';
+  if (form.customer_type === 'Individual' && !form.insurer_name) {
+    errors.insurer_name = 'Please enter customer name';
     isValid = false;
   }
 
@@ -339,9 +339,9 @@ onMounted(() => {
               <x-input
                 v-if="form.customer_type === 'Individual'"
                 label="CUSTOMER NAME"
-                v-model="form.customer_name"
+                v-model="form.insurer_name"
                 placeholder="Enter customer name"
-                :error="form.errors.customer_name"
+                :error="form.errors.insurer_name"
                 :disabled="isSubmitting"
                 required
               />

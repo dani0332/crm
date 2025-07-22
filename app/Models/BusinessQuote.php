@@ -179,4 +179,9 @@ class BusinessQuote extends Model implements AuditableContract
             'insured_id' // customer_insured.insured_id
         );
     }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Business);
+    }
 }

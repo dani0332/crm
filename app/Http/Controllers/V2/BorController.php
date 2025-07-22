@@ -23,17 +23,17 @@ use Inertia\Response;
 use App\Enums\BorStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
+use App\Services\Bor\BorService;
+use App\Traits\GenericQueriesAllLobs;
 
 class BorController extends Controller
 {
-    protected $borEmailService;
-    protected $borPdfService;
+    use GenericQueriesAllLobs;
+    protected $borService;
 
-    public function __construct(BorEmailService $borEmailService, BorPdfService $borPdfService)
+    public function __construct(BorService $borService)
     {
-        $this->borEmailService = $borEmailService;
-        $this->borPdfService = $borPdfService;
-        
+        $this->borService = $borService;
         // Apply BOR document upload permission to upload method
         $this->middleware('permission:' . PermissionsEnum::BOR_DOCUMENT_UPLOAD, ['only' => ['uploadDocument']]);
     }
@@ -43,17 +43,26 @@ class BorController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $logs = BorLog::where('lead_id', $request->leadId)
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate(15) // Add simple pagination
-            ->withQueryString();
-        $total = BorLog::where('lead_id', $request->leadId)->count();
+        try {
+            [$logs, $total] = $this->borService->getBorLogs($request->all());
 
-        return response()->json([
-            'success' => true,
-            'data' => $logs,
-            'total' => $total,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+                'total' => $total,
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Failed to fetch BOR logs', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch BOR logs',
+            ], 500);
+        }
+        
     }
 
 
@@ -63,41 +72,13 @@ class BorController extends Controller
     public function store(BorFormRequest $request)
     {
         try {
-            $validated = $request->validated();
-
-            DB::beginTransaction();
-
-            // Create BOR log entry with updated schema
-            $borLog = BorLog::create([
-                'lead_id' => $validated['lead_id'],
-                'lob' => $validated['lob'],
-                'customer_type' => $validated['customer_type'],
-                'company_name' => $validated['company_name'] ?? null,
-                'customer_name' => $validated['customer_name'] ?? null,
-                'insurance_provider_id' => $validated['insurance_provider_id'],
-                'policy_number' => $validated['policy_number'] ?? null,
-                'policy_expiry' => $validated['policy_expiry'] ?? null,
-                'chassis_number' => $validated['chassis_number'] ?? null,
-                'status' => BorStatusEnum::SIGNATURE_REQUESTED,
-                'date_created' => now(),
-                'email_sent' => false,
-            ]);
-
-            // Get lead information for email
-            $lead = PersonalQuote::find($validated['lead_id']);
-            
-            // Send BOR request email
-            $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
-
-            // Update email sent status
-            $borLog->update(['email_sent' => $emailSent]);
-
-            DB::commit();
+            $payload = $request->only('lead_id', 'lob', 'customer_type', 'company_name', 'insurer_name', 'insurance_provider_id', 'policy_number', 'policy_expiry', 'chassis_number');
+            $borLog = $this->borService->createBorLog($payload);
 
             // Return successful response
             return redirect()->back()->with([
-                'success' => 'BOR request created successfully' . ($emailSent ? ' and email sent to customer.' : ', but email failed to send.'),
-                'newBorLog' => $borLog->fresh(['insuranceProvider'])
+                'success' => 'BOR request created successfully' . ($borLog['emailSent'] ? ' and email sent to customer.' : ', but email failed to send.'),
+                'newBorLog' => $borLog['borLog']->fresh(['insuranceProvider'])
             ]);
 
         } catch (\Exception $e) {

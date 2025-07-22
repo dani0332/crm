@@ -87,7 +87,7 @@ const fetchBorLogs = async (page = 1) => {
   try {
     // Use simple axios call with pagination, similar to Pet Quotes approach
     const response = await axios.get(route('bor.requests.index'), {
-      params: { page, leadId: props.leadId }
+      params: { page, leadId: props.leadId, lob: props.lob }
     });
 
     if (response.data.success) {

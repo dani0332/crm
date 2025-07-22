@@ -18,29 +18,9 @@ class BorLog extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'lead_id',
-        'customer_type',
-        'policy_number',
-        'insurer_name',
-        'date_created',
-        'status',
-        'bor_reference',
-        'document_id',
-        'date_signed',
-        'signature_path',
-        'email_sent',
-        'date_uploaded',
-        'customer_signature_name',
-        'user_agent',
-        'insurance_provider_id',
-        'quote_document_id',
-        'company_name',
-        'chasis_number',
-        'policy_expiry',
-        'signed_pdf_path',
-        'cancellation_reason',
-    ];
+    protected $fillable = [];
+
+    protected $guarded = [];
 
     /**
      * The attributes that should be cast.
@@ -134,7 +114,7 @@ class BorLog extends Model
      */
     public function personalQuote(): BelongsTo
     {
-        return $this->belongsTo(PersonalQuote::class, 'lead_id', 'quote_id');
+        return $this->belongsTo(PersonalQuote::class, 'lead_id', 'id');
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Services\Bor;
 
 use App\Models\BorLog;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -88,12 +89,13 @@ class BorPdfService
             
             return ['pdf' => $pdf, 'name' => $filename];
         } catch (\Exception $e) {
-            Log::error('BOR preview PDF generation failed', [
+            LoggerService::error($e->getMessage(), [
                 'bor_log_id' => $borLog->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            return null;
+            throw $e;
         }
     }
 

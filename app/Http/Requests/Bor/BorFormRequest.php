@@ -34,14 +34,14 @@ class BorFormRequest extends FormRequest
         
         // Customer type specific validation
         if ($customerType === 'Individual') {
-            $rules['customer_name'] = ['required', 'string', 'max:255'];
+            $rules['insurer_name'] = ['required', 'string', 'max:255'];
             $rules['company_name'] = ['nullable'];
         } elseif ($customerType === 'Entity') {
             $rules['company_name'] = ['required', 'string', 'max:255'];
-            $rules['customer_name'] = ['nullable'];
+            $rules['insurer_name'] = ['nullable'];
         } else {
             // If customer_type is not set yet, make both optional for now
-            $rules['customer_name'] = ['nullable', 'string', 'max:255'];
+            $rules['insurer_name'] = ['nullable', 'string', 'max:255'];
             $rules['company_name'] = ['nullable', 'string', 'max:255'];
         }
 
@@ -49,9 +49,9 @@ class BorFormRequest extends FormRequest
         $motorLobs = [QuoteTypes::CAR, QuoteTypes::BIKE];
         $isMotorLob = in_array(strtolower($lob), $motorLobs);
 
-        // Policy fields are only required for Individual customers, not Entity customers
+        // Policy fields are only required for Individual insurers, not Entity insurers
         if ($customerType === 'Individual') {
-            // Motor LOB specific fields for Individual customers
+            // Motor LOB specific fields for Individual insurers
             if ($isMotorLob) {
                 $rules['policy_number'] = ['required', 'string', 'max:255'];
                 $rules['policy_expiry'] = ['required', 'date', 'after:today'];
@@ -65,13 +65,13 @@ class BorFormRequest extends FormRequest
                     $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
                 }
             } else {
-                // Non-motor LOBs for Individual customers - these fields are optional
+                // Non-motor LOBs for Individual insurers - these fields are optional
                 $rules['policy_number'] = ['nullable', 'string', 'max:255'];
                 $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
                 $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
             }
         } else {
-            // Entity customers don't need policy fields
+            // Entity insurers don't need policy fields
             $rules['policy_number'] = ['nullable', 'string', 'max:255'];
             $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
             $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
@@ -90,8 +90,8 @@ class BorFormRequest extends FormRequest
             'customer_type.in' => 'Customer type must be either Individual or Entity.',
             'lead_id.required' => 'Lead ID is required.',
             'lead_id.exists' => 'The selected lead does not exist.',
-            'customer_name.required' => 'Customer name is required for individual customers.',
-            'company_name.required' => 'Company name is required for entity customers.',
+            'insurer_name.required' => 'Insurer name is required for individual insurers.',
+            'company_name.required' => 'Company name is required for entity insurers.',
             'insurance_provider_id.exists' => 'The selected insurance provider does not exist.',
             'policy_number.required' => 'Policy number is required for this type of insurance.',
             'policy_expiry.required' => 'Policy expiry date is required for this type of insurance.',
@@ -108,7 +108,7 @@ class BorFormRequest extends FormRequest
         return [
             'customer_type' => 'customer type',
             'lead_id' => 'lead',
-            'customer_name' => 'customer name',
+            'insurer_name' => 'insurer name',
             'company_name' => 'company name',
 
             'insurance_provider_id' => 'insurance provider',
@@ -129,14 +129,14 @@ class BorFormRequest extends FormRequest
             
             // Additional business rule validations
             if ($customerType === 'Entity' && empty($this->input('company_name'))) {
-                $validator->errors()->add('company_name', 'Company name is required for entity customers.');
+                $validator->errors()->add('company_name', 'Company name is required for entity insurers.');
             }
             
-            if ($customerType === 'Individual' && empty($this->input('customer_name'))) {
-                $validator->errors()->add('customer_name', 'Customer name is required for individual customers.');
+            if ($customerType === 'Individual' && empty($this->input('insurer_name'))) {
+                $validator->errors()->add('insurer_name', 'Insurer name is required for individual insurers.');
             }
 
-            // LOB-specific business rules - only for Individual customers
+            // LOB-specific business rules - only for Individual insurers
             if ($customerType === 'Individual') {
                 $motorLobs = ['car', 'bike'];
                 if (in_array(strtolower($lob), $motorLobs)) {
