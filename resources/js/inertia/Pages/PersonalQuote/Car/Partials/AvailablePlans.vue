@@ -94,7 +94,15 @@ watch(
 watch(
   () => planForm.car_value,
   newValue => {
-    if (newValue && (newValue <= 0 || newValue > 99999999)) {
+    // Don't validate empty values in real-time (let form submission handle required validation)
+    if (newValue === null || newValue === undefined || newValue === '') {
+      showCarValueError.value = false;
+      carValueErrorMessage.value = '';
+      return;
+    }
+
+    const numValue = Number(newValue);
+    if (numValue <= 0 || numValue > 99999999) {
       showCarValueError.value = true;
       carValueErrorMessage.value =
         'Please enter a valid vehicle value between AED 1 and AED 99,999,999';
