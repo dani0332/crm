@@ -179,7 +179,7 @@ const getAddonVat = item => {
           label="Car value"
           required
           v-model="addPlanForm.car_value"
-          :rules="[isRequired, maxPrice(999999999), minPrice(1)]"
+          :rules="[isRequired, maxPrice(99999999), minPrice(1)]"
           class="w-full"
           placeholder="Enter Car value"
           type="number"
