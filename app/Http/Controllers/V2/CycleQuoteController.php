@@ -284,6 +284,8 @@ class CycleQuoteController extends Controller
             ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::InNegotiation, $request)],
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PaymentPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
 
@@ -296,7 +298,9 @@ class CycleQuoteController extends Controller
             QuoteStatusEnum::FollowedUp => 2,
             QuoteStatusEnum::PaymentPending => 3,
             QuoteStatusEnum::TransactionApproved => 4,
-            QuoteStatusEnum::PolicyIssued => 5,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::PolicyIssued => 7,
         ];
 
         $renewals = [
@@ -305,7 +309,9 @@ class CycleQuoteController extends Controller
             QuoteStatusEnum::FollowedUp => 2,
             QuoteStatusEnum::PaymentPending => 3,
             QuoteStatusEnum::TransactionApproved => 4,
-            QuoteStatusEnum::PolicyIssued => 5,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::PolicyIssued => 7,
         ];
 
         if ($areBothTeamsPresent || $isManagerOrDeputy) {

@@ -55,6 +55,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
@@ -78,6 +79,7 @@ class CentralService extends BaseService
             quoteTypeCode::Car,
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
+            quoteTypeCode::SAVINGS,
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -116,8 +118,22 @@ class CentralService extends BaseService
             $parentType = quoteTypeCode::Business;
         }
 
-        $repository = $this->getRepositoryObject($parentType);
-        $parentRecord = $repository::where('id', $entityId)->first();
+        $parentRecord = null;
+
+        if ($quoteType = QuoteTypes::tryFrom($parentType)) {
+            $parentRecord = $quoteType->model()::find($entityId);
+        }
+
+        if (! $parentRecord) {
+            $repository = $this->getRepositoryObject($parentType);
+            if ($repository) {
+                $parentRecord = $repository::where('id', $entityId)->first();
+            }
+        }
+
+        if (! $parentRecord) {
+            return false;
+        }
 
         if (! empty($data['lob_team_sub_selection'])) {
             $parentRecord['enquiryType'] = $data['lob_team_sub_selection'];
@@ -146,13 +162,19 @@ class CentralService extends BaseService
                     }
                 }
 
-                $repository = $this->getRepositoryObject(ucfirst($lob));
+                if (in_array($lob, [
+                    quoteTypeCode::SAVINGS,
+                ])) {
+                    $response = PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob));
+                } else {
+                    $repository = $this->getRepositoryObject(ucfirst($lob));
 
-                if (! class_exists($repository)) {
-                    return false;
+                    if (! class_exists($repository)) {
+                        return false;
+                    }
+
+                    $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
                 }
-
-                $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -183,7 +205,7 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::Home];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home];
         $quoteBatch = QuoteBatches::latest()->first();
         LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
@@ -281,6 +303,8 @@ class CentralService extends BaseService
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             case quoteTypeCode::Home:
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
+            case quoteTypeCode::SAVINGS:
+                return app(SavingsQuoteService::class)->getAvailablePlans($id);
             default:
                 return [];
         }
@@ -496,6 +520,16 @@ class CentralService extends BaseService
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
                 break;
+            case QuoteTypes::SAVINGS->value:
+                $endpoint = '/process-savings-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteUID' => $uuid,
+                    'quoteTypeId' => QuoteTypeId::Savings,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
         }
 
         return $response;
@@ -582,7 +616,7 @@ class CentralService extends BaseService
     // This method is used to update payment allocation status when lead status is updated
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {
-        $quote = $this->getQuoteObject($modelType, $quote_uuid);
+        $quote = $this->getQuoteObjectBy($modelType, $quote_uuid, 'uuid');
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             $payment = Payment::where('code', $quote->code)->with('paymentSplits')->first();
             if ($payment && $payment->paymentSplits->isNotEmpty()) {
@@ -1153,6 +1187,7 @@ class CentralService extends BaseService
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now(),
                         ]);
+                        (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     }
                     LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
                 }
