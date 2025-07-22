@@ -12,14 +12,12 @@ class ConversionAsAtReportExport implements CsvExportableInterface
     use ModernCsvExportable;
 
     protected Collection $columnTotals;
-
     protected Collection $headers;
 
     public function __construct(
         private ConversionAsAtReportService $conversionAsAtReportService,
-        private array                       $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
 
         // Initialize dynamic headers based on displayBy parameter
@@ -54,8 +52,8 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
 
         // Show title column if EITHER displayBy is set OR includeUnassignedLeads is enabled
-        if (!empty($displayBy) || $includeUnassignedLeads) {
-            if (!empty($displayBy)) {
+        if (! empty($displayBy) || $includeUnassignedLeads) {
+            if (! empty($displayBy)) {
                 // Use displayBy as header name
                 $titleHeader = str_replace('_', ' ', $displayBy);
                 $titleHeader = ucwords($titleHeader);
@@ -108,9 +106,6 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
             // Now process ALL records in the chunk (just like the download path does)
             foreach ($processedData as $record) {
-                /*logger()->debug("record:".print_r([
-                    '$record' => $record
-                    ],1));*/
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
             }
@@ -144,8 +139,8 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         ];
 
         // Add title column if EITHER displayBy is set OR includeUnassignedLeads is enabled
-        if (!empty($displayBy) || $includeUnassignedLeads) {
-            if (!empty($displayBy)) {
+        if (! empty($displayBy) || $includeUnassignedLeads) {
+            if (! empty($displayBy)) {
                 // Add displayBy value
                 $titleValue = $record->{$displayBy} ?? 'N/A';
             } else {
@@ -159,17 +154,16 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
         foreach ($this->columnTotals as $index => $field) {
             // Calculate offset: 1 if title column exists, 0 if not
-            $offset = (!empty($displayBy) || $includeUnassignedLeads) ? 1 : 0;
+            $offset = (! empty($displayBy) || $includeUnassignedLeads) ? 1 : 0;
             $sumColumns = [4 + $offset, 5 + $offset, 6 + $offset]; // total_leads, bad_leads, sale_leads
 
             if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
-                $this->columnTotals->put($index, ((float)$this->columnTotals->get($index, 0) + (float)($row->get($index) ?? 0)));
+                $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
 
         return $row->values()->toArray();
     }
-
 
     private function postDataRows($stream)
     {
@@ -180,10 +174,9 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
         // Check if we should include unassigned leads
         $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
-        $displayBy = $this->requestParams['displayBy'] ?? null;
 
         // Calculate offset: 1 if title column exists, 0 if not
-        $offset = (!empty($displayBy) || $includeUnassignedLeads) ? 1 : 0;
+        $offset = (! empty($this->requestParams['displayBy']) || $includeUnassignedLeads) ? 1 : 0;
 
         // Copy accumulated totals to totals row
         foreach ($this->columnTotals as $index => $key) {
@@ -247,6 +240,6 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
     private function getEmptyRow(): array
     {
-        return array_fill(0, count($this->map((object)[])), '');
+        return array_fill(0, count($this->map((object) [])), '');
     }
 }
