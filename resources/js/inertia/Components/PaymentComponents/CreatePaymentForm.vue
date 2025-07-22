@@ -291,7 +291,6 @@ const rules = {
     } else {
       return !!v || 'This field is required';
     }
-    return true;
   },
   reference: v => {
     if (

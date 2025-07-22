@@ -112,7 +112,7 @@ watch(
   () => quoteForm.dob,
   (newValue, oldValue) => {
     if (newValue) {
-      dobChanged(newValue);
+      dobChanged();
     }
   },
   { deep: true },

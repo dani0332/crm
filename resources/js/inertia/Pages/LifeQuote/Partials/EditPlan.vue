@@ -919,14 +919,14 @@ const formattedActualPremium = useFormattedNumberField(
               class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
               v-if="props?.selectedPlan?.benefits?.inclusion"
             >
-              <div
+              <dl
                 v-for="data in props?.selectedPlan?.benefits?.inclusion || []"
                 :key="data.code"
                 class="mb-3 text-center"
               >
                 <dt class="font-semibold">{{ data.text }}</dt>
                 <dd>{{ data.value ?? 'Included' }}</dd>
-              </div>
+              </dl>
             </div>
           </TabPanel>
 
@@ -937,14 +937,14 @@ const formattedActualPremium = useFormattedNumberField(
               class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
               v-if="props?.selectedPlan?.benefits?.exclusion"
             >
-              <div
+              <dl
                 v-for="data in props?.selectedPlan?.benefits?.exclusion || []"
                 :key="data.code"
                 class="mb-3 text-center"
               >
                 <dt class="font-semibold">{{ data.text }}</dt>
                 <dd>{{ data.value ?? 'Excluded' }}</dd>
-              </div>
+              </dl>
             </div>
           </TabPanel>
 
@@ -974,12 +974,12 @@ const formattedActualPremium = useFormattedNumberField(
         </div>
         <div class="flex justify-between gap-4">
           <!-- Price section aligned to the left -->
-          <div class="flex flex-row">
+          <dl class="flex flex-row">
             <dt class="font-bold text-lg ml-4">Total Price:</dt>
             <dd class="text-lg">
               &nbsp; AED {{ numberFormat(actualPremium) }}
             </dd>
-          </div>
+          </dl>
 
           <!-- Timestamps aligned to the right -->
           <div class="flex flex-col items-end">
@@ -1024,12 +1024,12 @@ const formattedActualPremium = useFormattedNumberField(
           <!-- Price section aligned to the left -->
           <div class="flex flex-col">
             <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
-            <div class="flex flex-row">
+            <dl class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
               <dd class="text-sm">
                 &nbsp; AED {{ numberFormat(actualPremium) }}
               </dd>
-            </div>
+            </dl>
           </div>
           <!-- Timestamps aligned to the right -->
         </div>
