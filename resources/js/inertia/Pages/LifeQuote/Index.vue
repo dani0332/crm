@@ -849,7 +849,7 @@ const insurerAMLStatusOption = computed(() =>
           :options="
             planSubTypes.map(item => ({
               value: item.id,
-              label:item.text,
+              label: item.text,
             }))
           "
         />

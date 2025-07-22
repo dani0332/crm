@@ -221,10 +221,10 @@ const isMasterPaymentPaid = computed(() => {
       <ToolTip
         title="FREQUENCY"
         :tooltip="
-			isLifeQuoteFrequencyReadonly
-				? 'To make changes, please update the payment term in the Available Plan section.'
-				: paymentTooltipEnum.FREQUENCY
-		"
+          isLifeQuoteFrequencyReadonly
+            ? 'To make changes, please update the payment term in the Available Plan section.'
+            : paymentTooltipEnum.FREQUENCY
+        "
         :required="!isFieldReadonly"
       />
       <x-field class="w-full">
@@ -256,7 +256,7 @@ const isMasterPaymentPaid = computed(() => {
           class="custom-select cursor-not-allowed bg-gray-100"
           :value="
             frequencyTypes.find(
-            item => item.value === paymentMethodsForm.frequency,
+              item => item.value === paymentMethodsForm.frequency,
             )?.label || paymentMethodsForm.frequency
           "
           readonly

@@ -1,6 +1,11 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { preventInvalidInputs, useFormattedNumberField, useFormattedRiderField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
+import {
+  preventInvalidInputs,
+  useFormattedNumberField,
+  useFormattedRiderField,
+  cleanFormattedValueToFloat,
+} from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -18,7 +23,6 @@ const notification = useNotifications('toast');
 const { isRequired } = useRules();
 
 const lifeCoverToggled = true;
-
 
 const shown = computed({
   get: () => props.modelValue,
@@ -89,7 +93,6 @@ watch(
   },
 );
 
-
 const validatePriceRange = value => {
   if (!props.plan.isManualPlan) return true;
   const price = cleanFormattedValueToFloat(value);
@@ -136,7 +139,6 @@ const paymentTerms = [
   { value: props.paymentTermEnum.SEMI_ANNUALLY, label: 'Semi-Annually' },
   { value: props.paymentTermEnum.ANNUALLY, label: 'Annually' },
 ];
-
 
 const filteredPaymentTerms = computed(() => {
   return createForm.providerId === 180
@@ -239,7 +241,6 @@ watch(
         text: rider.text,
         inputRequired: rider?.inputRequired ?? false,
       }));
-      
     }
   },
   { deep: true },
@@ -348,7 +349,6 @@ const onSubmit = () => {
       }
 
       emit('success');
-      
     })
     .catch(err => {
       emit('error');
@@ -440,7 +440,7 @@ onMounted(() => {
         };
         return mappedRider;
       });
-    } 
+    }
 
     getRiderDetails(props.plan.planId);
     exitAge.value = props.plan?.exitAge;
@@ -456,8 +456,10 @@ const isNonNegative = value => {
 const validateCoverValue = value => {
   if (props.plan.isApi) return true;
   value = cleanFormattedValueToFloat(value);
-  
-  if (parseFloat(value) > cleanFormattedValueToFloat(formattedSumAssured.value)) {
+
+  if (
+    parseFloat(value) > cleanFormattedValueToFloat(formattedSumAssured.value)
+  ) {
     return `Cover value must not exceed ${createForm.sumAssured}`;
   }
   return true;
@@ -499,8 +501,11 @@ const validateRiderCoverValue = (value, riderId) => {
   return true;
 };
 
-const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured')
-const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremium')
+const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured');
+const formattedActualPremium = useFormattedNumberField(
+  createForm,
+  'actualPremium',
+);
 </script>
 
 <template>
@@ -592,7 +597,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
               type="text"
               min="0"
               step="any"
-              @keydown="e => preventInvalidInputs(e, true,false)"
+              @keydown="e => preventInvalidInputs(e, true, false)"
             />
           </div>
         </div>
@@ -608,7 +613,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             class="w-full"
             type="text"
             step="any"
-            @keydown="e => preventInvalidInputs(e, true,false)"
+            @keydown="e => preventInvalidInputs(e, true, false)"
           />
         </div>
 
@@ -641,7 +646,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             class="w-full"
             type="text"
             step="any"
-            @keydown="e => preventInvalidInputs(e, true,true)"
+            @keydown="e => preventInvalidInputs(e, true, true)"
             :disabled="plan.isApi"
           />
         </div>
@@ -677,7 +682,12 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             disabled
           />
 
-          <x-toggle color="emerald" size="lg" disabled v-model="lifeCoverToggled" />
+          <x-toggle
+            color="emerald"
+            size="lg"
+            disabled
+            v-model="lifeCoverToggled"
+          />
           <x-input
             type="number"
             min="0"
@@ -719,9 +729,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
           <x-input
             type="number"
             :rules="
-              rider.active && props.plan.isManualPlan
-                ? [isNonNegative]
-                : []
+              rider.active && props.plan.isManualPlan ? [isNonNegative] : []
             "
             step="any"
             @keydown="e => preventInvalidInputs(e, false)"

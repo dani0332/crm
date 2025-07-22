@@ -1,7 +1,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import moment from 'moment';
-import { numberFormat, preventInvalidInputs, useFormattedNumberField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
+import {
+  numberFormat,
+  preventInvalidInputs,
+  useFormattedNumberField,
+  cleanFormattedValueToFloat,
+} from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -138,9 +143,7 @@ const actualPremium = computed(() => {
   return basePremium + overallLoadingValue + riderPrice;
 });
 
-
 const toggleVisiblity = () => {
-  
   axios
     .post('/personal-quotes/life/toggle-life-plan-visibility', {
       quoteUID: props.uuid,
@@ -167,7 +170,6 @@ const toggleVisiblity = () => {
       extraAttr.loading = false;
     });
 };
-
 
 // Update the Plan (if it is manual)
 const onSubmit = () => {
@@ -206,7 +208,7 @@ const onSubmit = () => {
         });
         return;
       }
-      
+
       notification.success({
         title: res.data.message,
         position: 'top',
@@ -215,8 +217,6 @@ const onSubmit = () => {
       emit('success');
 
       closeModal();
-
-
     })
     .catch(err => {
       emit('error', err);
@@ -458,14 +458,16 @@ const validateCoverValue = value => {
     return true;
   }
   // only validate for manual plans
-  if (parseFloat(value) > cleanFormattedValueToFloat(formattedSumAssured.value)) {
+  if (
+    parseFloat(value) > cleanFormattedValueToFloat(formattedSumAssured.value)
+  ) {
     return `Cover value must not exceed ${editForm.sumAssured}`;
   }
   return true;
 };
 
 const hidePlan = () => {
-  toggleVisiblity()
+  toggleVisiblity();
 };
 
 const submitType = props.selectedPlan.isApi ? ref('getQuote') : ref('onSubmit');
@@ -545,8 +547,11 @@ const validateRiderCoverValue = (value, riderId) => {
 
   return true;
 };
-const formattedSumAssured = useFormattedNumberField(editForm, 'sumAssured')
-const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium')
+const formattedSumAssured = useFormattedNumberField(editForm, 'sumAssured');
+const formattedActualPremium = useFormattedNumberField(
+  editForm,
+  'actualPremium',
+);
 </script>
 
 <template>
@@ -559,15 +564,17 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
     persistent
     @submit="handleSubmit"
   >
-    <template #header> 
-      
+    <template #header>
       <div class="flex items-center justify-between w-full px-6 py-4">
-        <h3 class="text-2xl font-semibold">{{ selectedPlan?.providerName ?? 'Edit Plan' }}</h3>
-          <span  @click="closeModal" class="cursor-pointer close-icon closeTag text-2xl">&times;</span>
-        
+        <h3 class="text-2xl font-semibold">
+          {{ selectedPlan?.providerName ?? 'Edit Plan' }}
+        </h3>
+        <span
+          @click="closeModal"
+          class="cursor-pointer close-icon closeTag text-2xl"
+          >&times;</span
+        >
       </div>
-
-      
     </template>
     <div class="w-full">
       <TabGroup>
@@ -672,7 +679,7 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
                   type="text"
-                  @keydown="e => preventInvalidInputs(e, true,true)"
+                  @keydown="e => preventInvalidInputs(e, true, true)"
                 />
               </div>
 
@@ -701,7 +708,7 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
                   type="text"
-                  @keydown="e => preventInvalidInputs(e, true,false)"
+                  @keydown="e => preventInvalidInputs(e, true, false)"
                 />
               </div>
 
@@ -850,7 +857,7 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
                         : []
                     "
                     type="number"
-                    @keydown="e => preventInvalidInputs(e, false,true)"
+                    @keydown="e => preventInvalidInputs(e, false, true)"
                     min="0"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.coverValue"
@@ -1019,7 +1026,9 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
             <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
             <div class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
-              <dd class="text-sm">&nbsp; AED {{ numberFormat(actualPremium) }}</dd>
+              <dd class="text-sm">
+                &nbsp; AED {{ numberFormat(actualPremium) }}
+              </dd>
             </div>
           </div>
           <!-- Timestamps aligned to the right -->
@@ -1076,9 +1085,7 @@ const formattedActualPremium = useFormattedNumberField(editForm, 'actualPremium'
             <!-- Total Price section -->
             <div class="flex items-center">
               <span class="font-bold mr-2">Total Price:</span>
-              <span class=""
-                >AED {{ numberFormat(actualPremium) }}</span
-              >
+              <span class="">AED {{ numberFormat(actualPremium) }}</span>
             </div>
           </div>
         </div>

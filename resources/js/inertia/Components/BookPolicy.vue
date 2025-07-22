@@ -234,7 +234,8 @@ const bpForm = useForm({
   isTapCaptureProcessStart:
     page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
   currency: page.props?.payments[0]?.currency || 'AED',
-  commission_based_on_currency: page.props?.payments[0]?.commission_based_on_currency || '',
+  commission_based_on_currency:
+    page.props?.payments[0]?.commission_based_on_currency || '',
   exchange_rate: page.props?.payments[0]?.exchange_rate || '',
 });
 
@@ -440,11 +441,12 @@ const calculateCommissionPercentage = (
 const calculateCommissionBasedOnCurrency = () => {
   if (isLifeLead && bpForm.currency !== 'AED') {
     const exchangeRate = Number(bpForm.exchange_rate) || 0;
-    const commissionBasedOnCurrency = Number(bpForm.commission_based_on_currency) || 0;
-    
+    const commissionBasedOnCurrency =
+      Number(bpForm.commission_based_on_currency) || 0;
+
     if (exchangeRate > 0 && commissionBasedOnCurrency > 0) {
       bpForm.commission_vat_not_applicable = useRoundIt(
-        commissionBasedOnCurrency * exchangeRate
+        commissionBasedOnCurrency * exchangeRate,
       );
     } else {
       bpForm.commission_vat_not_applicable = '';
@@ -545,14 +547,12 @@ const commissionVatApplicableTooltip = computed(() => {
 });
 
 const disableCommissionVatNotApplicable = computed(() => {
-
   // for life only
   if (isLifeLead) {
     if (bpForm.currency !== 'AED') {
       return true;
-    }
-    else{
-      return false;  
+    } else {
+      return false;
     }
   }
 
@@ -791,12 +791,12 @@ watch(
     if (showNonAEDFields.value) {
       calculateCommissionBasedOnCurrency();
     }
-  }
+  },
 );
 
 watch(
   () => bpForm.currency,
-  (newCurrency) => {
+  newCurrency => {
     if (isLifeLead) {
       if (newCurrency === 'AED') {
         // Clear calculated fields when switching to AED
@@ -807,7 +807,7 @@ watch(
         bpForm.commission_vat_not_applicable = '';
       }
     }
-  }
+  },
 );
 
 const sendPolicyConfirmation = () => {
@@ -1226,7 +1226,9 @@ const isDocTypeLoading = docType => {
               <template v-if="showCurrencyFields">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">
-                    <label class="border-b-2 border-dotted border-black uppercase">
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
                       Currency *
                     </label>
                   </dt>
@@ -1246,7 +1248,9 @@ const isDocTypeLoading = docType => {
 
                 <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
                   <dt class="font-medium">
-                    <label class="border-b-2 border-dotted border-black uppercase">
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
                       Commission based on Currency *
                     </label>
                   </dt>
@@ -1268,7 +1272,9 @@ const isDocTypeLoading = docType => {
 
                 <div v-if="showNonAEDFields" class="grid sm:grid-cols-2">
                   <dt class="font-medium">
-                    <label class="border-b-2 border-dotted border-black uppercase">
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
                       Exchange Rate *
                     </label>
                   </dt>
@@ -1476,7 +1482,6 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
-             
             </dl>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
               <div class="w-full md:w-1/2"></div>
@@ -1545,9 +1550,10 @@ const isDocTypeLoading = docType => {
                               <td>
                                 {{
                                   formatAmount(
-                                    (item.commission_vat_applicable != null && item.commission_vat_applicable != 0)
+                                    item.commission_vat_applicable != null &&
+                                      item.commission_vat_applicable != 0
                                       ? item.commission_vat_applicable
-                                      : item.commission_vat_not_applicable
+                                      : item.commission_vat_not_applicable,
                                   )
                                 }}
                               </td>

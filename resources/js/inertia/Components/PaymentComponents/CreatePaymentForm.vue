@@ -1971,7 +1971,7 @@ const uploadDocument = (doc, files, count) => {
           let quoteTypes = props.quoteTypesToCheck.filter(
             quoteType =>
               quoteType !== quoteTypeCodeEnum.Home &&
-              quoteType !== quoteTypeCodeEnum.Life
+              quoteType !== quoteTypeCodeEnum.Life,
           );
           let quoteDocuments =
             quoteTypes.includes(props.quoteType) ||
@@ -2585,7 +2585,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :payments="payments"
       :paymentStatusEnum="paymentStatusEnum"
       :quoteType="quoteType"
-			:quoteTypeCodeEnum="quoteTypeCodeEnum"
+      :quoteTypeCodeEnum="quoteTypeCodeEnum"
       @handle-collection-type-change="handleCollectionTypeChange"
       @handle-frequency-change="handleFrequencyChange"
       @calculate-payment-breakup="calculatePaymentBreakup"

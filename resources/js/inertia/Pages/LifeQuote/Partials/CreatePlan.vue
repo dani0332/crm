@@ -1,6 +1,10 @@
 <script setup>
 import { watch } from 'vue';
-import { preventInvalidInputs, useFormattedNumberField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
+import {
+  preventInvalidInputs,
+  useFormattedNumberField,
+  cleanFormattedValueToFloat,
+} from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -41,7 +45,6 @@ const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
 });
-
 
 const ridersData = ref({});
 
@@ -177,12 +180,12 @@ watch(
 // Watch for plan changes with immediate and deep options
 watch(
   () => createForm.planId,
-  (newPlanId) => {
+  newPlanId => {
     if (newPlanId) {
       getRiderDetails(newPlanId);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const fetchProviderPlans = () => {
@@ -249,13 +252,10 @@ const validateCoverValue = value => {
   return true;
 };
 
-
 const getRiderDetails = async planId => {
   try {
-    const res = await axios.get(
-      `/personal-quotes/life/riders/${planId}`,
-    );
-  
+    const res = await axios.get(`/personal-quotes/life/riders/${planId}`);
+
     // Clear existing options if needed
     ridersData.value = res.data.map(rider => ({
       riderId: rider.rider_id,
@@ -265,10 +265,8 @@ const getRiderDetails = async planId => {
       text: rider.rider.text,
       inputRequired: rider.input_required,
     }));
-    
-
   } catch (error) {
-    console.log(error); 
+    console.log(error);
 
     notification.error({
       title: 'Error fetching rider details',
@@ -277,10 +275,11 @@ const getRiderDetails = async planId => {
   }
 };
 
-
-const formattedSumAssured =  useFormattedNumberField(createForm, 'sumAssured')
-const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremium')
-
+const formattedSumAssured = useFormattedNumberField(createForm, 'sumAssured');
+const formattedActualPremium = useFormattedNumberField(
+  createForm,
+  'actualPremium',
+);
 </script>
 
 <template>
@@ -373,7 +372,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
               :rules="[isRequired, isNonNegative, validatePriceRange]"
               class="w-full"
               type="text"
-              @keydown="e => preventInvalidInputs(e, true,false)"
+              @keydown="e => preventInvalidInputs(e, true, false)"
               id="sumAssured"
             />
           </div>
@@ -426,7 +425,9 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
         </div>
 
         <div>
-          <label for="insurerQuoteNo" class="block font-medium text-gray-700 mb-1"
+          <label
+            for="insurerQuoteNo"
+            class="block font-medium text-gray-700 mb-1"
             >Insurer Quote Number <span class="text-red-500">*</span></label
           >
           <x-input
@@ -490,7 +491,11 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             min="0"
             :rules="
               rider.active
-                ? [isNonNegative, val => validateCoverValue(val), rider.inputRequired ? isRequired : null].filter(Boolean)
+                ? [
+                    isNonNegative,
+                    val => validateCoverValue(val),
+                    rider.inputRequired ? isRequired : null,
+                  ].filter(Boolean)
                 : []
             "
           />

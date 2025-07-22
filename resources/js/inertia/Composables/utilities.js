@@ -537,26 +537,37 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
 };
 
 // prevent charaters, accepts only numbers, comma, and decimal point
-export const preventInvalidInputs = (event, allowComma = false, allowDecimal = false) => {
-  const key = event.key
+export const preventInvalidInputs = (
+  event,
+  allowComma = false,
+  allowDecimal = false,
+) => {
+  const key = event.key;
 
   const controlKeys = [
-    'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Home', 'End'
-  ]
-  if (controlKeys.includes(key)) return
+    'Backspace',
+    'Delete',
+    'ArrowLeft',
+    'ArrowRight',
+    'Tab',
+    'Enter',
+    'Home',
+    'End',
+  ];
+  if (controlKeys.includes(key)) return;
 
   // Allow comma if specified
-  if (allowComma && key === ',') return
+  if (allowComma && key === ',') return;
 
   // Allow dot (.)
-  if (allowDecimal && key === '.') return
+  if (allowDecimal && key === '.') return;
 
   // Allow digits 0-9
-  if (/^[0-9]$/.test(key)) return
+  if (/^[0-9]$/.test(key)) return;
 
   // Block everything else
-  event.preventDefault()
-}
+  event.preventDefault();
+};
 
 export const numberFormat = (price, decimals = 2) => {
   price = parseFloat(price);
@@ -567,48 +578,45 @@ export const numberFormat = (price, decimals = 2) => {
 export const useFormattedNumberField = (source, fieldName) => {
   return computed({
     get() {
-      const val = source[fieldName]
-      return val != null ? Number(val).toLocaleString('en-US') : ''
+      const val = source[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
     },
     set(newVal) {
-      const cleaned = cleanFormattedValueToFloat(newVal)
-      const num = parseFloat(cleaned)
-      source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num
-    }
-  })
-}
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
 
 // Helper function to create formatted fields for rider arrays
 export const useFormattedRiderField = (ridersArray, index, fieldName) => {
   return computed({
     get() {
-      const rider = ridersArray.value[index]
-      if (!rider) return ''
-      const val = rider[fieldName]
-      return val != null ? Number(val).toLocaleString('en-US') : ''
+      const rider = ridersArray.value[index];
+      if (!rider) return '';
+      const val = rider[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
     },
     set(newVal) {
-      const rider = ridersArray.value[index]
-      if (!rider) return
-      const cleaned = cleanFormattedValueToFloat(newVal)
-      const num = parseFloat(cleaned)
-      rider[fieldName] = isNaN(num) || cleaned === '' ? 0 : num
-    }
-  })
-}
+      const rider = ridersArray.value[index];
+      if (!rider) return;
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      rider[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
 
-
-export const cleanFormattedValueToFloat = (value) => {
-  if (typeof value !== 'string') return 0
+export const cleanFormattedValueToFloat = value => {
+  if (typeof value !== 'string') return 0;
 
   // Remove commas
-  const cleaned = value.replace(/,/g, '')
+  const cleaned = value.replace(/,/g, '');
 
   // Parse to float
-  const num = parseFloat(cleaned)
+  const num = parseFloat(cleaned);
 
   // If NaN or empty, return 0
-  return isNaN(num) ? 0 : num
-}
-
-
+  return isNaN(num) ? 0 : num;
+};

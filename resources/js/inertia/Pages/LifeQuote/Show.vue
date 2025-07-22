@@ -1,5 +1,9 @@
 <script setup>
-import { applyEmiratesNumberMasking, numberFormat, preventInvalidInputs } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  numberFormat,
+  preventInvalidInputs,
+} from '@/inertia/Composables/utilities.js';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
@@ -10,7 +14,6 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
 import { watch } from 'vue';
-
 
 const page = usePage();
 defineProps({
@@ -317,7 +320,6 @@ const downloadComparisionPdf = () => {
     return;
   }
 
-  
   loader.value.download = true;
 
   axios
@@ -368,7 +370,6 @@ const downloadComparisionPdf = () => {
     });
 };
 
-
 const getPaymentTermTitle = months => {
   const mapping = {
     12: 'Monthly',
@@ -391,7 +392,7 @@ const getTotalAnnualPremium = (paymentTerm, premium) => {
   return numberFormat(value);
 };
 
-const getTotalAnnualPremiumAED = (item) => {
+const getTotalAnnualPremiumAED = item => {
   if (item.currency !== 'AED' && selectedProviderPlan === item.planId) {
     const paymentTermTitle = getPaymentTermTitle(item.paymentTerm);
     const mapping = {
@@ -400,7 +401,8 @@ const getTotalAnnualPremiumAED = (item) => {
       'Semi-Annually': 2,
       Annually: 1,
     };
-    const totalAnnualPremiumAED = (item.actualPremium * planExchangeRate.value) * mapping[paymentTermTitle];
+    const totalAnnualPremiumAED =
+      item.actualPremium * planExchangeRate.value * mapping[paymentTermTitle];
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
     return item.isManualPlan
@@ -428,7 +430,7 @@ const onCreatePlan = () => {
       modals.createPlan = false;
     },
     onFinish: () => {
-      onLoadAvailablePlansData(); 
+      onLoadAvailablePlansData();
 
       notification.success({
         title: 'Life Plan created successfully',
@@ -436,8 +438,6 @@ const onCreatePlan = () => {
       });
     },
   });
-  
-
 };
 
 const onCreateVariant = () => {
@@ -454,10 +454,9 @@ const onCreateVariant = () => {
         position: 'top',
       });
 
-      onLoadAvailablePlansData(); 
+      onLoadAvailablePlansData();
     },
   });
-  
 };
 
 const addVariant = plan => {
@@ -1065,7 +1064,6 @@ const totalAnnualPrice = computed(() => {
   return totalPrice;
 });
 
-
 const emailStatusesTable = reactive({
   isLoading: false,
   columns: [
@@ -1117,36 +1115,39 @@ const emailStatusesTableColumns = computed(() => {
   });
 });
 
-const updateExchangeRate = (item) => {
+const updateExchangeRate = item => {
   loader.value.exchangeRate = true;
-  
-  axios.post('/personal-quotes/life/update-exchange-rate', {
-    quoteUID: page.props.quote.uuid,
-    exchangeRate: planExchangeRate.value,
-  }).then(response => {
-    notification.success({
-      title: 'Exchange rate updated successfully',
-      position: 'top',
-    });
-    isExchangeRateEditable.value = false;
-    
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
 
-  }).catch(error => {
-    notification.error({
-      title: 'Failed to update exchange rate',
-      position: 'top',
+  axios
+    .post('/personal-quotes/life/update-exchange-rate', {
+      quoteUID: page.props.quote.uuid,
+      exchangeRate: planExchangeRate.value,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Exchange rate updated successfully',
+        position: 'top',
+      });
+      isExchangeRateEditable.value = false;
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Failed to update exchange rate',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loader.value.exchangeRate = false;
     });
-  }).finally(() => {
-    loader.value.exchangeRate = false;
-  });
-}
+};
 
 const enableExchangeRateEdit = () => {
   isExchangeRateEditable.value = true;
-}
+};
 </script>
 <template>
   <div>
@@ -1202,7 +1203,7 @@ const enableExchangeRateEdit = () => {
           >
             Duplicate Lead
           </x-button>
-          
+
           <LeadNotes
             :documentType="noteDocumentType"
             :notes="quoteNotes"
@@ -2052,12 +2053,16 @@ const enableExchangeRateEdit = () => {
 
               <template #item-totalPrice="item">
                 <span class="copay-max">{{
-                  item.isManualPlan ? numberFormat(item.totalPrice) : numberFormat(item.actualPremium)
+                  item.isManualPlan
+                    ? numberFormat(item.totalPrice)
+                    : numberFormat(item.actualPremium)
                 }}</span>
               </template>
 
               <template #item-sumInsured="item">
-                <span class="copay-max">{{ numberFormat(item.sumInsured) }}</span>
+                <span class="copay-max">{{
+                  numberFormat(item.sumInsured)
+                }}</span>
               </template>
 
               <template #item-planTypeId="item">
@@ -2069,7 +2074,7 @@ const enableExchangeRateEdit = () => {
                   >v.{{ item.version }}</span
                 >
               </template>
-              
+
               <template #item-paymentTerm="item">
                 <span class="copay-max">{{
                   getPaymentTermTitle(item.paymentTerm)
@@ -2077,29 +2082,36 @@ const enableExchangeRateEdit = () => {
               </template>
 
               <template #item-exchangeRate="item">
-                <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)" class="flex items-center gap-2">
+                <div
+                  v-if="
+                    item.currency != 'AED' &&
+                    selectedProviderPlan == item.planId &&
+                    selectedProviderPlanVersion == (item.version || 0)
+                  "
+                  class="flex items-center gap-2"
+                >
                   <div class="flex-1">
-                    <x-input 
-                      v-model="planExchangeRate" 
-                      type="text" 
-                      class="w-full" 
+                    <x-input
+                      v-model="planExchangeRate"
+                      type="text"
+                      class="w-full"
                       :disabled="!isExchangeRateEditable"
-                      @keydown="e => preventInvalidInputs(e, false,true)" 
+                      @keydown="e => preventInvalidInputs(e, false, true)"
                       placeholder="Exchange rate"
                     />
                   </div>
-                  <x-button 
+                  <x-button
                     v-if="!isExchangeRateEditable"
-                    size="xs" 
-                    color="blue" 
+                    size="xs"
+                    color="blue"
                     @click="enableExchangeRateEdit"
                   >
                     Edit
                   </x-button>
-                  <x-button 
+                  <x-button
                     v-if="isExchangeRateEditable"
-                    size="xs" 
-                    color="emerald" 
+                    size="xs"
+                    color="emerald"
                     :loading="loader.exchangeRate"
                     :disabled="loader.exchangeRate"
                     @click="updateExchangeRate(item)"
@@ -2110,21 +2122,24 @@ const enableExchangeRateEdit = () => {
               </template>
 
               <template #item-priceInAED="item">
-                <div v-if="item.currency != 'AED' && selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)" class="copay-max"> 
-                  
+                <div
+                  v-if="
+                    item.currency != 'AED' &&
+                    selectedProviderPlan == item.planId &&
+                    selectedProviderPlanVersion == (item.version || 0)
+                  "
+                  class="copay-max"
+                >
                   <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
-                    {{ numberFormat(item.actualPremium * (planExchangeRate)) }}
+                    {{ numberFormat(item.actualPremium * planExchangeRate) }}
                   </div>
 
-                  <div v-else>
-                    N/A
-                  </div>
-
-                </div>        
-                <div v-else-if="item.currency != 'AED'" class="copay-max">  
+                  <div v-else>N/A</div>
+                </div>
+                <div v-else-if="item.currency != 'AED'" class="copay-max">
                   N/A
                 </div>
-                <div v-else class="copay-max">  
+                <div v-else class="copay-max">
                   {{ numberFormat(item.actualPremium) }}
                 </div>
               </template>
@@ -2141,7 +2156,9 @@ const enableExchangeRateEdit = () => {
               </template>
 
               <template #item-totalAnnualPremiumAED="item">
-                <span class="copay-max">{{ getTotalAnnualPremiumAED(item) }}</span>
+                <span class="copay-max">{{
+                  getTotalAnnualPremiumAED(item)
+                }}</span>
               </template>
 
               <template #item-providerName="{ providerName, isDisabled }">
@@ -2247,7 +2264,12 @@ const enableExchangeRateEdit = () => {
                     >
 
                     <x-button
-                      v-else-if="!(ecomDetail?.isUnderwritten && selectedProviderPlan == item.planId)"
+                      v-else-if="
+                        !(
+                          ecomDetail?.isUnderwritten &&
+                          selectedProviderPlan == item.planId
+                        )
+                      "
                       size="xs"
                       color="emerald"
                       outlined
@@ -2311,17 +2333,25 @@ const enableExchangeRateEdit = () => {
                   {{ numberFormat(totalAnnualPrice) }}
                 </dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="ecomDetail?.currency != 'AED'">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
                 <dt class="font-medium uppercase">Total Price AED</dt>
                 <dd>
                   {{
                     ecomDetail?.isManualPlan
                       ? numberFormat(ecomDetail?.totalPrice * planExchangeRate)
-                      : numberFormat(ecomDetail?.actualPremium * planExchangeRate)
+                      : numberFormat(
+                          ecomDetail?.actualPremium * planExchangeRate,
+                        )
                   }}
                 </dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="ecomDetail?.currency != 'AED'">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
                   {{
@@ -2329,7 +2359,7 @@ const enableExchangeRateEdit = () => {
                       (ecomDetail?.isManualPlan
                         ? ecomDetail?.totalPrice * planExchangeRate
                         : ecomDetail?.actualPremium * planExchangeRate) *
-                      (page.props.quote?.life_quote?.payment_term ?? 1)
+                        (page.props.quote?.life_quote?.payment_term ?? 1),
                     )
                   }}
                 </dd>
