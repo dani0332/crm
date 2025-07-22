@@ -62,7 +62,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
                 $titleHeader = str_replace('_', ' ', $this->displayBy);
                 $titleHeader = ucwords($titleHeader);
             } else {
-                $titleHeader = 'Type';
+                $titleHeader = 'Assignment Type';
             }
 
             $this->headers = collect([$titleHeader])->merge($baseHeaders);
@@ -143,7 +143,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
             if (!empty($this->displayBy)) {
                 $titleValue = $record->{$this->displayBy} ?? 'N/A';
             } else {
-                $titleValue = 'Data';
+                $titleValue = 'Assigned Leads';
             }
             $row = collect([$titleValue])->merge($baseData);
         } else {
