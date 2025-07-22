@@ -1,10 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { errorMessages } from 'vue/compiler-sfc';
 import moment from 'moment';
-import { reactify } from '@vueuse/core';
-import { isNull } from 'lodash';
-import { numberFormat, preventInvalidInputs, useFormattedNumberField, useFormattedRiderField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
+import { numberFormat, preventInvalidInputs, useFormattedNumberField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -126,8 +123,7 @@ const editForm = reactive({
   isManualPlan: props.selectedPlan.isManualPlan,
   version: props.selectedPlan.version,
   isApi: props.selectedPlan.isApi,
-  isManualUpdate:
-    props.selectedPlan.isManualPlan || props.selectedPlan.isApi ? true : false,
+  isManualUpdate: props.selectedPlan.isManualPlan || props.selectedPlan.isApi,
   overallLoading: props?.selectedPlan?.overallLoading ?? 0,
 });
 

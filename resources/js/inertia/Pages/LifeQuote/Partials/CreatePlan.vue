@@ -1,6 +1,6 @@
 <script setup>
 import { watch } from 'vue';
-import { preventInvalidInputs, useFormattedNumberField, useFormattedRiderField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
+import { preventInvalidInputs, useFormattedNumberField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -75,10 +75,6 @@ const options = reactive({
 });
 
 const availableInsuranceProviders = computed(() => {
-  // if(createForm.isUW) {return props.insuranceProviders;}
-  // return props.insuranceProviders.filter(item => {
-  //   return !props.plans.some(plan => plan.providerId === item.id);
-  // });
   return props.insuranceProviders;
 });
 
@@ -272,6 +268,8 @@ const getRiderDetails = async planId => {
     
 
   } catch (error) {
+    console.log(error); 
+
     notification.error({
       title: 'Error fetching rider details',
       position: 'top',
@@ -309,7 +307,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
           </div>
         </div>
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="providerId" class="block font-medium text-gray-700 mb-1"
             >Insurance Provider <span class="text-red-500">*</span></label
           >
           <x-select
@@ -323,10 +321,11 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             :rules="[isRequired]"
             placeholder=""
             class="w-full"
+            id="providerId"
           />
         </div>
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="planId" class="block font-medium text-gray-700 mb-1"
             >Plan <span class="text-red-500">*</span></label
           >
           <x-select
@@ -341,12 +340,13 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             "
             :loading="options.loading"
             :rules="[isRequired]"
+            id="planId"
           />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block font-medium text-gray-700 mb-1"
+            <label for="currency" class="block font-medium text-gray-700 mb-1"
               >Currency <span class="text-red-500">*</span></label
             >
             <x-select
@@ -360,10 +360,11 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
                 }))
               "
               :rules="[isRequired]"
+              id="currency"
             />
           </div>
           <div>
-            <label class="block font-medium text-gray-700 mb-1"
+            <label for="sumAssured" class="block font-medium text-gray-700 mb-1"
               >Sum Assured <span class="text-red-500">*</span></label
             >
             <x-input
@@ -373,12 +374,13 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
               class="w-full"
               type="text"
               @keydown="e => preventInvalidInputs(e, true,false)"
+              id="sumAssured"
             />
           </div>
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="policyTerm" class="block font-medium text-gray-700 mb-1"
             >Policy Term <span class="text-red-500">*</span></label
           >
           <x-input
@@ -389,11 +391,12 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             type="number"
             min="0"
             @keydown="e => preventInvalidInputs(e, false)"
+            id="policyTerm"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="paymentTerm" class="block font-medium text-gray-700 mb-1"
             >Payment Frequency <span class="text-red-500">*</span></label
           >
           <x-select
@@ -402,11 +405,12 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             class="w-full"
             :options="filteredPaymentTerms"
             :rules="[isRequired]"
+            id="paymentTerm"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="price" class="block font-medium text-gray-700 mb-1"
             >Price (VAT not applicable)
             <span class="text-red-500">*</span></label
           >
@@ -417,11 +421,12 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             class="w-full"
             type="text"
             @keydown="e => preventInvalidInputs(e, true, true)"
+            id="price"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1"
+          <label for="insurerQuoteNo" class="block font-medium text-gray-700 mb-1"
             >Insurer Quote Number <span class="text-red-500">*</span></label
           >
           <x-input
@@ -429,6 +434,7 @@ const formattedActualPremium = useFormattedNumberField(createForm, 'actualPremiu
             placeholder="Enter Insurer Quote Number"
             :rules="[isRequired]"
             class="w-full"
+            id="insurerQuoteNo"
           />
         </div>
       </div>

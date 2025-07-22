@@ -24,6 +24,7 @@ class LifeQuoteRequest extends FormRequest
      */
     public function rules()
     {
+        $numericCondition = 'required|numeric|min:0';
         return [
             'first_name' => 'required|between:1,20',
             'last_name' => 'required|between:1,50',
@@ -35,10 +36,10 @@ class LifeQuoteRequest extends FormRequest
             'sum_insured_currency_id' => 'required|exists:currency_type,id',
             'marital_status_id' => 'required|exists:marital_status,id',
             'purpose_of_insurance_id' => 'required|exists:life_insurance_purpose,id',
-            'height' => 'required|numeric|min:0',
-            'weight' => 'required|numeric|min:0',
-            'bmi' => 'required|numeric|min:0',
-            'age' => 'required|numeric|min:0',
+            'height' => $numericCondition,
+            'weight' => $numericCondition,
+            'bmi' => $numericCondition,
+            'age' => $numericCondition,
             'number_of_years_id' => 'required|exists:life_number_of_year,id',
             'is_smoker' => 'required',
             'gender' => 'required|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
