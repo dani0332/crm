@@ -13,12 +13,20 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
     protected Collection $columnTotals;
     protected Collection $headers;
+    protected bool $includeUnassignedLeads;
+    protected ?string $displayBy;
+    protected int $columnOffset;
 
     public function __construct(
         private ConversionAsAtReportService $conversionAsAtReportService,
         private array $requestParams
     ) {
         request()->merge($this->requestParams);
+
+        // Initialize common properties
+        $this->includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
+        $this->displayBy = $this->requestParams['displayBy'] ?? null;
+        $this->columnOffset = (!empty($this->displayBy) || $this->includeUnassignedLeads) ? 1 : 0;
 
         // Initialize dynamic headers based on displayBy parameter
         $this->initializeHeaders();
@@ -48,18 +56,13 @@ class ConversionAsAtReportExport implements CsvExportableInterface
             'Net Conversion %',
         ];
 
-        $displayBy = $this->requestParams['displayBy'] ?? null;
-        $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
-
         // Show title column if EITHER displayBy is set OR includeUnassignedLeads is enabled
-        if (! empty($displayBy) || $includeUnassignedLeads) {
-            if (! empty($displayBy)) {
-                // Use displayBy as header name
-                $titleHeader = str_replace('_', ' ', $displayBy);
+        if (!empty($this->displayBy) || $this->includeUnassignedLeads) {
+            if (!empty($this->displayBy)) {
+                $titleHeader = str_replace('_', ' ', $this->displayBy);
                 $titleHeader = ucwords($titleHeader);
             } else {
-                // Generic title when only unassigned leads is enabled
-                $titleHeader = 'Assignment Type';
+                $titleHeader = 'Type';
             }
 
             $this->headers = collect([$titleHeader])->merge($baseHeaders);
@@ -124,9 +127,6 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
     public function map($record): array
     {
-        $displayBy = $this->requestParams['displayBy'] ?? null;
-        $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
-
         $baseData = [
             $record->start_date ?? 'N/A',
             $record->end_date ?? 'N/A',
@@ -138,14 +138,12 @@ class ConversionAsAtReportExport implements CsvExportableInterface
             $this->resolveNumberFormat($record->net_conversion ?? 0),
         ];
 
-        // Add title column if EITHER displayBy is set OR includeUnassignedLeads is enabled
-        if (! empty($displayBy) || $includeUnassignedLeads) {
-            if (! empty($displayBy)) {
-                // Add displayBy value
-                $titleValue = $record->{$displayBy} ?? 'N/A';
+        // Add title column if needed
+        if ($this->columnOffset > 0) {
+            if (!empty($this->displayBy)) {
+                $titleValue = $record->{$this->displayBy} ?? 'N/A';
             } else {
-                // Generic value when only unassigned leads is enabled
-                $titleValue = '';
+                $titleValue = 'Data';
             }
             $row = collect([$titleValue])->merge($baseData);
         } else {
@@ -153,11 +151,9 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         }
 
         foreach ($this->columnTotals as $index => $field) {
-            // Calculate offset: 1 if title column exists, 0 if not
-            $offset = (! empty($displayBy) || $includeUnassignedLeads) ? 1 : 0;
-            $sumColumns = [4 + $offset, 5 + $offset, 6 + $offset]; // total_leads, bad_leads, sale_leads
+            $sumColumns = [4 + $this->columnOffset, 5 + $this->columnOffset, 6 + $this->columnOffset];
 
-            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
@@ -168,15 +164,8 @@ class ConversionAsAtReportExport implements CsvExportableInterface
     private function postDataRows($stream)
     {
         $totalsRow = $this->getEmptyRow();
-
         $request = request()->merge($this->requestParams);
         $unassignedLeadsCount = $this->conversionAsAtReportService->getUnassignedLeadsCount($request);
-
-        // Check if we should include unassigned leads
-        $includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
-
-        // Calculate offset: 1 if title column exists, 0 if not
-        $offset = (! empty($this->requestParams['displayBy']) || $includeUnassignedLeads) ? 1 : 0;
 
         // Copy accumulated totals to totals row
         foreach ($this->columnTotals as $index => $key) {
@@ -184,50 +173,48 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         }
 
         // Add unassigned leads row BEFORE totals row if enabled
-        if ($includeUnassignedLeads && $unassignedLeadsCount > 0) {
-
-            // Create row with all zeros, then override specific values
+        if ($this->includeUnassignedLeads && $unassignedLeadsCount > 0) {
             $unassignedRow = array_fill(0, count($this->headers), 0);
 
-            // Always add title column since includeUnassignedLeads is true
             $unassignedRow[0] = 'Unassigned Leads';
             $unassignedRow[1] = $this->requestParams['createdAtDate'][0] ?? 'N/A';
             $unassignedRow[2] = $this->requestParams['createdAtDate'][1] ?? 'N/A';
             $unassignedRow[3] = $this->requestParams['asAtDate'] ?? 'N/A';
             $unassignedRow[4] = $this->resolveNumberFormat($unassignedLeadsCount);
-            // Other indexes remain 0
 
             fputcsv($stream, $unassignedRow);
         }
 
         // Calculate totals with correct column positions
-        $totalLeadsIndex = 3 + $offset;
-        $badLeadsIndex = 4 + $offset;
-        $saleLeadsIndex = 5 + $offset;
-        $grossConversionIndex = 6 + $offset;
-        $netConversionIndex = 7 + $offset;
+        $totalLeadsIndex = 3 + $this->columnOffset;
+        $badLeadsIndex = 4 + $this->columnOffset;
+        $saleLeadsIndex = 5 + $this->columnOffset;
+        $grossConversionIndex = 6 + $this->columnOffset;
+        $netConversionIndex = 7 + $this->columnOffset;
 
         $totalLeads = $this->columnTotals->get($totalLeadsIndex, 0);
         $badLeads = $this->columnTotals->get($badLeadsIndex, 0);
         $saleLeads = $this->columnTotals->get($saleLeadsIndex, 0);
 
         // Add unassigned leads to total leads count if included
-        if ($includeUnassignedLeads && $unassignedLeadsCount > 0) {
+        if ($this->includeUnassignedLeads && $unassignedLeadsCount > 0) {
             $totalLeads += $unassignedLeadsCount;
             $totalsRow[$totalLeadsIndex] = $this->resolveNumberFormat($totalLeads);
         }
 
-        // Set totals row label in first column
-        $totalsRow[0] = 'Totals';
+        // Set totals row label in first column (if title column exists)
+        if ($this->columnOffset > 0) {
+            $totalsRow[0] = 'Totals';
+        }
 
-        // Calculate Gross Conversion % = ((saleLeads / totalLeads) * 100)
+        // Calculate Gross Conversion % = ((saleLeads / (totalLeads - badLeads)) * 100)
         if ($totalLeads > 0) {
             $totalsRow[$grossConversionIndex] = $this->resolveNumberFormat(($saleLeads / $totalLeads) * 100);
         } else {
             $totalsRow[$grossConversionIndex] = 0;
         }
 
-        // Calculate Net Conversion % = ((saleLeads / (totalLeads - badLeads)) * 100)
+        // Calculate Net Conversion % = ((saleLeads / totalLeads) * 100) 2
         $validLeads = $totalLeads - $badLeads;
         if ($validLeads > 0) {
             $totalsRow[$netConversionIndex] = $this->resolveNumberFormat(($saleLeads / $validLeads) * 100);
