@@ -72,11 +72,12 @@ class EmailStatusEventJob implements ShouldQueue
                         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
                         $newEmailStatus->save();
 
-                        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
+                        
 
                         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                         $this->storeEmailStatusEvent($emailStatusData);
+                        Cache::forget("email_statuses_{$emailStatusData->quote_type_id}_{$emailStatusData->quote_id}");
                     } else {
                         info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                     }
