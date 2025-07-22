@@ -1666,7 +1666,6 @@ if (! function_exists('userHasProduct')) {
     }
 }
 
-
 if (! function_exists('getLifeRiderInfo')) {
     function getLifeRiderInfo($rider, $plan)
     {
@@ -1683,15 +1682,15 @@ if (! function_exists('getLifeRiderInfo')) {
             if($rider->coverType == 'VALUE'){
                 foreach($rider->criteria as $criteria){
                     if(isset($criteria->currency) && isset($plan->currency) && $criteria->currency == $plan->currency && isset($criteria->coverValue)){
-                        return 'Covered upto '.number_format($criteria->coverValue, 2);
+                        return is_string($criteria->coverValue) ? "Covered $criteria->coverValue" : 'Covered upto '.number_format($criteria->coverValue);
                     }
                 }
                 return 'Covered';
             }else if($rider->coverType == 'COVER'){
-                return 'Covered upto '.number_format($plan->sumInsured, 2); 
+                return is_string($plan->sumInsured) ? 'Covered '.$plan->sumInsured : 'Covered upto '.number_format($plan->sumInsured); 
             }
         }else{
-            return 'Covered upto '.number_format($rider?->coverValue, 2); 
+            return is_string($rider?->coverValue) ? 'Covered '.$rider?->coverValue : 'Covered upto '.number_format($rider?->coverValue);    
         }
 
         return 'Covered';
