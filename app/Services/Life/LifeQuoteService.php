@@ -667,6 +667,7 @@ class LifeQuoteService extends BaseService
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
+
                 return json_decode($getContents);
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
@@ -829,6 +830,7 @@ class LifeQuoteService extends BaseService
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
+
                 return json_decode($getContents);
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
