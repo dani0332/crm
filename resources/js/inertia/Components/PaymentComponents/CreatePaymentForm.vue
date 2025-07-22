@@ -161,6 +161,9 @@ const emit = defineEmits([
   'update-plan-detail',
 ]);
 
+const isCarQuote = props.quoteType === quoteTypeCodeEnum.Car;
+const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
   quoteTypeCodeEnum.Health,
@@ -1145,8 +1148,7 @@ const handleCollectionTypeChange = () => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
-    let isHealthQuote = props.quoteType === quoteTypeCodeEnum.Health;
-    let checkCondition = !isHealthQuote || !isIPLPermission;
+    let checkCondition = isCarQuote || isTravelQuote || !isIPLPermission;
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
