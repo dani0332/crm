@@ -645,7 +645,9 @@ const formattedActualPremium = useFormattedNumberField(
         </div>
 
         <div>
-          <label for="insurerQuoteNo" class="block font-medium text-gray-700 mb-1"
+          <label
+            for="insurerQuoteNo"
+            class="block font-medium text-gray-700 mb-1"
             >Insurer Quote Number</label
           >
           <x-input
