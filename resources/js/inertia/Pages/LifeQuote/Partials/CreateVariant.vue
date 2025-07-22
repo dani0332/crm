@@ -1,11 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import {
-  preventInvalidInputs,
-  useFormattedNumberField,
-  useFormattedRiderField,
-  cleanFormattedValueToFloat,
-} from '@/inertia/Composables/utilities.js';
+import { preventInvalidInputs, useFormattedNumberField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -70,14 +65,10 @@ const currencyRanges = ref([]);
 const getCurrencyCoverages = async planId => {
   if (!props.plan.isApi) return;
 
-  try {
-    const res = await axios.get(
+  const res = await axios.get(
       `/personal-quotes/life/currency-coverages/${planId}`,
     );
-    currencyRanges.value = res.data || [];
-  } catch (error) {
-    currencyRanges.value = [];
-  }
+  currencyRanges.value = res.data || [];
 };
 
 // Add watch for modal visibility to call getRiderDetails when opened
@@ -250,9 +241,6 @@ const getQuote = () => {
   submitType.value = 'getQuote';
   createForm.getQuoteLoading = true;
 
-  const policyTermValidation = validatePolicyTerm(createForm.policyTerm);
-  const sumAssuredValidation = validatePriceRange(createForm.sumAssured);
-
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
     price: isNaN(rider.price)
@@ -377,7 +365,6 @@ const clientAge = props.quote?.life_quote?.age;
 const riderOptions = ref([]);
 
 const getRiderDetails = async planId => {
-  try {
     const res = await axios.get(
       `/personal-quotes/life/rider-details/${planId}`,
     );
@@ -398,9 +385,7 @@ const getRiderDetails = async planId => {
         });
       }
     });
-  } catch (error) {
-    // Handle error silently
-  }
+
 };
 
 // Add onMounted hook to load rider data when component is mounted

@@ -34,10 +34,6 @@ const flattenLeads = leadsTypes => {
           lead?.life_quote?.insurance_tenure?.text || '';
         lead.age = lead.life_quote?.age || '';
         lead.sum_insured_value = lead.life_quote?.sum_insured_value || '';
-
-        // delete lead.nationality;
-        // delete lead.insurance_tenure;
-        // delete lead.life_quote;
       });
     }
   });
@@ -302,8 +298,6 @@ function filterQuotes(isValid) {
     }
   }
 
-  // serverOptions.value.page = 1;
-
   const filtersCleaned = cleanObj(filters);
   filtersCount.value = Object.keys(filtersCleaned).length;
   console.log(filtersCleaned);
@@ -364,7 +358,7 @@ watch(
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip placement="bottom">
-            <label
+            <label for="code"
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
               Ref-ID
@@ -375,6 +369,7 @@ watch(
             v-model="filters.code"
             type="search"
             name="code"
+            id="code"
             class="w-full"
             placeholder="Search by Ref-ID"
           />

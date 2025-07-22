@@ -539,17 +539,6 @@ watch(
   { deep: true },
 );
 
-const manageFilterCount = () => {
-  if (filters['sum_insured_range'] && filters['sum_insured_currency_id']) {
-    filtersCount.value = filtersCount.value - 1;
-  } else if (
-    !filters['sum_insured_range'] ||
-    !filters['sum_insured_currency_id']
-  ) {
-    filtersCount.value = filtersCount.value - 1;
-  }
-};
-
 const quoteStatuses = computed(() => page.props.leadStatuses || []);
 
 const insurerAMLStatusOption = computed(() =>

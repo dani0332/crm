@@ -698,7 +698,7 @@ const industryTypeOptions = computed(() => {
 
 const leadStatusOptions = computed(() => {
   return page.props.quoteStatuses.map(status => {
-    var statusDisabled = false;
+    let statusDisabled = false;
     if (status.id == quoteStatusEnum.PaymentLinkSentToCustomer) {
       statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
     }
@@ -933,8 +933,6 @@ const onLoadAvailablePlansData = async () => {
 
 const confirmSendEmail = () => {
   loader.value.link = true;
-  const first_name = page.props.quote.first_name || '';
-  const last_name = page.props.quote.last_name || '';
 };
 
 const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
@@ -2045,12 +2043,6 @@ const enableExchangeRateEdit = () => {
               class="flex-wrap"
               :hide-footer="computedListQuotePlans.length < 15"
             >
-              <!-- <template #item-copayName="item">
-                <p class="copay-max">
-                  {{ item.copayName }}
-                </p>
-              </template> -->
-
               <template #item-totalPrice="item">
                 <span class="copay-max">{{
                   item.isManualPlan
