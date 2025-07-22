@@ -1,6 +1,10 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { preventInvalidInputs, useFormattedNumberField, cleanFormattedValueToFloat } from '@/inertia/Composables/utilities.js';
+import {
+  preventInvalidInputs,
+  useFormattedNumberField,
+  cleanFormattedValueToFloat,
+} from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   uuid: String,
@@ -66,8 +70,8 @@ const getCurrencyCoverages = async planId => {
   if (!props.plan.isApi) return;
 
   const res = await axios.get(
-      `/personal-quotes/life/currency-coverages/${planId}`,
-    );
+    `/personal-quotes/life/currency-coverages/${planId}`,
+  );
   currencyRanges.value = res.data || [];
 };
 
@@ -365,27 +369,24 @@ const clientAge = props.quote?.life_quote?.age;
 const riderOptions = ref([]);
 
 const getRiderDetails = async planId => {
-    const res = await axios.get(
-      `/personal-quotes/life/rider-details/${planId}`,
-    );
+  const res = await axios.get(`/personal-quotes/life/rider-details/${planId}`);
 
-    // Clear existing options if needed
-    riderOptions.value = [];
+  // Clear existing options if needed
+  riderOptions.value = [];
 
-    // Loop through the data with new format
-    res.data.forEach(item => {
-      if (item.currency_coverages && Array.isArray(item.currency_coverages)) {
-        item.currency_coverages.forEach(coverage => {
-          riderOptions.value.push({
-            riderId: item.rider_id,
-            currency_id: coverage.currency_id,
-            range_minimum: coverage.min_cover,
-            range_maximum: coverage.max_cover,
-          });
+  // Loop through the data with new format
+  res.data.forEach(item => {
+    if (item.currency_coverages && Array.isArray(item.currency_coverages)) {
+      item.currency_coverages.forEach(coverage => {
+        riderOptions.value.push({
+          riderId: item.rider_id,
+          currency_id: coverage.currency_id,
+          range_minimum: coverage.min_cover,
+          range_maximum: coverage.max_cover,
         });
-      }
-    });
-
+      });
+    }
+  });
 };
 
 // Add onMounted hook to load rider data when component is mounted
