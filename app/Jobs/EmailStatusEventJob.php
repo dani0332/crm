@@ -72,8 +72,6 @@ class EmailStatusEventJob implements ShouldQueue
                         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
                         $newEmailStatus->save();
 
-                        
-
                         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                         $this->storeEmailStatusEvent($emailStatusData);
