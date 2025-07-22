@@ -166,7 +166,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             if ($eligibleUser) {
                 LoggerService::info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
-                return User::find($eligibleUser->user_id);
+                return User::with('leadAllocation')->find($eligibleUser->user_id);
             }
         }
 
@@ -342,7 +342,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             return null;
         }
 
-        $advisor = User::find($previousLead->advisor_id);
+        $advisor = User::with('leadAllocation')->find($previousLead->advisor_id);
         if (! $advisor) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor not found');
 
@@ -374,8 +374,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor has reached max capacity, will use normal allocation', extra: [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
-                'allocation_count' => $advisor->leadAllocation->allocation_count,
-                'max_capacity' => $advisor->leadAllocation->max_capacity,
+                'allocation_count' => $advisor->leadAllocation?->allocation_count ?? 'N/A',
+                'max_capacity' => $advisor->leadAllocation?->max_capacity ?? 'N/A',
             ]);
 
             return null;
@@ -385,8 +385,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             'advisor_id' => $advisor->id,
             'advisor_name' => $advisor->name,
             'advisor_status' => $advisor->status,
-            'allocation_count' => $advisor->leadAllocation->allocation_count,
-            'max_capacity' => $advisor->leadAllocation->max_capacity,
+            'allocation_count' => $advisor->leadAllocation?->allocation_count ?? 'N/A',
+            'max_capacity' => $advisor->leadAllocation?->max_capacity ?? 'N/A',
         ]);
 
         return $advisor;
@@ -439,6 +439,15 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     private function isMaxCapReached(User $advisor): bool
     {
+        if (!$advisor->leadAllocation) {
+            LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
+                'advisor_id' => $advisor->id,
+                'advisor_name' => $advisor->name,
+            ]);
+            // If no allocation record exists, consider max capacity reached for safety
+            return true;
+        }
+
         $allocationCount = $advisor->leadAllocation->allocation_count;
         $maxCapacity = $advisor->leadAllocation->max_capacity;
 

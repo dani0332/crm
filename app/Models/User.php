@@ -7,6 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Models\LeadAllocation;
 use App\Traits\Logable;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -447,5 +448,10 @@ class User extends Authenticatable implements AuditableContract
     public function scopeChs($query)
     {
         return $query->where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL);
+    }
+
+    public function leadAllocation()
+    {
+        return $this->hasOne(LeadAllocation::class, 'user_id', 'id');
     }
 }
