@@ -29,6 +29,7 @@ class RolePermissionSeeder extends Seeder
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
         $this->addPlanDetailsEditPermission();
+        $this->addOverrideCommissionPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -263,5 +264,16 @@ class RolePermissionSeeder extends Seeder
         if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
             $adminRole->givePermissionTo($permission);
         }
+    }
+    
+    private function addOverrideCommissionPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::OVERRIDE_COMMISSION_LIMIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

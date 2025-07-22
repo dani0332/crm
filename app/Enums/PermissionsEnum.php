@@ -423,6 +423,7 @@ final class PermissionsEnum extends Enum
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
+    public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
 
     // Savings Permissions
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
