@@ -21,7 +21,10 @@ const sectionExpanded = ref(true);
 
 // Assignment form for managers
 const assignmentForm = useForm({
-  manager_id: props.claim.assigned_claims_manager_id || props.claim.claims_manager_id || '',
+  manager_id:
+    props.claim.assigned_claims_manager_id ||
+    props.claim.claims_manager_id ||
+    '',
   manager_type: 'primary',
 });
 
@@ -56,27 +59,28 @@ const managersOptions = computed(() => {
 });
 
 const statusOptions = computed(() => {
-  return Object.entries(props.dropdowns.claimStatuses).map(
-    ([id, text]) => ({
-      value: parseInt(id),
-      label: text,
-    }),
-  );
+  return Object.entries(props.dropdowns.claimStatuses).map(([id, text]) => ({
+    value: parseInt(id),
+    label: text,
+  }));
 });
 
 const subStatusOptions = computed(() => {
-
-  return props.dropdowns.claimSubStatuses?.map(subStatus => ({
-    value: subStatus.id,
-    label: subStatus.text,
-  })) || [];
+  return (
+    props.dropdowns.claimSubStatuses?.map(subStatus => ({
+      value: subStatus.id,
+      label: subStatus.text,
+    })) || []
+  );
 });
 
 const complaintStatusOptions = computed(() => {
-  return props.dropdowns.complaintStatuses?.map(status => ({
-    value: status.value,
-    label: status.label,
-  })) || [];
+  return (
+    props.dropdowns.complaintStatuses?.map(status => ({
+      value: status.value,
+      label: status.label,
+    })) || []
+  );
 });
 
 // Check if the claim is vehicle-related
@@ -164,7 +168,7 @@ function updateSubStatus() {
         position: 'top',
       });
     },
-    onError: (errors) => {
+    onError: errors => {
       notification.error({
         title: 'Error updating sub-status',
         position: 'top',
@@ -174,21 +178,24 @@ function updateSubStatus() {
 }
 
 function updateComplaintStatus() {
-  complaintStatusForm.post(`/claims/${props.claim.id}/update-complaint-status`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Complaint status updated successfully',
-        position: 'top',
-      });
+  complaintStatusForm.post(
+    `/claims/${props.claim.id}/update-complaint-status`,
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Complaint status updated successfully',
+          position: 'top',
+        });
+      },
+      onError: errors => {
+        notification.error({
+          title: 'Error updating complaint status',
+          position: 'top',
+        });
+      },
     },
-    onError: (errors) => {
-      notification.error({
-        title: 'Error updating complaint status',
-        position: 'top',
-      });
-    },
-  });
+  );
 }
 
 function scheduleFollowUp() {
@@ -208,7 +215,7 @@ function scheduleFollowUp() {
         position: 'top',
       });
     },
-    onError: (errors) => {
+    onError: errors => {
       notification.error({
         title: 'Error scheduling follow-up',
         position: 'top',
@@ -271,7 +278,9 @@ function deleteClaim() {
     <Head :title="`Claim ${claim.ref_id}`" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Claim Details - {{ claim.ref_id }}</h2>
+        <h2 class="text-xl font-semibold">
+          Claim Details - {{ claim.ref_id }}
+        </h2>
         <x-tag
           v-if="claim.complaint_status === 'Complaint Open'"
           size="sm"
@@ -279,11 +288,7 @@ function deleteClaim() {
         >
           Complaint Open
         </x-tag>
-        <x-tag
-          v-else-if="isOverdue"
-          size="sm"
-          color="amber"
-        >
+        <x-tag v-else-if="isOverdue" size="sm" color="amber">
           Overdue Follow-up
         </x-tag>
       </template>
@@ -319,7 +324,9 @@ function deleteClaim() {
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Quick Actions</h3>
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Quick Actions
+            </h3>
           </div>
         </template>
         <template #body>
@@ -348,7 +355,9 @@ function deleteClaim() {
 
             <!-- Sub-Status Update -->
             <div class="bg-gray-50 p-4 rounded">
-              <h4 class="font-semibold mb-3 text-gray-700">Update Sub-Status</h4>
+              <h4 class="font-semibold mb-3 text-gray-700">
+                Update Sub-Status
+              </h4>
               <div class="flex gap-2">
                 <x-select
                   v-model="subStatusForm.sub_status_id"
@@ -415,7 +424,9 @@ function deleteClaim() {
 
             <!-- Follow-up Scheduling -->
             <div class="bg-gray-50 p-4 rounded">
-              <h4 class="font-semibold mb-3 text-gray-700">Schedule Follow-up</h4>
+              <h4 class="font-semibold mb-3 text-gray-700">
+                Schedule Follow-up
+              </h4>
               <div class="flex gap-2">
                 <DatePicker
                   v-model="followUpForm.next_follow_up_date"
@@ -434,10 +445,14 @@ function deleteClaim() {
             </div>
 
             <!-- Overdue Alert -->
-            <div v-if="isOverdue" class="bg-red-50 p-4 rounded border-l-4 border-red-400">
+            <div
+              v-if="isOverdue"
+              class="bg-red-50 p-4 rounded border-l-4 border-red-400"
+            >
               <h4 class="font-semibold mb-2 text-red-700">Overdue Follow-up</h4>
               <p class="text-sm text-red-600">
-                This claim requires follow-up (Due: {{ formatDate(claim.next_follow_up_date) }})
+                This claim requires follow-up (Due:
+                {{ formatDate(claim.next_follow_up_date) }})
               </p>
             </div>
           </div>
@@ -450,7 +465,9 @@ function deleteClaim() {
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Claim Details</h3>
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Claim Details
+            </h3>
           </div>
         </template>
         <template #body>
@@ -499,9 +516,13 @@ function deleteClaim() {
                   <x-tag
                     size="sm"
                     :color="
-                      claim.claim_status === 'Closed' ? 'success' :
-                      claim.claim_status === 'Open' ? 'warning' :
-                      claim.claim_status === 'Cancelled' ? 'error' : 'info'
+                      claim.claim_status === 'Closed'
+                        ? 'success'
+                        : claim.claim_status === 'Open'
+                          ? 'warning'
+                          : claim.claim_status === 'Cancelled'
+                            ? 'error'
+                            : 'info'
                     "
                   >
                     {{ claim.claim_status }}
@@ -550,9 +571,11 @@ function deleteClaim() {
                   <x-tag
                     size="sm"
                     :color="
-                      claim.complaint_status === 'Complaint Open' ? 'error' :
-                      claim.complaint_status === 'Complaint Closed' ? 'success' :
-                      'gray'
+                      claim.complaint_status === 'Complaint Open'
+                        ? 'error'
+                        : claim.complaint_status === 'Complaint Closed'
+                          ? 'success'
+                          : 'gray'
                     "
                   >
                     {{ claim.complaint_status }}
@@ -563,9 +586,9 @@ function deleteClaim() {
                 <dt class="font-medium">NEXT FOLLOW-UP DATE</dt>
                 <dd :class="{ 'text-red-600 font-semibold': isOverdue }">
                   {{ formatDate(claim.next_follow_up_date) }}
-                  <span
-          v-if="isOverdue"
-          class="ml-2 text-red-500">(Overdue)</span>
+                  <span v-if="isOverdue" class="ml-2 text-red-500"
+                    >(Overdue)</span
+                  >
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2" v-if="isCarLOB">
@@ -610,7 +633,9 @@ function deleteClaim() {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
-                <dd>{{ claim.additional_notes || 'No additional notes provided' }}</dd>
+                <dd>
+                  {{ claim.additional_notes || 'No additional notes provided' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>

@@ -11,10 +11,6 @@ const props = defineProps({
   <div>
     <Head title="Edit Claim" />
 
-    <Form 
-      :claim="claim"
-      :dropdowns="dropdowns"
-      :isEdit="true"
-    />
+    <Form :claim="claim" :dropdowns="dropdowns" :isEdit="true" />
   </div>
-</template> 
+</template>

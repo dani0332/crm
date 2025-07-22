@@ -508,7 +508,10 @@ watch(
       hide-footer
     >
       <template #item-ref_id="{ ref_id }">
-        <Link :href="`/claims/${ref_id}`" class="text-primary-500 hover:underline">
+        <Link
+          :href="`/claims/${ref_id}`"
+          class="text-primary-500 hover:underline"
+        >
           {{ ref_id }}
         </Link>
       </template>

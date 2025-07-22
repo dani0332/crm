@@ -10,10 +10,6 @@ defineProps({
   <div>
     <Head title="Create Claim Lead" />
 
-    <Form 
-      :claim="null"
-      :dropdowns="dropdowns"
-      :isEdit="false"
-    />
+    <Form :claim="null" :dropdowns="dropdowns" :isEdit="false" />
   </div>
-</template> 
+</template>

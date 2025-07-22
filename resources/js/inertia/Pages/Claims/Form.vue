@@ -90,8 +90,8 @@ function onSubmit(isValid) {
     <div class="flex justify-between items-center">
       <div>
         <h2 class="text-xl font-semibold">
-        {{ isEdit ? 'Edit Claim' : 'Create New Claim Lead' }}
-      </h2>
+          {{ isEdit ? 'Edit Claim' : 'Create New Claim Lead' }}
+        </h2>
         <p class="text-sm text-gray-600 mt-1" v-if="!isEdit">
           Create a new claim lead in IMCRM. Fields marked with * are mandatory.
         </p>
@@ -112,7 +112,9 @@ function onSubmit(isValid) {
       <!-- Claim Lead Information -->
       <div class="bg-white p-6 rounded shadow mb-6">
         <h3 class="text-lg font-semibold mb-4">Claim Lead Information</h3>
-        <p class="text-sm text-gray-600 mb-4">Fields marked with * are mandatory</p>
+        <p class="text-sm text-gray-600 mb-4">
+          Fields marked with * are mandatory
+        </p>
         <div class="grid sm:grid-cols-2 gap-4">
           <x-input
             v-model="claimForm.first_name"
