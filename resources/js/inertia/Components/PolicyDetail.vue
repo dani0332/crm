@@ -239,6 +239,7 @@ const calculateVatAmount = (
   }
 };
 const quoteType = page.props.quoteType.toLowerCase();
+const isLifeQuote = quoteType == quoteTypeCodeEnum.Life.toLowerCase();
 
 const isPriceVatApplicableEnabled =
   quoteType == quoteTypeCodeEnum.Life.toLowerCase() ||
