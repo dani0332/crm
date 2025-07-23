@@ -782,46 +782,6 @@
                 <tr style="page-break-inside: avoid;">
                     <td style="background-color: #DBEEFF; color: #5B5F60">
                         <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
-                            Entry age
-                        </p>
-                    </td>
-                   
-                    @foreach($displayPlans as $planId)
-                        @if(isset($planDetails['entry_age'][$planId]) && !empty($planDetails['entry_age'][$planId]))
-                            <td style="padding:0px !important;">
-                                <p>{{ $planDetails['entry_age'][$planId]}}</p>
-                            </td>
-                        @else
-                            <td>
-                                <p class="text-center not-applicable">Not applicable</p>
-                            </td>
-                        @endif
-                    @endforeach
-                </tr>
-
-                <tr style="page-break-inside: avoid;">
-                    <td style="background-color: #DBEEFF; color: #5B5F60">
-                        <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
-                            Exit age
-                        </p>
-                    </td>
-                   
-                    @foreach($displayPlans as $planId)
-                        @if(isset($planDetails['exit_age'][$planId]) && !empty($planDetails['exit_age'][$planId]))
-                            <td style="padding:0px !important;">
-                                <p>{{ $planDetails['exit_age'][$planId]}}</p>
-                            </td>
-                        @else
-                            <td>
-                                <p class="text-center not-applicable">Not applicable</p>
-                            </td>
-                        @endif
-                    @endforeach
-                </tr>
-
-                <tr style="page-break-inside: avoid;">
-                    <td style="background-color: #DBEEFF; color: #5B5F60">
-                        <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
                             Coverage
                         </p>
                     </td>
