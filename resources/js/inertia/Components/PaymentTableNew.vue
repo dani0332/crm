@@ -140,12 +140,16 @@ const isTransactionCaptureButtonEnabled = ref(true);
 const capturePaymentValidationErrorMessage = ref('');
 const selectedPaymentForEdit = ref(null);
 
+// for life only
+const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
+
 // Array of quote types to check against
 const quoteTypesToCheck = [
   quoteTypeCodeEnum.Car,
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.Life,
   quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
 // Declare initialAmount.value variable
@@ -176,6 +180,16 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
+} else if (props.quoteType === quoteTypeCodeEnum.Life) {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+    initialAmount.value =
+      props.quoteRequest.premium *
+      exchangeRate.value *
+      props.quoteRequest?.life_quote?.payment_term;
+  } else {
+    initialAmount.value =
+      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term;
+  }
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -235,6 +249,8 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.Life) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -367,6 +383,18 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = async () => {
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    if (
+      exchangeRate.value == 0 &&
+      props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED'
+    ) {
+      notification.error({
+        title: 'Please update the Exchange Rate in the Available Plan Section.',
+        position: 'top',
+      });
+      return;
+    }
+  }
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
@@ -459,7 +487,24 @@ const addPaymentModal = async () => {
   paymentFormUpdateData.collection_date = new Date();
   createPaymentModal.value = true;
 
-  paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
+  // Special handling for life quotes - map payment term to frequency
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.quoteRequest?.life_quote?.payment_term
+  ) {
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      4: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentFormUpdateData.frequency =
+      paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
+  } else {
+    paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
+  }
+
   paymentFormUpdateData.discount = '';
   paymentFormUpdateData.credit_approval = '';
   createPaymentFormRef.value.updateTotalPayments([{ value: '1', label: '1' }]);
@@ -467,6 +512,12 @@ const addPaymentModal = async () => {
   createPaymentFormRef.value.updatePaymentForm(paymentFormUpdateData);
   createPaymentFormRef.value.handleCollectionTypeChange();
   createPaymentFormRef.value.calculatePaymentBreakup();
+
+  // Trigger frequency change for life quotes to update payment schedule
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    createPaymentFormRef.value.handleFrequencyChange();
+  }
+
   createPaymentFormRef.value.applyPermissions();
 };
 
@@ -692,6 +743,17 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Home
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
+    } else if (props.quoteType === quoteTypeCodeEnum.Life) {
+      if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+        initialAmount.value =
+          props.quoteRequest.premium *
+          exchangeRate.value *
+          props.quoteRequest?.life_quote?.payment_term;
+      } else {
+        initialAmount.value =
+          props.quoteRequest.premium *
+          props.quoteRequest?.life_quote?.payment_term;
+      }
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -705,6 +767,10 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
+  } else if (props.quoteType == quoteTypeCodeEnum.Life) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
