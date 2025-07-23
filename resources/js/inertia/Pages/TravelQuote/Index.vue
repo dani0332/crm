@@ -603,7 +603,22 @@ const calculateAge = (dateOfBirth) => {
   if (!dateOfBirth) return 0;
 
   const today = new Date();
-  const birthDate = new Date(dateOfBirth);
+  let birthDate;
+
+  // Handle DD-MM-YYYY format
+  if (typeof dateOfBirth === 'string' && dateOfBirth.includes('-')) {
+    const [day, month, year] = dateOfBirth.split('-');
+    // Create date with year, month-1 (0-indexed), day
+    birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  } else {
+    birthDate = new Date(dateOfBirth);
+  }
+
+  // Check if the date is valid
+  if (isNaN(birthDate.getTime())) {
+    return 0;
+  }
+
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
 
