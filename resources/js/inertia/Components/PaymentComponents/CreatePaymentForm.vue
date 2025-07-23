@@ -636,7 +636,9 @@ const addPayment = isValid => {
       declined_custom_reason: declinedCustomReason,
       send_update_id: props.sendUpdate?.id || null,
       collection_type: paymentMethodsForm.collection_type,
+      insurer_receipt_number: paymentMethodsForm.insurer_receipt_number
     };
+
     paymentMethodsForm
       .transform(data => viewData)
       .post('/payments/' + props.quoteType + '/split-payment-approve-decline', {
