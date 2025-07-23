@@ -219,6 +219,7 @@ watch(
             required
             class="w-full uppercase"
             :disabled="page.props.lockLeadSectionsDetails.plan_details"
+            :error="planDetailsForm.errors.insurance_provider_id"
           />
         </div>
 
@@ -244,6 +245,7 @@ watch(
             class="w-full uppercase"
             type="text"
             @change="updatePriceWithVat"
+            :error="planDetailsForm.errors.price_vat_applicable"
           />
         </div>
 
