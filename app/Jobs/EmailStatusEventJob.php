@@ -50,6 +50,7 @@ class EmailStatusEventJob implements ShouldQueue
                     info('EmailStatusEventJob - update status for home quote : msg_id: '.$this->emailData->message_id.' - status: '.$this->emailData->status.' | Time: '.now());
                     app(EmailStatusService::class)->updateEmailStatus($isEmailMessage, $this->emailData->status);
                     Cache::forget("email_statuses_{$isEmailMessage->quote_type_id}_{$isEmailMessage->quote_id}");
+
                     return true;
                 }
 
