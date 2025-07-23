@@ -316,6 +316,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
     try {
       const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
+        quoteUuid: props.quoteRequest.uuid,
         modelType: props.quoteType,
         paymentCode: code,
         splitPaymentId: splitPaymentId,
@@ -584,8 +585,10 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
 
   return axios
     .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
-    .then(res => {
+    .then(async res => {
       if (res?.data?.response?.status == paymentCaptureValidationEnum.SUCCESS) {
+        createPaymentModal.value = true;
+        await new Promise(resolve => setTimeout(resolve, 200));
         createPaymentFormRef.value.updatePremiumToCapture(
           res?.data?.response?.premiumAmount,
         );
@@ -712,7 +715,7 @@ const setPlanDetail = () => {
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
-    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+    initalPlanDetails = props.quoteRequest?.car_plan;
     if (props.sendUpdate) {
       initalPlanDetails =
         props.quoteRequest.insurance_provider_details ??

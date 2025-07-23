@@ -68,6 +68,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insurer_api_status_id',
             'start_date',
             'end_date',
+            'days_cover_for',
             'lead_assignment_trigger',
             'parent_id',
         ], [
@@ -86,6 +87,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan:id,text',
             'currentlyLocatedIn:id,text',
             'renewalBatch:id,name',
+            'quoteTags:quote_uuid,name',
             'parent:id,code',
             'child:id,code,parent_id',
         ]);
@@ -137,6 +139,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when($this->hasFilterValue('previous_quote_policy_number', $requestParams), function ($query) use ($requestParams) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', requestParams: $requestParams)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', requestParams: $requestParams));
             })
+            ->filterByDate('travel_end_date', 'end_date', false)
+            ->filterBy('assignment_type', ignoreAll: true)
             ->when($this->hasFilterValue('is_renewal', $requestParams) && $this->getFilterValue('is_renewal', $requestParams) == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
             })

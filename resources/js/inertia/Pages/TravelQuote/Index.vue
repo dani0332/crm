@@ -12,6 +12,7 @@ defineProps({
   insuranceProviders: Array,
   travelPlans: Array,
   insurerAMLStatus: Object,
+  assignmentTypes: Object,
 });
 
 let params = useUrlSearchParams('history');
@@ -83,6 +84,8 @@ const filters = reactive({
   insurance_provider_ids: [],
   plan_name: [],
   travel_start_date: '',
+  travel_end_date: '',
+  assignment_type: '',
   private_client: 'all',
   age_group: [],
 });
@@ -1086,6 +1089,21 @@ const calculateAge = (dateOfBirth) => {
           ]"
           class="w-full"
           :single="true"
+        />
+        <DatePicker
+          v-model="filters.travel_end_date"
+          label="Travel End Date"
+          format="dd-MM-yyyy"
+        />
+
+        <x-select
+          v-model="filters.assignment_type"
+          name="assignment_type"
+          class="w-full"
+          placeholder="Search by Assignment Type"
+          :options="assignmentTypes"
+          label="Assignment Type"
+          filterable
         />
         <ComboBox
           v-model="filters.age_group"
