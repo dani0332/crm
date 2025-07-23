@@ -1537,8 +1537,8 @@ class SageApiEmbeddedProductService
     }
 
     /*
-     * We are having duplicate insurer tax and commission tax invoice number which are causing issue with sage booking, as same invoice numbers are being issued for
-     * other Leads in past, so we are adding asterisk for uniqueness, there have been some db changes for this already so am adding asterisk conditionaly so
+     * We are having duplicate insurer tax and commission tax invoice number which are causing issue with sage booking, as same invoice numbers were being issued for
+     * other Leads in the past, so we are adding asterisk for uniqueness, there have been some db changes for this already so I am  adding asterisk conditionally so
      * it would not mess with reversal of those entries
      * */
     private static function formatDocNumber($docNumber)
