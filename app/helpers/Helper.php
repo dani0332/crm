@@ -525,7 +525,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
             QuoteTypes::SAVINGS->value,
-            QuoteTypes::HOME->value
+            QuoteTypes::HOME->value,
         ]);
     }
 }
