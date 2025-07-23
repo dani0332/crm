@@ -87,6 +87,8 @@ const iconPosition = computed(() => {
     :clearable="!props.disabled"
     :range="range"
     text-input
+    :teleport-center="false"
+    teleport="body"
   >
     <!-- auto-apply -->
     <template #dp-input="{ value, onEnter, onTab, onBlur, onInput, onPaste }">

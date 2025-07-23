@@ -28,6 +28,7 @@ class RolePermissionSeeder extends Seeder
         $this->addRenewalsUploadPermission();
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
+        $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
     }
 
@@ -243,6 +244,26 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addPlanDetailsEditPermission(): void
+    {
+        $permission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::PLAN_DETAILS_EDIT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
     }
 
     private function addOverrideCommissionPermission(): void
