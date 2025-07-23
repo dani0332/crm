@@ -58,6 +58,7 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
@@ -2072,10 +2073,17 @@ class CRUDController extends Controller
         ]);
 
         if ($request->modelType == strtolower(quoteTypeCode::Life)) {
-            $quoteModel->update([
-                'policy_sum_assured_currency_id' => $request->policy_sum_assured_currency_id ?? null,
-                'policy_sum_assured' => $request->policy_sum_assured ?? null,
-            ]);
+            $model = $quoteModel;
+            if ($quoteModel instanceof PersonalQuote) {
+                $model = $quoteModel->lifeQuote;
+            }
+
+            if ($model) {
+                $model->update([
+                    'policy_sum_assured_currency_id' => $request->policy_sum_assured_currency_id ?? null,
+                    'policy_sum_assured' => $request->policy_sum_assured ?? null,
+                ]);
+            }
         }
 
         if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
