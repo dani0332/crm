@@ -269,7 +269,7 @@ function insuredKycFormValidate() {
 }
 const syncInsurerPortalUpdates = () => {
   axios
-    .post('/get-quote-from-insurer', {
+    .post('/get-quote-details-from-insurer', {
       quoteTypeId: page.props.quoteType.id,
       quoteUID: page.props.quoteRequest.uuid
     })

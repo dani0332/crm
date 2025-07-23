@@ -93,7 +93,42 @@ const submitAdditionalDriverDetailsForm = (isValid) => {
 // Watch for changes in insurerPortalSyncData and update form values
 watch(() => props.insurerPortalSyncData, (newData) => {
   if (newData) {
-    console.log('Updating Driver Details with:', newData);
+    if (newData.isInsuredAndDriverSame) {
+      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.isInsuredAndDriverSame;
+    }
+    if (newData.driverFirstName) {
+      additionalVehicleTransactionDetailsForm.driver_first_name = newData.driverFirstName;
+    }
+    if (newData.driverLastName) {
+      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.driverLastName;
+    }
+    if (newData.driverDob) {
+      additionalVehicleTransactionDetailsForm.driver_first_name = newData.driverDob;
+    }
+    if (newData.driverGender) {
+      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.driverGender;
+    }
+    if (newData.driverLicenseNumber) {
+      additionalVehicleTransactionDetailsForm.driver_first_name = newData.driverLicenseNumber;
+    }
+    if (newData.licenseIssuePlace) {
+      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.licenseIssuePlace;
+    }
+    if (newData.licenseIssueDate) {
+      additionalVehicleTransactionDetailsForm.driver_first_name = newData.licenseIssueDate;
+    }
+    if (newData.licenseExpiryDate) {
+      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.licenseExpiryDate;
+    }
+    if (newData.uaeDrivingExperience) {
+      additionalVehicleTransactionDetailsForm.driver_first_name = newData.uaeDrivingExperience;
+    }
+    if (newData.homeCountryLicenseIssuance) {
+      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.homeCountryLicenseIssuance;
+    }
+    if (newData.homeCountryDrivingExperience) {
+      additionalVehicleTransactionDetailsForm.driver_first_name = newData.homeCountryDrivingExperience;
+    }
   }
 }, { deep: true });
 

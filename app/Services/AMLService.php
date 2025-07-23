@@ -2074,6 +2074,6 @@ class AMLService
         }
 
         $screeningResult = json_decode($kycLogs->results);
-        return isset($screeningResult->uwApprovalStatus) && $screeningResult->uwApprovalStatus == 'Y';
+        return (isset($screeningResult->uwApprovalStatus) && isset($screeningResult->quoteStatus) && $screeningResult->uwApprovalStatus == 'Y' && $screeningResult->quoteStatus == 'Quote');
     }
 }

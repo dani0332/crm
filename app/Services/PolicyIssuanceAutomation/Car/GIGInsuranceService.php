@@ -812,63 +812,59 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quoteDetails->code.' started');
-        return response()->json([
-            'success' => true,
-            'message' => 'Quote details retrieved successfully from insurer portal',
-            'data' => [
-                'additionalVehicleTransactionDetails' => [
-                    'rtaTransactionType' => '',
-                    'plateCode' => '',
-                    'plateNumber' => '123456',
-                ]
-            ]
-        ]);
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Quote details retrieved successfully from insurer portal',
+        //     'data' => [
+        //         'additionalVehicleTransactionDetails' => [
+        //             'rtaTransactionType' => '',
+        //             'plateCode' => '',
+        //             'plateNumber' => '123456',
+        //         ]
+        //     ]
+        // ]);
         try {
             $payload = ['quoteTypeId' => $quoteTypeId, 'quoteUID' => $quoteDetails->uuid];
             $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
             $responseData = $response['data'];
 
             $getQuoteResponseMapping = [
-                'additionalVehicleTransactionDetails' => [
-                    'rtaTransactionType' => '',
-                    'plateCode' => '',
-                    'plateNumber' => $responseData->plateNumber,
-                    'trafficCodeNumber' => '',
-                    'chassisNumber' => '',
-                    'engineNumber' => '',
-                    'rtaPlateCategory' => '',
-                    'vehicleColor' => '',
-                    'plateColor' => '',
-                    'bankLoan' => '',
-                    'bankName' => '',
-                    'firstRegistrationDate' => $responseData->policySchedule->creationDate,
-                    'policyEffectiveDate' => $responseData->policySchedule->effectiveDate,
-                    'policyExpiryDate' => $responseData->policySchedule->expirationDate,
-                    'certificateStartDate' => $responseData->certificateInceptionDate,
-                    'certificateEndDate' => $responseData->certificateEndDate,
-                    'annualMileageEstimate' => '',
-                ],
-                'additionalDriverDetails' => [
-                    'isInsuredAndDriverSame' => $responseData->isPolicyHolderDriver,
-                    'driverFirstName' => '',
-                    'driverLastName' => '',
-                    'driverDob' => '',
-                    'driverGender' => '',
-                    'driverLicenseNumber' => '',
-                    'licenseIssuePlace' => '',
-                    'licenseIssueDate' => '',
-                    'licenseExpiryDate' => '',
-                    'uaeDrivingExperience' => '',
-                    'homeCountryLicenseIssuance' => '',
-                    'homeCountryDrivingExperience' => '',
-                ],
+                'rtaTransactionType' => $responseData->authorityTransactionDetails->code,
+                'plateCode' => $this->extractPlateCode($responseData->plateNumber), // optional
+                'plateNumber' => $this->extractPlateNumber($responseData->plateNumber), // optional
+                'trafficCodeNumber' => $responseData->motorInformation->trafficFileNumber,
+                'chassisNumber' => $responseData->motorInformation->chassisNumber,
+                'engineNumber' => $responseData->motorInformation->engineNumber,
+                'rtaPlateCategory' => '',
+                'vehicleColor' => $responseData->motorInformation->vehicleColor->code,
+                'plateColor' => $responseData->motorInformation->plateColor->code,
+                'bankLoan' => $responseData->motorInformation->isVehicleMortgaged,
+                'bankName' => ($responseData->motorInformation->isVehicleMortgaged) ? $responseData->motorInformation->bankName : '', // optional
+                'firstRegistrationDate' => $responseData->policySchedule->creationDate,
+                'policyEffectiveDate' => $responseData->policySchedule->effectiveDate,
+                'policyExpiryDate' => $responseData->policySchedule->expirationDate, // optional
+                'certificateStartDate' => $responseData->certificateInceptionDate,
+                'certificateEndDate' => $responseData->certificateEndDate, // optional
+                'annualMileageEstimate' => '', // optional
+                'isInsuredAndDriverSame' => $responseData->policyHolder->isPolicyHolderDriver,
+                'driverFirstName' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->givenName : $responseData->driver->firstName, // optional
+                'driverLastName' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->surName : $responseData->driver->lastName, // optional
+                'driverDob' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->birthDate : $responseData->driver->dateOfBirth, // optional
+                'driverGender' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->gender->value : $responseData->driver->gender,
+                'driverLicenseNumber' => '',
+                'licenseIssuePlace' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->firstDrivingLicenseIssueCountry->code : $responseData->driver->nationality->value, // optional
+                'licenseIssueDate' => '', // optional
+                'licenseExpiryDate' => '',
+                'uaeDrivingExperience' => '', // optional
+                'homeCountryLicenseIssuance' => '', // optional
+                'homeCountryDrivingExperience' => '', // optional
             ];
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Quote details retrieved successfully from insurer portal',
-                'data' => $getQuoteResponseMapping ?? null
-            ]);
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Quote details retrieved successfully from insurer portal',
+            //     'data' => $getQuoteResponseMapping ?? null
+            // ]);
 
             if (isset($response['status']) && $response['status'] === true) {
                 return response()->json([
@@ -910,5 +906,17 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
             self::BOOK_POLICY_API_FAILED_STATUS_ID,
         ];
+    }
+
+    private function extractPlateCode(string $plateNumber): string
+    {
+        preg_match('/([A-Za-z]+)/', $plateNumber, $matches);
+        return $matches[1] ?? '';
+    }
+
+    private function extractPlateNumber(string $plateNumber): string
+    {
+        preg_match('/(\d+)/', $plateNumber, $matches);
+        return $matches[1] ?? '';
     }
 }

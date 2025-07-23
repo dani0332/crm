@@ -1058,7 +1058,7 @@ class AMLController extends Controller
         return response()->json(['success' => $response['status'], 'message' => $response['message']]);
     }
 
-    public function getQuoteFromInsurer(Request $request)
+    public function getQuoteDetailsFromInsurer(Request $request)
     {
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value;
         $quoteDetails = $this->getQuoteObjectBy($quoteType, $request->quoteUID, 'uuid');
