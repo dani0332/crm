@@ -899,8 +899,8 @@ class SageApiEmbeddedProductService
         $epRefCode = $sukoonMedXTransaction->code;
         $policyNumber = $viewQuotePolicyApiResponse->policy_number;
 
-        $insurerTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_document_number;
-        $commissionTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_buyer_document_number;
+        $insurerTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_document_number.'*';
+        $commissionTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_buyer_document_number.'*';
 
         $sageRequestEmbeddedProduct = new stdClass;
         $sageRequestEmbeddedProduct->tapChargeId = $sukoonMedXTransaction?->payment->paymentSplits->first()?->paymentCharges?->transaction_id;
