@@ -608,11 +608,20 @@ const calculateAge = dateOfBirth => {
   const today = new Date();
   let birthDate;
 
-  // Handle DD-MM-YYYY format
+  // Handle both DD-MM-YYYY and YYYY-MM-DD formats
   if (typeof dateOfBirth === 'string' && dateOfBirth.includes('-')) {
-    const [day, month, year] = dateOfBirth.split('-');
-    // Create date with year, month-1 (0-indexed), day
-    birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const parts = dateOfBirth.split('-');
+
+    // Check if first part is a 4-digit year (YYYY-MM-DD format)
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD format
+      const [year, month, day] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      // DD-MM-YYYY format
+      const [day, month, year] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
   } else {
     birthDate = new Date(dateOfBirth);
   }
