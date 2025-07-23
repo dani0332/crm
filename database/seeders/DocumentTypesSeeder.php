@@ -603,9 +603,8 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
             ],
             [
-                'code' => 'BOR',
-                'text' => 'Broker on Record Letter',
-                'description' => 'Please upload the BOR letter with the signature and stamp on your official company letterhead',
+                'code' => 'BOR_SIGN',
+                'text' => 'Bor Signature',
                 'quote_type_id' => null,
                 'is_active' => 1,
                 'folder_path' => 'bor',

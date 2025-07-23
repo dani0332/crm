@@ -46,7 +46,7 @@ class BorService
         $personalQuote = $quoteObject->personalQuote;
 
         $data['lead_id'] = $personalQuote->id;
-        $data['status'] = BorStatusEnum::PENDING_BOR_REQUEST;
+        $data['status'] = BorStatusEnum::SIGNATURE_REQUESTED;
 
         $data['date_created'] = now();
         $data['email_sent'] = false;

@@ -52,6 +52,7 @@ const notification = useNotifications('toast'); // Fix: Use consistent notificat
 // Reactive data
 const borLogs = ref([]);
 const total = ref(0);
+const BorStatusEnum = ref({});
 const isLoading = ref(false);
 const error = ref(null);
 const showBorRequestForm = ref(false);
@@ -95,6 +96,7 @@ const fetchBorLogs = async (page = 1) => {
       const paginatedData = response.data.data;
       borLogs.value = paginatedData.data || [];
       total.value = response.data.total;
+      BorStatusEnum.value = response.data.bor_status_enum;
       // Extract pagination info from Laravel pagination response
       pagination.value = {
         current_page: paginatedData.current_page,
@@ -389,6 +391,7 @@ onMounted(() => {
             :logs="borLogs" 
             :loading="isLoading"
             :pagination="pagination"
+            :bor-status-enum="BorStatusEnum"
             @upload-document="handleUploadDocument"
             @update-status="handleUpdateStatus"
             @cancel-bor="handleCancelBor"

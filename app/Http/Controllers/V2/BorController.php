@@ -50,6 +50,7 @@ class BorController extends Controller
                 'success' => true,
                 'data' => $logs,
                 'total' => $total,
+                'bor_status_enum' => BorStatusEnum::asArray(),
             ]);
         } catch (\Throwable $th) {
             Log::error('Failed to fetch BOR logs', [

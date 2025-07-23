@@ -144,17 +144,6 @@ class BorLog extends Model
     }
 
     /**
-     * Check if the BOR request is pending.
-     */
-    public function isPending(): bool
-    {
-        return in_array($this->status, [
-            BorStatusEnum::SIGNATURE_REQUESTED,
-            BorStatusEnum::PENDING_BOR_REQUEST,
-        ]);
-    }
-
-    /**
      * Check if the BOR request is completed.
      */
     public function isCompleted(): bool

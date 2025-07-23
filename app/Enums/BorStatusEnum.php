@@ -11,10 +11,10 @@ use BenSampo\Enum\Enum;
  */
 final class BorStatusEnum extends Enum
 {
-    const PENDING_BOR_REQUEST = "PENDING_BOR_REQUEST";
-    const SIGNATURE_REQUESTED = 'SIGNATURE_REQUESTED';
-    const DOCUMENT_SIGNED = "DOCUMENT_SIGNED";
-    const DOCUMENT_UPLOADED = "DOCUMENT_UPLOADED";
-    const COMPLETED = "COMPLETED";
-    const CANCELLED = "CANCELLED";
+    const SIGNATURE_REQUESTED = 'Signature Requested';
+    const SENT_TO_INSURER = 'Sent to Insurer';
+    const DOCUMENT_SIGNED = "Document Signed";
+    const DOCUMENT_UPLOADED = "Document Uploaded";
+    const COMPLETED = "Completed";
+    const CANCELLED = "Cancelled";
 }

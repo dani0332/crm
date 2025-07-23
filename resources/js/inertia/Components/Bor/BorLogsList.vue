@@ -16,6 +16,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  borStatusEnum: {
+    type: Object,
+    required: true
+  },
   pagination: {
     type: Object,
     default: () => ({
@@ -52,7 +56,7 @@ const tableHeaders = ref([
   { text: 'User agent', value: 'user_agent', sortable: true },
   { text: 'Email Sent to UW', value: 'email_sent', sortable: false },
   { text: 'Status', value: 'status', sortable: false },
-  { text: 'Actions', value: 'action', sortable: false }
+  { text: 'Actions', value: 'actions', sortable: false }
 ])
 
 // Format data for DataTable
@@ -68,13 +72,6 @@ const tableItems = computed(() => {
 // Status badge configuration
 const getStatusBadge = (status) => {
   const statusConfig = {
-    // Legacy statuses
-    'pending': { class: 'bg-yellow-100 text-yellow-800', text: 'Pending' },
-    'sent': { class: 'bg-blue-100 text-blue-800', text: 'Sent' },
-    'completed': { class: 'bg-green-100 text-green-800', text: 'Completed' },
-    'failed': { class: 'bg-red-100 text-red-800', text: 'Failed' },
-    'cancelled': { class: 'bg-gray-100 text-gray-800', text: 'Cancelled' },
-    
     // New BorStatusEnum statuses
     'SIGNATURE_REQUESTED': { class: 'bg-yellow-100 text-yellow-800', text: 'Signature Requested' },
     'SENT_TO_INSURER': { class: 'bg-blue-100 text-blue-800', text: 'Sent to Insurer' },
@@ -82,7 +79,6 @@ const getStatusBadge = (status) => {
     'DOCUMENT_UPLOADED': { class: 'bg-purple-100 text-purple-800', text: 'Document Uploaded' },
     'CANCELLED': { class: 'bg-gray-100 text-gray-800', text: 'Cancelled' },
     'COMPLETED': { class: 'bg-green-100 text-green-800', text: 'Completed' },
-    'PENDING_BOR_REQUEST': { class: 'bg-yellow-100 text-yellow-800', text: 'Pending BOR Request' }
   }
   return statusConfig[status] || { class: 'bg-gray-100 text-gray-800', text: status }
 }
@@ -164,27 +160,24 @@ const statusOptions = [
 
 // Helper function to check if an action is allowed based on log data
 const canPerformAction = (log, action) => {
-  // If log has available_actions from backend, use that
-  if (log.available_actions && Array.isArray(log.available_actions)) {
-    return log.available_actions.some(a => a.action === action)
-  }
-  
   // Fallback logic for determining action availability
-  const status = log.status?.toUpperCase()
+  const status = log.status
+  const editAndCopyLinkCondition = ![props.borStatusEnum.SIGNATURE_REQUESTED, props.borStatusEnum.SENT_TO_INSURER].includes(status);
+  const uploadAndDoneCondition = ![props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status);
   
   switch (action) {
     case 'edit':
-      return ['SIGNATURE_REQUESTED', 'DOCUMENT_SIGNED'].includes(status)
+      return editAndCopyLinkCondition
     case 'upload':
-      return ['DOCUMENT_SIGNED'].includes(status) && can(permissionsEnum.BOR_DOCUMENT_UPLOAD)
+      return uploadAndDoneCondition && can(permissionsEnum.BOR_DOCUMENT_UPLOAD)
     case 'cancel':
-      return !['CANCELLED', 'COMPLETED'].includes(status)
+      return ![props.borStatusEnum.CANCELLED, props.borStatusEnum.COMPLETED].includes(status)
     case 'done':
-      return ['DOCUMENT_UPLOADED'].includes(status)
+      return uploadAndDoneCondition
     case 'view_document':
       return log.signed_pdf_path || log.document_path
     case 'copy_link':
-      return ['SIGNATURE_REQUESTED', 'SENT_TO_INSURER'].includes(status)
+      return editAndCopyLinkCondition
     default:
       return false
   }
@@ -278,9 +271,6 @@ const canPerformAction = (log, action) => {
               @click="handleUploadDocument(actions)"
               title="Upload signed document"
             >
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
               Upload
             </x-button>
 
@@ -292,24 +282,7 @@ const canPerformAction = (log, action) => {
               @click="handleCancelBor(actions)"
               title="Cancel BOR request"
             >
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
               Cancel
-            </x-button>
-
-            <!-- Mark Done Button -->
-            <x-button
-              v-if="canPerformAction(actions, 'done')"
-              color="success"
-              size="xs"
-              @click="handleMarkDone(actions)"
-              title="Mark as complete"
-            >
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              Done
             </x-button>
 
             <!-- View Document Button -->
@@ -327,21 +300,15 @@ const canPerformAction = (log, action) => {
               View
             </x-button>
 
-            <!-- Status Update Dropdown (for manual override) -->
-            <select
-              :value="actions.status"
-              @change="handleUpdateStatus(actions, $event.target.value)"
-              class="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              title="Update status manually"
+            <x-button
+              v-if="canPerformAction(actions, 'edit')"
+              color="primary"
+              size="xs"
+              @click="handleEditBor(actions)"
+              title="Edit BOR request"
             >
-              <option 
-                v-for="option in statusOptions" 
-                :key="option.value" 
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
+              Edit
+            </x-button>
           </div>
         </template>
       </DataTable>
