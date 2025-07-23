@@ -602,7 +602,7 @@ const insurerAMLStatusOption = computed(() => {
   }));
 });
 
-const calculateAge = (dateOfBirth) => {
+const calculateAge = dateOfBirth => {
   if (!dateOfBirth) return 0;
 
   const today = new Date();
@@ -625,7 +625,10 @@ const calculateAge = (dateOfBirth) => {
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
     age--;
   }
 
@@ -1313,15 +1316,9 @@ const calculateAge = (dateOfBirth) => {
         <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
       </template>
       <template #item-age_group="item">
-        <span v-if="item.child || item.parent">
-          Both
-        </span>
-        <span v-else-if="calculateAge(item.dob) < 65">
-          0 - 64
-        </span>
-        <span v-else-if="calculateAge(item.dob) >= 65">
-          65 and above
-        </span>
+        <span v-if="item.child || item.parent"> Both </span>
+        <span v-else-if="calculateAge(item.dob) < 65"> 0 - 64 </span>
+        <span v-else-if="calculateAge(item.dob) >= 65"> 65 and above </span>
       </template>
     </DataTable>
 

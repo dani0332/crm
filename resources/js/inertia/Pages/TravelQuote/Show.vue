@@ -110,7 +110,7 @@ const dateTimeFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
 };
 
-const calculateAge = (dateOfBirth) => {
+const calculateAge = dateOfBirth => {
   if (!dateOfBirth) return 0;
 
   const today = new Date();
@@ -133,7 +133,10 @@ const calculateAge = (dateOfBirth) => {
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
     age--;
   }
 
