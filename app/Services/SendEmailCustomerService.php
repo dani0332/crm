@@ -959,25 +959,19 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
-            // temporarily added.
-            LoggerService::info('email response for '.$emailData->code, extra: [
-                'response' => json_encode($clientResponse),
-                'getStatusCode' => $clientResponse->getStatusCode(),
-                'responseBody' => $clientResponse->getBody(),
-            ]);
             $message = json_decode($clientResponse->getBody()->getContents());
             if (isset($message->messageId)) {
                 $messageId = $message->messageId;
             }
+
             $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientResponse->getBody()->getContents()));
+            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- messageId : '.$messageId . ' responseCode: '.$responseCode);
             LoggerService::info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
+            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class() . 'messageId: '.$messageId;
             LoggerService::error($responseDetail);
             LoggerService::error('Quote Code: '.$emailData->code.' Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }

@@ -92,7 +92,12 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\HealthQuote;
 use App\Services\AddBatchForNonMotors;
+use App\Services\QuoteDocumentService;
+use App\Services\SendEmailCustomerService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -880,3 +885,25 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
     });
 });
+
+
+
+
+Route::get('/test', function (Request $request) {
+    $quoteCode = 'HEA-Z8RHE4WB';
+    $quote = HealthQuote::where('code', $quoteCode)->first();
+    $request->merge([
+        'model_type' => 'Health',
+        'quote_id' => $quote->id,
+        'send_policy_type' => 'customer',
+        'is_send_policy' => false,
+        'transaction_payment_status' => 'Fully Paid',
+        'modelType' => null,
+    ]);
+
+    $sendAndBookPolicy = new SendBookPolicyDocumentsJob($request, $quoteCode);
+    $sendAndBookPolicy->handle(app(SendEmailCustomerService::class), app(QuoteDocumentService::class));
+    dd('done');
+    dd($request->all());
+});
+
