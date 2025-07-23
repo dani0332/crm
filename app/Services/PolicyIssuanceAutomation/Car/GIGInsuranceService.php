@@ -14,7 +14,9 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Facades\Ken;
+use App\Http\Requests\SendBookPolicyRequest;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\InsurerRequestResponse;
@@ -23,9 +25,13 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SageApiService;
 use Exception;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Throwable;
 
 class GIGInsuranceService implements PolicyIssuanceInterface
 {
@@ -530,6 +536,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'name' => $docName,
                 'uploaded' => $quoteDocument?->id ? true : false,
                 'message' => $document['message'],
+                'document' => $quoteDocument,
             ]);
 
             if ($docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id) {
@@ -552,13 +559,98 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         } 
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - fetched all documents from insurer and Uploaded to IMCRM ');
-        $response['status'] = true;
-        $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
-        $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
+
+        // Collect successfully uploaded documents for batch OCR processing
+        $uploadedDocuments = $uploadedDocumentsToIMCRM->where('uploaded', true)
+            ->filter(function ($item) {
+                return isset($item['document']) && $item['document'];
+            })
+            ->pluck('document');
+
+        if ($uploadedDocuments->isNotEmpty()) {
+            $this->dispatchPopulateDocumentDataBatch($quote, $uploadedDocuments, $process);
+            
+            $response['status'] = true;
+            $response['message'] = 'Documents uploaded to IMCRM successfully. OCR processing batch dispatched.';
+            $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
+        } else {
+            // No documents were successfully uploaded - this should be treated as an error
+            $response['status'] = false;
+            $response['error'] = 'No documents were successfully uploaded to IMCRM';
+            $response['message'] = 'Failed to upload any documents to IMCRM';
+            
+            return $response;
+        }
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
 
         return $response;
+    }
+
+    /**
+     * Dispatch PopulateDocumentData jobs as a batch for all uploaded documents
+     */
+    private function dispatchPopulateDocumentDataBatch($quote, $uploadedDocuments, $process): void
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Starting batch OCR processing for '.count($uploadedDocuments).' documents');
+
+        $jobs = [];
+        
+        foreach ($uploadedDocuments as $document) {
+            if (! $document) {
+                continue;
+            }
+
+            $documentType = DocumentType::where([
+                'quote_type_id' => self::TYPE_ID, 
+                'code' => $document->document_type_code, 
+                'is_active' => true
+            ])->first();
+
+            if ($documentType) {
+                $jobs[] = new PopulateDocumentData(
+                    QuoteTypes::CAR,
+                    $quote,
+                    $documentType,
+                    $document->doc_url,
+                    $document->doc_mime_type,
+                    1 // Default user ID for automated processes, i think it's happy customer or something
+                );
+            }
+        }
+
+        if (empty($jobs)) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - No OCR jobs to dispatch');
+            return;
+        }
+
+        try {
+            Bus::batch($jobs)
+                ->then(function (Batch $batch) use ($quote, $process) {
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - All OCR jobs completed successfully');
+                    
+                    // Update the process status to reflect completion of document processing
+                    $process->update([
+                        'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+                        'updated_at' => now()
+                    ]);
+                    
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process step updated after successful OCR batch completion');
+                })
+                ->catch(function (Batch $batch, Throwable $e) use ($quote) {
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR batch processing failed: '.$e->getMessage());
+                })
+                ->finally(function (Batch $batch) use ($quote) {
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR batch processing completed (success or failure)');
+                })
+                ->allowFailures()
+                ->onQueue('shared')
+                ->dispatch();
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR batch dispatched with '.count($jobs).' jobs');
+        } catch (Exception $e) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Failed to dispatch OCR batch: '.$e->getMessage());
+        }
     }
 
     private function getPolicyIssuanceQuoteDocumentMapping($docName, $quote): ?array
@@ -588,7 +680,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return null;
     }
 
-    private function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null): void
+    private function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
@@ -597,7 +689,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         if (! $documentType) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document type not found for code: '.$documentCode);
 
-            return;
+            return null;
         }
 
         $fileContents = base64_decode($documentContent);
@@ -633,6 +725,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
+
+        return $newDocument;
     }
 
     private function executeBookPolicyStep($quote, $process)
@@ -660,25 +754,34 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
         $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $insurer = getInsuranceProvider($payment, QuoteTypes::CAR->value);
+        // $payment = $quote->payments()->mainLeadPayment()->first();
+        // $insurer = getInsuranceProvider($payment, QuoteTypes::CAR->value);
 
-        $getQuoteCallFromInsurer = InsurerRequestResponse::where([
-            'quote_uuid' => '98M8PNSL',//$quote->uuid,
-            'call_type' => 'quoteInfo',
-            'provider_id' => $insurer->id,
-            'status' => 'passed',
-        ])->latest()->first();
+        // $getQuoteCallFromInsurer = InsurerRequestResponse::where([
+        //     'quote_uuid' => '98M8PNSL',//$quote->uuid,
+        //     'call_type' => 'quoteInfo',
+        //     'provider_id' => $insurer->id,
+        //     'status' => 'passed',
+        // ])->latest()->first();
 
-        if (! $getQuoteCallFromInsurer) {
-            $response['error'] = 'Get Quote call from insurer not found';
-            $response['message'] = 'Get Quote call from insurer not found';
+        // if (! $getQuoteCallFromInsurer) {
+        //     $response['error'] = 'Get Quote call from insurer not found';
+        //     $response['message'] = 'Get Quote call from insurer not found';
 
+        //     return $response;
+        // }
+
+        // $getQuoteResponse = json_decode($getQuoteCallFromInsurer->response);
+        // $this->updateBookingAndPolicyDetails($quote, $getQuoteResponse);
+
+        // Pre-checks before executing postBookPolicyToSage using SendBookPolicyRequest validation
+        $preCheckResult = $this->validateBookPolicyUsingRequest($quote);
+        if (! $preCheckResult['status']) {
+            $response['error'] = $preCheckResult['error'];
+            $response['message'] = $preCheckResult['message'];
+            
             return $response;
         }
-
-        $getQuoteResponse = json_decode($getQuoteCallFromInsurer->response);
-        $this->updateBookingAndPolicyDetails($quote, $getQuoteResponse);
 
         $request = new \stdClass;
         $request->quote_id = $quote->id;
@@ -702,6 +805,57 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         $response['status'] = true;
         $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
+
+        return $response;
+    }
+
+    /**
+     * Validate book policy prerequisites using SendBookPolicyRequest validation 
+     * and additional document/status checks
+     */
+    private function validateBookPolicyUsingRequest($quote): array
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Validating book policy prerequisites');
+
+        $response = ['status' => true, 'error' => null, 'message' => null];
+
+        try {
+            // Prepare data for SendBookPolicyRequest validation
+            $requestData = [
+                'quote_id' => $quote->id,
+                'model_type' => self::TYPE,
+                'send_policy_type' => SendPolicyTypeEnum::SAGE,
+                'is_send_policy' => false,
+                'transaction_payment_status' => null,
+            ];
+
+            // Create validator using SendBookPolicyRequest rules
+            $sendBookPolicyRequest = new SendBookPolicyRequest();
+            $validator = Validator::make($requestData, $sendBookPolicyRequest->rules());
+            
+            // Apply the custom validation logic from SendBookPolicyRequest
+            $sendBookPolicyRequest->withValidator($validator);
+
+            if ($validator->fails()) {
+                $response['status'] = false;
+                $response['error'] = 'SendBookPolicyRequest validation failed';
+                $response['message'] = $validator->errors()->first();
+                
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - SendBookPolicyRequest validation failed: '.$response['message']);
+                return $response;
+            }
+
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - All prerequisites validated successfully');
+            $response['message'] = 'All book policy prerequisites validated successfully';
+            
+        } catch (Exception $e) {
+            $response['status'] = false;
+            $response['error'] = 'Validation error: ' . $e->getMessage();
+            $response['message'] = 'An error occurred during validation: ' . $e->getMessage();
+            
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Validation exception: '.$e->getMessage());
+        }
 
         return $response;
     }
