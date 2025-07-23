@@ -8,9 +8,9 @@ use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\TravelQuoteService;
 use App\Traits\ModernCsvExportable;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Carbon\Carbon;
 
 class TravelQuoteExport implements CsvExportableInterface
 {
@@ -85,6 +85,7 @@ class TravelQuoteExport implements CsvExportableInterface
     public function map($quote): array
     {
         $ageGroup = $this->getAgeGroup($quote);
+
         return [
             $quote->code,
             $quote->first_name,
@@ -153,6 +154,7 @@ class TravelQuoteExport implements CsvExportableInterface
         }
 
         $age = Carbon::parse($quote->dob)->age;
+
         return $age < 65 ? '0 - 64' : '65 and above';
     }
 }
