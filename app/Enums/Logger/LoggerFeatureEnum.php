@@ -33,4 +33,5 @@ enum LoggerFeatureEnum: string
     case CAR_OCB_INTRO_EMAIL = 'car-ocb-intro-email';
     case SAGE_EP_BOOKING = 'sage-ep-booking';
     case SAGE_EP_BOOKING_REVERSAL = 'sage-ep-booking-reversal';
+    case CAR_CQF_RENEWALS = 'car-cqf-renewals';
 }
