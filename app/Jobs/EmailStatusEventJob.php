@@ -40,8 +40,8 @@ class EmailStatusEventJob implements ShouldQueue
             if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
 
                 $isEmailMessage = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)->first();
-
-                if (! empty($isEmailMessage->quote_type_id) && ! empty($isEmailMessage->quote_id) && $isEmailMessage->quote_type_id == QuoteTypes::HOME->id()) {
+                $quoteTypeIds = [QuoteTypes::HOME->id(), QuoteTypes::LIFE->id()];
+                if (! empty($isEmailMessage->quote_type_id) && ! empty($isEmailMessage->quote_id) && in_array($isEmailMessage->quote_type_id, $quoteTypeIds)) {
                     if ($isEmailMessage->email_status == ProcessStatusCode::UNSUBSCRIBED) {
                         info('EmailStatusEventJob - status is already unsubscribe-request for msg_id: '.$this->emailData->message_id.' | Time: '.now());
 
@@ -49,7 +49,7 @@ class EmailStatusEventJob implements ShouldQueue
                     }
                     info('EmailStatusEventJob - update status for home quote : msg_id: '.$this->emailData->message_id.' - status: '.$this->emailData->status.' | Time: '.now());
                     app(EmailStatusService::class)->updateEmailStatus($isEmailMessage, $this->emailData->status);
-
+                    Cache::forget("email_statuses_{$isEmailMessage->quote_type_id}_{$isEmailMessage->quote_id}");
                     return true;
                 }
 
