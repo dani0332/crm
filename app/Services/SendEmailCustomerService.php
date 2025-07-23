@@ -814,8 +814,10 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called', extra: [
-            'payload' => json_encode($emailData),
+        LoggerService::info('Policy documents email sending started', extra: [
+            'quote_code' => $emailData->code,
+            'customer_email' => $emailData->customerEmail,
+            'template_id' => $emailData->emailTemplateId,
         ]);
 
         $isEmailSent = 0;
@@ -823,7 +825,9 @@ class SendEmailCustomerService extends BaseService
         $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId);
+            LoggerService::info('Processing attachments for policy documents', extra: [
+                'quote_code' => $emailData->code,
+            ]);
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
@@ -832,8 +836,12 @@ class SendEmailCustomerService extends BaseService
                 foreach ($documents as $document) {
                     $path = ! empty($document->watermarked_doc_url) ? $document->watermarked_doc_url : $document->doc_url;
                     if (empty($path)) {
-                        LoggerService::warning("Main lead document not found for document ID: {$document->id} Quote Code: {$emailData->code} Error Code: 404");
-
+                        LoggerService::warning('Main lead document not found', extra: [
+                            'quote_code' => $emailData->code,
+                            'document_id' => $document->id,
+                            'watermarked_url' => $document->watermarked_doc_url ?? null,
+                            'doc_url' => $document->doc_url ?? null,
+                        ]);
                         continue;
                     }
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
@@ -866,8 +874,6 @@ class SendEmailCustomerService extends BaseService
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $bodyData['bcc'][] = ['email' => $newLeadPool->value];
             }
-
-            LoggerService::info('Quote Code: '.$emailData->code.' Attachments: '.json_encode($attachments));
 
             $headers = [
                 'Accept' => 'application/json',
@@ -918,8 +924,6 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
 
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
-
             if ($emailData->advisorEmail) {
                 $bodyData['cc'][] = [
                     'email' => $emailData->advisorEmail,
@@ -946,8 +950,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            // Its a temp log and will be removed iin future
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- body '.$body);
+            LoggerService::info('Policy documents email payload for quote code: '.$emailData->code, extra: ['payload' => $body]);
 
             $client = new \GuzzleHttp\Client;
             $clientResponse = $client->post(
@@ -960,20 +963,29 @@ class SendEmailCustomerService extends BaseService
             );
 
             $message = json_decode($clientResponse->getBody()->getContents());
+            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
             if (isset($message->messageId)) {
                 $messageId = $message->messageId;
             }
 
             $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- messageId : '.$messageId . ' responseCode: '.$responseCode);
-            LoggerService::info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
+
+            LoggerService::info('Policy documents email sent successfully', extra: [
+                'quote_code' => $emailData->code,
+                'message_id' => $messageId,
+                'response_code' => $responseCode,
+            ]);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class() . 'messageId: '.$messageId;
-            LoggerService::error($responseDetail);
-            LoggerService::error('Quote Code: '.$emailData->code.' Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
+
+            LoggerService::error('Failed to send policy documents email', extra: [
+                'quote_code' => $emailData->code,
+                'error_code' => $responseCode,
+                'error_message' => $ex->getMessage(),
+                'message_id' => $messageId ?? null,
+            ]);
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
