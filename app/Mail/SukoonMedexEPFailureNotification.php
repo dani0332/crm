@@ -45,7 +45,7 @@ class SukoonMedexEPFailureNotification extends Mailable
                 ->to(['production.approval.team@insurancemarket.ae'])
                 ->cc([
                     'dt.system.notifications@insurancemarket.ae', 'sic.car.team@insurancemarket.ae',
-                    'diya.lekhwani@myalfred.com', 'rucha.keluskar@myalfred.com', 'sandeep.sharma@insurancemarket.ae'
+                    'diya.lekhwani@myalfred.com', 'rucha.keluskar@myalfred.com', 'sandeep.sharma@insurancemarket.ae',
                 ])
                 ->view('email.sukoon-medex-ep-job-failed', [
                     'refId' => $refId,
