@@ -1363,7 +1363,7 @@ class SplitPaymentService
             ->first();
     }
 
-    public function validateAuthorizedPayment($validator, $code, $quoteModel= null)
+    public function validateAuthorizedPayment($validator, $code, $quoteModel = null)
     {
 
         $payment = Payment::where('code', $code)->with('paymentSplits')->first();

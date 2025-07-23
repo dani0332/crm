@@ -265,7 +265,7 @@ class RolePermissionSeeder extends Seeder
             $adminRole->givePermissionTo($permission);
         }
     }
-    
+
     private function addOverrideCommissionPermission(): void
     {
         Permission::firstOrCreate([
