@@ -339,21 +339,23 @@ onMounted(() => {
         <p class="text-xl text-white">Segments</p>
       </div>
       <div class="p-4">
-        <table class="w-full border-collapse border rounded">
-          <thead>
-            <tr class="border">
-              <th scope="col" class="p-3 border">Segment Type</th>
-              <th scope="col" colspan="4" class="p-3 border">Advisors</th>
+        <table class="w-full border-collapse border rounded-lg">
+          <thead class="bg-primary text-white">
+            <tr class="border bg-primary text-white">
+              <th scope="col" class="border py-1 px-2">Segment Type</th>
+              <th scope="col" class="border py-1 px-2">
+                Segment Volume <span class="text-red-600">*</span>
+              </th>
+              <th scope="col" class="border py-1 px-2">
+                Segment Value <span class="text-red-600">*</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr class="border">
-              <th scope="row" class="w-40 border-r">
-                Segment Volume <span class="required">*</span>
-              </th>
-              <td class="">
+              <td class="p-3 border font-medium text-center">Advisors</td>
+              <td class="p-3 border text-center">
                 <x-select
-                  class="p-2"
                   v-model="batchForm.segment_volume"
                   name="segment_volume"
                   placeholder="Please select Segment Volume"
@@ -382,14 +384,8 @@ onMounted(() => {
                   </template>
                 </x-select>
               </td>
-            </tr>
-            <tr class="border">
-              <th scope="row" class="border-r">
-                Segment Value <span class="required">*</span>
-              </th>
-              <td>
+              <td class="p-3 border text-center">
                 <x-select
-                  class="p-2"
                   v-model="batchForm.segment_value"
                   name="segment_value"
                   placeholder="Please select Segment Value"
