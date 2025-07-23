@@ -46,6 +46,30 @@ class EmailService
 
             if ($response && $response->status_code == 200) {
                 if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
+
+                    $checkPlans = $this->checkPlans($lead->uuid);
+
+                    if (isset($checkPlans['hasError']) && $checkPlans['hasError']) {
+                        LoggerService::warning("sendOCAEmail - Error checking plans: {$checkPlans['errorMessage']}, keeping lead status as NewLead");
+                        return;
+                    }
+
+                    if ($checkPlans['totalNumberOfPlans'] == 0) {
+                        LoggerService::info("sendOCAEmail - total number of plans is 0, so lead status will remain NewLead");
+                        return;
+                    }
+
+                    if ($checkPlans['totalNumberOfHiddenPlans'] == $checkPlans['totalNumberOfPlans']) {
+                        LoggerService::info("sendOCAEmail - total number of hidden plans is equal to total number of plans, so lead status will remain NewLead");
+                        return;
+                    }
+
+                    LoggerService::info("sendOCAEmail - changing lead status to Quoted", [
+                        'totalPlans' => $checkPlans['totalNumberOfPlans'],
+                        'hiddenPlans' => $checkPlans['totalNumberOfHiddenPlans'],
+                        'visiblePlans' => $checkPlans['totalNumberOfPlans'] - $checkPlans['totalNumberOfHiddenPlans'],
+                    ]);
+
                     $lead->quote_status_id = QuoteStatusEnum::Quoted;
                     LifeQuote::where('uuid', $lead->uuid)->update([
                         'quote_status_id' => QuoteStatusEnum::Quoted,
@@ -126,5 +150,75 @@ class EmailService
             'uuid' => $quoteUID,
             'quote_type_id' => QuoteTypeId::Life,
         ])->first();
+    }
+
+    private function checkPlans(string $quoteUID): array
+    {
+        try {
+            $plansData = app(LifeQuoteService::class)->getQuotePlans($quoteUID);
+
+            if (is_string($plansData)) {
+                LoggerService::warning("checkPlans - API returned error", extra: [
+                    'error' => $plansData,
+                ]);
+                return [
+                    'totalNumberOfHiddenPlans' => 0,
+                    'totalNumberOfPlans' => 0,
+                    'hasError' => true,
+                    'errorMessage' => $plansData,
+                ];
+            }
+
+            if (!$plansData || !isset($plansData->quotes) || !isset($plansData->quotes->plans)) {
+                LoggerService::warning('checkPlans - Invalid or empty plans data structure');
+                return [
+                    'totalNumberOfHiddenPlans' => 0,
+                    'totalNumberOfPlans' => 0,
+                    'hasError' => true,
+                    'errorMessage' => 'Invalid plans data structure',
+                ];
+            }
+
+            $plans = $plansData->quotes->plans;
+            if (!is_array($plans) && !is_object($plans)) {
+                LoggerService::warning('checkPlans - Plans data is not iterable');
+                return [
+                    'totalNumberOfHiddenPlans' => 0,
+                    'totalNumberOfPlans' => 0,
+                    'hasError' => true,
+                    'errorMessage' => 'Plans data is not iterable',
+                ];
+            }
+
+            $totalNumberOfHiddenPlans = 0;
+            $totalNumberOfPlans = is_array($plans) ? count($plans) : (is_countable($plans) ? count($plans) : 0);
+
+            foreach ($plans as $plan) {
+                if (isset($plan->isDisabled) && $plan->isDisabled) {
+                    $totalNumberOfHiddenPlans++;
+                }
+            }
+
+            LoggerService::info("checkPlans - Successfully processed plans", extra: [
+                'totalPlans' => $totalNumberOfPlans,
+                'hiddenPlans' => $totalNumberOfHiddenPlans,
+            ]);
+
+            return [
+                'totalNumberOfHiddenPlans' => $totalNumberOfHiddenPlans,
+                'totalNumberOfPlans' => $totalNumberOfPlans,
+                'hasError' => false,
+            ];
+
+        } catch (\Exception $e) {
+            LoggerService::error("checkPlans - Exception occurred", exception: $e);
+
+            return [
+                'totalNumberOfHiddenPlans' => 0,
+                'totalNumberOfPlans' => 0,
+                'hasError' => true,
+                'errorMessage' => $e->getMessage(),
+            ];
+        }
     }
 }
