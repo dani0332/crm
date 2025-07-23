@@ -87,7 +87,7 @@ const filters = reactive({
   travel_end_date: '',
   assignment_type: '',
   private_client: 'all',
-  age_group: [],
+  age_group: 'all',
 });
 
 const loader = reactive({
