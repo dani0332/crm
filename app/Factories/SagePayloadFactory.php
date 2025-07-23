@@ -1277,7 +1277,7 @@ class SagePayloadFactory
         if (! isset($sageRequest->mainClassInsurance)) {
             $sageRequest->mainClassInsurance = $sageRequest->quoteType;
         }
-        $sageRequest->quoteCode = $quote->code;
+        $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : (PersonalQuote::find($quote?->personal_quote_id)?->code ?? $quote?->code);
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
