@@ -1027,8 +1027,11 @@ class SageApiEmbeddedProductService
         $epRefCode = $sukoonMedXTransaction->code;
         $policyNumber = $viewQuotePolicyApiResponse->policy_number;
 
-        $insurerTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_document_number;
-        $commissionTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_buyer_document_number;
+        $originalInsurerTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_document_number;
+        $originalCommissionTaxInvoiceNumber = $viewQuotePolicyApiResponse->additional_data->tax_invoice_buyer_document_number;
+
+        $insurerTaxInvoiceNumber = self::formatDocNumber($originalInsurerTaxInvoiceNumber);
+        $commissionTaxInvoiceNumber = self::formatDocNumber($originalCommissionTaxInvoiceNumber);
 
         $sageRequestEmbeddedProduct = new stdClass;
         $sageRequestEmbeddedProduct->tapChargeId = $sukoonMedXTransaction?->payment->paymentSplits->first()?->paymentCharges?->transaction_id;
@@ -1041,9 +1044,9 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->insurerName = $insuranceProvider->text;
         $sageRequestEmbeddedProduct->collectionAmount = $viewQuotePolicyApiResponse->payments[0]->amount;
         $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber = (string) mb_substr($commissionTaxInvoiceNumber, -18);
-        $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $commissionTaxInvoiceNumber;
+        $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
-        $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $insurerTaxInvoiceNumber;
+        $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->createdOn = Carbon::createFromFormat('d/m/Y', $viewQuotePolicyApiResponse->created_on)->format(env('DATE_FORMAT_ONLY'));
         $sageRequestEmbeddedProduct->taxAmount = $viewQuotePolicyApiResponse->pricing->tax_amount;
         $sageRequestEmbeddedProduct->policyPrice = $viewQuotePolicyApiResponse->pricing->policy_price;
@@ -1676,7 +1679,7 @@ class SageApiEmbeddedProductService
 
         // Payment code logic - for embedded products, we typically use standard bank code
         $entryDescription = 'CLIENT DIRECT PAYMENT TO '.$sageRequestEmbeddedProduct->insurerName;
-        
+
         $payLoad = [
             'BatchSelector' => 'PY',
             'Description' => $entryDescription,
@@ -1752,7 +1755,7 @@ class SageApiEmbeddedProductService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$quote, $sukoonMedXEPTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
         LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.'  Start applyPaymentAPInvoices for : '.$quote->code.' ');
-        
+
         $totalSteps = 15;
         $currentStep = 13;
         $isLiveApiCallStep13 = true;
@@ -1780,7 +1783,7 @@ class SageApiEmbeddedProductService
 
         $batchNumber = $postedResponse['BatchNumber'];
         LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.'  : '.$quote->code.' : createAPPaymentReceiptOneInvoice  - BatchNumber : '.$batchNumber.' completed successfully');
-        
+
         // Step 14
         $currentStep = 14;
         $isLiveApiCallStep14 = true;
@@ -1860,7 +1863,7 @@ class SageApiEmbeddedProductService
         return $returnMessage;
     }
 
-   
+
 
     public static function createApplyAPPrepaymentPayload($sageRequest, $sageRequestEmbeddedProduct)
     {
@@ -1942,6 +1945,16 @@ class SageApiEmbeddedProductService
             'sage_request_type' => $sageRequestType ?? null,
             'entry_type' => $entryType,
         ];
+    }
+
+    /*
+     * We are having duplicate insurer tax and commission tax invoice number which are causing issue with sage booking, as same invoice numbers were being issued for
+     * other Leads in the past, so we are adding asterisk for uniqueness, there have been some db changes for this already so I am  adding asterisk conditionally so
+     * it would not mess with reversal of those entries
+     * */
+    private static function formatDocNumber($docNumber)
+    {
+        return substr($docNumber, -1) === '*' ? $docNumber : $docNumber.'*';
     }
 
 }
