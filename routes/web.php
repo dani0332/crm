@@ -85,6 +85,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
@@ -192,6 +193,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('home/{quoteId}/plan_details/{planId}', [HomeQuoteController::class, 'planDetails'])->name('home_plan_details');
     Route::post('/home-plan-manual-update-process', [HomeQuoteController::class, 'homePlanUpdateManualProcess']);
 
+    // savings routes without check_route_access middleware
+    Route::post('/savings-plan-manual-update-process', [SavingsQuoteController::class, 'savingsPlanUpdateManualProcess'])->name('savingsPlanUpdate');
+    Route::get('savings/{quoteId}/plan_details/{planId}', [SavingsQuoteController::class, 'planDetails'])->name('savings_plan_details');
+    Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -220,6 +226,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
+        Route::prefix('personal-quotes')->group(function () {
+            Route::resource('/savings', SavingsQuoteController::class)->names(generateRouteNames('savings-quotes'));
+        });
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
 
         Route::group(['prefix' => 'quotes/'], function () {
@@ -240,6 +249,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
+        Route::get('leads-by-email', [V2CustomerController::class, 'listByEmail'])->name('leads-by-email');
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
         Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
@@ -262,6 +272,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
             Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
+
+            // Non Motor
+            Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update');
+            Route::get('renewals/retry/{renewalsUploadLead}', [RenewalsUploadController::class, 'retryRenewalProcesses'])->name('renewals.retry');
         });
     });
 
@@ -300,6 +314,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/sync-document', [EmbeddedProductController::class, 'syncDocument'])->name('embedded-products.sync-document');
+    Route::post('embedded-products/reschedule-sage-booking', [EmbeddedProductController::class, 'scheduleEPSageBooking'])->name('embedded-products.reschedule-sage-booking');
     Route::get('embedded-products/download/force', [EmbeddedProductController::class, 'force'])->name('force-download');
 
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
@@ -674,7 +689,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
         Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
         Route::post('temp-skip-bridger-aml', [AMLController::class, 'tempSkipBridgerAML'])->name('temp-skip-bridger-aml');
-        Route::get('aml-ctf-report-export', [AMLController::class, 'amlCtfReportExport'])->name('aml-ctf-report-export')->middleware(SetReadDbConnection::class);
+        Route::post('aml-ctf-report-export', [AMLController::class, 'amlCtfReportExport'])->name('aml-ctf-report-export')->middleware(SetReadDbConnection::class);
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
@@ -802,11 +817,59 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
         ->name('admin.nationality-allocation-config.audit-logs');
 
+    // Allocation Configuration Routes
+    Route::get('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'index'])
+        ->name('admin.allocation-configuration.index');
+    Route::post('allocation-configuration/fetch', [\App\Http\Controllers\AllocationConfigurationController::class, 'fetchConfiguration'])
+        ->name('admin.allocation-configuration.fetch');
+    Route::post('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'store'])
+        ->name('admin.allocation-configuration.store');
+    Route::put('allocation-configuration/{allocationConfiguration}', [\App\Http\Controllers\AllocationConfigurationController::class, 'update'])
+        ->name('admin.allocation-configuration.update');
+
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;
         $addBtchNuimber->handle();
         echo 'Done';
     });
+
+    // Command to bulk send policy documents
+    Route::get('/run-policy-bulk-send', function () {
+
+        // Check if user has admin role
+        if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+
+        // Use cache lock to prevent multiple servers from executing simultaneously
+        $lockKey = 'policy_bulk_send_lock';
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 600); // 10 minutes lock
+
+        if (! $lock->get()) {
+            return response()->json([
+                'error' => 'Command is already running on another server. Please wait.',
+                'status' => 'locked',
+            ], 423); // 423 Locked
+        }
+
+        try {
+            // Execute the command
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+
+            return response()->json([
+                'message' => 'Command executed successfully!',
+                'status' => 'completed',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Command execution failed: '.$e->getMessage(),
+                'status' => 'failed',
+            ], 500);
+        } finally {
+            // Always release the lock
+            $lock->release();
+        }
+    })->name('run-policy-bulk-send');
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously

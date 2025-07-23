@@ -11,6 +11,7 @@ use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
+use App\Exports\RenewalHealthUpdateFailedValidationExport;
 use App\Exports\RenewalHomeFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
@@ -20,25 +21,29 @@ use App\Jobs\Renewals\FetchHomeRenewalsPlansJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Traits\HasRoles;
 
 class RenewalsUploadController extends Controller
 {
-    private $renewalsUploadFileService;
-
     use TeamHierarchyTrait;
+
+    private $renewalsUploadFileService;
 
     public function __construct(RenewalsUploadService $renewalsUploadFileService)
     {
@@ -471,6 +476,9 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
+        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            return Excel::download(new RenewalHealthUpdateFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        }
         if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
             return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
         }
@@ -508,6 +516,13 @@ class RenewalsUploadController extends Controller
 
                 return redirect(config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid);
                 break;
+            case QuoteTypeShortCode::HEA:
+                $healthQuote = HealthQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
+                if (! $healthQuote) {
+                    return abort(404);
+                }
+
+                return redirect(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid);
             case QuoteTypeShortCode::HOM:
                 $homeQuote = HomeQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
                 if (! $homeQuote) {
@@ -564,5 +579,27 @@ class RenewalsUploadController extends Controller
             'azureStorageUrl' => $azureStorageUrl,
             'azureStorageContainer' => $azureStorageContainer,
         ]);
+    }
+
+    /**
+     * Retry all failed renewal processes for an upload batch
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function retryRenewalProcesses(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        /** @var User|HasRoles $user */
+        $user = Auth::user();
+        if (! $user || ! $user->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $result = $this->renewalsUploadFileService->retryRenewalUploadLeadProcesses($renewalsUploadLead);
+
+        if ($result) {
+            return redirect()->route('renewals-uploaded-leads-list')->with('success', 'Renewal processes retry initiated successfully');
+        }
+
+        return redirect()->route('renewals-uploaded-leads-list')->with('error', 'Failed to retry renewal processes');
     }
 }

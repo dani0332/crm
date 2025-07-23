@@ -8,6 +8,7 @@ enum LoggerFeatureEnum: string
     case ALLOCATION_AUDIT = 'allocation-audit';
     case FTC_EMAIL = 'ftc-email';
     case TRAVEL_RENEWALS = 'travel-renewals';
+    case OCR = 'ocr';
     case PCP_CLIENT = 'private-client';
     case AML_SCREENING = 'aml-screening';
     case CREATE_PAYMENT = 'create-payment';
@@ -29,4 +30,7 @@ enum LoggerFeatureEnum: string
     case SAGE_POLICY_BOOKING = 'sage-policy-booking';
     case SAGE_ENDORSEMENT_BOOKING = 'sage-endorsement-booking';
     case SAGE_POST_PREPAYMENT = 'sage-post-prepayment';
+    case CAR_OCB_INTRO_EMAIL = 'car-ocb-intro-email';
+    case SAGE_EP_BOOKING = 'sage-ep-booking';
+    case SAGE_EP_BOOKING_REVERSAL = 'sage-ep-booking-reversal';
 }

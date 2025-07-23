@@ -490,6 +490,11 @@ class CarQuote extends BaseModel
         return $this->is_renewal_tier_email_sent == 1;
     }
 
+    public function isProvider($code)
+    {
+        return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
+    }
+
     public function insured()
     {
         return $this->hasOneThrough(
@@ -514,5 +519,14 @@ class CarQuote extends BaseModel
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
             ->latest('customer_insured.updated_at');
+    }
+
+    /**
+     * Get quote tags for this car quote
+     */
+    public function quoteTags()
+    {
+        return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Car);
     }
 }

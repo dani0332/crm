@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CoverageTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
@@ -17,6 +18,7 @@ use App\Jobs\Renewals\FetchPlansForHomeRenewalsQuoteJob;
 use App\Jobs\Renewals\HomeRenewalBatchEmailJob;
 use App\Jobs\ScheduleHomeRenewalOcbEmails;
 use App\Models\InsuranceProvider;
+use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\RangeLookup;
 use App\Models\RenewalQuoteProcess;
@@ -32,8 +34,10 @@ use Throwable;
 
 class HomeRenewalService extends RenewalsUploadService
 {
-    public function updateQuotes(RenewalsUploadLeads $renewalsUploadLead)
+    public function updateQuotesHome(int $renewalsUploadLeadId)
     {
+        $renewalsUploadLead = RenewalsUploadLeads::find($renewalsUploadLeadId);
+
         $logPrefix = get_class($this).' fn: updateQuotes ';
         LoggerService::info($logPrefix.' Quote update started');
 
@@ -79,8 +83,10 @@ class HomeRenewalService extends RenewalsUploadService
         }
     }
 
-    public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
+    public function updateQuoteHome(int $renewalQuoteProcessId)
     {
+        $renewalQuoteProcess = RenewalQuoteProcess::find($renewalQuoteProcessId);
+
         $logPrefix = get_class($this).' FN: updateQuote';
         $data = $renewalQuoteProcess->data;
 
@@ -170,8 +176,10 @@ class HomeRenewalService extends RenewalsUploadService
         Fetch plans Section
         --------------------------------------
     */
-    public function fetchRenewalPlans(RenewalStatusProcess $renewalStatusProcess, $batch)
+    public function fetchRenewalPlansHome(int $renewalStatusProcessId, int $batch)
     {
+
+        $renewalStatusProcess = RenewalStatusProcess::find($renewalStatusProcessId);
 
         $logPrefix = get_class($this).' FN: fetchRenewalPlans - ';
 
@@ -249,8 +257,11 @@ class HomeRenewalService extends RenewalsUploadService
         }
     }
 
-    public function fetchPlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
+    public function fetchPlansHome(int $renewalQuoteProcessId, int $renewalStatusProcessId)
     {
+        $renewalQuoteProcess = RenewalQuoteProcess::find($renewalQuoteProcessId);
+        $renewalStatusProcess = RenewalStatusProcess::find($renewalStatusProcessId);
+
         $leadData = (object) $renewalQuoteProcess->data;
 
         $quote = PersonalQuote::where('id', $renewalQuoteProcess->quote_id)->first();
@@ -343,8 +354,12 @@ class HomeRenewalService extends RenewalsUploadService
         return true;
     }
 
-    public function scheduleHomeOCB(int $batch, RenewalsBatchEmails $renewalsBatchEmail)
+    public function scheduleHomeOCB(int $batch, int $renewalsBatchEmailId)
     {
+        $renewalsBatchEmail = RenewalsBatchEmails::find($renewalsBatchEmailId);
+
+        $renewalsBatchEmail->update(['status' => ProcessStatusCode::IN_PROGRESS]);
+
         $logPrefix = get_class($this).' FN: scheduleHomeOCB';
 
         LoggerService::info($logPrefix.' Scheduling Home Renewals OCB email', extra: [
@@ -491,11 +506,11 @@ class HomeRenewalService extends RenewalsUploadService
     private function createHomeQuoteData(array &$quoteData, array $data): array
     {
         $quoteData['insurance_provider_id'] = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
-        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null;
-        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null;
-        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null;
+        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? Lookup::where('text', $data['you_are_a'])->where('key', LookupsEnum::POSSESSION_TYPE)->first()->id : null;
+        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? Lookup::where('text', $data['i_live_in_a'])->where('key', LookupsEnum::ACCOMMODATION_TYPE)->first()->id : null;
+        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? Lookup::where('text', $data['occupancy_status_for_owners'])->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)->first()->id : null;
         $quoteData['sub_area_id'] = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
-        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null;
+        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? Lookup::where('text', $data['cover_required'])->where('key', LookupsEnum::COVERAGE_TYPE)->first()->id : null;
         $quoteData['contents_value_id'] = $this->getContentsAed($data);
         $quoteData['personal_belongings_value_id'] = $this->getPersonalBelongingsAed($data);
         $quoteData['building_value'] = $this->getBuildingAed($data);

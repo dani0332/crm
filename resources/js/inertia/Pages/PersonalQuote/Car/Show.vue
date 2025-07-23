@@ -1,10 +1,14 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import { usePage } from '@inertiajs/vue3';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import { ref, onMounted, onUnmounted, reactive, computed } from 'vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 
 defineProps({
   quote: Object,
@@ -168,6 +172,7 @@ const leadStatusForm = useForm({
   proof_document: null,
   car_lost_quote_log_id:
     page.props.paymentEntityModel.car_lost_quote_log?.id || 0,
+  current_quote_status_id: page.props.record.quote_status_id || null,
 });
 
 const leadApprovalStatusOptions = computed(() => {
@@ -1272,8 +1277,13 @@ onMounted(() => {
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
+  window.addEventListener('ocr-notification', handleOcrNotification);
+  window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
 });
-
+onUnmounted(() => {
+  window.removeEventListener('ocr-notification', handleOcrNotification);
+  window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
+});
 //activities
 const emailEventsTable = [
   { text: 'Type', value: 'type' },
@@ -1607,9 +1617,96 @@ const isCommercialVehicle = computed(() => {
   }
   return isCConditionMeet;
 });
+
+const ocrLoadingDocType = ref(null);
+const ocrLoading = ref(false);
+const policyDetailReloadKey = ref(0);
+const bookPolicyReloadKey = ref(0);
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
+const ocrLoadingDocTypes = reactive(new Set());
+
+// Helper function to check if a document type is currently being processed
+const isDocTypeLoading = docType => {
+  const result = ocrLoadingDocTypes.has(docType);
+  return result;
+};
+
+// Helper to check if any OCR is in progress
+const hasOcrInProgress = computed(() => {
+  const result = ocrLoadingDocTypes.size > 0;
+  return result;
+});
+
+function handleLeadStatusUpdated(event) {
+  const { uuid } = event.detail || {};
+  if (uuid === page.props.quote.uuid) {
+    router.reload({
+      onSuccess: () => {},
+      preserveState: true,
+      preserveScroll: true,
+      only: ['quote', 'record'],
+    });
+  }
+}
+
+function handleOcrNotification(event) {
+  const { docType, status, userId } = event.detail || {};
+  const currentUserId = usePage().props.auth.user.id;
+
+  // Only process notifications for the current user
+  if (userId !== currentUserId) {
+    return;
+  }
+
+  // For 'start' status, add document type to loading set
+  if (status === 'start') {
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
+      ocrLoadingDocType.value = docType;
+    }
+  } else {
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
+    router.reload({
+      onSuccess: () => {
+        // Clear both the old ref and the reactive Set for immediate UI update
+        ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+      },
+      preserveState: true,
+      preserveScroll: true,
+      only: [
+        'payments',
+        'bookPolicyDetails',
+        'quote',
+        'record',
+        'quoteDocuments',
+      ],
+    });
+  }
+}
 </script>
 
 <template>
+  <OcrNotification />
+  <LeadStatusUpdatedNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
@@ -3801,10 +3898,15 @@ const isCommercialVehicle = computed(() => {
 
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
+      :key="policyDetailReloadKey"
       :quote="quote"
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <QuoteDocument
@@ -3827,11 +3929,16 @@ const isCommercialVehicle = computed(() => {
           permissionEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       :quoteType="quoteType"
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <SendUpdates

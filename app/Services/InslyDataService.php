@@ -81,6 +81,7 @@ class InslyDataService extends BaseService
             QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
             QuoteTypes::PET->value => ['Pet insurance'],
             QuoteTypes::YACHT->value => ['Yacht insurance'],
+            QuoteTypes::SAVINGS->value => ['Savings'],
         ];
     }
 

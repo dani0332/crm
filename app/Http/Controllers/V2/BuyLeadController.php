@@ -42,7 +42,7 @@ class BuyLeadController extends Controller
     public function show()
     {
         $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
-        $data['requests'] = $this->buyLeadService->getTodaysRequests();
+        $data['requests'] = $this->buyLeadService->getActiveRequests();
 
         return inertia('BuyLeads/BuyLeadsRequest', $data);
     }
@@ -104,32 +104,32 @@ class BuyLeadController extends Controller
         // Query 2
         $results2 = DB::table('buy_lead_request_logs as blrl')
             ->selectRaw("
-            CASE 
+            CASE
                 WHEN blr.quote_type_id = 1 THEN cqr.code
                 WHEN blr.quote_type_id = 3 THEN hqr.code
                 ELSE NULL
             END AS RefID,
-            CASE 
+            CASE
                 WHEN blr.quote_type_id = 1 THEN 'NA'
                 WHEN blr.quote_type_id = 3 THEN hqr.health_team_type
                 ELSE NULL
             END AS TeamType,
-            CASE 
+            CASE
                 WHEN blr.quote_type_id = 1 THEN (CASE WHEN cqr.sic_advisor_requested = 1 THEN 'Yes' ELSE 'No' END)
                 WHEN blr.quote_type_id = 3 THEN (CASE WHEN hqr.sic_advisor_requested = 1 THEN 'Yes' ELSE 'No' END)
                 ELSE NULL
             END AS advisor_requested,
-            CASE 
+            CASE
                 WHEN blr.quote_type_id = 1 THEN (CASE WHEN cqr.assignment_type = 5 THEN 'Bought Lead' ELSE 'ReAssigned as Bought Lead' END)
                 WHEN blr.quote_type_id = 3 THEN (CASE WHEN hqr.assignment_type = 5 THEN 'Bought Lead' ELSE 'ReAssigned as Bought Lead' END)
                 ELSE NULL
             END AS assignment_type,
-            CASE 
+            CASE
                 WHEN blr.quote_type_id = 1 THEN cqr.created_at
                 WHEN blr.quote_type_id = 3 THEN hqr.created_at
                 ELSE NULL
             END AS lead_created_at,
-            CASE 
+            CASE
                 WHEN blr.quote_type_id = 1 THEN cqr.premium
                 WHEN blr.quote_type_id = 3 THEN hqr.premium
                 ELSE NULL

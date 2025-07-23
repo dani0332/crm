@@ -49,8 +49,7 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
             'renewalStatusProcessId' => $this->renewalStatusProcessId,
             'batch' => $this->batch,
         ]);
-        $renewalStatusProcess = RenewalStatusProcess::find($this->renewalStatusProcessId);
-        $homeRenewalService->fetchRenewalPlans($renewalStatusProcess, $this->batch);
+        $homeRenewalService->fetchRenewalPlansHome($this->renewalStatusProcessId, $this->batch);
     }
 
     /**

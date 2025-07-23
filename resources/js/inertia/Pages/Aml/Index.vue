@@ -1,5 +1,5 @@
 <script setup>
-import dayjs from 'dayjs/esm/index.js';
+import dayjs from 'dayjs';
 
 defineProps({
   aml: Object,
@@ -11,6 +11,7 @@ const notification = useToast();
 const loader = reactive({
   table: false,
   export: false,
+  exportAmlRiskScore: false,
 });
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
@@ -194,7 +195,7 @@ const onDataExport = async (exportType = 'download') => {
 
 function removeEmptyFields(obj) {
   Object.keys(obj).forEach(key => {
-    if (obj[key] === '') {
+    if (obj[key] === '' || obj[key] === null || obj[key] === undefined) {
       delete obj[key];
     }
   });
@@ -235,16 +236,32 @@ const quoteTypeOptions = computed(() =>
   ),
 );
 
-function downloadAmlCtfReport() {
+async function downloadAmlCtfReport() {
   resetCustomErrors();
-  const daysDifference = calculateDaysDifference(
-    filtersForm.amlCreatedStartDate,
-    filtersForm.amlCreatedEndDate,
-  );
-  if (daysDifference > 30) {
+
+  // Validate that either search criteria or date range is provided
+  const hasSearchCriteria =
+    filtersForm.quoteType || filtersForm.searchField || filtersForm.searchType;
+  const hasDateRange =
+    filtersForm.amlCreatedStartDate && filtersForm.amlCreatedEndDate;
+
+  if (!hasSearchCriteria && !hasDateRange) {
     customErrors.amlCreatedStartDate =
-      'Allowed no. of days between start & end dates are 30 days.';
+      'Please provide either search criteria (Quote Type, Search Field, or Search Type) or both start and end dates.';
     return;
+  }
+
+  // Only validate date difference if both dates are provided
+  if (filtersForm.amlCreatedStartDate && filtersForm.amlCreatedEndDate) {
+    const daysDifference = calculateDaysDifference(
+      filtersForm.amlCreatedStartDate,
+      filtersForm.amlCreatedEndDate,
+    );
+    if (daysDifference > 30) {
+      customErrors.amlCreatedStartDate =
+        'Allowed no. of days between start & end dates are 30 days.';
+      return;
+    }
   }
 
   const exportData = {};
@@ -254,15 +271,33 @@ function downloadAmlCtfReport() {
 
   //remove empty fields
   removeEmptyFields(exportData);
-
-  const url = `/kyc/aml-ctf-report-export`;
-  const data = useObjToUrl(exportData);
+  // const data = useObjToUrl(exportData);
 
   const payload = {
-    url: url + '?' + new URLSearchParams(data).toString(),
+    url: route('aml-ctf-report-export'),
+    method: 'post',
+    data: { ...exportData, exportType: 'email' },
+    type: 'aml-ctf-report',
+    exportType: 'email',
   };
 
-  window.open(url + '?' + useObjToUrl(exportData));
+  try {
+    loader.exportAmlRiskScore = true;
+    const response = await logAndExportQuotes(payload);
+    if (response.data.message) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      title: error.response.data.message,
+      position: 'top',
+    });
+  } finally {
+    loader.exportAmlRiskScore = false;
+  }
 }
 
 onMounted(() => {
@@ -345,18 +380,9 @@ onMounted(() => {
           v-if="can(permissionsEnum.DATA_EXTRACTION)"
           size="sm"
           color="#48bb78"
-          @click.prevent="onDataExport()"
-          :disabled="loader.export"
-          :loading="loader.export"
-        >
-          Export to Excel
-        </x-button>
-        <x-button
-          size="sm"
-          color="#ff5e00"
           @click.prevent="downloadAmlCtfReport()"
-          :disabled="loader.export"
-          :loading="loader.export"
+          :disabled="loader.exportAmlRiskScore"
+          :loading="loader.exportAmlRiskScore"
         >
           Export AML Risk Score Report
         </x-button>
