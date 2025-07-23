@@ -950,7 +950,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            LoggerService::info('Policy documents email payload for quote code: '.$emailData->code, extra: ['payload' => $body]);
+            LoggerService::info('Policy documents email payload for quote code: '.$emailData->code .' ---- body '.$body);
 
             $client = new \GuzzleHttp\Client;
             $clientResponse = $client->post(
