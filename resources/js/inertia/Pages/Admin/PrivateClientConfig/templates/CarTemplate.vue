@@ -81,6 +81,5 @@ const carFields = [
     @configuration-saved="$emit('configurationSaved')"
   />
 
-  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="quoteType.id"  />
+  <AuditLogs :quoteType="'PrivateClientConfig'" :quoteTypeId="quoteType.id" />
 </template>
-

@@ -173,7 +173,8 @@ const policyDetailsForm = useForm({
     page.props.quote.policy_issuance_status_other || '',
   modelType: props.modelType,
   quote_id: page.props.quote.id,
-  policy_sum_assured_currency_id: page.props.quote.policy_sum_assured_currency_id,
+  policy_sum_assured_currency_id:
+    page.props.quote.policy_sum_assured_currency_id,
   policy_sum_assured: page.props.quote.policy_sum_assured,
 });
 
@@ -327,28 +328,28 @@ const rules = {
   policy_sum_assured: v => {
     if (isLifeQuote) {
       if (!v) return 'This field is required';
-      
+
       // Check for incomplete decimal numbers (ending with decimal point)
       if (v.toString().endsWith('.')) {
         return 'Please enter a complete number';
       }
-      
+
       // Check if it's a valid number
       const num = Number(v);
       if (isNaN(num)) {
         return 'This field must be a valid number';
       }
-      
+
       // Check if it's negative
       if (num < 0) {
         return 'Policy sum assured cannot be negative';
       }
-      
+
       // Check if it's zero
       if (num === 0) {
         return 'Policy sum assured must be greater than 0';
       }
-      
+
       return true;
     }
     return true;
@@ -956,15 +957,16 @@ const FieldLoader = defineComponent({
                 />
               </div>
             </div>
-            <div v-if="isLifeQuote" class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+            <div
+              v-if="isLifeQuote"
+              class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+            >
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Sum Assured currency
-                    <span class="text-red-500"
-                      >*</span
-                    ></label
+                    <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{
