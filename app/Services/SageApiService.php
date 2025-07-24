@@ -1104,12 +1104,12 @@ class SageApiService
                 $isLiveApiCallStep3 = false;
 
                 $response = $sageLogArray[$stepsMapping['step_2']]['response'] ?? '';
-                $postedResponse = !empty(trim($response)) ? json_decode($response, true) : [];
+                $postedResponse = ! empty(trim($response)) ? json_decode($response, true) : [];
                 // Ensure $postedResponse is always an array
-                if (!is_array($postedResponse)) {
+                if (! is_array($postedResponse)) {
                     $postedResponse = [];
                 }
-               
+
             } else {
                 LoggerService::info('SAGE API :  Send Patch Request  for '.$quote->code);
                 $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
@@ -1429,11 +1429,11 @@ class SageApiService
                 if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                     LoggerService::info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
                     $isLiveApiCallStep7 = false;
-                    
+
                     $response = $sageLogArray[$stepsMapping['step_2']]['response'] ?? '';
-                    $postedResponse = !empty(trim($response)) ? json_decode($response, true) : [];
+                    $postedResponse = ! empty(trim($response)) ? json_decode($response, true) : [];
                     // Ensure $postedResponse is always an array
-                    if (!is_array($postedResponse)) {
+                    if (! is_array($postedResponse)) {
                         $postedResponse = [];
                     }
                 } else {
