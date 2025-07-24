@@ -53,7 +53,7 @@ class ValidateAuthorizedPayment implements Rule
             ->exists();
 
         // If there's an authorized payment, check if restricted fields are being changed
-        if ($hasAnyAuthorizedPayment && $this->quoteModel) {
+        if ($hasAnyAuthorizedPayment && $this->quoteModel && auth()->user()->can(PermissionsEnum::PLAN_DETAILS_EDIT)) {
             $request = request()->all();
             
             // Fields that should not be changed if payment is authorized
@@ -67,7 +67,7 @@ class ValidateAuthorizedPayment implements Rule
             // Check if any restricted field is being changed
             foreach ($fieldsToCheck as $field) {
                 if (isset($request[$field]) && isset($this->quoteModel->$field) && $request[$field] != $this->quoteModel->$field) {
-                    return false; 
+                    return false; // Field change detected, validation fails
                 }
             }
             
@@ -75,7 +75,7 @@ class ValidateAuthorizedPayment implements Rule
             return true;
         }
 
-        // If there's an authorized payment but no quote model, validation fails
+        // If there's an authorized payment but no quote model or no permission, validation fails
         if ($hasAnyAuthorizedPayment) {
             return false;
         }
@@ -116,8 +116,8 @@ class ValidateAuthorizedPayment implements Rule
             return 'No authorized payment found for this lead.';
         }
 
-        // If quote model is provided, check for specific field changes
-        if ($this->quoteModel && auth()->user()->can(PermissionsEnum::PLAN_DETAILS_EDIT)) {
+        // If quote model is provided and user has permission, check for specific field changes
+        if ($this->quoteModel && $this->quoteModel && auth()->user()->can(PermissionsEnum::PLAN_DETAILS_EDIT)) {
             $request = request()->all();
             
             $fieldsToCheck = [
