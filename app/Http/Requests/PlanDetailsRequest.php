@@ -7,7 +7,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Rules\ValidateAuthorizedPayment;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 
 class PlanDetailsRequest extends FormRequest
 {
@@ -66,7 +65,7 @@ class PlanDetailsRequest extends FormRequest
             }
 
             $rule = new ValidateAuthorizedPayment($code, $quoteModel);
-            if (!$rule->passes('code', $code)) {
+            if (! $rule->passes('code', $code)) {
                 $validator->errors()->add('code', $rule->message());
             }
         });

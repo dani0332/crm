@@ -16,7 +16,6 @@ use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
 use App\Enums\PaymentTooltip;
-use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;

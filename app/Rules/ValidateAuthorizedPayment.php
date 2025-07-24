@@ -24,21 +24,20 @@ class ValidateAuthorizedPayment implements Rule
      *
      * @param  string  $attribute
      * @param  mixed  $value
-     * @return bool
      */
     public function passes($attribute, $value): bool
     {
         // Use the value passed to the validation rule (the actual code field value)
         $code = $value ?: $this->code;
-        
-        if (!$code) {
+
+        if (! $code) {
             return true; // No code provided, validation passes
         }
-        
+
         $payment = Payment::where('code', $code)->with('paymentSplits')->first();
 
         // If no payment exists, validation passes
-        if (!$payment) {
+        if (! $payment) {
             return true;
         }
 
@@ -48,14 +47,14 @@ class ValidateAuthorizedPayment implements Rule
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::AUTHORISED,
                 PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PAID
+                PaymentStatusEnum::PAID,
             ])
             ->exists();
 
         // If there's an authorized payment, check if restricted fields are being changed
         if ($hasAnyAuthorizedPayment && $this->quoteModel && auth()->user()->can(PermissionsEnum::PLAN_DETAILS_EDIT)) {
             $request = request()->all();
-            
+
             // Fields that should not be changed if payment is authorized
             $fieldsToCheck = [
                 'insurance_provider_id',
@@ -70,7 +69,7 @@ class ValidateAuthorizedPayment implements Rule
                     return false; // Field change detected, validation fails
                 }
             }
-            
+
             // If no field changes detected, validation passes (user can still make other changes)
             return true;
         }
@@ -85,21 +84,19 @@ class ValidateAuthorizedPayment implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): string
     {
         // Use the code from the current request context
         $code = request()->code ?: $this->code;
-        
-        if (!$code) {
+
+        if (! $code) {
             return 'Payment code is required for validation.';
         }
-        
+
         $payment = Payment::where('code', $code)->with('paymentSplits')->first();
 
-        if (!$payment) {
+        if (! $payment) {
             return 'Payment not found for the provided code.';
         }
 
@@ -108,18 +105,18 @@ class ValidateAuthorizedPayment implements Rule
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::AUTHORISED,
                 PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PAID
+                PaymentStatusEnum::PAID,
             ])
             ->exists();
 
-        if (!$hasAnyAuthorizedPayment) {
+        if (! $hasAnyAuthorizedPayment) {
             return 'No authorized payment found for this lead.';
         }
 
         // If quote model is provided and user has permission, check for specific field changes
         if ($this->quoteModel && $this->quoteModel && auth()->user()->can(PermissionsEnum::PLAN_DETAILS_EDIT)) {
             $request = request()->all();
-            
+
             $fieldsToCheck = [
                 'insurance_provider_id',
                 'price_vat_applicable',
@@ -136,4 +133,4 @@ class ValidateAuthorizedPayment implements Rule
 
         return 'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.';
     }
-} 
+}
