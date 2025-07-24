@@ -618,7 +618,7 @@ const isPolicySendUpdateBooked = option => {
           <x-tooltip>
             <span class="text-sm">
               <span class="border-b-2 border-dotted border-black text-sm"
-                >Insurer RECEIPT Number</span
+                >INSURER RECEIPT NUMBER</span
               >
             </span>
             <template #tooltip>
