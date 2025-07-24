@@ -244,6 +244,11 @@ class LifeQuote extends Model implements AuditableContract
         return $this->belongsTo(CurrencyType::class, 'policy_sum_assured_currency_id');
     }
 
+    public function scopeFilterBySegment($query, $alias = 'lqr')
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Life);
+    }
     /**
      * Get all quote status logs for this model
      *

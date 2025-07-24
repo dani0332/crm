@@ -10,6 +10,7 @@ defineProps({
   currency: Array,
   insurerAMLStatus: Array,
   planSubTypes: Array,
+  quoteSegments: Object,
 });
 
 const page = usePage();
@@ -20,6 +21,11 @@ const rolesEnum = page.props.rolesEnum;
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
 const filtersCount = ref(0);
+const quoteSegments = page.props.quoteSegments;
+const quoteSegmentsLife = [
+  { value: 'all', label: 'All' },
+  ...quoteSegments.filter(segment => segment.value === 'fic' || segment.value === 'non-fic')
+];
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -81,6 +87,7 @@ const filters = reactive({
   sum_insured_currency_id: null,
   sum_insured_range: '',
   plan_type: '',
+  segment_filter: '',
   private_client: 'all',
 });
 
@@ -810,7 +817,15 @@ const insurerAMLStatusOption = computed(() =>
           range
           format="dd-MM-yyyy"
         />
-
+        <x-select
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegmentsLife"
+          filterable
+          filterPlaceholder="Filter Segment...."
+          :single="true"
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"

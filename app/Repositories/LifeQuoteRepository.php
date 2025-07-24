@@ -135,6 +135,7 @@ class LifeQuoteRepository extends BaseRepository
                 });
             })
             ->filter()
+            ->filterBySegment('life_quote_request')
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
