@@ -1251,6 +1251,8 @@ class SagePayloadFactory
     public static function globalSagePrepaymentReceiptPayloadData($sageRequestData)
     {
         [$quote,$payment, $paymentSplit , $sageRequest , $splitAmount] = $sageRequestData;
+        $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+        $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';
         if ($splitAmount != null) {
             $sageRequest->collection_amount = $splitAmount;
         }
@@ -1277,7 +1279,7 @@ class SagePayloadFactory
         if (! isset($sageRequest->mainClassInsurance)) {
             $sageRequest->mainClassInsurance = $sageRequest->quoteType;
         }
-        $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : (PersonalQuote::find($quote?->personal_quote_id)?->code ?? $quote?->code);
+        $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : ($personalQuote?->code ?? $quote?->code);
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
@@ -1289,7 +1291,7 @@ class SagePayloadFactory
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
         $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
-        $sageRequest->policyNumber = $quote?->policy_number;
+        $sageRequest->policyNumber = $policyNumber;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
 
         return $sageRequest;
