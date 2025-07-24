@@ -442,6 +442,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id']);
     }
 
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
+
     public function isNonAdvisorEmailSent()
     {
         return ! is_null($this->non_advisor_email_sent_at);

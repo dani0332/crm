@@ -66,7 +66,6 @@ const selectedData = computed({
   },
   set(newValue) {
     emit('update:modelValue', newValue);
-    return;
   },
 });
 
@@ -85,11 +84,13 @@ const iconPosition = computed(() => {
     :disabled="props.disabled"
     position="left"
     class="w-full"
-    auto-apply
     :clearable="!props.disabled"
     :range="range"
     text-input
+    :teleport-center="false"
+    teleport="body"
   >
+    <!-- auto-apply -->
     <template #dp-input="{ value, onEnter, onTab, onBlur, onInput, onPaste }">
       <x-input
         :model-value="value"
@@ -103,11 +104,11 @@ const iconPosition = computed(() => {
         :tooltip="props.tooltip"
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
-        @keydown.tab="onTab"
-        @change="onInput"
-        @blur="onBlur"
-        @paste="onPaste"
+        @update:modelValue="onInput"
         @keydown.enter.prevent="onEnter"
+        @blur="onBlur"
+        @keydown.tab="onTab"
+        @paste="onPaste"
         :error="props.error"
         :required="props.required"
       />

@@ -172,6 +172,7 @@ const leadStatusForm = useForm({
   proof_document: null,
   car_lost_quote_log_id:
     page.props.paymentEntityModel.car_lost_quote_log?.id || 0,
+  current_quote_status_id: page.props.record.quote_status_id || null,
 });
 
 const leadApprovalStatusOptions = computed(() => {
