@@ -84,7 +84,20 @@ class CarCQFRenewalService
     public function storeCarCQFRenewalQuote($quote)
     {
         LoggerService::info(self::class.' - Storing car cqf renewal quote');
-        LoggerService::info(self::class.' - Quote: '.json_encode($quote));
+        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
+                
+        // Calculate the policy expiry date based on the start date + 365 days
+        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
+        $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
+
+        LoggerService::info(self::class.' - Policy Details', [
+            'policyExpiryDate' => $policyExpiryDate,
+            'policyStartDate' => $policyStartDate,
+            'newPolicyExpiryDate' => $newPolicyExpiryDate,
+        ]);
+        $batch = $this->getRenewalBatch($newPolicyExpiryDate);
+
+
 
     }
     public function getRenewalBatch($newPolicyExpiryDate)
@@ -94,9 +107,11 @@ class CarCQFRenewalService
             ->whereNull('quote_type_id')
             ->first();
     }
-    public function mapCarCQFRenewalQuote($quote)
+    public function mapCarCQFRenewalQuote($quote,$batch)
     {
        $quoteUuid="";
+
+
         $quoteData = [
             'customer_id' => $quote->customer_id,
             'first_name' => $quote->first_name,
@@ -108,14 +123,14 @@ class CarCQFRenewalService
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
             'advisor_id' => null,
             'assignment_type' =>null,
-            'renewal_batch' => $data['batch'],
-            'renewal_batch_id' => $renewalBatchId ?? null,
+            'renewal_batch' =>  trim($batch->name),
+            'renewal_batch_id' => $batch->id,
             'quote_status_id' => QuoteStatusEnum::NewLead,
-            'renewal_import_code' => $renewalUploadLead->renewal_import_code,
-            'previous_quote_policy_number' => $data['policy_number'],
-            'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
-            'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
-            'previous_quote_policy_premium' => $data['premium'],
+            'renewal_import_code' => $quote->e,
+            'previous_quote_policy_number' => $quote->policy_number,
+            'previous_policy_start_date' => $quote->policy_start_date,
+            'previous_policy_expiry_date' => $quote->policy_expiry_date,
+            'previous_quote_policy_premium' => $quote->premium,
         ];
     }
 }
