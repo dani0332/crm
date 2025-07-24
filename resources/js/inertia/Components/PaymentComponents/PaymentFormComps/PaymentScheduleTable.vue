@@ -609,7 +609,7 @@ const isPolicySendUpdateBooked = option => {
               ? splitPaymentRecord.verified_at
               : 'N/A'
           }}
-        </div> 
+        </div>
       </div>
 
       <div class="flex w-full custombreak">
@@ -622,7 +622,9 @@ const isPolicySendUpdateBooked = option => {
               >
             </span>
             <template #tooltip>
-              <span>{{ paymentTooltipEnum.PAYMENT_VIEW_INSURER_RECEIPT_NUMBER }}</span>
+              <span>{{
+                paymentTooltipEnum.PAYMENT_VIEW_INSURER_RECEIPT_NUMBER
+              }}</span>
             </template>
           </x-tooltip>
         </div>
@@ -651,7 +653,7 @@ const isPolicySendUpdateBooked = option => {
 
       <div class="flex w-full custombreak pb-5">
         <div class="w-1/6 px-2 text-center"></div>
-        <div class="w-1/5 px-2" >
+        <div class="w-1/5 px-2">
           {{
             splitPaymentRecord.insurer_receipt_number !== null
               ? splitPaymentRecord.insurer_receipt_number
