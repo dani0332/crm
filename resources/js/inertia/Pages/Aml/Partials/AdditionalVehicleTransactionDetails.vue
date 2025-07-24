@@ -78,9 +78,20 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
     }).finally(() => {
       additionalVehicleTransactionDetailsForm.processing = false;
     });
-  } 
+  }
 }
 
+const isGIG = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
+});
+
+const isLIVA = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+});
+
+const isSUKOON = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
+});
 </script>
 
 <template>
@@ -94,85 +105,86 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
     <x-form @submit="submitAdditionalVehicleTransactionDetailsForm" :auto-focus="false">
       <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
           <x-field label="RTA Transaction Type" required>
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type" 
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type"
               :rules="[isRequired]"
               :options="rtaTransactionTypeOptions"
               placeholder="Select RTA Transaction Type"
             />
           </x-field>
-          
-          <x-field label="Plate Code" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.plate_code" 
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+
+          <x-field label="Plate Code" :required="! isGIG">
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.plate_code"
+              :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Plate Code"
               type="text"
             />
           </x-field>
-          
-          <x-field label="Plate Number" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.plate_number" 
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+
+          <x-field label="Plate Number" :required="! isGIG">
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.plate_number"
+              :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Plate Number"
               type="text"
             />
           </x-field>
-          
+
           <x-field label="Traffic Code Number" required>
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.traffic_code_number" 
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.traffic_code_number"
               :rules="[isRequired]"
               placeholder="Traffic Code Number"
               type="text"
             />
           </x-field>
-          
+
           <x-field label="Chassis Number" required>
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.chassis_number" 
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.chassis_number"
               :rules="[isRequired]"
               placeholder="Chassis Number"
               type="text"
             />
           </x-field>
-          
-          <x-field label="Engine Number" required>
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.engine_number" 
-              :rules="[isRequired]"
+
+          <x-field label="Engine Number" :required="! isSUKOON">
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.engine_number"
+              :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="Engine Number"
               type="text"
             />
           </x-field>
-        
-          <x-field label="RTA Plate Category">
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.rta_plate_category" 
+
+          <x-field label="RTA Plate Category" :required="isGIG">
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.rta_plate_category"
+              :rules="isGIG ? [isRequired] : []"
               :options="rtaPlateCategoryOptions"
               placeholder="Select RTA Plate Category"
             />
           </x-field>
-          
+
           <x-field label="Vehicle Color" required>
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.vehicle_color" 
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
               :options="vehicleColorOptions"
               :rules="[isRequired]"
               placeholder="Select Vehicle Color"
             />
           </x-field>
-          
-          <x-field label="Plate Color" :required="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA">
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.plate_color" 
+
+          <x-field label="Plate Color" :required="isGIG">
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.plate_color"
               :options="plateColorOptions"
-              :rules="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              :rules="isGIG ? [isRequired] : []"
               placeholder="Select Plate Color"
             />
           </x-field>
-          
+
           <x-field label="Bank Loan?" required>
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.bank_loan"
@@ -184,27 +196,27 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
               placeholder="Select Bank Loan"
             />
           </x-field>
-          
-          <x-field label="Bank Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+
+          <x-field label="Bank Name" :required="! isGIG">
             <ComboBox
               :single="true"
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
               :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1"
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              :rules="(! isGIG) ? [isRequired] : []"
               class="w-full"
             />
           </x-field>
-        
-          <x-field label="First Registration Date" required>
+
+          <x-field label="First Registration Date" :required="! isSUKOON">
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
-              :rules="[isRequired]"
+              :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="First Registration Date"
             />
           </x-field>
-          
+
           <x-field label="Policy Effective Date" required>
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
@@ -212,43 +224,43 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
               placeholder="Policy Effective Date"
             />
           </x-field>
-          
-          <x-field label="Policy Expiry Date" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+
+          <x-field label="Policy Expiry Date" :required="isLIVA">
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              :rules="isLIVA ? [isRequired] : []"
               placeholder="Policy Expiry Date"
             />
           </x-field>
-          
-          <x-field label="Certificate Start Date" required>
+
+          <x-field label="Certificate Start Date" :required="! isSUKOON">
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
-              :rules="[isRequired]"
+              :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="Certificate Start Date"
             />
           </x-field>
-          
-          <x-field label="Certificate End Date" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+
+          <x-field label="Certificate End Date" :required="isLIVA">
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              :rules="isLIVA ? [isRequired] : []"
               placeholder="Certificate End Date"
             />
           </x-field>
 
-          <x-field label="Annual Mileage Estimate" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <x-input 
-              v-if="page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA"
-              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate" 
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+          <x-field label="Annual Mileage Estimate" :required="isLIVA">
+            <x-input
+              v-if="isGIG"
+              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
+              :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Select Annual Mileage Estimate"
               type="text"
             />
-            <x-select 
+            <x-select
               v-else
-              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate" 
-              :rules="[isRequired]"
+              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
+              :rules="isLIVA ? [isRequired] : []"
               :options="annualMileageEstimateOptions"
               placeholder="Select Annual Mileage Estimate"
             />

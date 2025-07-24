@@ -178,8 +178,9 @@ const showVehicleAndDrvicerDetails = computed(() => {
   return (
     page.props.quoteType.id === page.props.quoteTypeIdEnum.Car &&
     [
-      page.props.insuranceProviderCodeEnum.RSA,
-      page.props.insuranceProviderCodeEnum.AXA,
+      page.props.insuranceProviderCodeEnum.RSA, // LIVA
+      page.props.insuranceProviderCodeEnum.AXA, // GIG
+      page.props.insuranceProviderCodeEnum.OIC, // SUKOON
     ].includes(page.props.quoteRequest?.plan?.insurance_provider.code)
   );
 });
@@ -994,7 +995,7 @@ const handleModalClose = () => {
       <div
         v-if="
           (page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) && 
+          page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike) &&
           !showVehicleAndDrvicerDetails
         "
       >
