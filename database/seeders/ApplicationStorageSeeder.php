@@ -276,6 +276,38 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => '120',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => '120',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_CQF_RENEWALS_SWITCH],
+            [
+                'value' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+
+        
+        
     }
 
     private function seedUnavailableTimeThreshold()
@@ -331,6 +363,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        
     }
 
     public function seedStopDeduplicateScript()

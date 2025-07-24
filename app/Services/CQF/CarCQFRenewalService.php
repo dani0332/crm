@@ -11,6 +11,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use Illuminate\Support\Sleep;
 use App\Enums\LeadSourceEnum;
+use App\Enums\AssignmentTypeEnum;
+use App\Models\RenewalBatch;
 
 
 class CarCQFRenewalService
@@ -85,13 +87,35 @@ class CarCQFRenewalService
         LoggerService::info(self::class.' - Quote: '.json_encode($quote));
 
     }
-
+    public function getRenewalBatch($newPolicyExpiryDate)
+    {
+        return RenewalBatch::where('start_date', '<=', $newPolicyExpiryDate)
+            ->where('end_date', '>=', $newPolicyExpiryDate)
+            ->whereNull('quote_type_id')
+            ->first();
+    }
     public function mapCarCQFRenewalQuote($quote)
     {
+       $quoteUuid="";
         $quoteData = [
-            'quote_id' => $quote->id,
-            'quote_number' => $quote->policy_number,
-            'quote_expiry_date' => $quote->policy_expiry_date,
+            'customer_id' => $quote->customer_id,
+            'first_name' => $quote->first_name,
+            'last_name' => $quote->last_name,
+            'email' => $quote->email,
+            'mobile_no' => $quote->mobile_no,
+            'uuid' => $quoteUuid,
+            'code' => strtoupper($quote->quote_type).'-'. $quoteUuid,
+            'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+            'advisor_id' => null,
+            'assignment_type' =>null,
+            'renewal_batch' => $data['batch'],
+            'renewal_batch_id' => $renewalBatchId ?? null,
+            'quote_status_id' => QuoteStatusEnum::NewLead,
+            'renewal_import_code' => $renewalUploadLead->renewal_import_code,
+            'previous_quote_policy_number' => $data['policy_number'],
+            'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
+            'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
+            'previous_quote_policy_premium' => $data['premium'],
         ];
     }
 }
