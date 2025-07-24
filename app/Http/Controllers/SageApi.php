@@ -46,7 +46,11 @@ class SageApi extends Controller
     }
     public function sageApiLogs(Request $request, $sectionId)
     {
-        $sageApiLogs = SageApiLog::with('user')->where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
+        $sageApiLogs = SageApiLog::with('user')->where(['model_type' => $request->modelClass, 'model_id' => $sectionId])->get();
+        if (! $sageApiLogs->count()) {
+            // Fall Back Option
+            $sageApiLogs = SageApiLog::with('user')->where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
+        }
 
         return response()->json(['success' => true, 'sageApiLogs' => $sageApiLogs]);
     }
