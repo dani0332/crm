@@ -1252,6 +1252,8 @@ class SagePayloadFactory
     public static function globalSagePrepaymentReceiptPayloadData($sageRequestData)
     {
         [$quote,$payment, $paymentSplit , $sageRequest , $splitAmount] = $sageRequestData;
+        $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+        $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';
         if ($splitAmount != null) {
             $sageRequest->collection_amount = $splitAmount;
         }
@@ -1278,7 +1280,7 @@ class SagePayloadFactory
         if (! isset($sageRequest->mainClassInsurance)) {
             $sageRequest->mainClassInsurance = $sageRequest->quoteType;
         }
-        $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : (PersonalQuote::find($quote?->personal_quote_id)?->code ?? $quote?->code);
+        $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : ($personalQuote?->code ?? $quote?->code);
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
@@ -1291,7 +1293,7 @@ class SagePayloadFactory
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
         $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
-        $sageRequest->policyNumber = $quote?->policy_number;
+        $sageRequest->policyNumber = $policyNumber;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
 
         return $sageRequest;
@@ -1330,13 +1332,15 @@ class SagePayloadFactory
             $policyIssuer = $payment->policyIssuer?->name ?? '';
         }
 
+        $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+
         $sageRequest = new stdClass;
 
-        $sageRequest->quoteRefId = PersonalQuote::find($quote?->personal_quote_id)?->code ?? '';
+        $sageRequest->quoteRefId = $personalQuote?->code ?? '';
         $sageRequest->userId = auth()->id();
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
-        //        TODO:: Need to check with Ali Array to Std
+        // TODO:: Need to check with Ali Array to Std
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
         $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
@@ -1346,10 +1350,12 @@ class SagePayloadFactory
             $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($firstChildPayment->due_date));
         }
 
+        $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';
+
         $sageRequest->mainClassInsurance = $modelType;
         $sageRequest->planId = $quote->plan_id ?? null;
-        $sageRequest->policyNumber = mb_substr($quote->policy_number, 60);
-        $sageRequest->originalPolicyNumber = $quote->policy_number;
+        $sageRequest->policyNumber = mb_substr($policyNumber, 60);
+        $sageRequest->originalPolicyNumber = $policyNumber;
         $sageRequest->policyIssuer = $policyIssuer;
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
         $sageRequest->subClass = $businessTypeOfInsuranceCode;
