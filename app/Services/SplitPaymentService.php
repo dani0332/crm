@@ -1385,7 +1385,6 @@ class SplitPaymentService
                         'insurance_provider_id',
                         'price_vat_applicable',
                         'price_vat_not_applicable',
-                        'price_with_vat',
                         'provider_code',
                     ];
                     // Loop through each field and compare request value with the current quote model value
