@@ -16,6 +16,7 @@ use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -26,6 +27,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
+use App\Models\EmbeddedTransaction;
 use App\Models\FtcEmailLog;
 use App\Models\HealthQuote;
 use App\Models\Payment;
@@ -548,33 +550,68 @@ class SplitPaymentService
 
     public function generateSplitPaymentLink($request)
     {
+        LoggerService::info('Generate split payment link called for payment code: '.$request->paymentCode.' and sr no: '.$request->splitPaymentId);
+
+        // Fetch the split payment record from the database.
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
-        if (! $splitPayment) {
-            return response()->json(['success' => false]);
+
+        // Validate that the split payment and its parent payment exist.
+        if (! $splitPayment || ! $splitPayment->payment) {
+            return response()->json(['success' => false, 'message' => 'Payment split or payments not found.']);
         }
+
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
 
-        if (! $payment) {
-            return response()->json(['success' => false]);
+        if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
+            // Check if the transaction is an "embedded" transaction from the main website's quote flow.
+            $isEmbedded = EmbeddedTransaction::where('quote_request_type', $payment->paymentable_type)
+                ->where('quote_request_id', $payment->paymentable_id)
+                ->select('id')
+                ->limit(1)
+                ->exists();
+
+            if ($isEmbedded) {
+                // For embedded transactions, generate a link that directs the user back to the website's payment page.
+                LoggerService::info("Generating embedded payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
+                $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
+                $lob = strtolower($modelType);
+                $paymentLink = "{$paymentLink}/{$lob}-insurance/quote/{$request->quoteUuid}/payment";
+
+                $insuranceProvider = getInsuranceProvider($payment, $lob);
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+                $paymentParams = [
+                    'planId' => $payment->plan_id,
+                    'providerCode' => $insuranceProvider->code,
+                    'quoteTypeId' => $quoteTypeId,
+                ];
+                $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+
+                return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+            }
         }
 
+        // For standard transactions, check if a valid, non-expired payment link already exists.
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
+            LoggerService::info("Returning existing payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
+
             return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
-        } else {
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-
-            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
-
-            $paymentParams = [
-                'code' => $payment->code.'-'.$splitPayment->sr_no,
-                'quoteTypeId' => $quoteTypeId,
-            ];
-            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
-
-            return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
+
+        // If no valid link exists, generate a new one.
+        LoggerService::info("Generating standard payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
+        $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
+        $paymentLink .= $splitPayment->payment_method === PaymentMethodsEnum::InsureNowPayLater ? 'tabby' : 'checkout';
+
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $paymentParams = [
+            'code' => $payment->code.'-'.$splitPayment->sr_no,
+            'quoteTypeId' => $quoteTypeId,
+        ];
+        $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+
+        return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
     }
 
     public function generateInsurerPaymentLink($request)
@@ -1326,16 +1363,43 @@ class SplitPaymentService
             ->first();
     }
 
-    public function validateAuthorizedPayment($validator, $code)
+    public function validateAuthorizedPayment($validator, $code, $quoteModel = null)
     {
 
         $payment = Payment::where('code', $code)->with('paymentSplits')->first();
 
-        // Check if payment is authorized
+        // Check if a payment exists for the given code
         if ($payment) {
+            // Determine if there is any authorized payment split (Credit Card, status: AUTHORIZED, CAPTURED, or PAID)
             $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
             if ($hasAnyAuthorizedPayment) {
-                $validator->errors()->add('authorized', 'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.');
+                // If the user has permission to edit plan details and a quote model is provided
+                if (auth()->user()->can(PermissionsEnum::PLAN_DETAILS_EDIT) && $quoteModel) {
+                    $request = request()->all();
+                    // Fields that should not be changed if payment is authorized
+                    $fieldsToCheck = [
+                        'insurance_provider_id',
+                        'price_vat_applicable',
+                        'price_vat_not_applicable',
+                        'provider_code',
+                    ];
+                    // Loop through each field and compare request value with the current quote model value
+                    foreach ($fieldsToCheck as $field) {
+                        // If the field exists in both request and model, and values differ, add a validation error
+                        if (isset($request[$field]) && isset($quoteModel->$field) && $request[$field] != $quoteModel->$field) {
+                            $validator->errors()->add(
+                                $field,
+                                "The value of $field cannot be changed as this lead is linked to an authorized payment."
+                            );
+                        }
+                    }
+                } else {
+                    // If user does not have permission or quote model is missing, add a general validation error
+                    $validator->errors()->add(
+                        'authorized',
+                        'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.'
+                    );
+                }
             }
         }
     }
