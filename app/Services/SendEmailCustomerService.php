@@ -963,14 +963,13 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $responseBody = $clientResponse->getBody()->getContents();
-            $response = json_decode($responseBody);
-
-            if (isset($response->messageId)) {
-                $messageId = $response->messageId;
+            $responseBody = trim($clientResponse->getBody()->getContents());
+            $message = json_decode($responseBody);
+            if (isset($message->messageId)) {
+                $messageId = $message->messageId;
             }
-
             $responseCode = $clientResponse->getStatusCode();
+            $response = "{$responseCode} {$responseBody}";
             $isEmailSent = 1;
 
             LoggerService::info('Policy documents email sent successfully', extra: [
@@ -979,9 +978,8 @@ class SendEmailCustomerService extends BaseService
                 'response_code' => $responseCode,
             ]);
         } catch (Exception $ex) {
-            $response = '';
             $responseCode = $ex->getCode();
-
+            $response = "{$responseCode} {$ex->getMessage()}";
             LoggerService::error('Failed to send policy documents email', extra: [
                 'quote_code' => $emailData->code,
                 'error_code' => $responseCode,
