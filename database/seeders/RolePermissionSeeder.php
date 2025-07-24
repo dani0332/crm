@@ -165,7 +165,7 @@ class RolePermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
     }
-    
+
     private function addInsurerPaymentLinkPermission(): void
     {
         Permission::firstOrCreate([
