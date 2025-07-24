@@ -19,10 +19,10 @@ class LifeAllocation extends BaseAllocation
             ->first();
     }
 
-    private function getAdvisorEmails()
+    protected function getAdvisorEmails($storageKey = null)
     {
         $category = $this->evaluateCategory();
-        $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
+        $amount = $this->lead->currency?->convertToAED((float) $this->lead?->sum_insured_value ?? 0);
 
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
         $karuna = 'karuna.ramesh@insurancemarket.ae';
@@ -32,6 +32,7 @@ class LifeAllocation extends BaseAllocation
 
         $gaurav = 'gaurav.sharma@insurancemarket.ae';
         $vivian = 'vivian.sandel@insurancemarket.ae';
+        $sourabh = 'sourabh.yadav@insurancemarket.ae';
 
         $emails = [];
 
@@ -40,7 +41,7 @@ class LifeAllocation extends BaseAllocation
         } elseif ($amount >= 1000000 && $amount <= 2000000 && in_array($category, [self::CAT_A])) {
             $emails = [$vivian];
         } elseif ($amount <= 2000000 && in_array($category, [self::CAT_B])) {
-            $emails = [$gaurav];
+            $emails = [$gaurav, $sourabh];
         } elseif ($amount > 2000000 && in_array($category, [self::CAT_A, self::CAT_B])) {
             $emails = [$santosh, $karuna, $christy, $katrina, $larry];
         }
@@ -51,7 +52,68 @@ class LifeAllocation extends BaseAllocation
     private function getCountriesMapping()
     {
         $catACountryMapping = [
-            'South African', 'Australian', 'New Zealander', 'Canadian', 'United Kingdom', 'Lebanese', 'Filipino', 'American', 'Europe',
+            'American',
+            'Australian',
+            'South African',
+            'United Kingdom',
+            'Lebanese',
+            'Filipino',
+            'New Zealander',
+            'Canadian',
+            'Russian',
+            'Ukrainian',
+            'French',
+            'Spanish',
+            'Swedish',
+            'German',
+            'Finnish',
+            'Norwegian',
+            'Polish',
+            'Italian',
+            'Romanian',
+            'Belarusian',
+            'Kazakhstani',
+            'Greek',
+            'Bulgarian',
+            'Icelander',
+            'Hungarian',
+            'Portuguese',
+            'Austrian',
+            'Czech',
+            'Serbian',
+            'Irish',
+            'Lithuanian',
+            'Latvian',
+            'Norwegian',
+            'Croatian',
+            'Herzegovinian',
+            'Slovakian',
+            'Estonian',
+            'Danish',
+            'Dutch',
+            'Swiss',
+            'Moldovan',
+            'Belgian',
+            'Albanian',
+            'Macedonian',
+            'Turkish',
+            'Slovenian',
+            'Montenegrin',
+            'Kosovar',
+            'Azerbaijani',
+            'Georgian',
+            'Luxembourger',
+            'Faroese',
+            'Andorran',
+            'Maltese',
+            'Liechtensteiner',
+            'Sammarinese',
+            'Gibraltar',
+            'Monacan',
+            'Vatican City',
+            'Armenian',
+            'Cypriot',
+            'Greenlandic',
         ];
 
         $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {

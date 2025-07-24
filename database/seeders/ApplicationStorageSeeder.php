@@ -15,7 +15,16 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-        // $this->seedBirdWorkflowUrls();
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_UNIVERSAL_SEARCH],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        $this->seedBirdWorkflowUrls();
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
         //     [
@@ -81,8 +90,17 @@ class ApplicationStorageSeeder extends Seeder
         //         'updated_at' => now(),
         //     ],
         // );
-        $this->seedBenchmarking();
-        $this->seedStopDeduplicateScript();
+        // $this->seedBenchmarking();
+        // $this->seedStopDeduplicateScript();
+        // $this->seedAmlAutomation();
+
+        // $this->seedYachtAndPetAdvisors();
+        $this->seedCycleAdvisors();
+        $this->seedCorplineAdvisors();
+        $this->savingsLOB();
+
+        $this->seedOcrEnabled();
+        $this->seedSukoonMedexProductSlug();
     }
 
     private function seedBirdWorkflowUrls()
@@ -166,6 +184,16 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_RENEWAL_OCB],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
         $this->seedUnavailableTimeThreshold();
     }
 
@@ -223,16 +251,6 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::ENABLE_TAP_INTEGRATION],
             [
                 'value' => '0',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DTT_FROM],
-            [
-                'value' => '2025-02-19',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -321,6 +339,137 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::STOP_DE_DUPLICATION_JOB],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAmlAutomation()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedYachtAndPetAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::YACHT_ADVISORS],
+            [
+                'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PET_ADVISORS],
+            [
+                'value' => 'smitha.chandran@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_ADVISORS_FOR_PET],
+            [
+                'value' => 'ghana.naeem@insurancemarket.ae,marialuisa.deguzman@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCycleAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYCLE_ADVISORS],
+            [
+                'value' => 'marialuisa.deguzman@insurancemarket.ae,virgilio.ocon@insurancemarket.ae,ghana.naeem@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCorplineAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CORPLINE_ADVISORS],
+            [
+                'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae,arun.shankar@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function savingsLOB()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NEW_LEAD_POOL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_BOOK_POLICY_TEMPLATE],
+            [
+                'value' => 734,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 737,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOcrEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedSukoonMedexProductSlug()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG],
+            [
+                'value' => 'afia_driver_medex',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

@@ -7,7 +7,6 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
-use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -29,7 +28,6 @@ use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\Emirate;
-use App\Models\Entity;
 use App\Models\KycLog;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
@@ -187,11 +185,8 @@ class BusinessQuoteController extends Controller
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
-        $isRenewalUser = auth()->user()->isRenewalUser();
-        $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
         $this->businessQuoteService->fillData();
 
-        $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->businessQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = $this->businessQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->businessQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
@@ -241,7 +236,6 @@ class BusinessQuoteController extends Controller
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -266,13 +260,6 @@ class BusinessQuoteController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
-        $countries = Nationality::all();
-        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
-        $entities = Entity::all();
-        $legalStructure = $this->lookupService->getLegalStructure();
-        $idDocumentType = $this->lookupService->getEntityDocumentTypes();
-        $issuancePlace = $this->lookupService->getIssuancePlaces();
-        $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
         $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
         $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
@@ -283,29 +270,6 @@ class BusinessQuoteController extends Controller
         $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
 
         if ($hasPolicyIssuedStatus) {
-            $removeOptions = [
-                // Endorsement Financial.
-                SendUpdateLogStatusEnum::MAOM,
-                SendUpdateLogStatusEnum::MDOM,
-                SendUpdateLogStatusEnum::MD,
-                SendUpdateLogStatusEnum::MSC,
-                SendUpdateLogStatusEnum::MPC,
-                SendUpdateLogStatusEnum::PU,
-                SendUpdateLogStatusEnum::SC,
-                // Endorsement non Financial.
-                SendUpdateLogStatusEnum::EIU,
-                SendUpdateLogStatusEnum::MSCNFI,
-                SendUpdateLogStatusEnum::QR,
-                SendUpdateLogStatusEnum::RFAML,
-                SendUpdateLogStatusEnum::RFCOC,
-                SendUpdateLogStatusEnum::RFCOI,
-                SendUpdateLogStatusEnum::RFEC,
-                SendUpdateLogStatusEnum::RFSOA,
-                SendUpdateLogStatusEnum::RFTI,
-                SendUpdateLogStatusEnum::RFTC,
-                SendUpdateLogStatusEnum::WOWPA,
-            ];
-
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -313,29 +277,18 @@ class BusinessQuoteController extends Controller
 
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
-        $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
-            'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
-            'legalStructure' => $legalStructure,
-            'idDocumentType' => $idDocumentType,
-            'issuancePlace' => $issuancePlace,
-            'issuanceAuthorities' => $issuanceAuthorities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
-            'amlStatusName' => $amlStatusName,
+            'amlStatusName' => AMLStatusCode::getName($record->aml_status),
             'quoteDetails' => $quoteDetails,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Business,
-            'dropdownSource' => $dropdownSource,
             'leadStatuses' => $quoteStatuses,
             'advisors' => $advisors,
-            'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
-            'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
             'quoteDocuments' => $quoteDocuments,
@@ -343,9 +296,7 @@ class BusinessQuoteController extends Controller
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'activities' => $activities,
-            'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
-            'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
@@ -366,7 +317,6 @@ class BusinessQuoteController extends Controller
                 'canEditQuote' => (auth()->user()->can('corpline-quotes-edit') || (userHasProduct(quoteTypeCode::CORPLINE) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                 'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
-
             ],
             'typeCode' => quoteTypeCode::CORPLINE,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
@@ -374,7 +324,7 @@ class BusinessQuoteController extends Controller
             'UBOsDetails' => $UBODetails,
             'UBORelations' => $UBORelations,
             'nationalities' => $nationalities,
-            'emirates' => $emirates,
+            'emirates' => Emirate::where('is_active', 1)->select('id', 'text')->get(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
@@ -434,6 +384,7 @@ class BusinessQuoteController extends Controller
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
         $this->crudService->updateModelByType('business', $request, $id);
+        $this->businessQuoteService->updateBusinessQuote($request, $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
     }
@@ -468,6 +419,8 @@ class BusinessQuoteController extends Controller
             ['id' => QuoteStatusEnum::AdditionalInformationRequested, 'title' => quoteStatusCode::ADDITIONAL_INFORMATION_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::AdditionalInformationRequested, $request)],
             ['id' => QuoteStatusEnum::QuoteRequested, 'title' => quoteStatusCode::QUOTE_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::QuoteRequested, $request)],
             ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::FinalizingTerms, 'title' => quoteStatusCode::FINALIZING_TERMS, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::FinalizingTerms, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
@@ -482,8 +435,10 @@ class BusinessQuoteController extends Controller
             QuoteStatusEnum::AdditionalInformationRequested => 3,
             QuoteStatusEnum::QuoteRequested => 4,
             QuoteStatusEnum::Quoted => 5,
-            QuoteStatusEnum::FinalizingTerms => 6,
-            QuoteStatusEnum::PolicyIssued => 7,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 6,
+            QuoteStatusEnum::PaymentInitiated => 7,
+            QuoteStatusEnum::FinalizingTerms => 8,
+            QuoteStatusEnum::PolicyIssued => 9,
         ];
 
         $renewals = [
@@ -492,8 +447,10 @@ class BusinessQuoteController extends Controller
             QuoteStatusEnum::PendingRenewalInformation => 2,
             QuoteStatusEnum::QuoteRequested => 3,
             QuoteStatusEnum::Quoted => 4,
-            QuoteStatusEnum::FinalizingTerms => 5,
-            QuoteStatusEnum::PolicyIssued => 6,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::FinalizingTerms => 7,
+            QuoteStatusEnum::PolicyIssued => 8,
         ];
 
         if ($areBothTeamsPresent || $isManagerOrDeputy) {

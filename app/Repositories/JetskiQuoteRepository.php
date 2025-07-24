@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -100,20 +101,42 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::JETSKI->id())
+        $quoteTypeId = QuoteTypes::JETSKI->id();
+
+        return $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
-            ->with(['jetskiQuote', 'nationality', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'jetskiQuote',
+                'nationality',
+                'advisor',
+                'quoteDetail.lostReason',
+                'latestInsured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
+                'latestInsured.insuredKyc:id,insured_id',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
+                },
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                }])->firstOrFail();
     }
 
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with([
             'quoteStatus',
@@ -122,10 +145,24 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
-        ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
-            $query->where('advisor_id', auth()->user()->id);
-        })->filter(! $forExport)
-            ->withFakeLeadCriteria()
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::JETSKI->id());
+            },
+            'customer',
+        ])->when(auth()->user() && auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
+            $query->where('advisor_id', auth()->id());
+        })
+            ->when($this->hasFilterValue('advisor_assigned_date', $requestParams), function ($query) use ($requestParams) {
+                $dateArray = $this->getFilterValue('advisor_assigned_date', $requestParams);
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            })
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
+            ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
                 DB::raw('
@@ -139,11 +176,42 @@ class JetskiQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
-
         $this->adjustQueryByInsurerInvoiceFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
+
+        return $query;
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
 }

@@ -115,7 +115,6 @@ const insuredFormDetails = useForm({
   id_issuance_place: props.entityDetails?.entity?.id_issuance_place ?? null,
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
-
   screening_id_type: props.insuredPersonDetails?.insured?.id_type ?? null,
   screening_id_number: props.insuredPersonDetails?.insured?.id_number ?? null,
 
@@ -656,115 +655,121 @@ watch(
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-          <x-field label="ID type" required>
-            <x-select
-              v-model="insuredFormDetails.screening_id_type"
-              :options="documentIDTypeForScreening"
-              placeholder="ID type"
-              :rules="[isRequired]"
+        <div class="flex gap-4">
+          <x-select
+            class="flex-1"
+            v-model="insuredFormDetails.screening_id_type"
+            :options="documentIDTypeForScreening"
+            placeholder="ID type"
+            :rules="[isRequired]"
+            label="ID type"
+            required
+          />
+          <template
+            v-if="insuredFormDetails.screening_id_type === 'emiratesId'"
+          >
+            <x-input
+              v-model="insuredFormDetails.screening_id_number"
+              placeholder="xxx-xxxx-xxxxxxx-x"
+              :rules="[isRequired, rules.emirateNumberCheck]"
+              @input="applyScreeningIdNumMasking"
+              :error="insuredFormDetails.errors.screening_id_number"
+              label="ID number"
+              required
+              class="flex-1"
             />
-          </x-field>
-          <x-field label="ID number" required>
-            <template
-              v-if="insuredFormDetails.screening_id_type === 'emiratesId'"
-            >
-              <x-input
-                v-model="insuredFormDetails.screening_id_number"
-                placeholder="xxx-xxxx-xxxxxxx-x"
-                :rules="[isRequired, rules.emirateNumberCheck]"
-                @input="applyScreeningIdNumMasking"
-                :error="insuredFormDetails.errors.screening_id_number"
-              />
-            </template>
-            <template v-else>
-              <x-input
-                v-model="insuredFormDetails.screening_id_number"
-                :placeholder="
-                  insuredFormDetails.screening_id_type === ''
-                    ? 'Enter ID Number'
-                    : 'Enter Passport Number'
-                "
-                :rules="[isRequired, rules.passportNumberCheck]"
-                @blur="validatePassportNumber('blur')"
-                @keypress="validatePassportNumber('keypress')"
-                :error="insuredFormDetails.errors.screening_id_number"
-              />
-            </template>
-          </x-field>
-          <template v-if="!insuredPersonDetailsFound">
-            <x-field>
-              <x-button
-                @click.prevent="submitInsuredPersonSearch"
-                class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
-                size="sm"
-                color="primary"
-                :loading="loader.search"
-              >
-                Search
-              </x-button>
-            </x-field>
           </template>
           <template v-else>
-            <div class="text-left space-x-4">
-              <x-button
-                size="sm"
-                color="info"
-                @click.prevent="clearInsuredPersonDetails"
-              >
-                Cancel
-              </x-button>
-            </div>
+            <x-input
+              label="ID number"
+              required
+              v-model="insuredFormDetails.screening_id_number"
+              :placeholder="
+                insuredFormDetails.screening_id_type === ''
+                  ? 'Enter ID Number'
+                  : 'Enter Passport Number'
+              "
+              :rules="[isRequired, rules.passportNumberCheck]"
+              @blur="validatePassportNumber('blur')"
+              @keypress="validatePassportNumber('keypress')"
+              :error="insuredFormDetails.errors.screening_id_number"
+              class="flex-1"
+            />
           </template>
-          <x-field label="Insured First Name">
-            <x-input
-              v-model="insuredFormDetails.insured_first_name"
-              :key="validationKey"
-              :rules="[isRequired, rules.nameCheck]"
-              placeholder="Insured First Name"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Insured Last Name">
-            <x-input
-              v-model="insuredFormDetails.insured_last_name"
-              :key="validationKey"
-              :rules="[isRequired, rules.nameCheck]"
-              placeholder="Insured Last Name"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
+          <template v-if="!insuredPersonDetailsFound">
+            <x-button
+              @click.prevent="submitInsuredPersonSearch"
+              class="focus:ring-2 focus:ring-black focus:ring-opacity-60 mt-3"
+              color="primary"
+              :loading="loader.search"
+            >
+              Search
+            </x-button>
+          </template>
+          <template v-else>
+            <x-button
+              class="mt-3"
+              color="info"
+              @click.prevent="clearInsuredPersonDetails"
+            >
+              Cancel
+            </x-button>
+          </template>
+        </div>
+        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+          <x-input
+            v-model="insuredFormDetails.insured_first_name"
+            :key="validationKey"
+            :rules="[isRequired, rules.nameCheck]"
+            placeholder="Insured First Name"
+            type="text"
+            class="w-full"
+            label="Insured First Name"
+            required
+          />
+          <x-input
+            v-model="insuredFormDetails.insured_last_name"
+            :key="validationKey"
+            :rules="[isRequired, rules.nameCheck]"
+            placeholder="Insured Last Name"
+            type="text"
+            class="w-full"
+            label="Insured Last Name"
+            required
+          />
 
-          <x-field label="Nationality">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.nationality_id"
-              :hasError="isEmptyNationality"
-              placeholder="Select Nationality"
-              :options="nationalitiesOptions"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Date of Birth">
-            <DatePicker
-              v-model="insuredFormDetails.dob"
-              :key="dobValidationKey"
-              :rules="[isRequired]"
-              placeholder="Date of Birth"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Gender" required>
-            <x-select
-              v-model="insuredFormDetails.screening_gender"
-              :key="validationKey"
-              :options="gender"
-              placeholder="Gender"
-              :rules="[isRequired]"
-            />
-          </x-field>
+          <x-select
+            v-model="insuredFormDetails.nationality_id"
+            filterable
+            filterPlaceholder="Filter Nationality...."
+            placeholder="Select Nationality"
+            virtualList
+            :virtualListItemHeight="32"
+            :virtualListOverscan="10"
+            :options="nationalitiesOptions"
+            class="w-full"
+            :rules="[isRequired]"
+            label="Nationality"
+            required
+          />
+
+          <DatePicker
+            label="Date of Birth"
+            v-model="insuredFormDetails.dob"
+            :key="dobValidationKey"
+            :rules="[isRequired]"
+            placeholder="Date of Birth"
+            class="w-full"
+          />
+          <x-select
+            v-model="insuredFormDetails.screening_gender"
+            :key="validationKey"
+            :options="gender"
+            placeholder="Gender"
+            :rules="[isRequired]"
+            label="Gender"
+            required
+          />
           <div class="flex gap-5 align-center">
             <p>Is the insured the payer?</p>
             <x-form-group v-model="is_insured">
@@ -772,20 +777,19 @@ watch(
               <x-radio :value="0" label="No" />
             </x-form-group>
           </div>
-          <x-field
-            label="Email in GIG portal"
+
+          <x-input
             v-if="
               quoteType.id === page.props.quoteTypeIdEnum.Car ||
-              quoteType.id === page.props.quoteTypeIdEnum.Bike
+              quoteType.id === page.props.quoteTypeIdEnum.Bike ||
+              quoteType.id === page.props.quoteTypeIdEnum.Home
             "
-          >
-            <x-input
-              v-model="insuredFormDetails.get_quote_email_gig"
-              placeholder="Email in GIG portal"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
+            label="Email in GIG portal"
+            v-model="insuredFormDetails.get_quote_email_gig"
+            placeholder="Email in GIG portal"
+            type="text"
+            class="w-full"
+          />
         </dl>
 
         <x-divider class="mb-4 mt-1" />
@@ -826,18 +830,19 @@ watch(
                 </x-tooltip>
               </div>
             </template>
-            <x-field label="Chassis Number" required v-else>
-              <x-input
-                v-model="insuredFormDetails.chassis_number"
-                placeholder="Enter Chassis Number"
-                type="text"
-                class="w-full"
-                :rules="[isRequired, rules.chassisNumberCheck]"
-                @blur="chassisNumberValidate('blur')"
-                @keypress="chassisNumberValidate('keypress')"
-                :error="insuredFormDetails.errors.chassis_number"
-              />
-            </x-field>
+            <x-input
+              v-else
+              label="Chassis Number"
+              required
+              v-model="insuredFormDetails.chassis_number"
+              placeholder="Enter Chassis Number"
+              type="text"
+              class="w-full"
+              :rules="[isRequired, rules.chassisNumberCheck]"
+              @blur="chassisNumberValidate('blur')"
+              @keypress="chassisNumberValidate('keypress')"
+              :error="insuredFormDetails.errors.chassis_number"
+            />
           </dl>
           <x-divider class="mb-4 mt-1" />
         </div>
@@ -945,105 +950,100 @@ watch(
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
         <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
-          <x-field label="Trade License No">
-            <x-input
-              v-model="insuredFormDetails.trade_license_no"
-              :rules="[isRequired]"
-              placeholder="Trade License No"
-              type="text"
-              class="w-full"
-            />
-            <x-button
-              @click.prevent="searchByTradeLicense"
-              size="xs"
-              color="primary"
-              :loading="loader.search"
-            >
-              Search
-            </x-button>
-          </x-field>
-          <x-field label="Company Name">
-            <x-input
-              v-model="insuredFormDetails.company_name"
-              :rules="[isRequired]"
-              placeholder="Company Name"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Company Address">
-            <x-input
-              v-model="insuredFormDetails.company_address"
-              :rules="[isRequired]"
-              placeholder="Company Address"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Entity Type">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.entity_type_code"
-              :rules="[isRequired]"
-              placeholder="Select Entity Type"
-              :options="[
-                { label: 'Parent', value: 'Parent' },
-                { label: 'Sub Entity', value: 'SubEntity' },
-              ]"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Industry Type">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.industry_type_code"
-              :rules="[isRequired]"
-              placeholder="Select Industry Type"
-              :options="industryTypeOptions"
-              class="w-full"
-              :hasError="industryTypeCode"
-            />
-          </x-field>
+          <x-input
+            v-model="insuredFormDetails.trade_license_no"
+            :rules="[isRequired]"
+            placeholder="Trade License No"
+            type="text"
+            class="w-full"
+            label="Trade License No"
+          />
+          <x-button
+            @click.prevent="searchByTradeLicense"
+            size="xs"
+            color="primary"
+            :loading="loader.search"
+          >
+            Search
+          </x-button>
+          <x-input
+            v-model="insuredFormDetails.company_name"
+            :rules="[isRequired]"
+            placeholder="Company Name"
+            type="text"
+            class="w-full"
+            label="Company Name"
+            required
+          />
+          <x-input
+            v-model="insuredFormDetails.company_address"
+            :rules="[isRequired]"
+            placeholder="Company Address"
+            type="text"
+            class="w-full"
+            label="Company Address"
+            required
+          />
+          <x-select
+            v-model="insuredFormDetails.entity_type_code"
+            :rules="[isRequired]"
+            placeholder="Select Entity Type"
+            :options="[
+              { label: 'Parent', value: 'Parent' },
+              { label: 'Sub Entity', value: 'SubEntity' },
+            ]"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Entity Type...."
+            label="Entity Type"
+            required
+          />
+          <x-select
+            v-model="insuredFormDetails.industry_type_code"
+            :rules="[isRequired]"
+            placeholder="Select Industry Type"
+            :options="industryTypeOptions"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Industry Type...."
+            label="Industry Type"
+            required
+          />
 
-          <x-field label="Emirate of Registration">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.emirate_of_registration_id"
-              :rules="[isRequired]"
-              placeholder="Select Emirate of Registration"
-              :options="emirateRegistrationOptions"
-              class="w-full"
-              :hasError="emirateRegistrationId"
-            />
-          </x-field>
+          <x-select
+            v-model="insuredFormDetails.emirate_of_registration_id"
+            :rules="[isRequired]"
+            placeholder="Select Emirate of Registration"
+            :options="emirateRegistrationOptions"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Emirate of Registration...."
+            label="Emirate of Registration"
+            required
+          />
         </dl>
         <x-divider class="mb-4 mt-1" />
         <template v-if="entityDetailsFound">
           <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 mb-5">
-            <x-field label="Trade License No">
-              <x-input
-                v-model="tradeLicenseEntity.trade_license"
-                type="text"
-                class="w-full"
-                disabled
-              />
-            </x-field>
-            <x-field label="Company Name">
-              <x-input
-                v-model="tradeLicenseEntity.company_name"
-                type="text"
-                class="w-full"
-                disabled
-              />
-            </x-field>
-            <x-field label="Company Address">
-              <x-input
-                v-model="tradeLicenseEntity.company_address"
-                type="text"
-                class="w-full"
-                disabled
-              />
-            </x-field>
+            <x-input
+              v-model="tradeLicenseEntity.trade_license"
+              type="text"
+              class="w-full"
+              disabled
+              label="Trade License No"
+            />
+            <x-input
+              v-model="tradeLicenseEntity.company_name"
+              type="text"
+              class="w-full"
+              disabled
+            />
+            <x-input
+              v-model="tradeLicenseEntity.company_address"
+              type="text"
+              class="w-full"
+              disabled
+            />
             <div class="text-left space-x-4">
               <x-button
                 size="sm"

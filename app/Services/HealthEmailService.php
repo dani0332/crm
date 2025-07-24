@@ -3,17 +3,19 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class HealthEmailService extends BaseService
@@ -21,7 +23,7 @@ class HealthEmailService extends BaseService
     public function sendHealthOCBIntroEmail($lead, $triggerSICWorkFlow)
     {
         // Retrieve plans with available ratings for the given lead
-        info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
+        LoggerService::info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
@@ -31,15 +33,15 @@ class HealthEmailService extends BaseService
                     $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
-                    info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
                 } else {
-                    info("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::warning("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
                 }
             } else {
-                info("SIC Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+                LoggerService::info("SIC Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
         } else {
-            info("triggerSICWorkFlow: {$triggerSICWorkFlow} | - SIC Health workflow not enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::info("triggerSICWorkFlow: {$triggerSICWorkFlow} | - SIC Health workflow not enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
 
         return $response ?? null;
@@ -67,14 +69,19 @@ class HealthEmailService extends BaseService
             'whatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => $workflowType,
-            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
+            'numberOfMembersCovered' => $workflowType == WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA ? $lead->customerMembers->count() : null,
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
     }
 
     private function getMembers($currentPlan)
     {
+        if (! property_exists($currentPlan, 'memberPremiumBreakdown')) {
+            return [];
+        }
+
         return collect($currentPlan->memberPremiumBreakdown ?? [])
             ->map(function ($member, $index) {
                 return collect($member)
@@ -109,31 +116,87 @@ class HealthEmailService extends BaseService
         }, $documents);
     }
 
+    private function getValueFromRatesPerCopay($currentPlan, $property)
+    {
+        if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            $ratesPerCopay = is_array($currentPlan->ratesPerCopay) ? $currentPlan->ratesPerCopay : (array) $currentPlan->ratesPerCopay;
+
+            $ratesPerCopay = collect($ratesPerCopay)->first();
+
+            return $ratesPerCopay[$property] ?? 0;
+        }
+
+        return null;
+    }
+
+    private function getPlanData($currentPlan)
+    {
+        if (! $currentPlan || ! is_object($currentPlan) || empty((array) $currentPlan)) {
+            return [];
+        }
+
+        $plan = [];
+
+        $getValueFromPlanOrRates = function (string $property) use ($currentPlan) {
+            if (property_exists($currentPlan, $property) && ($currentPlan->$property ?? null)) {
+                return $currentPlan->{$property};
+            }
+
+            return $this->getValueFromRatesPerCopay($currentPlan, $property);
+        };
+
+        $discountPremium = $getValueFromPlanOrRates('discountPremium');
+        $vat = $getValueFromPlanOrRates('vat');
+
+        if (property_exists($currentPlan, 'name')) {
+            $plan['name'] = $currentPlan->name;
+        }
+
+        if (property_exists($currentPlan, 'providerName')) {
+            $plan['providerName'] = $currentPlan->providerName;
+        }
+
+        if (property_exists($currentPlan, 'providerCode')) {
+            $plan['providerCode'] = strtolower($currentPlan->providerCode);
+        }
+
+        if (property_exists($currentPlan, 'eligibilityName')) {
+            $plan['tpa'] = $currentPlan->eligibilityName;
+        }
+
+        $plan['actualPremium'] = "AED {$discountPremium}";
+        $plan['vat'] = "AED {$vat}";
+
+        if (property_exists($currentPlan, 'policyWordings')) {
+            $plan['tobs'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan->policyWordings));
+        }
+
+        if (property_exists($currentPlan, 'benefits')) {
+            $benefits = is_object($currentPlan->benefits) ? $currentPlan->benefits : (object) $currentPlan->benefits;
+
+            if (property_exists($benefits, 'networkLink')) {
+                $plan['networkLinks'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $benefits->networkLink));
+            }
+        }
+
+        if (property_exists($currentPlan, 'mafLink')) {
+            $plan['mafLink'] = $currentPlan->mafLink;
+        }
+
+        return $plan;
+    }
+
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
     {
-        $currentPlan = $lead->getCurrentPlan();
+        $response = Ken::request('/fetch-health-selected-plan', 'post', [
+            'quoteUID' => $lead->uuid,
+        ]);
 
+        $plans = collect($response['plans'] ?? []);
+
+        $currentPlan = (object) $plans->first();
         $members = $this->getMembers($currentPlan);
-
-        $getDiscountPremium = function () use ($currentPlan) {
-            if ($currentPlan->discountPremium ?? null) {
-                return $currentPlan->discountPremium;
-            }
-
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                return $currentPlan->ratesPerCopay?->discountPremium ?? 0;
-            }
-        };
-
-        $getVat = function () use ($currentPlan) {
-            if ($currentPlan->vat ?? null) {
-                return $currentPlan->vat;
-            }
-
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                return $currentPlan->ratesPerCopay?->vat ?? 0;
-            }
-        };
+        $plan = $this->getPlanData($currentPlan);
 
         $payload = [
             'code' => $lead->code,
@@ -145,17 +208,7 @@ class HealthEmailService extends BaseService
             'email' => $lead->email,
             'totalMembers' => count($members),
             'members' => $members,
-            'plan' => [
-                'name' => $currentPlan?->name,
-                'providerName' => $currentPlan?->providerName,
-                'providerCode' => strtolower($currentPlan?->providerCode ?? ''),
-                'tpa' => $currentPlan?->eligibilityName ?? '',
-                'actualPremium' => "AED {$getDiscountPremium()}",
-                'vat' => "AED {$getVat()}",
-                'tobs' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
-                'networkLinks' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
-                'mafLink' => $currentPlan?->mafLink,
-            ],
+            'plan' => $plan,
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
         ];
 
@@ -176,10 +229,10 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
-        info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
+        LoggerService::info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
         try {
             if (! $lead->isApplicationPending()) {
-                info(self::class." Skipping Apply Now Email becuase quote status is not application pending for uuid: {$lead->uuid}");
+                LoggerService::info(self::class." Skipping Apply Now Email becuase quote status is not application pending for uuid: {$lead->uuid}");
 
                 return;
             }
@@ -195,22 +248,22 @@ class HealthEmailService extends BaseService
                         $lead->apply_now_email_sent_at = now();
                         $lead->save();
                     });
-                    info(self::class." - Apply Now Email Sent to Customer Email: {$lead->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
+                    LoggerService::info(self::class." - Apply Now Email Sent to Customer Email: {$lead->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
                 } elseif ($advisor) {
-                    info(self::class." - Apply Now Email Sent to Advisor Email: {$advisor->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
+                    LoggerService::info(self::class." - Apply Now Email Sent to Advisor Email: {$advisor->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
                 }
 
             } else {
-                Log::error(self::class." - Apply Now Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$lead->uuid}");
+                LoggerService::error(self::class." - Apply Now Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$lead->uuid}");
             }
         } catch (Exception $e) {
-            Log::error(self::class." - Exception for uuid {$lead->uuid}: ".$e->getMessage());
+            LoggerService::error(self::class." - Exception for uuid {$lead->uuid}: ".$e->getMessage());
         }
     }
 
     public function sendOCAHealthWorkFlow($lead)
     {
-        info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
+        LoggerService::info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS);
@@ -219,17 +272,17 @@ class HealthEmailService extends BaseService
                 $response = app(BirdService::class)->triggerWebHookRequest($birdSicHealthWorkflowData->value, $emailData);
                 $lead->oca_flow_enabled = true;
                 $lead->save();
-                info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                info("OCA Health workflow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info("OCA Health workflow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
 
                 if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
                 }
             } else {
-                info("OCA Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::warning("OCA Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } else {
-            info("OCA Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::info("OCA Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
 
         return $response ?? null;
@@ -246,14 +299,14 @@ class HealthEmailService extends BaseService
                     'flow_type' => QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS->value,
                     'flow_id' => $runId,
                 ]);
-                info("OCA Health workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info("OCA Health workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             } else {
-                info("OCA Health workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::warning("OCA Health workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } catch (\Throwable $th) {
             $errorMessage = "Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
-            info($errorMessage);
-            info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::error($errorMessage);
+            LoggerService::error("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
             throw $th;
         }
     }
@@ -261,18 +314,83 @@ class HealthEmailService extends BaseService
     public function sendApplicationSubmittedEmail($healthQuote)
     {
         try {
-            info(self::class." - Inside for UUID: {$healthQuote->uuid}");
+            LoggerService::info(self::class." - Inside for UUID: {$healthQuote->uuid}");
             $emailData = $this->mapDataForFollowupEmail($healthQuote, $healthQuote->advisor, WorkflowTypeEnum::HEALTH_APPLICATION_SUBMITTED);
             $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
-            info(self::class." - Triggering Bird triggerWebHookRequest for UUID: {$healthQuote->uuid}");
+            LoggerService::info(self::class." - Triggering Bird triggerWebHookRequest for UUID: {$healthQuote->uuid}");
             $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
-            info("Application submitted email sent for lead uuid: {$healthQuote->uuid} | Time: ".now());
+            LoggerService::info("Application submitted email sent for lead uuid: {$healthQuote->uuid} | Time: ".now());
 
             return $response;
         } catch (Exception $e) {
-            Log::error("Error sending application submitted email for lead Ref-ID: {$healthQuote->uuid} | Time: ".now().' - Error: '.$e->getMessage());
+            LoggerService::error("Error sending application submitted email for lead Ref-ID: {$healthQuote->uuid} | Time: ".now().' - Error: '.$e->getMessage());
 
             return false;
         }
+    }
+
+    public function sendSICHealthFollowupsWA($lead)
+    {
+        $response = Ken::request('/get-health-cheapest-plans', 'post', [
+            'quoteUID' => $lead->uuid,
+            'isRequestForPlansWithExtendedData' => false,
+            'isPlanTypes' => true,
+        ]);
+
+        if (empty($response['plans'])) {
+            LoggerService::info('SIC Health Followups WA not executed because no plans found');
+
+            return;
+        }
+        if (empty($response['planTypes'])) {
+            LoggerService::info('SIC Health Followups WA not executed because no plan types found');
+
+            return;
+        }
+        $planTypes = collect($response['planTypes'])
+            ->mapWithKeys(function ($planType) {
+                $key = $this->setPlanTypePremium($planType['text']);
+                if ($key !== null) {
+                    return [$key => $planType['calculatedDiscountPremium']];
+                }
+
+                return [];
+            });
+
+        try {
+            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            if ($isFollowupExecuted) {
+                LoggerService::info('SIC Health Followups WA already executed');
+
+                return;
+            }
+
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA);
+            $emailData->planTypes = $planTypes;
+            $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
+            if (! empty($response->headers['Run-Id']) && in_array($response->status_code, [200, 201])) {
+                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
+                app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, QuoteTypeId::Health);
+
+                LoggerService::info('SIC Health Followups WA executed');
+            }
+
+        } catch (\Exception $exception) {
+            LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);
+        }
+
+    }
+
+    public function setPlanTypePremium($planType)
+    {
+
+        return match ($planType) {
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::ENTRY_LEVEL->value) => 'entryLevelPremium',
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::GOOD->value) => 'goodPremium',
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::BEST->value) => 'bestPremium',
+            default => null
+        };
     }
 }

@@ -135,7 +135,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const industryTypeOptions = computed(() => {
-  return page.props.industryType.map(indType => ({
+  return page.props.industryType?.map(indType => ({
     value: indType.code,
     label: indType.text,
   }));
@@ -154,16 +154,20 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: page.props.quote?.latest_insured?.customer_type,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured?.first_name || '',
-  insured_last_name: page.props.quote?.insured?.last_name || '',
-  emirates_id_number: page.props.quote?.emirates_id_number || null,
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
+  emirates_id_number:
+    page.props.quote?.latest_insured?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
 
@@ -326,6 +330,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Stale for {{ countDays }}
         </p>
+        <x-button
+          v-if="quote?.customer?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
@@ -416,32 +428,32 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
-        <x-field label="LOBs" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            :options="
-              duplicateAllowedLobs.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-        </x-field>
-        <x-field label="Reason" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-        </x-field>
+        <x-select
+          v-model="leadDuplicateForm.lob_team"
+          :options="
+            duplicateAllowedLobs.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+          label="LOBs"
+          required
+        />
+        <x-select
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          :rules="[isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+          label="Reason"
+          required
+        />
       </div>
       <template #secondary-action>
         <x-button ghost tabindex="-1" @click="modals.duplicate = false"
@@ -488,7 +500,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -647,6 +659,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -659,7 +678,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -679,7 +698,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -772,11 +791,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     />
                   </dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -821,12 +844,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -844,28 +867,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      placeholder="SELECT ENTITY TYPE"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -1122,10 +1145,24 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @onAddUpdate="onAddUpdate"
     />
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.latest_insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 

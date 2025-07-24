@@ -1,7 +1,7 @@
 <script setup>
-import UBODetailsModels from './UBODetailsModels.vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
 import PayerDetails from './PayerDetails.vue';
+import UBODetailsModels from './UBODetailsModels.vue';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -62,13 +62,12 @@ const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
   customer_type: props.customerTypeEnum.Entity,
   quote_type: props.quoteType.code,
-
   insured_first_name:
-    props.quoteDetails?.customer?.insured?.first_name ??
+    props.quoteDetails?.customer?.latest_insured?.first_name ??
     props.quoteDetails?.customer?.insured_first_name ??
     null,
   insured_last_name:
-    props.quoteDetails?.customer?.insured?.last_name ??
+    props.quoteDetails?.customer?.latest_insured?.last_name ??
     props.quoteDetails?.customer?.insured_last_name ??
     null,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
@@ -251,38 +250,35 @@ const uboNationality = computed(() => {
       </p>
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 mb-5">
-          <x-field label="Trade License No">
-            <x-input
-              v-model="insuredFormDetails.trade_license_no"
-              placeholder="Trade License No"
-              type="text"
-              class="w-full"
-            />
-            <x-button
-              @click.prevent="searchByTradeLicense"
-              size="xs"
-              color="primary"
-              :loading="loader.search"
-            >
-              Search
-            </x-button>
-          </x-field>
-          <x-field label="Company Name">
-            <x-input
-              v-model="insuredFormDetails.company_name"
-              placeholder="Company Name"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Company Address">
-            <x-textarea
-              v-model="insuredFormDetails.company_address"
-              placeholder="Company Address"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
+          <x-input
+            label="Trade License No"
+            v-model="insuredFormDetails.trade_license_no"
+            placeholder="Trade License No"
+            type="text"
+            class="w-full"
+          />
+          <x-button
+            @click.prevent="searchByTradeLicense"
+            size="xs"
+            color="primary"
+            :loading="loader.search"
+          >
+            Search
+          </x-button>
+          <x-input
+            v-model="insuredFormDetails.company_name"
+            placeholder="Company Name"
+            type="text"
+            class="w-full"
+            label="Company Name"
+          />
+          <x-textarea
+            v-model="insuredFormDetails.company_address"
+            placeholder="Company Address"
+            type="text"
+            class="w-full"
+            label="Company Address"
+          />
           <div class="flex gap-5 mt-2 items-center">
             <p>Is the insured the payer?</p>
             <x-form-group v-model="is_insured">
@@ -293,30 +289,27 @@ const uboNationality = computed(() => {
         </dl>
         <div v-if="entityFound" class="mb-5">
           <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
-            <x-field label="Trade License No">
-              <x-input
-                v-model="tradeLicenseEntity.trade_license"
-                type="text"
-                class="w-full"
-                disabled
-              />
-            </x-field>
-            <x-field label="Company Name">
-              <x-input
-                v-model="tradeLicenseEntity.company_name"
-                type="text"
-                class="w-full"
-                disabled
-              />
-            </x-field>
-            <x-field label="Company Address">
-              <x-input
-                v-model="tradeLicenseEntity.company_address"
-                type="text"
-                class="w-full"
-                disabled
-              />
-            </x-field>
+            <x-input
+              v-model="tradeLicenseEntity.trade_license"
+              type="text"
+              class="w-full"
+              disabled
+              label="Trade License No"
+            />
+            <x-input
+              v-model="tradeLicenseEntity.company_name"
+              type="text"
+              class="w-full"
+              disabled
+              label="Company Name"
+            />
+            <x-input
+              v-model="tradeLicenseEntity.company_address"
+              type="text"
+              class="w-full"
+              disabled
+              label="Company Address"
+            />
             <div class="text-left space-x-4">
               <x-button size="sm" color="info"> Hide </x-button>
               <x-button
@@ -438,42 +431,42 @@ const uboNationality = computed(() => {
 
     <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <x-field label="Insured First Name">
-          <x-input
-            v-model="insuredFormDetails.insured_first_name"
-            :rules="[isRequired]"
-            placeholder="Insured First Name"
-            type="text"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Insured Last Name">
-          <x-input
-            v-model="insuredFormDetails.insured_last_name"
-            :rules="[isRequired]"
-            placeholder="Insured Last Name"
-            type="text"
-            class="w-full"
-          />
-        </x-field>
+        <x-input
+          v-model="insuredFormDetails.insured_first_name"
+          :rules="[isRequired]"
+          placeholder="Insured First Name"
+          type="text"
+          class="w-full"
+          label="Insured First Name"
+          required
+        />
+        <x-input
+          v-model="insuredFormDetails.insured_last_name"
+          :rules="[isRequired]"
+          placeholder="Insured Last Name"
+          type="text"
+          class="w-full"
+          label="Insured Last Name"
+          required
+        />
 
-        <x-field label="Nationality">
-          <ComboBox
-            :single="true"
-            v-model="insuredFormDetails.nationality_id"
-            placeholder="Select Nationality"
-            :options="nationalitiesOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Date of Birth">
-          <DatePicker
-            v-model="insuredFormDetails.dob"
-            :rules="[isRequired]"
-            placeholder="Date of Birth"
-            class="w-full"
-          />
-        </x-field>
+        <x-select
+          v-model="insuredFormDetails.nationality_id"
+          placeholder="Select Nationality"
+          :options="nationalitiesOptions"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter Nationality...."
+          label="Nationality"
+        />
+
+        <DatePicker
+          label="Date of Birth"
+          v-model="insuredFormDetails.dob"
+          :rules="[isRequired]"
+          placeholder="Date of Birth"
+          class="w-full"
+        />
         <div class="flex gap-5 mb-5 align-center">
           <p>Is the insured the payer?</p>
           <x-form-group v-model="is_insured">

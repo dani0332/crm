@@ -1,5 +1,5 @@
 <script setup>
-import dayjs from 'dayjs/esm/index.js';
+import dayjs from 'dayjs';
 
 defineProps({
   aml: Object,
@@ -11,6 +11,7 @@ const notification = useToast();
 const loader = reactive({
   table: false,
   export: false,
+  exportAmlRiskScore: false,
 });
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
@@ -105,7 +106,7 @@ const resetCustomErrors = () => {
   customErrors.amlCreatedEndDate = '';
 };
 
-const onDataExport = flag => {
+const onDataExport = async (exportType = 'download') => {
   isDateMandatory.value = true;
   isQuoteTypeEmpty.value = false;
   resetCustomErrors();
@@ -145,12 +146,56 @@ const onDataExport = flag => {
   removeEmptyFields(exportData);
 
   const url = `/kyc/export`;
-  window.open(url + '?' + useObjToUrl(exportData));
+  exportData.exportType = exportType;
+  const data = useObjToUrl(exportData);
+
+  const payload = {
+    // quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Aml'),
+    exportType: exportType,
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+
+  loader.export = true;
+  if (exportType == 'email') {
+    const exportResponse = await axios
+      .get(payload.url)
+      .then(resp => {
+        // return resp.data;
+        if (resp.data.message) {
+          notification.success({
+            title: resp.data.message,
+            position: 'top',
+          });
+        }
+
+        if (resp)
+          setTimeout(() => {
+            loader.export = false;
+          }, 1000);
+      })
+      .catch(err => {
+        notification.error({
+          title: err.response.data.message
+            ? err.response.data.message
+            : 'Unable to start an export',
+          position: 'top',
+        });
+        setTimeout(() => {
+          loader.export = false;
+        }, 1000);
+        throw err;
+      });
+  } else {
+    setTimeout(() => {
+      loader.export = false;
+    }, 1000);
+    window.open(url + '?' + useObjToUrl(exportData));
+  }
 };
 
 function removeEmptyFields(obj) {
   Object.keys(obj).forEach(key => {
-    if (obj[key] === '') {
+    if (obj[key] === '' || obj[key] === null || obj[key] === undefined) {
       delete obj[key];
     }
   });
@@ -191,6 +236,70 @@ const quoteTypeOptions = computed(() =>
   ),
 );
 
+async function downloadAmlCtfReport() {
+  resetCustomErrors();
+
+  // Validate that either search criteria or date range is provided
+  const hasSearchCriteria =
+    filtersForm.quoteType || filtersForm.searchField || filtersForm.searchType;
+  const hasDateRange =
+    filtersForm.amlCreatedStartDate && filtersForm.amlCreatedEndDate;
+
+  if (!hasSearchCriteria && !hasDateRange) {
+    customErrors.amlCreatedStartDate =
+      'Please provide either search criteria (Quote Type, Search Field, or Search Type) or both start and end dates.';
+    return;
+  }
+
+  // Only validate date difference if both dates are provided
+  if (filtersForm.amlCreatedStartDate && filtersForm.amlCreatedEndDate) {
+    const daysDifference = calculateDaysDifference(
+      filtersForm.amlCreatedStartDate,
+      filtersForm.amlCreatedEndDate,
+    );
+    if (daysDifference > 30) {
+      customErrors.amlCreatedStartDate =
+        'Allowed no. of days between start & end dates are 30 days.';
+      return;
+    }
+  }
+
+  const exportData = {};
+  Object.keys(availableFilters).forEach(key => {
+    exportData[key] = filtersForm[key];
+  });
+
+  //remove empty fields
+  removeEmptyFields(exportData);
+  // const data = useObjToUrl(exportData);
+
+  const payload = {
+    url: route('aml-ctf-report-export'),
+    method: 'post',
+    data: { ...exportData, exportType: 'email' },
+    type: 'aml-ctf-report',
+    exportType: 'email',
+  };
+
+  try {
+    loader.exportAmlRiskScore = true;
+    const response = await logAndExportQuotes(payload);
+    if (response.data.message) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      title: error.response.data.message,
+      position: 'top',
+    });
+  } finally {
+    loader.exportAmlRiskScore = false;
+  }
+}
+
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -204,7 +313,7 @@ onMounted(() => {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-        <ComboBox
+        <x-select
           v-model="filtersForm.quoteType"
           label="Quote Type"
           placeholder="Search by Quote Type"
@@ -212,8 +321,9 @@ onMounted(() => {
             { value: '', label: 'Select Quote Type' },
             ...quoteTypeOptions.value,
           ]"
-          :single="true"
-          :hasError="isQuoteTypeEmpty"
+          filterable
+          filterPlaceholder="Filter Quote Type...."
+          :rules="[isRequired]"
         />
 
         <x-select
@@ -260,10 +370,21 @@ onMounted(() => {
           v-if="can(permissionsEnum.DATA_EXTRACTION)"
           size="sm"
           color="#48bb78"
-          @click.prevent="onDataExport()"
-          :disabled="loader.table"
+          @click.prevent="onDataExport('email')"
+          :disabled="loader.export"
+          :loading="loader.export"
         >
-          Export to Excel
+          Export via email
+        </x-button>
+        <x-button
+          v-if="can(permissionsEnum.DATA_EXTRACTION)"
+          size="sm"
+          color="#48bb78"
+          @click.prevent="downloadAmlCtfReport()"
+          :disabled="loader.exportAmlRiskScore"
+          :loading="loader.exportAmlRiskScore"
+        >
+          Export AML Risk Score Report
         </x-button>
         <x-button
           size="sm"

@@ -48,6 +48,11 @@ const tableHeader = reactive([
     tooltip: 'The due date of the parent payment',
   },
   {
+    text: 'Payment Ref Id',
+    value: 'code',
+    tooltip: 'The payment ref id of the parent payment',
+  },
+  {
     text: 'Team',
     value: 'team',
     tooltip: 'Team Name',
@@ -123,6 +128,11 @@ const tableHeader = reactive([
     value: 'transaction_payment_status',
     tooltip:
       'Transaction payment status of invoice if its unpaid, partially paid or fully paid.',
+  },
+  {
+    text: 'Lead Status',
+    value: 'transaction_quote_status',
+    tooltip: 'Quote Status',
   },
   {
     text: 'Date Paid',
@@ -203,6 +213,10 @@ const tableHeader = reactive([
     text: 'Sage Receipt ID',
     value: 'sage_reciept_id',
     tooltip: 'Sage Receipt ID',
+  },
+  {
+    text: 'Private Client',
+    value: 'pcp_tag_formatted',
   },
 ]);
 

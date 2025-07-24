@@ -14,6 +14,7 @@ use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\CentralService;
 use App\Services\CustomerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -29,7 +30,7 @@ class PersonalQuoteController extends Controller
         $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
-        app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
+        app(CentralService::class)->updatePaymentAllocation($quoteType, $request->quote_uuid);
 
         if (! $response['activity_created']) {
             return back()->with('message', 'Status updated successfully');
@@ -40,6 +41,7 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
+        $documentService = app(QuoteDocumentService::class);
         $files = request()->file('files');
         $responses = collect();
 
@@ -62,6 +64,14 @@ class PersonalQuoteController extends Controller
 
         if ($hasErrors) {
             return back()->with('error', implode(', ', $errors));
+        }
+
+        $docTypes = $documentService->bringProofDocumentForAllLobs();
+        if (in_array($request->document_type_code, $docTypes)) {
+            $quote = $this->getQuoteObject($request->quote_type, $quoteId);
+            if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
+                $documentService->updateQuoteAndPaymentStatusToPaymentPending($quote);
+            }
         }
 
         app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);

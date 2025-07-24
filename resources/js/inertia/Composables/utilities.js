@@ -11,7 +11,8 @@ export const useCleanObj = reactive => {
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
-      reactive[key].length === 0
+      reactive[key].length === 0 ||
+      (typeof reactive[key] === 'string' && reactive[key].trim() === '')
     ) {
       delete reactive[key];
     }
@@ -45,7 +46,7 @@ export const useGetShowPageRoute = (
 
   const routesObj = {
     1: route('car.show', uuid),
-    2: route('home.show', uuid),
+    2: route('home-quotes-show', uuid),
     3: route('health.show', uuid),
     4: route('life-quotes-show', uuid),
     5: business_route,
@@ -54,6 +55,7 @@ export const useGetShowPageRoute = (
     8: route('travel.show', uuid),
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
+    18: route('savings-quotes-show', uuid),
   };
 
   return routesObj[quoteTypeId];
@@ -216,6 +218,7 @@ export const saveQueryParams = () => {
     'CorpLineQuote/Index',
     'YachtQuote/Index',
     'HomeQuote/Index',
+    'SavingsQuote/Index',
   ];
 
   if (routes.includes(component)) {
@@ -325,7 +328,7 @@ export const parseDate = dateString => {
 export function getQuoteType(id, returnType = 'code') {
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
-    2: { code: 'HOM', id: 'home', link: '/quotes' },
+    2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
     4: { code: 'LIF', id: 'life', link: '/quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
@@ -334,6 +337,8 @@ export function getQuoteType(id, returnType = 'code') {
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
     9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
+    11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
+    18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
   };
   return types[id] ? types[id][returnType] : '';
 }
@@ -363,6 +368,25 @@ export const calculateDaysDifference = (start_date, end_date) => {
   return 0;
 };
 
+export const calculateMonthsDifference = (start_date, end_date) => {
+  if (start_date && end_date) {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+
+    // Calculate year and month difference
+    const yearDiff = end.getFullYear() - start.getFullYear();
+    const monthDiff = end.getMonth() - start.getMonth();
+
+    // Total months difference
+    const totalMonths = yearDiff * 12 + monthDiff;
+
+    // Return absolute difference in months
+    // (e.g., March 31 to April 1 = 1 month, March 15 to March 20 = 0 months)
+    return Math.abs(totalMonths);
+  }
+  return 0;
+};
+
 // Function to get the quote type ID based on quote type name
 export const getQuoteTypeId = (quoteTypes, quoteType) => {
   return quoteTypes.filter(item => item.name === quoteType)[0]?.id;
@@ -373,14 +397,29 @@ export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
   return axios
     .post('/quotes/export-logs/create', payload)
-    .then(res => {
-      return res.data.success;
+    .then(async res => {
+      const exportResponse = await axios({
+        method: payload.method || 'get',
+        url: payload.url,
+        data: payload.data || null,
+      })
+        .then(resp => {
+          return resp.data;
+        })
+        .catch(err => {
+          throw err;
+        });
+      res.data.message = exportResponse.message;
+      return res;
     })
     .catch(err => {
       throw err;
     })
     .finally(() => {
-      window.open(payload.url);
+      // Cleanup operations if needed
+      if (payload.exportType !== 'email') {
+        window.open(payload.url);
+      }
     });
 };
 
@@ -433,6 +472,7 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
     return true;
   }
 };
+
 export const applyEmiratesNumberMasking = emiratesId => {
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
   if (emiratesIDNumber?.length > 15) {
@@ -458,4 +498,11 @@ export const applyEmiratesNumberMasking = emiratesId => {
   }
 
   return emiratesIDNumber;
+};
+
+export const useGenerateOptions = (items, valueKey, labelKey) => {
+  return items.map(item => ({
+    value: item[valueKey],
+    label: item[labelKey],
+  }));
 };

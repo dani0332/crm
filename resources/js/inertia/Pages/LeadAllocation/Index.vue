@@ -29,12 +29,25 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isSavings: {
+    type: Boolean,
+    default: false,
+  },
+  todayTotalRegularUnAssignedLeadCount: {
+    type: Number,
+    default: 0,
+  },
+  todayTotalLumpsumUnAssignedLeadCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const autoRefresh = ref(true);
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const lobSpecificLeadAllocation = page.props.lobSpecificLeadAllocation;
 const notification = useToast();
 
 const statusModal = getStatusModal();
@@ -79,7 +92,8 @@ const currentRow = id => {
 
 const editCap = id => {
   if (
-    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]) ||
+    lobSpecificLeadAllocation
   ) {
     const row = leadData?.value.find(item => item.id === id);
     row.capEdit = true;
@@ -229,7 +243,12 @@ watch(
 onMounted(() => {
   tableHeader.value = tableHeader.value.filter(column => {
     if (
-      !hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+      !hasAnyRole([
+        rolesEnum.Admin,
+        rolesEnum.LeadPool,
+        rolesEnum.Engineering,
+      ]) &&
+      !lobSpecificLeadAllocation
     ) {
       return column.value !== 'reset_cap';
     }
@@ -261,7 +280,7 @@ onMounted(() => {
             rolesEnum.Admin,
             rolesEnum.LeadPool,
             rolesEnum.Engineering,
-          ])
+          ]) || lobSpecificLeadAllocation
         "
       >
         <h2 class="text-lg font-semibold">Auto Refresh :</h2>
@@ -287,9 +306,17 @@ onMounted(() => {
         <h3>Total Advisors</h3>
         <p>{{ data.length }}</p>
       </div>
-      <div class="labox border-red-500">
+      <div class="labox border-red-500" v-if="!isSavings">
         <h3>Unassigned Leads Count</h3>
         <p>{{ props.todayTotalUnAssignedLeadCount }}</p>
+      </div>
+      <div class="labox border-red-500" v-if="isSavings">
+        <h3>Unassigned Lumpsum Leads Count</h3>
+        <p>{{ props.todayTotalLumpsumUnAssignedLeadCount }}</p>
+      </div>
+      <div class="labox border-red-500" v-if="isSavings">
+        <h3>Unassigned Regular Leads Count</h3>
+        <p>{{ props.todayTotalRegularUnAssignedLeadCount }}</p>
       </div>
 
       <TransitionGroup name="fade">
@@ -359,7 +386,7 @@ onMounted(() => {
                 rolesEnum.Admin,
                 rolesEnum.LeadPool,
                 rolesEnum.Engineering,
-              ])
+              ]) || lobSpecificLeadAllocation
             "
             :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
             :id="id"

@@ -32,10 +32,7 @@ class AMLCheckRequest extends FormRequest
                 'insured_last_name' => 'required|max:200',
             ];
 
-            if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
-                if ($this->quote_type == QuoteTypes::CAR->value) {
-                    $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
-                }
+            if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value])) {
                 $rules['get_quote_email_gig'] = 'nullable|email:rfc,dns';
             }
         }
@@ -49,6 +46,12 @@ class AMLCheckRequest extends FormRequest
                 'industry_type_code' => 'nullable',
                 'emirate_of_registration_id' => 'nullable',
             ];
+        }
+
+        $rules['customer_type'] = 'required|string';
+
+        if ($this->quote_type == QuoteTypes::CAR) {
+            $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
         }
 
         return $rules;

@@ -19,10 +19,18 @@ class RolePermissionSeeder extends Seeder
         // $this->searchModulePermissions();
         // $this->createBusinessIntelligenceUnitRole();
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
-        // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
         $this->addPaymentVerificationLowerAmountPermission();
+        $this->addPostPrepaymentButtonPermission();
+        $this->addInsurerPaymentLinkPermission();
+        $this->sendUpdateCancelPermission();
+        $this->addRenewalsUploadPermission();
+        // $this->addPolicyDetailsAddVatPermission();
+        $this->addNationalityAllocationConfigPermission();
+        $this->addPlanDetailsEditPermission();
+        $this->addOverrideCommissionPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -111,17 +119,19 @@ class RolePermissionSeeder extends Seeder
 
     private function addVoidPaymentEmbeddedPermission(): void
     {
-        $role = Role::where('name', RolesEnum::EpAdmin)->first();
+        $roles = Role::whereIn('name', [RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])->get();
         $permission = Permission::firstOrCreate([
-            'name' => PermissionsEnum::PAYMENTS_VOID,
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_VOID,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        if (! $role->hasPermissionTo($permission)) {
-            $role->givePermissionTo($permission);
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
         }
     }
 
@@ -149,6 +159,129 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::PAYMENT_VERIFICATION_LOWER_AMOUNT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+    
+    private function addInsurerPaymentLinkPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::INSURER_PAYMENT_LINK,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPostPrepaymentButtonPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::CAN_POST_PREMIUM_PREPAYMENT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addLeadAllocationLobPermissions()
+    {
+        $permissions = [
+            PermissionsEnum::HOME_LEADPOOL,
+            PermissionsEnum::LIFE_LEADPOOL,
+            PermissionsEnum::YACHT_LEADPOOL,
+            PermissionsEnum::PET_LEADPOOL,
+            PermissionsEnum::CYCLE_LEADPOOL,
+            PermissionsEnum::CORPLINE_LEADPOOL,
+            PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
+            PermissionsEnum::SAVINGS_LEADPOOL,
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function sendUpdateCancelPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::CANCEL_SEND_UPDATE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPolicyDetailsAddVatPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::POLICY_DETAILS_ADD_VAT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addRenewalsUploadPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR,
+            'guard_name' => 'web',
+        ]);
+
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWALS_BATCHES_NONMOTOR,
+            'guard_name' => 'web',
+        ]);
+    }
+
+    private function addNationalityAllocationConfigPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPlanDetailsEditPermission(): void
+    {
+        $permission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::PLAN_DETAILS_EDIT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
+    }
+
+    private function addOverrideCommissionPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::OVERRIDE_COMMISSION_LIMIT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

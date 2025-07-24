@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AIGWorkflowRequest;
+use App\Http\Requests\Api\ClearCacheRequest;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\EmailEventsRequest;
@@ -17,21 +23,30 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
+use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Jobs\HomeSyncSALJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
+use App\Services\Cache\CacheManager;
+use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
+use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
+use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -40,17 +55,19 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, PrivateClient;
 
     public $apiService;
     public $inboundEmailsHookService;
+    public $outboundEmailsHookService;
     protected $emailStatusService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
+        $this->outboundEmailsHookService = $outboundEmailsHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -239,6 +256,10 @@ class ApiController extends Controller
         return Ken::renewalRequest('/get-connectivity-check', 'get');
     }
 
+    public function birdOutboundEmailsHook(BirdOutBoundWebhookRequest $request)
+    {
+        return $this->outboundEmailsHookService->handleOutboundEmailsHook($request);
+    }
     public function duplicateEntries()
     {
         return DeDuplicateQuoteDetailScript::run();
@@ -271,5 +292,158 @@ class ApiController extends Controller
         info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.',  Insurance Provider: '.$insuranceProvider?->code.' - Status update and allocation failed');
 
         return response()->json(['success' => false, 'message' => 'Failed to update Insurer and API Issuance statuses and lead allocation!']);
+    }
+
+    public function homeSyncSAL(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required|string', // Ensure quoteUID is present
+        ]);
+
+        Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
+
+        try {
+            HomeSyncSALJob::dispatch($request->all());
+
+            Log::info('SAL sync job dispatched.', ['quoteUID' => $request->quoteUID]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'SAL sync job has been queued.',
+                'quoteUID' => $request->quoteUID,
+            ], 202);
+        } catch (\Exception $e) {
+            Log::error('SAL sync failed.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'quoteUID' => $request->quoteUID,
+                'request' => $request->all(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while syncing SAL data.',
+                'error_details' => $e->getMessage(),
+                'quoteUID' => $request->quoteUID,
+            ], 500);
+        }
+    }
+
+    public function forgetCache(ClearCacheRequest $request)
+    {
+        CacheManager::forget($request->getKey());
+
+        return apiResponse(null, Response::HTTP_OK, 'Cache cleared successfully');
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerAIGWorkflow($request);
+    }
+
+    /**
+     * Process the one-time exercise to tag customers as Private Clients based on criteria
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function tagPrivateClients(Request $request)
+    {
+        LoggerService::info('private client tag exercise has been initiated');
+
+        $request->validate([
+            'batch_size' => 'required|integer|min:1',
+            'cursor' => 'nullable|string',
+        ]);
+
+        try {
+
+            $batchSize = $request->input('batch_size');
+            $cursor = $request->input('cursor');
+
+            $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
+                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+                ->whereNotNull('policy_expiry_date')
+                ->where('policy_expiry_date', '>', now())
+                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
+
+            if ($cursor) {
+                $quotes->where('id', '>', $cursor);
+            }
+
+            $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
+
+            if ($quotes->isEmpty()) {
+                LoggerService::info('No quotes found without PCP tag.');
+
+                return apiResponse(
+                    null,
+                    Response::HTTP_OK,
+                    'No quotes found without PCP tag.'
+                );
+            }
+
+            $nextCursor = $quotes->last()->id;
+            $hasMore = $quotes->count() === $batchSize;
+
+            $data = [
+                'data' => [
+                    'next_cursor' => $nextCursor,
+                    'has_more' => $hasMore,
+                ],
+                'message' => 'Private client tagging exercise has been completed.',
+                'status' => 'success',
+            ];
+
+            foreach ($quotes as $quote) {
+
+                $customerData = [
+                    'customer_id' => $quote->customer->id,
+                    'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
+                    'email' => $quote->customer->email,
+                ];
+
+                LoggerService::info('private client tag marking activity has been started on customer', extra: $customerData);
+
+                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
+                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
+                LoggerService::endLogging();
+
+                LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
+            }
+
+            return apiResponse($data, Response::HTTP_OK);
+        } catch (\Exception $e) {
+            LoggerService::error('An error occurred while completing the private client tagging exercise', exception: $e);
+
+            return apiResponse(
+                $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'An error occurred while completing the private client tagging exercise.'
+            );
+        }
+        LoggerService::info('private client tag exercise has been completed');
+    }
+
+    public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerTravelAIGWorkflow($request);
+    }
+
+    public function triggerSICWhatsapp(SICWhatsappRequest $request)
+    {
+        // TODO: Implement triggerSICWhatsapp
+        return $this->apiService->triggerSICWhatsapp($request);
+    }
+    public function homeRenewalOCBAttachment(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required|string',
+        ]);
+
+        $publicUrl = app(HomeEmailService::class)->attachHomeOCBPDFToEmail($request->quoteUID);
+
+        return response()->json([
+            'public_url' => $publicUrl,
+        ]);
     }
 }

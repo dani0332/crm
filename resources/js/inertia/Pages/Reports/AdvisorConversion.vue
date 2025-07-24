@@ -29,7 +29,10 @@ const isDirty = ref(false);
 const isMounted = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const toast = useToast();
+const { maxSelections } = useRules();
 
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const {
   currentPageFirstIndex,
   currentPageLastIndex,
@@ -92,16 +95,16 @@ const tableHeader = [
     value: 'sale_leads',
   },
   {
+    text: 'Manual Created',
+    value: 'manual_created',
+  },
+  {
     text: 'Created Sale Leads',
     value: 'created_sale_leads',
   },
   {
     text: 'IM Renewals',
     value: 'afia_renewals_count',
-  },
-  {
-    text: 'Manual Created',
-    value: 'manual_created',
   },
   {
     text: 'Gross Conversion',
@@ -134,11 +137,26 @@ const totalLeads = reactive({
       value: 'fullName',
     },
     {
+      text: 'Assigned Date',
+      value: 'assignedDate',
+    },
+    {
       text: 'Lead Status',
       value: 'quoteStatusName',
     },
+    {
+      text: 'Premium',
+      value: 'premium',
+      sortable: true,
+    },
+    {
+      text: 'Private Client',
+      value: 'pcp_tag_formatted',
+    },
   ],
 });
+
+const showPremiumSortOptions = ref(false);
 
 function calculateGrossConversion(item) {
   if (item) {
@@ -235,6 +253,8 @@ const getFiltersObject = () => {
     insurance_for: '',
     travel_coverage: '',
     segment_filter: 'all',
+    registration_type: '',
+    vehicle_use: '',
   };
 };
 
@@ -814,6 +834,72 @@ const getAdvisorLabel = () => {
 
   return label;
 };
+
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const commericalOptions = [
+  { value: 'All', label: 'All' },
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
+const showCommercialRule = computed(() => {
+  if (filters.registration_type !== carRegistrationTypeEnum.PERSONAL) {
+    filters.isCommercial = '';
+  }
+  return filters.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
+
+const getRouteByLob = computed(() => {
+  const routeMap = {
+    [quoteTypeCodeEnum.Car]: 'car.show',
+    [quoteTypeCodeEnum.Travel]: 'travel.show',
+    [quoteTypeCodeEnum.Health]: 'health.show',
+    [quoteTypeCodeEnum.CORPLINE]: 'business.show',
+    [quoteTypeCodeEnum.GroupMedical]: 'amt.show',
+    [quoteTypeCodeEnum.Bike]: 'bike-quotes-show',
+    [quoteTypeCodeEnum.Home]: 'home-quotes-show',
+    [quoteTypeCodeEnum.Pet]: 'pet-quotes-show',
+    [quoteTypeCodeEnum.Cycle]: 'cycle-quotes-show',
+    [quoteTypeCodeEnum.Jetski]: 'jetski-quotes-show',
+    [quoteTypeCodeEnum.Yacht]: 'yacht-quotes-show',
+    [quoteTypeCodeEnum.SAVINGS]: 'savings-quotes-show',
+  };
+  return routeMap[filters.lob];
+});
+
+function togglePremiumSortOptions() {
+  showPremiumSortOptions.value = !showPremiumSortOptions.value;
+}
+
+function sortPremium(order) {
+  const items = [...(totalLeads.data.data || [])];
+  if (order === 'high') {
+    items.sort((a, b) => a.premium - b.premium);
+  } else if (order === 'low') {
+    items.sort((a, b) => b.premium - a.premium);
+  }
+  totalLeads.data.data = items;
+  showPremiumSortOptions.value = false;
+}
 </script>
 
 <template>
@@ -826,14 +912,15 @@ const getAdvisorLabel = () => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="LOB"
           placeholder="Select LOB"
           :options="quoteTypesOptions"
           class="w-full"
-          :single="true"
           @update:modelValue="onLobChange"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
 
         <DatePicker
@@ -868,7 +955,7 @@ const getAdvisorLabel = () => {
           class="w-full"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.batches"
           label="Batch Number"
           placeholder="Search by Batch Number"
@@ -878,15 +965,31 @@ const getAdvisorLabel = () => {
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="8"
-        />
+          :rules="[maxSelections(8)]"
+          filterable
+          filterPlaceholder="Filter Batch Number...."
+          truncate
+          multiple
+          helper="You can select up to 8 batch numbers"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.batches = Object.keys(filterOptions.batches).map(
+                  batch => batch,
+                )
+              "
+              @clear="filters.batches = []"
+            />
+          </template>
+        </x-select>
 
         <x-tooltip placement="top" v-if="canShow('tiers')">
           <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike">
             Development for Bike Tiers still in progress
           </template>
           <template #tooltip v-else> Select Tiers </template>
-          <ComboBox
+          <x-select
             :disabled="filters.lob === quoteTypeCodeEnum.Bike"
             :class="{
               'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
@@ -900,23 +1003,59 @@ const getAdvisorLabel = () => {
                 label: filterOptions.tiers[key],
               }))
             "
-          />
+            filterable
+            filterPlaceholder="Filter Tiers...."
+            truncate
+            multiple
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.tiers = Object.keys(filterOptions.tiers).map(
+                    tier => tier,
+                  )
+                "
+                @clear="filters.tiers = []"
+              />
+            </template>
+          </x-select>
         </x-tooltip>
 
-        <ComboBox
+        <x-select
+          v-if="filters.lob !== quoteTypeCodeEnum.Health"
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
+          virtualList
+          :virtual-list-item-height="34"
+          :virtual-list-overscan="10"
           :options="
             Object.keys(filterOptions.leadSources).map(key => ({
               value: key,
               label: filterOptions.leadSources[key],
             }))
           "
-          :max-limit="3"
-        />
+          :rules="[maxSelections(3)]"
+          filterable
+          filterPlaceholder="Filter Lead Source..."
+          truncate
+          multiple
+          helper="You can select up to 3 lead sources"
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.leadSources = Object.keys(
+                  filterOptions.leadSources,
+                ).map(leadSource => leadSource)
+              "
+              @clear="filters.leadSources = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
           :class="{
@@ -928,9 +1067,20 @@ const getAdvisorLabel = () => {
           :options="teamOptions"
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('sub_teams')"
           :disabled="!isDisabled('sub_teams')"
           :class="{
@@ -942,9 +1092,22 @@ const getAdvisorLabel = () => {
           :options="subteamOptions"
           @update:model-value="onSubTeamChange"
           :loading="loaders.subteamOptions"
-        />
+          filterable
+          filterPlaceholder="Filter SubTeams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_teams = subteamOptions.map(subteam => subteam.value)
+              "
+              @clear="filters.sub_teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('advisors')"
           :disabled="!isDisabled('advisors')"
           :class="{
@@ -954,7 +1117,21 @@ const getAdvisorLabel = () => {
           :label="getAdvisorLabel()"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          placeholder="Search by Advisors"
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-if="canShow('isEmbeddedProducts')"
           v-model="filters.isEmbeddedProducts"
@@ -967,15 +1144,26 @@ const getAdvisorLabel = () => {
         />
         <x-select
           v-if="canShow('isCommercial')"
-          v-model="filters.isCommercial"
-          label="Commercial"
+          v-model="filters.registration_type"
+          label="Registration Type"
           placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
+          :options="registrationTypeOptions"
         />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
+          v-if="canShow('isCommercial') && showCommercialRule"
+          v-model="filters.isCommercial"
+          label="Commercial Rule"
+          placeholder="Select any option"
+          :options="commericalOptions"
+        />
+
         <x-select
           v-if="canShow('insurance_type')"
           v-model="filters.insurance_type"
@@ -1014,7 +1202,7 @@ const getAdvisorLabel = () => {
           placeholder="Select travel coverage"
           class="w-full"
         />
-        <ComboBox
+        <x-select
           v-if="
             can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
           "
@@ -1026,8 +1214,27 @@ const getAdvisorLabel = () => {
               filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
             )
           "
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Segment...."
         />
+        <x-tooltip placement="top" v-if="canShow('tiers')">
+          <template #tooltip> Select Tiers </template>
+          <ComboBox
+            :disabled="filters.lob === quoteTypeCodeEnum.Car"
+            :class="{
+              'opacity-50': filters.lob === quoteTypeCodeEnum.Car,
+            }"
+            v-model="filters.tiers"
+            label="Tiers"
+            placeholder="Search by Tiers"
+            :options="
+              Object.keys(filterOptions.tiers).map(key => ({
+                value: key,
+                label: filterOptions.tiers[key],
+              }))
+            "
+          />
+        </x-tooltip>
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">
@@ -1060,6 +1267,116 @@ const getAdvisorLabel = () => {
       :sort-by="'net_conversion'"
       :sort-type="'desc'"
     >
+      <template #header-total_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Total Leads</span>
+          <template #tooltip> All leads from InsuranceMarket.ae. </template>
+        </x-tooltip>
+        <span v-else>Total Leads</span>
+      </template>
+
+      <template #header-gross_conversion>
+        <x-tooltip>
+          <span>Gross Conversion</span>
+          <template #tooltip>
+            Sale leads divided by gross denominator, expressed as a percentage.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-net_conversion>
+        <x-tooltip>
+          <span>Net Conversion</span>
+          <template #tooltip>
+            Sale leads divided by net denominator, expressed as a percentage.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-new_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>New Leads</span>
+          <template #tooltip>
+            Lead status marked as 'Quoted' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+        <span v-else>New Leads</span>
+      </template>
+
+      <template #header-not_interested>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Not Interested</span>
+          <template #tooltip>
+            Lead status marked as lost due to no response, already purchased
+            insurance, comparing options, budget issues, invalid visa, or
+            ineligibility due to medical conditions or age etc.
+          </template>
+        </x-tooltip>
+        <span v-else>Not Interested</span>
+      </template>
+
+      <template #header-in_progress>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>In Progress</span>
+          <template #tooltip>
+            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or
+            'Quoted,' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+        <span v-else>In Progress</span>
+      </template>
+
+      <template #header-manual_created>
+        <x-tooltip>
+          <span>Manually Created</span>
+          <template #tooltip> All leads from IMCRM. </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-bad_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Bad Leads</span>
+          <template #tooltip>
+            Quotes marked as 'Duplicate' or 'Fake,' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+        <span v-else>Bad Leads</span>
+      </template>
+
+      <template #header-sale_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Sale Leads</span>
+          <template #tooltip>
+            Quotes from InsuranceMarket.ae where payment is 'Captured' or status
+            is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to
+            customer,' and 'Policy Booked', Booking failed.
+          </template>
+        </x-tooltip>
+        <span v-else>Sale Leads</span>
+      </template>
+
+      <template #header-created_sale_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Created Sale Leads</span>
+          <template #tooltip>
+            Quotes from IMCRM source where payment is 'Captured' or status is
+            'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
+          </template>
+        </x-tooltip>
+        <span v-else>Created Sale Leads</span>
+      </template>
+
+      <template #header-afia_renewals_count>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>IM Renewals</span>
+          <template #tooltip>
+            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and
+            source 'renewal upload.'
+          </template>
+        </x-tooltip>
+        <span v-else>IM Renewals</span>
+      </template>
+
       <template #item-gross_conversion="item">
         <p v-if="item.gross_conversion == 0">NaN</p>
         <p v-else>{{ item.gross_conversion }} %</p>
@@ -1134,6 +1451,17 @@ const getAdvisorLabel = () => {
         </button>
       </template>
 
+      <template #item-manual_created="item">
+        <p v-if="item.manual_created == 0">{{ item.manual_created }}</p>
+        <button
+          v-else
+          @click="onFetchAdvisorAssignedLeads(item, 'manual_created')"
+          class="text-primary underline"
+        >
+          {{ item.manual_created }}
+        </button>
+      </template>
+
       <template #item-created_sale_leads="item">
         <p v-if="item.created_sale_leads == 0">{{ item.created_sale_leads }}</p>
         <button
@@ -1155,17 +1483,6 @@ const getAdvisorLabel = () => {
           class="text-primary underline"
         >
           {{ item.afia_renewals_count }}
-        </button>
-      </template>
-
-      <template #item-manual_created="item">
-        <p v-if="item.manual_created == 0">{{ item.manual_created }}</p>
-        <button
-          v-else
-          @click="onFetchAdvisorAssignedLeads(item, 'manual_created')"
-          class="text-primary underline"
-        >
-          {{ item.manual_created }}
         </button>
       </template>
 
@@ -1194,13 +1511,13 @@ const getAdvisorLabel = () => {
             {{ calculateTotalSum(reportData, 'sale_leads') }}
           </td>
           <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'manual_created') }}
+          </td>
+          <td class="direction-center">
             {{ calculateTotalSum(reportData, 'created_sale_leads') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'afia_renewals_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'manual_created') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalGrossConversion(reportData) }}
@@ -1285,7 +1602,16 @@ const getAdvisorLabel = () => {
             border-cell
             hide-rows-per-page
             hide-footer
-          ></DataTable>
+          >
+            <template #item-cdbId="{ cdbId, uuid }">
+              <Link
+                :href="route(getRouteByLob, uuid)"
+                class="text-primary-500 hover:underline"
+              >
+                {{ cdbId }}
+              </Link>
+            </template>
+          </DataTable>
         </div>
         <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
           <x-spinner size="lg" color="#1d83bc" />

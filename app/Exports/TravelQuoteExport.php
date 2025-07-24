@@ -2,17 +2,35 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
-use App\Repositories\TravelQuoteRepository;
-use App\Traits\ExcelExportable;
+use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\QuoteTypeId;
+use App\Services\TravelQuoteService;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class TravelQuoteExport
+class TravelQuoteExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    public function collection()
+    public function __construct(
+        private TravelQuoteService $travelQuoteService
+    ) {}
+
+    public function collection(array $requestParams = []): Collection
     {
-        return TravelQuoteRepository::getData(true);
+        return $this->travelQuoteService->getGridData(requestParams: $requestParams)->get();
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery(array $requestParams = []): ?Builder
+    {
+        return $this->travelQuoteService->getGridData(requestParams: $requestParams);
     }
 
     public function headings(): array
@@ -31,6 +49,8 @@ class TravelQuoteExport
             'INSURER API STATUS',
             'CREATED DATE',
             'TRAVEL START DATE',
+            'TRAVEL END DATE',
+            'TRAVEL DURATION',
             'LAST MODIFIED DATE',
             'DOB',
             'TRANSAPP CODE',
@@ -53,6 +73,10 @@ class TravelQuoteExport
             'TRAVEL COVERAGE',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'ADVISOR REQUESTED',
+            'SEGMENT',
+            'LEAD ASSIGNMENT TRIGGER',
+            'PRIVATE CLIENT',
         ];
     }
 
@@ -72,6 +96,8 @@ class TravelQuoteExport
             $quote->insurer_api_status ? $quote->insurer_api_status : '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             $quote->start_date ?? '',
+            $quote->end_date ?? '',
+            $quote->days_cover_for ?? '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,
@@ -94,6 +120,25 @@ class TravelQuoteExport
             $quote->coverage_code,
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
+            $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
+            $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
+            $quote->customer?->pcp_tag_formatted ?? '',
+        ];
+    }
+
+    /**
+     * Get export metadata with travel-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 8, // QuoteTypeId::Travel
+            'exportType' => 'travel_quotes',
         ];
     }
 }

@@ -51,6 +51,11 @@ const tableHeader = reactive([
     tooltip: 'The due date of the child installment',
   },
   {
+    text: 'Payment Ref Id',
+    value: 'code',
+    tooltip: 'The payment ref id for the child installment',
+  },
+  {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
     tooltip:
@@ -214,6 +219,10 @@ const tableHeader = reactive([
     value: 'sage_reciept_id',
     tooltip: 'Sage Receipt ID',
   },
+  {
+    text: 'Private Client',
+    value: 'pcp_tag_formatted',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -274,6 +283,9 @@ const isIntegerColumn = key => {
     </template>
     <template #item-due_date="{ due_date }">
       {{ due_date ? due_date : 'N/A' }}
+    </template>
+    <template #item-code="{ code, split_sr_no }">
+      {{ code }}{{ split_sr_no ? '-' + split_sr_no : '' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
       {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.0 }}

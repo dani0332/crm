@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
@@ -208,6 +209,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
         ];
 
         return [
@@ -227,6 +229,7 @@ class AdvisorDistributionReportService extends BaseService
                     quoteTypeCode::Yacht,
                     quoteTypeCode::CORPLINE,
                     quoteTypeCode::GroupMedical,
+                    quoteTypeCode::SAVINGS,
                 ],
             ],
             'sub_teams' => [
@@ -290,6 +293,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Yacht => PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
             quoteTypeCode::Life => PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_DISTRIBUTION_REPORT,
+            quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {
@@ -463,6 +467,13 @@ class AdvisorDistributionReportService extends BaseService
         if (isset($filters->leadSources) && count($filters->leadSources) > 0) {
             $query->whereIn('car_quote_request.source', $filters->leadSources);
         }
+        if (isset($filters->registration_type) && $filters->registration_type != 'All') {
+
+            $query->where('car_quote_request.registration_type', $filters->registration_type);
+        }
+        if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All' && $filters->registration_type == CarRegistrationType::COMPANY) {
+            $query->where('car_quote_request.vehicle_use', $filters->vehicle_use);
+        }
         if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
             $query->where('car_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
         }
@@ -591,11 +602,14 @@ class AdvisorDistributionReportService extends BaseService
             }
 
             if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
-
-                $query->join('travel_quote_request', function ($join) use ($filters) {
-                    $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
-                        ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
-                });
+                if ($isTravelQuote) {
+                    $query->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                } else {
+                    $query->join('travel_quote_request', function ($join) use ($filters) {
+                        $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
+                            ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                    });
+                }
             }
         }
 

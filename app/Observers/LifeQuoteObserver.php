@@ -6,6 +6,8 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\PrivateClientUpdatedEvent;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\LifeQuote;
@@ -44,6 +46,7 @@ class LifeQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $lifeQuote->transaction_approved_at];
         }
         if (isset($dirty['advisor_id'])) {
+            LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
 
             if ($lifeQuote->source != LeadSourceEnum::IMCRM) {
 
@@ -83,6 +86,7 @@ class LifeQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+            event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));
         }
 
         if (
@@ -91,7 +95,7 @@ class LifeQuoteObserver
         ) {
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
-
+            event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));
         }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Jobs\OCB;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\TiersEnum;
 use App\Facades\PostMark;
 use App\Models\ApplicationStorage;
@@ -16,6 +17,7 @@ use App\Models\User;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\HttpRequestService;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -49,6 +51,7 @@ class SendCarOCBIntroEmailJob implements ShouldQueue
         $this->triggerOnlyWorkflow = $triggerOnlyWorkflow;
         $this->handleZeroPlans = $handleZeroPlans;
         $this->forceSicWorkflow = $forceSicWorkflow;
+        $this->afterCommit();
     }
 
     /**
@@ -69,7 +72,9 @@ class SendCarOCBIntroEmailJob implements ShouldQueue
 
                 return;
             } else {
-                info('SendCarOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
+                LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CAR_OCB_INTRO_EMAIL);
+
+                LoggerService::info('SendCarOCBIntroEmailJob - Lead found');
 
                 if (($lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
                     $this->sendDubaiNowEmail($lead);
@@ -80,14 +85,14 @@ class SendCarOCBIntroEmailJob implements ShouldQueue
 
                     $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow, $this->triggerOnlyWorkflow, $this->forceSicWorkflow);
                     if (in_array($responseCode, [200, 201]) || $responseCode == null) {
-                        info('SendCarOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
+                        LoggerService::info('SendCarOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                     } else {
-                        Log::error('SendCarOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
+                        LoggerService::error('SendCarOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                     }
                 }
             }
         } catch (Exception $e) {
-            info('SendCarOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
+            LoggerService::error('SendCarOCBIntroEmailJob - Error', exception: $e);
         }
     }
 

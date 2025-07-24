@@ -79,6 +79,7 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   last_modified_date: null,
+  private_client: 'all',
 });
 
 provide('filters', filters);
@@ -352,33 +353,65 @@ const validateDateRange = () => {
           :options="subTeamOptions"
         />
 
-        <ComboBox
+        <x-select
           v-if="isAllowed"
           v-model="filters.quote_status"
           label="Lead Status"
           name="quote_status"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
+          filterable
+          filterPlaceholder="Filter Lead Status...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status = leadStatusOptions.map(
+                  leadStatus => leadStatus.value,
+                )
+              "
+              @clear="filters.quote_status = []"
+            />
+          </template>
+        </x-select>
+
+        <DatePicker
+          label="Policy Expiry Start Date"
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
         />
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
-        <ComboBox
+
+        <DatePicker
+          label="Policy Expiry End Date"
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+        />
+        <x-select
           v-if="isAllowed"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="modifiedAdvisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = modifiedAdvisorOptions.map(
+                  advisor => advisor.value,
+                )
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
@@ -452,6 +485,19 @@ const validateDateRange = () => {
           label="Last Modified Date"
           range
           format="dd-MM-yyyy"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

@@ -1,0 +1,68 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+  You are an expert in Laravel, Vue.js, and modern full-stack web development technologies.
+
+  Key Principles
+  - Write concise, technical responses with accurate examples in PHP and Vue.js.
+  - Follow Laravel and Vue.js best practices and conventions.
+  - Use object-oriented programming with a focus on SOLID principles.
+  - Favor iteration and modularization over duplication.
+  - Use descriptive and meaningful names for variables, methods, and files.
+  - Adhere to Laravel's directory structure conventions (e.g., app/Http/Controllers).
+  - Prioritize dependency injection and service containers.
+  - Maintain thorough inline documentation throughout the code
+  - Implement consistent API response structures with proper HTTP status codes and error messaging.
+  - Implement security best practices including proper input validation and protection against common web vulnerabilities.  
+  - Apply appropriate design patterns consistently across the application, like Factory, Strategy, and Observer patterns.
+
+  Laravel
+  - Leverage PHP 8.2+ features (e.g., readonly properties, match expressions).
+  - Apply strict typing: declare(strict_types=1).
+  - Follow PSR-12 coding standards for PHP.
+  - Use Laravel's built-in features and helpers (e.g., `Str::` and `Arr::`).
+  - File structure: Stick to Laravel's MVC architecture and directory organization.
+  - Implement error handling and logging:
+    - Use Laravel's exception handling and logging tools.
+    - Apply try-catch blocks for predictable errors.
+  - Use Laravel's request validation and middleware effectively.
+  - Implement Eloquent ORM for database modeling and queries.
+  - This project uses doppler, when running a local command make sure to use `doppler run -- ` before the php command like `doppler run -- php artisan --version`
+
+  Vue.js
+  - Use Vue 3 with Composition API as your project is running Vue 3.5.x
+  - Utilize Inertia.js for seamless Laravel-Vue integration with @inertiajs/vue3.
+  - Take advantage of auto-imports and component registration via unplugin-auto-import and unplugin-vue-components.
+  - Implement UI components from @indielayer/ui and vue3-easy-data-table for structured interfaces.
+  - Follow the project's established directory structure for components, layouts, pages, and composables.
+  - Leverage Vite for bundling with hot module reloading as configured in your vite.config.js
+  - Use the VueUse composition utilities library that's already integrated
+  - Follow the centralized icon management approach via the icons.js file
+  - Work with TailwindCSS for styling according to your project configuration
+  - Maintain consistent layout patterns using the authenticated layout wrapper
+  
+  Dependencies
+  - Composer for dependency management
+  - TailwindCSS for styling and responsive design
+  - Vite for asset bundling and Vue integration
+
+  Best Practices
+  - Use Eloquent ORM for data access.
+  - Secure APIs with Laravel Passport and ensure proper CSRF protection.
+  - Optimize front-end development with TailwindCSS.
+  - Separate data access logic from business logic by implementing the service pattern for better testability and maintainability.
+
+  Key Conventions
+  1. Follow Laravel's MVC architecture.
+  2. Use routing for clean URL and endpoint definitions.
+  3. Implement request validation with Form Requests.
+  4. Build reusable Vue components.
+  6. Manage database relationships using Eloquent's features.
+  7. Ensure code decoupling with Laravel's events and listeners.
+  8. Implement job queues and background tasks for better scalability.
+  9. Use Laravel's built-in scheduling for recurring processes.
+  10. Employ Vite for asset optimization and bundling.
+  

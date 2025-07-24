@@ -86,7 +86,7 @@ function onReset() {
     <!-- Filters -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.search_type"
           label="Search By"
           placeholder="Search By"
@@ -98,7 +98,8 @@ function onReset() {
             { value: 'mobile_no', label: 'Mobile Number' },
             { value: 'uuid', label: 'Customer ID' },
           ]"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Search By...."
         />
         <x-input
           v-model="filters.search_value"
@@ -166,7 +167,9 @@ function onReset() {
 
       <template #item-insured_first_name="{ customer }">
         {{
-          customer?.insured?.first_name ?? customer?.insured_first_name ?? ''
+          customer?.latest_insured?.first_name ??
+          customer?.insured_first_name ??
+          ''
         }}
       </template>
 

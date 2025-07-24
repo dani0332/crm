@@ -1,4 +1,5 @@
 <script setup>
+import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
 const can = permission => useCan(permission);
 
 const { isRequired } = useRules();
@@ -73,6 +74,8 @@ const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const commissionPercentageExceedsLimit = ref(false);
+const showCommissionPercentageExceedsLimitAlert = ref(false);
 
 const dateToYMD = date => {
   if (date) {
@@ -235,6 +238,7 @@ function isNotZero(value) {
 
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
+  code: props.sendUpdateLog.code,
   send_update_type: props.sendUpdateLog.category.code,
   send_update_option: props.sendUpdateLog?.option?.code ?? null,
   booking_date: props.bookingDetails?.booking_date,
@@ -354,6 +358,7 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
+  commissionPercentageExceedsLimit.value = false;
   if (
     [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
       props.sendUpdateLog?.option?.code,
@@ -419,10 +424,15 @@ const calculateCommission = () => {
         if (page.props.isTapEnabled) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
           const brokerCommMinPer = brokerCommission
-            ? roundValue(brokerCommission.commission_percentage_min)
+            ? Math.max(
+                (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
+                0,
+              )
             : null;
           const brokerCommMaxPer = brokerCommission
-            ? roundValue(brokerCommission.commission_percentage_max)
+            ? brokerCommission?.fixed_commission
+              ? Number(brokerCommission?.fixed_commission) + 2.5
+              : 0
             : null;
           if (
             commissionPercentage > 0 &&
@@ -436,16 +446,28 @@ const calculateCommission = () => {
               !(
                 Number(commissionPercentage) >= Number(brokerCommMinPer) &&
                 Number(commissionPercentage) <= Number(brokerCommMaxPer)
-              )
+              ) &&
+              can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
+            ) {
+              commissionPercentageExceedsLimit.value = true;
+            }
+            if (
+              brokerCommMinPer != null &&
+              brokerCommMaxPer != null &&
+              !(
+                Number(commissionPercentage) >= Number(brokerCommMinPer) &&
+                Number(commissionPercentage) <= Number(brokerCommMaxPer)
+              ) &&
+              !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
             ) {
               notification.error({
                 title:
-                  'The commission amount you entered is outside the permitted range.',
+                  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.',
                 position: 'top',
               });
               bookingDetailsForm.setError({
                 commission_vat_applicable:
-                  'The commission amount you entered is outside the permitted range.',
+                  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.',
               });
               bookingDetailsForm.commission_vat_applicable =
                 commissionPercentage = null;
@@ -515,6 +537,16 @@ function thousandSeparator(value) {
 
 const saveBookingDetail = isValid => {
   if (!isValid) return;
+  if (
+    commissionPercentageExceedsLimit.value &&
+    can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT) &&
+    !showCommissionPercentageExceedsLimitAlert.value
+  ) {
+    showCommissionPercentageExceedsLimitAlert.value = true;
+    return;
+  } else {
+    showCommissionPercentageExceedsLimitAlert.value = false;
+  }
   // it will check payment related condition.
   let childOptions = [
     sendUpdateStatusEnum.MPC,
@@ -604,6 +636,7 @@ const selectedInvoice = () => {
     quoteUuid: props.realQuote.uuid,
     quoteId: props.realQuote.id,
     taxInvoiceNo: bookingDetailsForm.reversal_invoice,
+    code: props.sendUpdateLog.code,
   };
   axios
     .post(url, data)
@@ -795,6 +828,7 @@ const sendUpdateValidation = () => {
       quoteRefId: props.realQuote.id,
       action: actionButton.value,
       inslyMigrated: props.realQuote.insly_migrated,
+      code: props.sendUpdateLog.code,
     })
     .then(response => {
       if (response.status == 200) {
@@ -913,6 +947,7 @@ function sendUpdate(prePaymentCheck = true) {
       paymentValidated: true,
       reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
       inslyMigrated: props.realQuote.insly_migrated,
+      code: props.sendUpdateLog.code,
     })
     .then(response => {
       loader.sendUpdate = false;
@@ -972,6 +1007,7 @@ const submitToCustomer = (withPartialPaymentCheck = true) => {
     inslyMigrated: props.realQuote.insly_migrated,
     isEmailSent: props.sendUpdateLog.is_email_sent,
     quoteCode: props.realQuote.code,
+    code: props.sendUpdateLog.code,
   };
   axios
     .post(url, data)
@@ -1038,17 +1074,20 @@ watch(
 );
 
 const isPriceVatNotApplicableEditable = computed(() => {
-  return (
-    props.quoteType === quoteTypeCodeEnum.Business ||
-    props.quoteType === quoteTypeCodeEnum.Health ||
-    props.quoteType === quoteTypeCodeEnum.Life
-  );
+  return [
+    quoteTypeCodeEnum.Business,
+    quoteTypeCodeEnum.Health,
+    quoteTypeCodeEnum.Life,
+    quoteTypeCodeEnum.SAVINGS,
+  ].includes(props.quoteType);
 });
 
 const isPriceVatApplicableEditable = computed(() => {
   return (
     (isCIOrCIR.value || isEF.value || isCPD.value) &&
-    props.quoteType !== quoteTypeCodeEnum.Life
+    ![quoteTypeCodeEnum.Life, quoteTypeCodeEnum.SAVINGS].includes(
+      props.quoteType,
+    )
   );
 });
 
@@ -1245,14 +1284,14 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <ComboBox
+                <x-select
                   v-model="bookingDetailsForm.reversal_invoice"
-                  class="w-full"
-                  placeholder="Select Tax invoice number"
-                  @update:model-value="selectedInvoice"
                   :options="paymentInvoiceNumberOptions"
-                  :single="true"
+                  placeholder="Select Tax invoice number"
                   :disabled="!state.reversalSectionEdit"
+                  filterable
+                  filterPlaceholder="Filter Tax invoice number...."
+                  @update:modelValue="selectedInvoice"
                 />
               </div>
             </div>
@@ -2285,6 +2324,7 @@ watch(
                       placeholder="Enter Commission Amount"
                       size="xs"
                       :icon-left="isNegativeValue ? 'minus' : ''"
+                      @change="calculateCommission"
                     />
                     <template #tooltip>
                       {{
@@ -2496,6 +2536,13 @@ watch(
               </x-button>
             </template>
           </div>
+          <BookPolicyOverrideCommissionLimitModal
+            :showCommissionPercentageExceedsLimitAlert="
+              showCommissionPercentageExceedsLimitAlert
+            "
+            :bpForm="bookingDetailsForm"
+            @modalClosed="showCommissionPercentageExceedsLimitAlert = false"
+          />
         </x-form>
       </template>
     </Collapsible>

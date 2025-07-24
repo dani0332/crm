@@ -356,96 +356,104 @@ const validateDateRange = () => {
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Company Name">
-          <x-input
-            v-model="filters.company_name"
-            type="search"
-            name="company_name"
-            class="w-full"
-            placeholder="Search by Company Name"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            name="created_at_start"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
-        </x-field>
-        <x-field label="Lead Status" v-if="isAllowed">
-          <x-select
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
-        <x-field label="Business Insurance Type">
-          <x-select
-            v-model="filters.business_type_of_insurance_id"
-            placeholder="INSURANCE TYPE"
-            :options="insuranceTypeOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Advisor" v-if="isAllowed">
-          <ComboBox
-            v-model="filters.advisors"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-          />
-        </x-field>
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+        <x-input
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          class="w-full"
+          placeholder="Search by Company Name"
+          label="Company Name"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          label="Created Date End"
+        />
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.quote_status_id"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          class="w-full"
+          filterable
+          label="Lead Status"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
+        <x-select
+          v-model="filters.business_type_of_insurance_id"
+          placeholder="INSURANCE TYPE"
+          :options="insuranceTypeOptions"
+          class="w-full"
+          filterable
+          label="Business Insurance Type"
+        />
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.advisors"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          label="Advisor"
+          filterable
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(option => option.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"

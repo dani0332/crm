@@ -22,6 +22,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const UPDATE_ISSUED = 'UPDATE_ISSUED';
     const UPDATE_SENT_TO_CUSTOMER = 'UPDATE_SENT_TO_CUSTOMER';
     const UPDATE_BOOKED = 'UPDATE_BOOKED';
+    const REQUEST_CANCELLED = 'REQUEST_CANCELLED';
     const SEND_UPDATE = 'SEND_UPDATE';
     const UPDATE_BOOKING_QUEUED = 'UPDATE_BOOKING_QUEUED';
     const UPDATE_BOOKING_FAILED = 'UPDATE_BOOKING_FAILED';
@@ -90,7 +91,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const DOV = 'DOV'; // Deletion of vehicle
     const ACB = 'ACB'; // Additional tax invoice raised by buyer booking
     const ATIB = 'ATIB'; // Additional tax invoice booking
-    const ATICB = 'ATICB'; // Additional tax invoice and commission booking
+    const ATICB = 'ATICB'; // Additional tax invoice and tax invoice raised by buyer booking
     const CAAFE = 'CAAFE'; // Correction and amendments (with Financial Effect).
     const ATCRNB = 'ATCRNB'; // Additional tax credit note booking
     const ATCRNB_RBB = 'ATCRNB_RBB'; // Additional tax credit note raised by buyer booking

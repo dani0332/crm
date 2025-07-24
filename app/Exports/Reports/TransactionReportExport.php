@@ -15,6 +15,7 @@ class TransactionReportExport extends BaseReportsExport
             'Transactions',
             'Policy Start Date',
             'Payment Due Date',
+            'Payment Ref ID',
             'Price (VAT applicable)',
             'Total VAT',
             'Price (VAT not applicable)',
@@ -46,6 +47,7 @@ class TransactionReportExport extends BaseReportsExport
             'Lead Source',
             'Booking Date',
             'Sage Receipt ID',
+            'Private Client',
         ];
     }
 
@@ -58,6 +60,7 @@ class TransactionReportExport extends BaseReportsExport
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
+            $quote->code ?? 'N/A',
             $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
             $this->resolveNumberFormat($quote->vat ?? 0),
             $this->resolveNumberFormat($quote->price_vat_not_applicable ?? 0),
@@ -89,11 +92,12 @@ class TransactionReportExport extends BaseReportsExport
             $quote->source ?? 'N/A',
             $quote->policy_booking_date ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 
     public static function afterSheet(AfterSheet $event)
     {
-        self::performSum($event, ['G', 'H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'Q']);
+        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'P', 'R']);
     }
 }

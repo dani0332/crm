@@ -20,10 +20,21 @@ const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const quoteStatusOptions = computed(() => {
-  return props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return props.quoteStatuses.map(status => {
+    var statusDisabled = false;
+    // below status are not editable by advisor
+    if (status.id == quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const quoteStatusForm = useForm({
@@ -31,6 +42,7 @@ const quoteStatusForm = useForm({
   quote_status_id: props.quote.quote_status_id,
   notes: props.quote.notes || null,
   lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
+  current_quote_status_id: props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {
@@ -121,36 +133,32 @@ const allowStatusUpdate = computed(() => {
           </div>
           <div class="w-full md:w-2/3">
             <div class="flex flex-col gap-4">
-              <x-field
-                label="Lost Reason"
-                class="uppercase"
+              <x-select
+                v-model="quoteStatusForm.lost_reason_id"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                label="LOST REASON"
                 required
                 v-if="
                   quoteStatusForm.quote_status_id ==
                   page.props.quoteStatusEnum?.Lost
                 "
-              >
-                <x-select
-                  v-model="quoteStatusForm.lost_reason_id"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="quoteStatusForm.errors.lost_reason_id"
-                />
-              </x-field>
-              <x-field class="uppercase" label="Transaction Type">
-                <x-input
-                  type="text"
-                  v-model="quote.transaction_type_text"
-                  class="w-full"
-                  :disabled="true"
-                />
-              </x-field>
+                :error="quoteStatusForm.errors.lost_reason_id"
+              />
+
+              <x-input
+                type="text"
+                v-model="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+                label="TRANSACTION TYPE"
+              />
             </div>
           </div>
         </div>

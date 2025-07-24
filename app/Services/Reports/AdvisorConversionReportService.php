@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
@@ -16,10 +17,12 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Traits\VehicleTypeTrait;
 use App\Models\CarQuote;
+use App\Models\Customer;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Models\User;
 use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
@@ -68,6 +71,8 @@ class AdvisorConversionReportService extends BaseService
             'insurance_for' => $request->insurance_for,
             'travel_coverage' => $request->travel_coverage,
             'segment_filter' => $request->segment_filter,
+            'registration_type' => $request->registration_type,
+            'vehicle_use' => $request->vehicle_use,
         ];
 
         if ($lob === quoteTypeCode::Car) {
@@ -134,9 +139,17 @@ class AdvisorConversionReportService extends BaseService
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
-        $this->addSelect($query, 'car_quote_request');
+        $this->addSelect($query, 'car_quote_request', $lob);
 
         return $query;
+    }
+
+    private function getUsers($userIds)
+    {
+        return User::whereIn('id', $userIds)
+            ->where('department_id', auth()->user()->department_id)
+            ->pluck('id')
+            ->toArray();
     }
 
     private function getAdvisorConversionQuoteStatusDate()
@@ -162,6 +175,7 @@ class AdvisorConversionReportService extends BaseService
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
     }
 
@@ -178,51 +192,60 @@ class AdvisorConversionReportService extends BaseService
             ':badLeadsStatuses' => implode(',', $this->getBadLeadStatuses()),
             ':imRenewal' => QuoteStatusEnum::IMRenewal,
             ':notInterestedStatuses' => implode(',', $this->getNotInterestedStatuses()),
+            ':lostStatuses' => implode(',', $this->getLostStatuses()),
             ':newLead' => QuoteStatusEnum::NewLead,
+            ':quotedLead' => QuoteStatusEnum::Quoted,
             ':inProgressStatuses' => implode(',', $this->getInProgressStatuses()),
+            ':inProgressHealthStatuses' => implode(',', $this->getInProgressHealthStatuses()),
             ':paidStatuses' => implode(',', $this->getPaidStatuses()),
+            ':lostReasons' => implode(',', $this->getLostReasons()),
         ];
     }
 
-    private function addSelect($query, $table)
+    private function addSelect($query, $table, $lob)
     {
-        $getSaleLeadsQuery = function ($sourceCondition, $as) use ($table) {
-            return strtr('SUM(CASE WHEN (
-                            ((:table.payment_status_id in (:paidStatuses) OR :table.quote_status_id in (:approvedStatuses)) and :table.transaction_approved_at is NULL) OR
-                            (:table.quote_status_id in (:approvedStatuses) and :table.transaction_approved_at < ":quoteStatusDate") OR
-                            (:table.quote_status_id in (:saleStatuses) and :table.transaction_approved_at >= ":quoteStatusDate")
-                        ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
-                    ) as '.$as, $this->getBindings($table));
+        $bindings = $this->getBindings($table);
+
+        $buildCaseSum = function ($condition, $alias) use ($bindings) {
+            return DB::raw(strtr("SUM(CASE WHEN {$condition} THEN 1 ELSE 0 END) as {$alias}", $bindings));
         };
 
-        $query->addSelect(
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id = :newLead and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:inProgressStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:badLeadsStatuses)  and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings($table))
-            ),
-            DB::raw($getSaleLeadsQuery('NOT IN', 'sale_leads')),
-            DB::raw($getSaleLeadsQuery('IN', 'created_sale_leads')),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and :table.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:badLeadsStatuses) and :table.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings($table))
-            ),
-        );
+        $getSaleLeadsQuery = function ($sourceCondition, $alias) use ($bindings) {
+            $condition = "(
+                ((:table.payment_status_id IN (:paidStatuses) OR :table.quote_status_id IN (:approvedStatuses)) AND :table.transaction_approved_at IS NULL) OR
+                (:table.quote_status_id IN (:approvedStatuses) AND :table.transaction_approved_at < \":quoteStatusDate\") OR
+                (:table.quote_status_id IN (:saleStatuses) AND :table.transaction_approved_at >= \":quoteStatusDate\")
+            ) AND :table.source {$sourceCondition} (:excludedSources)";
+
+            return DB::raw(strtr("SUM(CASE WHEN {$condition} THEN 1 ELSE 0 END) as {$alias}", $bindings));
+        };
+
+        $commonSelects = [
+            $buildCaseSum(':table.source NOT IN (:excludedSources)', 'total_leads'),
+            $buildCaseSum(':table.source IN (:excludedSources)', 'manual_created'),
+            $buildCaseSum(':table.quote_status_id IN (:badLeadsStatuses) AND :table.source NOT IN (:excludedSources)', 'bad_leads'),
+            $getSaleLeadsQuery('NOT IN', 'sale_leads'),
+            $getSaleLeadsQuery('IN', 'created_sale_leads'),
+            $buildCaseSum(':table.quote_status_id = :imRenewal AND :table.source NOT IN (:excludedSources)', 'afia_renewals_count'),
+            $buildCaseSum(':table.quote_status_id IN (:badLeadsStatuses) AND :table.source IN (:excludedSources)', 'manual_created_bad_leads'),
+        ];
+
+        $lobSpecificConditions = [
+            quoteTypeCode::Health => [
+                $buildCaseSum(':table.quote_status_id IN (:lostStatuses) AND personal_quote_details.lost_reason_id IN (:lostReasons)', 'not_interested'),
+                $buildCaseSum(':table.quote_status_id = :quotedLead', 'new_leads'),
+                $buildCaseSum(':table.quote_status_id IN (:inProgressHealthStatuses)', 'in_progress'),
+            ],
+            'default' => [
+                $buildCaseSum(':table.quote_status_id = :newLead AND :table.source NOT IN (:excludedSources)', 'new_leads'),
+                $buildCaseSum(':table.quote_status_id IN (:notInterestedStatuses) AND :table.source NOT IN (:excludedSources)', 'not_interested'),
+                $buildCaseSum(':table.quote_status_id IN (:inProgressStatuses) AND :table.source NOT IN (:excludedSources)', 'in_progress'),
+            ],
+        ];
+
+        $lobSelects = $lobSpecificConditions[$lob] ?? $lobSpecificConditions['default'];
+
+        $query->addSelect(...array_merge($commonSelects, $lobSelects));
     }
 
     private function getPersonsalQuoteQuery($lob)
@@ -269,12 +292,14 @@ class AdvisorConversionReportService extends BaseService
                     })
                     ->pluck('user_id')
                     ->toArray();
+                if ($lob == quoteTypeCode::Health) {
+                    $userIds = $this->getUsers($userIds);
+                }
             }
-
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
 
-        $this->addSelect($query, 'personal_quotes');
+        $this->addSelect($query, 'personal_quotes', $lob);
 
         return $query;
     }
@@ -293,6 +318,7 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
         ];
 
         return [
@@ -384,6 +410,7 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Yacht => PermissionsEnum::YACHT_CONVERSION_REPORT,
             quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
+            quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_CONVERSION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {
@@ -535,9 +562,9 @@ class AdvisorConversionReportService extends BaseService
     {
         $query->when(isset($filters->leadType), function ($subQuery) use ($filters, $table) {
             $quoteStatuses = match ($filters->leadType) {
-                ReportsLeadTypeEnum::NEW_LEADS => [QuoteStatusEnum::NewLead],
-                ReportsLeadTypeEnum::NOT_INTERESTED => $this->getNotInterestedStatuses(),
-                ReportsLeadTypeEnum::IN_PROGRESS => $this->getInProgressStatuses(),
+                ReportsLeadTypeEnum::NEW_LEADS => ($filters->lob == quoteTypeCode::Health) ? [QuoteStatusEnum::Quoted] : [QuoteStatusEnum::NewLead],
+                ReportsLeadTypeEnum::NOT_INTERESTED => ($filters->lob == quoteTypeCode::Health) ? $this->getLostStatuses() : $this->getNotInterestedStatuses(),
+                ReportsLeadTypeEnum::IN_PROGRESS => ($filters->lob == quoteTypeCode::Health) ? $this->getInProgressHealthStatuses() : $this->getInProgressStatuses(),
                 ReportsLeadTypeEnum::BAD_LEAD => $this->getBadLeadStatuses(),
                 ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT => [QuoteStatusEnum::IMRenewal],
                 default => [],
@@ -711,14 +738,19 @@ class AdvisorConversionReportService extends BaseService
             })
             ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter == 'yes', function ($q) {
                 $q->whereNotIn('car_quote_request.source', $this->getExcludedSources());
-            })
-            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
+            })->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
                 $q->whereIn('car_quote_request.source', $filters->leadSourceFilter);
             }, function ($q) use ($isPopup) {
                 $q->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
                     ->when($isPopup, function ($sq) {
                         $sq->whereNull('car_quote_request.renewal_import_code');
                     });
+            })
+            ->when(! empty($filters->registration_type) && $filters->registration_type != 'All', function ($q) use ($filters) {
+                $q->where('car_quote_request.registration_type', '=', $filters->registration_type);
+            })
+            ->when(! empty($filters->vehicle_use) && $filters->vehicle_use != 'All' && $filters->registration_type == CarRegistrationType::COMPANY, function ($q) use ($filters) {
+                $q->where('car_quote_request.vehicle_use', $filters->vehicle_use);
             });
 
         $this->applyLeadTypeFilter($query, 'car_quote_request', $filters);
@@ -746,7 +778,12 @@ class AdvisorConversionReportService extends BaseService
             ->select(
                 DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
                 'car_quote_request.code as cdbId',
-                'quote_status.text as quoteStatusName'
+                'quote_status.text as quoteStatusName',
+                'car_quote_request_detail.advisor_assigned_date as assignedDate',
+                'car_quote_request.premium as premium',
+                'car_quote_request.uuid as uuid',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
@@ -754,6 +791,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
+            ->leftJoin('customer as c', 'car_quote_request.customer_id', 'c.id')
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc')
             ->where('users.is_active', true);
     }
@@ -767,12 +805,17 @@ class AdvisorConversionReportService extends BaseService
             ->select(
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as fullName"),
                 'personal_quotes.code as cdbId',
-                'quote_status.text as quoteStatusName'
+                'quote_status.text as quoteStatusName',
+                'personal_quote_details.advisor_assigned_date as assignedDate',
+                'personal_quotes.premium as premium',
+                'personal_quotes.uuid as uuid',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             )
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->join('quote_status', 'quote_status.id', 'personal_quotes.quote_status_id')
+            ->leftJoin('customer as c', 'personal_quotes.customer_id', 'c.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
             ->orderBy('personal_quote_details.advisor_assigned_date', 'desc');

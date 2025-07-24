@@ -51,6 +51,11 @@ const tableHeader = reactive([
     tooltip: 'The due date of the parent payment',
   },
   {
+    text: 'Payment Ref Id',
+    value: 'code',
+    tooltip: 'The payment ref id of the parent payment',
+  },
+  {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
     tooltip:
@@ -218,6 +223,10 @@ const tableHeader = reactive([
     text: 'Sage Receipt ID',
     value: 'sage_reciept_id',
     tooltip: 'Sage Receipt ID',
+  },
+  {
+    text: 'Private Client',
+    value: 'pcp_tag_formatted',
   },
 ]);
 const isIntegerColumn = key => {

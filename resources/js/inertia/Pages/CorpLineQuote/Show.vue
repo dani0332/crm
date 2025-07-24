@@ -3,47 +3,194 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 const props = defineProps({
-  quote: Object,
-  genderOptions: Object,
-  assignedGMType: String,
-  allowedDuplicateLOB: Array,
-  quoteDetails: Object,
-  customerAdditionalContacts: Array,
-  activities: Array,
-  advisors: Array,
-  typeCode: String,
-  isBetaUser: Boolean,
-  payments: Array,
-  quoteRequest: Object,
-  permissions: Object,
-  paymentMethods: Object,
-  insuranceProviders: Array,
-  insuranceProvidersAll: Object,
-  lostReasons: Object,
-  customerTypeEnum: Object,
-  companyTypes: Array,
-  nationalities: Array,
-  UBORelations: Array,
-  UBOsDetails: Array,
-  canAddBatchNumber: Boolean,
-  documentTypes: Object,
-  noteDocumentType: Object,
-  storageUrl: String,
-  quoteNotes: Object,
-  cdnPath: String,
-  vatPercentage: Number,
-  paymentTooltipEnum: Object,
-  isNewPaymentStructure: Boolean,
-  sendUpdateOptions: Array,
-  sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean,
-  linkedQuoteDetails: Array,
-  bookPolicyDetails: Array,
-  lockLeadSectionsDetails: Object,
-  paymentDocument: Array,
-  amlStatusName: String,
-  paymentGatewayEnum: Array,
-  isFuncsEnabled: Array,
+  quote: {
+    type: Object,
+    required: true,
+  },
+  quoteDetails: {
+    type: Object,
+    required: true,
+  },
+  modelType: {
+    type: String,
+    required: true,
+  },
+  quoteTypeId: {
+    type: Number,
+    required: true,
+  },
+  leadStatuses: {
+    type: Array,
+    required: true,
+  },
+  advisors: {
+    type: Array,
+    required: true,
+  },
+  allowedDuplicateLOB: {
+    type: Array,
+    required: true,
+  },
+  genderOptions: {
+    type: Object,
+    required: true,
+  },
+  lostReasons: {
+    type: Object,
+    required: true,
+  },
+  quoteDocuments: {
+    type: Array,
+    required: true,
+  },
+  documentTypes: {
+    type: Object,
+    required: true,
+  },
+  cdnPath: {
+    type: String,
+    required: true,
+  },
+  memberCategories: {
+    type: Array,
+    required: true,
+  },
+  activities: {
+    type: Array,
+    required: true,
+  },
+  customerAdditionalContacts: {
+    type: Array,
+    required: true,
+  },
+  payments: {
+    type: Array,
+    required: true,
+  },
+  quoteRequest: {
+    type: Object,
+    required: true,
+  },
+  isBetaUser: {
+    type: Boolean,
+    required: true,
+  },
+  paymentMethods: {
+    type: Object,
+    required: true,
+  },
+  insuranceProviders: {
+    type: Array,
+    required: true,
+  },
+  insuranceProvidersAll: {
+    type: Object,
+    required: true,
+  },
+  permissions: {
+    type: Object,
+    required: true,
+  },
+  typeCode: {
+    type: String,
+    required: true,
+  },
+  customerTypeEnum: {
+    type: Object,
+    required: true,
+  },
+  companyTypes: {
+    type: Array,
+    required: true,
+  },
+  UBOsDetails: {
+    type: Array,
+    required: true,
+  },
+  UBORelations: {
+    type: Array,
+    required: true,
+  },
+  nationalities: {
+    type: Array,
+    required: true,
+  },
+  canAddBatchNumber: {
+    type: Boolean,
+    required: true,
+  },
+  noteDocumentType: {
+    type: Object,
+    required: true,
+  },
+  quoteNotes: {
+    type: Object,
+    required: true,
+  },
+  vatPercentage: {
+    type: Number,
+    required: true,
+  },
+  paymentTooltipEnum: {
+    type: Object,
+    required: true,
+  },
+  isNewPaymentStructure: {
+    type: Boolean,
+    required: true,
+  },
+  sendUpdateOptions: {
+    type: Array,
+    required: true,
+  },
+  sendUpdateLogs: {
+    type: Array,
+    required: true,
+  },
+  sendUpdateEnum: {
+    type: Object,
+    required: true,
+  },
+  hasPolicyIssuedStatus: {
+    type: Boolean,
+    required: true,
+  },
+  linkedQuoteDetails: {
+    type: Array,
+    required: true,
+  },
+  bookPolicyDetails: {
+    type: Array,
+    required: true,
+  },
+  quoteStatusEnum: {
+    type: Object,
+    required: true,
+  },
+  lockLeadSectionsDetails: {
+    type: Object,
+    required: true,
+  },
+  paymentDocument: {
+    type: Array,
+    required: true,
+  },
+  paymentGatewayEnum: {
+    type: Array,
+    required: true,
+  },
+  isFuncsEnabled: {
+    type: Object,
+    required: true,
+  },
+  storageUrl: {
+    type: String,
+    required: true,
+  },
+  amlStatusName: {
+    type: String,
+    required: true,
+  },
 });
 
 const page = usePage();
@@ -405,12 +552,13 @@ const companyConcernOptions = [
   { label: 'Sub Entity', value: 'SubEntity' },
 ];
 
-const companyTypeOptions = computed(() => {
+const industryTypeOptions = computed(() => {
   return page.props.companyTypes.map(comp_type => ({
     value: comp_type.code,
     label: comp_type.text,
   }));
 });
+
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
@@ -425,13 +573,15 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
+
+const enabledCustomerType =
+  page.props.quote.customer_type ?? page.props.customerTypeEnum.Entity;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name:
     page.props.quote.insured_first_name ??
     page.props.quote.customer_insured_first_name ??
@@ -668,32 +818,30 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
-        <x-field label="LOBs">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[rules.isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-        </x-field>
-        <x-field label="Reason">
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-        </x-field>
+        <x-select
+          v-model="leadDuplicateForm.lob_team"
+          :options="
+            allowedDuplicateLOB.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[rules.isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+          label="LOBs"
+        />
+        <x-select
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          :rules="[isRequired]"
+          class="w-full"
+          label="Reason"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+        />
       </div>
       <template #secondary-action>
         <x-button ghost tabindex="-1" @click="modals.duplicate = false">
@@ -773,7 +921,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
@@ -973,12 +1121,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -999,29 +1147,36 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   <dd>
                     <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      :options="companyTypeOptions"
-                      placeholder="SELECT COMPANY TYPE"
+                      :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT COMPANY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="companyConcernOptions"
-                      placeholder="SELECT COMPANY CONCERN"
                       class="w-full"
+                      placeholder="SELECT COMPANY CONCERN"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
+                <div>
+                  <EntityRiskRatingScoreDetails
+                    :quote="quote"
+                    :modelType="quoteType"
+                  />
+                </div>
               </dl>
               <div
-                class="flex justify-end"
                 v-if="readOnlyMode.isDisable === true"
+                class="flex justify-end"
               >
                 <x-button
                   v-if="isProfileUpdateAllow"
@@ -1035,23 +1190,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 </x-button>
               </div>
             </div>
-            <dl></dl>
-            <div class="flex justify-end">
-              <x-button
-                v-if="isProfileUpdateAllow"
-                class="mt-4"
-                color="emerald"
-                size="sm"
-                :loading="customerProfileForm.processing"
-                type="submit"
-              >
-                Update Profile
-              </x-button>
-            </div>
-            <EntityRiskRatingScoreDetails
-              :quote="quote"
-              :modelType="quoteType"
-            />
           </x-form>
         </template>
       </Collapsible>
@@ -1136,7 +1274,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </x-modal>
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -1231,14 +1369,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               class="w-full"
               :error="leadStatusForm.errors.lostReason"
             />
-            <x-field label="Transaction Type">
-              <x-input
-                type="text"
-                v-model="quote.transaction_type_text"
-                class="w-full"
-                :disabled="true"
-              />
-            </x-field>
+            <x-input
+              type="text"
+              v-model="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+              label="Transaction Type"
+            />
           </div>
         </div>
         <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
@@ -1596,11 +1733,25 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       />
     </div> -->
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured_kyc_id"
       :expanded="sectionExpanded"
     />
 

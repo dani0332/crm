@@ -2,7 +2,6 @@
 
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
-use Monolog\Handler\SyslogUdpHandler;
 
 return [
 
@@ -42,7 +41,7 @@ return [
         ],
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single', 'papertrail'],
+            'channels' => ['single', 'axiom'],
             'ignore_exceptions' => false,
         ],
 
@@ -72,16 +71,6 @@ return [
             'level' => env('LOG_LEVEL', 'critical'),
         ],
 
-        'papertrail' => [
-            'driver' => 'monolog',
-            'level' => env('LOG_LEVEL', 'debug'),
-            'handler' => SyslogUdpHandler::class,
-            'handler_with' => [
-                'host' => env('PAPERTRAIL_URL'),
-                'port' => env('PAPERTRAIL_PORT'),
-            ],
-        ],
-
         'stderr' => [
             'driver' => 'monolog',
             'level' => env('LOG_LEVEL', 'debug'),
@@ -109,6 +98,16 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+        ],
+
+        'axiom' => [
+            'driver' => 'monolog',
+            'handler' => App\Logging\AxiomBatchHandler::class,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'with' => [
+                'apiToken' => env('AXIOM_API_TOKEN'),
+                'dataset' => env('AXIOM_DATASET'),
+            ],
         ],
     ],
 

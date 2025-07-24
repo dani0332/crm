@@ -2,23 +2,21 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Enums\RenewalProcessStatuses;
-use App\Models\RenewalsUploadLeads;
+use App\Exceptions\RenewalProcessException;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
+class UpdateRenewalQuotesJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 60;
     public $backoff = 10;
@@ -32,6 +30,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
      */
     public function __construct($renewalQuoteProcess)
     {
+        $this->delay = now()->addSeconds(2);
         $this->renewalQuoteProcess = $renewalQuoteProcess;
     }
 
@@ -42,7 +41,11 @@ class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        $renewalsUploadService->updateQuote($this->renewalQuoteProcess);
+        try {
+            $renewalsUploadService->updateQuote($this->renewalQuoteProcess);
+        } catch (Throwable $e) {
+            throw $e; // Re-throw to mark job as failed
+        }
     }
 
     /**
@@ -54,12 +57,34 @@ class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
     }
 
     /**
+     * Handle a job failure.
+     *
      * @return void
      */
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
-        $this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
-        RenewalsUploadLeads::where('id', $this->renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $errors = [];
+        $step = null;
+
+        if ($exception instanceof RenewalProcessException) {
+            $errors = $exception->getErrors();
+            $step = $exception->getStep();
+        } else {
+            $errors = ['Unexpected error: '.$exception->getMessage()];
+        }
+
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'step' => $step,
+            'errors' => $errors,
+        ], exception: $exception);
+
+        $renewalsUploadService->updateRenewalQuoteProcess(
+            $this->renewalQuoteProcess,
+            true,
+            $errors,
+            $step
+        );
     }
 }

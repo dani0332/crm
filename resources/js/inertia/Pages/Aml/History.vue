@@ -120,17 +120,18 @@ onMounted(() => {});
             />
           </div>
           <div>
-            <ComboBox
+            <x-select
               label="Is Processed"
               placeholder="Search by Lead Status"
               v-model="filters.is_processed"
               class="w-full"
-              :single="true"
               :options="[
                 { label: 'All', value: '' },
                 { label: 'Yes', value: '1' },
                 { label: 'No', value: '0' },
               ]"
+              filterable
+              filterPlaceholder="Filter Is Processed...."
             />
           </div>
         </div>

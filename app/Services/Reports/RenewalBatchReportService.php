@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -475,6 +476,13 @@ class RenewalBatchReportService extends BaseService
                 $this->queryForSegmentType($query, $segmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VALUE, $reportDateEnd,
                     'renewed_by_value_segment_advisors', 'total_by_value_segment_advisors', $batch);
             }
+        }
+
+        if (isset($filters->registration_type) && $filters->registration_type != 'All') {
+            $query->where('car_quote_request.registration_type', $filters->registration_type);
+        }
+        if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All' && $filters->registration_type == CarRegistrationType::COMPANY) {
+            $query->where('car_quote_request.vehicle_use', $filters->vehicle_use);
         }
 
         /**
@@ -1046,24 +1054,6 @@ class RenewalBatchReportService extends BaseService
 
     public function getAllNonMotorBatches()
     {
-        $renewalBatches = RenewalBatch::select('id', 'name', 'start_date', 'end_date', 'month', 'year')->whereNull('quote_type_id');
-        $renewalBatches->orderBy('id');
-        $renewalBatches = $renewalBatches->get()
-            ->map(function ($batch) {
-                // Get the date display format from the configuration
-                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-                // Format the start and end dates of the batch
-                $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
-                $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
-
-                // Return an associative array with the batch 'name' and 'id'
-                return [
-                    'id' => $batch->id,
-                    'name' => "{$batch->month_name}-{$batch->name}-({$start_date} to {$end_date})",
-                ];
-            })
-            ->toArray();
-
-        return $renewalBatches;
+        return RenewalBatch::getAllBatches(true);
     }
 }

@@ -5,20 +5,26 @@ namespace App\Repositories;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\BrokerInvoiceNumber;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
@@ -75,18 +81,25 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $paymentLink;
     }
 
+    // Creates a new payment record along with associated split payments for a quote
     public function fetchCreateNewPayment($request)
     {
-        DB::beginTransaction();
         try {
+            // Initialize payment source and get quote model
+            $paymentSource = 'Main Lead';
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            info('Starting payment creation process for Quote: '.$quoteModel->code);
+            LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::CREATE_PAYMENT);
+            $quoteCode = $quoteModel->code;
+            LoggerService::info("Starting manual payment creation process for quote code: {$quoteCode}");
             $masterPayment = (object) $request->payment;
+
+            // Determine initial payment status
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                 $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
             }
 
+            // Build payment information array with all required fields
             $paymentInformation = [
                 'total_price' => $masterPayment->total_price,
                 'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -106,39 +119,64 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => $masterPaymentStatus,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
+                'created_by' => $request->user()->id ?? null,
+                'updated_by' => $request->user()->id ?? null,
+                'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
             ];
 
+            // Generate payment code based on quote code and existing payment count
             $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+            $paymentInformation['code'] = ($count > 0) ? "{$quoteCode}-{$count}" : $quoteCode;
+            LoggerService::info("Generated payment code {$paymentInformation['code']} for quote {$quoteCode} (payment #{$count} for this quote)");
 
+            // Handle special case for send update or child lead payments
             if ($request->send_update_id || ! empty($quoteModel->parent_duplicate_quote_id)) {
                 // Payment follow-up count is now iterative (uuid-(nth+1)) and not dependent on the count of payments in the quote
                 // Count will be iterative for each payment added through the send update or Child lead
-                $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+                $mainLeadCode = implode('-', array_slice(explode('-', $quoteCode), 0, 2));
                 $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
-                $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
+                $paymentInformation['code'] = ($paymentCount > 0) ? "{$mainLeadCode}-{$paymentCount}" : $mainLeadCode;
+                LoggerService::info("Payment code updated for send update/child lead: {$paymentInformation['code']}");
 
+                // Update payment source if it's from a send update log
                 if (! empty(request()->send_update_id)) {
                     $paymentInformation['send_update_log_id'] = $request->send_update_id;
                     $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+                    $paymentSource = 'Send Update Log';
+                    LoggerService::info("Payment source changed to Send Update Log with ID: {$request->send_update_id} for code {$paymentInformation['code']}");
                 }
             }
 
+            // Add reference if provided
             if ($masterPayment->reference) {
                 $paymentInformation['reference'] = $masterPayment->reference;
             }
-            if ($masterPayment->payment_methods != PaymentMethodsEnum::CreditCard && $masterPayment->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
-                $paymentInformation['authorized_at'] = now();
-            }
-            $quoteModel->payments()->create($paymentInformation);
-            info('Payment created with Code: '.$paymentInformation['code']);
-            // Add split payments start
-            $this->addPaymentSplits($request, $paymentInformation['code']);
-            // Add split payments ends
-            info('Payment splits added for Payment Code: '.$paymentInformation['code']);
 
+            // Pre-authorize payment for certain payment methods
+            if (! in_array($masterPayment->payment_methods, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::InsureNowPayLater])) {
+                $paymentInformation['authorized_at'] = now();
+                LoggerService::info("Payment pre-authorized for payment method: {$masterPayment->payment_methods}");
+            }
+        } catch (Exception $exception) {
+            LoggerService::error("Error occurred during payment creation pre-processing: {$exception->getMessage()} for code {$paymentInformation['code']}", exception: $exception);
+
+            return ['status' => 'error', 'message' => $exception->getMessage()];
+        }
+
+        // Start database transaction
+        DB::beginTransaction();
+        try {
+            // Create the main payment record
+            $payment = $quoteModel->payments()->create($paymentInformation);
+            LoggerService::info("{$paymentSource} Payment created with Code: {$paymentInformation['code']}");
+
+            // Get quote UUID and add payment splits
+            $quoteUUID = $quoteModel instanceof SendUpdateLog ? null : $quoteModel->uuid;
+            LoggerService::info("Starting to add payment splits for payment code: {$paymentInformation['code']}");
+            $this->addPaymentSplits($request, $payment, $quoteUUID);
+            LoggerService::info("Payment splits successfully added for payment code: {$paymentInformation['code']}");
+
+            // Create payment status log entry
             $paymentLog = new PaymentStatusLog([
                 'current_payment_status_id' => PaymentStatusEnum::NEW,
                 'payment_code' => $paymentInformation['code'],
@@ -146,17 +184,24 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_at' => now(),
             ]);
             $paymentLog->save();
-            if (! $request->send_update_id) { // it will check if the payment is added from send update.
+            LoggerService::info("Payment status log created for payment code: {$paymentInformation['code']}");
+
+            // Update quote status if necessary
+            if (! $request->send_update_id && $masterPayment->payment_methods !== PaymentMethodsEnum::InsurerPaymentLink) {
                 $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+                LoggerService::info("Quote status updated to Payment Pending for quote code: {$quoteCode}");
             }
+
+            // Save quote and commit transaction
             $quoteModel->save();
             DB::commit();
-            info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
+            LoggerService::info("Payment creation transaction committed successfully for payment code: {$paymentInformation['code']}");
 
             return ['status' => 'success', 'message' => 'Payment Added'];
         } catch (Exception $exception) {
-            DB::rollBack(); // Rollback changes if any error occurred
-            info('Error occurred during payment creation: '.$exception->getMessage());
+            // Rollback changes if any error occurred
+            DB::rollBack();
+            LoggerService::error("Error occurred during payment creation transaction: {$exception->getMessage()} for code {$paymentInformation['code']}", exception: $exception);
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
@@ -164,68 +209,82 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateNewPayment($request)
     {
+        $masterPayment = (object) $request->payment;
+        $payment = Payment::where('code', $request->paymentCode)->first();
+        if (! $payment) {
+            LoggerService::warning("Payment does not exist for Payment Code: {$request->paymentCode}");
+
+            return ['status' => 'error', 'message' => 'Payment record not found'];
+        }
+
+        LoggerService::info("Starting payment update process for code: {$request->paymentCode} is payment locked: {$request->isPaymentLocked}");
+
+        // Check if payment is locked we will update only specific fields
+        if ($request->isPaymentLocked) {
+            LoggerService::info("Processing locked payment update with limited fields for code: {$request->paymentCode}");
+            $paymentInformation = [
+                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                'credit_approval' => $masterPayment->credit_approval,
+                'updated_by' => $request->user()->id ?? null,
+            ];
+
+            if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
+                LoggerService::info("Updating parent payment method from {$payment->payment_methods_code} to {$masterPayment->payment_methods} for locked payment: {$request->paymentCode}");
+                $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
+            }
+        } else {
+            LoggerService::info("Processing full payment update for code: {$request->paymentCode}");
+            $paymentInformation = [
+                'total_price' => $masterPayment->total_price,
+                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                'discount_reason' => $masterPayment->discount_reason,
+                'discount_custom_reason' => $masterPayment->discount_custom_reason,
+                'discount_type' => $masterPayment->discount,
+                'frequency' => $masterPayment->frequency,
+                'credit_approval' => $masterPayment->credit_approval,
+                'total_payments' => $masterPayment->payment_no,
+                'collection_type' => $masterPayment->collection_type,
+                'total_amount' => $masterPayment->total_amount, // amount after discount
+                'collection_date' => $masterPayment->collection_date,
+                'discount_value' => $masterPayment->discount_value,
+                'payment_methods_code' => $masterPayment->payment_methods,
+                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
+                'updated_by' => $request->user()->id ?? null,
+                'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
+            ];
+
+            if ($masterPayment->reference) {
+                $paymentInformation['reference'] = $masterPayment->reference;
+            }
+            if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+            }
+        }
+
         $maxRetries = 2;
 
-        return $this->handleWithDeadlockRetries(function () use ($request) {
-            $masterPayment = (object) $request->payment;
-            $payment = Payment::where('code', $request->paymentCode)->first();
-            if (! $payment) {
-                info('Payment does not exist for Payment Code: '.$request->paymentCode);
-
-                return ['status' => 'error', 'message' => 'Payment record not found'];
-            }
-
-            if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
-                $paymentInformation = [
-                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
-                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
-                    'credit_approval' => $masterPayment->credit_approval,
-                    'updated_by' => $request->user()->id,
-                ];
-
-                if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
-                    $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
-                }
-            } else {
-
-                $paymentInformation = [
-                    'total_price' => $masterPayment->total_price,
-                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
-                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
-                    'discount_reason' => $masterPayment->discount_reason,
-                    'discount_custom_reason' => $masterPayment->discount_custom_reason,
-                    'discount_type' => $masterPayment->discount,
-                    'frequency' => $masterPayment->frequency,
-                    'credit_approval' => $masterPayment->credit_approval,
-                    'total_payments' => $masterPayment->payment_no,
-                    'collection_type' => $masterPayment->collection_type,
-                    'total_amount' => $masterPayment->total_amount, // amount after discount
-                    'collection_date' => $masterPayment->collection_date,
-                    'discount_value' => $masterPayment->discount_value,
-                    'payment_methods_code' => $masterPayment->payment_methods,
-                    'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                    'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-                    'updated_by' => $request->user()->id,
-                ];
-
-                if ($masterPayment->reference) {
-                    $paymentInformation['reference'] = $masterPayment->reference;
-                }
-                if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
-                } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
-                }
-            }
+        return $this->handleWithDeadlockRetries(function () use ($request, $payment, $paymentInformation) {
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             $payment->update($paymentInformation);
-            // Log payment update
-            info('Payment updated successfully for Payment Code: '.$request->paymentCode);
+            LoggerService::info("Payment updated successfully for Payment Code: {$request->paymentCode}");
 
             // Update split payments start
+            // Delete trashed files if any of file is deleted from quote document
             if (! empty($request->trashedFilesModal)) {
+                LoggerService::info("Deleting trashed files for payment code: {$request->paymentCode}");
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
-            $this->updatePaymentSplits($request);
+            $quoteUUID = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? null : $quoteModel->uuid;
+            $isRenewalLead = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? false : $quoteModel->source == LeadSourceEnum::RENEWAL_UPLOAD;
+
+            $this->updatePaymentSplits($request, $payment, $quoteUUID, $isRenewalLead);
+
+            LoggerService::info("Payment update process completed for code: {$request->paymentCode}");
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
@@ -244,60 +303,113 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $isCreditApprovalRemoved || ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod));
     }
 
-    // Add split payments
-    public function addPaymentSplits($request, $quoteID)
+    // Add split payments for a parent payment and creates related payment splits
+    public function addPaymentSplits($request, $payment, $quoteUUID)
     {
+        $quoteID = $payment->code;
+        LoggerService::info("Starting split payment creation for payment code: {$quoteID}");
+
         $masterPayment = (object) $request->payment;
+        $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+        $isPaymentLinkNotNull = collect($masterPayment->payment_splits)->filter(function ($split) {
+            return isset($split['insurer_payment_link']) && $split['insurer_payment_link'] !== null;
+        })->isNotEmpty();
+        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull && $request->sendFTCEmail;
         $totalSplitPayments = count($masterPayment->payment_splits);
+
+        // Calculate discount if applicable
         $discount = 0;
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0) {
             $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $masterPayment->discount_value);
+            LoggerService::info("Discount calculated for payment code {$quoteID}: amount {$discount}");
         }
+
+        $firstPaymentSplit = null;
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
+                // Create payment split record with required information
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
+                    'insurer_payment_link' => $splitPayment['insurer_payment_link'] ?? null,
                     'payment_method' => $splitPayment['payment_method'],
                     'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
                     'payment_amount' => $splitPayment['payment_amount'],
                     'due_date' => $splitPayment['due_date'],
                     'payment_status_id' => PaymentStatusEnum::NEW,
                     'discount_value' => $discount,
+                    'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
+                    'cc_payment_gateway' => ! empty($request->cc_payment_gateway) ? $request->cc_payment_gateway : null,
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
+                LoggerService::info("Created payment split #{$splitPayment['sr_no']} for payment {$quoteID} with method {$splitPayment['payment_method']}");
+
+                if ($splitPayment['sr_no'] == 1) {
+                    $firstPaymentSplit = $paymentSplitRecord;
+                }
+
                 if ($paymentSplitRecord) {
-                    // add document references
+                    // Associate documents with payment split if available
                     if (isset($splitPayment['document_detail']) && count($splitPayment['document_detail'])) {
                         foreach ($splitPayment['document_detail'] as $document) {
                             $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                             if ($quoteDocumentRec) {
                                 $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                                 $quoteDocumentRec->save();
+                                LoggerService::info("Associated document ID: {$document['id']} with payment split for {$quoteID}");
                             }
                         }
                     }
+                    // Update child payment status based on payment method
                     $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($paymentSplitRecord);
                     $paymentSplitRecord->update(['payment_status_id' => $childPaymentStatus]);
+                    LoggerService::info("Updated payment split #{$splitPayment['sr_no']} status to {$childPaymentStatus} for {$quoteID}");
                 }
             }
         }
-        // Update parent payment status
-        $payment = Payment::where('code', $quoteID)->first();
+
+        // Update parent payment status based on child payments
         $this->setMasterPaymentStatus($payment);
-        app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $quoteID);
+        LoggerService::info("Updated master payment status completed for {$quoteID}");
+
+        // Dispatch FTC email job if applicable
+        // Only for insurer payment link payment method
+        if ($sendFTCEmail && $quoteUUID != null) {
+            $modelType = $request->modelType;
+            $quoteType = QuoteTypes::from($modelType);
+            SendFTCEmailJob::dispatch($quoteUUID, $quoteType, true)->delay(now()->addSeconds(5));
+            LoggerService::info("Dispatched FTC email job for payment {$quoteID}");
+        }
+
+        // Process discount documents if available
+        $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
+        if ($discountDocuments && count($discountDocuments)) {
+            $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $quoteID])->first();
+            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit);
+            LoggerService::info("Uploaded discount documents for payment {$quoteID}");
+        }
+
+        LoggerService::info("Completed split payment creation for {$quoteID}");
     }
 
-    public function updatePaymentSplits($request)
+    public function updatePaymentSplits($request, $payment, $quoteUUID, $isRenewalLead = false)
     {
+        LoggerService::info("Starting update payment splits for payment code: {$request->paymentCode}");
         $masterPayment = (object) $request->payment;
+        $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+        $insurerPaymentLinkIndex = collect($masterPayment->payment_splits)->search(function ($item) {
+            return isset($item['insurer_payment_link']) && $item['insurer_payment_link'] !== null;
+        });
+        $sendFTCEmail = $isInsurerPaymentLink && $insurerPaymentLinkIndex !== false && $request->sendFTCEmail;
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
         // Skipping paid payments and deleting extra payments
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
+                // We are not deleting certian payment statuses payment add backend validation
+                // This will handle once we are updating frequecy types and deleting extra payments
                 if (
                     in_array($paymentSplit->payment_status_id, [
                         PaymentStatusEnum::PAID,
@@ -312,6 +424,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     continue;
                 }
                 if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
+                    LoggerService::info("Deleting payment split #{$paymentSplit->sr_no} and documents for payment {$request->paymentCode}");
                     // Delete QuoteDocuments referencing the payment split
                     $paymentSplit->documents()->forceDelete();
                     // Then delete the payment split
@@ -330,14 +443,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $discount = 0;
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0 && count($paymentPaidSerialNo) == 0) {
             $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $masterPayment->discount_value);
+            LoggerService::info("Discount calculated for payment code {$request->paymentCode}: amount {$discount}");
         }
 
-        foreach ($masterPayment->payment_splits as $splitPayment) {
+        $firstPaymentSplit = null;
+
+        foreach ($masterPayment->payment_splits as $index => $splitPayment) {
             $serialNo = $splitPayment['sr_no'];
             // update payment amount for paid payments
             if (isset($request->isPaidEditable) && $request->isPaidEditable && count($paymentPaidSerialNo) === $totalSplitPayments) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
                 if ($paymentSplit) {
+                    LoggerService::info("Updating payment split #{$serialNo} for payment {$request->paymentCode} with amount {$splitPayment['payment_amount']}");
                     $paymentSplit->update(['payment_amount' => $splitPayment['payment_amount']]);
                 }
 
@@ -349,12 +466,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-
+                LoggerService::info("Processing payment split #{$serialNo} for payment {$request->paymentCode} with method {$splitPayment['payment_method']}");
                 if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+                    LoggerService::info("Processing locked payment split update with limited fields for code: {$request->paymentCode}");
                     $splitPaymentInformation = [
                         'payment_method' => $splitPayment['payment_method'],
                     ];
                 } else {
+                    LoggerService::info("Processing full payment split update for code: {$request->paymentCode}");
                     $splitPaymentInformation = [
                         'code' => $request->paymentCode,
                         'sr_no' => $serialNo,
@@ -364,13 +483,25 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'payment_status_id' => PaymentStatusEnum::NEW, // reset status to 'NEW
                         'due_date' => $splitPayment['due_date'],
                         'discount_value' => $discount,
+                        'insurer_payment_link' => $splitPayment['insurer_payment_link'] ?? null,
+                        'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
+                        'cc_payment_gateway' => ! empty($request->cc_payment_gateway) ? $request->cc_payment_gateway : null,
                     ];
                 }
 
                 $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
                 if (! $paymentSplitRecord) {
+                    LoggerService::info("Creating new payment split #{$serialNo} for payment {$request->paymentCode}");
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
+                    if ($index == $insurerPaymentLinkIndex) {
+                        $sendFTCEmail = ($splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink
+                            && (
+                                $isRenewalLead // Renewal leads with InsurerPaymentLink always send FTC email
+                                ||
+                                ($request->sendFTCEmail && ($splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link)) // Regular leads need both conditions
+                            ));
+                    }
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 // add document references
@@ -379,9 +510,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     && $paymentSplitRecord
                     && count($splitPayment['document_detail'])
                 ) {
+                    LoggerService::info("Adding document references for payment split #{$serialNo} for payment {$request->paymentCode}");
                     foreach ($splitPayment['document_detail'] as $document) {
                         $quoteDocumentRec = QuoteDocument::find($document['id']);
                         if ($quoteDocumentRec) {
+                            LoggerService::info("Associating document ID: {$document['id']} with payment split for {$request->paymentCode}");
                             $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                             $quoteDocumentRec->save();
                         }
@@ -389,13 +522,26 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
                 if ($paymentSplitRecord) {
                     $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($paymentSplitRecord);
+                    LoggerService::info("Updating payment split #{$serialNo} status to {$childPaymentStatus} for payment {$request->paymentCode}");
                     $paymentSplitRecord->update(['payment_status_id' => $childPaymentStatus]);
+                }
+                if ($serialNo == 1) {
+                    $firstPaymentSplit = $paymentSplitRecord;
                 }
             }
         }
+        // Dispatch FTC email job if sendFTCEmail is true and quoteUUID is not null
+        // sendFTCEmail is passing from frontend
+        ($sendFTCEmail && $quoteUUID != null) && SendFTCEmailJob::dispatch($quoteUUID, QuoteTypes::from($request->modelType), true)->delay(now()->addSeconds(5));
         $payment = Payment::where('code', $request->paymentCode)->first();
+        LoggerService::info("Setting master payment status for payment code: {$request->paymentCode}");
         $this->setMasterPaymentStatus($payment);
-        app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $request->paymentCode);
+        $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
+        if ($discountDocuments && count($discountDocuments)) {
+            LoggerService::info("Uploading discount documents for payment code: {$request->paymentCode}");
+            $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $request->paymentCode])->first();
+            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit);
+        }
     }
 
     // Will move this code to helper or some where else later
@@ -417,21 +563,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function handlePaymentDecline($request)
     {
+        $paymentCode = $request->payment_code;
+        LoggerService::info("Processing payment decline for {$paymentCode}");
+
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
+        LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::DECLINE_PARENT_PAYMENT);
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+        LoggerService::info("Updating payment decline details for payment code: {$paymentCode}");
         $firstPayment->update([
             'decline_reason_id' => $request->declined_reason,
             'decline_custom_reason' => $request->declined_custom_reason,
             'updated_by' => Auth::user()->id,
         ]);
         if ($request->send_update_id > 0) {
+            LoggerService::info("Updating send update status logs for quote ID: {$quoteModel->id}");
             app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
             $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
         } else {
+            LoggerService::info("Updating quote status to TransactionDeclined for main lead quote ID: {$quoteModel->id}");
             $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
         }
         $quoteModel->save();
-        info('Master payment code: '.$request->payment_code.' Transaction declined');
+        LoggerService::info("Transaction declined process complete: {$paymentCode}");
 
         return 'Transaction declined';
     }
@@ -445,30 +598,43 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     public function handlePaymentApprove($request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_PARENT_PAYMENT);
+        $paymentCode = $request->payment_code;
+        LoggerService::info("Payment approval process initiated: {$paymentCode}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
-                $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
+                if ($key == null || $key < 0) {
+                    LoggerService::info("Child payment code: {$paymentCode} Invalid split number: {$key}");
+
+                    continue;
+                }
+                $paymentSplit = PaymentSplits::where(['code' => $paymentCode, 'sr_no' => $key])->first();
+
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' approving process started');
+                    LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} approving process started with amount: {$splitAmount}");
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
+                } else {
+                    LoggerService::info("Payment split not found or already paid: {$paymentCode}, Split No: {$key}");
                 }
             }
         }
         // Log the master payment approval process
-        info('Master payment code: '.$request->payment_code.' processing master payment approval');
+        LoggerService::info('Master payment code: '.$paymentCode.' processing master payment approval called');
 
         // process master payment approve
-        return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
+        return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $paymentCode);
 
     }
 
     // This method handles the approval or decline of split payments based on the request.
-    public function fetchUpdateSplitPaymentsApprove($request)
+    public function fetchMasterPaymentApproveCapture($request)
     {
+        LoggerService::info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
+
         return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
     }
 
@@ -503,19 +669,40 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return response()->json(['error' => 'Total Price Update Failed']);
     }
 
-    public function fetchUpdatePaymentStatus($request)
+    public function fetchSplitPaymentApproveDecline($request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_DECLINE_CHILD_PAYMENT);
         $maxRetries = 2;
+        $successMessage = 'Payment Verified';
 
-        return $this->handleWithDeadlockRetries(function () use ($request) {
-            $successMessage = 'Payment Verified';
-            $splitPayment = PaymentSplits::find($request->splitPaymentId);
-            $masterPayment = $splitPayment->payment;
+        // Move fetching data outside transaction
+        $splitPayment = PaymentSplits::find($request->splitPaymentId);
+        $splitPaymentCode = $splitPayment->code;
+        $srNo = $splitPayment->sr_no;
+        $masterPayment = $splitPayment->payment;
+
+        // Prepare to store Sage receipt ID if successful
+        $sageReceiptId = null;
+
+        // Process Sage API call outside transaction if needed
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled()) {
+            $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
+
+            if ($sageResponse['status'] != 'success') {
+                vAbort($sageResponse['response']);
+            }
+
+            $sageReceiptId = $sageResponse['response'];
+        }
+
+        // Now handle database operations within transaction
+        return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment, $sageReceiptId, $successMessage, $splitPaymentCode, $srNo) {
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentStatusId = PaymentStatusEnum::CAPTURED;
                 if ($request->actual_amount && $request->actual_amount > $request->collection_amount) {
                     $paymentStatusId = PaymentStatusEnum::PARTIAL_CAPTURED;
                 }
+                LoggerService::info("Split payment approval started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
                     'collection_amount' => $request->collection_amount,
                     'bank_reference_number' => $request->bank_reference_number,
@@ -531,56 +718,49 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     isset($request->approved_document_model[$splitPayment->sr_no])
                     && count($request->approved_document_model[$splitPayment->sr_no]) > 0
                 ) {
+                    LoggerService::info("Processing approved documents for split payment - code: {$splitPaymentCode}, SR No: {$srNo}, document count: ".count($request->approved_document_model[$splitPayment->sr_no]));
                     foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                         $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                         if ($quoteDocumentRec) {
+                            LoggerService::info("Processing document ID: {$document['id']} for split payment - code: {$splitPaymentCode}, SR No: {$srNo}");
                             if (empty($document['payment_split_id'])) {
                                 $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                                LoggerService::info("Assigned document to payment split - code: {$splitPaymentCode}, SR No: {$srNo}, document ID: {$document['id']}");
                             } else {
                                 $quoteDocumentRec->document_type_code = $this->mapToReciept($quoteDocumentRec->document_type_code);
                                 $quoteDocumentRec->document_type_text = DocumentTypeEnum::RECEIPT;
+                                LoggerService::info("Updated document to receipt type - code: {$splitPaymentCode}, SR No: {$srNo}, document ID: {$document['id']}");
                             }
                             $quoteDocumentRec->save();
                         }
                     }
                 }
 
-                // create sage receipt
-                if ((new SageApiService)->isSageEnabled()) {
-                    $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
-                    if ($sageResponse['status'] == 'success') {
-                        $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
-                        $splitPayment->update($paymentInformation);
-                        if ($masterPayment) {
-                            $masterPayment->update(
-                                [
-                                    'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                                    'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                                ],
-                            );
-                        }
-                    } else {
-                        $failMessage = $sageResponse['response'];
-                        vAbort($failMessage);
-                    }
-                } else {
-                    $splitPayment->update($paymentInformation);
-
-                    if ($masterPayment) {
-                        $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
-                        $masterPayment->update(
-                            [
-                                'captured_amount' => $masterCapturedAmount,
-                                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                            ],
-                        );
-                    }
+                // Add sage receipt ID if it exists
+                if ($sageReceiptId) {
+                    $paymentInformation['sage_reciept_id'] = $sageReceiptId;
                 }
+
+                $splitPayment->update($paymentInformation);
+
+                if ($masterPayment) {
+                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
+                    $masterPayment->update(
+                        [
+                            'captured_amount' => $masterCapturedAmount,
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                        ],
+                    );
+                }
+
                 /* Create payment receipt for broker */
                 if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
+                    LoggerService::info("Creating broker receipt for - code: {$splitPaymentCode}, SR No: {$srNo}, collection type: {$masterPayment->collection_type}");
                     app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
                 }
+                LoggerService::info("Split payment approval completed successfully - code: {$splitPaymentCode}, SR No: {$srNo}");
             } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
+                LoggerService::info("Split payment decline started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
                     'decline_reason_id' => $request->declined_reason,
                     'decline_custom_reason' => $request->declined_custom_reason,
@@ -589,6 +769,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 ];
                 $splitPayment->update($paymentInformation);
                 $successMessage = 'Payment Declined';
+                LoggerService::info("Split payment decline completed successfully - code: {$splitPaymentCode}, SR No: {$srNo}");
             }
             // Update parent payment status
             $this->setMasterPaymentStatus($masterPayment);
@@ -792,12 +973,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function setMasterPaymentStatus($payment)
     {
         if ($payment) {
+            $oldPaymentStatus = $payment->payment_status_id;
+            info("Master payment code: {$payment->code} - setMasterPaymentStatus called");
             if ($payment->frequency == 'upfront') {
                 $this->updateUpfrontStatus($payment);
             } else {
                 $this->updateNonUpfrontStatus($payment);
             }
-            info('Master payment code: '.$payment->code.' Updating lead status');
+            $newPaymentStatus = $payment->payment_status_id;
+            LoggerService::info("Master payment code: {$payment->code} - Payment status updated from {$oldPaymentStatus} to {$newPaymentStatus}");
             app(SplitPaymentService::class)->updateLeadStatus($payment); // update lead status
         }
     }
@@ -910,12 +1094,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function updatePriceVatApplicableAndVat($quote, $modelType)
     {
         /* Start - Temporarily adding for correcting historic data */
-        info('Start - Temporarily adding for correcting historic data'.$quote->uuid);
+        info('Start - Temporarily adding for correcting historic data: '.$quote->code);
         /* calculate price and vat for payments for old payment data  where price_vat_applicable is not available */
         $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
         if ($quotePayment) {
             if (! $quotePayment->price_vat_applicable) {
-                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->frequency, $quotePayment->total_price, $modelType, $quote->id);
+                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->total_price, $modelType, $quote->id, $quotePayment->code);
                 $quotePayment->update([
                     'price_vat_applicable' => $priceWithoutVat,
                     'price_vat' => $vat,
@@ -931,7 +1115,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         if ($splitPayment->sr_no === 1) {
                             $splitAmount = $splitPayment->payment_amount + $quotePayment->discount_value;
                         }
-                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $modelType, $quote->id, count($paymentSplits));
+                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $modelType, $quote->id, count($paymentSplits), $splitPayment->code);
                         $splitPayment->update([
                             'price_vat_applicable' => $priceWithoutVat,
                             'price_vat' => $vat,
@@ -941,7 +1125,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
 
-        info('End - Temporarily adding for correcting historic data '.$quote->uuid);
+        info('End - Temporarily adding for correcting historic data: '.$quote->code);
         /* End - Temporarily adding for correcting historic data */
 
     }

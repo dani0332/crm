@@ -100,8 +100,10 @@ class CallBackNotification extends Command
                                     $message = 'Urgent reminder Whatsapp request for ';
                                 }
 
-                                info("InstantAlfred {$notificationType} Reminder Notification Send to Advisor {$record->advisor_id} And Quote Code is {$record->code}");
-                                event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
+                                // info("InstantAlfred {$notificationType} Reminder Notification Send to Advisor {$record->advisor_id} And Quote Code is {$record->code}");
+                                if ($record->advisor_id) {
+                                    event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
+                                }
                             }
                         }
                     }

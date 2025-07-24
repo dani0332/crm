@@ -2,18 +2,17 @@
 
 namespace App\Services;
 
+use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\DatabaseColumnsString;
-use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -24,6 +23,7 @@ use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\Customer;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
@@ -38,6 +38,7 @@ use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -56,9 +57,12 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
+    const SELECT_TITLE_MULTIPLE = 'select|title|multiple';
+    const APPLICATION_JSON = 'application/json';
+
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -125,7 +129,11 @@ class HealthQuoteService extends BaseService
             'hqr.renewal_import_code',
             'hqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(hqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
             'hqr.previous_quote_policy_premium',
+            'hqr.renewal_upload_plan_code',
+            'hqr.renewal_upload_copay_code',
+            'hqr.renewal_upload_payment_link',
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
@@ -144,14 +152,10 @@ class HealthQuoteService extends BaseService
             'hqr.risk_score',
             'hqr.enquiry_count',
             'hqr.policy_booking_date',
-            DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Health.' AND quote_request_id = hqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
+            'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
@@ -199,7 +203,11 @@ class HealthQuoteService extends BaseService
                     WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
-            ')
+            '),
+            'c.pcp_tag',
+            'hqr.pc_qualified',
+            DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+            DB::raw(HealthQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -219,7 +227,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
-            ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
+            ->leftjoin('payment_status', 'py.payment_status_id', 'payment_status.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
             ->leftJoin('renewal_batches as rb', 'hqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
@@ -229,9 +237,11 @@ class HealthQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Health]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id');
     }
 
     public function getEntity($id)
@@ -329,295 +339,20 @@ class HealthQuoteService extends BaseService
                 $subTeam = auth()->user()->subTeam->name;
             }
             HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $subTeam]);
+
+            $this->selfAssign(QuoteTypes::HEALTH, $response->quoteUID);
         }
 
         return $response;
     }
 
-    public function getGridData($model = null, $request = null)
+    public function getGridData($model = null, $requestParams = [])
     {
-        $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();
-        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
-        $isRenewalManager = Auth::user()->isRenewalManager();
-        $isNewManager = Auth::user()->isNewBusinessManager();
-        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        if ($model != null) {
-            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
-                $searchProperties = $model->renewalSearchProperties;
-            } elseif ($isNewManager || $isNewAdvisor) {
-                $searchProperties = $model->newBusinessSearchProperties;
-            } else {
-                $searchProperties = $model->searchProperties;
-            }
-        } else {
-            $searchProperties = $this->fillModelSearchProperties();
-            $request = request();
-        }
+        $query = $this->healthQuoteQueryBuilder->processGridData($requestParams);
+        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
+        $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
-        if (
-            empty($request->email) && empty($request->code) && empty($request->first_name) &&
-            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
-        ) {
-            $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
-        }
-        if (! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
-
-            $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-            $this->query->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-        }
-        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-            $dateFrom = $this->parseDate($request['next_followup_date'], true);
-            $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->transaction_approved_dates)) {
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $startDate = Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
-            $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
-        }
-        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
-        && ! isset($request->booking_date) && ! isset($request->renewal_batches)
-    && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
-            $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
-        }
-        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-            $dateFrom = $this->parseDate($request['created_at'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
-            $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
-            $dateArray = $request['last_modified_date'];
-
-            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
-        }
-
-        if (
-            ! empty($request->created_at_start)
-            && ! empty($request->created_at_end)
-            && empty($request->code)
-            && empty($request->email)
-            && empty($request->mobile_no)
-            && empty($request->payment_due_date)
-            && empty($request->booking_date)
-            && empty($request->renewal_batches)
-            && empty($request->previous_quote_policy_number)
-            && ! isset($request->insurer_tax_invoice_number)
-            && ! isset($request->insurer_commission_tax_invoice_number)
-        ) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
-            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
-        }
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
-            // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
-        }
-        if (isset($request->code) && $request->code != '') {
-            $this->query->where('hqr.code', $request->code);
-        }
-        if (isset($request->first_name) && $request->first_name != '') {
-            $this->query->where('hqr.first_name', $request->first_name);
-        }
-        if (isset($request->last_name) && $request->last_name != '') {
-            $this->query->where('hqr.last_name', $request->last_name);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $this->query->where('hqr.email', $request->email);
-        }
-        if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $this->query->where('hqr.mobile_no', $request->mobile_no);
-        }
-        if (isset($request->policy_number) && $request->policy_number != '') {
-            $this->query->where('hqr.policy_number', $request->policy_number);
-        }
-        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where(function ($query) use ($request) {
-                $query->where('hqr.policy_number', $request->previous_quote_policy_number)
-                    ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-            });
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
-            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
-
-        if (! isset($request->email) && $request->email == '') {
-            $this->query->where('hqr.quote_status_id', '!=', 9);
-        }
-
-        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-            $dateFrom = $this->parseDate($request['next_followup_date'], true);
-            $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        // health_team_type filter
-        if (isset($request->sub_team) && $request->sub_team != '') {
-            $this->query->where('hqr.health_team_type', $request->sub_team);
-        }
-        // quote_status filter
-        if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
-            $this->query->whereIn('quote_status_id', $request->quote_status);
-        }
-
-        if (isset($request->advisors) && is_array($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
-            $this->query->whereNull('hqr.advisor_id');
-        }
-
-        // advisors filter
-        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
-            $this->query->whereIn('advisor_id', $request->advisors);
-        }
-        // is_renewal filter
-        if (isset($request->is_renewal) && $request->is_renewal != '') {
-            if ($request->is_renewal == 'Yes') {
-                $this->query->whereNotNull('previous_quote_policy_number');
-            } else {
-                $this->query->whereNull('previous_quote_policy_number');
-            }
-        }
-
-        // payment_status_id filter
-        if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
-        }
-
-        // is_cold filter
-        if (isset($request->is_cold) && $request->is_cold != '') {
-            $this->query->where('hqr.is_cold', 1);
-        }
-
-        // is_stale filter
-        if (isset($request->is_stale) && $request->is_stale != '') {
-            $this->query->whereNotNull('hqr.stale_at');
-        }
-
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
-            // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
-        }
-        if (isset($request->assignment_type) && ! empty($request->assignment_type) && $request->assignment_type !== 'all') {
-            $this->query->where('hqr.assignment_type', $request->assignment_type);
-        }
-        if (isset($request->first_name) && $request->first_name != '') {
-            $this->query->where('hqr.first_name', $request->first_name);
-        }
-        if (isset($request->last_name) && $request->last_name != '') {
-            $this->query->where('hqr.last_name', $request->last_name);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $this->query->where('hqr.email', $request->email);
-        }
-        if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $this->query->where('hqr.mobile_no', $request->mobile_no);
-        }
-
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
-            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
-
-        if (isset($request->is_renewal) && $request->is_renewal != '') {
-            if ($request->is_renewal == quoteTypeCode::yesText) {
-                $this->query->whereNotNull('hqr.previous_quote_policy_number');
-            }
-            if ($request->is_renewal == quoteTypeCode::noText) {
-                $this->query->whereNull('hqr.previous_quote_policy_number');
-            }
-        }
-        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
-            $this->query->where('hqr.sic_advisor_requested', $request->sic_advisor_requested);
-        }
-        if (isset($request->is_ecommerce)) {
-            $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
-            $this->query->where('hqr.is_ecommerce', $isEcommerce);
-        }
-        if ($request->has('segment_filter')) {
-            $segmentFilter = $request->input('segment_filter');
-            $subQueryCallback = function ($subQuery) {
-                $subQuery->distinct()
-                    ->select('quote_uuid')
-                    ->from('quote_tags')
-                    ->where('name', QuoteSegmentEnum::SIC->tag())
-                    ->where('quote_type_id', QuoteTypeId::Health);
-            };
-            $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($subQueryCallback) {
-                $query->whereIn('hqr.uuid', $subQueryCallback);
-            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($subQueryCallback) {
-                $query->whereNotIn('hqr.uuid', $subQueryCallback);
-            });
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
-            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
-            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
-        }
-
-        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
-            $this->query->whereIn('hqr.insurer_aml_status', $request->insurer_aml_status);
-        }
-
-        $this->adjustQueryByDateFilters($this->query, 'hqr');
-
-        foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
-                if ($request[$item] == 'null') {
-                    $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
-                        $this->query->whereNull('advisor_id');
-                    } else {
-                        $this->query->whereIn('advisor_id', $request[$item]);
-                    }
-                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('quote_status_id', $request[$item]);
-                } else {
-                    $skipped = ['is_ecommerce', 'is_renewal', 'previous_policy_expiry_date', 'next_followup_date'];
-                    if (in_array($item, $skipped)) {
-                        continue;
-                    }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
-                }
-            }
-        }
-
-        // sortBy filter
-        if (isset($request->sortBy) && $request->sortBy != '') {
-            return $this->query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            return $this->query->orderBy('hqr.created_at', 'DESC');
-        }
+        return $query;
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -777,8 +512,8 @@ class HealthQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'quote_status_id' => 'select|title|multiple',
-            'advisor_id' => 'select|title|multiple',
+            'quote_status_id' => self::SELECT_TITLE_MULTIPLE,
+            'advisor_id' => self::SELECT_TITLE_MULTIPLE,
             'wcu_id' => 'select|title',
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
@@ -808,7 +543,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
             'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
-            'renewal_batches' => 'select|title|multiple',
+            'renewal_batches' => self::SELECT_TITLE_MULTIPLE,
             'renewal_import_code' => 'input|text',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -1036,8 +771,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1103,8 +838,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1178,6 +913,7 @@ class HealthQuoteService extends BaseService
             $this->leadAllocationService->removeLeadAllocationForOldAdvisor($entity);
         }
         $entity->advisor_id = null;
+        $entity->assignment_type = null;
         $entity->quote_status_id = $quoteStatusId;
         $entity->save();
     }
@@ -1185,23 +921,24 @@ class HealthQuoteService extends BaseService
     public function assignWCU($request): array
     {
         $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        info('Leads ids to assign: '.json_encode($leadsIds));
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds));
         $userId = $request->assigned_to_id_new;
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
+                LoggerService::warning('Cannot assign WCU as lead is in Transaction Approved state, lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
 
                 continue;
             } elseif ($lead) {
                 $lead->advisor_id = null;
+                $lead->assignment_type = null;
                 $lead->quote_status_id = QuoteStatusEnum::NewLead;
                 $lead->wcu_id = $userId;
                 $lead->health_team_type = $request->assign_team;
                 $lead->save();
-                info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
+                LoggerService::info('WCU advisor: '.$userId.' assigned to lead: '.$leadId);
             }
         }
 
@@ -1211,21 +948,21 @@ class HealthQuoteService extends BaseService
     public function assignHealthTeam($request, $lead): bool
     {
         if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-            info('Cannot assign Health Team as lead is in Transaction Approved state');
+            LoggerService::warning('Cannot assign Health Team as lead is in Transaction Approved state');
 
             return false;
         }
         if ($lead->health_team_type != null && $lead->advisor_id != null) {
-            info('Removing previous advisor as lead already assigned to a health team');
+            LoggerService::info('Removing previous advisor as lead already assigned to a health team');
             $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
         }
         $selectedTeam = $request->get('assign_team');
         if ($selectedTeam == quoteTypeCode::GM) {
-            info('Assigning lead to GM');
+            LoggerService::info("Assigning lead to GM Ref-ID: {$lead->uuid}");
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
         } else {
-            info('Assigning lead to '.$selectedTeam.' team');
+            LoggerService::info("Assigning lead to {$selectedTeam} team");
             $lead->health_team_type = $selectedTeam;
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
@@ -1280,10 +1017,18 @@ class HealthQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+
+            LoggerService::info(self::class.' - processManualLeadAssignment: Checking lead_assignment_trigger', extra: [
+                'current_value' => $lead->lead_assignment_trigger ?? 'null',
+            ]);
+            if (empty($lead->lead_assignment_trigger)) {
+                LoggerService::info(self::class.' - processManualLeadAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+                $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+            }
             // will update the car quote request detail entity about assignment
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId);
 
-            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+            LoggerService::info('Manual assignment done and details table updated for lead: '.$lead->uuid.' and old advisor assigned date is: '.$oldAdvisorAssignedDate.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
             // update new and previous (if applicable) advisor counts in lead allocation table
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type);
             // update existing record of quote view count if exists and reset count to zero
@@ -1309,10 +1054,19 @@ class HealthQuoteService extends BaseService
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
+            LoggerService::error('Lead or new advisor ID is null, unable to update allocation counts');
+
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        // Skip allocation count updates for IMCRM source leads
+        if ($lead->source === LeadSourceEnum::IMCRM) {
+            LoggerService::info('Skipping allocation count update for IMCRM source lead: '.$lead->uuid);
+
+            return;
+        }
+
+        LoggerService::info('Previous assignment type is: '.$previousAssignmentType);
 
         // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
@@ -1361,8 +1115,8 @@ class HealthQuoteService extends BaseService
                         if (isset($plan['ratesPerCopay'])) {
                             foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
                                 if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
-                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
-                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
+                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
                                 }
                             }
                         }
@@ -1440,6 +1194,7 @@ class HealthQuoteService extends BaseService
     public function healthPlanModifyV2($request)
     {
         $loadingPrices = $request->get('loadingPrice');
+        $adjustingPrices = $request->get('adjustingPrice');
         $manualPremiumPrices = $request->get('manualPremiumPrice');
 
         if (empty($request->get('selectedCopay'))) {
@@ -1469,6 +1224,12 @@ class HealthQuoteService extends BaseService
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
                             }
                             if (
+                                isset($adjustingPrices[$key]) &&
+                                (int) $adjustingPrices[$key]['memberId'] == $value['memberId']
+                            ) {
+                                $copay['adjustedPrice'] = (float) $adjustingPrices[$key]['price'];
+                            }
+                            if (
                                 isset($manualPremiumPrices[$key]) &&
                                 (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
                                 && $manualPremiumPrices[$key]['premium'] != 0
@@ -1495,7 +1256,7 @@ class HealthQuoteService extends BaseService
                 'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
-            info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
+            LoggerService::info('Health Plan Modify V2 Request Data: ', $dataArray);
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
             return $response;
@@ -1793,7 +1554,7 @@ class HealthQuoteService extends BaseService
     public function processCancelPayment($data)
     {
         $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
-        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        LoggerService::info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/'.$paymentGatewayEndpoint.'/cancel';
         $apiToken = config('constants.MARSHALL_API_TOKEN');
         $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
@@ -1825,8 +1586,9 @@ class HealthQuoteService extends BaseService
 
     public function assignLeadDirectlyForQA(int $userId, $lead): void
     {
-        info('inside the check for manual assignment QA');
+        LoggerService::info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
+        $lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED;
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
@@ -1938,8 +1700,9 @@ class HealthQuoteService extends BaseService
                       ) AS HealthTeams"),
                 DB::raw("GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ') AS AdvisorTeamName"),
             ])
+            ->leftJoin('payments as py', 'py.code', '=', 'q.code')
             ->leftJoin('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
-            ->leftJoin('payment_status as ps', 'q.payment_status_id', '=', 'ps.id')
+            ->leftJoin('payment_status as ps', 'py.payment_status_id', '=', 'ps.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->leftJoin('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')

@@ -82,11 +82,11 @@ const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
   first_name:
-    props.quote?.customer?.insured?.first_name ??
+    props.quote?.customer?.latest_insured?.first_name ??
     props.quote?.customer.insured_first_name ??
     props.quote.first_name,
   last_name:
-    props.quote?.customer?.insured?.last_name ??
+    props.quote?.customer?.latest_insured?.last_name ??
     props.quote?.customer.insured_last_name ??
     props.quote.last_name,
   dob: dateFormat(props.quote.dob) || '',
@@ -326,6 +326,13 @@ function activePatternField() {
   }
 }
 
+const isExpired = date => {
+  if (!date) return false;
+  // Format the date in DD-MM-YYYY HH:MM:SS format for useCompareDueDate
+  const formattedDate = useDateFormat(date, 'DD-MM-YYYY 00:00:00').value;
+  return useCompareDueDate(formattedDate);
+};
+
 onMounted(() => {
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
@@ -373,31 +380,43 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.nationality_id"
         label="Nationality"
         :options="nationalityOptions"
         placeholder="Nationality"
-        :single="true"
-        :hasError="isNationalityEmpty"
+        filterable
+        filterPlaceholder="Filter Nationality...."
+        :rules="[isRequired]"
+        virtualList
+        :virtualListItemHeight="32"
+        :virtualListOverscan="10"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.country_of_residence"
         label="Country of residence"
         :options="countryList"
         placeholder="Country of residence"
-        :single="true"
+        filterable
+        filterPlaceholder="Filter Country of Residence...."
         :rules="[isRequired]"
+        virtualList
+        :virtualListItemHeight="32"
+        :virtualListOverscan="10"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.place_of_birth"
         label="Place of birth"
         :options="countryList"
         placeholder="Place of birth"
-        :single="true"
-        :hasError="isPlaceOfBirthEmpty"
+        filterable
+        filterPlaceholder="Filter Place of Birth...."
+        :rules="[isRequired]"
+        virtualList
+        :virtualListItemHeight="32"
+        :virtualListOverscan="10"
       />
 
       <x-select
@@ -470,6 +489,7 @@ onMounted(() => {
         v-model="kycForm.id_expiry_date"
         label="ID expiry date"
         :rules="[isRequired]"
+        :helper="isExpired(kycForm.id_expiry_date) ? 'Invalid expiry date' : ''"
       />
     </div>
 
@@ -530,13 +550,14 @@ onMounted(() => {
         :rules="[rules.isRequired]"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.professional_title"
         label="Professional job title"
         :options="professionalTitleOptions"
         placeholder="Professional job title"
-        :single="true"
         :rules="[rules.isRequired]"
+        filterable
+        filterPlaceholder="Filter Professional Job Title...."
       />
 
       <x-select

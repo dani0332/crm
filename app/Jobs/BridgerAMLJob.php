@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\BridgerInsightService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,11 +24,12 @@ class BridgerAMLJob implements ShouldQueue
     private $customerType;
     private $bridgerAPIToken;
     private $loginCustomerEmail;
+    private $isAutomation;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($bridgerAPIToken, $payload, $quoteDetails, $quoteTypeID, $customerType, $loginCustomerEmail)
+    public function __construct($bridgerAPIToken, $payload, $quoteDetails, $quoteTypeID, $customerType, $loginCustomerEmail, $isAutomation = false)
     {
         $this->bridgerAPIToken = $bridgerAPIToken;
         $this->payload = $payload;
@@ -34,6 +37,7 @@ class BridgerAMLJob implements ShouldQueue
         $this->quoteTypeID = $quoteTypeID;
         $this->customerType = $customerType;
         $this->loginCustomerEmail = $loginCustomerEmail ?? '';
+        $this->isAutomation = $isAutomation;
     }
 
     /**
@@ -41,6 +45,9 @@ class BridgerAMLJob implements ShouldQueue
      */
     public function handle(BridgerInsightService $bridgerInsightService): void
     {
+        LoggerService::startQuoteLogging($this->quoteDetails, LoggerFeatureEnum::AML_SCREENING);
+        LoggerService::info('BridgerAMLJob started');
+
         try {
             $bridgerInsightService->searchAMLResult(
                 $this->bridgerAPIToken,
@@ -48,11 +55,14 @@ class BridgerAMLJob implements ShouldQueue
                 $this->quoteDetails,
                 $this->quoteTypeID,
                 $this->customerType,
-                $this->loginCustomerEmail
+                $this->loginCustomerEmail,
+                isAutomation: $this->isAutomation
             );
 
         } catch (\Exception $exception) {
-            logger()->error('AML Screening Bridger Job Exception: '.$exception->getMessage());
+            LoggerService::error('AML Screening Bridger Job failed', exception: $exception);
         }
+
+        LoggerService::info('BridgerAMLJob ended');
     }
 }

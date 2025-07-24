@@ -11,6 +11,7 @@ use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -20,7 +21,7 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
 
-class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
+class UploadAndCreateImport implements OnEachRow, SkipsEmptyRows, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
     use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
@@ -60,7 +61,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
 
     public function chunkSize(): int
     {
-        return 2000;
+        return 1000;
     }
 
     /**
@@ -94,10 +95,14 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
                 'index' => 1,
                 'title' => 'Customer Email',
                 'rules' => [
-                    'required', 'max:255',
+                    'required', 'max:255', 'email:rfc,dns',
                     function ($attribute, $value, $onFailure) {
                         if ($value == 0 || $value == '0') {
                             $onFailure('The '.$attribute.' cannot be 0.');
+                        }
+
+                        if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                            $onFailure('The '.$attribute.' must contain a local part, @ symbol, and domain part (e.g., name@example.com).');
                         }
                     },
                 ],
@@ -118,7 +123,14 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
             'insurer' => ['index' => 4, 'title' => 'Insurance Provider', 'rules' => 'required|max:100'],
             'product' => ['index' => 5, 'title' => 'Product', 'rules' => 'required|max:100'],
             'product_type' => ['index' => 6, 'title' => 'Product Type', 'rules' => 'max:100'],
-            'advisor' => ['index' => 7, 'title' => 'Advisor Email', 'rules' => 'max:100'],
+            'advisor' => ['index' => 7, 'title' => 'Advisor Email', 'rules' => [
+                'max:100', 'nullable', 'email:rfc,dns',
+                function ($attribute, $value, $onFailure) {
+                    if ($value && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        $onFailure('The '.$attribute.' must contain a local part, @ symbol, and domain part (e.g., name@example.com).');
+                    }
+                },
+            ]],
             'policy_number' => ['index' => 8, 'title' => 'Policy Number', 'rules' => 'required|max:100'],
             'start_date' => ['index' => 9, 'title' => 'Policy Start Date', 'rules' => ['max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
@@ -134,7 +146,14 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
             'make' => ['index' => 12, 'title' => 'Car Make', 'rules' => 'max:50'],
             'model' => ['index' => 13, 'title' => 'Car Model', 'rules' => 'max:50'],
             'year' => ['index' => 14, 'title' => 'Model Year', 'rules' => 'max:4'],
-            'previous_advisor' => ['index' => 15, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
+            'previous_advisor' => ['index' => 15, 'title' => 'Previous Advisor Email', 'rules' => [
+                'nullable', 'max:100', 'email:rfc,dns',
+                function ($attribute, $value, $onFailure) {
+                    if ($value && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        $onFailure('The '.$attribute.' must contain a local part, @ symbol, and domain part (e.g., name@example.com).');
+                    }
+                },
+            ]],
             'object' => ['index' => 16, 'title' => 'Object', 'rules' => 'max:200'],
             'premium' => ['index' => 17, 'title' => 'Gross Premium', 'rules' => 'nullable|numeric'],
             'source' => ['index' => 18, 'title' => 'Sales Channel', 'rules' => 'max:100'],

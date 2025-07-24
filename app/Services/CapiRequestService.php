@@ -9,6 +9,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 
 class CapiRequestService
 {
@@ -78,7 +79,7 @@ class CapiRequestService
                         ]
                     );
 
-                    info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+                    LoggerService::info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                 }
             }
         }
@@ -104,8 +105,10 @@ class CapiRequestService
     {
         $response = self::sendCAPIRequest('/api/v1-get-uuid', ['quoteTypeId' => $type]);
         if ($response) {
+
             return $response;
         } else {
+
             return false;
         }
     }
@@ -116,6 +119,8 @@ class CapiRequestService
         if ($response) {
             return $response;
         } else {
+            info('fn: getPersonalQuoteUUID - response: false');
+
             return false;
         }
     }

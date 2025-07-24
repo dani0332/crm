@@ -38,7 +38,7 @@ class LeadAssignRequest extends FormRequest
 
         $validator->after(function ($validator) {
             $leadsIds = array_map('intval', explode(',', request()->assigned_lead_id));
-            $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
+            $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home];
 
             $model = (in_array(ucfirst(request()->modelType), $personalQuotes)) ?
                 PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
@@ -57,7 +57,6 @@ class LeadAssignRequest extends FormRequest
                     $validator->errors()->add('assigned_lead_id', 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.');
                     break;
                 }
-
             }
         });
     }

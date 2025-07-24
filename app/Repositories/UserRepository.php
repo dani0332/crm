@@ -76,6 +76,8 @@ class UserRepository extends BaseRepository
             $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
         } elseif ($modelType == QuoteTypes::CAR->value) {
             $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_DEPUTY_MANAGER'];
+        } elseif ($modelType == QuoteTypes::SAVINGS->value) {
+            $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_MANAGER'];
         } else {
             $roles = [strtoupper($modelType).'_ADVISOR'];
         }
@@ -137,12 +139,17 @@ class UserRepository extends BaseRepository
             RolesEnum::Advisor,
         ];
 
+        // Filter to existing roles only
         $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
 
-        return User::role($existingRoles)
+        // Use Spatie's whereHas method which builds a single efficient query
+        return User::query()
+            ->whereHas('roles', function ($query) use ($existingRoles) {
+                $query->whereIn('name', $existingRoles);
+            })
+            ->where('is_active', 1)
             ->select('name', 'id')
             ->orderBy('name')
-            ->where('is_active', 1)
             ->get()
             ->toArray();
     }

@@ -71,7 +71,7 @@ class AmtController extends Controller
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -216,6 +216,13 @@ class AmtController extends Controller
 
         if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
             $data->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
+        }
+
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request->advisor_assigned_date;
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
         $this->adjustQueryByDateFilters($data, 'bqr');
@@ -493,14 +500,12 @@ class AmtController extends Controller
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $leadStatuses = $leadStatuses->filter(function ($item) {
-            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::POLICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
-        })->toArray();
-
-        $leadStatuses = array_map(function ($item) use ($request) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id'], $request);
+            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::POLICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER || $item->text == quoteStatusCode::PaymentInitiated || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
+        })->map(function ($item) use ($request) {
+            $item->data = getDataAgainstStatus('Business', $item->id, $request);
 
             return $item;
-        }, $leadStatuses);
+        })->toArray();
 
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),

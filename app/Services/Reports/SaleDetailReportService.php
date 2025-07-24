@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\SaleDetailReportExport;
+use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -63,6 +64,7 @@ class SaleDetailReportService extends ManagementReport
                 'p.insurer_tax_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
+                'qs.text as transaction_quote_status',
                 'p.captured_at as date_paid',
                 'p.captured_amount as collected_amount',
                 'personal_quotes.first_name',
@@ -79,12 +81,14 @@ class SaleDetailReportService extends ManagementReport
                 'p.commmission_percentage',
                 'personal_quotes.policy_booking_date',
                 'ps.sage_reciept_id',
+                DB::raw(Customer::formattedPcpTagCase('cm').' as pcp_tag_formatted')
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
+            ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')

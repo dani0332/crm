@@ -48,7 +48,7 @@ const documentsTableItems = computed(() => {
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
       created_by: doc.created_by ? doc.created_by.name : '',
-      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
+      watermarked_doc_url: doc.watermarked_doc_url || doc.doc_url,
     };
   });
 });
@@ -58,11 +58,14 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
+  doc_id: null,
+  doc_uuid: null,
 });
 
-const onDocDelete = name => {
+const onDocDelete = (doc_id, doc_uuid) => {
   modals.docConfirm = true;
-  confirmDeleteData.docs = name;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
 };
 
 const confirmDeleteDoc = () => {
@@ -70,8 +73,8 @@ const confirmDeleteDoc = () => {
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid,
     },
     {
       preserveScroll: true,
@@ -166,7 +169,7 @@ const uploadFile = (doc, filesWithInfo) => {
     >
       <template #item-original_name="item">
         <a
-          :href="storageUrl + item.watermarked_doc_url"
+          :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
           target="_blank"
           class="text-primary-600"
         >
@@ -182,13 +185,13 @@ const uploadFile = (doc, filesWithInfo) => {
           {{ item.doc_name }}
         </a>
       </template>
-      <template #item-action="{ doc_name }">
+      <template #item-action="{ id, doc_uuid }">
         <div>
           <x-button
             size="xs"
             color="error"
             outlined
-            @click.prevent="onDocDelete(doc_name)"
+            @click.prevent="onDocDelete(id, doc_uuid)"
           >
             Delete
           </x-button>

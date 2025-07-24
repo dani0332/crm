@@ -2,11 +2,13 @@
 
 namespace App\Enums;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
+use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -25,15 +27,13 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
+use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use App\Services\Logger\LoggerService;
-use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
@@ -43,6 +43,7 @@ use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\HomeAllocation;
 use App\Strategies\Allocations\LifeAllocation;
 use App\Strategies\Allocations\PetAllocation;
+use App\Strategies\Allocations\SavingsAllocation;
 use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
@@ -69,6 +70,7 @@ enum QuoteTypes: string
     case CORPLINE = 'CorpLine';
     case CAR_REVIVAL = 'CarRevival';
     case CAR_BIKE = 'Car_Bike';
+    case SAVINGS = 'Savings';
 
     public function id(): string
     {
@@ -91,6 +93,7 @@ enum QuoteTypes: string
             QuoteTypes::JETSKI => 11,
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
+            QuoteTypes::SAVINGS => 18,
             default => null,
         };
     }
@@ -111,6 +114,7 @@ enum QuoteTypes: string
             11 => QuoteTypes::JETSKI,
             101 => QuoteTypes::CORPLINE,
             102 => QuoteTypes::GROUP_MEDICAL,
+            18 => QuoteTypes::SAVINGS,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -118,7 +122,7 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        return self::getId(match (ucfirst($value)) {
+        $quoteTypeEnum = match (ucfirst($value)) {
             'Car' => QuoteTypes::CAR,
             'Home' => QuoteTypes::HOME,
             'Health' => QuoteTypes::HEALTH,
@@ -132,8 +136,11 @@ enum QuoteTypes: string
             'Jetski' => QuoteTypes::JETSKI,
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
+            'Savings' => QuoteTypes::SAVINGS,
             default => null,
-        });
+        };
+
+        return $quoteTypeEnum ? self::getId($quoteTypeEnum) : null;
     }
 
     public function model(): Model
@@ -150,6 +157,7 @@ enum QuoteTypes: string
             self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote : new PetQuote,
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
+            self::SAVINGS => checkPersonalQuotes($this->value) ? new PersonalQuote : new SavingsQuote,
             default => new PersonalQuote,
         };
     }
@@ -171,8 +179,6 @@ enum QuoteTypes: string
             self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new YachtQuoteRequestDetail,
             self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new TravelQuoteRequestDetail,
             self::PET => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new PetQuoteRequestDetail,
-            self::CYCLE => new PersonalQuoteDetail,
-            self::JETSKI => new PersonalQuoteDetail,
             default => new PersonalQuoteDetail,
         };
     }
@@ -182,6 +188,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
+            self::HOME => SendHomeOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
@@ -210,6 +217,7 @@ enum QuoteTypes: string
             self::PET => 'PET-',
             self::CYCLE => 'CYC-',
             self::JETSKI => 'JSK-',
+            self::SAVINGS => 'SAV-',
         };
     }
 
@@ -227,6 +235,7 @@ enum QuoteTypes: string
             'PET' => self::PET,
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
+            'SAV' => self::SAVINGS,
         ];
 
         return $codes[$code] ?? null;
@@ -234,20 +243,23 @@ enum QuoteTypes: string
 
     public function url(string $uuid): string
     {
+        $isPersonalQuote = checkPersonalQuotes($this->value);
+
         return match ($this) {
-            self::CAR => checkPersonalQuotes($this->value) ? route('car-quotes-show', $uuid) : route('car.show', $uuid),
-            self::HOME => checkPersonalQuotes($this->value) ? route('home-quotes-show', $uuid) : route('home.show', $uuid),
-            self::HEALTH => checkPersonalQuotes($this->value) ? route('health-quotes-show', $uuid) : route('health.show', $uuid),
-            self::LIFE => checkPersonalQuotes($this->value) ? route('life-quotes-show', $uuid) : (Route::has('life.show') ? route('life.show', $uuid) : route('life-quotes-show', $uuid)),
-            self::BUSINESS => checkPersonalQuotes($this->value) ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
-            self::BIKE => checkPersonalQuotes($this->value) ? route('bike-quotes-show', $uuid) : route('bike.show', $uuid),
-            self::YACHT => checkPersonalQuotes($this->value) ? route('yacht-quotes-show', $uuid) : route('yacht.show', $uuid),
-            self::TRAVEL => checkPersonalQuotes($this->value) ? route('travel-quotes-show', $uuid) : route('travel.show', $uuid),
-            self::PET => checkPersonalQuotes($this->value) ? route('pet-quotes-show', $uuid) : route('pet.show', $uuid),
-            self::CYCLE => checkPersonalQuotes($this->value) ? route('cycle-quotes-show', $uuid) : route('cycle.show', $uuid),
-            self::JETSKI => checkPersonalQuotes($this->value) ? route('jetski-quotes-show', $uuid) : route('jetski.show', $uuid),
-            self::CORPLINE => checkPersonalQuotes($this->value) ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
-            self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
+            self::CAR => $isPersonalQuote ? route('car-quotes-show', $uuid) : route('car.show', $uuid),
+            self::HOME => $isPersonalQuote ? route('home-quotes-show', $uuid) : route('home.show', $uuid),
+            self::HEALTH => $isPersonalQuote ? route('health-quotes-show', $uuid) : route('health.show', $uuid),
+            self::LIFE => $isPersonalQuote ? route('life-quotes-show', $uuid) : (Route::has('life.show') ? route('life.show', $uuid) : route('life-quotes-show', $uuid)),
+            self::BUSINESS => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
+            self::BIKE => $isPersonalQuote ? route('bike-quotes-show', $uuid) : route('bike.show', $uuid),
+            self::YACHT => $isPersonalQuote ? route('yacht-quotes-show', $uuid) : route('yacht.show', $uuid),
+            self::TRAVEL => $isPersonalQuote ? route('travel-quotes-show', $uuid) : route('travel.show', $uuid),
+            self::PET => $isPersonalQuote ? route('pet-quotes-show', $uuid) : route('pet.show', $uuid),
+            self::CYCLE => $isPersonalQuote ? route('cycle-quotes-show', $uuid) : route('cycle.show', $uuid),
+            self::JETSKI => $isPersonalQuote ? route('jetski-quotes-show', $uuid) : route('jetski.show', $uuid),
+            self::CORPLINE => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
+            self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
+            self::SAVINGS => route('savings-quotes-show', $uuid),
         };
     }
 
@@ -260,27 +272,28 @@ enum QuoteTypes: string
         };
     }
 
-    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
+    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false, bool $sicAdvisorRequested = false)
     {
-        LoggerService::startQuoteLogging($uuid);
+        LoggerService::startQuoteLogging($this->refId($uuid), LoggerFeatureEnum::ALLOCATION);
 
         $allocationService = match ($this) {
-            self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
-            self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
+            self::CAR => new CarAllocation($uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),
+            self::HEALTH => new HealthAllocation($uuid, overrideAdvisorId: $overrideAdvisorId),
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
-            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $this->getTracker(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, $uuid, $teamId), $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::TRAVEL => new TravelAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::PET => new PetAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::LIFE => new LifeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::CORPLINE => new CorplineAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::SAVINGS => new SavingsAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             default => null,
         };
 
         if ($allocationService) {
-            return $allocationService->executeSteps();
+            return $allocationService->execute();
         }
 
         return $allocationService;
@@ -299,7 +312,9 @@ enum QuoteTypes: string
             self::LIFE => [RolesEnum::LifeAdvisor],
             self::CORPLINE => [RolesEnum::CorpLineAdvisor],
             self::HOME => [RolesEnum::HomeAdvisor],
+            self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
+            self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             default => [],
         };
     }
@@ -350,6 +365,14 @@ enum QuoteTypes: string
                 return BusinessQuote::class;
             case self::getId(self::TRAVEL):
                 return TravelQuote::class;
+            case self::getId(self::YACHT):
+                return YachtQuote::class;
+            case self::getId(self::BIKE):
+                return BikeQuote::class;
+            case self::getId(self::CYCLE):
+                return CycleQuote::class;
+            case self::getId(self::JETSKI):
+                return JetskiQuote::class;
             default:
                 return PersonalQuote::class;
         }
@@ -389,6 +412,7 @@ enum QuoteTypes: string
             self::CORPLINE => [],
             self::CAR_REVIVAL => [],
             self::CAR_BIKE => [],
+            self::SAVINGS => [],
             default => [],
         };
     }

@@ -54,6 +54,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  required: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -62,7 +66,6 @@ const selectedData = computed({
   },
   set(newValue) {
     emit('update:modelValue', newValue);
-    return;
   },
 });
 
@@ -81,12 +84,14 @@ const iconPosition = computed(() => {
     :disabled="props.disabled"
     position="left"
     class="w-full"
-    auto-apply
     :clearable="!props.disabled"
     :range="range"
     text-input
+    :teleport-center="false"
+    teleport="body"
   >
-    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
+    <!-- auto-apply -->
+    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput, onPaste }">
       <x-input
         :model-value="value"
         :label="props.label"
@@ -99,11 +104,13 @@ const iconPosition = computed(() => {
         :tooltip="props.tooltip"
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
-        @keydown.tab="onTab"
         @update:modelValue="onInput"
-        @blur="onBlur"
         @keydown.enter.prevent="onEnter"
+        @blur="onBlur"
+        @keydown.tab="onTab"
+        @paste="onPaste"
         :error="props.error"
+        :required="props.required"
       />
     </template>
   </x-datepicker>
@@ -116,7 +123,6 @@ const iconPosition = computed(() => {
 
 .dp__icon.dp__clear_icon {
   @apply !text-orange-500;
-  top: v-bind(iconPosition) !important;
 }
 
 .dp__cell_disabled {

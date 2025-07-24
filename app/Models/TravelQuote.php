@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
@@ -37,6 +39,9 @@ class TravelQuote extends Model implements AuditableContract
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'start_date' => FilterTypes::DATE,
+        'end_date' => FilterTypes::DATE,
+        'assignment_type' => FilterTypes::EXACT,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -45,6 +50,11 @@ class TravelQuote extends Model implements AuditableContract
         'insurer_api_status',
         'api_issuance_status',
         'insurer_api_email_action',
+        'insurer_aml_status_text',
+        'previous_policy_expiry_date_formatted',
+        'dob_formatted',
+        'pc_qualified_formatted',
+        'assignment_type_text',
     ];
 
     protected static function booted()
@@ -100,9 +110,19 @@ class TravelQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
+    public function amlAutomation()
+    {
+        return $this->belongsTo(AmlAutomation::class, 'code', 'code');
+    }
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function paymentSplits()
+    {
+        return $this->hasMany(PaymentSplits::class, 'code', 'code');
     }
 
     public function plan()
@@ -229,7 +249,7 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 
-    public function TravelDestinations()
+    public function travelDestinations()
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
     }
@@ -317,5 +337,61 @@ class TravelQuote extends Model implements AuditableContract
     public function isSenior()
     {
         return $this->customerMembers->where('age', '>=', 65)->count() > 0;
+    }
+
+    public function renewalBatch()
+    {
+        return $this->belongsTo(renewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
+
+    public function isPaymentAuthorizedOrPaymentLinkRequested()
+    {
+        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    // TODO:: Need to verify this function
+    public function insured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id, relation between travel_quote and customer_insured
+            'id', // insured.id
+            'id', // travel_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Travel);
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // travel_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
+            ->latest('customer_insured.updated_at');
+    }
+
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
+
+    /**
+     * Get quote tags for this car quote
+     */
+    public function quoteTags()
+    {
+        return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Travel);
     }
 }

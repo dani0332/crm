@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LostReasonEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -54,6 +55,26 @@ trait Reportable
         ];
     }
 
+    public function getLostStatuses()
+    {
+        return [
+            QuoteStatusEnum::Lost,
+        ];
+    }
+
+    public function getLostReasons()
+    {
+        return [
+            LostReasonEnum::UNRESPONSIVE_VIA_EMAIL,
+            LostReasonEnum::ALREADY_PURCHASED_INSURANCE_ELSEWHERE,
+            LostReasonEnum::SHOPPING_AROUND,
+            LostReasonEnum::OUTSIDE_OF_BUDGET,
+            LostReasonEnum::NO_VALID_VISA,
+            LostReasonEnum::UNINSURABLE_DUE_TO_MEDICAL_REASONS,
+            LostReasonEnum::UNINSURABLE_DUE_TO_AGE,
+        ];
+    }
+
     public function getInProgressStatuses()
     {
         return [
@@ -65,6 +86,19 @@ trait Reportable
             QuoteStatusEnum::PaymentPending,
             QuoteStatusEnum::AMLScreeningCleared,
             QuoteStatusEnum::PendingQuote,
+        ];
+    }
+
+    public function getInProgressHealthStatuses()
+    {
+        return [
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::InNegotiation,
+            QuoteStatusEnum::ApplicationPending,
+            QuoteStatusEnum::MissingDocumentsRequested,
+            QuoteStatusEnum::ApplicationSubmitted,
+            QuoteStatusEnum::KYCCleared,
+            QuoteStatusEnum::PaymentPending,
         ];
     }
 
@@ -140,6 +174,7 @@ trait Reportable
             quoteTypeCode::Home => quoteTypeCode::Home,
             quoteTypeCode::CORPLINE => quoteTypeCode::CORPLINE,
             quoteTypeCode::GroupMedical => quoteTypeCode::GroupMedical,
+            quoteTypeCode::SAVINGS => quoteTypeCode::SAVINGS,
 
         ];
     }
@@ -158,6 +193,7 @@ trait Reportable
             quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
         ];
 
         // Return the filter options with their visibility settings

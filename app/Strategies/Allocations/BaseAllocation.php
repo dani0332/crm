@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -10,15 +11,21 @@ use App\Enums\UserStatusEnum;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
+use App\Services\Logger\LoggerService;
+use App\Services\NationalityAllocationService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-abstract class BaseAllocation extends AllocationService
+abstract class BaseAllocation extends AllocationService implements Allocation
 {
     abstract protected function fetchAdvisor(int $onlineStatus);
 
     protected $lead;
+    protected bool $hasNationalityConfig = false;
+    protected array $advisorIDs = [];
+    protected array $excludedAdvisorIds = [];
 
     public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
@@ -27,7 +34,7 @@ abstract class BaseAllocation extends AllocationService
         return in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id();
     }
 
-    public function executeSteps()
+    public function execute()
     {
         $response = [
             'advisorId' => 0,
@@ -36,19 +43,20 @@ abstract class BaseAllocation extends AllocationService
         ];
 
         try {
-            info(self::class.' - executeSteps: Allocation Started');
+            LoggerService::info(self::class.' - execute: Allocation Started');
             $this->resolveLead();
 
             if (! $this->lead) {
-                info(self::class.' - executeSteps: Lead not found');
+                LoggerService::info(self::class.' - execute: Lead not found');
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = $this->fetchAvailableAdvisor();
 
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
+                    $this->sendNonAdvisorEmail();
 
-                    info(self::class.' - executeSteps: No advisor found');
+                    LoggerService::info(self::class.' - execute: No advisor found');
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
@@ -60,8 +68,8 @@ abstract class BaseAllocation extends AllocationService
             $this->leadAllocationFailed($this->uuid, $this->quoteType);
 
             $message = $th->getMessage() ?? '';
-            info('exception occurred in lead allocation with error : '.$message);
-            info('exception occurred in lead allocation with error stack as  : '.$th->getTraceAsString());
+            LoggerService::error('exception occurred in lead allocation with error : '.$message);
+            LoggerService::error('exception occurred in lead allocation with error stack as  : '.$th->getTraceAsString());
             $response = $this->createResponse(0, "exception occurred in lead allocation with error : {$message}", Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -86,7 +94,14 @@ abstract class BaseAllocation extends AllocationService
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
     {
-        return User::select('users.id as user_id')
+        Log::info('BaseAllocation: Starting getAdvisorBaseQuery', [
+            'onlineStatus' => $onlineStatus,
+            'roles' => $roles,
+            'quoteTypeId' => $this->getQuoteTypeId(),
+            'teamId' => $this->teamId,
+        ]);
+
+        $query = User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
@@ -99,13 +114,26 @@ abstract class BaseAllocation extends AllocationService
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->getQuoteTypeId())
+            ->when(
+                $this->hasNationalityConfig,
+                fn ($q) => $q->whereIn('users.id', $this->advisorIDs),
+                function ($q) {
+                    if (! empty($this->excludedAdvisorIds)) {
+                        $q->whereNotIn('users.id', $this->excludedAdvisorIds);
+                    }
+                },
+            )
             ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
+
+        LoggerService::sql('BaseAllocation: getAdvisorBaseQuery', $query);
+
+        return $query;
     }
 
     public function fetchAvailableAdvisor()
     {
-        info(self::class." - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId}");
+        LoggerService::info(self::class." - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -116,12 +144,14 @@ abstract class BaseAllocation extends AllocationService
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
+        $this->resolveNationalityConfig();
+
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status}");
+            LoggerService::info(self::class." - trying to get advisors with current status as {$status}");
             $eligibleUser = $this->fetchAdvisor($status);
 
             if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
+                LoggerService::info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
                 return User::find($eligibleUser->user_id);
             }
@@ -135,20 +165,27 @@ abstract class BaseAllocation extends AllocationService
         DB::beginTransaction();
         try {
             $assignmentType = $this->isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
-            info(self::class.' - assignLead: Going to Assign Advisor');
+            LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
             $previousAssignmentType = $this->lead->assignment_type;
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
             $this->lead->assignment_type = $assignmentType;
+            LoggerService::info(self::class.' - assignLead: Checking lead_assignment_trigger', extra: [
+                'current_value' => $this->lead->lead_assignment_trigger ?? 'null',
+            ]);
+            if (empty($this->lead->lead_assignment_trigger)) {
+                LoggerService::info(self::class.' - assignLead: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+                $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+            }
             $quoteBatch = QuoteBatches::latest()->first();
             $this->lead->quote_batch_id = $quoteBatch->id;
             $this->lead->save();
-            info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
+            LoggerService::info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
             $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
 
             if ($this->lead->source != LeadSourceEnum::REFERRAL) {
-                info(self::class.' - lead source is not referral so about to update allocation record');
+                LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
                 if ($assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED) {
                     $this->addAllocationCounts($advisor->id, $this->getQuoteTypeId());
                 } else {
@@ -158,18 +195,85 @@ abstract class BaseAllocation extends AllocationService
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($e->getMessage());
+            LoggerService::error($e->getMessage());
         }
     }
 
     private function updateQuoteDetail()
     {
-        info(self::class.' - about to update quote detail record');
+        LoggerService::info(self::class.' - about to update quote detail record');
 
         $oldAdvisorAssignedDate = $this->lead->quoteDetail?->advisor_assigned_date ?? '';
 
         $this->upsertQuoteDetail($this->lead->id, $this->quoteType->detailModel(), $this->quoteType->model()->getForeignKey());
 
         return $oldAdvisorAssignedDate;
+    }
+
+    protected function getAdvisorEmails($storageKey)
+    {
+        $emails = getAppStorageValueByKey($storageKey, useCache: true);
+
+        if (empty($emails)) {
+            return [];
+        }
+
+        $emails = explode(',', $emails);
+        $emails = array_map('trim', $emails);
+        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
+
+        LoggerService::info(self::class.' - Advisor Emails fetched', ['count' => count($emails), 'advisors' => $emails]);
+
+        return $emails;
+    }
+
+    private function resolveNationalityConfig()
+    {
+        $config = NationalityAllocationService::find($this->quoteType, $this->lead->nationality_id);
+
+        if ($config) {
+            $this->hasNationalityConfig = true;
+            $this->advisorIDs = NationalityAllocationService::getUserIDs($config);
+            LoggerService::info(self::class." - Nationality Config found for Nationality ID: {$this->lead->nationality_id} | Advisor IDs: ".implode(', ', $this->advisorIDs));
+        } else {
+            $this->resolveExcludedAdvisorIds();
+        }
+
+        return $config;
+    }
+
+    private function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->quoteType);
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->excludedAdvisorIds = $excludedAdvisorIds;
+    }
+
+    private function sendNonAdvisorEmail()
+    {
+        $lobsToSend = [QuoteTypes::SAVINGS];
+
+        if (! in_array($this->quoteType, $lobsToSend)) {
+            return;
+        }
+
+        if ($this->lead->isNonAdvisorEmailSent()) {
+            LoggerService::info(self::class.' - Non Advisor Email already sent to customer');
+
+            return;
+        }
+
+        app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+            $this->lead,
+            $this->quoteType->value,
+            isNonAdvisorEmail: true,
+        );
+
+        $this->lead->touch('non_advisor_email_sent_at');
+        LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
@@ -19,8 +20,10 @@ use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\EmbeddedTransaction;
+use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
@@ -167,7 +170,6 @@ function cleanString($string)
 
 function getDataAgainstStatus($modelType, $statusId, Request $request)
 {
-    // dd($request->all());
     $result = [];
 
     if (! $modelType) {
@@ -241,6 +243,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
         }
+        if ($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('sum_insured_value');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -251,6 +256,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
+        if ($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->sum('sum_insured_value');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
@@ -516,6 +524,8 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
+            QuoteTypes::SAVINGS->value,
+            QuoteTypes::HOME->value,
         ]);
     }
 }
@@ -580,8 +590,8 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
         // Remove spaces from the mobile number
         $mobile = str_replace(' ', '', $mobile);
 
-        // If the number starts with +971, 971, 92, or 91, return it as is
-        if (preg_match('/^(?:\+?971|92|91)/', $mobile)) {
+        // If the number starts with +971, 971,+92, 92, or +91 91, return it as is
+        if (preg_match('/^(?:\+?971|971|\+?92|\+?91|92|91)/', $mobile)) {
             return ltrim($mobile, '+'); // Remove '+' if present, but keep the number unchanged
         }
 
@@ -663,9 +673,10 @@ if (! function_exists('checkModifiedRecord')) {
 if (! function_exists('dateQueryFilter')) {
     function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
     {
-        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
-        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
-        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        $dateFormat = config('constants.DATE_FORMAT_ONLY') ?: 'Y-m-d';
+        $firstDate = date($dateFormat.' 00:00:00', strtotime($firstDate));
+        $secondDate = date($dateFormat.' 23:59:59', strtotime($secondDate));
+        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH') ?: 'Y-m-d H:i:s');
 
         if ($clauseTypeBetween) {
             return [$firstDate, $secondDate];
@@ -691,9 +702,13 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
-    function getIMLogo($isPDF = false)
+    function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
+
+        if ($latest) {
+            $imLogo = 'images/im_logo_25k-hi.png';
+        }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
@@ -864,6 +879,10 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
 
+        if (isset($request->quote_status_id) && $request->quote_status_id != '') {
+            $partialQuery->where('quote_status_id', $request->quote_status_id);
+        }
+
         if (isset($request->first_name) && $request->first_name != '') {
             $partialQuery->where('first_name', $request->first_name);
         }
@@ -947,6 +966,29 @@ if (! function_exists('getCardViewRequestFilters')) {
             if (! empty($advisors)) {
                 $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             }
+        }
+
+        if (isset($request->advisor_id) && $request->advisor_id != '') {
+            $partialQuery->where('advisor_id', $request->advisor_id);
+        }
+
+        // Handle policy expiry date range filter
+        if (! empty($request->policy_expiry_date) && ! empty($request->policy_expiry_date_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+
+            $partialQuery->whereBetween('policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+
+        // Handle investment frequency filter for PersonalQuote (Savings)
+        if ($modelType == PersonalQuote::class && isset($request->investment_frequency) && $request->investment_frequency != '') {
+            $partialQuery->whereHas('savingsQuote', function ($q) use ($request) {
+                $q->where('investment_criteria_id', $request->investment_frequency);
+            });
+        }
+
+        if ($request->has('private_client') && $request->filled('private_client')) {
+            $partialQuery->filterByPrivateClient($request->private_client);
         }
     }
 }
@@ -1211,19 +1253,22 @@ if (! function_exists('getAssignmentTypeText')) {
                 $assignmentText = 'System Assigned';
                 break;
             case 2:
-                $assignmentText = 'System ReAssigned';
+                $assignmentText = 'System Reassigned';
                 break;
             case 3:
                 $assignmentText = 'Manual Assigned';
                 break;
             case 4:
-                $assignmentText = 'Manual ReAssigned';
+                $assignmentText = 'Manual Reassigned';
                 break;
             case 5:
                 $assignmentText = 'Bought Lead';
                 break;
             case 6:
-                $assignmentText = 'ReAssigned as Bought Lead';
+                $assignmentText = 'Reassigned as Bought Lead';
+                break;
+            case 7:
+                $assignmentText = 'Self Assigned';
                 break;
             default:
                 break;
@@ -1338,7 +1383,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer_addresses.city as courier_address_city',
                 'customer_addresses.landmark as courier_address_landmark',
             ])
-                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel]), function ($q) use ($table, $quoteTypeId) {
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1347,6 +1392,20 @@ if (! function_exists('getCourierQuote')) {
                             QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
                             default => "{$table}.emirate_of_registration_id"
                         });
+                })
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])->leftJoin('home_quote_request', function (JoinClause $join) use ($table) {
+                        $join->on('home_quote_request.personal_quote_id', '=', "{$table}.id")
+                            ->leftJoin('sub_areas', function (JoinClause $subJoin) {
+                                $subJoin->on('sub_areas.id', '=', 'home_quote_request.sub_area_id')
+                                    ->leftJoin('emirates', function (JoinClause $sub) {
+                                        $sub->on('emirates.id', '=', 'sub_areas.emirates_id');
+                                    });
+                            });
+                    });
                 })
                 ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
                     $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
@@ -1384,6 +1443,12 @@ if (! function_exists('getCourierQuote')) {
 
                 if ($quoteAdditionalDetail) {
                     $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+                }
+
+                if ($quoteTypeId == QuoteTypeId::Travel) {
+                    $emirate = Emirate::where('text', $quote->courier_address_city)->first();
+                    $quote->emirate_text = $emirate?->text ?? null;
+                    $quote->emirate_code = $emirate?->code ?? null;
                 }
 
                 return [
@@ -1533,7 +1598,7 @@ if (! function_exists('getInsuranceProvider')) {
     function getInsuranceProvider($payment, $quoteType, $quote = null)
     {
         $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value];
         $planRelationName = strtolower($quoteType).'Plan';
 
         //        Reminder:: Add Commercial vehicle logic for fetch correct provider
@@ -1548,10 +1613,11 @@ if (! function_exists('getInsuranceProvider')) {
 
             if (! empty($quoteDetails)) {
                 $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
-                $isCommercialVehicle = app(\App\Services\LeadAllocationService::class)->isCommercialVehicles($quoteDetails);
                 $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
 
-                if ($isCommercialVehicle || ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD && $vehicleType == strtoupper(QuoteTypes::BIKE->value))) {
+                if ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD
+                && $vehicleType == strtoupper(QuoteTypes::BIKE->value)
+                && $quoteDetails?->registration_type === CarRegistrationType::PERSONAL) {
                     return $payment?->insuranceProvider;
                 }
             }

@@ -14,8 +14,11 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
+use Exception;
+use Illuminate\Http\Response;
 
 class AllocationService extends BaseService
 {
@@ -78,7 +81,7 @@ class AllocationService extends BaseService
 
             return $leadAllocation;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error($e->getMessage());
         }
     }
 
@@ -88,7 +91,7 @@ class AllocationService extends BaseService
         if (! empty($allocationRecord)) {
             $allocationRecord->adjustAssignmentCounts($isBuyLead);
         } else {
-            info('Allocation record not found against advisor');
+            LoggerService::info('Allocation record not found against advisor');
         }
     }
 
@@ -110,7 +113,7 @@ class AllocationService extends BaseService
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        LoggerService::info('Previous assignment type is : '.$previousAssignmentType);
 
         if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD])) {
             BuyLeadRequestLog::reAssign($quoteTypeId, $lead, $newAdvisorId, $previousAdvisorId);
@@ -120,7 +123,7 @@ class AllocationService extends BaseService
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor
-        info('adjust Allocation Quote Type Id : '.$quoteTypeId);
+        LoggerService::info('adjust Allocation Quote Type Id : '.$quoteTypeId);
         $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor
@@ -261,21 +264,22 @@ class AllocationService extends BaseService
         }
     }
 
-    public function createResponse(int $advisorId, string $message, int $status, ?int $tierId = null): array
+    public function createResponse(int $advisorId, string $message, int $status, ?Tier $tier = null): array
     {
         $resp = [
             'advisorId' => $advisorId,
             'message' => $message,
-            'tierId' => $tierId,
             'status' => $status,
         ];
 
-        if (! $tierId) {
-            unset($resp['tierId']);
+        if ($tier) {
+            $resp['tierId'] = $tier->id;
+            $resp['tierName'] = $tier->name;
         }
 
         return $resp;
     }
+
     public function shouldProceedWithReAllocation($allocationSwitchName)
     {
         // Fetch reassignment start and end times
@@ -284,7 +288,7 @@ class AllocationService extends BaseService
 
         // Check if current time is within reassignment window and master switch is ON
         $shouldProceed = now()->between($startTime, $endTime) && (config($allocationSwitchName) == 1);
-        info('Reassignment with current time check: '.$shouldProceed);
+        LoggerService::info('Reassignment with current time check: '.$shouldProceed);
         // Fetch public holiday start and end
         $publicHolidayStart = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_START_DATE);
         $publicHolidayEnd = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE);
@@ -297,8 +301,62 @@ class AllocationService extends BaseService
             // Ensure the current time is not within the public holiday period
             $shouldProceed = $shouldProceed && ! now()->between($publicHolidayStartDateTime, $publicHolidayEndDateTime);
         }
-        info('Reassignment with public holiday check: '.$shouldProceed);
+        LoggerService::info('Reassignment with public holiday check: '.$shouldProceed);
 
         return $shouldProceed;
+    }
+
+    public function resolveAllocationResponse(AllocationRequest $request, ?Exception $exception = null): array
+    {
+        if ($lead = $request->getLead()) {
+            $lead->endAllocation();
+        }
+
+        $request->endBuyLeadProcessing();
+
+        if ($request->isEvaluateTierOnlyRequest() && $request->getTier()) {
+            $tier = $request->getTier();
+
+            return [
+                'advisorId' => $lead->advisor_id,
+                'message' => 'Tier evaluated successfully',
+                'status' => Response::HTTP_OK,
+                'tierId' => $tier->id,
+                'tierName' => $tier->name,
+            ];
+        }
+
+        if ($request->isAllocated() || $request->isSameAdvisor()) {
+            $message = 'Advisor assigned successfully!';
+
+            if ($request->isSameAdvisor()) {
+                $message = 'Found same advisor as previous advisor so further allocation is skipped';
+            }
+
+            $data = [
+                'advisorId' => $request->getAdvisor()?->id ?? $lead?->advisor_id,
+                'message' => $message,
+                'status' => Response::HTTP_OK,
+            ];
+
+            $tier = $request->getTier();
+
+            if ($tier) {
+                $data['tierId'] = $tier->id;
+                $data['tierName'] = $tier->name;
+            }
+
+            return $data;
+        }
+
+        if ($request->isFailed()) {
+            $this->leadAllocationFailed($request->getQuoteUUID(), $request->getQuoteType());
+        }
+
+        return [
+            'advisorId' => 0,
+            'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
+            'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
+        ];
     }
 }

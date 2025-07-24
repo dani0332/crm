@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BusinessQuoteRepository extends BaseRepository
@@ -30,8 +31,16 @@ class BusinessQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
+
         $query = $this->with([
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
@@ -49,25 +58,25 @@ class BusinessQuoteRepository extends BaseRepository
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
         )), function ($query) {
-            $query->where('advisor_id', \auth()->user()->id);
+            $query->where('advisor_id', auth()->id());
         })->when(($quoteType == quoteTypeCode::CORPLINE && (
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
         )), function ($query) {
-            $query->where('advisor_id', auth()->user()->id);
+            $query->where('advisor_id', auth()->id());
         })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(! $forExport, $forTotalLeadsCount, $requestParams)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-        $this->adjustQueryByDateFilters($query, 'business_quote_request');
+        $this->adjustQueryByDateFilters($query, 'business_quote_request', $requestParams);
         $query->orderBy('business_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query : $query->simplePaginate();
     }
 
     /**
@@ -75,6 +84,7 @@ class BusinessQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($queryWhere)
     {
+        $quoteTypeId = QuoteTypes::BUSINESS->id();
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
@@ -83,6 +93,10 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
+                'latestInsured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
+                'latestInsured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
@@ -102,9 +116,10 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
+
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
 
         return $quote;
     }

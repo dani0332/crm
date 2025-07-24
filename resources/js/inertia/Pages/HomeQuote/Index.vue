@@ -1,14 +1,13 @@
 <script setup>
+// Test comment for Cursor rule - testing pre-commit hook
+// Another test comment to trigger "Build Vue assets before commit" rule
+// Testing git hook implementation
 defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
   renewalBatches: Array,
   isManualAllocationAllowed: Boolean,
-  totalCount: {
-    type: Number,
-    default: 0,
-  },
   authorizedDays: Number,
   insurerAMLStatus: Array,
 });
@@ -87,6 +86,11 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ]);
 
 const filters = reactive({
@@ -110,10 +114,10 @@ const filters = reactive({
   policy_expiry_date_end: '',
   payment_due_date: '',
   booking_date: '',
-  last_modified_date: null,
   advisor_assigned_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  private_client: 'all',
 });
 
 const canExport = ref(false);
@@ -141,34 +145,99 @@ const leadStatusOptions = computed(() => {
 });
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
+  let options = [
+    {
+      value: '-1',
+      label: 'UnAssigned',
+    },
+  ];
+
+  options.push(
+    ...page.props.advisors.map(advisor => ({
+      value: advisor.id,
+      label: advisor.name,
+    })),
+  );
+
+  return options;
 });
 
 const renewalBatchOptions = computed(() => {
-  return page.props.renewalBatches.map(batch => ({
+  return page.props?.renewalBatches?.map(batch => ({
     value: batch.id,
     label: batch.name,
   }));
 });
 
 const exportLoader = ref(false);
-const onDataExport = () => {
+const onDataExport = (exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
+  filters.exportType = exportType;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'),
+    exportType: exportType,
     url: url + '?' + new URLSearchParams(data).toString(),
   };
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    if (result)
+
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start an export',
+        position: 'top',
+      });
       setTimeout(() => {
         exportLoader.value = false;
       }, 1000);
-  });
+      throw err;
+    });
 };
 
 function onSubmit(isValid) {
@@ -187,7 +256,7 @@ function onSubmit(isValid) {
 
     filtersCount.value = Object.keys(filtersCleaned).length;
 
-    router.visit(route('home.index'), {
+    router.visit(route('home-quotes-list'), {
       method: 'get',
       data: {
         ...filtersCleaned,
@@ -199,13 +268,12 @@ function onSubmit(isValid) {
       onFinish: () => (loader.table = false),
     });
   } else {
-    console.log('Invalid');
   }
 }
 
 function onReset() {
   removedSavedParams();
-  router.visit(route('home.index'), {
+  router.visit(route('home-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -368,6 +436,7 @@ const resetDateFilters = filterName => {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
     booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
     created_at: ['booking_date', 'payment_due_date'],
+    previous_quote_policy_number: ['created_at_start', 'created_at_end'],
   };
 
   const filtersToReset =
@@ -380,10 +449,15 @@ const resetDateFilters = filterName => {
 };
 
 [
-  'payment_due_date',
-  'booking_date',
+  'email',
+  'mobile_no',
+  'code',
   'created_at_start',
   'created_at_end',
+  'renewal_batch',
+  'previous_quote_policy_number',
+  'payment_due_date',
+  'booking_date',
 ].forEach(filterName => {
   watch(
     () => filters[filterName],
@@ -412,11 +486,6 @@ const formatDate = dateString =>
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Home List</h2>
-        <!-- PD Revert
-          <LeadsCount
-          :leadsCount="$page.props.totalCount"
-          :key="$page.props.totalCount"
-        /> -->
       </template>
       <template #default>
         <ColumnSelection
@@ -432,7 +501,7 @@ const formatDate = dateString =>
           @toggleFilters="showFilters = !showFilters"
         />
 
-        <Link :href="route('home-cardView')">
+        <Link :href="route('home-quotes-card')">
           <x-button
             size="sm"
             color="#1d83bc"
@@ -443,7 +512,7 @@ const formatDate = dateString =>
           </x-button>
         </Link>
 
-        <Link :href="route('home.create')">
+        <Link :href="route('home-quotes-create')">
           <x-button
             size="sm"
             color="#ff5e00"
@@ -455,34 +524,6 @@ const formatDate = dateString =>
         </Link>
       </template>
     </StickyHeader>
-    <!-- <div class="flex justify-between items-center">
-      <div class="flex items-center gap-5">
-        <h2 class="text-xl font-semibold">Home List</h2>
-        <LeadsCount :leadsCount="$page.props.totalCount" />
-      </div>
-      <div class="flex space-x-2 items-center">
-        <ColumnSelection
-          v-model:columns="tableHeader"
-          storage-key="home-list"
-        />
-
-        <FiltersButton
-          :is-shown="showFilters"
-          :filters="filters"
-          :filters-count="filtersCount"
-          @selected-filters="handleSelectedFilters"
-          @toggleFilters="showFilters = !showFilters"
-        />
-
-        <Link :href="route('home-cardView')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
-        </Link>
-
-        <Link :href="route('home.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
-        </Link>
-      </div>
-    </div> -->
     <x-divider class="my-4" />
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -503,101 +544,143 @@ const formatDate = dateString =>
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            name="created_at_start"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
-        </x-field>
-        <x-field label="Lead Status">
-          <ComboBox
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-          />
-        </x-field>
-        <ComboBox
-          v-model="filters.insurer_aml_status"
-          label="Insurer AML Status"
-          name="insurer_aml_status"
-          :options="insurerAMLStatusOption"
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
         />
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
-        <x-field
-          label="Advisor"
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          label="Created Date End"
+        />
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <x-select
+          v-model="filters.quote_status_id"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          class="w-full"
+          filterable
+          label="Lead Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatusOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.insurer_aml_status"
+          name="insurer_aml_status"
+          placeholder="Search by Insurer AML Status"
+          :options="insurerAMLStatusOption"
+          class="w-full"
+          filterable
+          label="Insurer AML Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
+        <x-select
           v-if="
             !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor])
           "
+          v-model="filters.advisors"
+          name="advisor_id"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          filterable
+          label="Advisor"
+          multiple
+          truncate
         >
-          <ComboBox
-            v-model="filters.advisors"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-          />
-        </x-field>
-        <x-field label="Renewal">
-          <x-select
-            v-model="filters.is_renewal"
-            placeholder="Search by Renewal"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 'Yes', label: 'Yes' },
-              { value: 'No', label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.is_renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+          label="Renewal"
+        />
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
@@ -606,12 +689,27 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Policy Number"
         />
-        <ComboBox
+        <x-select
           v-model="filters.renewal_batches"
-          label="Renewal Batch"
           placeholder="Search by Renewal Batch"
+          label="Renewal Batch"
           :options="renewalBatchOptions"
-        />
+          multiple
+          truncate
+          filterable
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batches = renewalBatchOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.renewal_batches = []"
+            />
+          </template>
+        </x-select>
 
         <DatePicker
           v-model="filters.payment_due_date"
@@ -628,13 +726,6 @@ const formatDate = dateString =>
           range
           multi-calendars
           multi-calendars-solo
-        />
-        <DatePicker
-          v-model="filters.last_modified_date"
-          name="created_at_start"
-          label="Last Modified Date"
-          range
-          format="dd-MM-yyyy"
         />
         <DatePicker
           v-if="hasRole(rolesEnum.HomeManager)"
@@ -664,6 +755,19 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -673,12 +777,27 @@ const formatDate = dateString =>
             color="emerald"
             :loading="exportLoader"
             @click.prevent="onDataExport"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+            class="justify-self-start mr-3"
+          >
+            Export via email
+          </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or policy expiry dates or payment due date or
@@ -754,7 +873,7 @@ const formatDate = dateString =>
     >
       <template #item-code="{ code, uuid, stale_at, price_with_vat }">
         <Link
-          :href="route('home.show', uuid)"
+          :href="route('home-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>
@@ -762,26 +881,27 @@ const formatDate = dateString =>
         </Link>
       </template>
       <template #item-authorized_at="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ item.authorized_at }}
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ item?.payments[0]?.authorized_at }}
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ daysAgoFromAuthorizedDate(item.payments[0].authorized_at) }}
         </p>
       </template>
-      <template
-        #item-previous_policy_expiry_date="{
-          previous_policy_expiry_date,
-          source,
-        }"
-      >
+      <template #item-previous_policy_expiry_date="item">
         {{
-          source === 'Renewal_upload'
-            ? formatDate(previous_policy_expiry_date)
+          item?.source === 'Renewal_upload'
+            ? formatDate(item?.previous_policy_expiry_date)
             : ''
         }}
+      </template>
+      <template #item-quote_status_id_text="item">
+        {{ item?.quote_status?.text }}
+      </template>
+      <template #item-advisor_id_text="item">
+        {{ item?.advisor?.name }}
       </template>
       <template #item-renewal_batch_text="item">
         <p>

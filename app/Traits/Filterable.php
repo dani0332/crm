@@ -3,10 +3,12 @@
 namespace App\Traits;
 
 use App\Builders\QueryBuildable;
+use App\Enums\QuoteStatusEnum;
+use Carbon\Carbon;
 
 trait Filterable
 {
-    use QueryBuildable;
+    use ContextAwareFiltering, QueryBuildable;
 
     private function getAlias($alias = null)
     {
@@ -45,7 +47,6 @@ trait Filterable
                 $this->applyFilter($query, 'advisor_id', $ids, $alias);
             }
         });
-
     }
 
     public function scopeFilterByBatches($query, $id, $alias = null)
@@ -81,19 +82,66 @@ trait Filterable
         });
     }
 
-    public function scopeFilterByAdvisorAssignedDates($query, string $relation, array $filterNames)
+    public function scopeResolveData($query, bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
     {
-        [$startDateFilterName, $endDateFilterName] = $filterNames;
+        return $query
+            ->when(
+                $getTotalCount,
+                fn ($q) => $q->count(),
+                fn ($query) => $query->when(
+                    $forExport,
+                    fn ($q) => $q->get(),
+                    fn ($q) => $q->when($paginted, fn ($sq) => $sq->simplePaginate(10)->withQueryString())
+                )
+            );
+    }
 
-        $query->when(request()->filled($startDateFilterName) && ! request()->filled($endDateFilterName), function ($query) use ($relation, $startDateFilterName) {
-            $query->whereRelation($relation, 'advisor_assigned_date', '>=', $this->parseDate(request($startDateFilterName), true));
-        })->when(! request()->filled($startDateFilterName) && request()->filled($endDateFilterName), function ($query) use ($relation, $endDateFilterName) {
-            $query->whereRelation($relation, 'advisor_assigned_date', '<=', $this->parseDate(request($endDateFilterName), false));
-        })->when(request()->filled($startDateFilterName) && request()->filled($endDateFilterName), function ($query) use ($relation, $startDateFilterName, $endDateFilterName) {
-            $query->whereHas($relation, function ($query) use ($startDateFilterName, $endDateFilterName) {
-                $query->whereBetween('advisor_assigned_date', [$this->parseDate(request($startDateFilterName), true), $this->parseDate(request($endDateFilterName), false)]);
-            });
+    public function scopeFilterByCreatedAt($query, $start, $end, $alias = null)
+    {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $defaultStartDate = now()->startOfDay();
+        $defaultEndDate = now()->endOfDay();
+
+        $start = $start ? Carbon::parse($start)->startOfDay() : $defaultStartDate;
+        $end = $end ? Carbon::parse($end)->endOfDay() : $defaultEndDate;
+
+        $start = $start->format($dateFormat);
+        $end = $end->format($dateFormat);
+
+        $query->when($start, function ($sq) use ($start, $alias) {
+            $sq->where("{$this->getAlias($alias)}.created_at", '>=', $start);
         });
+
+        $query->when($end, function ($sq) use ($end, $alias) {
+            $sq->where("{$this->getAlias($alias)}.created_at", '<=', $end);
+        });
+    }
+
+    public function scopeFilterByAdvisorAssignedDates($query, string $relation, array|string $filterNames, bool $verifyQuoteStatus = false)
+    {
+        $start = null;
+        $end = null;
+
+        if (is_array($filterNames)) {
+            [$startDateFilterName, $endDateFilterName] = $filterNames;
+            $start = request($startDateFilterName, null);
+            $end = request($endDateFilterName, null);
+        } elseif (is_string($filterNames) && request()->filled($filterNames)) {
+            [$start, $end] = request($filterNames);
+        }
+
+        $start = $start ? $this->parseDate($start, true) : null;
+        $end = $end ? $this->parseDate($end, false) : null;
+
+        $query->when(! empty($start) && empty($end), function ($query) use ($relation, $start) {
+            $query->whereRelation($relation, 'advisor_assigned_date', '>=', $start);
+        })->when(empty($start) && ! empty($end), function ($query) use ($relation, $end) {
+            $query->whereRelation($relation, 'advisor_assigned_date', '<=', $end);
+        })->when(! empty($start) && ! empty($end), function ($query) use ($relation, $start, $end) {
+            $query->whereHas($relation, function ($query) use ($start, $end) {
+                $query->whereBetween('advisor_assigned_date', [$start, $end]);
+            });
+        })->when($verifyQuoteStatus, fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]));
     }
 
     public function scopeFilterByPaymentDueDates($query, $filterName)
@@ -110,11 +158,14 @@ trait Filterable
         });
     }
 
-    public function applyByFilters($query, string $filterName, string $operator, ?string $column = null, bool $ignoreAll = false, bool $isBool = false)
+    public function applyByFilters($query, string $filterName, string $operator, ?string $column = null, bool $ignoreAll = false, bool $isBool = false, array $requestParams = [])
     {
-        $filterValue = request($filterName, ($operator === 'in' ? [] : ''));
+        // Handle parameter name variations for lead status
+        $requestParams = $this->mapParameterVariations($requestParams);
 
-        $hasFilter = request()->filled($filterName);
+        $filterValue = $this->getFilterValue($filterName, $requestParams) ?: ($operator === 'in' ? [] : '');
+
+        $hasFilter = $this->hasFilterValue($filterName, $requestParams);
 
         if ($isBool) {
             $filterValue = filter_var($filterValue, FILTER_VALIDATE_BOOLEAN);
@@ -145,19 +196,19 @@ trait Filterable
         });
     }
 
-    public function scopeFilterBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, bool $isBool = false)
+    public function scopeFilterBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, bool $isBool = false, array $requestParams = [])
     {
-        $this->applyByFilters($query, $filterName, '=', $column, $ignoreAll, $isBool);
+        $this->applyByFilters($query, $filterName, '=', $column, $ignoreAll, $isBool, $requestParams);
     }
 
-    public function scopeFilterIn($query, string $filterName, ?string $column = null, bool $ignoreAll = false)
+    public function scopeFilterIn($query, string $filterName, ?string $column = null, bool $ignoreAll = false, array $requestParams = [])
     {
-        $this->applyByFilters($query, $filterName, 'in', $column, $ignoreAll);
+        $this->applyByFilters($query, $filterName, 'in', $column, $ignoreAll, false, $requestParams);
     }
 
-    public function scopeMatchBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false)
+    public function scopeMatchBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, array $requestParams = [])
     {
-        $this->applyByFilters($query, $filterName, 'like', $column, $ignoreAll);
+        $this->applyByFilters($query, $filterName, 'like', $column, $ignoreAll, false, $requestParams);
     }
 
     public function scopeFilterByToday($query, $column = 'created_at')
@@ -165,11 +216,22 @@ trait Filterable
         $query->whereBetween($column, [$this->parseDate(now(), true), $this->parseDate(now(), false)]);
     }
 
-    public function scopeFilterByDateRange($query, $filterName, $column = null)
+    public function scopeFilterByDateRange($query, $filterName, $column = null, array $requestParams = [])
     {
+        // Handle parameter name variations for lead status
+        $requestParams = $this->mapParameterVariations($requestParams);
+
         $column = $this->resolveColumn($filterName, $column);
-        $query->when(request()->filled($filterName), function ($subQuery) use ($column, $filterName) {
-            [$start, $end] = request($filterName);
+        $hasFilter = $this->hasFilterValue($filterName, $requestParams);
+
+        $query->when($hasFilter, function ($subQuery) use ($column, $filterName, $requestParams) {
+            $filterValue = $this->getFilterValue($filterName, $requestParams);
+
+            if (is_array($filterValue) && count($filterValue) >= 2) {
+                [$start, $end] = $filterValue;
+            } else {
+                return; // Invalid date range format
+            }
 
             $start = $this->parseDate($start, true);
             $end = $this->parseDate($end, false);
@@ -178,11 +240,36 @@ trait Filterable
         });
     }
 
-    public function scopeFilterByDate($query, $filterName, $column = null, $isStartOfDay = true)
+    public function scopeFilterByDate($query, $filterName, $column = null, $isStartOfDay = true, array $requestParams = [])
     {
+        // Handle parameter name variations for lead status
+        $requestParams = $this->mapParameterVariations($requestParams);
+
         $column = $this->resolveColumn($filterName, $column);
-        $query->when(request()->filled($filterName), function ($subQuery) use ($column, $filterName, $isStartOfDay) {
-            $subQuery->where($column, $isStartOfDay ? '>=' : '<=', $this->parseDate(request($filterName), $isStartOfDay));
+        $hasFilter = $this->hasFilterValue($filterName, $requestParams);
+
+        $query->when($hasFilter, function ($subQuery) use ($column, $filterName, $isStartOfDay, $requestParams) {
+            $filterValue = $this->getFilterValue($filterName, $requestParams);
+            $subQuery->where($column, $isStartOfDay ? '>=' : '<=', $this->parseDate($filterValue, $isStartOfDay));
         });
     }
+
+    public function scopeToday($query, $column = 'created_at')
+    {
+        $query->whereDate($column, today());
+    }
+
+    public function scopeFilterByPrivateClient($query, $filter)
+    {
+        if (is_null($filter) || $filter == 'all') {
+            return;
+        }
+
+        $query->whereRelation('customer', function ($q) use ($filter) {
+            $filter == 'no'
+                ? $q->whereNull('pcp_tag')
+                : $q->where('pcp_tag', $filter);
+        });
+    }
+
 }

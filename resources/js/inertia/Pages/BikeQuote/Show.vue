@@ -166,15 +166,18 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: page.props.quote?.latest_insured?.customer_type,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured?.first_name || '',
-  insured_last_name: page.props.quote?.insured?.last_name || '',
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
@@ -360,97 +363,114 @@ function capitalizeString(str) {
 <template>
   <div>
     <Head title="Bike Quotes" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Bike Detail</h2>
+        <x-button
+          v-if="record?.customer?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
+      </template>
 
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Bike Detail</h2>
-      <div class="flex gap-2">
-        <Link
-          v-if="quote.quote_detail?.insly_id"
-          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-          preserve-scroll
-        >
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            View Legacy policy
-          </x-button>
-        </Link>
-        <Link
-          v-else-if="
-            quote.source == leadSource.RENEWAL_UPLOAD &&
-            canAny([
-              permissionsEnum.VIEW_LEGACY_DETAILS,
-              permissionsEnum.VIEW_ALL_LEADS,
-            ])
-          "
-          :href="
-            route(
-              'view-legacy-policy.renewal-uploads',
-              quote.previous_quote_policy_number,
-            )
-          "
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+      <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+        <div class="flex gap-2">
           <Link
-            v-if="!isDisabled"
-            :href="route('bike-quotes-edit', quote.uuid)"
+            v-if="quote.quote_detail?.insly_id"
+            :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+            preserve-scroll
           >
-            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+            <x-button
+              size="sm"
+              color="#ff5e00"
+              tag="div"
+              v-if="readOnlyMode.isDisable === true"
+            >
+              View Legacy policy
+            </x-button>
+          </Link>
+          <Link
+            v-else-if="
+              quote.source == leadSource.RENEWAL_UPLOAD &&
+              canAny([
+                permissionsEnum.VIEW_LEGACY_DETAILS,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                quote.previous_quote_policy_number,
+              )
+            "
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <LeadEditBtnTemplate v-slot="{ isDisabled }">
+            <Link
+              v-if="!isDisabled"
+              :href="route('bike-quotes-edit', quote.uuid)"
+            >
+              <x-button
+                size="sm"
+                tag="div"
+                v-if="readOnlyMode.isDisable === true"
+                >Edit</x-button
+              >
+            </Link>
+            <x-button v-else :disabled="isDisabled" size="sm" tag="div"
               >Edit</x-button
             >
+          </LeadEditBtnTemplate>
+
+          <x-tooltip
+            v-if="lockLeadSectionsDetails.lead_details"
+            placement="bottom"
+          >
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.BikeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+              :isDisabled="true"
+            />
+            <template #tooltip
+              >This lead is now locked as the policy has been booked. If changes
+              are needed, go to 'Send Update', select 'Add Update', and choose
+              'Correction of Policy'</template
+            >
+          </x-tooltip>
+          <template v-else>
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.BikeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+            />
+          </template>
+
+          <Link
+            v-if="can(permissionsEnum.BikeQuotesList)"
+            :href="route('bike-quotes-list')"
+            preserve-scroll
+          >
+            <x-button size="sm" color="primary" tag="div">
+              Bike Quotes
+            </x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
-            >Edit</x-button
-          >
-        </LeadEditBtnTemplate>
-
-        <x-tooltip
-          v-if="lockLeadSectionsDetails.lead_details"
-          placement="bottom"
-        >
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.BikeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-            :isDisabled="true"
-          />
-          <template #tooltip
-            >This lead is now locked as the policy has been booked. If changes
-            are needed, go to 'Send Update', select 'Add Update', and choose
-            'Correction of Policy'</template
-          >
-        </x-tooltip>
-        <template v-else>
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.BikeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-          />
-        </template>
-
-        <Link
-          v-if="can(permissionsEnum.BikeQuotesList)"
-          :href="route('bike-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
-        </Link>
+        </div>
       </div>
-    </div>
+    </StickyHeader>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center flex-wrap gap-2">
@@ -537,7 +557,7 @@ function capitalizeString(str) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote?.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -745,6 +765,13 @@ function capitalizeString(str) {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -755,7 +782,7 @@ function capitalizeString(str) {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           {{
-            quote.customer_type == page.props.customerTypeEnum.Individual
+            enabledCustomerType == page.props.customerTypeEnum.Individual
               ? 'Customer '
               : 'Entity '
           }}
@@ -771,7 +798,7 @@ function capitalizeString(str) {
         <div class="text-sm">
           <dl
             v-if="
-              quote.customer_type === page.props.customerTypeEnum.Individual
+              enabledCustomerType === page.props.customerTypeEnum.Individual
             "
             class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
@@ -873,6 +900,10 @@ function capitalizeString(str) {
               </dt>
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PRIVATE CLIENT</dt>
+              <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
+            </div>
             <RiskRatingScoreDetails
               v-if="quote"
               :quote="quote"
@@ -880,7 +911,7 @@ function capitalizeString(str) {
             />
           </dl>
           <dl
-            v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+            v-if="enabledCustomerType === page.props.customerTypeEnum.Entity"
             class="grid md:grid-cols-2 gap-x-6 gap-y-4"
           >
             <div class="grid sm:grid-cols-2">
@@ -925,12 +956,12 @@ function capitalizeString(str) {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
               <dd>
-                <ComboBox
+                <x-select
                   v-model="customerProfileForm.emirate_of_registration_id"
-                  :single="true"
-                  placeholder="SELECT EMIRATES OF REGISTRATION"
                   :options="emiratesOptions"
                   class="w-full"
+                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                  filterable
                 />
               </dd>
             </div>
@@ -948,28 +979,28 @@ function capitalizeString(str) {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">INDUSTRY TYPE</dt>
               <dd>
-                <ComboBox
-                  :single="true"
+                <x-select
                   v-model="customerProfileForm.industry_type_code"
-                  placeholder="SELECT INDUSTRY TYPE"
                   :options="industryTypeOptions"
                   class="w-full"
+                  placeholder="SELECT INDUSTRY TYPE"
+                  filterable
                 />
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">ENTITY TYPE</dt>
               <dd>
-                <ComboBox
-                  @update:modelValue="entityTypeChange($event)"
-                  :single="true"
-                  v-model:modelValue="customerProfileForm.entity_type_code"
-                  placeholder="SELECT ENTITY TYPE"
+                <x-select
+                  :modelValue="customerProfileForm.entity_type_code"
                   :options="[
                     { label: 'Parent', value: 'Parent' },
                     { label: 'Sub Entity', value: 'SubEntity' },
                   ]"
                   class="w-full"
+                  placeholder="SELECT ENTITY TYPE"
+                  filterable
+                  @update:modelValue="entityTypeChange($event)"
                 />
               </dd>
             </div>
@@ -1077,7 +1108,7 @@ function capitalizeString(str) {
     </x-modal>
 
     <MemberDetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -1094,7 +1125,7 @@ function capitalizeString(str) {
     />
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -1137,121 +1168,121 @@ function capitalizeString(str) {
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
         <div class="w-full md:w-1/2">
-          <x-field label="CC" required>
-            <x-input
-              v-model="assumptionsForm.cubic_capacity"
-              type="number"
-              placeholder="CC"
+          <x-input
+            v-model="assumptionsForm.cubic_capacity"
+            type="number"
+            placeholder="CC"
+            class="w-full"
+            :rules="[isRequired]"
+            :disabled="!assumptionState.isEditing"
+            label="CC"
+            required
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="assumptionsForm.seat_capacity"
+            type="number"
+            placeholder="Seat Capacity"
+            class="w-full"
+            :rules="[isRequired]"
+            :disabled="!assumptionState.isEditing"
+            label="Seat Capacity"
+            required
+          />
+        </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="assumptionsForm.vehicle_type_id"
+              :options="bikeBodyType"
+              placeholder="Vehicle Body Type"
               class="w-full"
               :rules="[isRequired]"
               :disabled="!assumptionState.isEditing"
+              label="Vehicle Body Type"
+              required
             />
-          </x-field>
+          </div>
         </div>
         <div class="w-full md:w-1/2">
-          <x-field label="Seat Capacity" required>
-            <x-input
-              v-model="assumptionsForm.seat_capacity"
-              type="number"
-              placeholder="Seat Capacity"
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="assumptionsForm.is_modified"
+              :options="isOptions"
+              placeholder="Is Modified"
               class="w-full"
               :rules="[isRequired]"
               :disabled="!assumptionState.isEditing"
+              label="Is Bike modified?"
+              required
             />
-          </x-field>
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-field label="Vehicle Body Type" required>
-              <x-select
-                v-model="assumptionsForm.vehicle_type_id"
-                :options="bikeBodyType"
-                placeholder="Vehicle Body Type"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
-          </div>
-        </div>
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-field label="Is Bike modified?" required>
-              <x-select
-                v-model="assumptionsForm.is_modified"
-                :options="isOptions"
-                placeholder="Is Modified"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
           </div>
         </div>
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Is Bank Financed" required>
-              <x-select
-                v-model="assumptionsForm.is_bank_financed"
-                :options="isOptions"
-                placeholder="Is Bank Financed"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.is_bank_financed"
+              :options="isOptions"
+              placeholder="Is Bank Financed"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Is Bank Financed"
+              required
+            />
           </div>
         </div>
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Is GCC Standard?" required>
-              <x-select
-                v-model="assumptionsForm.is_gcc_standard"
-                :options="isOptions"
-                placeholder="Is GCC Standard"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.is_gcc_standard"
+              :options="isOptions"
+              placeholder="Is GCC Standard"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Is GCC Standard?"
+              required
+            />
           </div>
         </div>
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Current Insurance Status" required>
-              <x-select
-                v-model="assumptionsForm.current_insurance_status"
-                :options="currentInsuranceOptions"
-                placeholder="Current Insurance Status"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.current_insurance_status"
+              :options="currentInsuranceOptions"
+              placeholder="Current Insurance Status"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Current Insurance Status"
+              required
+            />
           </div>
         </div>
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Year Of First Registration" required>
-              <x-select
-                v-model="assumptionsForm.year_of_first_registration"
-                :options="
-                  $page.props.yearsOfManufacture.map(year => {
-                    return { value: year.id.toString(), label: year.text };
-                  })
-                "
-                placeholder="Year Of First Registration"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.year_of_first_registration"
+              :options="
+                $page.props.yearsOfManufacture.map(year => {
+                  return { value: year.id.toString(), label: year.text };
+                })
+              "
+              placeholder="Year Of First Registration"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Year Of First Registration"
+              required
+            />
           </div>
         </div>
       </div>
@@ -1298,6 +1329,7 @@ function capitalizeString(str) {
       :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
       :websiteURL="websiteURL"
       :linkedQuoteDetails="linkedQuoteDetails"
+      :payments="payments"
       @plan-selected="fetchUpdatedQuote"
     />
 
@@ -1405,6 +1437,12 @@ function capitalizeString(str) {
       :id="$page.props.quote.id"
       :quote-type="quoteType"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.latest_insured?.insured_kyc?.id"
     />
 
     <ApiLogs :type="modelClass" :id="$page.props.quote.id" />

@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Events\Axiom\FlushAxiomBatch;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\QuoteEmailUpdated;
 use App\Events\TravelQuoteAdvisorUpdated;
+use App\Listeners\Axiom\HandleAxiomBatchFlush;
 use App\Listeners\HandleBikeAdvisorUpdated;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\HandleHealthAdvisorUpdated;
@@ -64,6 +66,37 @@ class EventServiceProvider extends ServiceProvider
         TakeImpersonation::class => [
             HandleImpersonatedSession::class,
         ],
+        FlushAxiomBatch::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Console\Events\CommandFinished::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Console\Events\ScheduledTaskFailed::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Console\Events\ScheduledTaskFinished::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Queue\Events\JobProcessed::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Queue\Events\JobExceptionOccurred::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Queue\Events\JobFailed::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Queue\Events\JobReleasedAfterException::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \Illuminate\Queue\Events\JobTimedOut::class => [
+            HandleAxiomBatchFlush::class,
+        ],
+        \App\Events\PrivateClientUpdatedEvent::class => [
+            \App\Listeners\ApplyPrivateClientTagListener::class,
+        ],
+
     ];
 
     /**

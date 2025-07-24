@@ -10,6 +10,7 @@ use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -18,6 +19,7 @@ use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -25,6 +27,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
+use App\Enums\QuoteJourneyEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -47,6 +50,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -90,11 +94,14 @@ use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
+use App\Services\QuoteJourneyService;
+use App\Services\Quotes\SavingsQuoteService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -136,6 +143,7 @@ class CRUDController extends Controller
     protected $quoteDocumentService;
     protected $emailDataService;
     protected $allocationService;
+    private $savingsQuoteService;
 
     use GenericQueriesAllLobs, TeamHierarchyTrait;
 
@@ -161,7 +169,8 @@ class CRUDController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
-        AllocationService $allocationService
+        AllocationService $allocationService,
+        SavingsQuoteService $savingsQuoteService
     ) {
         $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
@@ -185,6 +194,7 @@ class CRUDController extends Controller
         $this->quoteDocumentService = $quoteDocumentService;
         $this->emailDataService = $emailDataService;
         $this->allocationService = $allocationService;
+        $this->savingsQuoteService = $savingsQuoteService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -423,6 +433,7 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+            $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
 
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
@@ -465,7 +476,7 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Car || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
+        if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
             $validateArray = [];
             $modelDetails[quoteTypeCode::Home]['totalLeadsCount'] = HomeQuoteRepository::getData(true, true);
             $modelDetails[quoteTypeCode::Health]['totalLeadsCount'] = HealthQuoteRepository::getData(true, true);
@@ -770,7 +781,13 @@ class CRUDController extends Controller
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
-            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Car);
+
+            if ($quote->registration_type == CarRegistrationType::COMPANY) {
+                $documentQuoteTypeId = QuoteTypeId::CompanyCar;
+            } else {
+                $documentQuoteTypeId = QuoteTypeId::Car;
+            }
+            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId);
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
             $storageUrl = storageUrl();
@@ -792,16 +809,14 @@ class CRUDController extends Controller
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
             $insuranceProvidersByQuoteType = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CAR->id());
-            $commercialRules = $this->leadAllocationService->isCommercialVehicles($record);
             $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
-            $listQuotePlans = app(CarQuoteService::class)->getPlans($id);
+            $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'listQuotePlans',
                 'record',
                 'sendUpdateOptions',
                 'sendUpdateLogs',
@@ -881,7 +896,6 @@ class CRUDController extends Controller
                 'hasPolicyIssuedStatus',
                 'insuranceProvidersByQuoteType',
                 'vatPercentage',
-                'commercialRules',
                 'clientInquiryLogs',
                 'policyIssuanceStatus',
                 'bookPolicyDetails',
@@ -893,6 +907,7 @@ class CRUDController extends Controller
                 'amlStatusName',
                 'paymentGatewayEnum',
                 'isFuncsEnabled',
+                'businessActivities',
             ]));
         }
 
@@ -1304,11 +1319,16 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+            $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
             $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
                 ? $courierQuoteResponse['data']['status']
                 : 'Pending';
+
+            if ($record->registration_type == CarRegistrationType::COMPANY) {
+                $record->company_contact_name = $record->first_name.' '.$record->last_name;
+            }
 
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
@@ -1363,11 +1383,12 @@ class CRUDController extends Controller
         app(CustomerAddressService::class)->validateAddress($request);
 
         if ($modelType == quoteTypeCode::Car) {
-            $carQuoteRequest = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
-            $carQuoteRequestDetail = $carQuoteRequest->carQuoteRequestDetail;
-            $carQuoteRequestDetail->chassis_number = $request->chassis_number;
-            if ($carQuoteRequestDetail->isDirty()) {
-                $carQuoteRequestDetail->save();
+            $carQuoteRequest = CarQuote::where('uuid', $id)->first();
+            if ($carQuoteRequest && $request->has('chassis_number')) {
+                CarQuoteRequestDetail::updateOrCreate(
+                    ['car_quote_request_id' => $carQuoteRequest->id],
+                    ['chassis_number' => $request->chassis_number]
+                );
             }
         }
 
@@ -1379,7 +1400,7 @@ class CRUDController extends Controller
         if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) && $modelType == quoteTypeCode::Car) {
             $lead = CarQuote::where('uuid', $id)->first();
             if ($lead) {
-                $this->carQuoteService->sendAddressNotificationToCustomer($lead, $request->input('addressObj'));
+                app(CustomerAddressService::class)->sendAddressNotificationToCustomer($lead, $request->input('addressObj'), QuoteTypeId::Car);
                 app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $id);
                 SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
             }
@@ -1553,6 +1574,9 @@ class CRUDController extends Controller
         if (strpos($url, 'pet')) {
             $this->genericModel->modelType = 'Pet';
         }
+        if (strpos($url, 'savings')) {
+            $this->genericModel->modelType = 'Savings';
+        }
     }
 
     private function fillModelByModelType($type, Request $request)
@@ -1562,9 +1586,9 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
+        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
-            $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Savings';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
             $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
@@ -1810,7 +1834,6 @@ class CRUDController extends Controller
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);
             if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
-                // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
             }
 
@@ -1831,9 +1854,25 @@ class CRUDController extends Controller
 
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
+
+        // Check for error in result
+        if (isset($result['error'])) {
+            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('error', $result['error']);
+        }
+
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
             $this->crudService->calculateScore($plainEntity, $request->modelType);
+        }
+
+        if ($request->current_quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
+            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId);
+        }
+
+        if ($request->current_quote_status_id != $entity->quote_status_id && in_array($entity->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
+            $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
+            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
         }
 
         // courtesy email
@@ -1876,7 +1915,7 @@ class CRUDController extends Controller
             // $results = getDataAgainstEveryStatus($request->modelType, $request);
             $results = getDataAgainstStatus($request->modelType, $request->status, $request);
 
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht])) {
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS])) {
                 return $results;
             }
 
@@ -2127,6 +2166,7 @@ class CRUDController extends Controller
 
     public function storePayment(StorePaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CREATE_PAYMENT);
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);
@@ -2179,6 +2219,7 @@ class CRUDController extends Controller
 
     public function updatePayment(Request $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_PAYMENT);
         $paymentInformation = [
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
@@ -2210,6 +2251,14 @@ class CRUDController extends Controller
             $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
         }
 
+        // check if advisor belongs to PCP or not
+        $isPCPTeamAdvisor = ! empty($carQuote->advisor_id) ? $this->carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+        LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
+        if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+            app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        }
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
 
@@ -2242,17 +2291,19 @@ class CRUDController extends Controller
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
         if ($quoteUuId) {
-
-            $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            $quoteType = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType));
+            $ocbEmailJob = $quoteType?->ocbEmailJob();
+            LoggerService::startQuoteLogging($quoteType->refId($quoteUuId));
+            LoggerService::info('Sending OCB email Manually');
             if ($ocbEmailJob) {
-                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                LoggerService::info('sendOCBEmailNB OCB email sending started');
                 dispatch(new $ocbEmailJob($quoteUuId, null));
-                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+                LoggerService::info('sendOCBEmailNB OCB email Job dispatched');
             }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
-            Log::info('sendOCBEmailNB OCB email quote uuid not found');
+            LoggerService::info('sendOCBEmailNB OCB email quote uuid not found');
 
             return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
         }
@@ -2270,6 +2321,7 @@ class CRUDController extends Controller
             'updated_at' => now(),
             'updated_by' => auth()->user()->email,
             'advisor_id' => null,
+            'assignment_type' => null,
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'quote_status_date' => now(),
             'is_renewal_tier_email_sent' => 0,
