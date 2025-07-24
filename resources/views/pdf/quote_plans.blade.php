@@ -826,7 +826,7 @@
                                     if ($feature['code'] == 'ancillaryExcess') {
                                         $value = $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%') : 'TBA';
                                     } elseif ($feature['code'] == 'carValue') {
-                                        $value = $plans[$planId]->{$feature['code']} ? (($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) ? 'N/A'  : formatAmount($plans[$planId]->{$feature['code']})) : 'TBA';
+                                        $value = $plans[$planId]->{$feature['code']} ? (($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) ? 'N/A'  : formatAmount($plans[$planId]->{$feature['code']}, 0)) : 'TBA';
                                     } else {
                                         $value = $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']}, 0) : 'TBA';
                                     }
