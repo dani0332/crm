@@ -96,6 +96,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  insurerReceiptNumberCheckInProcess: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const page = usePage();
@@ -108,6 +112,7 @@ const emit = defineEmits([
   'cancel-modal',
   'aml-verification',
   'update-from-insurer-payment-link',
+  'check-insurer-receipt-number',
 ]);
 
 const handleCancelClick = () => {
@@ -226,7 +231,7 @@ const handleCancelModalClick = () => {
             >
               Approve
             </x-button>
-            <x-button
+            <!-- <x-button
               v-if="
                 (isApproveClicked ||
                   (isCreditApprovalView && !isDeclineClicked)) &&
@@ -247,7 +252,43 @@ const handleCancelModalClick = () => {
               </template>
               <template v-else-if="isVerificationAllowed"> Approve </template>
               <template v-else> Approve </template>
-            </x-button>
+            </x-button> -->
+            <template
+              v-if="
+                (isApproveClicked ||
+                  (isCreditApprovalView && !isDeclineClicked)) &&
+                isTransactionCaptureButtonEnabled
+              "
+            >
+              <x-button
+                v-if="isCreditApprovalView && isCreditCardView"
+                class="mr-2 focus:outline-black"
+                size="sm"
+                color="#ff5e00"
+                type="submit"
+                tabindex="0"
+                :loading="processing"
+                :disabled="
+                  isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                "
+              >
+                Capture
+              </x-button>
+              <x-button
+                v-else
+                class="mr-2 focus:outline-black"
+                size="sm"
+                color="#ff5e00"
+                @click="emit('check-insurer-receipt-number')"
+                tabindex="0"
+                :loading="processing || insurerReceiptNumberCheckInProcess"
+                :disabled="
+                  isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                "
+              >
+                Approve
+              </x-button>
+            </template>
           </div>
         </div>
       </template>
