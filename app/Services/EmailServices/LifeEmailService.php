@@ -15,6 +15,7 @@ use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use App\Services\Life\LifeQuoteService;
 
 class LifeEmailService extends BaseService
 {
@@ -32,20 +33,54 @@ class LifeEmailService extends BaseService
                 LoggerService::info('sendFICEmail - Advisor not found');
             }
             $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_FIC_EMAIL);
-            if ($personalQuote->quote_status_id == QuoteStatusEnum::NewLead) {
-                $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
-                LifeQuote::where('uuid', $personalQuote->uuid)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
-                $personalQuote->save();
-            } else {
-                LoggerService::info("sendFICEmail - Quote status is not new lead for quote: {$personalQuote->uuid}");
-            }
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+           
+           
 
+
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
             if ($response && $response->status_code === 200) {
                 LoggerService::info('sendFICEmail - Successfully triggered event');
             } else {
                 LoggerService::info("sendFICEmail - Error triggering event having response status code: {$response?->status_code}");
             }
+            $plansData = $this->checkPlans($personalQuote->uuid);
+            // Optimize plan status checks and logging for clarity and maintainability
+            if (!empty($plansData['hasError'])) {
+                LoggerService::warning(
+                    "sendFICEmail - Error checking plans: {$plansData['errorMessage']}, keeping lead status as NewLead"
+                );
+                return;
+            }
+
+            $totalPlans = (int) ($plansData['totalNumberOfPlans'] ?? 0);
+            $hiddenPlans = (int) ($plansData['totalNumberOfHiddenPlans'] ?? 0);
+
+            if ($totalPlans === 0) {
+                LoggerService::info("sendFICEmail - No plans found, lead status remains NewLead");
+                return;
+            }
+
+            if ($hiddenPlans === $totalPlans) {
+                LoggerService::info("sendFICEmail - All plans are hidden, lead status remains NewLead");
+                return;
+            }
+
+        
+
+            if ($personalQuote->quote_status_id == QuoteStatusEnum::NewLead) {
+                $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                $personalQuote->save();
+                LifeQuote::where('uuid', $personalQuote->uuid)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+               
+            } else {
+                LoggerService::info("sendFICEmail - Quote status is not new lead for quote: {$personalQuote->uuid}");
+            }
+            if ($plansData['hasError']) {
+                LoggerService::warning("sendFICEmail - Error checking plans", extra: [
+                    'error' => $plansData['errorMessage'],
+                ]);
+            }
+           
         } else {
             LoggerService::info(self::class.' - FIC Life Email is not set');
         }
@@ -192,6 +227,75 @@ class LifeEmailService extends BaseService
             }
         } else {
             LoggerService::info(self::class." - Automated Life Followup is not set workflow url not found for quote: {$personalQuote->uuid}");
+        }
+    }
+    private function checkPlans(string $quoteUID): array
+    {
+        try {
+            $plansData = app(LifeQuoteService::class)->getQuotePlans($quoteUID);
+
+            if (is_string($plansData)) {
+                LoggerService::warning("checkPlans - API returned error", extra: [
+                    'error' => $plansData,
+                ]);
+                return [
+                    'totalNumberOfHiddenPlans' => 0,
+                    'totalNumberOfPlans' => 0,
+                    'hasError' => true,
+                    'errorMessage' => $plansData,
+                ];
+            }
+
+            if (!$plansData || !isset($plansData->quotes) || !isset($plansData->quotes->plans)) {
+                LoggerService::warning('checkPlans - Invalid or empty plans data structure');
+                return [
+                    'totalNumberOfHiddenPlans' => 0,
+                    'totalNumberOfPlans' => 0,
+                    'hasError' => true,
+                    'errorMessage' => 'Invalid plans data structure',
+                ];
+            }
+
+            $plans = $plansData->quotes->plans;
+            if (!is_array($plans) && !is_object($plans)) {
+                LoggerService::warning('checkPlans - Plans data is not iterable');
+                return [
+                    'totalNumberOfHiddenPlans' => 0,
+                    'totalNumberOfPlans' => 0,
+                    'hasError' => true,
+                    'errorMessage' => 'Plans data is not iterable',
+                ];
+            }
+
+            $totalNumberOfHiddenPlans = 0;
+            $totalNumberOfPlans = is_array($plans) ? count($plans) : (is_countable($plans) ? count($plans) : 0);
+
+            foreach ($plans as $plan) {
+                if (isset($plan->isDisabled) && $plan->isDisabled) {
+                    $totalNumberOfHiddenPlans++;
+                }
+            }
+
+            LoggerService::info("checkPlans - Successfully processed plans", extra: [
+                'totalPlans' => $totalNumberOfPlans,
+                'hiddenPlans' => $totalNumberOfHiddenPlans,
+            ]);
+
+            return [
+                'totalNumberOfHiddenPlans' => $totalNumberOfHiddenPlans,
+                'totalNumberOfPlans' => $totalNumberOfPlans,
+                'hasError' => false,
+            ];
+
+        } catch (\Exception $e) {
+            LoggerService::error("checkPlans - Exception occurred", exception: $e);
+
+            return [
+                'totalNumberOfHiddenPlans' => 0,
+                'totalNumberOfPlans' => 0,
+                'hasError' => true,
+                'errorMessage' => $e->getMessage(),
+            ];
         }
     }
 }
