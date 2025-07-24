@@ -253,11 +253,11 @@ class SageApiService
             }
         }
 
-         // create AP Prepayment Premium Receipt
-         $createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
-         if (! $createPremiumPrepayment['status']) {
-             return $createPremiumPrepayment;
-         }
+        // create AP Prepayment Premium Receipt
+        $createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
+        if (! $createPremiumPrepayment['status']) {
+            return $createPremiumPrepayment;
+        }
 
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
             if (empty($reversalInvoiceLogs)) {
@@ -1126,7 +1126,7 @@ class SageApiService
         } else {
 
             $createAPPremiumPaymentReceipt = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-            $sageResponse = json_decode($createAPPremiumPaymentReceipt,true);
+            $sageResponse = json_decode($createAPPremiumPaymentReceipt, true);
         }
 
         if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {

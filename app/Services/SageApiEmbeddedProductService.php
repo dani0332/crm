@@ -1863,8 +1863,6 @@ class SageApiEmbeddedProductService
         return $returnMessage;
     }
 
-
-
     public static function createApplyAPPrepaymentPayload($sageRequest, $sageRequestEmbeddedProduct)
     {
         $entryType = SageEnum::SCT_STRAIGHT;

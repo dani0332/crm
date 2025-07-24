@@ -1577,7 +1577,7 @@ class SagePayloadFactory
 
     public static function readyToPostUpfrontApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
-        $sageRequestType =  SageEnum::SRT_RTP_APPLY_PAYMENT_AP_UPFRONT_INV;
+        $sageRequestType = SageEnum::SRT_RTP_APPLY_PAYMENT_AP_UPFRONT_INV;
         $payLoad = [
             'BatchStatus' => 'ReadyToPost',
         ];
@@ -1601,7 +1601,7 @@ class SagePayloadFactory
 
     public static function postUpfrontApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
-        $sageRequestType =  SageEnum::SRT_POST_APPLY_PAYMENT_AP_UPFRONT_INV;
+        $sageRequestType = SageEnum::SRT_POST_APPLY_PAYMENT_AP_UPFRONT_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchType' => 'PY',
@@ -1669,14 +1669,14 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchSelector=\'PY\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' =>   SageEnum::SRT_RTP_APPLY_PAYMENT_AP_SPLIT_INV,
+            'sage_request_type' => SageEnum::SRT_RTP_APPLY_PAYMENT_AP_SPLIT_INV,
             'entry_type' => $entryType,
         ];
     }
 
     public static function postSplitApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
-        $sageRequestType =  SageEnum::SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV;
+        $sageRequestType = SageEnum::SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchType' => 'PY',
@@ -1703,7 +1703,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType ,
+            'sage_request_type' => $sageRequestType,
             'entry_type' => $entryType,
         ];
     }
