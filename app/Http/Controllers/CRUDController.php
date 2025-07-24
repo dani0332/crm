@@ -816,7 +816,7 @@ class CRUDController extends Controller
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
             $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
             $apiIssuanceStatus = PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id);
-            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id];
+            $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record, QuoteTypes::CAR->value)[$record->insurer_api_status_id] ?? null;
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',

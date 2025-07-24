@@ -1491,16 +1491,15 @@ class CentralService extends BaseService
 
     public function autoCapturePaymentProcess($quoteTypeId, $quote, $premiumCheckEnabled = true)
     {
-        // TODO:: Payment capture process should be executed by JOB but for now we are executing it here - Need to update this
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started');
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if(! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
             return ['status' => false, 'message' => 'Auto capture payment process failed'];
         }
-
-        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
 
         if ($premiumCheckEnabled) {
             // Premium check call to check if the premium is valid
@@ -1522,7 +1521,6 @@ class CentralService extends BaseService
             LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
         }
 
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
         $paymentSplits = $payment->paymentSplits;
         $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
 

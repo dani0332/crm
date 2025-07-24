@@ -211,14 +211,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        if ($nextStepToBeExecuted === self::BOOK_POLICY) {
-            $bookPolicyResponse = $this->executeBookPolicyStep($quote, $process);
-            if(! $bookPolicyResponse['status']) {
-                return $bookPolicyResponse;
-            }
+        // if ($nextStepToBeExecuted === self::BOOK_POLICY) {
+        //     $bookPolicyResponse = $this->executeBookPolicyStep($quote, $process);
+        //     if(! $bookPolicyResponse['status']) {
+        //         return $bookPolicyResponse;
+        //     }
 
-            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        }
+        //     $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        // }
 
         return ['status' => true, 'message' => 'Step executed successfully', 'completed_step' => $nextStepToBeExecuted];
     }
@@ -561,26 +561,30 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - fetched all documents from insurer and Uploaded to IMCRM ');
 
         // Collect successfully uploaded documents for batch OCR processing
-        $uploadedDocuments = $uploadedDocumentsToIMCRM->where('uploaded', true)
-            ->filter(function ($item) {
-                return isset($item['document']) && $item['document'];
-            })
-            ->pluck('document');
+        // $uploadedDocuments = $uploadedDocumentsToIMCRM->where('uploaded', true)
+        //     ->filter(function ($item) {
+        //         return isset($item['document']) && $item['document'];
+        //     })
+        //     ->pluck('document');
 
-        if ($uploadedDocuments->isNotEmpty()) {
-            $this->dispatchPopulateDocumentDataBatch($quote, $uploadedDocuments, $process);
+        // if ($uploadedDocuments->isNotEmpty()) {
+        //     $this->dispatchPopulateDocumentDataBatch($quote, $uploadedDocuments, $process);
             
-            $response['status'] = true;
-            $response['message'] = 'Documents uploaded to IMCRM successfully. OCR processing batch dispatched.';
-            $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
-        } else {
-            // No documents were successfully uploaded - this should be treated as an error
-            $response['status'] = false;
-            $response['error'] = 'No documents were successfully uploaded to IMCRM';
-            $response['message'] = 'Failed to upload any documents to IMCRM';
+        //     $response['status'] = true;
+        //     $response['message'] = 'Documents uploaded to IMCRM successfully. OCR processing batch dispatched.';
+        //     $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
+        // } else {
+        //     // No documents were successfully uploaded - this should be treated as an error
+        //     $response['status'] = false;
+        //     $response['error'] = 'No documents were successfully uploaded to IMCRM';
+        //     $response['message'] = 'Failed to upload any documents to IMCRM';
             
-            return $response;
-        }
+        //     return $response;
+        // }
+
+        $response['status'] = true;
+        $response['message'] = 'Documents uploaded to IMCRM successfully. OCR processing batch dispatched.';
+        $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
 

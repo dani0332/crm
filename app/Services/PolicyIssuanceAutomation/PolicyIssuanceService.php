@@ -350,10 +350,11 @@ class PolicyIssuanceService
         $insurer = getInsuranceProvider($payment, $quoteType);
 
         $insurerAutomation = $this->init($quoteType, $insurer->code);
+        if($insurerAutomation) {
+            $insurerApiStatuses = $insurerAutomation->getInsurerAPIStatuses();
+        }
 
-        $insurerApiStatuses = $insurerAutomation->getInsurerAPIStatuses();
-
-        return $insurerApiStatuses;
+        return $insurerApiStatuses ?? [];
     }
 
     public function getFailedBookingInsurerAPIStatus($quote, $quoteType)
