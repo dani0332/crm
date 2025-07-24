@@ -1,12 +1,12 @@
 <script setup>
-import { reactive } from 'vue';
 import { createReusableTemplate } from '@vueuse/core';
+import { reactive } from 'vue';
+import SelectPlan from '../../Components/SelectPlan.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import SelectPlan from '../../Components/SelectPlan.vue';
 
 const props = defineProps({
   quote: Object,
@@ -774,6 +774,7 @@ const getIncludedBenefitsTooltip = fieldText =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
