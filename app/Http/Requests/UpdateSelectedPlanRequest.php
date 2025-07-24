@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
-use App\Services\SplitPaymentService;
+use App\Rules\ValidateAuthorizedPayment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSelectedPlanRequest extends FormRequest
@@ -45,7 +45,10 @@ class UpdateSelectedPlanRequest extends FormRequest
         $code = request()->code;
 
         $validator->after(function ($validator) use ($code) {
-            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code);
+            $rule = new ValidateAuthorizedPayment($code);
+            if (!$rule->passes('code', $code)) {
+                $validator->errors()->add('code', $rule->message());
+            }
         });
     }
 }
