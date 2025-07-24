@@ -43,7 +43,10 @@ class SukoonMedexEPFailureNotification extends Mailable
                 ->from('alfred@notify.insurancemarket.ae', 'InsuranceMarket.ae')
                 ->replyTo(['instant@alfred.insurancemarket.ae', 'alfred@insurancemarket.ae'])
                 ->to(['production.approval.team@insurancemarket.ae'])
-                ->cc(['dt.system.notifications@insurancemarket.ae', 'sic.car.team@insurancemarket.ae'])
+                ->cc([
+                    'dt.system.notifications@insurancemarket.ae', 'sic.car.team@insurancemarket.ae',
+                    'diya.lekhwani@myalfred.com', 'rucha.keluskar@myalfred.com', 'sandeep.sharma@insurancemarket.ae',
+                ])
                 ->view('email.sukoon-medex-ep-job-failed', [
                     'refId' => $refId,
                     'imcrmLink' => $imcrmLink,
@@ -53,8 +56,8 @@ class SukoonMedexEPFailureNotification extends Mailable
             return $this->subject($subject)
                 ->from('alfred@testnotify.alfred.ae')
                 ->replyTo(['test.emails@insurancemarket.ae'])
-                ->to(['rucha.keluskar@myalfred.com', 'arsalan.mughal@myalfred.com'])
-                ->cc(['diya.lekhwani@myalfred.com', 'jawad.arif@myalfred.com'])
+                ->to(['rucha.keluskar@myalfred.com'])
+                ->cc(['diya.lekhwani@myalfred.com'])
                 ->view('email.sukoon-medex-ep-job-failed', [
                     'refId' => $refId,
                     'imcrmLink' => $imcrmLink,
