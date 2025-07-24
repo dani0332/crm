@@ -821,7 +821,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::put('logs/{id}/status', [BorController::class, 'updateStatus'])->name('bor.logs.update-status');
         Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.logs.cancel');
         Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.logs.mark-done');
-        Route::get('logs/{id}/document', [BorController::class, 'viewDocument'])->name('bor.logs.view-document');
+        Route::get('logs/{id}/download', [BorController::class, 'downloadDocument'])->name('bor.logs.download-document');
         
         // Document Management
         Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');

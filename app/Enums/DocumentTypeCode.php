@@ -80,4 +80,17 @@ class DocumentTypeCode extends Enum
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
+
+    // BAL
+    const BAL = 'BAL';
+    const BAL_BIKE = 'BAL_Bike';
+    const BAL_TRVL = 'BAL_TRVL';
+    const BAL_HOME = 'BAL_HOME';
+    const BAL_HLTH = 'BAL_HLTH';
+    const BAL_YACHT = 'BAL_YCHT';
+    const BAL_CYCLE = 'BAL_CYCLE';
+    const BAL_LIFE = 'BAL_LIFE';
+    const BAL_PET = 'BAL_PET';
+    const BOR_SIGN = 'BOR_SIGN';
+
 }

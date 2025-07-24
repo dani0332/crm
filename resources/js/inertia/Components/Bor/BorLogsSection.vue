@@ -7,7 +7,7 @@ import BorUploadDocument from './BorUploadDocument.vue';
 import BorCancelModal from './BorCancelModal.vue';
 import BorDoneModal from './BorDoneModal.vue';
 import BorViewDocumentModal from './BorViewDocumentModal.vue';
-import axios from 'axios'; // Added axios import
+import axios from 'axios';
 
 const props = defineProps({
   leadId: {
@@ -61,6 +61,9 @@ const showCancelModal = ref(false);
 const showDoneModal = ref(false);
 const showViewDocumentModal = ref(false);
 const selectedBorLog = ref(null);
+// Edit mode state
+const isEditMode = ref(false);
+const editingBorLog = ref(null);
 
 // Auto-collapse when policy is issued
 const isCollapsed = ref(
@@ -147,11 +150,22 @@ const handlePageChange = (pageUrl) => {
 };
 
 const openBorRequestForm = () => {
+  isEditMode.value = false;
+  editingBorLog.value = null;
+  showBorRequestForm.value = true;
+};
+
+// Handle BOR edit
+const handleEditBor = (borLog) => {
+  isEditMode.value = true;
+  editingBorLog.value = borLog;
   showBorRequestForm.value = true;
 };
 
 const closeBorRequestForm = () => {
   showBorRequestForm.value = false;
+  isEditMode.value = false;
+  editingBorLog.value = null;
   
   // Ensure scroll is restored when modal closes
   setTimeout(() => {
@@ -399,6 +413,7 @@ onMounted(() => {
             @view-document="handleViewDocument"
             @refresh="fetchBorLogs"
             @page-change="handlePageChange"
+            @edit-bor="handleEditBor"
           />
         </div>
       </template>
@@ -412,6 +427,8 @@ onMounted(() => {
       :lob="lob"
       :customer-data="customerData"
       :insurance-providers="insuranceProviders"
+      :bor-log="editingBorLog"
+      :bor-status-enum="BorStatusEnum"
       @close="closeBorRequestForm"
       @success="handleBorRequestSuccess"
     />
@@ -424,32 +441,6 @@ onMounted(() => {
       :document-types="documentTypes"
       @close="closeUploadModal"
       @success="handleUploadSuccess"
-    />
-
-    <!-- Cancel BOR Modal -->
-    <BorCancelModal
-      v-if="showCancelModal"
-      :visible="showCancelModal"
-      :bor-log="selectedBorLog"
-      @close="closeCancelModal"
-      @success="handleActionSuccess"
-    />
-
-    <!-- Mark Done Modal -->
-    <BorDoneModal
-      v-if="showDoneModal"
-      :visible="showDoneModal"
-      :bor-log="selectedBorLog"
-      @close="closeDoneModal"
-      @success="handleActionSuccess"
-    />
-
-    <!-- View Document Modal -->
-    <BorViewDocumentModal
-      v-if="showViewDocumentModal"
-      :visible="showViewDocumentModal"
-      :bor-log="selectedBorLog"
-      @close="closeViewDocumentModal"
     />
   </div>
 </template>

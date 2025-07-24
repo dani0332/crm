@@ -8,7 +8,9 @@ use App\Models\BorLog;
 use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BorController extends Controller
 {
@@ -55,6 +57,12 @@ class BorController extends Controller
             $borLog = BorLog::where('bor_reference', $request->input('bor_ref_id'))->first();
             $quote = $borLog->personalQuote;
             $request->merge(['quote_uuid' => $quote->code]);
+            $previousDoc = $borLog->document;
+
+            if($previousDoc && $previousDoc->doc_url) {
+                Storage::disk('azureIM')->delete($previousDoc->doc_url);
+                $previousDoc->delete();
+            }
 
             $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
 
@@ -65,7 +73,7 @@ class BorController extends Controller
             ]);
 
             return response()->json(['message' => 'success', 'data' => $document]);
-        } catch (\Throwable $th) {
+        } catch (Exception $th) {
             LoggerService::error('Failed to sign document', [
                 'error' => $th->getMessage(),
                 'trace' => $th->getTraceAsString(),

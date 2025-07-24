@@ -33,7 +33,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['upload-document', 'update-status', 'cancel-bor', 'mark-done', 'view-document', 'refresh', 'page-change'])
+const emit = defineEmits(['upload-document', 'update-status', 'cancel-bor', 'mark-done', 'view-document', 'refresh', 'page-change', 'edit-bor'])
 
 // Permission management
 const page = usePage()
@@ -107,6 +107,49 @@ const handleViewDocument = (log) => {
   showViewDocumentModal.value = true
 }
 
+const handleEditBor = (log) => {
+  emit('edit-bor', log)
+}
+
+const handleCopyLink = (log) => {
+  // Copy the BOR link to clipboard
+  const borLink = route('bor.customer.sign', log.document_id)
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    // Use the Clipboard API
+    navigator.clipboard.writeText(borLink).then(() => {
+      // Show success notification
+      const notification = useNotifications('toast')
+      notification.success({
+        title: 'Link Copied',
+        message: 'BOR signing link copied to clipboard',
+        position: 'top',
+      })
+    }).catch(err => {
+      console.error('Failed to copy link: ', err)
+    })
+  } else {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea')
+    textArea.value = borLink
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
+    try {
+      document.execCommand('copy')
+      const notification = useNotifications('toast')
+      notification.success({
+        title: 'Link Copied',
+        message: 'BOR signing link copied to clipboard',
+        position: 'top',
+      })
+    } catch (err) {
+      console.error('Failed to copy link: ', err)
+    }
+    document.body.removeChild(textArea)
+  }
+}
+
 // Modal event handlers
 const onCancelModalClose = () => {
   showCancelModal.value = false
@@ -162,9 +205,13 @@ const statusOptions = [
 const canPerformAction = (log, action) => {
   // Fallback logic for determining action availability
   const status = log.status
-  const editAndCopyLinkCondition = ![props.borStatusEnum.SIGNATURE_REQUESTED, props.borStatusEnum.SENT_TO_INSURER].includes(status);
-  const uploadAndDoneCondition = ![props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status);
-  
+  const editAndCopyLinkCondition = ![props.borStatusEnum.COMPLETED, props.borStatusEnum.CANCELLED].includes(status);
+  const uploadAndDoneCondition = ![props.borStatusEnum.COMPLETED, props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status);
+
+  console.log(status);
+  console.log(action);
+  console.log(uploadAndDoneCondition);
+
   switch (action) {
     case 'edit':
       return editAndCopyLinkCondition
@@ -175,7 +222,7 @@ const canPerformAction = (log, action) => {
     case 'done':
       return uploadAndDoneCondition
     case 'view_document':
-      return log.signed_pdf_path || log.document_path
+      return [props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED, props.borStatusEnum.COMPLETED].includes(status)
     case 'copy_link':
       return editAndCopyLinkCondition
     default:
@@ -262,7 +309,7 @@ const canPerformAction = (log, action) => {
 
         <!-- Actions Column -->
         <template #item-actions="{ actions }">
-          <div class="flex items-center space-x-1 flex-wrap">
+          <div class="flex items-center space-x-1 space-y-1 flex-wrap">
             <!-- Upload Document Button -->
             <x-button
               v-if="canPerformAction(actions, 'upload')"
@@ -293,10 +340,6 @@ const canPerformAction = (log, action) => {
               @click="handleViewDocument(actions)"
               title="View documents"
             >
-              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
               View
             </x-button>
 
@@ -308,6 +351,16 @@ const canPerformAction = (log, action) => {
               title="Edit BOR request"
             >
               Edit
+            </x-button>
+
+            <x-button
+              v-if="canPerformAction(actions, 'copy_link')"
+              color="primary"
+              size="xs"
+              @click="handleCopyLink(actions)"
+              title="Copy link"
+            >
+              Copy
             </x-button>
           </div>
         </template>
@@ -365,7 +418,7 @@ const canPerformAction = (log, action) => {
 
     <BorViewDocumentModal
       v-if="selectedLog"
-      :show="showViewDocumentModal"
+      :visible="showViewDocumentModal"
       :bor-log="selectedLog"
       @close="onViewDocumentModalClose"
     />

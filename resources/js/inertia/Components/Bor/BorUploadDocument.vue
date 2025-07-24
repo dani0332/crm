@@ -189,9 +189,8 @@ onMounted(() => {
 
 <template>
   <x-modal 
-    :show="showModal" 
-    @close="closeModal"
-    max-width="2xl"
+    v-model="showModal"
+    size="xl"
   >
     <div class="p-6">
       <!-- Header -->

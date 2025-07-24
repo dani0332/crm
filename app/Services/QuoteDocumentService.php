@@ -234,6 +234,7 @@ class QuoteDocumentService extends BaseService
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
+                'bor_ref_id' => $data['bor_ref_id'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
 

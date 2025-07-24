@@ -354,8 +354,6 @@ class BorLog extends Model
                     $todayEnd = now()->endOfDay();
                     
                     $lastCount = static::where('lead_id', $leadId)
-                        ->where('date_created', '>=', $todayStart)
-                        ->where('date_created', '<=', $todayEnd)
                         ->lockForUpdate() // Prevent concurrent access
                         ->count();
                     

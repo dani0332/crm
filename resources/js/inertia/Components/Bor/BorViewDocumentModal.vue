@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
   visible: {
@@ -17,41 +16,33 @@ const emit = defineEmits(['close']);
 
 const isLoading = ref(false);
 const error = ref(null);
-const documentData = ref(null);
+const showModal = ref(props.visible);
 
-// Computed properties
+// Computed properties - use embedded document data
 const hasSignedDocument = computed(() => {
-  return documentData.value?.signed_pdf_path || props.borLog.signed_pdf_path;
+  return props.borLog.signed_pdf_path || props.borLog.signed_pdf?.length > 0;
 });
 
 const hasUploadedDocuments = computed(() => {
-  return documentData.value?.uploaded_documents?.length > 0;
+  return props.borLog.uploaded_documents?.length > 0;
 });
 
 const signedDocumentUrl = computed(() => {
-  return documentData.value?.signed_pdf_path || props.borLog.signed_pdf_path;
+  return props.borLog.signed_pdf_path || props.borLog.signed_pdf?.[0]?.doc_url;
 });
 
 const uploadedDocuments = computed(() => {
-  return documentData.value?.uploaded_documents || [];
+  return props.borLog.uploaded_documents || [];
 });
 
-// Fetch document details
-const fetchDocumentDetails = async () => {
+// Initialize document data from embedded BOR log data
+const initializeDocumentData = () => {
   if (!props.borLog?.id) return;
 
-  isLoading.value = true;
+  // No need to fetch data since it's already embedded in borLog
+  // Just ensure we have the data structure needed
+  isLoading.value = false;
   error.value = null;
-
-  try {
-    const response = await axios.get(route('bor.logs.view-document', props.borLog.id));
-    documentData.value = response.data.data;
-  } catch (err) {
-    console.error('Failed to fetch document details:', err);
-    error.value = 'Failed to load document details. Please try again.';
-  } finally {
-    isLoading.value = false;
-  }
 };
 
 // View document in new tab
@@ -75,15 +66,15 @@ const downloadDocument = (documentUrl, filename) => {
 
 // Handle close
 const handleClose = () => {
-  documentData.value = null;
   error.value = null;
   emit('close');
 };
 
 // Watch for modal visibility changes
 watch(() => props.visible, (newVisible) => {
+  showModal.value = newVisible;
   if (newVisible) {
-    fetchDocumentDetails();
+    initializeDocumentData();
   }
 });
 
@@ -121,9 +112,8 @@ const getFileTypeIcon = (filename) => {
 
 <template>
   <x-modal
-    :visible="visible"
-    @close="handleClose"
-    size="lg"
+    v-model="showModal"
+    size="xl"
   >
     <template #header>
       <h3 class="text-lg font-semibold text-gray-900 flex items-center">

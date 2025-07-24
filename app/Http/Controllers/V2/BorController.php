@@ -21,19 +21,31 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Enums\BorStatusEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Services\Bor\BorService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Exception;
 
 class BorController extends Controller
 {
     use GenericQueriesAllLobs;
+    
     protected $borService;
+    protected $borEmailService;
+    protected $borPdfService;
 
-    public function __construct(BorService $borService)
-    {
+    public function __construct(
+        BorService $borService,
+        BorEmailService $borEmailService,
+        BorPdfService $borPdfService
+    ) {
         $this->borService = $borService;
+        $this->borEmailService = $borEmailService;
+        $this->borPdfService = $borPdfService;
         // Apply BOR document upload permission to upload method
         $this->middleware('permission:' . PermissionsEnum::BOR_DOCUMENT_UPLOAD, ['only' => ['uploadDocument']]);
     }
@@ -52,8 +64,8 @@ class BorController extends Controller
                 'total' => $total,
                 'bor_status_enum' => BorStatusEnum::asArray(),
             ]);
-        } catch (\Throwable $th) {
-            Log::error('Failed to fetch BOR logs', [
+        } catch (Exception $th) {
+            LoggerService::error('Failed to fetch BOR logs', [
                 'error' => $th->getMessage(),
                 'trace' => $th->getTraceAsString(),
                 'request' => $request->all(),
@@ -84,7 +96,7 @@ class BorController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('BOR request creation failed', [
+            LoggerService::error('BOR request creation failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'request_data' => $request->except(['password']),
@@ -94,6 +106,49 @@ class BorController extends Controller
                 'general' => 'Failed to create BOR request. Please try again.'
             ])->withInput();
         }
+    }
+
+    /**
+     * Update a BOR request
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $payload = $request->only('lead_id', 'lob', 'customer_type', 'company_name', 'insurer_name', 'insurance_provider_id', 'policy_number', 'policy_expiry', 'chassis_number');
+            $borLog = $this->borService->updateBorLog($payload, $id);
+
+            return redirect()->back()->with([
+                'success' => 'BOR request update successfully' . ($borLog['emailSent'] ? ' and email sent to customer.' : ', but email failed to send.'),
+                'updatedBorLog' => $borLog['borLog']->fresh(['insuranceProvider'])
+            ]);
+
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to update BOR request', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'request' => $request->all(),
+            ]);
+
+            return redirect()->back()->withErrors([
+                'general' => 'Failed to create BOR request. Please try again.'
+            ])->withInput();
+        }
+    }
+
+    public function downloadDocument(Request $request)
+    {
+        $file_content = Storage::disk('azureIM')->get($request->path);
+        $file = explode('/', $request->path);
+        $lastIndex = count($file);
+
+        return response()
+            ->streamDownload(
+                function () use ($file_content) {
+                    echo $file_content;
+                },
+                $file[$lastIndex - 1]
+            );
     }
 
     /**
@@ -113,9 +168,12 @@ class BorController extends Controller
             ]);
 
             $borLog = BorLog::findOrFail($borLogId ?: $validated['bor_log_id']);
+            $personalQuote = $borLog->personalQuote;
+            $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
+            $quoteObject = $this->getQuoteObject($quoteType, $personalQuote->quote_id);
             
             // Auto-determine document type code based on the lead's LOB if not provided
-            $documentTypeCode = $validated['document_type_code'] ?? $this->determineBorDocumentType($borLog);
+            $documentTypeCode = $validated['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
             
             // Get the document type for this LOB  
             $documentType = DocumentType::where('code', $documentTypeCode)->first();
@@ -134,13 +192,14 @@ class BorController extends Controller
             $uploadData = [
                 'document_type_code' => $documentTypeCode,
                 'quote_uuid' => $borLog->bor_reference, // Use BOR reference as identifier
+                'bor_ref_id' => $borLog->bor_reference,
             ];
 
             // Upload using existing service, leveraging polymorphic relationship
             $uploadedDocument = $quoteDocumentService->uploadQuoteDocument(
                 $request->file('file'),
                 $uploadData,
-                $borLog // Pass BorLog as the "quote" object for polymorphic relationship
+                $quoteObject
             );
 
             if ($uploadedDocument) {
@@ -165,7 +224,7 @@ class BorController extends Controller
                     'success' => true,
                     'message' => 'BOR document uploaded successfully',
                     'data' => [
-                        'bor_log' => $borLog->fresh(['documents']),
+                        'bor_log' => $borLog->fresh(['personalQuote']),
                         'document' => $uploadedDocument
                     ]
                 ]);
@@ -183,9 +242,13 @@ class BorController extends Controller
                 'errors' => $e->validator->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('BOR document upload failed', [
+            dd($e);
+            LoggerService::error('BOR document upload failed', [
                 'bor_log_id' => $borLogId ?? $request->input('bor_log_id'),
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $request->file('file'),
+                'line' => $e->getLine(),
                 'request' => $request->except(['file']) // Exclude file data from logs
             ]);
 
@@ -199,25 +262,26 @@ class BorController extends Controller
     /**
      * Determine the appropriate BOR document type code based on lead LOB
      */
-    private function determineBorDocumentType(BorLog $borLog): string
+    private function determineBorDocumentType($quoteType): string
     {
-        $lead = $borLog->personalQuote;
-        if (!$lead) {
+        if (!$quoteType) {
             return 'BAL'; // Default to general BAL
         }
 
         // Map LOB to document type code
         $lobToDocumentType = [
-            'car' => 'BAL',
-            'bike' => 'BAL_Bike', 
-            'travel' => 'BAL_TRVL',
-            'home' => 'BAL_HOME',
-            'pet' => 'BAL_PET',
-            'commercial' => 'BAL_COMM',
-            'health' => 'BAL_HLTH',
+            'car' => DocumentTypeCode::BAL,
+            'bike' => DocumentTypeCode::BAL_BIKE, 
+            'travel' => DocumentTypeCode::BAL_TRVL,
+            'home' => DocumentTypeCode::BAL_HOME,
+            'pet' => DocumentTypeCode::BAL_PET,
+            'health' => DocumentTypeCode::BAL_HLTH,
+            'life' => DocumentTypeCode::BAL_LIFE,
+            'cycle' => DocumentTypeCode::BAL_CYCLE,
+            'yacht' => DocumentTypeCode::BAL_YACHT,
         ];
 
-        return $lobToDocumentType[strtolower($lead->lob)] ?? 'BAL';
+        return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';
     }
 
     /**
@@ -247,7 +311,7 @@ class BorController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to fetch BOR by document ID', [
+            LoggerService::error('Failed to fetch BOR by document ID', [
                 'document_id' => $token,
                 'error' => $e->getMessage(),
             ]);
@@ -259,84 +323,6 @@ class BorController extends Controller
         }
     }
 
-    /**
-     * Validate signature data before submission
-     */
-    public function validateSignature(Request $request, $token): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'signature_data' => 'required|string',
-            ]);
-
-            $borLog = BorLog::where('document_id', $token)->firstOrFail();
-
-            // Verify BOR log is in the correct status for signing
-            if (!in_array($borLog->status, ['pending', 'sent'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This BOR document is no longer available for signing',
-                ], 400);
-            }
-
-            // Validate signature data format
-            $signatureData = $validated['signature_data'];
-            if (!str_contains($signatureData, 'data:image/png;base64,') && !str_contains($signatureData, 'data:image/jpeg;base64,')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid signature format. Only PNG and JPEG signatures are accepted.',
-                ], 422);
-            }
-
-            // Extract and validate base64 data
-            $base64Data = preg_replace('#^data:image/[^;]+;base64,#', '', $signatureData);
-            $decodedData = base64_decode($base64Data, true);
-            
-            if ($decodedData === false || strlen($decodedData) < 100) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid or corrupted signature data',
-                ], 422);
-            }
-
-            // Check image dimensions (optional validation)
-            $imageInfo = getimagesizefromstring($decodedData);
-            if (!$imageInfo || $imageInfo[0] < 50 || $imageInfo[1] < 20) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Signature is too small or invalid',
-                ], 422);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Signature is valid',
-                'data' => [
-                    'width' => $imageInfo[0],
-                    'height' => $imageInfo[1],
-                    'mime_type' => $imageInfo['mime'],
-                    'size_bytes' => strlen($decodedData),
-                ],
-            ]);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('BOR signature validation failed', [
-                'token' => $token,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Signature validation failed',
-            ], 500);
-        }
-    }
 
     /**
      * Generate preview PDF for BOR document (before signing)
@@ -366,7 +352,7 @@ class BorController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('BOR PDF preview generation failed', [
+            LoggerService::error('BOR PDF preview generation failed', [
                 'token' => $token,
                 'error' => $e->getMessage(),
             ]);
@@ -380,108 +366,6 @@ class BorController extends Controller
         }
     }
 
-    /**
-     * Submit customer signature (for customer portal)
-     */
-    public function submitSignature(Request $request, $token): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'signature_data' => 'required|string',
-                'customer_name' => 'required|string|max:255',
-                'ip_address' => 'nullable|ip',
-                'user_agent' => 'nullable|string|max:1000',
-            ]);
-
-            $borLog = BorLog::where('document_id', $token)->firstOrFail();
-
-            // Verify BOR log is in the correct status for signing
-            if (!in_array($borLog->status, ['pending', 'sent'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This BOR document is no longer available for signing',
-                ], 400);
-            }
-
-            DB::beginTransaction();
-
-            // Store signature data as a file
-            $signatureFilename = 'signature_' . $borLog->id . '_' . time() . '.png';
-            $signaturePath = 'bor-signatures/' . $signatureFilename;
-            
-            // Decode base64 signature and save
-            $signatureData = str_replace('data:image/png;base64,', '', $validated['signature_data']);
-            $signatureDecoded = base64_decode($signatureData);
-            
-            if ($signatureDecoded === false) {
-                throw new \Exception('Invalid signature data format');
-            }
-            
-            Storage::disk('public')->put($signaturePath, $signatureDecoded);
-
-            // Update BOR log with signature information
-            $borLog->update([
-                'status' => 'completed',
-                'signature_path' => Storage::url($signaturePath),
-                'date_signed' => now(), // Use current timestamp
-                'customer_signature_name' => $validated['customer_name'],
-                'user_agent' => $validated['user_agent'] ?? $request->header('User-Agent'),
-            ]);
-
-            // Generate signed PDF document
-            $pdfUrl = $this->borPdfService->generateSignedBorPdf($borLog);
-            
-            if (!$pdfUrl) {
-                Log::warning('BOR PDF generation failed but signature was submitted', [
-                    'bor_log_id' => $borLog->id,
-                    'token' => $token,
-                ]);
-            }
-
-            // Send completion notification emails
-            $this->borEmailService->sendBorCompletionEmail($borLog);
-            
-            // Send insurer notification if needed
-            if ($borLog->insurer_name) {
-                // TODO: Get actual insurer email from insurance provider configuration
-                $insurerEmail = 'insurer@example.com'; // This should be configurable
-                $this->borEmailService->sendBorInsurerNotification($borLog, $insurerEmail);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Signature submitted successfully',
-                'data' => [
-                    'bor_log_id' => $borLog->id,
-                    'status' => $borLog->status,
-                    'date_signed' => $borLog->date_signed,
-                    'customer_name' => $borLog->customer_signature_name,
-                ],
-            ]);
-
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('BOR signature submission failed', [
-                'token' => $token,
-                'error' => $e->getMessage(),
-                'request_data' => $request->except(['signature_data']), // Exclude large signature data from logs
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to submit signature: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
 
     /**
      * API endpoint to update BOR status with validation and automatic transitions
@@ -572,7 +456,7 @@ class BorController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('BOR status update failed', [
+            LoggerService::error('BOR status update failed', [
                 'bor_id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -652,7 +536,7 @@ class BorController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('BOR cancellation failed', [
+            LoggerService::error('BOR cancellation failed', [
                 'bor_id' => $id,
                 'error' => $e->getMessage(),
             ]);
@@ -717,7 +601,7 @@ class BorController extends Controller
             ], 404);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('BOR completion failed', [
+            LoggerService::error('BOR completion failed', [
                 'bor_id' => $id,
                 'error' => $e->getMessage(),
             ]);
@@ -730,141 +614,33 @@ class BorController extends Controller
     }
 
     /**
-     * API endpoint to view/download BOR document
-     */
-    public function viewDocument(Request $request, $id): JsonResponse
-    {
-        try {
-            $borLog = BorLog::findOrFail($id);
-
-            if (!$borLog->allowsViewDocument()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Document cannot be viewed in the current status',
-                    'current_status' => $borLog->status,
-                ], 422);
-            }
-
-            $documentData = [
-                'bor_id' => $borLog->id,
-                'bor_reference' => $borLog->bor_reference,
-                'status' => $borLog->status,
-            ];
-
-            // Check for signed PDF
-            if ($borLog->signed_pdf_path && Storage::exists($borLog->signed_pdf_path)) {
-                $documentData['signed_pdf'] = [
-                    'url' => Storage::url($borLog->signed_pdf_path),
-                    'path' => $borLog->signed_pdf_path,
-                    'type' => 'signed_pdf',
-                ];
-            }
-
-            // Check for uploaded documents
-            $uploadedDocuments = $borLog->documents()->with('documentType')->get();
-            if ($uploadedDocuments->isNotEmpty()) {
-                $documentData['uploaded_documents'] = $uploadedDocuments->map(function ($doc) {
-                    return [
-                        'id' => $doc->id,
-                        'name' => $doc->document_name,
-                        'type' => $doc->documentType->name ?? 'Unknown',
-                        'url' => $doc->document_url,
-                        'uploaded_at' => $doc->created_at,
-                    ];
-                });
-            }
-
-            // Check if there are any documents to view
-            if (!isset($documentData['signed_pdf']) && empty($documentData['uploaded_documents'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No documents available to view',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Document(s) retrieved successfully',
-                'data' => $documentData,
-            ]);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'BOR not found',
-            ], 404);
-        } catch (\Exception $e) {
-            Log::error('BOR document view failed', [
-                'bor_id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve document. Please try again.',
-            ], 500);
-        }
-    }
-
-    /**
      * Get available actions for a BOR based on its current status
      */
     private function getAvailableActions(BorLog $borLog): array
     {
         $actions = [];
+        $status = $borLog->status;
 
-        if ($borLog->allowsEditing()) {
-            $actions[] = [
-                'key' => 'edit',
-                'label' => 'Edit',
-                'icon' => 'edit',
-                'color' => 'primary',
-            ];
+        // Define actions based on status and permissions
+        $editAndCopyLinkCondition = !in_array($status, [BorStatusEnum::COMPLETED, BorStatusEnum::CANCELLED]);
+        $uploadAndDoneCondition = !in_array($status, [BorStatusEnum::DOCUMENT_SIGNED, BorStatusEnum::DOCUMENT_UPLOADED]);
+
+        if ($editAndCopyLinkCondition) {
+            $actions[] = 'edit';
+            $actions[] = 'copy_link';
         }
 
-        if ($borLog->allowsCopyLink()) {
-            $actions[] = [
-                'key' => 'copy_link',
-                'label' => 'Copy Link',
-                'icon' => 'link',
-                'color' => 'info',
-            ];
+        if ($uploadAndDoneCondition) {
+            $actions[] = 'upload';
+            $actions[] = 'done';
         }
 
-        if ($borLog->allowsUpload()) {
-            $actions[] = [
-                'key' => 'upload',
-                'label' => 'Upload',
-                'icon' => 'upload',
-                'color' => 'success',
-            ];
+        if (!in_array($status, [BorStatusEnum::CANCELLED, BorStatusEnum::COMPLETED])) {
+            $actions[] = 'cancel';
         }
 
-        if ($borLog->allowsViewDocument()) {
-            $actions[] = [
-                'key' => 'view',
-                'label' => 'View Document',
-                'icon' => 'eye',
-                'color' => 'info',
-            ];
-        }
-
-        if ($borLog->allowsMarkingDone()) {
-            $actions[] = [
-                'key' => 'done',
-                'label' => 'Mark Done',
-                'icon' => 'check',
-                'color' => 'success',
-            ];
-        }
-
-        if ($borLog->allowsCancellation()) {
-            $actions[] = [
-                'key' => 'cancel',
-                'label' => 'Cancel',
-                'icon' => 'x',
-                'color' => 'error',
-            ];
+        if ($borLog->signed_pdf_path || $borLog->document_path) {
+            $actions[] = 'view_document';
         }
 
         return $actions;
