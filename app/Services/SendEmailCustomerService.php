@@ -963,8 +963,10 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $message = json_decode($clientResponse->getBody()->getContents());
-            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
+            $responseBody = $clientResponse->getBody()->getContents();
+            $message = json_decode($responseBody);
+            $response = json_decode($clientResponse->getStatusCode().' '.$responseBody, true);
+
             if (isset($message->messageId)) {
                 $messageId = $message->messageId;
             }
