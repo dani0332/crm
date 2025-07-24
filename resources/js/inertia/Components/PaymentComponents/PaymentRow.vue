@@ -230,7 +230,8 @@ const validateUpfrontCapture = paymentRecord => {
     return getCaptureValidStatuses(paymentSplitRec);
   const isIPPending =
     paymentSplitRec.payment_method.code === paymentMethodsEnum.InsurerPayment &&
-    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
+    (paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING ||
+    (paymentSplitRec.payment_status_id === paymentStatusEnum.PARTIALLY_PAID && paymentRecord.collection_type === 'insurer'));
   const isCAPayment =
     paymentSplitRec.payment_method.code === paymentMethodsEnum.CreditApproval &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
@@ -274,7 +275,9 @@ const validateSplitPaymentsCapture = paymentRecord => {
       let ipPending = ipPaymentStatus.filter(
         item =>
           item.payment_status_id === paymentStatusEnum.PENDING ||
-          item.payment_status_id === paymentStatusEnum.PAID,
+          item.payment_status_id === paymentStatusEnum.PAID
+          ||
+          (item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID && paymentRecord.collection_type === 'insurer'),
       );
       return ipPending.length === ipPaymentStatus.length;
     } else {
