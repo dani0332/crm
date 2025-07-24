@@ -84,6 +84,10 @@ watch(
       getCurrencyCoverages(props.plan.planId);
       submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
       exitAge.value = props.plan?.exitAge;
+
+      quoteFetched.value = false;
+    } else {
+      quoteFetched.value = false;
     }
   },
 );
@@ -236,6 +240,8 @@ watch(
         text: rider.text,
         inputRequired: rider?.inputRequired ?? false,
       }));
+    } else {
+      ridersData.value = [];
     }
   },
   { deep: true },
@@ -292,6 +298,7 @@ const getQuote = () => {
       }
 
       submitType.value = 'onSubmit';
+      quoteFetched.value = true;
     })
     .catch(err => {
       errorMessage.value = err.response.data.message;
@@ -302,6 +309,35 @@ const getQuote = () => {
 };
 
 const submitType = props?.plan?.isApi ? ref('getQuote') : ref('onSubmit');
+
+const quoteFetched = ref(false);
+
+watch(
+  [
+    () => createForm.currency,
+    () => createForm.sumAssured,
+    () => createForm.policyTerm,
+    () => createForm.paymentTerm,
+  ],
+  () => {
+    if (props.plan?.isApi && quoteFetched.value && submitType.value === 'onSubmit') {
+      submitType.value = 'getQuote';
+      quoteFetched.value = false;
+    }
+  },
+  { deep: true }
+);
+
+watch(
+  () => ridersData.value,
+  () => {
+    if (props.plan?.isApi && quoteFetched.value && submitType.value === 'onSubmit') {
+      submitType.value = 'getQuote';
+      quoteFetched.value = false;
+    }
+  },
+  { deep: true }
+);
 
 const handleSubmit = isValid => {
   if (!isValid) {
@@ -749,7 +785,7 @@ const formattedActualPremium = useFormattedNumberField(
           <x-button class="mr-2" @click="shown = false"> Cancel </x-button>
           <x-button
             type="submit"
-            v-if="!createForm.actualPremium && plan.isApi"
+            v-if="plan.isApi && submitType === 'getQuote'"
             color="emerald"
             :loading="createForm.getQuoteLoading"
           >
@@ -757,7 +793,7 @@ const formattedActualPremium = useFormattedNumberField(
           </x-button>
 
           <x-button
-            v-else
+            v-else-if="!plan.isApi || submitType === 'onSubmit'"
             type="submit"
             color="emerald"
             :loading="createForm.loading"
