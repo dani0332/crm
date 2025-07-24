@@ -75,11 +75,7 @@ class LifeEmailService extends BaseService
             } else {
                 LoggerService::info("sendFICEmail - Quote status is not new lead for quote: {$personalQuote->uuid}");
             }
-            if ($plansData['hasError']) {
-                LoggerService::warning("sendFICEmail - Error checking plans", extra: [
-                    'error' => $plansData['errorMessage'],
-                ]);
-            }
+           
            
         } else {
             LoggerService::info(self::class.' - FIC Life Email is not set');
