@@ -629,7 +629,7 @@ const addPayment = isValid => {
       plan_id: props.planDetail?.id || 0,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
-			actual_amount: parseFloat(splitAmountModels.value?.[splitPaymentNo.value]), // need to check from commmits
+			actual_amount: parseFloat(splitAmountModels.value?.[splitPaymentNo.value]),
       bank_reference_number: paymentMethodsForm.bank_reference_number,
       splitPaymentId: paymentMethodsForm.splitPaymentId,
       is_declined: isDeclineClicked.value,
