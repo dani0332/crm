@@ -2748,6 +2748,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             show-close
             backdrop
             is-form
+            persistent
             @submit="onMemberSubmit"
           >
             <div
