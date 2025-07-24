@@ -964,11 +964,10 @@ class SendEmailCustomerService extends BaseService
             );
 
             $responseBody = $clientResponse->getBody()->getContents();
-            $message = json_decode($responseBody);
-            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
+            $response = json_decode($responseBody);
 
-            if (isset($message->messageId)) {
-                $messageId = $message->messageId;
+            if (isset($response->messageId)) {
+                $messageId = $response->messageId;
             }
 
             $responseCode = $clientResponse->getStatusCode();
