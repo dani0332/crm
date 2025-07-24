@@ -814,8 +814,7 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        LoggerService::info('Policy documents email sending started', extra: [
-            'quote_code' => $emailData->code,
+        LoggerService::info('Policy documents email sending started for quote code: '.$emailData->code, extra: [
             'customer_email' => $emailData->customerEmail,
             'template_id' => $emailData->emailTemplateId,
         ]);
@@ -825,9 +824,7 @@ class SendEmailCustomerService extends BaseService
         $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
-            LoggerService::info('Processing attachments for policy documents', extra: [
-                'quote_code' => $emailData->code,
-            ]);
+            LoggerService::info('Processing attachments for policy documents for quote code: '.$emailData->code);
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
@@ -836,8 +833,7 @@ class SendEmailCustomerService extends BaseService
                 foreach ($documents as $document) {
                     $path = ! empty($document->watermarked_doc_url) ? $document->watermarked_doc_url : $document->doc_url;
                     if (empty($path)) {
-                        LoggerService::warning('Main lead document not found', extra: [
-                            'quote_code' => $emailData->code,
+                        LoggerService::warning('Main lead document not found for quote code: '.$emailData->code, extra: [
                             'document_id' => $document->id,
                             'watermarked_url' => $document->watermarked_doc_url ?? null,
                             'doc_url' => $document->doc_url ?? null,
@@ -972,16 +968,14 @@ class SendEmailCustomerService extends BaseService
             $response = "{$responseCode} {$responseBody}";
             $isEmailSent = 1;
 
-            LoggerService::info('Policy documents email sent successfully', extra: [
-                'quote_code' => $emailData->code,
+            LoggerService::info('Policy documents email sent successfully for quote code: '.$emailData->code, extra: [
                 'message_id' => $messageId,
                 'response_code' => $responseCode,
             ]);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $response = "{$responseCode} {$ex->getMessage()}";
-            LoggerService::error('Failed to send policy documents email', extra: [
-                'quote_code' => $emailData->code,
+            LoggerService::error('Failed to send policy documents email for quote code: '.$emailData->code, extra: [
                 'error_code' => $responseCode,
                 'error_message' => $ex->getMessage(),
                 'message_id' => $messageId ?? null,
