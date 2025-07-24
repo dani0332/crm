@@ -38,6 +38,7 @@ class SplitPaymentUpdateRequest extends FormRequest
             'quote_id' => 'required|integer',
             'splitPaymentId' => 'required|integer',
             'collection_type' => 'required|string',
+            'insurer_receipt_number' => 'nullable|string',
         ];
     }
 

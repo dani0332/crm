@@ -1543,4 +1543,18 @@ class CentralService extends BaseService
 
         return $response;
     }
+
+    public function checkInsurerReceiptNumber($quoteType, $receiptNumber)
+    {
+        $count = PaymentSplits::where('insurer_receipt_number', $receiptNumber)->count();
+        if ($count > 0) {
+            LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number already exists: '.$receiptNumber);
+
+            return ['status' => false, 'message' => 'Receipt number already exists'];
+        }
+
+        LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number does not exist: '.$receiptNumber);
+
+        return ['status' => true, 'message' => 'Receipt number does not exist'];
+    }
 }

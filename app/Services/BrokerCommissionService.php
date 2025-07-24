@@ -97,4 +97,79 @@ class BrokerCommissionService
 
         return $isCreditCardEnabled;
     }
+
+    public function getBrokerCommission($data)
+    {
+        [$insurerId, $quoteTypeId, $businessTypeOfInsurance, $planId] = $data;
+
+        // Try with all 4 parameters
+        $brokerCommission = BrokerCommission::select('automatic_commission_transfer')
+            ->where('insurance_provider_id', $insurerId)
+            ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                $q->where('quote_type_id', $quoteTypeId);
+            })
+            ->when($businessTypeOfInsurance, function ($q) use ($businessTypeOfInsurance) {
+                $q->where('business_type_of_insurance_id', $businessTypeOfInsurance);
+            })
+            ->when($planId, function ($q) use ($planId) {
+                $q->where('plan_id', $planId);
+            })
+            ->first();
+
+        if ($brokerCommission) {
+            return $brokerCommission;
+        }
+
+        // Try with 3 parameters (without planId)
+        if ($planId) {
+            $brokerCommission = BrokerCommission::select('automatic_commission_transfer')
+                ->where('insurance_provider_id', $insurerId)
+                ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                    $q->where('quote_type_id', $quoteTypeId);
+                })
+                ->when($businessTypeOfInsurance, function ($q) use ($businessTypeOfInsurance) {
+                    $q->where('business_type_of_insurance_id', $businessTypeOfInsurance);
+                })
+                ->whereNull('plan_id')
+                ->first();
+
+            if ($brokerCommission) {
+                return $brokerCommission;
+            }
+        }
+
+        // Try with 2 parameters (without businessTypeOfInsurance)
+        if ($businessTypeOfInsurance) {
+            $brokerCommission = BrokerCommission::select('automatic_commission_transfer')
+                ->where('insurance_provider_id', $insurerId)
+                ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                    $q->where('quote_type_id', $quoteTypeId);
+                })
+                ->whereNull('business_type_of_insurance_id')
+                ->whereNull('plan_id')
+                ->first();
+
+            if ($brokerCommission) {
+                return $brokerCommission;
+            }
+        }
+
+        // Finally try with just insurer and quote type
+        return BrokerCommission::select('automatic_commission_transfer')
+            ->where('insurance_provider_id', $insurerId)
+            ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                $q->where('quote_type_id', $quoteTypeId);
+            })
+            ->whereNull('business_type_of_insurance_id')
+            ->whereNull('plan_id')
+            ->first();
+    }
+
+    public function isAutomaticCommissionTransferEnabledForInsurer($data)
+    {
+        $brokerCommission = $this->getBrokerCommission($data);
+        info(self::class.' fn:'.__FUNCTION__.' Broker Commission Id : '.$brokerCommission?->id.', Automatic Commission Transfer : '.$brokerCommission?->automatic_commission_transfer, ['data' => json_encode($data)]);
+
+        return $brokerCommission?->automatic_commission_transfer;
+    }
 }
