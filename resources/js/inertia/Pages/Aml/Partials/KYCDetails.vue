@@ -19,6 +19,7 @@ const rolesEnum = page.props.rolesEnum;
 const complianceDisable = ref(true);
 const patternFieldDisable = ref(true);
 const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
+const syncProcessLoading = ref(false);
 
 const emit = defineEmits(['update:insurerPortalSyncData']); 
 
@@ -268,6 +269,7 @@ function insuredKycFormValidate() {
   return isValid;
 }
 const syncInsurerPortalUpdates = () => {
+  syncProcessLoading.value = true;
   axios
     .post('/get-quote-details-from-insurer', {
       quoteTypeId: page.props.quoteType.id,
@@ -289,6 +291,7 @@ const syncInsurerPortalUpdates = () => {
           position: 'top',
         });
       }
+      syncProcessLoading.value = false;
     })
     .catch(error => {
       notification.error({
@@ -296,6 +299,7 @@ const syncInsurerPortalUpdates = () => {
         position: 'top',
       });
       console.error('Sync error:', error);
+      syncProcessLoading.value = false;
     });
 };
 
@@ -1127,6 +1131,7 @@ watch(
         class="px-6"
         @click="syncInsurerPortalUpdates"
         :disabled="!isSyncEnabled"
+        :loading="syncProcessLoading"
       >
         Sync
       </x-button>

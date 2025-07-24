@@ -2073,6 +2073,12 @@ class AMLService
         }
 
         $screeningResult = json_decode($kycLogs->results);
-        return (isset($screeningResult->uwApprovalStatus) && isset($screeningResult->quoteStatus) && $screeningResult->uwApprovalStatus == 'Y' && $screeningResult->quoteStatus == 'Quote');
+        
+        if (!isset($screeningResult->uwApprovalStatus, $screeningResult->quoteStatus)) {
+            return false;
+        }
+
+        return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO 
+            && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUOTE_STATUS;
     }
 }

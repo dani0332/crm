@@ -970,17 +970,44 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quoteDetails->code.' started');
-        // return response()->json([
-        //     'success' => true,
-        //     'message' => 'Quote details retrieved successfully from insurer portal',
-        //     'data' => [
-        //         'additionalVehicleTransactionDetails' => [
-        //             'rtaTransactionType' => '',
-        //             'plateCode' => '',
-        //             'plateNumber' => '123456',
-        //         ]
-        //     ]
-        // ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Quote details retrieved successfully from insurer portal',
+            'data' => [
+                'rtaTransactionType' => 'RTT03',
+                'plateCode' => 'A',
+                'plateNumber' => '123456',
+                'trafficCodeNumber' => 'TFC123456',
+                'chassisNumber' => 'CHASSIS123456789',
+                'engineNumber' => 'ENGINE123456',
+                'rtaPlateCategory' => 'RPC01',
+                'vehicleColor' => '38',
+                'plateColor' => '38',
+                'bankLoan' => false,
+                'bankName' => 'FI0079',
+                'firstRegistrationDate' => '2023-01-01',
+                'policyEffectiveDate' => '2024-01-01',
+                'policyExpiryDate' => '2024-12-31',
+                'certificateStartDate' => '2024-01-01',
+                'certificateEndDate' => '2024-12-31',
+                'annualMileageEstimate' => '20000',
+                'isInsuredAndDriverSame' => 1,
+                'driverFirstName' => 'John',
+                'driverLastName' => 'Doe',
+                'driverDob' => '1990-01-01',
+                'driverGender' => 'male',
+                'driverLicenseNumber' => 'LIC123456789',
+                'licenseIssuePlace' => 'sharjah', 
+                'licenseIssueDate' => '2018-01-01',
+                'licenseExpiryDate' => '2028-01-01',
+                'uaeDrivingExperience' => '5',
+                'homeCountryLicenseIssuance' => 'Bosnian',
+                'homeCountryDrivingExperience' => '8'
+            ]
+        ]);
+        
+        /* Commented out for testing
         try {
             $payload = ['quoteTypeId' => $quoteTypeId, 'quoteUID' => $quoteDetails->uuid];
             $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
@@ -1044,6 +1071,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'message' => 'An error occurred while retrieving quote details from insurer portal'
             ]);
         }
+        */ // End of commented out section for testing
     }
 
     public function getInsurerAPIStatuses()

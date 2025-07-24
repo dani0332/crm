@@ -74,60 +74,35 @@ const additionalVehicleTransactionDetailsForm = useForm({
   annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
 });
 
-// Watch for changes in insurerPortalSyncData and update form values
-watch(() => props.insurerPortalSyncData, (newData) => {
-  if (newData) {
-    if (newData.rtaTransactionType) {
-      additionalVehicleTransactionDetailsForm.rta_transaction_type = newData.rtaTransactionType.toString();
-    }
-    if (newData.plateCode) {
-      additionalVehicleTransactionDetailsForm.plate_code = newData.plateCode;
-    }
-    if (newData.plateNumber) {
-      additionalVehicleTransactionDetailsForm.plate_number = newData.plateNumber;
-    }
-    if (newData.trafficCodeNumber) {
-      additionalVehicleTransactionDetailsForm.traffic_code_number = newData.trafficCodeNumber;
-    }
-    if (newData.chassisNumber) {
-      additionalVehicleTransactionDetailsForm.chassis_number = newData.chassisNumber;
-    }
-    if (newData.engineNumber) {
-      additionalVehicleTransactionDetailsForm.engine_number = newData.engineNumber;
-    }
-    if (newData.rtaPlateCategory) {
-      additionalVehicleTransactionDetailsForm.rta_plate_category = newData.rtaPlateCategory;
-    }
-    if (newData.vehicleColor) {
-      additionalVehicleTransactionDetailsForm.vehicle_color = newData.vehicleColor;
-    }
-    if (newData.plateColor) {
-      additionalVehicleTransactionDetailsForm.plate_color = newData.plateColor;
-    }
-    if (newData.bankLoan !== undefined) {
-      additionalVehicleTransactionDetailsForm.bank_loan = newData.bankLoan;
-    }
-    if (newData.bankName) {
-      additionalVehicleTransactionDetailsForm.bank_name = newData.bankName;
-    }
-    if (newData.firstRegistrationDate) {
-      additionalVehicleTransactionDetailsForm.first_registration_date = newData.firstRegistrationDate;
-    }
-    if (newData.policyEffectiveDate) {
-      additionalVehicleTransactionDetailsForm.policy_effective_date = newData.policyEffectiveDate;
-    }
-    if (newData.policyExpiryDate) {
-      additionalVehicleTransactionDetailsForm.policy_expiry_date = newData.policyExpiryDate;
-    }
-    if (newData.certificateStartDate) {
-      additionalVehicleTransactionDetailsForm.certificate_start_date = newData.certificateStartDate;
-    }
-    if (newData.certificateEndDate) {
-      additionalVehicleTransactionDetailsForm.certificate_end_date = newData.certificateEndDate;
-    }
-    if (newData.annualMileageEstimate) {
-      additionalVehicleTransactionDetailsForm.annual_mileage_estimate = newData.annualMileageEstimate.toString();
-    }
+watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
+  if (vehicleTransactionDetails) {
+    const fieldMappings = {
+      vehicleTransactionDetails: {
+        rtaTransactionType: 'rta_transaction_type',
+        plateCode: 'plate_code',
+        plateNumber: 'plate_number',
+        trafficCodeNumber: 'traffic_code_number',
+        chassisNumber: 'chassis_number',
+        engineNumber: 'engine_number',
+        rtaPlateCategory: 'rta_plate_category', 
+        vehicleColor: 'vehicle_color',
+        plateColor: 'plate_color',
+        bankLoan: 'bank_loan', 
+        bankName: 'bank_name',
+        firstRegistrationDate: 'first_registration_date', 
+        policyEffectiveDate: 'policy_effective_date', 
+        policyExpiryDate: 'policy_expiry_date', 
+        certificateStartDate: 'certificate_start_date', 
+        certificateEndDate: 'certificate_end_date', 
+        annualMileageEstimate: 'annual_mileage_estimate',
+      },
+    };
+
+    Object.entries(fieldMappings.vehicleTransactionDetails).forEach(([sourceKey, targetKey]) => {
+      if (vehicleTransactionDetails?.[sourceKey]) {
+        additionalVehicleTransactionDetailsForm[targetKey] = vehicleTransactionDetails[sourceKey];
+      }
+    });
   }
 }, { deep: true });
 

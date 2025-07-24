@@ -90,45 +90,30 @@ const submitAdditionalDriverDetailsForm = (isValid) => {
   } 
 };
 
-// Watch for changes in insurerPortalSyncData and update form values
-watch(() => props.insurerPortalSyncData, (newData) => {
-  if (newData) {
-    if (newData.isInsuredAndDriverSame) {
-      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.isInsuredAndDriverSame;
-    }
-    if (newData.driverFirstName) {
-      additionalVehicleTransactionDetailsForm.driver_first_name = newData.driverFirstName;
-    }
-    if (newData.driverLastName) {
-      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.driverLastName;
-    }
-    if (newData.driverDob) {
-      additionalVehicleTransactionDetailsForm.driver_first_name = newData.driverDob;
-    }
-    if (newData.driverGender) {
-      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.driverGender;
-    }
-    if (newData.driverLicenseNumber) {
-      additionalVehicleTransactionDetailsForm.driver_first_name = newData.driverLicenseNumber;
-    }
-    if (newData.licenseIssuePlace) {
-      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.licenseIssuePlace;
-    }
-    if (newData.licenseIssueDate) {
-      additionalVehicleTransactionDetailsForm.driver_first_name = newData.licenseIssueDate;
-    }
-    if (newData.licenseExpiryDate) {
-      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.licenseExpiryDate;
-    }
-    if (newData.uaeDrivingExperience) {
-      additionalVehicleTransactionDetailsForm.driver_first_name = newData.uaeDrivingExperience;
-    }
-    if (newData.homeCountryLicenseIssuance) {
-      additionalVehicleTransactionDetailsForm.is_insured_and_driver_same = newData.homeCountryLicenseIssuance;
-    }
-    if (newData.homeCountryDrivingExperience) {
-      additionalVehicleTransactionDetailsForm.driver_first_name = newData.homeCountryDrivingExperience;
-    }
+watch(() => props.insurerPortalSyncData, (driverDetails) => {
+  if (driverDetails) {
+    const fieldMappings = {
+      driverDetails: {
+        isInsuredAndDriverSame: 'is_insured_and_driver_same',
+        driverFirstName: 'driver_first_name',
+        driverLastName: 'driver_last_name',
+        driverDob: 'driver_dob',
+        driverGender: 'driver_gender',
+        driverLicenseNumber: 'driver_license_number',
+        licenseIssuePlace: 'license_issue_place',
+        licenseIssueDate: 'license_issue_date',
+        licenseExpiryDate: 'license_expiry_date',
+        uaeDrivingExperience: 'uae_driving_experience',
+        homeCountryLicenseIssuance: 'home_country_license_issuance',
+        homeCountryDrivingExperience: 'home_country_driving_experience',
+      },
+    };
+
+    Object.entries(fieldMappings.driverDetails).forEach(([sourceKey, targetKey]) => {
+      if (driverDetails?.[sourceKey]) {
+        additionalDriverDetailsForm[targetKey] = driverDetails[sourceKey];
+      }
+    });
   }
 }, { deep: true });
 
