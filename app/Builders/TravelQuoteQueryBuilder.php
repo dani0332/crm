@@ -217,29 +217,37 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                     return;
                 }
 
-                // Define parent-child relationship subquery once to avoid duplication
-                $parentChildRelationshipIds = function ($subQuery) {
-                    $subQuery->select('parent_id as id')
-                        ->from('travel_quote_request')
-                        ->whereNotNull('parent_id')
-                        ->union(
-                            DB::table('travel_quote_request')
-                                ->select('id')
-                                ->whereNotNull('parent_id')
-                        );
-                };
-
                 if (in_array('both', $ageGroups)) {
                     // Show only records with parent-child relationships
-                    $q->whereIn('id', $parentChildRelationshipIds);
+                    // This includes both parents (records that have children) and children (records with parent_id)
+                    $q->where(function ($subQuery) {
+                        $subQuery->whereNotNull('parent_id') // Child records
+                            ->orWhereExists(function ($query) {
+                                $query->select(DB::raw(1))
+                                    ->from('travel_quote_request as child')
+                                    ->whereColumn('child.parent_id', 'travel_quote_request.id');
+                            }); // Parent records that have children
+                    });
                 } else {
                     // Exclude records with parent-child relationships
-                    $q->whereNotIn('id', $parentChildRelationshipIds);
+                    $q->whereNull('parent_id') // Not a child
+                        ->whereNotExists(function ($query) {
+                            $query->select(DB::raw(1))
+                                ->from('travel_quote_request as child')
+                                ->whereColumn('child.parent_id', 'travel_quote_request.id');
+                        }); // Not a parent
 
+                    // Handle age group filtering with OR logic for multiple selections
+                    $ageConditions = [];
                     if (in_array('0_64', $ageGroups)) {
-                        $q->whereRaw('TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 65');
-                    } elseif (in_array('65_plus', $ageGroups)) {
-                        $q->whereRaw('TIMESTAMPDIFF(YEAR, dob, CURDATE()) >= 65');
+                        $ageConditions[] = 'TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 65';
+                    }
+                    if (in_array('65_plus', $ageGroups)) {
+                        $ageConditions[] = 'TIMESTAMPDIFF(YEAR, dob, CURDATE()) >= 65';
+                    }
+
+                    if (! empty($ageConditions)) {
+                        $q->whereRaw('('.implode(' OR ', $ageConditions).')');
                     }
                 }
             });
