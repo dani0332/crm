@@ -60,7 +60,7 @@ const loader = ref({
 const fileInput = ref();
 
 const notesForm = reactive({
-  notes: null,
+  notes: '',
   quote_request_id: props.quote?.id,
   quote_type: props.modelType,
   quote_status_id: props.quote?.quote_status_id,
@@ -160,7 +160,7 @@ const onEditNote = data => {
 };
 
 const showAddNotesModal = () => {
-  notesForm.notes = null;
+  notesForm.notes = '';
   notesForm.id = null;
   showAddNotes.value = true;
   isEdit.value = false;
@@ -266,7 +266,7 @@ watch(
     <div>
       <div class="flex justify-end">
         <x-button size="sm" color="orange" @click="showAddNotesModal()">
-          {{ isEdit ? 'Edit' : 'Add' }} Notes
+          Add Notes
         </x-button>
       </div>
       <DataTable
