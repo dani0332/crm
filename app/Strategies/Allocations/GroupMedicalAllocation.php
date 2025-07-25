@@ -20,10 +20,6 @@ class GroupMedicalAllocation extends BaseAllocation
     const TEAM_MICRO = 'micro';
     const TEAM_NON_MICRO = 'non_micro';
 
-    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false, public bool $hasDuplicateLead = false, public ?string $existingRecordUuid = null)
-    {
-        parent::__construct($quoteType, $uuid, $teamId, $overrideAdvisorId, $isReAssignment, $hasDuplicateLead, $existingRecordUuid);
-    }
 
     protected function resolveLead(): void
     {

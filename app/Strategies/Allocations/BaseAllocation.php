@@ -29,7 +29,10 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected array $advisorIDs = [];
     protected array $excludedAdvisorIds = [];
 
-    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false, public bool $hasDuplicateLead = false, public ?string $existingRecordUuid = null) {}
+    protected bool $hasDuplicateLead = false;
+    protected ?string $existingRecordUuid = null;
+
+    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
     private function getQuoteTypeId()
     {
@@ -47,13 +50,16 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         try {
             LoggerService::info(self::class.' - execute: Allocation Started');
             $this->resolveLead();
+            if ($this->lead && $this->shouldHandleDuplicateLead()) {
+                $this->resolveDuplicateLeadInfo();
+            }
 
             if (! $this->lead) {
                 LoggerService::info(self::class.' - execute: Lead not found');
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = null;
-                if ($this->hasDuplicateLead && $this->shouldHandleDuplicateLead()) {
+                if ($this->hasDuplicateLead) {
                     $advisor = $this->handleDuplicateLeadAssignment();
                     LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
                         'found_advisor' => $advisor ? true : false,
@@ -97,7 +103,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 $q->where('quote_type_id', $this->quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
+            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
+            ->with('quoteDetail');
     }
 
     protected function resolveLead(): void
@@ -456,5 +463,41 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
 
         return ! $isAdvisorAvailable;
+    }
+
+    protected function resolveDuplicateLeadInfo(): void
+    {
+        $quoteDetail = $this->lead->quoteDetail;
+
+        try {
+            if ($quoteDetail) {
+                $this->hasDuplicateLead = (bool) ($quoteDetail->has_duplicate_lead ?? false);
+                $this->existingRecordUuid = $quoteDetail->existing_record_uuid ?? null;
+
+                LoggerService::info(self::class.' - resolveDuplicateLeadInfo: Resolved from database', extra: [
+                    'quote_type' => $this->quoteType->value,
+                    'quote_uuid' => $this->uuid,
+                    'has_duplicate_lead' => $this->hasDuplicateLead,
+                    'existing_record_uuid' => $this->existingRecordUuid,
+                ]);
+            } else {
+                LoggerService::info(self::class.' - resolveDuplicateLeadInfo: No quote detail found', extra: [
+                    'quote_type' => $this->quoteType->value,
+                    'quote_uuid' => $this->uuid,
+                ]);
+
+                $this->hasDuplicateLead = false;
+                $this->existingRecordUuid = null;
+            }
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' - resolveDuplicateLeadInfo: Error resolving duplicate info', [
+                'quote_type' => $this->quoteType->value,
+                'quote_uuid' => $this->uuid,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->hasDuplicateLead = false;
+            $this->existingRecordUuid = null;
+        }
     }
 }
