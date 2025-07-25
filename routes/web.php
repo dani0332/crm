@@ -2,7 +2,6 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
@@ -787,11 +786,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // bookpolicy routes
     Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy')->middleware('permission:'.PermissionsEnum::BOOK_POLICY_DETAILS_ADD);
     Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy')->middleware('permission:'.PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON.'|'.PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON.'|'.PermissionsEnum::BOOK_POLICY_BUTTON);
-
-    // Temporary route for updating commissions - TODO: Remove this route after updating the commissions
-    Route::get('update-commissions', [CentralController::class, 'updateCommissionForLeads'])
-        ->name('update-commissions')
-        ->middleware('role:'.RolesEnum::Admin);
 
     /* health quote members */
     Route::post('/health-quote-add-member', [HealthQuoteController::class, 'healthQuoteAddMember']);
