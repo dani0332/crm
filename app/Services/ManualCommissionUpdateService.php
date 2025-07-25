@@ -292,7 +292,6 @@ class ManualCommissionUpdateService extends BaseService
                     $results[$refId] = [
                         'success' => false,
                         'error' => 'Policy is not booked yet',
-                        'commission_details' => null
                     ];
                     continue;
                 }
@@ -325,12 +324,12 @@ class ManualCommissionUpdateService extends BaseService
                         'commission' => $commissionDetails['total_commission'],
                     ]);
 
-                    $results[$refId] = ['success' => true, 'error' => null, 'commission_details' => $commissionDetails];
+                    $results[$refId] = ['success' => true, 'commission_details' => $commissionDetails];
 
                 }
             } catch (\Exception $e) {
                 LoggerService::info('__class: ' . self::class . ' fn: ' . __FUNCTION__ . ' Error while processing commission for ref_id: ' . $refId, extra: ['error' => $e->getMessage()]);
-                $results[$refId] = ['success' => false, 'error' => 'Error processing commission: ' . $e->getMessage(), 'commission_details' => null];
+                $results[$refId] = ['success' => false, 'error' => 'Error processing commission: ' . $e->getMessage()];
             }
         }
 
