@@ -882,6 +882,17 @@ class CentralController extends Controller
         return response()->json($response);
     }
 
+    public function checkInsurerReceiptNumber($quoteType, Request $request)
+    {
+        $validatedRequest = (object) $request->validate([
+            'insurer_receipt_number' => 'required|string',
+        ]);
+
+        $response = app(CentralService::class)->checkInsurerReceiptNumber($quoteType, $validatedRequest->insurer_receipt_number);
+
+        return response()->json($response);
+    }
+
     public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
     {
         LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
