@@ -772,6 +772,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onActivitySubmit"
         >
           <div class="grid gap-4">
@@ -819,6 +820,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onVoidSubmit"
         >
           <div>
@@ -912,6 +914,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onAddDocumentSubmit"
         >
           <template #header>
