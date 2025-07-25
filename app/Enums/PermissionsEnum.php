@@ -407,6 +407,7 @@ final class PermissionsEnum extends Enum
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const PAYMENT_VERIFICATION_LOWER_AMOUNT = 'payment-verification-lower-amount';
     public const PERMISSION_LIST = 'permission-list';
     public const INSURER_PAYMENT_LINK = 'insurer-payment-link';
     public const CANCEL_SEND_UPDATE = 'cancel-send-update';
