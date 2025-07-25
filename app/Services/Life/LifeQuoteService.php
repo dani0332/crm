@@ -241,7 +241,6 @@ class LifeQuoteService extends BaseService
             'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
             'maritalStatusId' => $data['marital_status_id'],
             'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'tenureOfInsuranceId' => LifeInsurerTenure::LIFE,
             'numberOfYearsId' => $data['number_of_years_id'],
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
