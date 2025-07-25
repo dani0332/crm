@@ -1933,12 +1933,12 @@ const enableExchangeRateEdit = () => {
     />
 
     <template v-if="!quote.is_ecommerce">
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :vatPrice="vatPercentage"
-      :expanded="sectionExpanded"
+      <PlanDetails
+        :insuranceProviders="insuranceProviders"
+        :quote="quote"
+        :quoteType="quoteType"
+        :vatPrice="vatPercentage"
+        :expanded="sectionExpanded"
         :isAddUpdate="isAddUpdate"
       />
     </template>
@@ -1950,7 +1950,9 @@ const enableExchangeRateEdit = () => {
             <div class="flex flex-wrap gap-4 justify-between items-center">
               <h3 class="font-semibold text-primary-800 text-lg">
                 Available Plans
-                <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
+                <x-tag size="sm">{{
+                  listQuotePlansFiltered.length || 0
+                }}</x-tag>
               </h3>
             </div>
           </template>

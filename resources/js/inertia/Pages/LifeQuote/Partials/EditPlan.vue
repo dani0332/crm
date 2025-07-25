@@ -929,11 +929,9 @@ const formattedActualPremium = useFormattedNumberField(
             </div>
           </TabPanel>
 
-
           <!-- Policy Wordings -->
           <TabPanel>
             <dl class="grid md:grid-cols-2 gap-5 p-4">
-             
               <div
                 v-for="data in props?.selectedPlan?.policyWordings || []"
                 :key="data"
@@ -977,9 +975,7 @@ const formattedActualPremium = useFormattedNumberField(
 
             <x-button
               v-if="
-                editForm.isApi &&
-                !editForm.isUnderwritten &&
-                !isPdfGenerated
+                editForm.isApi && !editForm.isUnderwritten && !isPdfGenerated
               "
               @click="generatePdf()"
               class="mt-2"

@@ -24,7 +24,9 @@ const filtersCount = ref(0);
 const quoteSegments = page.props.quoteSegments;
 const quoteSegmentsLife = [
   { value: 'all', label: 'All' },
-  ...quoteSegments.filter(segment => segment.value === 'fic' || segment.value === 'non-fic')
+  ...quoteSegments.filter(
+    segment => segment.value === 'fic' || segment.value === 'non-fic',
+  ),
 ];
 
 const rules = {
