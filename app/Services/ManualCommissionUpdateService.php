@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Repositories\PaymentRepository;
@@ -287,6 +288,15 @@ class ManualCommissionUpdateService extends BaseService
         foreach ($carQuoteRefIds as $refId) {
             try {
                 $carQuoteDetails = CarQuote::where('code', $refId)->first();
+                if($carQuoteDetails->status !== QuoteStatusEnum::PolicyBooked) {
+                    $results[$refId] = [
+                        'success' => false,
+                        'error' => 'Policy is not booked yet',
+                        'commission_details' => null
+                    ];
+                    continue;
+                }
+
                 $payment = $carQuoteDetails->payment;
                 $insuranceProvider = getInsuranceProvider($payment, QuoteTypes::CAR->value, $carQuoteDetails);
                 $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
