@@ -537,11 +537,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
                 return $response;
             }
+            if ($isPolicyBookingFailed) {
+                $response['isEditBookingDetailsDisabled'] = false;
+                $response['message'] = 'Booking Step is editable';
+            }
 
             return $response;
-        } elseif ($isPolicyBookingFailed) {
-            $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = 'Booking Step is editable';
         } elseif (! $policyIssuance) { /* && $quote->insurer_api_status_id */
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
