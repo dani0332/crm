@@ -305,7 +305,7 @@ const onDataExport = async (flag, exportType = 'download') => {
       .get(finalUrl)
       .then(resp => {
         // return resp.data;
-        console.log("resp.data.message",resp.data.message);
+        console.log('resp.data.message', resp.data.message);
         if (resp.data.message) {
           notification.success({
             title: resp.data.message,
@@ -313,7 +313,8 @@ const onDataExport = async (flag, exportType = 'download') => {
           });
         }
         loaders.export = false;
-      }).catch(err => {
+      })
+      .catch(err => {
         notification.error({
           title: err.response.data.message
             ? err.response.data.message
