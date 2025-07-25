@@ -80,6 +80,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -91,7 +92,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\ManualCommissionUpdateService;
 
 class CentralController extends Controller
 {
@@ -879,6 +879,17 @@ class CentralController extends Controller
         LoggerService::info("Delete parent payment called for payment code : {$request->payment_code}");
 
         $response = app(CentralService::class)->deletePayment($validatedRequest);
+
+        return response()->json($response);
+    }
+
+    public function checkInsurerReceiptNumber($quoteType, Request $request)
+    {
+        $validatedRequest = (object) $request->validate([
+            'insurer_receipt_number' => 'required|string',
+        ]);
+
+        $response = app(CentralService::class)->checkInsurerReceiptNumber($quoteType, $validatedRequest->insurer_receipt_number);
 
         return response()->json($response);
     }

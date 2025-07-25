@@ -346,6 +346,7 @@ const formatDate = date => {
     backdrop
     @update:modelValue="handleConfirmation(false)"
     is-form
+    persistent
     @submit="onSubmit"
   >
     <x-select
