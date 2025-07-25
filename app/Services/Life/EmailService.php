@@ -51,20 +51,23 @@ class EmailService
 
                     if (isset($checkPlans['hasError']) && $checkPlans['hasError']) {
                         LoggerService::warning("sendOCAEmail - Error checking plans: {$checkPlans['errorMessage']}, keeping lead status as NewLead");
+
                         return;
                     }
 
                     if ($checkPlans['totalNumberOfPlans'] == 0) {
-                        LoggerService::info("sendOCAEmail - total number of plans is 0, so lead status will remain NewLead");
+                        LoggerService::info('sendOCAEmail - total number of plans is 0, so lead status will remain NewLead');
+
                         return;
                     }
 
                     if ($checkPlans['totalNumberOfHiddenPlans'] == $checkPlans['totalNumberOfPlans']) {
-                        LoggerService::info("sendOCAEmail - total number of hidden plans is equal to total number of plans, so lead status will remain NewLead");
+                        LoggerService::info('sendOCAEmail - total number of hidden plans is equal to total number of plans, so lead status will remain NewLead');
+
                         return;
                     }
 
-                    LoggerService::info("sendOCAEmail - changing lead status to Quoted", [
+                    LoggerService::info('sendOCAEmail - changing lead status to Quoted', [
                         'totalPlans' => $checkPlans['totalNumberOfPlans'],
                         'hiddenPlans' => $checkPlans['totalNumberOfHiddenPlans'],
                         'visiblePlans' => $checkPlans['totalNumberOfPlans'] - $checkPlans['totalNumberOfHiddenPlans'],
@@ -158,9 +161,10 @@ class EmailService
             $plansData = app(LifeQuoteService::class)->quotePlans(['quote_uuid' => $quoteUID]);
 
             if (is_string($plansData)) {
-                LoggerService::warning("checkPlans - API returned error", extra: [
+                LoggerService::warning('checkPlans - API returned error', extra: [
                     'error' => $plansData,
                 ]);
+
                 return [
                     'totalNumberOfHiddenPlans' => 0,
                     'totalNumberOfPlans' => 0,
@@ -169,8 +173,9 @@ class EmailService
                 ];
             }
 
-            if (!$plansData || !isset($plansData->quotes) || !isset($plansData->quotes->plans)) {
+            if (! $plansData || ! isset($plansData->quotes) || ! isset($plansData->quotes->plans)) {
                 LoggerService::warning('checkPlans - Invalid or empty plans data structure');
+
                 return [
                     'totalNumberOfHiddenPlans' => 0,
                     'totalNumberOfPlans' => 0,
@@ -180,8 +185,9 @@ class EmailService
             }
 
             $plans = $plansData->quotes->plans;
-            if (!is_array($plans) && !is_object($plans)) {
+            if (! is_array($plans) && ! is_object($plans)) {
                 LoggerService::warning('checkPlans - Plans data is not iterable');
+
                 return [
                     'totalNumberOfHiddenPlans' => 0,
                     'totalNumberOfPlans' => 0,
@@ -199,7 +205,7 @@ class EmailService
                 }
             }
 
-            LoggerService::info("checkPlans - Successfully processed plans", extra: [
+            LoggerService::info('checkPlans - Successfully processed plans', extra: [
                 'totalPlans' => $totalNumberOfPlans,
                 'hiddenPlans' => $totalNumberOfHiddenPlans,
             ]);
@@ -211,7 +217,7 @@ class EmailService
             ];
 
         } catch (\Exception $e) {
-            LoggerService::error("checkPlans - Exception occurred", exception: $e);
+            LoggerService::error('checkPlans - Exception occurred', exception: $e);
 
             return [
                 'totalNumberOfHiddenPlans' => 0,

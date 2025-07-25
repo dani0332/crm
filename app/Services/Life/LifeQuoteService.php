@@ -800,7 +800,7 @@ class LifeQuoteService extends BaseService
         $queryParams = [
             'quoteUID' => $quoteUuId,
             'isModified' => true,
-            'isCqfOcb' => false
+            'isCqfOcb' => false,
         ];
 
         // Add planIds as comma-separated string if provided

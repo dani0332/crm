@@ -13,9 +13,9 @@ use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use App\Services\Life\LifeQuoteService;
 
 class LifeEmailService extends BaseService
 {
@@ -33,9 +33,6 @@ class LifeEmailService extends BaseService
                 LoggerService::info('sendFICEmail - Advisor not found');
             }
             $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_FIC_EMAIL);
-           
-           
-
 
             $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
             if ($response && $response->status_code === 200) {
@@ -45,10 +42,11 @@ class LifeEmailService extends BaseService
             }
             $plansData = $this->checkPlans($personalQuote->uuid);
             // Optimize plan status checks and logging for clarity and maintainability
-            if (!empty($plansData['hasError'])) {
+            if (! empty($plansData['hasError'])) {
                 LoggerService::warning(
                     "sendFICEmail - Error checking plans: {$plansData['errorMessage']}, keeping lead status as NewLead"
                 );
+
                 return;
             }
 
@@ -56,27 +54,26 @@ class LifeEmailService extends BaseService
             $hiddenPlans = (int) ($plansData['totalNumberOfHiddenPlans'] ?? 0);
 
             if ($totalPlans === 0) {
-                LoggerService::info("sendFICEmail - No plans found, lead status remains NewLead");
+                LoggerService::info('sendFICEmail - No plans found, lead status remains NewLead');
+
                 return;
             }
 
             if ($hiddenPlans === $totalPlans) {
-                LoggerService::info("sendFICEmail - All plans are hidden, lead status remains NewLead");
+                LoggerService::info('sendFICEmail - All plans are hidden, lead status remains NewLead');
+
                 return;
             }
-
-        
 
             if ($personalQuote->quote_status_id == QuoteStatusEnum::NewLead) {
                 $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $personalQuote->save();
                 LifeQuote::where('uuid', $personalQuote->uuid)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
-               
+
             } else {
                 LoggerService::info("sendFICEmail - Quote status is not new lead for quote: {$personalQuote->uuid}");
             }
-           
-           
+
         } else {
             LoggerService::info(self::class.' - FIC Life Email is not set');
         }
@@ -231,9 +228,10 @@ class LifeEmailService extends BaseService
             $plansData = app(LifeQuoteService::class)->getQuotePlans($quoteUID);
 
             if (is_string($plansData)) {
-                LoggerService::warning("checkPlans - API returned error", extra: [
+                LoggerService::warning('checkPlans - API returned error', extra: [
                     'error' => $plansData,
                 ]);
+
                 return [
                     'totalNumberOfHiddenPlans' => 0,
                     'totalNumberOfPlans' => 0,
@@ -242,8 +240,9 @@ class LifeEmailService extends BaseService
                 ];
             }
 
-            if (!$plansData || !isset($plansData->quotes) || !isset($plansData->quotes->plans)) {
+            if (! $plansData || ! isset($plansData->quotes) || ! isset($plansData->quotes->plans)) {
                 LoggerService::warning('checkPlans - Invalid or empty plans data structure');
+
                 return [
                     'totalNumberOfHiddenPlans' => 0,
                     'totalNumberOfPlans' => 0,
@@ -253,8 +252,9 @@ class LifeEmailService extends BaseService
             }
 
             $plans = $plansData->quotes->plans;
-            if (!is_array($plans) && !is_object($plans)) {
+            if (! is_array($plans) && ! is_object($plans)) {
                 LoggerService::warning('checkPlans - Plans data is not iterable');
+
                 return [
                     'totalNumberOfHiddenPlans' => 0,
                     'totalNumberOfPlans' => 0,
@@ -272,7 +272,7 @@ class LifeEmailService extends BaseService
                 }
             }
 
-            LoggerService::info("checkPlans - Successfully processed plans", extra: [
+            LoggerService::info('checkPlans - Successfully processed plans', extra: [
                 'totalPlans' => $totalNumberOfPlans,
                 'hiddenPlans' => $totalNumberOfHiddenPlans,
             ]);
@@ -284,7 +284,7 @@ class LifeEmailService extends BaseService
             ];
 
         } catch (\Exception $e) {
-            LoggerService::error("checkPlans - Exception occurred", exception: $e);
+            LoggerService::error('checkPlans - Exception occurred', exception: $e);
 
             return [
                 'totalNumberOfHiddenPlans' => 0,
