@@ -308,6 +308,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD),
+                        'Savings',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::SAVINGS]),
+                        fn ($s) => $s->attributes(['icon' => 'savings'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
@@ -419,6 +425,7 @@ class HandleInertiaRequests extends Middleware
                     route('life-quotes-list'),
                     fn ($s) => $s->attributes(['icon' => 'life'])
                 )
+                ->addIf((auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_LIST) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Savings Quotes', route('savings-quotes-list'), fn ($s) => $s->attributes(['icon' => 'savings']))
                 ->addIf(
                     (auth()->user()->can(PermissionsEnum::HomeQuotesList)
                         || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
@@ -551,7 +558,8 @@ class HandleInertiaRequests extends Middleware
                         'Uploads',
                         route('customer.upload'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
+                    )
+                    ->add('Leads by Email', route('leads-by-email'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -770,6 +778,12 @@ class HandleInertiaRequests extends Middleware
                                 'Configure SIC Health',
                                 route('admin.sic-health-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::ILA_CONFIG_ALL_LOB),
+                                'ILA Configuration',
+                                route('admin.allocation-configuration.index'),
+                                fn ($s) => $s->attributes(['icon' => 'settings'])
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),

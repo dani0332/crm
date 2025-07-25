@@ -77,8 +77,10 @@ trait ModernCsvExportable
     private function processEmailParameters(string $fileName, array $requestParams): array
     {
         // Ensure we have a user for the job context (query builders need this)
-        if (! isset($requestParams['user']) && Auth::check()) {
-            $requestParams['user'] = Auth::user();
+        $currentUser = null;
+        if (! isset($requestParams['user_id']) && Auth::check()) {
+            $currentUser = Auth::user();
+            $requestParams['user_id'] = $currentUser->id;
         }
 
         // Set recipient email if not provided
@@ -87,7 +89,7 @@ trait ModernCsvExportable
                 throw new UnauthorizedHttpException('', 'User not authenticated');
             }
 
-            $currentUser = User::find(Auth::user()->id);
+            $currentUser = $currentUser ?? Auth::user();
             $requestParams['recipientEmail'] = $currentUser->email;
             $requestParams['recipientName'] = $currentUser->name;
         }

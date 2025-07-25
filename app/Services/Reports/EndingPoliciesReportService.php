@@ -46,7 +46,7 @@ class EndingPoliciesReportService extends ManagementReport
                 'ip.text as insurer',
                 'qt.code as line_of_business',
                 'personal_quotes.policy_start_date',
-                'p.policy_expiry_date as policy_end_date',
+                'personal_quotes.policy_expiry_date as policy_end_date',
                 DB::raw('SUM(premium) as collected_amount'),
                 DB::raw('SUM(personal_quotes.price_vat_applicable) as price_vat_applicable'),
                 DB::raw('SUM(vat) as total_vat'),

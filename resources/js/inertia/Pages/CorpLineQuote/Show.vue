@@ -815,6 +815,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -1586,6 +1587,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
@@ -1732,6 +1734,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         :hide-footer="historyData.length < 15"
       />
     </div> -->
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <AuditLogs
       :quoteType="$page.props.modelType"
