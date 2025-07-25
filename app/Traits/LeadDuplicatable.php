@@ -14,15 +14,9 @@ trait LeadDuplicatable
 
     protected function resolveDuplicateLeadInfo(): void
     {
-        $quoteDetail = null;
+        $quoteDetail = $this->lead->quoteDetail;
 
         try {
-            if ($this->quoteType->isPersonalQuote()) {
-                $quoteDetail = $this->lead->quoteDetail;
-            } else {
-                $quoteDetail = $this->lead->businessQuoteRequestDetail ?? $this->lead->quoteDetail;
-            }
-
             if ($quoteDetail) {
                 $this->hasDuplicateLead = (bool) ($quoteDetail->has_duplicate_lead ?? false);
                 $this->existingRecordUuid = $quoteDetail->existing_record_uuid ?? null;
