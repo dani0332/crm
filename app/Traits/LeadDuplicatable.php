@@ -64,7 +64,7 @@ trait LeadDuplicatable
         return in_array($this->quoteType, $eligibleTypes);
     }
 
-    private function getPreviousLead()
+    private function getPreviousLead(): ?object
     {
         $previousLead = $this->quoteType->model()
             ->select('id', 'uuid', 'advisor_id')
