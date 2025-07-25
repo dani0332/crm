@@ -111,7 +111,6 @@ const extraAttr = reactive({
 });
 
 const isPdfGenerated = props?.selectedPlan?.isPdfGenerated ?? false;
-
 const editForm = reactive({
   providerId: props?.selectedPlan?.providerId ?? null,
   planId: props?.selectedPlan?.planId ?? null,
@@ -930,27 +929,11 @@ const formattedActualPremium = useFormattedNumberField(
             </div>
           </TabPanel>
 
-          <!-- Exclusion -->
-
-          <TabPanel>
-            <div
-              class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
-              v-if="props?.selectedPlan?.benefits?.exclusion"
-            >
-              <dl
-                v-for="data in props?.selectedPlan?.benefits?.exclusion || []"
-                :key="data.code"
-                class="mb-3 text-center"
-              >
-                <dt class="font-semibold">{{ data.text }}</dt>
-                <dd>{{ data.value ?? 'Excluded' }}</dd>
-              </dl>
-            </div>
-          </TabPanel>
 
           <!-- Policy Wordings -->
           <TabPanel>
             <dl class="grid md:grid-cols-2 gap-5 p-4">
+             
               <div
                 v-for="data in props?.selectedPlan?.policyWordings || []"
                 :key="data"
@@ -995,7 +978,6 @@ const formattedActualPremium = useFormattedNumberField(
             <x-button
               v-if="
                 editForm.isApi &&
-                editForm.providerId == 180 &&
                 !editForm.isUnderwritten &&
                 !isPdfGenerated
               "
