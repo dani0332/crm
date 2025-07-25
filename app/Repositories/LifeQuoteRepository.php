@@ -3,13 +3,31 @@
 namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\LookupsEnum;
+use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Facades\Capi;
+use App\Models\ApplicationStorage;
+use App\Models\Emirate;
 use App\Models\LifeQuote;
-use App\Traits\CentralTrait;
+use App\Models\PersonalQuote;
+use App\Services\BaseService;
+use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
+use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -17,16 +35,16 @@ use Illuminate\Support\Facades\DB;
 
 class LifeQuoteRepository extends BaseRepository
 {
-    use CentralTrait;
+    use GenericQueriesAllLobs;
 
     public function model()
     {
-        return LifeQuote::class;
+        return PersonalQuote::class;
     }
 
     public function fetchCreate($data)
     {
-        $lifeData = [
+        $quoteData = [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
             'email' => $data['email'],
@@ -37,24 +55,34 @@ class LifeQuoteRepository extends BaseRepository
             'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
             'maritalStatusId' => $data['marital_status_id'],
             'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'childrenId' => $data['children_id'],
-            'premium' => $data['premium'],
             'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
             'numberOfYearsId' => $data['number_of_years_id'],
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
+            'height' => $data['height'],
+            'weight' => $data['weight'],
+            'bmi' => $data['bmi'],
+            'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'quoteTypeId' => intval(QuoteTypes::LIFE->id()),
+            'lang' => 'EN',
+            'device' => 'DESKTOP',
+            'createdById' => auth()->user()->id,
         ];
 
-        $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
+        $response = Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
 
         if (isset($response->quoteUID)) {
-            // todo: make sure if this is required to update, or api is handling this as well
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
-            $quote->update(['premium' => $lifeData['premium']]);
+            $quote->lifeQuote()->update([
+                'height' => $quoteData['height'],
+                'weight' => $quoteData['weight'],
+                'bmi' => $quoteData['bmi'],
+                'age' => $quoteData['age'],
+            ]);
         }
 
         return $response;
@@ -62,21 +90,37 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
-        $quote = $this->where('uuid', $uuid)->firstOrFail();
+        return DB::transaction(function () use ($uuid, $data) {
+            $quote = $this->byQuoteTypeId(QuoteTypes::LIFE->id())->where('uuid', $uuid)->firstOrFail();
 
-        $quoteData = Arr::only($data, [
-            'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'sum_insured_value', 'nationality_id', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'premium', 'tenure_of_insurance_id', 'number_of_years_id', 'is_smoker', 'gender', 'others_info',
-        ]);
-        $quote->update($quoteData);
+            // check the columns to be updated in personal quotes.
+            $quoteData = Arr::only($data, $this->allowedColumns());
+            $quoteData['updated_by_id'] = auth()->user()->id;
+            $quote->update($quoteData);
 
-        return $quote;
+            // check the columns to be updated in life quote request.
+            if ($quote->lifeQuote) {
+                $quote->lifeQuote()->update(Arr::only($data, (new LifeQuote)->allowedColumns()));
+            } else {
+                $quote->lifeQuote()->create(Arr::only($data, (new LifeQuote)->allowedColumns()));
+            }
+
+            return $quote;
+        });
     }
 
-    public function fetchGetData()
+    public function fetchGetData($forExport = false)
     {
-        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
-            'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
-            'payments', 'customer', 'latestInsured' => function ($q) {
+        $query = $this->byQuoteTypeCode(QuoteTypes::LIFE)->with([
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'quoteDetail.lostReason:id,text',
+            'renewalBatchModel',
+            'paymentStatus',
+            'payments',
+            'customer',
+            'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
             }])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
@@ -86,11 +130,12 @@ class LifeQuoteRepository extends BaseRepository
                 $dateArray = request()->advisor_assigned_date;
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-                $query->whereHas('lifeQuoteRequestDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
             ->filter()
+            ->filterBySegment('life_quote_request')
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
@@ -109,9 +154,11 @@ class LifeQuoteRepository extends BaseRepository
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
-        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        return $query->simplePaginate()->withQueryString();
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate(15)->withQueryString();
     }
 
     public function fetchExport()
@@ -124,29 +171,11 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->where($column, $value)->with([
-            'advisor',
-            'quoteStatus',
-            'nationality',
-            'previousAdvisor',
-            'lifeQuoteRequestDetail.lostReason',
-            'purposeOfInsurance',
-            'children',
-            'currency',
-            'insuranceTenure',
-            'numberOfYears',
-            'maritalStatus',
-            'paymentStatus',
-            'customer.additionalContactInfo',
-            'transactionType',
-            'insuranceProvider',
-            'payments.paymentMethod',
-            'payments.paymentStatus',
-            'payments.paymentSplits.paymentStatus',
-            'payments.paymentSplits.paymentMethod',
-            'payments.paymentSplits.documents',
-            'payments.paymentSplits.verifiedByUser',
-            'payments.paymentSplits.processJob',
+        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuote.previousAdvisor', 'lifeQuote.lifeQuoteRequestDetail.lostReason',
+            'lifeQuote.purposeOfInsurance', 'lifeQuote.children', 'lifeQuote.currency', 'lifeQuote.insuranceTenure', 'lifeQuote.numberOfYears', 'lifeQuote.maritalStatus',
+            'lifeQuote.paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
+            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
+            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
             },
@@ -154,20 +183,50 @@ class LifeQuoteRepository extends BaseRepository
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
-            'customer',
+        ])->with([
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'lifeQuote' => function ($q) {
+                $q->with([
+                    'children',
+                    'currency',
+                    'maritalStatus',
+                    'purposeOfInsurance',
+                    'insuranceTenure',
+                    'numberOfYears',
+                    'previousAdvisor',
+                ]);
+            },
+            'quoteDetail.lostReason:id,text',
+            'paymentStatus',
+            'customer.additionalContactInfo',
+            'transactionType',
+            'insuranceProvider',
+            'payments' => function ($q) {
+                $q->with([
+                    'paymentMethod',
+                    'paymentStatus',
+                    'paymentSplits' => function ($q) {
+                        $q->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                            'processJob',
+                        ])->orderBy('sr_no', 'asc');
+                    },
+                ]);
+            },
+            'documents' => function ($q) {
+                $q->with('createdBy')->orderBy('created_at', 'desc');
+            },
+            'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            },
         ])
-            ->with([
-                'documents' => function ($q) {
-                    $q->with('createdBy')->orderBy('created_at', 'desc');
-                },
-            ])
-            ->with([
-                'payments.paymentSplits' => function ($q) {
-                    $q->orderBy('sr_no', 'asc');
-                },
-            ])
             ->select([
-                'life_quote_request.*',
+                'personal_quotes.*',
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
@@ -183,25 +242,6 @@ class LifeQuoteRepository extends BaseRepository
         }
 
         return $quote;
-    }
-
-    /**
-     * get all dropdown options required for form.
-     *
-     * @return array
-     */
-    public function fetchGetFormOptions()
-    {
-        return [
-            'nationalities' => NationalityRepository::withActive()->get(),
-            'currency' => CurrencyTypeRepository::withActive()->get(),
-            'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
-            'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'children' => LifeChildrenRepository::withActive()->get(),
-            'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
-            'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
-
-        ];
     }
 
     public function fetchGetDuplicateEntityByCode($code)
@@ -230,5 +270,147 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchCreateDuplicate(array $dataArr): object
     {
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::LIFE->value).'-quote', 'post', $dataArr);
+    }
+
+    public function fetchGetShowFormOptions($quote)
+    {
+        $payments = $quote->payments;
+        $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
+
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+        $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $nationalities = NationalityRepository::withActive()->get();
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::LIFE->id());
+        $activities = ActivityRepository::where([
+            'quote_type_id' => QuoteTypes::LIFE->id(),
+            'quote_request_id' => $quote->id,
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
+
+        $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::LIFE->id(), $quoteStatuses);
+
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $activitiesData = [];
+        foreach ($activities as $activity) {
+            $activitiesData[] = [
+                'id' => $activity->id,
+                'uuid' => $activity->uuid,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => $activity->assignee->name,
+                'assignee_id' => $activity->assignee_id,
+                'status' => $activity->status,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
+            ];
+        }
+
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
+
+        $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
+        return [
+            'documentTypes' => $documentTypes,
+            'storageUrl' => storageUrl(),
+            'quoteType' => QuoteTypes::LIFE,
+            'quoteTypeId' => QuoteTypeId::Life,
+            'quoteStatuses' => $quoteStatuses,
+            'quote' => $quote,
+            'amlStatusName' => $amlStatusName,
+            'record' => $quote,
+            'activities' => $activitiesData,
+            'advisors' => $advisors,
+            'allowedDuplicateLOB' => $duplicateAllowedLobs,
+            'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
+            'lostReasons' => $lostReasons,
+            'modelType' => QuoteTypes::LIFE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
+            'embeddedProducts' => $embeddedProducts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'nationalities' => $nationalities,
+            'memberRelations' => $memberRelations,
+            'membersDetails' => $membersDetails,
+            'industryType' => $industryType,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
+            'paymentMethods' => (new LookupService)->getPaymentMethods(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'payments' => $payments,
+            'insuranceProviders' => $insuranceProviders,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+
+            'enums' => [
+                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'vatPercentage' => $vatPercentage,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
+        ];
+    }
+
+    public function fetchGetCardData($request)
+    {
+        $leadStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())
+            ->whereIn('text', [quoteStatusCode::NEWLEAD, quoteStatusCode::QUOTED, quoteStatusCode::FOLLOWEDUP, quoteStatusCode::NEGOTIATION])
+            ->get()->toArray();
+
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id'], $request);
+
+            return $item;
+        }, $leadStatuses);
+
+        return [
+            'quotes' => array_values($leadStatuses),
+            'quoteType' => QuoteTypes::LIFE->value,
+        ];
     }
 }
