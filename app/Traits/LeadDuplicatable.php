@@ -66,15 +66,9 @@ trait LeadDuplicatable
             return null;
         }
 
-        $advisor = User::find($previousLead->advisor_id);
+        $advisor = User::where('is_active', true)->find($previousLead->advisor_id);
         if (! $advisor) {
             LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor not found');
-
-            return null;
-        }
-
-        if (! $advisor->is_active) {
-            LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor is not active');
 
             return null;
         }
@@ -98,8 +92,6 @@ trait LeadDuplicatable
             LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor has reached max capacity, will use normal allocation', extra: [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
-                'allocation_count' => $advisor->leadAllocation?->allocation_count ?? 'N/A',
-                'max_capacity' => $advisor->leadAllocation?->max_capacity ?? 'N/A',
             ]);
 
             return null;
@@ -109,8 +101,6 @@ trait LeadDuplicatable
             'advisor_id' => $advisor->id,
             'advisor_name' => $advisor->name,
             'advisor_status' => $advisor->status,
-            'allocation_count' => $advisor->leadAllocation?->allocation_count ?? 'N/A',
-            'max_capacity' => $advisor->leadAllocation?->max_capacity ?? 'N/A',
         ]);
 
         return $advisor;
