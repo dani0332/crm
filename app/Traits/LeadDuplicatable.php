@@ -16,35 +16,16 @@ trait LeadDuplicatable
     {
         $quoteDetail = $this->lead->quoteDetail;
 
-        try {
-            if ($quoteDetail) {
-                $this->hasDuplicateLead = (bool) ($quoteDetail->has_duplicate_lead ?? false);
-                $this->existingRecordUuid = $quoteDetail->existing_record_uuid ?? null;
+        if ($quoteDetail) {
+            $this->hasDuplicateLead = (bool) ($quoteDetail->has_duplicate_lead ?? false);
+            $this->existingRecordUuid = $quoteDetail->existing_record_uuid ?? null;
 
-                LoggerService::info(self::class.' - resolveDuplicateLeadInfo: Resolved from database', extra: [
-                    'quote_type' => $this->quoteType->value,
-                    'quote_uuid' => $this->uuid,
-                    'has_duplicate_lead' => $this->hasDuplicateLead,
-                    'existing_record_uuid' => $this->existingRecordUuid,
-                ]);
-            } else {
-                LoggerService::info(self::class.' - resolveDuplicateLeadInfo: No quote detail found', extra: [
-                    'quote_type' => $this->quoteType->value,
-                    'quote_uuid' => $this->uuid,
-                ]);
-
-                $this->hasDuplicateLead = false;
-                $this->existingRecordUuid = null;
-            }
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.' - resolveDuplicateLeadInfo: Error resolving duplicate info', [
+            LoggerService::info(self::class.' - resolveDuplicateLeadInfo: Resolved from database', extra: [
                 'quote_type' => $this->quoteType->value,
                 'quote_uuid' => $this->uuid,
-                'error' => $e->getMessage(),
+                'has_duplicate_lead' => $this->hasDuplicateLead,
+                'existing_record_uuid' => $this->existingRecordUuid,
             ]);
-
-            $this->hasDuplicateLead = false;
-            $this->existingRecordUuid = null;
         }
     }
 
