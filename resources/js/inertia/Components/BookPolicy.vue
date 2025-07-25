@@ -388,70 +388,70 @@ const submitPolicy = async () => {
 
 const calculateVatOnCommission = commissionVatApplicable => {
   if (Number(commissionVatApplicable) > 0) {
-    return useRoundIt(commissionVatApplicable * page.props.vat);
+    return useRoundIt(commissionVatApplicable * page.props.vat); // 192.50 * 0.05 = 9.63
   } else {
     return 0;
   }
 };
 const calculateCommissionPercentage = (
-  totalCommissionWithoutVat,
-  totalPriceWithoutVat,
+  totalCommissionWithoutVat, // 192.50
+  totalPriceWithoutVat, // 770
 ) => {
   commissionPercentageExceedsLimit.value = false;
-  if (totalCommissionWithoutVat > 0) {
+  if (totalCommissionWithoutVat > 0) { // 192.50 > 0
     let totalCommissionInPercentage =
-      (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
+      (totalCommissionWithoutVat / totalPriceWithoutVat) * 100; // 192.50 / 770 * 100 = 25.00
     let brokerCommission = props.bookPolicyDetails.brokerCommission;
     let commission_percentage_min = Math.max(
-      (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
-      0,
+      (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5, // 25.00 - 2.5 = 22.5
+      0, // 0
     );
-    let commission_percentage_max = brokerCommission?.fixed_commission
-      ? Number(brokerCommission?.fixed_commission) + 2.5
-      : 0;
-    if (commission_percentage_min != 0 && commission_percentage_max != 0) {
+    let commission_percentage_max = brokerCommission?.fixed_commission // 25.00
+      ? Number(brokerCommission?.fixed_commission) + 2.5 // 25.00 + 2.5 = 27.5
+      : 0; // 0
+    if (commission_percentage_min != 0 && commission_percentage_max != 0) { // 22.5 != 0 && 27.5 != 0
       if (
-        totalCommissionInPercentage < commission_percentage_min ||
-        totalCommissionInPercentage > commission_percentage_max
+        totalCommissionInPercentage < commission_percentage_min || // 25.00 < 22.5
+        totalCommissionInPercentage > commission_percentage_max // 25.00 > 27.5
       ) {
         commissionPercentageExceedsLimit.value = true;
       }
       if (
-        (totalCommissionInPercentage < commission_percentage_min ||
-          totalCommissionInPercentage > commission_percentage_max) &&
-        !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
+        (totalCommissionInPercentage < commission_percentage_min || // 25.00 < 22.5
+          totalCommissionInPercentage > commission_percentage_max) && // 25.00 > 27.5
+        !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT) // false
       ) {
         bp.isAllowedToUpdateCommission = false;
       } else {
         bp.isAllowedToUpdateCommission = true;
       }
     }
-    return useRoundIt(totalCommissionInPercentage);
+    return useRoundIt(totalCommissionInPercentage); // 25.00
   } else {
     return 0;
   }
 };
 
 const calculateCommission = () => {
-  let totalPriceWithoutVat =
-    Number(props.quote?.price_vat_applicable) +
-    Number(props.quote?.price_vat_not_applicable);
+  let totalPriceWithoutVat = // 770
+    Number(props.quote?.price_vat_applicable) + // 770
+    Number(props.quote?.price_vat_not_applicable); // 0 
 
-  let totalCommissionWithoutVat =
-    Number(bpForm.commission_vat_not_applicable) +
-    Number(bpForm.commission_vat_applicable);
+  let totalCommissionWithoutVat = // 192.50
+    Number(bpForm.commission_vat_not_applicable) + // 0
+    Number(bpForm.commission_vat_applicable); // 192.50
 
   if (totalCommissionWithoutVat > 0) {
-    bpForm.vat_on_commission = calculateVatOnCommission(
-      bpForm.commission_vat_applicable,
+    bpForm.vat_on_commission = calculateVatOnCommission( // 9.63
+      bpForm.commission_vat_applicable, // 192.50
     );
-    bpForm.total_commission =
-      totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
+    bpForm.total_commission = // 202.13 
+      totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission); // 192.50 + 9.63 = 202.13
 
     if (totalPriceWithoutVat > 0) {
-      bpForm.commission_percentage = calculateCommissionPercentage(
-        totalCommissionWithoutVat,
-        totalPriceWithoutVat,
+      bpForm.commission_percentage = calculateCommissionPercentage( // 25.00
+        totalCommissionWithoutVat, // 192.50
+        totalPriceWithoutVat, // 770
       );
     } else {
       bpForm.commission_percentage = 0;
