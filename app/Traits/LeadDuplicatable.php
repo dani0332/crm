@@ -72,21 +72,21 @@ trait LeadDuplicatable
             ->first();
 
         if (! $previousLead) {
-            LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: No previous lead found with UUID', extra: [
+            LoggerService::info(self::class.' - getPreviousLead: No previous lead found with UUID', extra: [
                 'existing_record_uuid' => $this->existingRecordUuid,
             ]);
 
             return null;
         }
 
-        LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Found previous lead', extra: [
+        LoggerService::info(self::class.' - getPreviousLead: Found previous lead', extra: [
             'previous_lead_id' => $previousLead->id,
             'previous_lead_uuid' => $previousLead->uuid,
             'previous_advisor_id' => $previousLead->advisor_id,
         ]);
 
         if (empty($previousLead->advisor_id)) {
-            LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous lead has no advisor assigned');
+            LoggerService::info(self::class.' - getPreviousLead: Previous lead has no advisor assigned');
 
             return null;
         }
@@ -98,7 +98,7 @@ trait LeadDuplicatable
     {
         $advisor = User::where('is_active', true)->find($previousLead->advisor_id);
         if (! $advisor) {
-            LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor not found');
+            LoggerService::info(self::class.' - getPreviousAdvisor: Previous advisor not found');
 
             return null;
         }
@@ -106,7 +106,7 @@ trait LeadDuplicatable
         $validStatuses = $this->getValidAdvisorStatuses();
         $isOnLeave = ! in_array($advisor->status, $validStatuses);
         if ($isOnLeave) {
-            LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor status not valid for current time, will use ILA logic', extra: [
+            LoggerService::info(self::class.' - getPreviousAdvisor: Previous advisor status not valid for current time, will use ILA logic', extra: [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
                 'advisor_status' => $advisor->status,
@@ -119,7 +119,7 @@ trait LeadDuplicatable
 
         $isMaxCapReached = $this->isMaxCapReached($advisor, $this->getQuoteTypeId());
         if ($isMaxCapReached) {
-            LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor has reached max capacity, will use normal allocation', extra: [
+            LoggerService::info(self::class.' - getPreviousAdvisor: Previous advisor has reached max capacity, will use normal allocation', extra: [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
             ]);
@@ -127,7 +127,7 @@ trait LeadDuplicatable
             return null;
         }
 
-        LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Will assign to previous advisor', extra: [
+        LoggerService::info(self::class.' - getPreviousAdvisor: Will assign to previous advisor', extra: [
             'advisor_id' => $advisor->id,
             'advisor_name' => $advisor->name,
             'advisor_status' => $advisor->status,
