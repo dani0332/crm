@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Enums\QuoteTypes;
-use App\Enums\UserStatusEnum;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 
@@ -131,20 +130,5 @@ trait LeadDuplicatable
         ];
 
         return in_array($this->quoteType, $eligibleTypes);
-    }
-
-    private function getValidAdvisorStatuses(): array
-    {
-        $isBusinessHours = $this->isBusinessHours();
-
-        LoggerService::info(self::class.' - getValidAdvisorStatuses: Business hours check', extra: [
-            'is_business_hours' => $isBusinessHours,
-        ]);
-
-        if ($isBusinessHours) {
-            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE];
-        } else {
-            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
-        }
     }
 }
