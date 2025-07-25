@@ -7,7 +7,6 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
-use App\Models\LeadAllocation;
 use App\Traits\Logable;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

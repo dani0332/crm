@@ -9,13 +9,13 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
-use Carbon\Carbon;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
 use App\Services\SendEmailCustomerService;
+use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -417,7 +417,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             $isWeekend = $currentTime->isWeekend();
             $isWithinTimeRange = $currentTime->between($startTime, $endTime);
 
-            $isBusinessHours = !$isWeekend && $isWithinTimeRange;
+            $isBusinessHours = ! $isWeekend && $isWithinTimeRange;
 
             LoggerService::info(self::class.' - isBusinessHours: Business hours calculation', extra: [
                 'start_time' => $startTime->format('H:i'),
@@ -439,11 +439,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     private function isMaxCapReached(User $advisor): bool
     {
-        if (!$advisor->leadAllocation) {
+        if (! $advisor->leadAllocation) {
             LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
             ]);
+
             // If no allocation record exists, consider max capacity reached for safety
             return true;
         }
@@ -454,6 +455,6 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         // Advisor is available if allocation_count < max_capacity OR max_capacity is -1 (unlimited)
         $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
 
-        return !$isAdvisorAvailable;
+        return ! $isAdvisorAvailable;
     }
 }
