@@ -2,12 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use App\Enums\Logger\LoggerFeatureEnum;
-use App\Services\Logger\LoggerService;
 
 class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
 {
@@ -16,7 +16,6 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 100;
     public $backoff = 300;
-
     private $quote;
     private $quoteTypeId;
 
@@ -37,7 +36,7 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
     {
         try {
             $this->quote = $this->quote->refresh();
-            LoggerService::startQuoteLogging( $this->quote , LoggerFeatureEnum::POLICY_ISSUE_WHATSAPP_MESSAGE);
+            LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::POLICY_ISSUE_WHATSAPP_MESSAGE);
 
             if (! $this->quote) {
                 LoggerService::info(self::class." - Lead not found for Quote Code : {$this->quote?->code}");
