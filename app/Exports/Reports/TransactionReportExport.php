@@ -6,7 +6,6 @@ use App\Contracts\CsvExportableInterface;
 use App\Services\Reports\TransactionReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Events\AfterSheet;
 
 class TransactionReportExport implements CsvExportableInterface
 {
@@ -14,9 +13,8 @@ class TransactionReportExport implements CsvExportableInterface
 
     public function __construct(
         private TransactionReportService $transactionReportService,
-        private array                    $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
         //        if(request()->filled('groupBy')){
         //            $this->groupByColumn = request()->groupBy;
@@ -82,6 +80,7 @@ class TransactionReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
+
         //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         return $this->transactionReportService->getReportData($request);
     }
@@ -151,15 +150,16 @@ class TransactionReportExport implements CsvExportableInterface
             //                'total_policies' => $numericValues->get('total_policies'),
             //                ], true));
 
-            $sumColumns = [8,9,10,11,12,11,13,14,15,16,18];
+            $sumColumns = [8, 9, 10, 11, 12, 11, 13, 14, 15, 16, 18];
 
-            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
-                if($index == 2){
-                    logger()->debug("numeric: ".$row->get($index));
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
+                if ($index == 2) {
+                    logger()->debug('numeric: '.$row->get($index));
                 }
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
+
         return $row->values()->toArray();
     }
 

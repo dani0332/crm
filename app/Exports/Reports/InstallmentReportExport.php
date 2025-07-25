@@ -16,9 +16,8 @@ class InstallmentReportExport implements CsvExportableInterface
 
     public function __construct(
         private InstallmentReportService $installmentReportService,
-        private array                    $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
 
         $this->columnTotals = collect();
@@ -36,6 +35,7 @@ class InstallmentReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
+
         //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         return $this->installmentReportService->getReportData($request);
     }
@@ -46,6 +46,7 @@ class InstallmentReportExport implements CsvExportableInterface
     public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
     {
         $request = request()->merge($requestParams);
+
         return $this->installmentReportService->getReportQueryBuilder($request);
     }
 
@@ -98,7 +99,7 @@ class InstallmentReportExport implements CsvExportableInterface
         if (isset($quote->code)) {
             $paymentRefId = $quote->code;
             if (isset($quote->split_sr_no) && $quote->split_sr_no) {
-                $paymentRefId .= '-' . $quote->split_sr_no;
+                $paymentRefId .= '-'.$quote->split_sr_no;
             }
         } else {
             $paymentRefId = 'N/A';
@@ -157,10 +158,11 @@ class InstallmentReportExport implements CsvExportableInterface
             //                ], true));
 
             $sumColumns = [8, 9, 10, 11, 12, 11, 13, 14, 15, 16, 18];
-            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
+
         return $row->values()->toArray();
     }
 

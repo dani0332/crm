@@ -3,7 +3,6 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
-use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleDetailReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -17,9 +16,8 @@ class SaleDetailReportExport implements CsvExportableInterface
 
     public function __construct(
         private SaleDetailReportService $saleDetailReportService,
-        private array                    $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
         //        if(request()->filled('groupBy')){
         //            $this->groupByColumn = request()->groupBy;
@@ -147,7 +145,7 @@ class SaleDetailReportExport implements CsvExportableInterface
         foreach ($this->columnTotals as $index => $field) {
 
             $sumColumns = [10, 11, 12, 13, 14, 15, 16, 17, 24];
-            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
@@ -155,10 +153,10 @@ class SaleDetailReportExport implements CsvExportableInterface
         return $row->values()->toArray();
     }
 
-//    public static function afterSheet(AfterSheet $event)
-//    {
-//        self::performSum($event, ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'X']);
-//    }
+    //    public static function afterSheet(AfterSheet $event)
+    //    {
+    //        self::performSum($event, ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'X']);
+    //    }
 
     public function processChunkedQuery($query, array $requestParams, $stream): int
     {

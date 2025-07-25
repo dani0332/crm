@@ -3,7 +3,6 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
-use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleSummaryReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -18,9 +17,8 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
     public function __construct(
         private SaleSummaryReportService $saleSummaryReportService,
-        private array                    $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
 
         if (request()->filled('groupBy')) {

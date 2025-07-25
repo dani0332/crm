@@ -3,7 +3,6 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
-use App\Services\Logger\LoggerService;
 use App\Services\Reports\ActivePoliciesReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -17,9 +16,8 @@ class ActivePoliciesReportExport implements CsvExportableInterface
 
     public function __construct(
         private ActivePoliciesReportService $activePoliciesReportService,
-        private array                    $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
         //        if(request()->filled('groupBy')){
         //            $this->groupByColumn = request()->groupBy;
@@ -41,6 +39,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
+
         //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         return $this->activePoliciesReportService->getReportData($request);
     }
@@ -51,6 +50,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
     public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
     {
         $request = request()->merge($requestParams);
+
         return $this->activePoliciesReportService->getReportQueryBuilder($request);
     }
 
@@ -77,12 +77,13 @@ class ActivePoliciesReportExport implements CsvExportableInterface
 
         foreach ($this->columnTotals as $index => $field) {
 
-            $sumColumns = [3,4,5];
+            $sumColumns = [3, 4, 5];
 
-            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
+
         return $row->values()->toArray();
     }
 
@@ -107,10 +108,10 @@ class ActivePoliciesReportExport implements CsvExportableInterface
         return $totalRecords;
     }
 
-//    public static function afterSheet(AfterSheet $event)
-//    {
-//        self::performSum($event, ['C', 'D', 'E']);
-//    }
+    //    public static function afterSheet(AfterSheet $event)
+    //    {
+    //        self::performSum($event, ['C', 'D', 'E']);
+    //    }
 
     private function postDataRows($stream)
     {

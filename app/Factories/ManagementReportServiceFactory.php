@@ -141,6 +141,7 @@ class ManagementReportServiceFactory
         if (isset($exportMap[$reportCategory])) {
             $service = self::createStrategy($reportCategory);
             $config = $exportMap[$reportCategory];
+
             return app()->make($config['class'], [$config['service'] => $service, 'requestParams' => $requestParams]);
         }
 

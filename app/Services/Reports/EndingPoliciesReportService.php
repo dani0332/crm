@@ -4,7 +4,6 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\EndingPoliciesReportExport;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -85,13 +84,15 @@ class EndingPoliciesReportService extends ManagementReport
         $query = $this->getReportQueryBuilder($request);
 
         if ($request->export == 1) {
-             $data = $query->get();
-             $this->formatData($data);
-             return $data;
+            $data = $query->get();
+            $this->formatData($data);
+
+            return $data;
             // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $this->formatData($data);
+
             return $data;
         }
     }
