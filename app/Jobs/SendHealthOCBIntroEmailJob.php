@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\Skip;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -78,5 +79,14 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error("SendHealthOCBIntroEmailJob - Exception: {$e->getMessage()} | Stack Trace: {$e->getTraceAsString()}");
         }
+    }
+
+    public function middleware()
+    {
+        $isAUHLead = HealthQuote::where('uuid', $this->quoteUuid)->first()?->isFromAUH() ?? false;
+
+        return [
+            Skip::when(fn () => $isAUHLead),
+        ];
     }
 }

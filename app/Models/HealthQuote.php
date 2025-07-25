@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
@@ -489,5 +490,10 @@ class HealthQuote extends Model implements AuditableContract
     public function ftcEmailLogs()
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function isFromAUH()
+    {
+        return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
     }
 }
