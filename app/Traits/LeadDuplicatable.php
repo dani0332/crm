@@ -42,6 +42,7 @@ trait LeadDuplicatable
         }
 
         $previousLead = $this->quoteType->model()
+            ->select('id', 'uuid', 'advisor_id')
             ->where('uuid', $this->existingRecordUuid)
             ->first();
 
@@ -66,8 +67,6 @@ trait LeadDuplicatable
         }
 
         $advisor = User::find($previousLead->advisor_id);
-        $this->isMaxCapReached($advisor, $this->getQuoteTypeId());
-
         if (! $advisor) {
             LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor not found');
 
