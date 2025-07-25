@@ -108,6 +108,7 @@ const showPriceModel = () => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="submitTotalPrice"
     >
       <div class="w-full grid md:grid-cols-1 gap-3">
