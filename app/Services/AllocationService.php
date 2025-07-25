@@ -14,6 +14,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
+use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -358,5 +359,51 @@ class AllocationService extends BaseService
             'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
             'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
         ];
+    }
+
+    public function isBusinessHours(): bool
+    {
+        try {
+            $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+            $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+
+            $currentTime = now();
+            $isWeekend = $currentTime->isWeekend();
+            $isWithinTimeRange = $currentTime->between($startTime, $endTime);
+
+            $isBusinessHours = ! $isWeekend && $isWithinTimeRange;
+
+            LoggerService::info(self::class.' - isBusinessHours: Business hours calculation', extra: [
+                'start_time' => $startTime->format('H:i'),
+                'end_time' => $endTime->format('H:i'),
+                'current_time' => $currentTime->format('H:i'),
+                'is_weekend' => $isWeekend,
+                'is_within_time_range' => $isWithinTimeRange,
+                'is_business_hours' => $isBusinessHours,
+            ]);
+
+            return $isBusinessHours;
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
+            return true;
+        }
+    }
+
+    public function isMaxCapReached(User $advisor): bool
+    {
+        if (! $advisor->leadAllocation) {
+            LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
+                'advisor_id' => $advisor->id,
+                'advisor_name' => $advisor->name,
+            ]);
+            return true;
+        }
+
+        $allocationCount = $advisor->leadAllocation->allocation_count;
+        $maxCapacity = $advisor->leadAllocation->max_capacity;
+
+        $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
+
+        return ! $isAdvisorAvailable;
     }
 }

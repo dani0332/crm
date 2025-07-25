@@ -2,7 +2,6 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -15,22 +14,21 @@ use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
 use App\Services\SendEmailCustomerService;
-use Carbon\Carbon;
+use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
+    use LeadDuplicatable;
+
     abstract protected function fetchAdvisor(int $onlineStatus);
 
     protected $lead;
     protected bool $hasNationalityConfig = false;
     protected array $advisorIDs = [];
     protected array $excludedAdvisorIds = [];
-
-    protected bool $hasDuplicateLead = false;
-    protected ?string $existingRecordUuid = null;
 
     public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
@@ -173,7 +171,9 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             if ($eligibleUser) {
                 LoggerService::info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
-                return User::with('leadAllocation')->find($eligibleUser->user_id);
+                return User::with(['leadAllocation' => function ($query) {
+                    $query->where('quote_type_id', $this->getQuoteTypeId());
+                }])->find($eligibleUser->user_id);
             }
         }
 
@@ -297,207 +297,5 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
-    protected function shouldHandleDuplicateLead(): bool
-    {
-        $eligibleTypes = [
-            QuoteTypes::HOME,
-            QuoteTypes::CORPLINE,
-            QuoteTypes::PET,
-            QuoteTypes::YACHT,
-            QuoteTypes::CYCLE,
-            QuoteTypes::GROUP_MEDICAL,
-            QuoteTypes::LIFE,
-        ];
 
-        return in_array($this->quoteType, $eligibleTypes);
-    }
-
-    protected function handleDuplicateLeadAssignment()
-    {
-        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Starting duplicate lead check', extra: [
-            'quote_type' => $this->quoteType->value,
-            'existing_record_uuid' => $this->existingRecordUuid,
-        ]);
-
-        if (empty($this->existingRecordUuid)) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No existingRecordUuid provided');
-
-            return null;
-        }
-
-        $previousLead = $this->quoteType->model()
-            ->where('uuid', $this->existingRecordUuid)
-            ->first();
-
-        if (! $previousLead) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No previous lead found with UUID', extra: [
-                'existing_record_uuid' => $this->existingRecordUuid,
-            ]);
-
-            return null;
-        }
-
-        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Found previous lead', extra: [
-            'previous_lead_id' => $previousLead->id,
-            'previous_lead_uuid' => $previousLead->uuid,
-            'previous_advisor_id' => $previousLead->advisor_id,
-        ]);
-
-        if (empty($previousLead->advisor_id)) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous lead has no advisor assigned');
-
-            return null;
-        }
-
-        $advisor = User::with('leadAllocation')->find($previousLead->advisor_id);
-        if (! $advisor) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor not found');
-
-            return null;
-        }
-
-        if (! $advisor->is_active) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor is not active');
-
-            return null;
-        }
-
-        $validStatuses = $this->getValidAdvisorStatuses();
-        $isOnLeave = ! in_array($advisor->status, $validStatuses);
-        if ($isOnLeave) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor status not valid for current time, will use ILA logic', extra: [
-                'advisor_id' => $advisor->id,
-                'advisor_name' => $advisor->name,
-                'advisor_status' => $advisor->status,
-                'valid_statuses' => $validStatuses,
-                'is_business_hours' => $this->isBusinessHours(),
-            ]);
-
-            return null;
-        }
-
-        $isMaxCapReached = $this->isMaxCapReached($advisor);
-        if ($isMaxCapReached) {
-            LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor has reached max capacity, will use normal allocation', extra: [
-                'advisor_id' => $advisor->id,
-                'advisor_name' => $advisor->name,
-                'allocation_count' => $advisor->leadAllocation?->allocation_count ?? 'N/A',
-                'max_capacity' => $advisor->leadAllocation?->max_capacity ?? 'N/A',
-            ]);
-
-            return null;
-        }
-
-        LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Will assign to previous advisor', extra: [
-            'advisor_id' => $advisor->id,
-            'advisor_name' => $advisor->name,
-            'advisor_status' => $advisor->status,
-            'allocation_count' => $advisor->leadAllocation?->allocation_count ?? 'N/A',
-            'max_capacity' => $advisor->leadAllocation?->max_capacity ?? 'N/A',
-        ]);
-
-        return $advisor;
-    }
-
-    private function getValidAdvisorStatuses(): array
-    {
-        $isBusinessHours = $this->isBusinessHours();
-
-        LoggerService::info(self::class.' - getValidAdvisorStatuses: Business hours check', extra: [
-            'is_business_hours' => $isBusinessHours,
-        ]);
-
-        if ($isBusinessHours) {
-            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE];
-        } else {
-            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
-        }
-    }
-
-    private function isBusinessHours(): bool
-    {
-        try {
-            $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-            $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-
-            $currentTime = now();
-            $isWeekend = $currentTime->isWeekend();
-            $isWithinTimeRange = $currentTime->between($startTime, $endTime);
-
-            $isBusinessHours = ! $isWeekend && $isWithinTimeRange;
-
-            LoggerService::info(self::class.' - isBusinessHours: Business hours calculation', extra: [
-                'start_time' => $startTime->format('H:i'),
-                'end_time' => $endTime->format('H:i'),
-                'current_time' => $currentTime->format('H:i'),
-                'is_weekend' => $isWeekend,
-                'is_within_time_range' => $isWithinTimeRange,
-                'is_business_hours' => $isBusinessHours,
-            ]);
-
-            return $isBusinessHours;
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
-
-            // fallback to true for safety as per business hours logic
-            return true;
-        }
-    }
-
-    private function isMaxCapReached(User $advisor): bool
-    {
-        if (! $advisor->leadAllocation) {
-            LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
-                'advisor_id' => $advisor->id,
-                'advisor_name' => $advisor->name,
-            ]);
-
-            // If no allocation record exists, consider max capacity reached for safety
-            return true;
-        }
-
-        $allocationCount = $advisor->leadAllocation->allocation_count;
-        $maxCapacity = $advisor->leadAllocation->max_capacity;
-
-        // Advisor is available if allocation_count < max_capacity OR max_capacity is -1 (unlimited)
-        $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
-
-        return ! $isAdvisorAvailable;
-    }
-
-    protected function resolveDuplicateLeadInfo(): void
-    {
-        $quoteDetail = $this->lead->quoteDetail;
-
-        try {
-            if ($quoteDetail) {
-                $this->hasDuplicateLead = (bool) ($quoteDetail->has_duplicate_lead ?? false);
-                $this->existingRecordUuid = $quoteDetail->existing_record_uuid ?? null;
-
-                LoggerService::info(self::class.' - resolveDuplicateLeadInfo: Resolved from database', extra: [
-                    'quote_type' => $this->quoteType->value,
-                    'quote_uuid' => $this->uuid,
-                    'has_duplicate_lead' => $this->hasDuplicateLead,
-                    'existing_record_uuid' => $this->existingRecordUuid,
-                ]);
-            } else {
-                LoggerService::info(self::class.' - resolveDuplicateLeadInfo: No quote detail found', extra: [
-                    'quote_type' => $this->quoteType->value,
-                    'quote_uuid' => $this->uuid,
-                ]);
-
-                $this->hasDuplicateLead = false;
-                $this->existingRecordUuid = null;
-            }
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.' - resolveDuplicateLeadInfo: Error resolving duplicate info', [
-                'quote_type' => $this->quoteType->value,
-                'quote_uuid' => $this->uuid,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->hasDuplicateLead = false;
-            $this->existingRecordUuid = null;
-        }
-    }
 }
