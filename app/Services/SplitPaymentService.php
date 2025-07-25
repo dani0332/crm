@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use stdClass;
 
 class SplitPaymentService
 {
@@ -104,7 +105,8 @@ class SplitPaymentService
         return $childPaymentStatus;
     }
 
-    public function createSageRecipt($request, $splitPayment, $splitAmount = null)
+    /* Will be removed once Sage Enhancements are verified */
+    /*public function createSageRecipt($request, $splitPayment, $splitAmount = null)
     {
         if ($splitAmount != null) {
             $request->collection_amount = $splitAmount;
@@ -142,6 +144,7 @@ class SplitPaymentService
         } else {
             LoggerService::info('SAGE API :  Send createPrepaymentReceipts for '.$quote->code);
             $request->merge(['sage_payment_code' => $splitPayment->payment_method]);
+            $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
         }
@@ -223,7 +226,7 @@ class SplitPaymentService
         }
 
         return $returnMessage;
-    }
+    }*/
 
     // function to check if the payment structure is new
     public function isNewPaymentStructure($payments)
@@ -719,27 +722,24 @@ class SplitPaymentService
             // Log message for creating Sage receipt
             LoggerService::info("Creating Sage receipt for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} - Current Sage receipt ID: {$paymentSplit->sage_reciept_id}");
 
-            // Handle Sage API call outside transaction
-            if ((new SageApiService)->isSageEnabled() && empty($paymentSplit->sage_reciept_id)) {
+            $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quoteModel, $paymentSplit); /* Handle NRA case where payment is approved after policy/send update is booked */
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
+            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
-                $request = Request::createFromGlobals();
-                $request->merge([
-                    'modelType' => $modelType,
-                    'quote_id' => $quoteId,
-                    'customer_id' => $quoteModel->customer_id,
-                    'advisor_id' => $quoteModel->advisor_id,
-                ]);
+                $sageRequest = new stdClass;
+                $sageRequest->userId = auth()->id();
+                $sageRequest->quoteType = $modelType;
+                $sageRequest->modelType = $modelType;
+                $sageRequest->quote_id = $quoteId;
+                $sageRequest->customer_id = $quoteModel?->customer_id;
+                $sageRequest->advisor_id = $quoteModel?->advisor_id;
 
-                // Make Sage API call outside transaction
-                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
-                if ($sageResponse['status'] == 'success') {
-                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['response']}");
-                    $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
-                        $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                        $paymentSplit->save();
-                    }, $maxRetries);
+                /* Handle NRA case where payment is approved after policy/send update is booked */
+                $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
+                if ($sageResponse['status']) {
+                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['message']}");
                 } else {
-                    $sageMessage = $sageResponse['response'];
+                    $sageMessage = $sageResponse['message'];
                     LoggerService::info("Sage receipt creation failed for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with error: {$sageMessage}");
 
                     if ($isFromJob) {
@@ -779,7 +779,6 @@ class SplitPaymentService
             }
         }
 
-        // Move determination of shouldCreateReceipt outside transaction
         $paymentSplit = PaymentSplits::with([
             'payment' => function ($query) {
                 $query->with(['insuranceProvider', 'sendUpdateLog']);

@@ -384,6 +384,7 @@ const getInsuranceType = (planId, insurance_provider_plan) => {
     backdrop
     @update:modelValue="handleConfirmation(false)"
     is-form
+    persistent
     @submit="onSubmit"
   >
     <x-select

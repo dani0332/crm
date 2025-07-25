@@ -1162,6 +1162,7 @@ const shouldShowPlanDetailsSection = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
