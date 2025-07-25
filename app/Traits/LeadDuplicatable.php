@@ -28,7 +28,7 @@ trait LeadDuplicatable
         }
     }
 
-    protected function getAdvisorForDuplicateLeadAssignment()
+    protected function getAdvisorForDuplicateLeadAssignment(): ?User
     {
         LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Starting duplicate lead check', extra: [
             'quote_type' => $this->quoteType->value,
@@ -94,7 +94,7 @@ trait LeadDuplicatable
         return $previousLead;
     }
 
-    private function getPreviousAdvisor($previousLead)
+    private function getPreviousAdvisor($previousLead): ?User
     {
         $advisor = User::where('is_active', true)->find($previousLead->advisor_id);
         if (! $advisor) {
