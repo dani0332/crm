@@ -41,6 +41,31 @@ trait LeadDuplicatable
             return null;
         }
 
+        $previousLead = $this->getPreviousLead();
+        if (! $previousLead) {
+            return null;
+        }
+
+        return $this->getPreviousAdvisor($previousLead);
+    }
+
+    protected function shouldHandleDuplicateLead(): bool
+    {
+        $eligibleTypes = [
+            QuoteTypes::HOME,
+            QuoteTypes::CORPLINE,
+            QuoteTypes::PET,
+            QuoteTypes::YACHT,
+            QuoteTypes::CYCLE,
+            QuoteTypes::GROUP_MEDICAL,
+            QuoteTypes::LIFE,
+        ];
+
+        return in_array($this->quoteType, $eligibleTypes);
+    }
+
+    private function getPreviousLead()
+    {
         $previousLead = $this->quoteType->model()
             ->select('id', 'uuid', 'advisor_id')
             ->where('uuid', $this->existingRecordUuid)
@@ -66,6 +91,11 @@ trait LeadDuplicatable
             return null;
         }
 
+        return $previousLead;
+    }
+
+    private function getPreviousAdvisor($previousLead)
+    {
         $advisor = User::where('is_active', true)->find($previousLead->advisor_id);
         if (! $advisor) {
             LoggerService::info(self::class.' - getAdvisorForDuplicateLeadAssignment: Previous advisor not found');
@@ -104,20 +134,5 @@ trait LeadDuplicatable
         ]);
 
         return $advisor;
-    }
-
-    protected function shouldHandleDuplicateLead(): bool
-    {
-        $eligibleTypes = [
-            QuoteTypes::HOME,
-            QuoteTypes::CORPLINE,
-            QuoteTypes::PET,
-            QuoteTypes::YACHT,
-            QuoteTypes::CYCLE,
-            QuoteTypes::GROUP_MEDICAL,
-            QuoteTypes::LIFE,
-        ];
-
-        return in_array($this->quoteType, $eligibleTypes);
     }
 }
