@@ -901,9 +901,6 @@ class CentralController extends Controller
         }
     }
 
-    /**
-     * Calculate VAT on commission (equivalent to calculateVatOnCommission in Vue)
-     */
     private function calculateVatOnCommission($commissionVatApplicable, $vatRate)
     {
         if ($commissionVatApplicable > 0) {
@@ -912,9 +909,6 @@ class CentralController extends Controller
         return 0;
     }
 
-    /**
-     * Calculate commission percentage (equivalent to calculateCommissionPercentage in Vue)
-     */
     private function calculateCommissionPercentage($totalCommissionWithoutVat, $totalPriceWithoutVat, $brokerCommission = null)
     {
         if ($totalCommissionWithoutVat <= 0) {
@@ -923,8 +917,10 @@ class CentralController extends Controller
 
         $totalCommissionInPercentage = ($totalCommissionWithoutVat / $totalPriceWithoutVat) * 100;
         
-        // Check commission limits if brokerCommission is available
+        $commissionPercentageMin = 0;
+        $commissionPercentageMax = 0;
         $commissionPercentageExceedsLimit = false;
+        
         if ($brokerCommission && $brokerCommission->fixed_commission) {
             $commissionPercentageMin = max(($brokerCommission->fixed_commission - 2.5), 0);
             $commissionPercentageMax = $brokerCommission->fixed_commission + 2.5;
@@ -943,9 +939,6 @@ class CentralController extends Controller
         ];
     }
 
-    /**
-     * Calculate commission details (equivalent to calculateCommission in Vue)
-     */
     private function calculateCommissionDetails($carQuoteDetails, $payment, $brokerCommission)
     {
         $vatRate = ApplicationStorageEnums::VAT;

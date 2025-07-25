@@ -398,7 +398,7 @@ const calculateCommissionPercentage = (
   totalPriceWithoutVat,
 ) => {
   commissionPercentageExceedsLimit.value = false;
-  if (totalCommissionWithoutVat > 0) { // 192.50 > 0
+  if (totalCommissionWithoutVat > 0) {
     let totalCommissionInPercentage =
       (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
     let brokerCommission = props.bookPolicyDetails.brokerCommission;
