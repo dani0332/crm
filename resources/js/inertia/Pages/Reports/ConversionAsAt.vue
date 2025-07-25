@@ -41,7 +41,6 @@ const carVehicleUseEnum = page.props.carVehicleUse;
 let quoteSegments = reactive(page.props.quoteSegments ?? []);
 let filteredQuoteSegments = ref([]);
 
-
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
   currentPageFirstIndex,
@@ -378,9 +377,7 @@ function onLobChange(updateDisplayFilter = true) {
     filteredQuoteSegments.value = [];
     filters.segment_filter = '';
   }
-  
 }
-
 
 const minDate = computed(() => {
   if (filters.startEndDate && filters.startEndDate.length > 0) {
@@ -417,7 +414,6 @@ onMounted(() => {
     element.removeAttribute('title');
   });
 });
-
 </script>
 
 <template>
@@ -524,7 +520,10 @@ onMounted(() => {
         />
 
         <x-select
-          v-if="can(permissionsEnum.SEGMENT_FILTER) && filters.lob == props.quoteTypeIdEnum.Life"
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) &&
+            filters.lob == props.quoteTypeIdEnum.Life
+          "
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
@@ -532,7 +531,6 @@ onMounted(() => {
           filterable
           filterPlaceholder="Filter Segment...."
         />
-   
 
         <DatePicker
           v-if="filters.includeUnassignedLeads == 'yes'"

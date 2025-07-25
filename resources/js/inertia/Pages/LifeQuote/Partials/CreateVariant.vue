@@ -320,23 +320,31 @@ watch(
     () => createForm.paymentTerm,
   ],
   () => {
-    if (props.plan?.isApi && quoteFetched.value && submitType.value === 'onSubmit') {
+    if (
+      props.plan?.isApi &&
+      quoteFetched.value &&
+      submitType.value === 'onSubmit'
+    ) {
       submitType.value = 'getQuote';
       quoteFetched.value = false;
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
   () => ridersData.value,
   () => {
-    if (props.plan?.isApi && quoteFetched.value && submitType.value === 'onSubmit') {
+    if (
+      props.plan?.isApi &&
+      quoteFetched.value &&
+      submitType.value === 'onSubmit'
+    ) {
       submitType.value = 'getQuote';
       quoteFetched.value = false;
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 const handleSubmit = isValid => {

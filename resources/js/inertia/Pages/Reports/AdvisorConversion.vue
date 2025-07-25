@@ -551,11 +551,11 @@ const onLobChange = (e, isOnMounted = false) => {
       const isLifeQuote = filters.lob === quoteTypeCodeEnum.Life;
       const allowedSegments = isLifeQuote ? ['all', 'fic', 'non-fic'] : null;
       const excludedSegments = !isLifeQuote ? ['fic', 'non-fic'] : null;
-      return isLifeQuote 
+      return isLifeQuote
         ? allowedSegments.includes(segment.value)
         : !excludedSegments.includes(segment.value);
     });
-   
+
     loadTeams(e);
   } else {
     loadAdvisorsByLob(e);
@@ -1186,7 +1186,7 @@ function sortPremium(order) {
           class="w-full"
           @update:model-value="onInsuranceTypeChange"
         />
-        
+
         <x-select
           v-if="canShow('insurance_for')"
           v-model="filters.insurance_for"
@@ -1214,7 +1214,9 @@ function sortPremium(order) {
           class="w-full"
         />
         <x-select
-          v-if="can(permissionsEnum.SEGMENT_FILTER)  && canShow('segment_filter')"
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
+          "
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"

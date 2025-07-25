@@ -897,7 +897,9 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
-  onLoadAvailablePlansData();
+  if (page.props.quote.is_ecommerce) {
+    onLoadAvailablePlansData();
+  }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -1930,371 +1932,386 @@ const enableExchangeRateEdit = () => {
       :quote-status-enum="page.props.quoteStatusEnum"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex flex-wrap gap-4 justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Available Plans
-              <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
+    <template v-if="!quote.is_ecommerce">
+      <PlanDetails
+        :insuranceProviders="insuranceProviders"
+        :quote="quote"
+        :quoteType="quoteType"
+        :vatPrice="vatPercentage"
+        :expanded="sectionExpanded"
+        :isAddUpdate="isAddUpdate"
+      />
+    </template>
 
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap gap-3 justify-end mb-3">
-            <x-button
-              size="sm"
-              @click.prevent="downloadComparisionPdf"
-              :loading="loader.download"
-              color="emerald"
-              v-if="selectedPlans.length > 0"
-            >
-              Download PDF Comparison
-            </x-button>
+    <template v-if="quote.is_ecommerce">
+      <div class="p-4 rounded shadow mb-6 bg-white">
+        <Collapsible :expanded="sectionExpanded">
+          <template #header>
+            <div class="flex flex-wrap gap-4 justify-between items-center">
+              <h3 class="font-semibold text-primary-800 text-lg">
+                Available Plans
+                <x-tag size="sm">{{
+                  listQuotePlansFiltered.length || 0
+                }}</x-tag>
+              </h3>
+            </div>
+          </template>
 
-            <x-button
-              @click.prevent="sendOCAEmail"
-              size="sm"
-              :loading="loader.link"
-              color="orange"
-              :disabled="doesEmailStatusExist || isOcaButtonDisabled"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Send OCA Email to Customer
-            </x-button>
-            <x-button
-              v-if="plansTable.data.length > 0"
-              size="sm"
-              color="orange"
-              @click.prevent="
-                onCopyText(ecomLifeInsuranceQuoteUrl + quote.uuid)
-              "
-            >
-              Copy Link
-            </x-button>
-            <x-modal
-              v-model="modals.sendConfirm"
-              title="Send Email"
-              show-close
-              backdrop
-            >
-              <p>Are you sure send email to customer?</p>
-              <template #actions>
-                <div class="text-right space-x-4">
-                  <x-button
-                    size="sm"
-                    ghost
-                    @click.prevent="modals.sendConfirm = false"
-                  >
-                    Cancel
-                  </x-button>
-                  <x-button
-                    size="sm"
-                    color="error"
-                    @click.prevent="confirmSendEmail"
-                    :loading="loader.link"
-                  >
-                    Send
-                  </x-button>
-                </div>
-              </template>
-            </x-modal>
-
-            <AddPlanButtonTemplate v-slot="{ isDisabled }">
+          <template #body>
+            <x-divider class="my-4" />
+            <div class="flex flex-wrap gap-3 justify-end mb-3">
               <x-button
                 size="sm"
+                @click.prevent="downloadComparisionPdf"
+                :loading="loader.download"
                 color="emerald"
-                @click.prevent="modals.createPlan = true"
-                :disabled="isDisabled"
+                v-if="selectedPlans.length > 0"
               >
-                Add Plan
+                Download PDF Comparison
               </x-button>
-            </AddPlanButtonTemplate>
 
-            <x-tooltip
-              v-if="page.props.lockLeadSectionsDetails.plan_selection"
-              position="left"
-              align="center"
-              class="yoyo-tip"
-            >
-              <AddPlanButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                <div class="whitespace-normal text-xs">
-                  No further actions can be taken on an issued policy. For
-                  changes, such as a change in insurer, go to 'Send Update',
-                  select 'Add Update', and choose 'Cancellation from inception
-                  and reissuance.
-                </div>
-              </template>
-            </x-tooltip>
-            <AddPlanButtonReuseTemplate v-else />
-
-            <DataTable
-              ref="planDataTable"
-              v-model:items-selected="selectedPlans"
-              table-class-name="tablefixed compact"
-              :headers="plansTable.columns"
-              :items="computedListQuotePlans || []"
-              border-cell
-              hide-rows-per-page
-              :rows-per-page="15"
-              class="flex-wrap"
-              :hide-footer="computedListQuotePlans.length < 15"
-            >
-              <template #item-totalPrice="item">
-                <span class="copay-max">{{
-                  item.isManualPlan
-                    ? numberFormat(item.totalPrice)
-                    : numberFormat(item.actualPremium)
-                }}</span>
-              </template>
-
-              <template #item-sumInsured="item">
-                <span class="copay-max">{{
-                  numberFormat(item.sumInsured)
-                }}</span>
-              </template>
-
-              <template #item-planTypeId="item">
-                <span class="copay-max">{{ item.planType }}</span>
-              </template>
-
-              <template #item-variantVersion="item">
-                <span v-if="item.version" class="copay-max"
-                  >v.{{ item.version }}</span
-                >
-              </template>
-
-              <template #item-paymentTerm="item">
-                <span class="copay-max">{{
-                  getPaymentTermTitle(item.paymentTerm)
-                }}</span>
-              </template>
-
-              <template #item-exchangeRate="item">
-                <div
-                  v-if="
-                    item.currency != 'AED' &&
-                    selectedProviderPlan == item.planId &&
-                    selectedProviderPlanVersion == (item.version || 0)
-                  "
-                  class="flex items-center gap-2"
-                >
-                  <div class="flex-1">
-                    <x-input
-                      v-model="planExchangeRate"
-                      type="text"
-                      class="w-full"
-                      :disabled="!isExchangeRateEditable"
-                      @keydown="e => preventInvalidInputs(e, false, true)"
-                      placeholder="Exchange rate"
-                    />
-                  </div>
-                  <x-button
-                    v-if="!isExchangeRateEditable"
-                    size="xs"
-                    color="blue"
-                    @click="enableExchangeRateEdit"
-                  >
-                    Edit
-                  </x-button>
-                  <x-button
-                    v-if="isExchangeRateEditable"
-                    size="xs"
-                    color="emerald"
-                    :loading="loader.exchangeRate"
-                    :disabled="loader.exchangeRate"
-                    @click="updateExchangeRate(item)"
-                  >
-                    Update
-                  </x-button>
-                </div>
-              </template>
-
-              <template #item-priceInAED="item">
-                <div
-                  v-if="
-                    item.currency != 'AED' &&
-                    selectedProviderPlan == item.planId &&
-                    selectedProviderPlanVersion == (item.version || 0)
-                  "
-                  class="copay-max"
-                >
-                  <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
-                    {{ numberFormat(item.actualPremium * planExchangeRate) }}
-                  </div>
-
-                  <div v-else>N/A</div>
-                </div>
-                <div v-else-if="item.currency != 'AED'" class="copay-max">
-                  N/A
-                </div>
-                <div v-else class="copay-max">
-                  {{ numberFormat(item.actualPremium) }}
-                </div>
-              </template>
-
-              <template #item-totalAnnualPremium="item">
-                <span class="copay-max">{{
-                  item.isManualPlan
-                    ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
-                    : getTotalAnnualPremium(
-                        item.paymentTerm,
-                        item.actualPremium,
-                      )
-                }}</span>
-              </template>
-
-              <template #item-totalAnnualPremiumAED="item">
-                <span class="copay-max">{{
-                  getTotalAnnualPremiumAED(item)
-                }}</span>
-              </template>
-
-              <template #item-providerName="{ providerName, isDisabled }">
-                <p>
-                  {{ providerName }}
-                </p>
-                <div class="flex gap-1">
-                  <x-tag
-                    v-if="isDisabled"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px]"
-                  >
-                    Hidden
-                  </x-tag>
-                </div>
-              </template>
-
-              <template
-                #item-planName="{
-                  planName,
-                  isUnderwritten,
-                  isManualPlan,
-                  isApi,
-                  isRateCalculator,
-                }"
+              <x-button
+                @click.prevent="sendOCAEmail"
+                size="sm"
+                :loading="loader.link"
+                color="orange"
+                :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+                v-if="readOnlyMode.isDisable === true"
               >
-                <p>
-                  {{ planName }}
-                </p>
-                <div class="flex gap-1">
-                  <x-tag
-                    v-if="isUnderwritten"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px] bg-green-300 text-green-800 font-semibold px-2 py-1 rounded-md"
-                  >
-                    UW
-                  </x-tag>
-                  <x-tag
-                    v-else-if="isManualPlan && !isApi"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"
-                  >
-                    Manual
-                  </x-tag>
-                  <x-tag
-                    v-else-if="isApi"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px] bg-orange-200 text-orange-700 font-semibold px-2 py-1 rounded-md"
-                  >
-                    API
-                  </x-tag>
-                  <x-tag
-                    v-else-if="isRateCalculator"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px] bg-green-200 text-green-700 font-semibold px-2 py-1 rounded-md"
-                  >
-                    Rate Calculator
-                  </x-tag>
-                </div>
-              </template>
+                Send OCA Email to Customer
+              </x-button>
+              <x-button
+                v-if="plansTable.data.length > 0"
+                size="sm"
+                color="orange"
+                @click.prevent="
+                  onCopyText(ecomLifeInsuranceQuoteUrl + quote.uuid)
+                "
+              >
+                Copy Link
+              </x-button>
+              <x-modal
+                v-model="modals.sendConfirm"
+                title="Send Email"
+                show-close
+                backdrop
+              >
+                <p>Are you sure send email to customer?</p>
+                <template #actions>
+                  <div class="text-right space-x-4">
+                    <x-button
+                      size="sm"
+                      ghost
+                      @click.prevent="modals.sendConfirm = false"
+                    >
+                      Cancel
+                    </x-button>
+                    <x-button
+                      size="sm"
+                      color="error"
+                      @click.prevent="confirmSendEmail"
+                      :loading="loader.link"
+                    >
+                      Send
+                    </x-button>
+                  </div>
+                </template>
+              </x-modal>
 
-              <template #item-action="item">
-                <div class="flex gap-2 pr-2">
-                  <x-button
-                    size="xs"
-                    color="primary"
-                    outlined
-                    @click.prevent="viewPlan(item)"
+              <AddPlanButtonTemplate v-slot="{ isDisabled }">
+                <x-button
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="modals.createPlan = true"
+                  :disabled="isDisabled"
+                >
+                  Add Plan
+                </x-button>
+              </AddPlanButtonTemplate>
+
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.plan_selection"
+                position="left"
+                align="center"
+                class="yoyo-tip"
+              >
+                <AddPlanButtonReuseTemplate :isDisabled="true" />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    No further actions can be taken on an issued policy. For
+                    changes, such as a change in insurer, go to 'Send Update',
+                    select 'Add Update', and choose 'Cancellation from inception
+                    and reissuance.
+                  </div>
+                </template>
+              </x-tooltip>
+              <AddPlanButtonReuseTemplate v-else />
+
+              <DataTable
+                ref="planDataTable"
+                v-model:items-selected="selectedPlans"
+                table-class-name="tablefixed compact"
+                :headers="plansTable.columns"
+                :items="computedListQuotePlans || []"
+                border-cell
+                hide-rows-per-page
+                :rows-per-page="15"
+                class="flex-wrap"
+                :hide-footer="computedListQuotePlans.length < 15"
+              >
+                <template #item-totalPrice="item">
+                  <span class="copay-max">{{
+                    item.isManualPlan
+                      ? numberFormat(item.totalPrice)
+                      : numberFormat(item.actualPremium)
+                  }}</span>
+                </template>
+
+                <template #item-sumInsured="item">
+                  <span class="copay-max">{{
+                    numberFormat(item.sumInsured)
+                  }}</span>
+                </template>
+
+                <template #item-planTypeId="item">
+                  <span class="copay-max">{{ item.planType }}</span>
+                </template>
+
+                <template #item-variantVersion="item">
+                  <span v-if="item.version" class="copay-max"
+                    >v.{{ item.version }}</span
                   >
-                    View
-                  </x-button>
-                  <x-button
-                    size="xs"
-                    color="emerald"
-                    outlined
-                    @click.prevent="
-                      onCopyText(
-                        ecomLifeInsuranceQuoteUrl +
-                          quote.uuid +
-                          `/payment/?providerCode=${item.providerCode}&planId=${item.planId}&version=${item.version}`,
-                      )
+                </template>
+
+                <template #item-paymentTerm="item">
+                  <span class="copay-max">{{
+                    getPaymentTermTitle(item.paymentTerm)
+                  }}</span>
+                </template>
+
+                <template #item-exchangeRate="item">
+                  <div
+                    v-if="
+                      item.currency != 'AED' &&
+                      selectedProviderPlan == item.planId &&
+                      selectedProviderPlanVersion == (item.version || 0)
                     "
+                    class="flex items-center gap-2"
                   >
-                    Copy
-                  </x-button>
-                  <span>
+                    <div class="flex-1">
+                      <x-input
+                        v-model="planExchangeRate"
+                        type="text"
+                        class="w-full"
+                        :disabled="!isExchangeRateEditable"
+                        @keydown="e => preventInvalidInputs(e, false, true)"
+                        placeholder="Exchange rate"
+                      />
+                    </div>
                     <x-button
-                      v-if="
-                        selectedProviderPlan == item.planId &&
-                        selectedProviderPlanVersion == (item.version || 0) &&
-                        !item.isDisabled
-                      "
+                      v-if="!isExchangeRateEditable"
                       size="xs"
-                      color="orange"
-                      outlined
-                      :disabled="true"
-                      >Selected</x-button
+                      color="blue"
+                      @click="enableExchangeRateEdit"
                     >
+                      Edit
+                    </x-button>
+                    <x-button
+                      v-if="isExchangeRateEditable"
+                      size="xs"
+                      color="emerald"
+                      :loading="loader.exchangeRate"
+                      :disabled="loader.exchangeRate"
+                      @click="updateExchangeRate(item)"
+                    >
+                      Update
+                    </x-button>
+                  </div>
+                </template>
 
-                    <x-button
-                      v-else-if="
-                        !(
-                          ecomDetail?.isUnderwritten &&
-                          selectedProviderPlan == item.planId
+                <template #item-priceInAED="item">
+                  <div
+                    v-if="
+                      item.currency != 'AED' &&
+                      selectedProviderPlan == item.planId &&
+                      selectedProviderPlanVersion == (item.version || 0)
+                    "
+                    class="copay-max"
+                  >
+                    <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
+                      {{ numberFormat(item.actualPremium * planExchangeRate) }}
+                    </div>
+
+                    <div v-else>N/A</div>
+                  </div>
+                  <div v-else-if="item.currency != 'AED'" class="copay-max">
+                    N/A
+                  </div>
+                  <div v-else class="copay-max">
+                    {{ numberFormat(item.actualPremium) }}
+                  </div>
+                </template>
+
+                <template #item-totalAnnualPremium="item">
+                  <span class="copay-max">{{
+                    item.isManualPlan
+                      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
+                      : getTotalAnnualPremium(
+                          item.paymentTerm,
+                          item.actualPremium,
                         )
-                      "
+                  }}</span>
+                </template>
+
+                <template #item-totalAnnualPremiumAED="item">
+                  <span class="copay-max">{{
+                    getTotalAnnualPremiumAED(item)
+                  }}</span>
+                </template>
+
+                <template #item-providerName="{ providerName, isDisabled }">
+                  <p>
+                    {{ providerName }}
+                  </p>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="isDisabled"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      Hidden
+                    </x-tag>
+                  </div>
+                </template>
+
+                <template
+                  #item-planName="{
+                    planName,
+                    isUnderwritten,
+                    isManualPlan,
+                    isApi,
+                    isRateCalculator,
+                  }"
+                >
+                  <p>
+                    {{ planName }}
+                  </p>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="isUnderwritten"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-green-300 text-green-800 font-semibold px-2 py-1 rounded-md"
+                    >
+                      UW
+                    </x-tag>
+                    <x-tag
+                      v-else-if="isManualPlan && !isApi"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"
+                    >
+                      Manual
+                    </x-tag>
+                    <x-tag
+                      v-else-if="isApi"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-orange-200 text-orange-700 font-semibold px-2 py-1 rounded-md"
+                    >
+                      API
+                    </x-tag>
+                    <x-tag
+                      v-else-if="isRateCalculator"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-green-200 text-green-700 font-semibold px-2 py-1 rounded-md"
+                    >
+                      Rate Calculator
+                    </x-tag>
+                  </div>
+                </template>
+
+                <template #item-action="item">
+                  <div class="flex gap-2 pr-2">
+                    <x-button
+                      size="xs"
+                      color="primary"
+                      outlined
+                      @click.prevent="viewPlan(item)"
+                    >
+                      View
+                    </x-button>
+                    <x-button
                       size="xs"
                       color="emerald"
                       outlined
-                      :loading="selectPlanLoader[`${item._id}`]"
                       @click.prevent="
-                        selectPlan(
-                          item.planId,
-                          page.props.quote.uuid,
-                          item.version,
-                          item._id,
-                          item.isUnderwritten,
+                        onCopyText(
+                          ecomLifeInsuranceQuoteUrl +
+                            quote.uuid +
+                            `/payment/?providerCode=${item.providerCode}&planId=${item.planId}&version=${item.version}`,
                         )
                       "
                     >
-                      Select
+                      Copy
                     </x-button>
-                  </span>
-                  <span v-if="!item.isUnderwritten">
-                    <x-button
-                      size="xs"
-                      color="emerald"
-                      @click.prevent="addVariant(item)"
-                    >
-                      Add Variant
-                    </x-button>
-                  </span>
-                </div>
-              </template>
-            </DataTable>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+                    <span>
+                      <x-button
+                        v-if="
+                          selectedProviderPlan == item.planId &&
+                          selectedProviderPlanVersion == (item.version || 0) &&
+                          !item.isDisabled
+                        "
+                        size="xs"
+                        color="orange"
+                        outlined
+                        :disabled="true"
+                        >Selected</x-button
+                      >
+
+                      <x-button
+                        v-else-if="
+                          !(
+                            ecomDetail?.isUnderwritten &&
+                            selectedProviderPlan == item.planId
+                          )
+                        "
+                        size="xs"
+                        color="emerald"
+                        outlined
+                        :loading="selectPlanLoader[`${item._id}`]"
+                        @click.prevent="
+                          selectPlan(
+                            item.planId,
+                            page.props.quote.uuid,
+                            item.version,
+                            item._id,
+                            item.isUnderwritten,
+                          )
+                        "
+                      >
+                        Select
+                      </x-button>
+                    </span>
+                    <span v-if="!item.isUnderwritten">
+                      <x-button
+                        size="xs"
+                        color="emerald"
+                        @click.prevent="addVariant(item)"
+                      >
+                        Add Variant
+                      </x-button>
+                    </span>
+                  </div>
+                </template>
+              </DataTable>
+            </div>
+          </template>
+        </Collapsible>
+      </div>
+    </template>
 
     <!-- Ecom Plan Detail -->
     <div v-show="ecomDetail != null" class="p-4 rounded shadow mb-6 bg-white">
