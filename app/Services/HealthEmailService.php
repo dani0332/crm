@@ -229,6 +229,12 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
+        if ($lead->isAUHLead()) {
+            LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH for uuid: {$lead->uuid}");
+
+            return;
+        }
+
         LoggerService::info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
         try {
             if (! $lead->isApplicationPending()) {
@@ -263,6 +269,12 @@ class HealthEmailService extends BaseService
 
     public function sendOCAHealthWorkFlow($lead)
     {
+        if ($lead->isAUHLead()) {
+            LoggerService::info(self::class." - Skipping OCA Health Workflow because lead is from AUH for uuid: {$lead->uuid}");
+
+            return;
+        }
+
         LoggerService::info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\LeadSourceEnum;
 use App\Models\HealthQuote;
 use App\Services\HealthEmailService;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -83,7 +84,11 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
 
     public function middleware()
     {
-        $isAUHLead = HealthQuote::where('uuid', $this->quoteUuid)->first()?->isFromAUH() ?? false;
+        $isAUHLead = HealthQuote::where('uuid', $this->quoteUuid)->first()?->isAUHLead() ?? false;
+
+        if ($isAUHLead) {
+            LoggerService::info(self::class." - Skipping OCB Email because lead is from AUH for UUID: {$this->quoteUuid}");
+        }
 
         return [
             Skip::when(fn () => $isAUHLead),
