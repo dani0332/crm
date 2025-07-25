@@ -899,8 +899,6 @@ class CentralController extends Controller
         }
     }
 
-    
-
     public function updateCommissionForLeads()
     {
         $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
