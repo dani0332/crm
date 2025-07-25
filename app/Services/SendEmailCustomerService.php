@@ -815,7 +815,6 @@ class SendEmailCustomerService extends BaseService
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
         LoggerService::info('Policy documents email sending started for quote code: '.$emailData->code, extra: [
-            'customer_email' => $emailData->customerEmail,
             'template_id' => $emailData->emailTemplateId,
         ]);
 
