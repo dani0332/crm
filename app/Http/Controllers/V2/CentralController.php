@@ -287,14 +287,14 @@ class CentralController extends Controller
                 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
                 'transaction_payment_status' => $validatedData['transaction_payment_status'],
                 'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
-                'broker_invoice_number' => $validatedData['broker_invoice_number'], // not generated yet
+                'broker_invoice_number' => $validatedData['broker_invoice_number'],
                 'insurer_invoice_date' => $validatedData['invoice_date'],
                 'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
                 'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
-                'commmission_percentage' => $validatedData['commission_percentage'], // not calculated yet
+                'commmission_percentage' => $validatedData['commission_percentage'],
                 'commission_vat' => $validatedData['vat_on_commission'],
-                'commission' => $validatedData['total_commission'], // not calculated yet
-                'invoice_description' => $validatedData['invoice_description'], // not generated yet
+                'commission' => $validatedData['total_commission'],
+                'invoice_description' => $validatedData['invoice_description'],
             ];
 
             $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
