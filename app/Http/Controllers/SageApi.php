@@ -47,9 +47,9 @@ class SageApi extends Controller
     public function sageApiLogs(Request $request, $sectionId)
     {
         $sageApiLogs = SageApiLog::with('user')
-            ->where(function($query) use ($request, $sectionId) {
+            ->where(function ($query) use ($request, $sectionId) {
                 $query->where(['model_type' => $request->modelClass, 'model_id' => $sectionId])
-                      ->orWhere(['section_type' => $request->modelClass, 'section_id' => $sectionId]);
+                    ->orWhere(['section_type' => $request->modelClass, 'section_id' => $sectionId]);
             })
             ->orderBy('id', 'desc')
             ->get();

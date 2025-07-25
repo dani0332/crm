@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentFrequency;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
