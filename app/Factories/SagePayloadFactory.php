@@ -1253,6 +1253,7 @@ class SagePayloadFactory
         [$quote,$payment, $paymentSplit , $sageRequest , $splitAmount] = $sageRequestData;
         $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
         $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';
+        $sageRequest->collection_amount = $paymentSplit->collection_amount;
         if ($splitAmount != null) {
             $sageRequest->collection_amount = $splitAmount;
         }
