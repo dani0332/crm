@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Enums\BorStatusEnum;
+use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Models\BorLog;
+use App\Models\DocumentType;
 use App\Services\Bor\BorPdfService;
+use App\Services\Bor\BorService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
@@ -19,6 +23,8 @@ class BorController extends Controller
      */
     private $borPdfService;
 
+    private $borService;
+
     /**
      * @var QuoteDocumentService
      */
@@ -26,10 +32,12 @@ class BorController extends Controller
 
     public function __construct(
         BorPdfService $borPdfService,
-        QuoteDocumentService $quoteDocumentService
+        QuoteDocumentService $quoteDocumentService,
+        BorService $borService
     ) {
         $this->borPdfService = $borPdfService;
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->borService = $borService;
     }
 
     public function generatePdf(Request $request)
@@ -82,5 +90,17 @@ class BorController extends Controller
 
             return response()->json(['message' => 'failed', 'error' => $th->getMessage()], 500);
         }
+    }
+
+    public function getDocumentTypes(Request $request)
+    {
+        if($request->has('quote_type_id')) {
+            $quoteType = QuoteTypes::getName($request->input('quote_type_id'));
+            $borDocTypes = [$this->borService->determineBorDocumentType($quoteType)];
+        } else {
+            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET];
+        }
+        $documentTypes = DocumentType::whereIn('code', $borDocTypes)->get();
+        return response()->json(['data' => $documentTypes]);
     }
 }

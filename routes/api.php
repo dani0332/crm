@@ -81,6 +81,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('bor')->group(function () {
         Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
 
+        Route::get('document-types', [BorController::class, 'getDocumentTypes'])->name('bor.get-document-types');
         // Signature routes
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });

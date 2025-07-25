@@ -170,4 +170,29 @@ class BorService
         
         return ['borLog' => $enrichedBorLog, 'emailSent' => false];
     }
+
+    /**
+     * Determine the appropriate BOR document type code based on lead LOB
+     */
+    public function determineBorDocumentType($quoteType): string
+    {
+        if (!$quoteType) {
+            return 'BAL'; // Default to general BAL
+        }
+
+        // Map LOB to document type code
+        $lobToDocumentType = [
+            'car' => DocumentTypeCode::BAL,
+            'bike' => DocumentTypeCode::BAL_BIKE,
+            'travel' => DocumentTypeCode::BAL_TRVL,
+            'home' => DocumentTypeCode::BAL_HOME,
+            'pet' => DocumentTypeCode::BAL_PET,
+            'health' => DocumentTypeCode::BAL_HLTH,
+            'life' => DocumentTypeCode::BAL_LIFE,
+            'cycle' => DocumentTypeCode::BAL_CYCLE,
+            'yacht' => DocumentTypeCode::BAL_YACHT,
+        ];
+
+        return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';
+    }
 } 
