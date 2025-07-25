@@ -6,7 +6,6 @@ use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -84,7 +83,7 @@ class PetQuoteRepository extends BaseRepository
             $quote->update($quoteData);
 
             $quote->petQuote()->updateOrCreate(
-                ['personal_quote_id' => $quote->id],
+                ['personal_quote_id' => $quote->id, 'uuid' => $quote->uuid, 'code' => $quote->code],
                 Arr::only($data, (new PetQuote)->allowedColumns())
             );
 
@@ -121,21 +120,25 @@ class PetQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::PET->id());
+            },
             'quoteDetail',
+            'customer',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(! empty(request()->is_renewal), function ($query) {
-                $isRenewal = request()->is_renewal;
+            ->when(! empty($this->getFilterValue('is_renewal', $requestParams)), function ($query) use ($requestParams) {
+                $isRenewal = $this->getFilterValue('is_renewal', $requestParams);
                 if ($isRenewal == quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
                 } elseif ($isRenewal == quoteTypeCode::noText) {
                     $query->whereNull('previous_quote_policy_number');
                 }
             })
-            ->when(! empty(request()->advisor_assigned_date), function ($query) {
-                $dateArray = request()->advisor_assigned_date;
+            ->when(! empty($this->getFilterValue('advisor_assigned_date', $requestParams)), function ($query) use ($requestParams) {
+                $dateArray = $this->getFilterValue('advisor_assigned_date', $requestParams);
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
@@ -143,6 +146,7 @@ class PetQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
@@ -160,7 +164,7 @@ class PetQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+        $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         if ($forTotalLeadsCount) {
             // PD Revert
@@ -168,7 +172,37 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
+        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
     public function fetchGetBy($column, $value)
@@ -187,9 +221,10 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'transactionType',
-                'insured' => function ($q) use ($quoteTypeId) {
+                'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
+                'latestInsured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -227,23 +262,18 @@ class PetQuoteRepository extends BaseRepository
                 'policy_start_date',
                 'policy_issuance_date',
                 'dob AS unformatted_dob',
-                \DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Pet.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
             ])
             ->firstOrFail();
 
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
-        if (isset($data['insured'][0])) {
-            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        if (isset($data['latest_insured'])) {
+            $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
 
         return $quote;

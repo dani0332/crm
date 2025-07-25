@@ -22,7 +22,7 @@ class LifeAllocation extends BaseAllocation
     protected function getAdvisorEmails($storageKey = null)
     {
         $category = $this->evaluateCategory();
-        $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
+        $amount = $this->lead->currency?->convertToAED((float) $this->lead?->sum_insured_value ?? 0);
 
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
         $karuna = 'karuna.ramesh@insurancemarket.ae';
@@ -52,15 +52,68 @@ class LifeAllocation extends BaseAllocation
     private function getCountriesMapping()
     {
         $catACountryMapping = [
-            'South African',
+            'American',
             'Australian',
-            'New Zealander',
-            'Canadian',
+            'South African',
             'United Kingdom',
             'Lebanese',
             'Filipino',
-            'American',
-            'Europe',
+            'New Zealander',
+            'Canadian',
+            'Russian',
+            'Ukrainian',
+            'French',
+            'Spanish',
+            'Swedish',
+            'German',
+            'Finnish',
+            'Norwegian',
+            'Polish',
+            'Italian',
+            'Romanian',
+            'Belarusian',
+            'Kazakhstani',
+            'Greek',
+            'Bulgarian',
+            'Icelander',
+            'Hungarian',
+            'Portuguese',
+            'Austrian',
+            'Czech',
+            'Serbian',
+            'Irish',
+            'Lithuanian',
+            'Latvian',
+            'Norwegian',
+            'Croatian',
+            'Herzegovinian',
+            'Slovakian',
+            'Estonian',
+            'Danish',
+            'Dutch',
+            'Swiss',
+            'Moldovan',
+            'Belgian',
+            'Albanian',
+            'Macedonian',
+            'Turkish',
+            'Slovenian',
+            'Montenegrin',
+            'Kosovar',
+            'Azerbaijani',
+            'Georgian',
+            'Luxembourger',
+            'Faroese',
+            'Andorran',
+            'Maltese',
+            'Liechtensteiner',
+            'Sammarinese',
+            'Gibraltar',
+            'Monacan',
+            'Vatican City',
+            'Armenian',
+            'Cypriot',
+            'Greenlandic',
         ];
 
         $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {

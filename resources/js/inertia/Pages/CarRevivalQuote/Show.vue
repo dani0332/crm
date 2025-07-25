@@ -125,6 +125,7 @@ const leadStatusForm = useForm({
   notes: page.props.quote.notes || null,
   lostReason: page.props.quote.lost_reason_id || null,
   isInertia: true,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {
@@ -849,10 +850,6 @@ const sendPolicyToClient = () => {
             <dt class="font-medium">Policy Number</dt>
             <dd>{{ quote.policy_number }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Policy Expiry Date</dt>
-            <dd>{{ quote.policy_expiry_date }}</dd>
-          </div>
         </dl>
       </div>
     </div>
@@ -1248,7 +1245,7 @@ const sendPolicyToClient = () => {
       >
         <template #item-original_name="item">
           <a
-            :href="cdnPath + (item.watermarked_doc_url ?? item.doc_url)"
+            :href="cdnPath + (item.watermarked_doc_url || item.doc_url)"
             target="_blank"
             class="text-primary-600"
           >

@@ -285,8 +285,9 @@ class CRUDService extends BaseService
                 }
             }
 
+            $iplLobs = [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Life), strtolower(quoteTypeCode::Business)];
             if (
-                strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+                in_array(strtolower($request->modelType), $iplLobs) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
             ) {
                 // Only allow if quote has payment link history and payment method is insurer payment link
                 if (method_exists($entity, 'hasInsurerPaymentLink') && $entity->hasInsurerPaymentLink() && ! $entity->canUpdateToTransactionApproved() && ! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
@@ -1181,8 +1182,7 @@ class CRUDService extends BaseService
                 QuoteStatusEnum::PolicyCancelledReissued,
             ]) ||
             $record?->insly_migrated || $record?->insly_id ||
-            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id) ||
-            $record?->source == LeadSourceEnum::RENEWAL_UPLOAD
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id)
         ) {
             return true;
         }

@@ -143,9 +143,9 @@ const onUpdatePlan = () => {
     showInsurerError.value = false;
   }
 
-  if (planForm.car_value > 999999) {
+  if (planForm.actual_premium > 999999) {
     notification.error({
-      title: 'Maximum car price is 999,999 AED',
+      title: 'Maximum premium should be upto AED 999,999',
       position: 'top',
     });
     return;
@@ -319,6 +319,11 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 "
                 size="sm"
                 type="number"
+                :error="
+                  planForm.actual_premium > 999999
+                    ? 'Maximum premium should be upto AED 999,999'
+                    : ''
+                "
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -342,19 +347,9 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
               <dt class="mt-2">Car value:</dt>
               <x-input
                 v-model="planForm.car_value"
-                :helper="
-                  planForm.is_manual_update
-                    ? `Min: AED ${props.plan.carValueLowerLimit} - Max: AED ${props.plan.carValueUpperLimit}`
-                    : ''
-                "
                 size="sm"
                 type="number"
                 :disabled="page.props.lockLeadSectionsDetails.plan_selection"
-                :error="
-                  planForm.car_value > 999999
-                    ? 'Maximum car price is 999,999 AED'
-                    : ''
-                "
               />
             </div>
             <div class="grid sm:grid-cols-2">

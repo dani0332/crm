@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
@@ -67,14 +69,19 @@ class HealthEmailService extends BaseService
             'whatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => $workflowType,
-            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
+            'numberOfMembersCovered' => $workflowType == WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA ? $lead->customerMembers->count() : null,
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
     }
 
     private function getMembers($currentPlan)
     {
+        if (! property_exists($currentPlan, 'memberPremiumBreakdown')) {
+            return [];
+        }
+
         return collect($currentPlan->memberPremiumBreakdown ?? [])
             ->map(function ($member, $index) {
                 return collect($member)
@@ -109,31 +116,87 @@ class HealthEmailService extends BaseService
         }, $documents);
     }
 
+    private function getValueFromRatesPerCopay($currentPlan, $property)
+    {
+        if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            $ratesPerCopay = is_array($currentPlan->ratesPerCopay) ? $currentPlan->ratesPerCopay : (array) $currentPlan->ratesPerCopay;
+
+            $ratesPerCopay = collect($ratesPerCopay)->first();
+
+            return $ratesPerCopay[$property] ?? 0;
+        }
+
+        return null;
+    }
+
+    private function getPlanData($currentPlan)
+    {
+        if (! $currentPlan || ! is_object($currentPlan) || empty((array) $currentPlan)) {
+            return [];
+        }
+
+        $plan = [];
+
+        $getValueFromPlanOrRates = function (string $property) use ($currentPlan) {
+            if (property_exists($currentPlan, $property) && ($currentPlan->$property ?? null)) {
+                return $currentPlan->{$property};
+            }
+
+            return $this->getValueFromRatesPerCopay($currentPlan, $property);
+        };
+
+        $discountPremium = $getValueFromPlanOrRates('discountPremium');
+        $vat = $getValueFromPlanOrRates('vat');
+
+        if (property_exists($currentPlan, 'name')) {
+            $plan['name'] = $currentPlan->name;
+        }
+
+        if (property_exists($currentPlan, 'providerName')) {
+            $plan['providerName'] = $currentPlan->providerName;
+        }
+
+        if (property_exists($currentPlan, 'providerCode')) {
+            $plan['providerCode'] = strtolower($currentPlan->providerCode);
+        }
+
+        if (property_exists($currentPlan, 'eligibilityName')) {
+            $plan['tpa'] = $currentPlan->eligibilityName;
+        }
+
+        $plan['actualPremium'] = "AED {$discountPremium}";
+        $plan['vat'] = "AED {$vat}";
+
+        if (property_exists($currentPlan, 'policyWordings')) {
+            $plan['tobs'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan->policyWordings));
+        }
+
+        if (property_exists($currentPlan, 'benefits')) {
+            $benefits = is_object($currentPlan->benefits) ? $currentPlan->benefits : (object) $currentPlan->benefits;
+
+            if (property_exists($benefits, 'networkLink')) {
+                $plan['networkLinks'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $benefits->networkLink));
+            }
+        }
+
+        if (property_exists($currentPlan, 'mafLink')) {
+            $plan['mafLink'] = $currentPlan->mafLink;
+        }
+
+        return $plan;
+    }
+
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
     {
-        $currentPlan = $lead->getCurrentPlan();
+        $response = Ken::request('/fetch-health-selected-plan', 'post', [
+            'quoteUID' => $lead->uuid,
+        ]);
 
+        $plans = collect($response['plans'] ?? []);
+
+        $currentPlan = (object) $plans->first();
         $members = $this->getMembers($currentPlan);
-
-        $getDiscountPremium = function () use ($currentPlan) {
-            if ($currentPlan->discountPremium ?? null) {
-                return $currentPlan->discountPremium;
-            }
-
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                return $currentPlan->ratesPerCopay?->discountPremium ?? 0;
-            }
-        };
-
-        $getVat = function () use ($currentPlan) {
-            if ($currentPlan->vat ?? null) {
-                return $currentPlan->vat;
-            }
-
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                return $currentPlan->ratesPerCopay?->vat ?? 0;
-            }
-        };
+        $plan = $this->getPlanData($currentPlan);
 
         $payload = [
             'code' => $lead->code,
@@ -145,17 +208,7 @@ class HealthEmailService extends BaseService
             'email' => $lead->email,
             'totalMembers' => count($members),
             'members' => $members,
-            'plan' => [
-                'name' => $currentPlan?->name,
-                'providerName' => $currentPlan?->providerName,
-                'providerCode' => strtolower($currentPlan?->providerCode ?? ''),
-                'tpa' => $currentPlan?->eligibilityName ?? '',
-                'actualPremium' => "AED {$getDiscountPremium()}",
-                'vat' => "AED {$getVat()}",
-                'tobs' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
-                'networkLinks' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
-                'mafLink' => $currentPlan?->mafLink,
-            ],
+            'plan' => $plan,
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
         ];
 
@@ -274,5 +327,70 @@ class HealthEmailService extends BaseService
 
             return false;
         }
+    }
+
+    public function sendSICHealthFollowupsWA($lead)
+    {
+        $response = Ken::request('/get-health-cheapest-plans', 'post', [
+            'quoteUID' => $lead->uuid,
+            'isRequestForPlansWithExtendedData' => false,
+            'isPlanTypes' => true,
+        ]);
+
+        if (empty($response['plans'])) {
+            LoggerService::info('SIC Health Followups WA not executed because no plans found');
+
+            return;
+        }
+        if (empty($response['planTypes'])) {
+            LoggerService::info('SIC Health Followups WA not executed because no plan types found');
+
+            return;
+        }
+        $planTypes = collect($response['planTypes'])
+            ->mapWithKeys(function ($planType) {
+                $key = $this->setPlanTypePremium($planType['text']);
+                if ($key !== null) {
+                    return [$key => $planType['calculatedDiscountPremium']];
+                }
+
+                return [];
+            });
+
+        try {
+            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            if ($isFollowupExecuted) {
+                LoggerService::info('SIC Health Followups WA already executed');
+
+                return;
+            }
+
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA);
+            $emailData->planTypes = $planTypes;
+            $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
+            if (! empty($response->headers['Run-Id']) && in_array($response->status_code, [200, 201])) {
+                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
+                app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, QuoteTypeId::Health);
+
+                LoggerService::info('SIC Health Followups WA executed');
+            }
+
+        } catch (\Exception $exception) {
+            LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);
+        }
+
+    }
+
+    public function setPlanTypePremium($planType)
+    {
+
+        return match ($planType) {
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::ENTRY_LEVEL->value) => 'entryLevelPremium',
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::GOOD->value) => 'goodPremium',
+            HealthPlanTypeEnum::typeText(HealthPlanTypeEnum::BEST->value) => 'bestPremium',
+            default => null
+        };
     }
 }

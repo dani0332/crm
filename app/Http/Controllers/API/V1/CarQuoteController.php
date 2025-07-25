@@ -5,14 +5,17 @@ namespace App\Http\Controllers\API\V1;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Models\CarQuote;
 use App\Models\QuoteStatus;
+use App\Models\Team;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
 use App\Services\QuoteStatusService;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -20,6 +23,8 @@ class CarQuoteController extends Controller
     /**
      * @return void
      */
+    use TeamHierarchyTrait;
+
     public function index()
     {
         $quotes = CarQuoteRepository::select(
@@ -32,6 +37,7 @@ class CarQuoteController extends Controller
 
     public function getFollowupLeads()
     {
+        $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->value('id') ?? null;
         $quotes = CarQuoteRepository::select(['id', 'code', 'uuid', 'advisor_id', 'renewal_batch', 'quote_batch_id'])
             ->whereHas('carQuoteRequestDetail', function ($q) {
                 $q->whereNotNull('ocb_sent_date');
@@ -40,6 +46,7 @@ class CarQuoteController extends Controller
                 $q->whereNotNull('ocb_sent_date');
             }])->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID])
             ->where('quote_status_id', '<>', QuoteStatusEnum::Duplicate)
+            ->whereNotIn('advisor_id', $this->getTeamUserIds($pcpTeamId))
             ->filter()
             ->simplePaginate((request()->limit ?? 100));
 
@@ -74,7 +81,7 @@ class CarQuoteController extends Controller
     {
         $quoteStatus = QuoteStatus::find($request->quote_status_id)->code ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($request->quote_type);
-        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, [], $request->notes);
+        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, $request->notes);
 
         return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
     }

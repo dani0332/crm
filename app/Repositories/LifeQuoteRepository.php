@@ -76,7 +76,9 @@ class LifeQuoteRepository extends BaseRepository
     {
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
             'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
-            'payments'])
+            'payments', 'customer', 'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
+            }])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
@@ -89,6 +91,7 @@ class LifeQuoteRepository extends BaseRepository
                 });
             })
             ->filter()
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
                 '*',
@@ -121,14 +124,37 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
-            'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
-            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
-            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob', 'insured',
+        $quote = $this->where($column, $value)->with([
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'previousAdvisor',
+            'lifeQuoteRequestDetail.lostReason',
+            'purposeOfInsurance',
+            'children',
+            'currency',
+            'insuranceTenure',
+            'numberOfYears',
+            'maritalStatus',
+            'paymentStatus',
+            'customer.additionalContactInfo',
+            'transactionType',
+            'insuranceProvider',
+            'payments.paymentMethod',
+            'payments.paymentStatus',
+            'payments.paymentSplits.paymentStatus',
+            'payments.paymentSplits.paymentMethod',
+            'payments.paymentSplits.documents',
+            'payments.paymentSplits.verifiedByUser',
+            'payments.paymentSplits.processJob',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
+            },
+            'latestInsured.insuredKyc:id,insured_id',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
+            'customer',
         ])
             ->with([
                 'documents' => function ($q) {
@@ -145,20 +171,15 @@ class LifeQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                \DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = life_quote_request.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
             ])->firstOrFail();
 
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
-        if (isset($data['insured'][0])) {
-            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        if (isset($data['latestInsured'])) {
+            $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
 
         return $quote;
@@ -203,8 +224,7 @@ class LifeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria();
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
 
-        return $query->orderBy('life_quote_request.created_at', 'desc')
-            ->get();
+        return $query->orderBy('life_quote_request.created_at', 'desc');
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

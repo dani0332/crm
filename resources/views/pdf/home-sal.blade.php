@@ -279,9 +279,15 @@
                                                 Each item that's valued at AED 40,000 or more has been recorded for
                                                 comprehensive coverage.
                                             </p>
-                                            <p class="light-text-slate-200 sm-text-12px sm-important-text-10px sm-important-my-1 sm-important-leading-3_5"
-                                                style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333333; line-height: 20px">
-                                                Below, you'll find a summary of the declared items:</p>
+                                            @if(isset($data['has_items']) && $data['has_items'])
+                                                <p class="light-text-slate-200 sm-text-12px sm-important-text-10px sm-important-my-1 sm-important-leading-3_5"
+                                                    style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333333; line-height: 20px">
+                                                    Below, you'll find a summary of the declared items:</p>
+                                            @else
+                                                <p class="light-text-slate-200 sm-text-12px sm-important-text-10px sm-important-my-1 sm-important-leading-3_5"
+                                                    style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333333; line-height: 20px">
+                                                    No items have been declared at this time.</p>
+                                            @endif
                                         </td>
                                         <td
                                             style="width: 176px; padding-left: 12px; text-align: left; vertical-align: top">
@@ -309,55 +315,65 @@
                                             </td>
                                         </tbody>
                                     </table>
-                                    <div class="light-bg-gray-800"
-                                        style="border-radius: 8px; background-color: #F7F7F7; padding: 12px">
-                                        <table class="light-text-slate-200"
-                                            style="min-width: 100%; table-layout: auto; border-collapse: collapse; vertical-align: middle; font-size: 14px; color: #5D697B"
-                                            cellpadding="0" cellspacing="0" role="presentation">
-                                            <thead>
-                                                <tr style="background-color: #DBEEFF">
-                                                    <th class="sm-text-8px light-text-slate-600"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
-                                                        Item description
-                                                    </th>
-                                                    <th class="sm-text-8px light-text-slate-600"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
-                                                        Item value (AED)
-                                                    </th>
-                                                    <th class="sm-text-8px light-text-slate-600"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
-                                                        Purchase date
-                                                    </th>
-                                                    <th class="sm-text-8px light-text-slate-600"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
-                                                        Invoice/serial number
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($data['items'] as $item)
-                                                    <tr>
-                                                        <td class="sm-text-8px"
-                                                            style="width: 40%; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                            {{ $item->description }}
-                                                        </td>
-                                                        <td class="sm-text-8px"
-                                                            style="width: 20%; max-width: 108px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                            {{ $item->value }}
-                                                        </td>
-                                                        <td class="sm-text-8px"
-                                                            style="width: 20%; max-width: 113px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                            {{ $item->purchase_date }}
-                                                        </td>
-                                                        <td class="sm-text-8px"
-                                                            style="width: 20%; max-width: 96px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                            {{ $item->invoice_number }}
-                                                        </td>
+                                    @if(isset($data['has_items']) && $data['has_items'])
+                                        <div class="light-bg-gray-800"
+                                            style="border-radius: 8px; background-color: #F7F7F7; padding: 12px">
+                                            <table class="light-text-slate-200"
+                                                style="min-width: 100%; table-layout: auto; border-collapse: collapse; vertical-align: middle; font-size: 14px; color: #5D697B"
+                                                cellpadding="0" cellspacing="0" role="presentation">
+                                                <thead>
+                                                    <tr style="background-color: #DBEEFF">
+                                                        <th class="sm-text-8px light-text-slate-600"
+                                                            style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
+                                                            Item description
+                                                        </th>
+                                                        <th class="sm-text-8px light-text-slate-600"
+                                                            style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
+                                                            Item value (AED)
+                                                        </th>
+                                                        <th class="sm-text-8px light-text-slate-600"
+                                                            style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
+                                                            Purchase date
+                                                        </th>
+                                                        <th class="sm-text-8px light-text-slate-600"
+                                                            style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
+                                                            Invoice/serial number
+                                                        </th>
                                                     </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($data['items'] as $item)
+                                                        <tr>
+                                                            <td class="sm-text-8px"
+                                                                style="width: 40%; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                                {{ $item->description }}
+                                                            </td>
+                                                            <td class="sm-text-8px"
+                                                                style="width: 20%; max-width: 108px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                                {{ $item->value }}
+                                                            </td>
+                                                            <td class="sm-text-8px"
+                                                                style="width: 20%; max-width: 113px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                                {{ $item->purchase_date }}
+                                                            </td>
+                                                            <td class="sm-text-8px"
+                                                                style="width: 20%; max-width: 96px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                                {{ $item->invoice_number }}
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <div class="light-bg-gray-800"
+                                            style="border-radius: 8px; background-color: #F7F7F7; padding: 12px; text-align: center;">
+                                            <p class="light-text-slate-200 sm-text-12px"
+                                                style="margin: 20px 0; font-family: inherit; font-size: 14px; color: #5D697B; font-style: italic;">
+                                                No items have been declared for this quote.
+                                            </p>
+                                        </div>
+                                    @endif
                                 </div>
                                 {{-- <div style="margin-top: 24px">
                                     <a href="{{ $data['quote_declaration_link'] }}" target="_blank"

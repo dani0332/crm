@@ -106,6 +106,7 @@ const isError = ref(false);
 const loader = reactive({
   table: false,
   view: false,
+  exportLoader: false,
 });
 const showChatLogs = ref(false);
 
@@ -141,7 +142,8 @@ watch(
   },
 );
 
-function onSubmit() {
+function onSubmit(isValid) {
+  if (!isValid) return;
   if (filters.quoteId || filters.email || filters.mobile_no) {
     filters.chat_initiated_at = [];
   }
@@ -236,10 +238,87 @@ onMounted(() => {
   }
 });
 
-const downloadReport = () => {
-  const data = useObjToUrl(useCleanObj({ ...filters, ...serverOptions.value }));
-  const url = route('exportChatData');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+const exportReport = async (exportType = 'download') => {
+  try {
+    loader.exportLoader = true;
+
+    // Validate required fields for email export
+    if (!filters.report) {
+      notification.error({
+        position: 'top',
+        title: 'Export Error',
+        text: 'Please select a report type before exporting.',
+      });
+      return;
+    }
+
+    const days = calculateDaysDifference(
+      filters.chat_initiated_at[0],
+      filters.chat_initiated_at[1],
+    );
+
+    if (days > 30) {
+      notification.error({
+        position: 'top',
+        title: 'Export Error',
+        message: 'Maximum 30 days are allowed.',
+      });
+      return;
+    }
+
+    const data = {
+      ...useCleanObj({ ...filters, ...serverOptions.value }),
+      ...(exportType === 'email'
+        ? { recipientEmail: page.props.auth.user.email }
+        : {}),
+      report: filters.report,
+    };
+
+    const payload =
+      exportType === 'download'
+        ? {
+            type: 'instant-alfred-chat',
+            quote_type_id: null,
+            exportType: 'download',
+            url: `${route('exportChatData')}?${new URLSearchParams(useObjToUrl(data)).toString()}`,
+          }
+        : {
+            type: 'instant-alfred-chat',
+            quote_type_id: null,
+            exportType: 'email',
+            url: route('instant-alfred.export-email'),
+            data: data,
+            method: 'post',
+          };
+
+    const result = await logAndExportQuotes(payload);
+
+    if (result.data.success !== false) {
+      notification.success({
+        title:
+          exportType === 'download'
+            ? 'Export Initiated'
+            : 'Your export has been queued and will be sent to your email shortly.',
+        position: 'top',
+      });
+    } else {
+      notification.error({
+        title:
+          result.data.message || 'Failed to initiate export. Please try again.',
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      position: 'top',
+      title: 'Export Error',
+      text:
+        error.response?.data?.message ||
+        'An error occurred while initiating the export. Please try again.',
+    });
+  } finally {
+    loader.exportLoader = false;
+  }
 };
 </script>
 
@@ -267,6 +346,7 @@ const downloadReport = () => {
             { label: 'Health', value: 'Health' },
             { label: 'Travel', value: 'Travel' },
             { label: 'Bike', value: 'Bike' },
+            { label: 'Home', value: 'Home' },
           ]"
           placeholder="Select a Quote Type"
           class="w-full"
@@ -299,61 +379,114 @@ const downloadReport = () => {
           :onlySelect="true"
         />
       </div>
-      <x-field label="Transaction Type">
-        <combo-box
-          v-model="filters.transaction_type_id"
-          :options="transactionTypes"
-          placeholder="Search by Transaction type"
-          class="w-full"
-        >
-        </combo-box>
-      </x-field>
-      <x-field label="Batch">
-        <combo-box
-          v-model="filters.quote_batch_id"
-          :options="leadBatches"
-          placeholder="Search by Batch"
-          class="w-full"
-        >
-        </combo-box>
-      </x-field>
-      <x-field label="Lead Status">
-        <combo-box
-          v-model="filters.quote_status_id"
-          :options="leadStatus"
-          placeholder="Select the Lead status"
-          class="w-full"
-        >
-        </combo-box>
-      </x-field>
-      <x-field label="Payment Status">
-        <combo-box
-          v-model="filters.payment_status_id"
-          :options="paymentStatus"
-          placeholder="Search by Payment status"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Sale leads">
-        <x-select
-          v-model="filters.sale_leads"
-          :options="[
-            { value: null, label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          placeholder="Search by Sale leads"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Segment">
-        <x-select
-          v-model="filters.segment"
-          :options="quoteSegments"
-          placeholder="Search by SIC"
-          class="w-full"
-        />
-      </x-field>
+
+      <x-select
+        v-model="filters.transaction_type_id"
+        :options="transactionTypes"
+        placeholder="Search by Transaction type"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Transaction Type...."
+        label="Transaction Type"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.transaction_type_id = transactionTypes.map(
+                item => item.value,
+              )
+            "
+            @clear="filters.transaction_type_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.quote_batch_id"
+        :options="leadBatches"
+        placeholder="Search by Batch"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Batch...."
+        label="Batch"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.quote_batch_id = leadBatches.map(item => item.value)
+            "
+            @clear="filters.quote_batch_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.quote_status_id"
+        :options="leadStatus"
+        placeholder="Select the Lead status"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Lead Status...."
+        label="Lead Status"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.quote_status_id = leadStatus.map(item => item.value)
+            "
+            @clear="filters.quote_status_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.payment_status_id"
+        :options="paymentStatus"
+        placeholder="Search by Payment status"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Payment Status...."
+        label="Payment Status"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.payment_status_id = paymentStatus.map(item => item.value)
+            "
+            @clear="filters.payment_status_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.sale_leads"
+        :options="[
+          { value: null, label: 'All' },
+          { value: 'Yes', label: 'Yes' },
+          { value: 'No', label: 'No' },
+        ]"
+        placeholder="Search by Sale leads"
+        class="w-full"
+        label="Sale leads"
+      >
+      </x-select>
+
+      <x-select
+        v-model="filters.segment"
+        :options="quoteSegments"
+        placeholder="Search by SIC"
+        class="w-full"
+        label="Segment"
+      />
+
       <x-field label="Report Category">
         <x-select
           v-model="filters.report"
@@ -406,7 +539,7 @@ const downloadReport = () => {
     </div>
 
     <div class="flex justify-between gap-3">
-      <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+      <div v-if="can(permissionsEnum.DATA_EXTRACTION)" class="flex gap-2">
         <x-tooltip v-if="reportButtonCon.disable" position="right">
           <x-button size="sm" color="emerald">Export Excel</x-button>
           <template #tooltip v-if="reportButtonCon.msg">
@@ -421,8 +554,30 @@ const downloadReport = () => {
           v-else
           size="sm"
           color="emerald"
-          @click.prevent="downloadReport"
+          @click.prevent="exportReport('download')"
+          :loading="loader.exportLoader"
           >Export Excel</x-button
+        >
+
+        <x-tooltip v-if="reportButtonCon.disable" position="right">
+          <x-button size="sm" color="emerald" :loading="loader.exportLoader">
+            Export via Email
+          </x-button>
+          <template #tooltip v-if="reportButtonCon.msg">
+            <span class="font-medium">
+              {{ reportButtonCon.msg }}
+            </span>
+          </template>
+        </x-tooltip>
+
+        <x-button
+          :disabled="reportButtonCon.disable"
+          v-else
+          size="sm"
+          color="blue"
+          :loading="loader.exportLoader"
+          @click.prevent="exportReport('email')"
+          >Export via Email</x-button
         >
       </div>
 

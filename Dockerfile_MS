@@ -38,14 +38,13 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     wget \
     gnupg \
-    ghostscript \
     libwebp-dev \
-    pdftk
+    qpdf
 
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
 RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
-RUN pecl install mongodb-1.20.0 && docker-php-ext-enable mongodb
+RUN pecl install mongodb-2.1.0 && docker-php-ext-enable mongodb
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 COPY . /app
@@ -78,9 +77,8 @@ libzip4 \
 zlib1g \
 libicu-dev \
 libmemcached11 \
-ghostscript \
 libwebp-dev \
-pdftk
+qpdf
 
 # Set working directory
 WORKDIR /var/www

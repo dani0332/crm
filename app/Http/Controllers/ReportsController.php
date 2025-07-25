@@ -11,7 +11,9 @@ use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
+use App\Http\Requests\UTMReportRequest;
 use App\Models\Department;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -34,6 +36,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 
 class ReportsController extends Controller
@@ -331,7 +334,7 @@ class ReportsController extends Controller
         ];
     }
 
-    public function utmLeadsSaleReport(Request $request, ReportService $reportService)
+    public function utmLeadsSaleReport(UTMReportRequest $request, ReportService $reportService)
     {
         $resp = $reportService->utmReport($request);
 
@@ -339,6 +342,17 @@ class ReportsController extends Controller
             'quoteTypes' => $resp['lobs'],
             'reportData' => $resp['records'],
         ]);
+    }
+
+    public function exportUtmReport(UTMReportRequest $request, ReportService $reportService)
+    {
+        $resp = $reportService->utmReport($request);
+        $data = $resp['records'];
+
+        return Excel::download(
+            new UtmReportExport($data),
+            'UTM Report.xlsx'
+        );
     }
 
     public function renderPipelineReport(Request $request, ReportService $reportService)
@@ -523,6 +537,7 @@ class ReportsController extends Controller
             QuoteTypes::CORPLINE,
             QuoteTypes::CYCLE,
             QuoteTypes::YACHT,
+            QuoteTypes::SAVINGS,
         ];
 
         $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();

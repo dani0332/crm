@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\DocumentTypeText;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -16,23 +17,33 @@ use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\CarPlanPolicyWording;
 use App\Models\DocumentType;
+use App\Models\HealthPlanPolicyWording;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
+use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
-use setasign\Fpdi\PdfParser\StreamReader;
 
 class QuoteDocumentService extends BaseService
 {
+    protected $client;
     use GenericQueriesAllLobs;
+
+    public function __construct()
+    {
+        $this->client = new Client;
+    }
 
     /**
      * get list of active document types can be presented to customer to upload documents.
@@ -52,7 +63,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::GroupMedical, quoteTypeCode::Business];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::GroupMedical, quoteTypeCode::Business, quoteTypeCode::SAVINGS];
 
         return in_array($quoteModelType, $enabledLOBs);
     }
@@ -128,6 +139,8 @@ class QuoteDocumentService extends BaseService
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false)
     {
+        LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
+
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
@@ -237,8 +250,6 @@ class QuoteDocumentService extends BaseService
                     $data['quote_uuid'],
                     $documentType->id
                 )->afterCommit();
-            } else {
-                LoggerService::info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
@@ -310,6 +321,7 @@ class QuoteDocumentService extends BaseService
 
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
+            // If watermarked_doc_url is not null then we can send watermarked document in email
             $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
@@ -416,6 +428,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
+            QuoteTypeId::Savings => ['SPD', 'SPDR', 'SDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
@@ -429,14 +442,23 @@ class QuoteDocumentService extends BaseService
     public function getHandBookDocuments($quote, $coPaymentIds = null)
     {
         if ($quote->policyWording) {
-            $policyWording = $quote->policyWording;
+            // Get policy wording documents for the quote and filter out co-payment documents if provided
+            // Filter out policy wording documents that don't have a link
+            $policyWording = $quote->policyWording
+                ->when($coPaymentIds != null, function ($collection) use ($coPaymentIds) {
+                    return $collection->reject(function ($item) use ($coPaymentIds) {
+                        return in_array($item->health_plan_co_payment_id, $coPaymentIds);
+                    });
+                })
+                ->filter(function ($item) use ($quote) {
+                    if (empty($item->link)) {
+                        LoggerService::warning("Policy wording document not found for policy wording ID: {$item->id} Quote Code: {$quote->code} Error Code: 404");
 
-            // Filter out documents with matching co-payment codes
-            if ($coPaymentIds != null) {
-                $policyWording = $policyWording->reject(function ($policyWording) use ($coPaymentIds) {
-                    return $coPaymentIds && in_array($policyWording->health_plan_co_payment_id, $coPaymentIds);
+                        return false;
+                    }
+
+                    return true;
                 });
-            }
 
             $policyWording = $policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
@@ -466,21 +488,28 @@ class QuoteDocumentService extends BaseService
     public function getAppDownloadLink($modelType, $quote)
     {
         $appDownloadLink = '';
+        LoggerService::info('getAppDownloadLink called for quote code: '.$quote->code);
         if (ucfirst($modelType) == quoteTypeCode::Health) {
             $plan = $quote->plan;
-            $code = $plan->insuranceProvider->code.'_HEALTH_DOC';
+
+            $healthNetwork = $plan->healthNetwork;
+            $code = str_replace(' ', '_', trim($healthNetwork->text)).'_HEALTH_DOC';
+            LoggerService::info('Trying health network doc for quote code: '.$quote->code.' with key: '.$code);
             $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
-            // If no document found against provider  will check health network document
+
+            // If no document found network provider  will check provider document
             if ($providerHealthDoc == null) {
-                $healthNetwork = $plan->healthNetwork;
-                $code = str_replace(' ', '_', $healthNetwork->text).'_HEALTH_DOC';
+                $code = trim($plan->insuranceProvider->code).'_HEALTH_DOC';
+                LoggerService::info('Provider doc for quote code: '.$quote->code.' with key: '.$code);
                 $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
             }
             // If these two documents then we send complete url
             if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
+                LoggerService::info('Direct link used for quote code: '.$quote->code.' with key: '.$code);
                 $appDownloadLink = $providerHealthDoc;
             } else {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
+                LoggerService::info('Base URL prepended for quote code: '.$quote->code.' with key: '.$code);
                 $appDownloadLink = $baseUrl.$providerHealthDoc;
             }
         }
@@ -522,49 +551,142 @@ class QuoteDocumentService extends BaseService
             throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
         }
 
-        $tempFilePath = storage_path('temp/temp_'.$docName);
-        file_put_contents($tempFilePath, $fileContent);
+        // Save the source file
+        $sourceFilePath = storage_path('temp/source_'.$docName);
+        file_put_contents($sourceFilePath, $fileContent);
 
-        // Convert the PDF to a version compatible with FPDI
-        shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+        try {
+            // Use QPDF as our primary watermarking approach
+            return $this->qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
+        } catch (\Exception $e) {
+            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
 
-        sleep(3);
+            // Incase qpdfWatermark() fails/throw exception. Made sure that we delete the file that it created.
+            $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
+            if (file_exists($watermarkPdf ?? '')) {
+                unlink($watermarkPdf);
+            }
 
-        if (! file_exists($outputFile)) {
-            LoggerService::error("Unable to read file outputFile: $outputFile ");
-            throw new \Exception("Unable to read file outputFile: $outputFile");
+            // If watermarking fails completely, use the original file without watermark
+            if (file_exists($sourceFilePath)) {
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+                LoggerService::info("Using unwatermarked original file due to error for UUID: $uuid");
+
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+            }
+
+            // If we can't even use the original file, re-throw the exception
+            throw $e;
+        } finally {
+            // after everything remove all the temp files from storage/temp
+            if (file_exists($sourceFilePath)) {
+                unlink($sourceFilePath);
+            }
+
+            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt');
+            if (file_exists($qpdfLogPath)) {
+                unlink($qpdfLogPath);
+            }
+
+            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+            if (file_exists($decryptedTempPath)) {
+                unlink($decryptedTempPath);
+            }
+
+            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+            if (file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
+
+        }
+    }
+
+    private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    {
+        // Preprocess the PDF with qpdf for FPDI compatibility
+        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+        $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
+
+        $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+        $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
+            escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
+
+        shell_exec($decryptCommand);
+
+        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+
+            if (strpos($logOutput, 'invalid password') !== false) {
+                /** PDF has password, falling back to original document*/
+
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+
+            } else {
+                throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+            }
         }
 
+        // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
+        $qpdfCommand = 'qpdf '.
+            '--no-warn '. // Suppress warnings
+            '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
+            escapeshellarg($decryptedTempPath).' '.
+            escapeshellarg($tempFilePath).' > '.
+            escapeshellarg($qpdfLogPath).' 2>&1';
+
+        $output = shell_exec($qpdfCommand);
+
+        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+            LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
+            throw new \Exception('qpdf preprocessing failed');
+        }
+
+        // region Apply watermark with FPDI
         $pdf = new Fpdi;
+        $pageCount = $pdf->setSourceFile($tempFilePath);
 
-        $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
-
-        LoggerService::info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
         $watermarkImagePath = public_path('images/watermark1.png');
         $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
-
-            // Log::info('Page size: '.json_encode($size));
-
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            // Add watermark
+
+            // Add watermark based on orientation
             if ($size['orientation'] === 'P') {
-                $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+                $pdf->Image(
+                    $watermarkImagePath,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
             } else {
-                $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+                $pdf->Image(
+                    $watermarkImageAA4Path,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
             }
 
+            // Layer the original page content over the watermark
             $pdf->useTemplate($templateId);
         }
 
         $pdf->Output($outputPath, 'F');
+        // endregion
 
-        // Delete the temporary file
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
+        // Check if the output file was created successfully
+        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
+            throw new \Exception('FPDI watermarking failed');
         }
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
@@ -690,6 +812,19 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
+    public function getDocumentUrl($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    {
+        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+
+        if (Storage::disk($storageDisk)->exists($fileName)) {
+            $encodedFileName = urlencode($fileName);
+
+            return Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Generate a temporary URL for a document stored in a specified storage disk.
      *
@@ -700,19 +835,11 @@ class QuoteDocumentService extends BaseService
      */
     public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
     {
-        // Calculate the expiry time for the temporary URL
-        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
 
-        // Check if the file exists in the specified storage disk
-        if (Storage::disk($storageDisk)->exists($fileName)) {
-            // Generate the temporary URL
-            $encodedFileName = urlencode($fileName);
-            $temporaryUrl = Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
-
-            // Return the temporary URL if generated
-            return response()->json(['url' => $temporaryUrl]);
+        if ($url) {
+            return response()->json(['url' => $url]);
         } else {
-            // Return an error message if the file does not exist
             return response()->json(['error' => 'File does not exist on server']);
         }
     }
@@ -803,4 +930,90 @@ class QuoteDocumentService extends BaseService
         }
         $payment->save();
     }
+
+    /**
+     * This function bring proof document for all lob's except car and bike
+     *
+     * @return array
+     */
+    public function bringProofDocumentForAllLobs()
+    {
+        $documentTypeCodes = DocumentType::where('text', DocumentTypeText::PAYMENT_PROOF)->whereNotIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Bike])->pluck('code')->toArray();
+
+        return $documentTypeCodes;
+    }
+
+    public function checkHandbookDocuments($quoteType)
+    {
+
+        if ($quoteType == quoteTypeCode::Car) {
+            $carPolicyWordingDocs = CarPlanPolicyWording::get();
+            $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($carPolicyWordingDocs);
+        } elseif ($quoteType == quoteTypeCode::Health) {
+            $healthPolicyWordingDocs = HealthPlanPolicyWording::get();
+            $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($healthPolicyWordingDocs);
+        } elseif ($quoteType == quoteTypeCode::Travel) {
+            $travelPolicyWordingDocs = TravelPlanPolicyWording::get();
+            $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($travelPolicyWordingDocs);
+        } else {
+            LoggerService::error("Invalid quote type: {$quoteType}");
+
+            return;
+        }
+
+        $filteredDocuments = $this->filterAttachments($policyWordingDocuments);
+        LoggerService::info("Missing policy wording documents for {$quoteType}", extra: [
+            'quote_type' => $quoteType,
+            'missing_documents' => $filteredDocuments,
+            'total_missing' => count($filteredDocuments),
+        ]);
+
+    }
+
+    public function formatPolicyWordingDocumentUrls($policyWordingDocs)
+    {
+        return $policyWordingDocs->map(function ($policyWording) {
+            $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
+            if (strpos($policyWording->link, $baseUrl) !== 0) {
+                $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
+            }
+            $policyWordingDocumentURL = preg_replace('/\s+$/m', '', $policyWording->link);
+
+            return [
+                'id' => $policyWording->id,
+                'url' => $policyWordingDocumentURL,
+            ];
+        });
+    }
+
+    public function filterAttachments($documents)
+    {
+        $attachments = [];
+        foreach ($documents as $document) {
+            $info = $this->getDocumentInfo($document['url']);
+            if ($info['exists']) {
+                continue;
+            }
+            $attachments[] = $document['id'];
+        }
+
+        return $attachments;
+    }
+
+    private function getDocumentInfo($url)
+    {
+        try {
+            $response = $this->client->head($url);
+            if ($response->getStatusCode() == 200) {
+                $fileSize = $response->hasHeader('Content-Length') ? $response->getHeader('Content-Length')[0] : 'Unknown';
+
+                return ['exists' => true, 'size' => $fileSize];
+            } else {
+                return ['exists' => false, 'size' => null];
+            }
+        } catch (RequestException $e) {
+            return ['exists' => false, 'size' => null];
+        }
+    }
+
 }

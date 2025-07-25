@@ -2,30 +2,40 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\QuoteTypeId;
 use App\Services\CarQuoteService;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class CarQuoteExport
+class CarQuoteExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
+
+    public function __construct(
+        private CarQuoteService $carQuoteService
+    ) {}
 
     /**
      * Get the data collection - this is used by the original implementation
      * and falls back when getQuery is not available
      */
-    public function collection($requestParams = [])
+    public function collection(array $requestParams = []): Collection
     {
-        return app(CarQuoteService::class)->getGridData(requestParams: $requestParams)->get();
+        return $this->carQuoteService->getGridData(requestParams: $requestParams)->get();
     }
 
     /**
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
-        return app(CarQuoteService::class)->getGridData(requestParams: $requestParams);
+        return $this->carQuoteService->getGridData(requestParams: $requestParams);
     }
 
     /**
@@ -80,6 +90,11 @@ class CarQuoteExport
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'ASSIGNMENT TYPE',
+            'ADVISOR REQUESTED',
+            'SEGMENT',
+            'LEAD ASSIGNMENT TRIGGER',
+            'PRIVATE CLIENT',
         ];
     }
 
@@ -135,6 +150,26 @@ class CarQuoteExport
             $quote->previous_quote_policy_number ?? '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
+            (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
+            $quote->getSegments($quote, QuoteTypeId::Car) ?? '',
+            $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
+            $quote->customer?->pcp_tag_formatted ?? '',
+        ];
+    }
+
+    /**
+     * Get export metadata with car-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 1, // QuoteTypeId::Car
+            'exportType' => 'car_quotes',
         ];
     }
 }

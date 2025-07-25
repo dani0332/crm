@@ -154,6 +154,26 @@ export const useRules = () => {
     );
   };
 
+  const maxDateRange = value => {
+    if (!value || typeof value !== 'string' || !value.includes(' - '))
+      return true;
+    const [start, end] = value.split(' - ').map(d => {
+      const [m, d_, y] = d.split('/');
+      return new Date(`${d_}-${m}-${y}`);
+    });
+    if ([start, end].some(dt => isNaN(dt))) return 'Invalid date format';
+    const diffDays = Math.ceil((end - start) / 864e5);
+    if (diffDays < 0) return 'End date must be after start date';
+    if (diffDays > 30)
+      return `Date range must be 30 days or less (selected: ${diffDays} days)`;
+    return true;
+  };
+
+  // For regex: only letters, spaces, hyphens (matches /^[a-zA-Z\s\-]+$/)
+  const isValidName = v =>
+    /^[a-zA-Z\s\-]+$/.test(v) ||
+    'Only letters, spaces, and hyphens are allowed.';
+
   return {
     name,
     isEmail,
@@ -179,5 +199,7 @@ export const useRules = () => {
     emiratesNumber,
     minValue,
     maxSelections,
+    maxDateRange,
+    isValidName,
   };
 };

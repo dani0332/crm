@@ -25,7 +25,11 @@ class RolePermissionSeeder extends Seeder
         $this->addPostPrepaymentButtonPermission();
         $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
+        $this->addRenewalsUploadPermission();
         // $this->addPolicyDetailsAddVatPermission();
+        $this->addNationalityAllocationConfigPermission();
+        $this->addPlanDetailsEditPermission();
+        $this->addOverrideCommissionPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -211,6 +215,61 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::POLICY_DETAILS_ADD_VAT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addRenewalsUploadPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR,
+            'guard_name' => 'web',
+        ]);
+
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWALS_BATCHES_NONMOTOR,
+            'guard_name' => 'web',
+        ]);
+    }
+
+    private function addNationalityAllocationConfigPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPlanDetailsEditPermission(): void
+    {
+        $permission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::PLAN_DETAILS_EDIT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
+    }
+
+    private function addOverrideCommissionPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::OVERRIDE_COMMISSION_LIMIT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

@@ -1,6 +1,8 @@
 <script setup>
 const props = defineProps({
   plan: Object,
+  plans: Array,
+  payments: Array,
   quoteType: String,
   uuid: String,
   hasChildLead: Boolean,
@@ -17,17 +19,197 @@ const props = defineProps({
 });
 
 const page = usePage();
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 const isPlanSelectionEnable = ref(false);
+const hasAnyAuthorizedPayment = ref(false);
+const hasAnyPendingPayment = ref(false);
+const hasSameGateway = ref(true);
+const showSelectPlanConfirm = ref(false);
 
 const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
 
 const emit = defineEmits(['update:selectedPlanChanged']);
 
+const closeSelectPlanConfirmModal = () => {
+  showSelectPlanConfirm.value = false;
+};
+
+const validatePayments = selectedPlanObj => {
+  return new Promise((resolve, reject) => {
+    const payments = props.payments;
+    for (let i = 0; i < payments.length; i++) {
+      if (payments[i].payment_status_id == paymentStatusEnum.AUTHORISED) {
+        hasAnyAuthorizedPayment.value = true;
+      }
+      if (payments[i].payment_status_id == paymentStatusEnum.PENDING) {
+        hasAnyPendingPayment.value = true;
+      }
+
+      for (let j = 0; j < payments[i].payment_splits.length; j++) {
+        if (
+          payments[i].payment_splits[j].payment_status_id ==
+          paymentStatusEnum.AUTHORISED
+        ) {
+          hasAnyAuthorizedPayment.value = true;
+        }
+        if (
+          payments[i].payment_splits[j].payment_status_id ==
+          paymentStatusEnum.PENDING
+        ) {
+          hasAnyPendingPayment.value = true;
+        }
+      }
+    }
+
+    if (!hasAnyPendingPayment.value) {
+      return resolve(false);
+    }
+
+    const planIds = [];
+    for (let i = 0; i < props.plans.length; i++) {
+      if (props.extraDetails.selectedPlansIds.includes(props.plans[i].id)) {
+        if (props.quoteType.toLocaleLowerCase() == 'health') {
+          planIds.push({
+            providerId: props.plans[i].providerId,
+            planId: props.plans[i].id,
+          });
+        } else {
+          planIds.push({
+            providerId: props.plans[i].insuranceProviderId,
+            planId: props.plans[i].id,
+          });
+        }
+        break;
+      }
+    }
+    if (
+      props.quoteType.toLocaleLowerCase() == 'travel' &&
+      props.extraDetails?.planType == 'seniorPlans'
+    ) {
+      planIds.push({
+        providerId:
+          selectedPlanObj.selected_insurance_provider_id ||
+          selectedPlanObj.insurance_provider_id,
+        planId: selectedPlanObj.selected_plan_id || selectedPlanObj.plan_id,
+      });
+    } else {
+      planIds.push({
+        providerId: selectedPlanObj.insurance_provider_id,
+        planId: selectedPlanObj.plan_id,
+      });
+    }
+
+    const data = {
+      plan_ids: planIds,
+    };
+
+    axios
+      .post(
+        `/personal-quotes/${props.quoteType}/${props.code}/get-plans-payment-gateway`,
+        data,
+      )
+      .then(res => {
+        const responsePlans = res.data?.plans;
+        const firstGatewayId = responsePlans[0]?.gateway_id;
+        const allSameGateway = responsePlans.every(
+          item => item.gateway_id === firstGatewayId,
+        );
+        hasSameGateway.value = allSameGateway;
+        resolve(allSameGateway);
+      })
+      .catch(err => {
+        isLoading.value = false;
+        notification.error({
+          title: err?.response?.data?.error,
+          position: 'top',
+          timeout: 3000,
+        });
+        hasSameGateway.value = false;
+        reject(err);
+      });
+  });
+};
+
+const checkAndUpdateSelectedPlan = async () => {
+  isLoading.value = true;
+
+  let data = {
+    plan_id: props.plan.id,
+    provider_code: props.plan?.providerCode ?? null,
+    insurance_provider_id: props.plan?.insuranceProviderId ?? null,
+  };
+
+  if (props.quoteType.toLocaleLowerCase() == 'health') {
+    data.insurance_provider_id = props.plan?.providerId ?? null;
+    data.copay_id = props.plan.selectedCopayId;
+  }
+
+  if (props.quoteType.toLocaleLowerCase() == 'travel') {
+    data.insurance_provider_id = props.plan?.insuranceProviderId ?? null;
+    data.planType = props.extraDetails?.planType;
+    if (props.extraDetails?.selectedPlansIds.length > 0) {
+      for (let i = 0; i < props.extraDetails?.selectedPlansIds.length; i++) {
+        if (
+          props.extraDetails?.planType == 'normalPlans' &&
+          props.extraDetails?.seniorPlansIds.includes(
+            props.extraDetails?.selectedPlansIds[i],
+          )
+        ) {
+          data.plan_id = props.plan.id;
+          data.selected_plan_id = props.extraDetails?.selectedPlansIds[i];
+          data.selected_insurance_provider_id =
+            props.extraDetails?.selectedPlansIds[i]?.insuranceProviderId ??
+            null;
+        }
+
+        if (
+          props.extraDetails?.planType == 'seniorPlans' &&
+          props.extraDetails?.normalPlansIds.includes(
+            props.extraDetails?.selectedPlansIds[i],
+          )
+        ) {
+          data.selected_plan_id = props.plan.id;
+          data.selected_insurance_provider_id =
+            props.plan?.insuranceProviderId ?? null;
+          data.plan_id = props.extraDetails?.selectedPlansIds[i];
+        }
+      }
+    } else {
+      data.plan_id = props.plan.id;
+    }
+  }
+  // data.insurance_provider_id = props.insuranceProviderId;
+  data.code = props.code;
+  hasAnyAuthorizedPayment.value = false;
+  hasAnyPendingPayment.value = false;
+  hasSameGateway.value = true;
+  if (props.payments?.length) {
+    await validatePayments(data);
+    if (hasAnyAuthorizedPayment.value) {
+      notification.error({
+        title:
+          'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.',
+        position: 'top',
+        timeout: 3000,
+      });
+      isLoading.value = false;
+      return;
+    }
+    if (hasAnyPendingPayment.value && !hasSameGateway.value) {
+      showSelectPlanConfirm.value = true;
+      isLoading.value = false;
+      return;
+    }
+  }
+  updateSelectedPlan();
+};
+
 const updateSelectedPlan = () => {
   isLoading.value = true;
+  showSelectPlanConfirm.value = false;
   let data = {
     plan_id: props.plan.id,
     provider_code: props.plan?.providerCode ?? null,
@@ -91,6 +273,13 @@ const updateSelectedPlan = () => {
             (props.plan?.basmah || 0) +
             props.plan?.vat +
             (props.plan?.loadingPrice || 0);
+          break;
+        case 'savings':
+          // For savings quotes, the premium is typically the investment amount
+          premium =
+            res.data.plan?.planProcessValue?.totalPremium ||
+            props.plan?.actualPremium ||
+            0;
           break;
         default:
           break;
@@ -162,7 +351,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
       outlined
       :loading="isLoading"
       :disabled="isDisabled"
-      @click.prevent="updateSelectedPlan()"
+      @click.prevent="checkAndUpdateSelectedPlan()"
     >
       Select
     </x-button>
@@ -184,4 +373,141 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
     </template>
   </x-tooltip>
   <SelectPlanButtonReuseTemplate v-else :isDisabled="hasChildLead" />
+  <div
+    class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+    v-if="showSelectPlanConfirm"
+  >
+    <div
+      class="modal-retry-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+    >
+      <div class="modal-confirm-header text-base text-white bg-white">
+        <div
+          class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+        >
+          <div class="flex items-center space-x-2">Override Payments</div>
+          <div class="flex items-center space-x-2">
+            <span
+              @click="closeSelectPlanConfirmModal"
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                class="w-4 h-4 text-gray-800"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-full mt-2 flex flex-col">
+        <div
+          class="text-lg px-6 py-4 border-b flex justify-between items-start"
+        >
+          <div class="text-left">
+            <span>
+              The current plan has a pending payment. Switching to a new plan
+              with a different payment gateway will override the existing
+              payment. Do you want to continue?</span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-full mt-2 flex flex-col items-center">
+        <x-button
+          size="lg"
+          @click="updateSelectedPlan"
+          color="orange"
+          class="px-4 py-2 mt-4 mb-4"
+        >
+          <span>Proceed</span></x-button
+        >
+      </div>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+/* Modal container */
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background-color: hsl(0, 4%, 9%);
+  border-radius: 4px;
+  padding: 5px;
+  z-index: 1050;
+}
+/* Modal header */
+.modal-header {
+  background-color: hsl(0, 4%, 9%);
+}
+/* Modal body */
+.modal-body {
+  padding: 10px 0;
+}
+
+.modal-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #33333333;
+  z-index: 1040;
+}
+.modal-confirm-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75% !important;
+  height: 37%;
+  background-color: hsla(0, 0%, 100%, 0.99);
+  border-radius: 8px; /* Adjust the radius for desired roundness */
+  padding: 2px;
+  z-index: 1050;
+  border: 1px solid #ccc; /* Grey color for the border */
+}
+
+.modal-retry-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 45%;
+  background-color: hsla(0, 0%, 100%, 0.99);
+  border-radius: 8px; /* Adjust the radius for desired roundness */
+  padding: 2px;
+  z-index: 1050;
+  border: 1px solid #ccc; /* Grey color for the border */
+}
+/* Modal header */
+.modal-confirm-header {
+  color: #000;
+}
+.inner-th-class {
+  min-width: 160px;
+}
+</style>
