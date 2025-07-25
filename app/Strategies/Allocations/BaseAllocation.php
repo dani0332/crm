@@ -58,7 +58,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             } else {
                 $advisor = null;
                 if ($this->hasDuplicateLead) {
-                    $advisor = $this->handleDuplicateLeadAssignment();
+                    $advisor = $this->getAdvisorForDuplicateLeadAssignment();
                     LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
                         'found_advisor' => $advisor ? true : false,
                         'advisor_id' => $advisor?->id,
