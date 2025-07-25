@@ -385,6 +385,7 @@ class AllocationService extends BaseService
             return $isBusinessHours;
         } catch (\Exception $e) {
             LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
+
             return true;
         }
     }
@@ -398,6 +399,7 @@ class AllocationService extends BaseService
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
             ]);
+
             return true;
         }
 

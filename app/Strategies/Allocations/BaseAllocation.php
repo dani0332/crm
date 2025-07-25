@@ -295,5 +295,4 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
-
 }

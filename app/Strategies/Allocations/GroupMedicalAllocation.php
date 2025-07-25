@@ -4,7 +4,6 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthPlanTypeEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Services\Logger\LoggerService;
 
@@ -19,7 +18,6 @@ class GroupMedicalAllocation extends BaseAllocation
     // Teams
     const TEAM_MICRO = 'micro';
     const TEAM_NON_MICRO = 'non_micro';
-
 
     protected function resolveLead(): void
     {

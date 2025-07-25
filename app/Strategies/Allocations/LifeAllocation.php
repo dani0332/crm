@@ -2,7 +2,6 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
 
@@ -10,7 +9,6 @@ class LifeAllocation extends BaseAllocation
 {
     private const CAT_A = 'categoryA';
     private const CAT_B = 'categoryB';
-
 
     protected function fetchAdvisor(int $onlineStatus)
     {

@@ -2,12 +2,10 @@
 
 namespace App\Traits;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
-use Carbon\Carbon;
 
 trait LeadDuplicatable
 {
@@ -65,6 +63,7 @@ trait LeadDuplicatable
 
         if (empty($this->existingRecordUuid)) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No existingRecordUuid provided');
+
             return null;
         }
 
@@ -76,6 +75,7 @@ trait LeadDuplicatable
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: No previous lead found with UUID', extra: [
                 'existing_record_uuid' => $this->existingRecordUuid,
             ]);
+
             return null;
         }
 
@@ -87,6 +87,7 @@ trait LeadDuplicatable
 
         if (empty($previousLead->advisor_id)) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous lead has no advisor assigned');
+
             return null;
         }
 
@@ -95,11 +96,13 @@ trait LeadDuplicatable
 
         if (! $advisor) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor not found');
+
             return null;
         }
 
         if (! $advisor->is_active) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor is not active');
+
             return null;
         }
 
@@ -113,6 +116,7 @@ trait LeadDuplicatable
                 'valid_statuses' => $validStatuses,
                 'is_business_hours' => $this->isBusinessHours(),
             ]);
+
             return null;
         }
 
@@ -124,6 +128,7 @@ trait LeadDuplicatable
                 'allocation_count' => $advisor->leadAllocation?->allocation_count ?? 'N/A',
                 'max_capacity' => $advisor->leadAllocation?->max_capacity ?? 'N/A',
             ]);
+
             return null;
         }
 

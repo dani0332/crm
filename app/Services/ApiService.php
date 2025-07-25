@@ -105,7 +105,6 @@ class ApiService
         $teamId = $request->input('teamId', false);
         $sicAdvisorRequested = $request->input('sicAdvisorRequested', false);
 
-
         $lead = QuoteTypes::getName($allocationType)?->model()?->where('uuid', $allocationId)?->first();
         if ($lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
