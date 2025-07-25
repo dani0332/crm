@@ -69,6 +69,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                     $advisor = $this->fetchAvailableAdvisor();
                 }
 
+                // if advisor still not found, then we need to fail the lead allocation
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
                     $this->sendNonAdvisorEmail();
