@@ -97,13 +97,13 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected function getLeadBaseQuery()
     {
         return $this->quoteType->model()
+            ->with('quoteDetail')
             ->where('uuid', $this->uuid)
             ->when($this->quoteType->isPersonalQuote(), function ($q) {
                 $q->where('quote_type_id', $this->quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
-            ->with('quoteDetail');
+            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }
 
     protected function resolveLead(): void
