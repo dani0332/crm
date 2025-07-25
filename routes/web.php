@@ -2,7 +2,6 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
