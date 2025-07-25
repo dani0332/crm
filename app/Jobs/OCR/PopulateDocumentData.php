@@ -85,9 +85,6 @@ class PopulateDocumentData implements ShouldQueue
                     $this->release(now()->addMinutes(2 * $this->attempts()));
                 }
             }
-
-            
-
         } catch (\Exception $e) {
             throw $e;
         }

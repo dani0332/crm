@@ -211,14 +211,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        // if ($nextStepToBeExecuted === self::BOOK_POLICY) {
-        //     $bookPolicyResponse = $this->executeBookPolicyStep($quote, $process);
-        //     if(! $bookPolicyResponse['status']) {
-        //         return $bookPolicyResponse;
-        //     }
+        if ($nextStepToBeExecuted === self::BOOK_POLICY) {
+            $bookPolicyResponse = $this->executeBookPolicyStep($quote, $process);
+            if(! $bookPolicyResponse['status']) {
+                return $bookPolicyResponse;
+            }
 
-        //     $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        // }
+            $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+        }
 
         return ['status' => true, 'message' => 'Step executed successfully', 'completed_step' => $nextStepToBeExecuted];
     }
@@ -264,7 +264,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $response = ['status' => false, 'completed_step' => self::UPLOAD_DOCUMENTS, 'error' => null, 'message' => null];
         $endPoint = $this->baseUrl.'/v1/insurance-documents';
 
-        // Validation checks for document upload
         $documentUploadValidationCheck = app(PolicyIssuanceService::class)->documentUploadPreChecks(self::TYPE_ID, $quote, [
             QuoteDocumentsEnum::CAR_REGISTRATION_CARD,
             QuoteDocumentsEnum::CAR_EMIRATE_ID,
