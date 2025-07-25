@@ -155,7 +155,7 @@ class EmailService
     private function checkPlans(string $quoteUID): array
     {
         try {
-            $plansData = app(LifeQuoteService::class)->getQuotePlans($quoteUID);
+            $plansData = app(LifeQuoteService::class)->quotePlans(['quote_uuid' => $quoteUID]);
 
             if (is_string($plansData)) {
                 LoggerService::warning("checkPlans - API returned error", extra: [

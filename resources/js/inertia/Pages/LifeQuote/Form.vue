@@ -1,4 +1,6 @@
 <script setup>
+import { calculateBMI, calculateAge } from '../../Composables/utilities';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -100,6 +102,7 @@ const getBMI = () => {
 
   quoteForm.bmi = calculateBMI(quoteForm.height, quoteForm.weight);
 };
+
 const dobChanged = () => {
   if (!quoteForm.dob) {
     quoteForm.age = '';

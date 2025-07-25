@@ -799,9 +799,8 @@ class LifeQuoteService extends BaseService
         // Build query parameters
         $queryParams = [
             'quoteUID' => $quoteUuId,
-            'getLatestRating' => 'false',
-            'lang' => 'en',
-            'callSource' => 'imcrm',
+            'isModified' => true,
+            'isCqfOcb' => false
         ];
 
         // Add planIds as comma-separated string if provided
