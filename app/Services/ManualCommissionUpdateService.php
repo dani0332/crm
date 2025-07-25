@@ -298,7 +298,7 @@ class ManualCommissionUpdateService extends BaseService
                     continue;
                 }
 
-                if($carQuoteDetails->status !== QuoteStatusEnum::PolicyBooked) {
+                if($carQuoteDetails->quote_status_id  !== QuoteStatusEnum::PolicyBooked) {
                     $results[$refId] = [
                         'success' => false,
                         'error' => 'Policy is not booked yet',
