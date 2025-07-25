@@ -241,7 +241,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $emails = array_map('trim', $emails);
         $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
 
-        LoggerService::info(self::class.' - Advisor Emails fetched', extra: ['count' => count($emails), 'advisors' => $emails]);
+        LoggerService::info(self::class.' - Advisor Emails fetched', ['count' => count($emails), 'advisors' => $emails]);
 
         return $emails;
     }
