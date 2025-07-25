@@ -96,7 +96,7 @@ class BorController extends Controller
     {
         if($request->has('quote_type_id')) {
             $quoteType = QuoteTypes::getName($request->input('quote_type_id'));
-            $borDocTypes = [$this->borService->determineBorDocumentType($quoteType)];
+            $borDocTypes = [$this->borService->determineBorDocumentType($quoteType->value)];
         } else {
             $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET];
         }
