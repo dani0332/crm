@@ -290,15 +290,16 @@ class ManualCommissionUpdateService extends BaseService
             try {
                 $carQuoteDetails = CarQuote::where('code', $refId)->first();
 
-                if(!$carQuoteDetails) {
+                if (! $carQuoteDetails) {
                     $results[$refId] = [
                         'success' => false,
                         'error' => 'Car quote not found',
                     ];
+
                     continue;
                 }
 
-                if($carQuoteDetails->quote_status_id  !== QuoteStatusEnum::PolicyBooked) {
+                if ($carQuoteDetails->quote_status_id !== QuoteStatusEnum::PolicyBooked) {
                     $results[$refId] = [
                         'success' => false,
                         'error' => 'Policy is not booked yet',
