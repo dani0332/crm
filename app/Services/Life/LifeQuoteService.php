@@ -6,7 +6,6 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
-use App\Enums\LifeInsurerTenure;
 use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTermEnum;
