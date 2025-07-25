@@ -80,6 +80,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -907,5 +908,12 @@ class CentralController extends Controller
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function updateCommissionForLeads()
+    {
+        $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
+
+        return $response;
     }
 }
