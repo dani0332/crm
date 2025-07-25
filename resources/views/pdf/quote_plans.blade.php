@@ -696,6 +696,11 @@
                     <p class="text-center" style="font-size: 14px">
                         {{ $plans[$planId]->name ?? '' }}
                     </p>
+                    @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
+                        <img style="margin-top:3px" src="{{public_path('images/quote_plans_pages/imcrm_plan_renewal_tag_blue.png')}}" />
+                    @else
+                        <img style="margin-top:3px" src="{{public_path('images/quote_plans_pages/imcrm_plan_renewal_empty_tag.png')}}" />
+                    @endif
                 </th>
             @endforeach
         </tr>
