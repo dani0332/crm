@@ -1520,6 +1520,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
