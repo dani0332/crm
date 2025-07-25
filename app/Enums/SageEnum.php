@@ -4,11 +4,6 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-/**
- * @method static static OptionOne()
- * @method static static OptionTwo()
- * @method static static OptionThree()
- */
 final class SageEnum extends Enum
 {
     /* Sage Processes Locks Enums */
@@ -59,6 +54,11 @@ final class SageEnum extends Enum
     const EP_SRT_CREATE_PP_REC = 'EP_SRT_CREATE_PP_REC';
     const EP_SRT_RTP_PP_REC = 'EP_SRT_RTP_PP_REC';
     const EP_SRT_POST_PP_REC = 'EP_SRT_POST_PP_REC';
+
+    // AR Commission Pre Payments Receipts
+    const CREATE_COM_PP_REC = 'CREATE_COM_PP_REC';
+    const RTP_COM_PP_REC = 'RTP_COM_PP_REC';
+    const POST_COM_PP_REC = 'POST_COM_PP_REC';
 
     // AR Invoices - Upfront
     const EP_SRT_CREATE_AR_PREM_COMM_INV = 'EP_SRT_CREATE_AR_PREM_COMM_INV';
@@ -209,4 +209,6 @@ final class SageEnum extends Enum
     // Sage Payload
     const BANK_CODE = 'INSBANK';
     const PAYMENT_CODE = 'IP';
+    const BANK_CODE_TAP = 'TAP';
+    const PAYMENT_CODE_CREDIT_CARD = 'CC';
 }
