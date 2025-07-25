@@ -171,9 +171,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             if ($eligibleUser) {
                 LoggerService::info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
-                return User::with(['leadAllocation' => function ($query) {
-                    $query->where('quote_type_id', $this->getQuoteTypeId());
-                }])->find($eligibleUser->user_id);
+                return User::find($eligibleUser->user_id);
             }
         }
 

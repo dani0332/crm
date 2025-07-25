@@ -90,9 +90,8 @@ trait LeadDuplicatable
             return null;
         }
 
-        $advisor = User::with(['leadAllocation' => function ($query) {
-            $query->where('quote_type_id', $this->getQuoteTypeId());
-        }])->find($previousLead->advisor_id);
+        $advisor = User::find($previousLead->advisor_id);
+        $this->isMaxCapReached($advisor, $this->getQuoteTypeId());
 
         if (! $advisor) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor not found');
@@ -117,7 +116,7 @@ trait LeadDuplicatable
             return null;
         }
 
-        $isMaxCapReached = $this->isMaxCapReached($advisor);
+        $isMaxCapReached = $this->isMaxCapReached($advisor, $this->getQuoteTypeId());
         if ($isMaxCapReached) {
             LoggerService::info(self::class.' - handleDuplicateLeadAssignment: Previous advisor has reached max capacity, will use normal allocation', extra: [
                 'advisor_id' => $advisor->id,

@@ -389,9 +389,11 @@ class AllocationService extends BaseService
         }
     }
 
-    public function isMaxCapReached(User $advisor): bool
+    public function isMaxCapReached(User $advisor, $quoteTypeId): bool
     {
-        if (! $advisor->leadAllocation) {
+        $leadAllocation = $advisor->getLeadAllocation($quoteTypeId);
+
+        if (! $leadAllocation) {
             LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
                 'advisor_id' => $advisor->id,
                 'advisor_name' => $advisor->name,
@@ -399,8 +401,8 @@ class AllocationService extends BaseService
             return true;
         }
 
-        $allocationCount = $advisor->leadAllocation->allocation_count;
-        $maxCapacity = $advisor->leadAllocation->max_capacity;
+        $allocationCount = $leadAllocation->allocation_count;
+        $maxCapacity = $leadAllocation->max_capacity;
 
         $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
 
