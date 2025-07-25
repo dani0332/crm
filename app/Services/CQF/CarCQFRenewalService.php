@@ -17,19 +17,34 @@ use App\Services\CapiRequestService;
 use App\Enums\QuoteTypes;
 use App\Enums\LookupsEnum;
 use App\Repositories\LookupRepository;
+use App\Enums\CarRegistrationType;
+use App\Models\RenewalsBatchEmails;
+use App\Models\RenewalQuoteProcess;
+use Illuminate\Support\Facades\DB;
+use App\Services\RenewalsUploadService;
+use App\Enums\ProcessStatusCode;
+use App\Enums\RenewalsUploadType;
+use App\Models\RenewalsUploadLeads;
+use App\Enums\RenewalProcessStatuses;
+use Illuminate\Support\Facades\Validator;
+use App\Models\QuoteRequestEntityMapping;
+use App\Enums\QuoteTypeId;
+use App\Models\Entity;
+use App\Enums\CustomerTypeEnum;
 
 
 class CarCQFRenewalService
 {
 
-
+    private $totalQuotesProcessed = 0;
     public function processCarCQFRenewalLeads()
     {
-        // $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD);
-        $renewalDaysThreshold  = 10;
+        $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD);
+       
         $startDate = Carbon::now()->subDays((int) $renewalDaysThreshold);
         LoggerService::info(self::class . " - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
-        $carQuotes = CarQuote::whereDate('policy_expiry_date', '<=', $startDate)
+        $renewalsUploadLeads = $this->createRenewalsUploadLeads();
+         CarQuote::whereDate('policy_expiry_date', '<=', $startDate)
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
@@ -40,43 +55,111 @@ class CarCQFRenewalService
                 ]);
             })
             
-            ->take(5)
-            ->chunkById(100, function ($quotes) {
+            ->take(4)
+            ->chunkById(2, function ($quotes) use ($renewalsUploadLeads) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
                 if ($quoteCount > 0) {
                     LoggerService::info(self::class." - processing cqf car renewals quotes in chunk: {$quoteCount}");
-                    $this->createCarCQFRenewalLeads($quotes);
+                    $this->createCarCQFRenewalLeads($quotes,$renewalsUploadLeads);
                 } else {
                     LoggerService::info(self::class.' - No quotes in chunk');
                 }
             });
+
+            $renewalsUploadLeads->update(['status' => ProcessStatusCode::COMPLETED,'total_records' => $this->totalQuotesProcessed]);
+            LoggerService::info(self::class." - Car CQF Renewal Leads processing completed");
     }
 
-   
+    public function createRenewalsUploadLeads(){
+        $uploadLeadData = [
+            'renewal_import_code' => app(RenewalsUploadService::class)->generateRandomString(),
+            'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
+            'file_name' => null,
+            'file_path' => null,
+            'status' => ProcessStatusCode::UPLOADED,
+            'good' => 0,
+            'cannot_upload' => 0,
+            'is_sic' =>  0,
+            'created_by_id' =>null,
+            'renewal_import_type' => RenewalsUploadType::CREATE_LEADS,
+        ];
+        return RenewalsUploadLeads::create($uploadLeadData);
+    }
 
-    public function createCarCQFRenewalLeads($quotes)
+    public function createCarCQFRenewalLeads($quotes,$renewalsUploadLeads)
     {
         foreach ($quotes as $quote) {
+            $validationErrors = [];
             LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::CAR_CQF_RENEWALS);
-            try {
           
+    
+            try {
+                $this->totalQuotesProcessed++;
+                $validationErrors = $this->validateQuote($quote);
+                if($validationErrors['success'] == false){
+                    $this->markQuoteAsCompleted($quote,$renewalsUploadLeads,false, $validationErrors['errors']);
+                    continue;
+                }
                 // Check if the quote is a duplicate
                 if ($this->isDuplicateQuote($quote)) {
                     LoggerService::info(self::class.' - Duplicate quote detected. Skipping processing');
+                    $validationErrors= ['policy_number'=>"Duplicate quote detected for policy number: $quote->policy_number"];
+   
+                    $this->markQuoteAsCompleted($quote,$renewalsUploadLeads,false,$validationErrors);
                     continue; // Skip processing this quote
                 }
                 Sleep::for(3)->seconds();
                 LoggerService::info(self::class.' - Processing quote');
-                $this->storeCarCQFRenewalQuote($quote);
-               
+                $this->storeCarCQFRenewalQuote($quote,$renewalsUploadLeads);
+                
             } catch (\Exception $e) {
                 // Log the exception or handle it as needed
                 LoggerService::error('Error processing quote', exception: $e);
+                $this->markQuoteAsCompleted($quote,$renewalsUploadLeads,false);
             }
 
            
         }
+    }
+    public function validateQuote($quote)
+    {
+        // Validate required fields for the quote and return error messages if missing
+        $quote->registration_type = "test";
+        $validator = Validator::make( $quote->toArray(), 
+        [
+            'policy_number'      => ['required'],
+            'policy_expiry_date' => ['required', 'date'],
+            'first_name'         => ['required'],
+            'email'              => ['required', 'email'],
+            'mobile_no'          => ['required'],
+            'car_make_id'        => ['required'],
+            'car_model_id'       => ['required'],
+            'registration_type'  => ['required','in:'.CarRegistrationType::PERSONAL.','.CarRegistrationType::COMPANY],
+        ], $this->getValidationMessages());
+
+        $errors = [];
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->toArray();  
+            foreach ($errors as $field => $message) {
+                $errors[$field] = $message[0];
+            }
+        }
+       
+
+       
+        if (!empty($errors)) {
+            LoggerService::error(self::class . ' - Quote validation failed', ['errors' => $errors, 'quote_uuid' => $quote->uuid ?? null]);
+            return [
+                'success' => false,
+                'errors' => $errors,
+            ];
+        }
+        return [
+            'success' => true,
+            'errors' => [],
+        ];
     }
     public function isDuplicateQuote($quote)
     {
@@ -88,14 +171,71 @@ class CarCQFRenewalService
         ->exists();
     }
     
-    public function storeCarCQFRenewalQuote($quote)
+    public function markQuoteAsCompleted($quote,$renewalsUploadLeads,$status,$validationErrors = [])
+    {
+        
+        if($status){
+
+           RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['good' => DB::raw('good+1')]);
+           $renewalQuoteProcess =  $this->createRenewalQuoteProcess($quote,renewalsUploadLeads: $renewalsUploadLeads);
+           $renewalQuoteProcess->status = RenewalProcessStatuses::PROCESSED;
+           $renewalQuoteProcess->save();
+            LoggerService::info(self::class." - Renewal Quote Process created for quote");
+        }else{
+          RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
+           $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote,$renewalsUploadLeads);
+           $renewalQuoteProcess->status = RenewalProcessStatuses::BAD_DATA;
+           $renewalQuoteProcess->validation_errors = $validationErrors;
+           $renewalQuoteProcess->data = $this->mapFailedQuoteData($quote);
+           $renewalQuoteProcess->save();
+
+            LoggerService::info(self::class." - Renewal Quote Process not created for quote");
+        }
+
+    }
+    public function mapFailedQuoteData($quote)
+    {
+        return [
+            'customer_name' => $quote->first_name . ' ' . $quote->last_name ?? null,
+            'email' => $quote->email ?? null,
+            'mobile_no' => $quote->mobile_no,
+            'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
+            'car_make_id' => $quote->car_make_id ?? null,
+            'car_model_id' => $quote->car_model_id ?? null,
+            'registration_type' => $quote->registration_type ?? null,
+            'validation_errors' => $quote->validation_errors ?? null,
+            'source' => $quote->source ?? null,
+            'batch' => $quote->batch->name ?? null,
+            'renewal_import_code' => $quote->renewal_import_code ?? null,
+            'renewal_import_type' => $quote->renewal_import_type ?? null,
+            'renewal_import_status' => $quote->renewal_import_status ?? null,
+            'renewal_import_date' => $quote->renewal_import_date ?? null,
+            'renewal_import_time' => $quote->renewal_import_time ?? null,
+        ];
+    }
+
+    public function createRenewalQuoteProcess($quote,$renewalsUploadLeads)
+    {
+     
+        return RenewalQuoteProcess::create(attributes: [
+            'renewals_upload_lead_id' => $renewalsUploadLeads->id,
+            'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
+            'policy_number' => $quote->policy_number ?? null,
+            'data' => $quote ?? [],
+            'batch' => $quote->batch->name ?? null,
+            'status' => RenewalProcessStatuses::NEW,
+            'type' => RenewalsUploadType::CREATE_LEADS,
+        ]);
+    }
+
+    public function storeCarCQFRenewalQuote($quote,$renewalsUploadLeads)
     {
         LoggerService::info(self::class.' - Storing car cqf renewal quote');
         $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
                 
         // Calculate the policy expiry date based on the start date + 365 days
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
-        $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
+        $newPolicyExpiryDate = $policyStartDate->copy()->addDays(120);
 
         LoggerService::info(self::class.' - Policy Details', [
             'policyExpiryDate' => $policyExpiryDate,
@@ -103,15 +243,20 @@ class CarCQFRenewalService
             'newPolicyExpiryDate' => $newPolicyExpiryDate,
         ]);
         $batch = $this->getRenewalBatch($newPolicyExpiryDate);
-        $quoteData = $this->mapCarCQFRenewalQuote($quote, $batch);
-        $newQuote = CarQuote::create($quoteData);
-        LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully',self::class), [
-            'previous_quote_uuid' => $quote->uuid,
-            'new_quote_uuid' => $newQuote->uuid,
-            'previous_quote_id' => $quote->id,
-            'new_quote_id' => $newQuote->id,
-        ]);
 
+        $quoteData = $this->mapCarCQFRenewalQuote($quote, $batch,$renewalsUploadLeads);
+        $newQuote = CarQuote::create($quoteData);
+       
+        if($newQuote){
+            $this->markQuoteAsCompleted($quote,$renewalsUploadLeads,true);
+            $this->getCustomerEntity($newQuote, $quote);
+            LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully',self::class), [
+                'previous_quote_uuid' => $quote->uuid,
+                'new_quote_uuid' => $newQuote->uuid,
+                'previous_quote_id' => $quote->id,
+                'new_quote_id' => $newQuote->id,
+            ]);
+        }
         return $newQuote;
     }
     public function getRenewalBatch($newPolicyExpiryDate)
@@ -134,7 +279,7 @@ class CarCQFRenewalService
             return $response->uuid;
         }
     }
-    public function mapCarCQFRenewalQuote($quote,$batch)
+    public function mapCarCQFRenewalQuote($quote,$batch,$renewalsUploadLeads)
     {
    
        $quoteUuid = $this->generateUUID();
@@ -147,29 +292,32 @@ class CarCQFRenewalService
             'uuid' => $quoteUuid,
             'code' => sprintf('%s%s', strtoupper(QuoteTypes::CAR->shortCode()), $quoteUuid),
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+            'dob' => $quote->dob,
             'advisor_id' => null,
             'assignment_type' =>null,
-            'renewal_batch' =>  trim($batch->name),
-            'renewal_batch_id' => $batch->id,
+            'renewal_batch' =>  trim($batch->name) ?? null,
+            'registration_type' => $quote->registration_type ?? CarRegistrationType::PERSONAL,
+            'renewal_batch_id' => $batch->id ?? null,
             'quote_status_id' => QuoteStatusEnum::NewLead,
-            'renewal_import_code' => null,
+            'renewal_import_code' => $renewalsUploadLeads->renewal_import_code,
             'previous_quote_policy_number' => $quote->policy_number,
             'previous_policy_start_date' => $quote->policy_start_date,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->premium,
             'previous_quote_id' => $quote->id,
-            'is_quote_locked' => true,
             'car_make_id' => $quote->car_make_id,
             'car_model_id' => $quote->car_model_id,
+            'vehicle_type_id'=> $quote->vehicle_type_id,
+            'cylinder' => $quote->cylinder,
             'year_of_manufacture' => $quote->year_of_manufacture,
-            'year_of_first_registration' => $quote->year_of_first_registration,
+            'currently_insured_with' => $quote->currently_insured_with,
             'vehicle_category' => $quote->vehicle_category,
             'car_type_insurance_id' => $quote->car_type_insurance_id,
-            'cylinder' => $quote->cylinder,
             'seat_capacity' => $quote->seat_capacity,
-            'vehicle_type_id' => $quote->vehicle_type_id,
             'tier_id' => $quote->tier_id,
-            'transaction_type_id' => $quote->transaction_type_id,
+            'vehicle_use'=>$quote->vehicle_use,
+            'emirate_of_registration_id'=>$quote->emirate_of_registration_id,
+            'car_value'=>$quote->car_value,
             ];
 
         $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)->first();
@@ -179,4 +327,58 @@ class CarCQFRenewalService
 
         return $quoteData;
     }
+
+    public function getCustomerEntity($newquote, $oldquote)
+    {
+        $entityMapping = QuoteRequestEntityMapping::with('entity')
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->where('quote_request_id', $newquote->id)
+            ->first();
+
+        if (isset($oldquote->registration_type) && $oldquote->registration_type == CarRegistrationType::COMPANY) {
+
+            if (! $entityMapping) {
+
+                $entity = Entity::create([
+                    'company_name' => $oldquote->first_name . ' ' . $oldquote->last_name ?? null,
+                ]);
+                $entityId = $entity->id;
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
+
+                QuoteRequestEntityMapping::updateOrCreate([
+                    'quote_type_id' => QuoteTypeId::Car,
+                    'quote_request_id' => $newquote->id,
+                ], ['entity_id' => $entityId]);
+            }
+
+        } else {
+            if ($entityMapping) {
+                $entityMappingCount = $entityMapping->entity->quoteRequestEntityMapping->count();
+                $entityRecord = $entityMapping->entity;
+                $entityMapping->delete();
+                if ($entityMappingCount == 1) {
+                    $entityRecord->delete();
+                }
+            }
+        }
+    }
+
+
+    public function getValidationMessages()
+    {
+       return [
+            'policy_number.required'      => 'Policy number is required.',
+            'source.required'             => 'Source is required.',
+            'policy_expiry_date.required' => 'Policy expiry date is required.',
+            'policy_expiry_date.date'     => 'Policy expiry date must be a valid date.',
+            'first_name.required'         => 'Customer name is required.',
+            'email.required'              => 'Customer email is required.',
+            'email.email'                 => 'Customer email must be a valid email address.',
+            'mobile_no.required'          => 'Customer mobile is required.',
+            'car_make_id.required'        => 'Car make is required.',
+            'car_model_id.required'       => 'Car model is required.',
+            'registration_type.required'  => 'Registration type is required.',
+       ];
+    }
+
 }
