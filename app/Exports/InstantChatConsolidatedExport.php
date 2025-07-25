@@ -44,6 +44,7 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
         return [
             'QUOTE TYPE',
             'REF ID',
+            'LEAD CREATED DATE',
             'DATE OF FIRST INTERACTION',
             'COMMUNICATION CHANNEL',
             'BATCH',
@@ -73,6 +74,7 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
         return [
             $chat->quote_type ?? explode('-', $chat->code)[0], // 'QUOTE TYPE'
             $chat->code ?? 'N/A', // 'REF ID'
+            $chat->lead_created_at ?? 'N/A', // 'LEAD CREATED AT'
             $chat->chat_initiated_at ?? $chat->date_of_first_interaction ?? 'N/A', // 'DATE OF FIRST INTERACTION'
             $this->formatCommunicationChannel($chat->communication_channels ?? []), // 'COMMUNICATION CHANNEL'
             $chat->quote_batch_id_text ?? 'N/A', // 'BATCH'
