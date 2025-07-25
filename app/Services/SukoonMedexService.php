@@ -610,7 +610,7 @@ class SukoonMedexService
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
         $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
 
-        if ((!empty($emirateIdNumber)) && strlen($emirateIdNumber) >= 15 && strlen($emirateIdNumber) <= 19) {
+        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) >= 15 && strlen($emirateIdNumber) <= 19) {
             $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
                 .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
         }
