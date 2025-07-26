@@ -449,7 +449,7 @@ class User extends Authenticatable implements AuditableContract
         return $query->where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL);
     }
 
-    public function getLeadAllocation($quoteTypeId)
+    public function getFirstFromLeadAllocation($quoteTypeId)
     {
         return $this->hasOne(LeadAllocation::class, 'user_id', 'id')->where('quote_type_id', $quoteTypeId)->first();
     }

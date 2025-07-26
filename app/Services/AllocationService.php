@@ -392,7 +392,7 @@ class AllocationService extends BaseService
 
     public function isMaxCapReached(User $advisor, $quoteTypeId): bool
     {
-        $leadAllocation = $advisor->getLeadAllocation($quoteTypeId);
+        $leadAllocation = $advisor->getFirstFromLeadAllocation($quoteTypeId);
 
         if (! $leadAllocation) {
             LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
