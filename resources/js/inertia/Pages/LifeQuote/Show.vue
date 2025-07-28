@@ -3,10 +3,12 @@ import {
   applyEmiratesNumberMasking,
   numberFormat,
   preventInvalidInputs,
+  useIsQuoteCreatedAfterCutoff,
 } from '@/inertia/Composables/utilities.js';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
@@ -16,8 +18,7 @@ import EditPlan from './Partials/EditPlan.vue';
 import { watch } from 'vue';
 
 const page = usePage();
-defineProps({
-  availablePlan: Object,
+const props = defineProps({
   quote: Object,
   quoteStatuses: Object,
   quoteType: String,
@@ -64,6 +65,8 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   emailStatuses: Array,
+  isBetaUser: Boolean,
+  lifeCutOffDate: String,
 });
 
 const { isRequired, emiratesNumber } = useRules();
@@ -103,8 +106,7 @@ const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate ?? 0);
 const isExchangeRateEditable = ref(false);
 
 const selectedProviderPlan = page.props.quote.plan_id;
-const selectedProviderPlanVersion =
-  page.props?.availablePlan?.quotes?.version ?? 0;
+const selectedProviderPlanVersion = page.props?.quote?.quote_customer_plan?.plan?.version ?? 0;
 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
   createReusableTemplate();
@@ -401,8 +403,11 @@ const getTotalAnnualPremiumAED = item => {
       'Semi-Annually': 2,
       Annually: 1,
     };
-    const totalAnnualPremiumAED =
-      item.actualPremium * planExchangeRate.value * mapping[paymentTermTitle];
+
+    const premiumInAED =
+      Math.round(item.actualPremium * planExchangeRate.value * 100) / 100;
+    const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
+
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
     return item.isManualPlan
@@ -972,6 +977,19 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+const shouldShowPlanDetailsSection = computed(() => {
+  const cutoffDate = props.lifeCutOffDate
+    ? new Date(props.lifeCutOffDate)
+    : new Date('2025-07-25 12:00:00');
+
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
+    return false;
+  }
+
+  return true;
+});
+
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -1932,18 +1950,17 @@ const enableExchangeRateEdit = () => {
       :quote-status-enum="page.props.quoteStatusEnum"
     />
 
-    <template v-if="!quote.is_ecommerce">
-      <PlanDetails
-        :insuranceProviders="insuranceProviders"
-        :quote="quote"
-        :quoteType="quoteType"
-        :vatPrice="vatPercentage"
-        :expanded="sectionExpanded"
-        :isAddUpdate="isAddUpdate"
-      />
-    </template>
+    <PlanDetails
+      v-if="shouldShowPlanDetailsSection"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      :expanded="sectionExpanded"
+      :isAddUpdate="isAddUpdate"
+    />
 
-    <template v-if="quote.is_ecommerce">
+    <template v-else>
       <div class="p-4 rounded shadow mb-6 bg-white">
         <Collapsible :expanded="sectionExpanded">
           <template #header>
@@ -2139,7 +2156,13 @@ const enableExchangeRateEdit = () => {
                     class="copay-max"
                   >
                     <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
-                      {{ numberFormat(item.actualPremium * planExchangeRate) }}
+                      {{
+                        numberFormat(
+                          Math.round(
+                            item.actualPremium * planExchangeRate * 100,
+                          ) / 100,
+                        )
+                      }}
                     </div>
 
                     <div v-else>N/A</div>
@@ -2685,6 +2708,17 @@ const enableExchangeRateEdit = () => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
+    />
+
+    <QuotePayments
+      v-else
+      :can="can"
+      :payments="payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
     />
 
     <EmbeddedProducts
