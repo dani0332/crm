@@ -368,6 +368,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Check if TAP integration is enabled
         $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
+        $homeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_CUT_OFF_DATE)->first()?->value ?? null;
 
         return [
             'documentTypes' => $documentTypes,
@@ -424,6 +425,7 @@ class HomeQuoteRepository extends BaseRepository
             'lookUpData' => $lookUpData,
             'isFuncsEnabled' => $isFuncsEnabled,
             'homePossessionTypeEnum' => HomePossessionType::asArray(),
+            'homeCutOffDate' => $homeCutOffDate,
         ];
     }
 
