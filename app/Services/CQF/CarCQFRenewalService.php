@@ -196,6 +196,18 @@ class CarCQFRenewalService
     }
     public function mapFailedQuoteData($quote)
     {
+        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
+                
+        // Calculate the policy expiry date based on the start date + 365 days
+        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
+        $newPolicyExpiryDate = $policyStartDate->copy()->addDays(120);
+
+        LoggerService::info(self::class.' - Policy Details', [
+            'policyExpiryDate' => $policyExpiryDate,
+            'policyStartDate' => $policyStartDate,
+            'newPolicyExpiryDate' => $newPolicyExpiryDate,
+        ]);
+        $batch = $this->getRenewalBatch($newPolicyExpiryDate);
         return [
             'customer_name' => $quote->first_name . ' ' . $quote->last_name ?? null,
             'email' => $quote->email ?? null,
@@ -208,7 +220,7 @@ class CarCQFRenewalService
             'policy_number' => $quote->policy_number,
             'start_date' => $quote->policy_start_date,
             'end_date' => $quote->policy_expiry_date,
-            'batch' => $quote->batch()->name ?? null,
+            'batch' => !empty($batch) ? $batch->name : null,
             'make' => $quote->carMake()->text ?? null,
             'model' => $quote->carModel()->text ?? null,
             'year' => $quote->year_of_manufacture ?? null,
