@@ -787,6 +787,7 @@ class CarEmailService extends BaseService
         return (object) [
             'failedQuotes' => $failedQuotes,
             'renewalsManagersEmails' => $renewalsManagersEmails ?? [],
+            'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
         ];
     }
 
