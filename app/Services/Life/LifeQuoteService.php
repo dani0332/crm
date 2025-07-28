@@ -903,7 +903,7 @@ class LifeQuoteService extends BaseService
 
     public function getLifeRiderInfo($rider, $plan)
     {
-        if (! isset($rider) && empty($rider)) {
+        if (empty($rider)) {
             return 'Optional';
         }
 
