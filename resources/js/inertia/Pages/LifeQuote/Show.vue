@@ -19,7 +19,6 @@ import { watch } from 'vue';
 
 const page = usePage();
 const props = defineProps({
-  availablePlan: Object,
   quote: Object,
   quoteStatuses: Object,
   quoteType: String,
@@ -107,8 +106,7 @@ const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate ?? 0);
 const isExchangeRateEditable = ref(false);
 
 const selectedProviderPlan = page.props.quote.plan_id;
-const selectedProviderPlanVersion =
-  page.props?.availablePlan?.quotes?.version ?? 0;
+const selectedProviderPlanVersion = page.props?.quote?.quote_customer_plan?.plan?.version ?? 0;
 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
   createReusableTemplate();
