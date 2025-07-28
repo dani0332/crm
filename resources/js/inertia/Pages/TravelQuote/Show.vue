@@ -1075,37 +1075,6 @@ const format = date => {
   return `${day}/${month}/${year} ${hours}:${minutes} `;
 };
 
-const formatDateTimeForPicker = dateTimeString => {
-  if (!dateTimeString) return null;
-
-  // Handle format: DD-MM-YYYY HH:mm:ss from server
-  const [datePart, timePart] = dateTimeString.split(' ');
-  if (!datePart || !timePart) return null;
-
-  const [day, month, year] = datePart.split('-');
-  const [hours, minutes, seconds] = timePart.split(':');
-
-  // Create a date object but compensate for timezone to preserve exact time display
-  // The server sends local time, but DatePicker with utc="preserve" still converts
-  const date = new Date(
-    parseInt(year),
-    parseInt(month) - 1, // Month is 0-indexed
-    parseInt(day),
-    parseInt(hours),
-    parseInt(minutes),
-    parseInt(seconds) || 0,
-  );
-
-  // Get timezone offset and compensate by subtracting it
-  // This ensures the DatePicker displays the exact time from server
-  const timezoneOffsetMinutes = date.getTimezoneOffset();
-  const compensatedDate = new Date(
-    date.getTime() - timezoneOffsetMinutes * 60000,
-  );
-
-  return compensatedDate;
-};
-
 const activityEdit = data => {
   activityActionEdit.value = true;
   modals.activity = true;
