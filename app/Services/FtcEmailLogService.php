@@ -10,9 +10,13 @@ class FtcEmailLogService
 {
     public function createTrackEmail($payload)
     {
+        $checkEmailFtcLog = FtcEmailLog::where('uuid', $payload['uuid'])->first();
+        if ($checkEmailFtcLog) {
+            return ['message' => 'Email log already created with this uuid', 'data' => $checkEmailFtcLog];
+        }
         $trackEmail = FtcEmailLog::create($payload);
 
-        return $trackEmail;
+        return ['message' => 'Email log created successfully', 'data' => $trackEmail];
     }
 
     public function updateTrackEmail($payload, $id, $uuid = null)
