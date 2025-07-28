@@ -891,10 +891,13 @@ class SageApiService
         [$sageRequest, $quote, $payment, $paymentSplits] = $sageRequestDataArray;
 
         $prepaymentResponses = [];
+        $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+        if (! $isFrequencyUpfrontOrSplit) {
+            $paymentSplits = $payment->paymentSplits()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
+        }
 
         foreach ($paymentSplits as $paymentSplit) {
-
-            $isPaymentMethodCAOrIP = in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditApproval, PaymentMethodsEnum::InsurerPayment]);
+            $isPaymentMethodCAOrIP = in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditApproval]);
             if ($isPaymentMethodCAOrIP) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' Posting of prepayment skipped due to credit approval :  '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
                 $prepaymentResponses[] = ['status' => true, 'message' => 'Posting of prepayment skipped due to credit approval : '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
@@ -903,7 +906,6 @@ class SageApiService
             }
             $createPrepaymentReceiptResponse = $this->createPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit);
             $prepaymentResponses[] = $createPrepaymentReceiptResponse;
-
         }
 
         // Check if there is any failed AR Prepayment Receipt
