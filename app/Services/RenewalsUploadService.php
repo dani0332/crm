@@ -77,6 +77,7 @@ use App\Models\HealthPlanCoPayment;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceProviderPlan;
 use App\Models\Lookup;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
@@ -114,7 +115,6 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Throwable;
-use App\Models\InsuranceProviderPlan;
 
 class RenewalsUploadService
 {
@@ -2500,7 +2500,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->premium) {
-                                if (!$leadData->insurance_provider) {
+                                if (! $leadData->insurance_provider) {
                                     LoggerService::info('fn - uploadedLeadsValidation - insurance provider is required with premium');
                                     $leadValidationErrors->push('Insurance Provider is required with Premium');
                                     break;
@@ -2523,7 +2523,7 @@ class RenewalsUploadService
                                     $plan = InsuranceProviderPlan::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->plan_name))])
                                         ->where('quote_type_id', QuoteTypeId::Home)
                                         ->first();
-                                
+
                                     if (! $plan) {
                                         LoggerService::info('fn - uploadedLeadsValidation - plan name is invalid');
                                         $leadValidationErrors->push('Plan name is invalid');

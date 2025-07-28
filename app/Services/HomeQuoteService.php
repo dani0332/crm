@@ -1343,6 +1343,7 @@ class HomeQuoteService extends BaseService
 
         if (! $planId) {
             LoggerService::error('No plan found for plan name: '.$data['plan_name']);
+
             return false;
         }
         $request = [[
