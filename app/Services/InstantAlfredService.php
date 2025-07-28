@@ -728,6 +728,7 @@ class InstantAlfredService extends BaseService
             QuoteTypeId::Bike,
             QuoteTypeId::Health,
             QuoteTypeId::Travel,
+            QuoteTypeId::Home,
         ]) && ! empty($request->report);
     }
 
