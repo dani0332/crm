@@ -227,6 +227,27 @@ export const useRules = () => {
     /^[a-zA-Z\s\-]+$/.test(v) ||
     'Only letters, spaces, and hyphens are allowed.';
 
+  // Custom validation rule for maximum price
+  const maxPrice = maxValue => {
+    return value => {
+      if (!value) return true; // Allow empty values (required rule handles that)
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return 'Must be a valid number';
+      return (
+        numValue <= maxValue ||
+        `Price cannot exceed ${maxValue.toLocaleString()}`
+      );
+    };
+  };
+
+  const minPrice = minValue => {
+    return value => {
+      if (!value) return true; // Allow empty values (required rule handles that)
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return 'Must be a valid number';
+      return numValue >= minValue || `Price cannot be less than ${minValue}`;
+    };
+  };
   return {
     name,
     isEmail,
@@ -255,5 +276,7 @@ export const useRules = () => {
     maxDateRange,
     maxDateRangeArray,
     isValidName,
+    maxPrice,
+    minPrice,
   };
 };
