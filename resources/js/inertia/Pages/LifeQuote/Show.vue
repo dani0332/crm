@@ -1167,6 +1167,21 @@ const updateExchangeRate = item => {
 const enableExchangeRateEdit = () => {
   isExchangeRateEditable.value = true;
 };
+
+const getTotalAnnualPriceAED = (
+  isManualPlan,
+  actualPremium,
+  planExchangeRate,
+  paymentTerm,
+) => {
+  const priceInAED = Math.round(
+    (isManualPlan
+      ? ecomDetail?.totalPrice * planExchangeRate
+      : actualPremium * planExchangeRate) * 100
+  ) / 100;
+
+  return numberFormat(priceInAED * paymentTerm);
+};
 </script>
 <template>
   <div>
@@ -2389,11 +2404,11 @@ const enableExchangeRateEdit = () => {
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
                   {{
-                    numberFormat(
-                      (ecomDetail?.isManualPlan
-                        ? ecomDetail?.totalPrice * planExchangeRate
-                        : ecomDetail?.actualPremium * planExchangeRate) *
-                        (page.props.quote?.life_quote?.payment_term ?? 1),
+                    getTotalAnnualPriceAED(
+                      ecomDetail?.isManualPlan,
+                      ecomDetail?.actualPremium,
+                      planExchangeRate.value,
+                      quote?.life_quote?.payment_term ?? 1,
                     )
                   }}
                 </dd>
