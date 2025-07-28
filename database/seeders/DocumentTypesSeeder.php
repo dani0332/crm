@@ -603,9 +603,9 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
             ],
             [
-                'code' => 'LIFE_ID',
+                'code' => DocumentTypeCode::Illustration_Document,
                 'text' => 'Illustration Document',
-                'description' => 'Illustration Document',
+                'description' => '',
                 'is_active' => 1,
                 'quote_type_id' => QuoteTypeId::Life,
                 'folder_path' => 'life',
