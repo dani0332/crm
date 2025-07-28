@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteJourneyEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -18,12 +17,10 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
-use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
-use App\Services\QuoteJourneyService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -64,16 +61,6 @@ class PersonalQuoteRepository extends BaseRepository
             }
 
             $quote->update($quoteData);
-
-            if ($quote->quote_status_id != $data['current_quote_status_id'] && $quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
-                $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-                (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
-            }
-
-            if ($quote->quote_status_id != $data['current_quote_status_id'] && in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
-                $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-                (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
-            }
 
             if ($previousStatusId != $data['quote_status_id']) {
                 $quote['previousStatusIdChanged'] = true;
@@ -142,7 +129,12 @@ class PersonalQuoteRepository extends BaseRepository
             while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
                 $docUuid = uniqid().rand(1, 100);
             }
+            $documentTypeText = $documentType->text;
 
+            if ($data['document_type_code'] == DocumentTypeCode::Illustration_Document && $quote->quote_type_id == QuoteTypeId::Life) {
+                $documentTypeText = $quote->insuranceProvider ? $quote->insuranceProvider->text.' - '.$documentType->text : $documentType->text;
+                $originalName = $quote->insuranceProvider ? $quote->insuranceProvider->text.' Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.'.$file->getClientOriginalExtension() : 'Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.'.$file->getClientOriginalExtension();
+            }
             // This data will store in quote documents table
             $document = [
                 'doc_name' => 'original_'.$docName,
@@ -150,7 +142,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'doc_url' => $filePathAzure,
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
-                'document_type_text' => $documentType->text,
+                'document_type_text' => $documentTypeText,
                 'doc_uuid' => $docUuid,
                 'created_by_id' => auth()->id(),
             ];
@@ -334,5 +326,10 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchGetById($quoteId)
     {
         return $this->where('id', $quoteId)->first();
+    }
+
+    public function fetchGetBy($column, $value)
+    {
+        return $this->where($column, $value)->with(['payments'])->first();
     }
 }

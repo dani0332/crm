@@ -12,7 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\AlfredChat;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
-use App\Models\PersonalQuote;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +52,7 @@ class InstantAlfredService extends BaseService
                     'pqr.uuid',
                     'pqr.id',
                     'pqr.code',
+                    'pqr.created_at as lead_created_at',
                     'pqrd.chat_initiated_at'
                 )
                 ->where('pqr.quote_type_id', $quoteTypeId)
@@ -64,6 +65,11 @@ class InstantAlfredService extends BaseService
                 ->when($request->quoteId, function ($query) use ($request) {
                     $query->where('pqr.code', '=', $request->quoteId);
                 })
+                ->when(! empty($request->lead_created_at), function ($query) use ($request) {
+                    $dateFrom = Carbon::parse($request->lead_created_at[0]);
+                    $dateTo = Carbon::parse($request->lead_created_at[1]);
+                    $query->whereBetween('pqr.created_at', [$dateFrom, $dateTo]);
+                })
                 ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
                 ->when(! empty($request->chat_initiated_at), function ($query) use ($request) {
                     $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
@@ -75,20 +81,6 @@ class InstantAlfredService extends BaseService
                 });
         } else {
             // Full query with all joins and data when filters/reports are needed
-            $aliases = [];
-
-            // Define segment constants for better maintainability
-            $SEGMENT_NON_SIC = 'NON-SIC';
-            $SEGMENT_SIC_REVIVAL = 'SIC-REVIVAL';
-            $SEGMENT_AIG = 'AIG';
-            $SEGMENT_SIC = 'SIC';
-
-            // Define revival sources for better maintainability
-            $REVIVAL_SOURCES = [
-                LeadSourceEnum::REVIVAL,
-                LeadSourceEnum::REVIVAL_REPLIED,
-                LeadSourceEnum::REVIVAL_PAID,
-            ];
 
             $subQuery = DB::table('quote_tags as qt')
                 ->select(
@@ -104,6 +96,11 @@ class InstantAlfredService extends BaseService
                 ->when(! empty($request->email), fn ($query) => $query->where('pqr.email', '=', $request->email))
                 ->when(! empty($request->mobile_no), fn ($query) => $query->where('pqr.mobile_no', '=', $request->mobile_no))
                 ->when(! empty($request->quoteId), fn ($query) => $query->where('pqr.code', '=', $request->quoteId))
+                ->when(! empty($request->lead_created_at), function ($query) use ($request) {
+                    $dateFrom = Carbon::parse($request->lead_created_at[0]);
+                    $dateTo = Carbon::parse($request->lead_created_at[1]);
+                    $query->whereBetween('pqr.created_at', [$dateFrom, $dateTo]);
+                })
                 ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
                 ->when(! empty($request->chat_initiated_at), function ($query) use ($request) {
                     $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
@@ -141,9 +138,7 @@ class InstantAlfredService extends BaseService
                 ->when(isset($request->sortType), fn ($query) => $query->orderBy('pqrd.chat_initiated_at', $request->sortType));
         }
 
-        $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
-
-        return $aliases;
+        return $this->personalQuery;
     }
 
     /**
@@ -185,13 +180,7 @@ class InstantAlfredService extends BaseService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-        $aliases = $this->buildQueryByModel($quoteTypeId);
-
-        $modelData = $aliases[PersonalQuote::class] ?? $aliases[CarQuote::class];
-
-        $alias = $modelData['alias'];
-
-        $partialQuery = $modelData['query'];
+        $partialQuery = $this->buildQueryByModel($quoteTypeId);
 
         $partialQuery->whereNotNull('chat_initiated_at');
 
@@ -489,6 +478,8 @@ class InstantAlfredService extends BaseService
                 // Add segment
                 $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
 
+                $record['lead_created_at'] = $sqlData[$quoteId]->lead_created_at ?? 'N/A';
+
                 // Add lead_assignment_trigger and its text representation
                 $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
                 $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger
@@ -619,6 +610,7 @@ class InstantAlfredService extends BaseService
             'pqr.quote_batch_id',
             'pqr.insurance_provider_id',
             'pqr.premium as total_price',
+            'pqr.created_at as lead_created_at',
             'pqrd.chat_initiated_at',
             DB::raw('DATE_FORMAT(pqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
             DB::raw('DATE_FORMAT(pqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),

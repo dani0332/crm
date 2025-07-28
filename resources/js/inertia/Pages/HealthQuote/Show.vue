@@ -1946,6 +1946,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2748,6 +2749,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             show-close
             backdrop
             is-form
+            persistent
             @submit="onMemberSubmit"
           >
             <div
@@ -3003,6 +3005,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         show-close
         backdrop
         is-form
+        persistent
         @submit="onAdditionalContactSubmit"
       >
         <div class="grid gap-4">
@@ -3983,6 +3986,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onActivitySubmit"
     >
       <div class="grid gap-4">
