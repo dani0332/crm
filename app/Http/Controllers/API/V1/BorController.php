@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Models\BorLog;
@@ -98,9 +99,15 @@ class BorController extends Controller
             $quoteType = QuoteTypes::getName($request->input('quote_type_id'));
             $borDocTypes = [$this->borService->determineBorDocumentType($quoteType->value)];
         } else {
-            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET];
+            $borDocTypes = [DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS];
         }
-        $documentTypes = DocumentType::whereIn('code', $borDocTypes)->get();
+        $documentTypes = DocumentType::whereIn('code', $borDocTypes)
+            ->when(($request->has('quote_type_id') && $request->input('quote_type_id') == QuoteTypeId::Car), function ($query) use ($request) {
+                $query->where('quote_type_id', $request->input('quote_type_id'));
+            })
+            ->where('is_active', 1)
+            ->whereNull('business_type_of_insurance_id')
+            ->get();
         return response()->json(['data' => $documentTypes]);
     }
 }

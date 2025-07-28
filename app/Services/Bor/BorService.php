@@ -86,7 +86,7 @@ class BorService
                     DocumentTypeCode::BAL_CYCLE,
                     DocumentTypeCode::BAL_LIFE,
                 ];
-                return in_array($code, $allowedCodes) && $doc->bor_ref_id == $borRefId;
+                return in_array($code, $allowedCodes) && $doc->document_category == $borRefId;
             });
 
             // Filter signed PDF documents
@@ -191,6 +191,7 @@ class BorService
             'life' => DocumentTypeCode::BAL_LIFE,
             'cycle' => DocumentTypeCode::BAL_CYCLE,
             'yacht' => DocumentTypeCode::BAL_YACHT,
+            'business' => DocumentTypeCode::BAL_BS,
         ];
 
         return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';

@@ -92,5 +92,6 @@ class DocumentTypeCode extends Enum
     const BAL_LIFE = 'BAL_LIFE';
     const BAL_PET = 'BAL_PET';
     const BOR_SIGN = 'BOR_SIGN';
+    const BAL_BS = 'BAL_BS';
 
 }

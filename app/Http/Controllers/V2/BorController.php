@@ -173,10 +173,10 @@ class BorController extends Controller
             $quoteObject = $this->getQuoteObject($quoteType, $personalQuote->quote_id);
             
             // Auto-determine document type code based on the lead's LOB if not provided
-            $documentTypeCode = $validated['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
+            $documentTypeCode = $validated['document_type_code'] ?? $this->borService->determineBorDocumentType($quoteType);
             
             // Get the document type for this LOB  
-            $documentType = DocumentType::where('code', $documentTypeCode)->first();
+            $documentType = DocumentType::where('code', $documentTypeCode)->where('is_active', 1)->whereNull('business_type_of_insurance_id')->first();
             
             if (!$documentType) {
                 return response()->json([
@@ -192,7 +192,7 @@ class BorController extends Controller
             $uploadData = [
                 'document_type_code' => $documentTypeCode,
                 'quote_uuid' => $borLog->bor_reference, // Use BOR reference as identifier
-                'bor_ref_id' => $borLog->bor_reference,
+                'document_category' => $borLog->bor_reference,
             ];
 
             // Upload using existing service, leveraging polymorphic relationship
@@ -257,31 +257,6 @@ class BorController extends Controller
                 'message' => 'Document upload failed: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Determine the appropriate BOR document type code based on lead LOB
-     */
-    private function determineBorDocumentType($quoteType): string
-    {
-        if (!$quoteType) {
-            return 'BAL'; // Default to general BAL
-        }
-
-        // Map LOB to document type code
-        $lobToDocumentType = [
-            'car' => DocumentTypeCode::BAL,
-            'bike' => DocumentTypeCode::BAL_BIKE, 
-            'travel' => DocumentTypeCode::BAL_TRVL,
-            'home' => DocumentTypeCode::BAL_HOME,
-            'pet' => DocumentTypeCode::BAL_PET,
-            'health' => DocumentTypeCode::BAL_HLTH,
-            'life' => DocumentTypeCode::BAL_LIFE,
-            'cycle' => DocumentTypeCode::BAL_CYCLE,
-            'yacht' => DocumentTypeCode::BAL_YACHT,
-        ];
-
-        return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';
     }
 
     /**
