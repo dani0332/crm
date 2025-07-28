@@ -31,6 +31,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Enums\QuoteTypeId;
 use App\Models\Entity;
 use App\Enums\CustomerTypeEnum;
+use App\Jobs\SendFailedCarRenewalsJob;
 use App\Services\InsuranceProviderService;
 
 
@@ -38,6 +39,8 @@ class CarCQFRenewalService
 {
 
     private $totalQuotesProcessed = 0;
+    private $errorQuotes = 0;
+    private $failedQuotes = [];
     public function processCarCQFRenewalLeads()
     {
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD);
@@ -69,7 +72,12 @@ class CarCQFRenewalService
             });
 
             $renewalsUploadLeads->update(['status' => ProcessStatusCode::COMPLETED,'total_records' => $this->totalQuotesProcessed]);
-            LoggerService::info(self::class." - Car CQF Renewal Leads processing completed");
+            if($this->errorQuotes > 0){
+                SendFailedCarRenewalsJob::dispatch($this->failedQuotes);
+                LoggerService::info(self::class." - Car CQF Renewal Leads processing completed with errors: {$this->errorQuotes}");
+            }else{
+                LoggerService::info(self::class." - Car CQF Renewal Leads processing completed");
+            }
     }
 
     public function createRenewalsUploadLeads(){
@@ -100,6 +108,7 @@ class CarCQFRenewalService
                 $validationErrors = $this->validateQuote($quote);
                 if($validationErrors['success'] == false){
                     $this->markQuoteAsCompleted($quote,$renewalsUploadLeads,false, $validationErrors['errors']);
+     
                     continue;
                 }
                 // Check if the quote is a duplicate
@@ -189,7 +198,8 @@ class CarCQFRenewalService
            $renewalQuoteProcess->validation_errors = $validationErrors;
            $renewalQuoteProcess->data = $this->mapFailedQuoteData($quote);
            $renewalQuoteProcess->save();
-
+           $this->errorQuotes++;
+           $this->failedQuotes[] = $quote->policy_number;
             LoggerService::info(self::class." - Renewal Quote Process not created for quote");
         }
 
