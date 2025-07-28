@@ -29,7 +29,7 @@ class ValidateAuthorizedPayment
     {
         // Use the code from constructor if not provided in method parameter
         $codeToValidate = $code ?? $this->code;
-        
+
         if (! $codeToValidate) {
             return; // No code provided, validation passes
         }
