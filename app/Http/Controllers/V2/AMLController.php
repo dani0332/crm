@@ -877,7 +877,6 @@ class AMLController extends Controller
             $response['success'] = $preparedFormData;
         }
 
-
         return response()->json($response);
     }
 

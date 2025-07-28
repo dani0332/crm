@@ -11,6 +11,7 @@ use App\Models\DocumentType;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
 use Exception;
+use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
@@ -18,7 +19,7 @@ use Illuminate\Queue\Middleware\Skip;
 
 class PopulateDocumentData implements ShouldQueue
 {
-    use Queueable;
+    use Batchable, Queueable;
 
     public $tries = 1;
     public $timeout = 100;

@@ -46,7 +46,7 @@ class SendBookPolicyRequest extends FormRequest
     {
         $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
 
-        if ($quote->quote_type_id == QuoteTypeId::Savings) {
+        if ($quote?->quote_type_id == QuoteTypeId::Savings) {
             $validator->after(function ($validator) use ($quote) {
                 $uploadedDocuments = $quote?->documents()->pluck('document_type_code')->toArray();
                 $requiredDocuments = [
