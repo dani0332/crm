@@ -33,6 +33,8 @@ class InstantAlfredService extends BaseService
                 return 'COALESCE(hqr.lead_assignment_trigger, pqr.lead_assignment_trigger) as lead_assignment_trigger';
             case QuoteTypeId::Travel:
                 return 'COALESCE(tqr.lead_assignment_trigger, pqr.lead_assignment_trigger) as lead_assignment_trigger';
+            case QuoteTypeId::Home:
+                return 'pqr.lead_assignment_trigger as lead_assignment_trigger';
             default:
                 return 'pqr.lead_assignment_trigger as lead_assignment_trigger';
         }
@@ -747,6 +749,9 @@ class InstantAlfredService extends BaseService
                 break;
             case QuoteTypeId::Travel:
                 $query->leftJoin('travel_quote_request as tqr', 'tqr.uuid', '=', 'pqr.uuid');
+                break;
+            case QuoteTypeId::Home:
+                $query->leftJoin('home_quote_request as home_qr', 'home_qr.uuid', '=', 'pqr.uuid');
                 break;
         }
     }
