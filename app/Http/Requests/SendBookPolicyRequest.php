@@ -129,7 +129,7 @@ class SendBookPolicyRequest extends FormRequest
                             $validator->errors()->add('value', 'Total commission is required');
                         }
 
-                        $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+                        /*$isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
                         $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
                         $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
                         $isQuoteFallUnderSkippableCriteria = (new SageApiService)->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $splits);
@@ -152,7 +152,7 @@ class SendBookPolicyRequest extends FormRequest
                                     }
                                 }
                             }
-                        }
+                        }*/
 
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');
