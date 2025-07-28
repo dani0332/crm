@@ -41,6 +41,10 @@ trait PersonalQuotable
         return $this->quote_type_id === QuoteTypeId::Yacht;
     }
 
+    public function isLife()
+    {
+        return $this->quote_type_id === QuoteTypeId::Life;
+    }
     public function isSavings()
     {
         return $this->quote_type_id === QuoteTypeId::Savings;
