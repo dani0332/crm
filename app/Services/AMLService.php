@@ -89,6 +89,7 @@ class AMLService
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
@@ -107,6 +108,7 @@ class AMLService
             QuoteTypes::JETSKI->id() => $quoteRequestId,
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id,
             QuoteTypes::YACHT->id() => $quoteRequestId,
+            QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
         };
@@ -125,6 +127,7 @@ class AMLService
             QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
         };
@@ -174,19 +177,29 @@ class AMLService
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
-            $quoteRequestDetails = LifeQuote::with([
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::LIFE->id())->with([
                 'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer.detail',
-                'purposeOfInsurance',
-                'children',
-                'maritalStatus',
-                'insuranceTenure',
-                'numberOfYears',
-                'currency',
                 'nationality',
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentMethod',
+                        'getCustomerPaymentInstrument',
+                        'paymentStatus',
+                    ]);
+                },
+                'lifeQuote' => function ($q) {
+                    $q->with([
+                        'children',
+                        'currency',
+                        'maritalStatus',
+                        'purposeOfInsurance',
+                        'insuranceTenure',
+                        'numberOfYears',
+                    ]);
+                },
+
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $quoteRequestDetails = BusinessQuote::with([

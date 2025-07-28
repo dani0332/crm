@@ -195,6 +195,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('quote_status_id', $statusId)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function ($query) {
+            $query->with([
+                'nationality' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     $modelQuery = $modelType::when($modelType == BusinessQuote::class, function ($query) {
@@ -209,6 +218,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('advisor_id', auth()->user()->id)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function ($query) {
+            $query->with([
+                'nationality' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     // Reminder: previous quote id is not available in personal quote
@@ -526,6 +544,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::YACHT->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::LIFE->value,
         ]);
     }
 }
@@ -1667,5 +1686,37 @@ if (! function_exists('userHasProduct')) {
         $productIds = auth()->user()->products->pluck('product_id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
+    }
+}
+
+if (! function_exists('getLifeRiderInfo')) {
+    function getLifeRiderInfo($rider, $plan)
+    {
+        if (! isset($rider) && empty($rider)) {
+            return 'Optional';
+        }
+
+        // if rider options is not active then return (Optional)
+        if (! $rider->active) {
+            return 'Optional';
+        }
+
+        if (! $rider->inputRequired) {
+            if ($rider->coverType == 'VALUE') {
+                foreach ($rider->criteria as $criteria) {
+                    if (isset($criteria->currency) && isset($plan->currency) && $criteria->currency == $plan->currency && isset($criteria->coverValue)) {
+                        return is_string($criteria->coverValue) ? "Covered $criteria->coverValue" : 'Covered upto '.number_format($criteria->coverValue);
+                    }
+                }
+
+                return 'Covered';
+            } elseif ($rider->coverType == 'COVER') {
+                return is_string($plan->sumInsured) ? 'Covered '.$plan->sumInsured : 'Covered upto '.number_format($plan->sumInsured);
+            }
+        } else {
+            return is_string($rider?->coverValue) ? 'Covered '.$rider?->coverValue : 'Covered upto '.number_format($rider?->coverValue);
+        }
+
+        return 'Covered';
     }
 }

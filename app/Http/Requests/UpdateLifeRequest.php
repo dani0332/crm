@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\quoteTypeCode;
-use App\Services\LifeQuoteService;
+use App\Services\Life\LifeQuoteService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateLifeRequest extends FormRequest

@@ -110,6 +110,7 @@ class AMLController extends Controller
                     QuoteTypes::PET->id(),
                     QuoteTypes::CYCLE->id(),
                     QuoteTypes::JETSKI->id(),
+                    QuoteTypes::LIFE->id(),
                     QuoteTypes::SAVINGS->id(),
                     QuoteTypes::HOME->id(),
                 ])) {

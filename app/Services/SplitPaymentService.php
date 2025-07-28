@@ -32,6 +32,7 @@ use App\Models\FtcEmailLog;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
@@ -1003,6 +1004,7 @@ class SplitPaymentService
     // Update lead status for ecomm quotes
     public function updateLeadStatus($payment)
     {
+        $quoteTypeId = null;
         $quoteModel = $payment->paymentable;
         $ecommQuotes = [
             CarQuote::class,
@@ -1012,8 +1014,10 @@ class SplitPaymentService
         if ($quoteModel) {
             $oldPaymentStatus = $quoteModel->payment_status_id;
             $quoteModel->payment_status_id = $payment->payment_status_id;
-
-            if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            if ($payment->paymentable_type == PersonalQuote::class) {
+                $quoteTypeId = $quoteModel->quote_type_id;
+            }
+            if ((in_array($payment->paymentable_type, $ecommQuotes) || $quoteTypeId === QuoteTypeId::Life) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
                 LoggerService::info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type}");
 
