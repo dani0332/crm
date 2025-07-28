@@ -328,7 +328,7 @@ export const parseDate = dateString => {
 export function getQuoteType(id, returnType = 'code') {
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
-    2: { code: 'HOM', id: 'home', link: '/quotes' },
+    2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
     4: { code: 'LIF', id: 'life', link: '/quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
@@ -337,6 +337,7 @@ export function getQuoteType(id, returnType = 'code') {
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
     9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
+    11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
     18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
   };
   return types[id] ? types[id][returnType] : '';
@@ -432,6 +433,35 @@ export const getIp = async () => {
   }
 };
 
+// Function to calculate age
+export const calculateAge = birthDateString => {
+  const birthDate = new Date(birthDateString);
+
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  const dayDifference = today.getDate() - birthDate.getDate();
+
+  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+    age--;
+  }
+
+  return age;
+};
+
+// Function to calculate BMI
+export const calculateBMI = (heightInCm, weightInKg) => {
+  if (!heightInCm || !weightInKg) {
+    return 0;
+  }
+
+  const heightInMeters = heightInCm / 100;
+  const bmi = weightInKg / heightInMeters ** 2;
+
+  return parseFloat(bmi.toFixed(2));
+};
 export const resolveUserStatusText = statusId => {
   switch (parseInt(statusId)) {
     case 1:
@@ -504,4 +534,89 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
     value: item[valueKey],
     label: item[labelKey],
   }));
+};
+
+// prevent charaters, accepts only numbers, comma, and decimal point
+export const preventInvalidInputs = (
+  event,
+  allowComma = false,
+  allowDecimal = false,
+) => {
+  const key = event.key;
+
+  const controlKeys = [
+    'Backspace',
+    'Delete',
+    'ArrowLeft',
+    'ArrowRight',
+    'Tab',
+    'Enter',
+    'Home',
+    'End',
+  ];
+  if (controlKeys.includes(key)) return;
+
+  // Allow comma if specified
+  if (allowComma && key === ',') return;
+
+  // Allow dot (.)
+  if (allowDecimal && key === '.') return;
+
+  // Allow digits 0-9
+  if (/^[0-9]$/.test(key)) return;
+
+  // Block everything else
+  event.preventDefault();
+};
+
+export const numberFormat = (price, decimals = 2) => {
+  price = parseFloat(price);
+  return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+// life lob specific function
+export const useFormattedNumberField = (source, fieldName) => {
+  return computed({
+    get() {
+      const val = source[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+// Helper function to create formatted fields for rider arrays
+export const useFormattedRiderField = (ridersArray, index, fieldName) => {
+  return computed({
+    get() {
+      const rider = ridersArray.value[index];
+      if (!rider) return '';
+      const val = rider[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const rider = ridersArray.value[index];
+      if (!rider) return;
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      rider[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+export const cleanFormattedValueToFloat = value => {
+  if (typeof value !== 'string') return 0;
+
+  // Remove commas
+  const cleaned = value.replace(/,/g, '');
+
+  // Parse to float
+  const num = parseFloat(cleaned);
+
+  // If NaN or empty, return 0
+  return isNaN(num) ? 0 : num;
 };

@@ -41,6 +41,7 @@ const can = permission => useCan(permission);
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 
 const { filterCCPayments } = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
@@ -139,6 +140,12 @@ const isCreditCardViewReplicated = ref(false);
 const isTransactionCaptureButtonEnabled = ref(true);
 const capturePaymentValidationErrorMessage = ref('');
 const selectedPaymentForEdit = ref(null);
+const showInsurerReceiptNumberInputField = ref(false);
+const isInsurerReceiptNumberExistsModalOpen = ref(false);
+const insurerReceiptNumberCheckInProcess = ref(false);
+
+// for life only
+const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -146,6 +153,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.Life,
   quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
 // Declare initialAmount.value variable
@@ -176,6 +184,16 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
+} else if (props.quoteType === quoteTypeCodeEnum.Life) {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+    initialAmount.value =
+      props.quoteRequest.premium *
+      exchangeRate.value *
+      props.quoteRequest?.life_quote?.payment_term;
+  } else {
+    initialAmount.value =
+      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term;
+  }
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -235,6 +253,8 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.Life) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -316,6 +336,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
     try {
       const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
+        quoteUuid: props.quoteRequest.uuid,
         modelType: props.quoteType,
         paymentCode: code,
         splitPaymentId: splitPaymentId,
@@ -366,6 +387,18 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = async () => {
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    if (
+      exchangeRate.value == 0 &&
+      props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED'
+    ) {
+      notification.error({
+        title: 'Please update the Exchange Rate in the Available Plan Section.',
+        position: 'top',
+      });
+      return;
+    }
+  }
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
@@ -458,7 +491,24 @@ const addPaymentModal = async () => {
   paymentFormUpdateData.collection_date = new Date();
   createPaymentModal.value = true;
 
-  paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
+  // Special handling for life quotes - map payment term to frequency
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.quoteRequest?.life_quote?.payment_term
+  ) {
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      4: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentFormUpdateData.frequency =
+      paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
+  } else {
+    paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
+  }
+
   paymentFormUpdateData.discount = '';
   paymentFormUpdateData.credit_approval = '';
   createPaymentFormRef.value.updateTotalPayments([{ value: '1', label: '1' }]);
@@ -466,6 +516,12 @@ const addPaymentModal = async () => {
   createPaymentFormRef.value.updatePaymentForm(paymentFormUpdateData);
   createPaymentFormRef.value.handleCollectionTypeChange();
   createPaymentFormRef.value.calculatePaymentBreakup();
+
+  // Trigger frequency change for life quotes to update payment schedule
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    createPaymentFormRef.value.handleFrequencyChange();
+  }
+
   createPaymentFormRef.value.applyPermissions();
 };
 
@@ -490,6 +546,44 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
+const closeInsurerReceiptNumberExistsModal = () => {
+  isInsurerReceiptNumberExistsModalOpen.value = false;
+};
+
+const checkInsurerReceiptNumber = () => {
+  if (
+    showInsurerReceiptNumberInputField.value &&
+    paymentMethodsFormReplicated.value.insurer_receipt_number
+  ) {
+    insurerReceiptNumberCheckInProcess.value = true;
+    axios
+      .post(`/payments/${props.quoteType}/check-insurer-receipt-number`, {
+        insurer_receipt_number:
+          paymentMethodsFormReplicated.value.insurer_receipt_number,
+      })
+      .then(res => {
+        if (res.data.status) {
+          createPaymentFormRef.value?.submitPaymentForm();
+        } else {
+          isInsurerReceiptNumberExistsModalOpen.value = true;
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title:
+            err?.response?.data?.message ||
+            'Insurer receipt number check failed',
+          position: 'top',
+        });
+      })
+      .finally(() => {
+        insurerReceiptNumberCheckInProcess.value = false;
+      });
+  } else {
+    createPaymentFormRef.value?.submitPaymentForm();
+  }
+};
+
 /**
  * Opens the payment modal for editing a payment
  * Loads payment data, initializes form, and sets appropriate view/edit state
@@ -507,6 +601,8 @@ const editPaymentModal = async (
   capture_approval,
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
+  showInsurerReceiptNumberInputField.value = false;
+  isInsurerReceiptNumberExistsModalOpen.value = false;
   selectedPaymentForEdit.value = payment;
 
   if (
@@ -535,6 +631,20 @@ const editPaymentModal = async (
       timeout: 10000,
     });
     return false;
+  }
+
+  // Check and enable insurer receipt number input field
+  if (split_payment_id) {
+    const splitPayment = payment?.payment_splits?.find(
+      split => split.id === split_payment_id,
+    );
+    if (
+      payment.collection_type === 'insurer' &&
+      splitPayment &&
+      splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment
+    ) {
+      showInsurerReceiptNumberInputField.value = true;
+    }
   }
 
   isTransactionCaptureButtonEnabled.value = true;
@@ -691,6 +801,17 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Home
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
+    } else if (props.quoteType === quoteTypeCodeEnum.Life) {
+      if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+        initialAmount.value =
+          props.quoteRequest.premium *
+          exchangeRate.value *
+          props.quoteRequest?.life_quote?.payment_term;
+      } else {
+        initialAmount.value =
+          props.quoteRequest.premium *
+          props.quoteRequest?.life_quote?.payment_term;
+      }
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -707,6 +828,10 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
+  } else if (props.quoteType == quoteTypeCodeEnum.Life) {
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
   } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
@@ -714,7 +839,7 @@ const setPlanDetail = () => {
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
-    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+    initalPlanDetails = props.quoteRequest?.car_plan;
     if (props.sendUpdate) {
       initalPlanDetails =
         props.quoteRequest.insurance_provider_details ??
@@ -1144,6 +1269,15 @@ watch(
               isTransactionCaptureButtonEnabled
             "
             :selectedPaymentForEdit="selectedPaymentForEdit"
+            :showInsurerReceiptNumberInputField="
+              showInsurerReceiptNumberInputField
+            "
+            :insurerReceiptNumberCheckInProcess="
+              insurerReceiptNumberCheckInProcess
+            "
+            :isInsurerReceiptNumberExistsModalOpen="
+              isInsurerReceiptNumberExistsModalOpen
+            "
             @cancel-modal="createPaymentModal = !createPaymentModal"
             @aml-verification="openAmlVerificationModal"
             @update-plan-detail="updatePlanDetail"
@@ -1154,6 +1288,10 @@ watch(
             @update-create-payment-modal="value => (createPaymentModal = value)"
             @update-total-amount="value => (totalAmount = value)"
             @update-total-price="value => (totalPrice = value)"
+            @check-insurer-receipt-number="checkInsurerReceiptNumber"
+            @close-insurer-receipt-number-exists-modal="
+              closeInsurerReceiptNumberExistsModal
+            "
           />
 
           <!-- Image Gallery Modal -->
@@ -1342,5 +1480,9 @@ watch(
 .manage-payment-table-parent-div::-webkit-scrollbar {
   width: 6px;
   background-color: #c1c1c1;
+}
+.receipt-number-exists-modal-container {
+  max-height: 270px;
+  max-width: 630px;
 }
 </style>

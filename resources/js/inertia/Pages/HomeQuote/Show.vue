@@ -1162,6 +1162,7 @@ const shouldShowPlanDetailsSection = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2325,6 +2326,13 @@ const shouldShowPlanDetailsSection = computed(() => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
+    />
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
 
     <AuditLogs
