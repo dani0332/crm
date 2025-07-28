@@ -906,7 +906,7 @@ class LifeQuoteService extends BaseService
 
     public function getLifeRiderInfo($rider, $plan)
     {
-        if ($rider === null || !($rider->active ?? false)) {
+        if ($rider === null || ! ($rider->active ?? false)) {
             return 'Optional';
         }
         if (! ($rider->inputRequired ?? false)) {
@@ -915,20 +915,22 @@ class LifeQuoteService extends BaseService
                     if (($criteria->currency ?? null) === ($plan->currency ?? null) && isset($criteria->coverValue)) {
                         return is_string($criteria->coverValue)
                             ? "Covered {$criteria->coverValue}"
-                            : 'Covered upto ' . number_format($criteria->coverValue);
+                            : 'Covered upto '.number_format($criteria->coverValue);
                     }
                 }
+
                 return 'Covered';
             } elseif (($rider->coverType ?? '') === 'COVER') {
                 return is_string($plan->sumInsured ?? '')
                     ? "Covered {$plan->sumInsured}"
-                    : 'Covered upto ' . number_format($plan->sumInsured ?? 0);
+                    : 'Covered upto '.number_format($plan->sumInsured ?? 0);
             }
         } else {
             return is_string($rider->coverValue ?? '')
                 ? "Covered {$rider->coverValue}"
-                : 'Covered upto ' . number_format($rider->coverValue ?? 0);
+                : 'Covered upto '.number_format($rider->coverValue ?? 0);
         }
+
         return 'Covered';
     }
 
