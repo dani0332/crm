@@ -46,9 +46,7 @@ class UpdateSelectedPlanRequest extends FormRequest
 
         $validator->after(function ($validator) use ($code) {
             $rule = new ValidateAuthorizedPayment($code);
-            if (! $rule->passes('code', $code)) {
-                $validator->errors()->add('code', $rule->message());
-            }
+            $rule->validate($validator, $code);
         });
     }
 }

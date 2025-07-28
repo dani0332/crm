@@ -65,9 +65,7 @@ class PlanDetailsRequest extends FormRequest
             }
 
             $rule = new ValidateAuthorizedPayment($code, $quoteModel);
-            if (! $rule->passes('code', $code)) {
-                $validator->errors()->add('code', $rule->message());
-            }
+            $rule->validate($validator, $code);
         });
     }
 }
