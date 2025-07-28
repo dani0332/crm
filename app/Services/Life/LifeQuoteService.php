@@ -903,7 +903,7 @@ class LifeQuoteService extends BaseService
 
     public function getLifeRiderInfo($rider, $plan)
     {
-        if ($rider === null || !$rider->active ?? false) {
+        if ($rider === null || !($rider->active ?? false)) {
             return 'Optional';
         }
         if (! ($rider->inputRequired ?? false)) {
