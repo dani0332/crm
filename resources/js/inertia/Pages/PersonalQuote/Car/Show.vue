@@ -1,14 +1,14 @@
 <script setup>
+import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { usePage } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import { ref, onMounted, onUnmounted, reactive, computed } from 'vue';
-import OcrNotification from '@/inertia/Components/OcrNotification.vue';
-import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 
 defineProps({
   quote: Object,
@@ -174,6 +174,7 @@ const leadStatusForm = useForm({
   proof_document: null,
   car_lost_quote_log_id:
     page.props.paymentEntityModel.car_lost_quote_log?.id || 0,
+  current_quote_status_id: page.props.record.quote_status_id || null,
 });
 
 const leadApprovalStatusOptions = computed(() => {
@@ -2263,6 +2264,7 @@ function handleOcrNotification(event) {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -4210,6 +4212,7 @@ function handleOcrNotification(event) {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">

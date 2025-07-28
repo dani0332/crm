@@ -2,8 +2,12 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
+use App\Models\User;
+use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
 
 class LifeAllocation extends BaseAllocation
 {
@@ -24,6 +28,13 @@ class LifeAllocation extends BaseAllocation
         $category = $this->evaluateCategory();
         $amount = $this->lead->currency?->convertToAED((float) $this->lead?->sum_insured_value ?? 0);
 
+        if ($this->lead->isFIC(QuoteTypes::LIFE)) {
+            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');
+            $users = $this->getFicRulesUsers();
+            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule  ', ['users_ids' => $users->pluck('id')->toArray()]);
+
+            return $users->pluck('email')->toArray();
+        }
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
         $karuna = 'karuna.ramesh@insurancemarket.ae';
         $christy = 'christy.thomas@insurancemarket.ae';
@@ -52,15 +63,68 @@ class LifeAllocation extends BaseAllocation
     private function getCountriesMapping()
     {
         $catACountryMapping = [
-            'South African',
+            'American',
             'Australian',
-            'New Zealander',
-            'Canadian',
+            'South African',
             'United Kingdom',
             'Lebanese',
             'Filipino',
-            'American',
-            'Europe',
+            'New Zealander',
+            'Canadian',
+            'Russian',
+            'Ukrainian',
+            'French',
+            'Spanish',
+            'Swedish',
+            'German',
+            'Finnish',
+            'Norwegian',
+            'Polish',
+            'Italian',
+            'Romanian',
+            'Belarusian',
+            'Kazakhstani',
+            'Greek',
+            'Bulgarian',
+            'Icelander',
+            'Hungarian',
+            'Portuguese',
+            'Austrian',
+            'Czech',
+            'Serbian',
+            'Irish',
+            'Lithuanian',
+            'Latvian',
+            'Norwegian',
+            'Croatian',
+            'Herzegovinian',
+            'Slovakian',
+            'Estonian',
+            'Danish',
+            'Dutch',
+            'Swiss',
+            'Moldovan',
+            'Belgian',
+            'Albanian',
+            'Macedonian',
+            'Turkish',
+            'Slovenian',
+            'Montenegrin',
+            'Kosovar',
+            'Azerbaijani',
+            'Georgian',
+            'Luxembourger',
+            'Faroese',
+            'Andorran',
+            'Maltese',
+            'Liechtensteiner',
+            'Sammarinese',
+            'Gibraltar',
+            'Monacan',
+            'Vatican City',
+            'Armenian',
+            'Cypriot',
+            'Greenlandic',
         ];
 
         $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {
@@ -80,5 +144,12 @@ class LifeAllocation extends BaseAllocation
         return in_array($this->lead->nationality?->code, $countriesMapping[self::CAT_A])
             ? self::CAT_A
             : self::CAT_B;
+    }
+
+    private function getFicRulesUsers()
+    {
+        $usersIds = app(RuleService::class)->getFicRulesUsers();
+
+        return User::select('id', 'email')->whereIn('id', $usersIds)->get();
     }
 }

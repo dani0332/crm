@@ -43,7 +43,7 @@ enum LookupsEnum: string
     case SEND_UPDATE_CODE = 'send-update-code';
     case BUSINESS_TYPE_OF_CUSTOMER = 'business-type-of-customer';
     case SEND_UPDATE_CANCEL_OPTIONS = 'send-update-cancel-options';
-
+    case LIFE_PLAN_SUB_TYPE = 'plan-sub-type';
     case POSSESSION_TYPE = 'possession-type';
     case ACCOMMODATION_TYPE = 'accommodation-type';
     case OWNER_OCCUPANCY_TYPE = 'owner-occupancy-type';

@@ -425,6 +425,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -1143,6 +1144,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
       @onAddUpdate="onAddUpdate"
+    />
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
 
     <AuditLogs

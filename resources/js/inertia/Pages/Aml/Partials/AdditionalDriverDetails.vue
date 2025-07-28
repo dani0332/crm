@@ -30,14 +30,14 @@ const nationalitiesOptions = computed(() => {
 
 const drivingExperienceOptions = computed(() => {
   const options = [{ value: '0', label: 'No Experience' }]
-  
+
   for (let i = 1; i <= 50; i++) {
     options.push({
       value: i.toString(),
       label: i === 1 ? '1 Year' : `${i} Years`
     })
   }
-  
+
   return options
 });
 
@@ -87,8 +87,20 @@ const submitAdditionalDriverDetailsForm = (isValid) => {
     }).finally(() => {
       additionalDriverDetailsForm.processing = false;
     });
-  } 
+  }
 };
+
+const isGIG = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
+});
+
+const isLIVA = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+});
+
+const isSUKOON = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
+});
 
 watch(() => props.insurerPortalSyncData, (driverDetails) => {
   if (driverDetails) {
@@ -117,7 +129,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
   }
 }, { deep: true });
 
-</script> 
+</script>
 
 <template>
   <div>
@@ -126,13 +138,13 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         Additional Driver Details
       </h3>
     </div>
-    
+
     <x-form @submit="submitAdditionalDriverDetailsForm">
       <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
         <!-- Is Insured and Driver Same -->
         <x-field label="Is the Insured and Driver the same?" required>
-          <x-select 
-            v-model="additionalDriverDetailsForm.is_insured_and_driver_same" 
+          <x-select
+            v-model="additionalDriverDetailsForm.is_insured_and_driver_same"
             :rules="[isRequired]"
             :options="[
               { value: 1, label: 'Yes' },
@@ -141,100 +153,102 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             placeholder="Select Is Insured and Driver Same"
           />
         </x-field>
-        
+
         <!-- Driver Name -->
-        <x-field label="Driver First Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-          <x-input 
-            v-model="additionalDriverDetailsForm.driver_first_name" 
-            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+        <x-field label="Driver First Name" :required="! isGIG">
+          <x-input
+            v-model="additionalDriverDetailsForm.driver_first_name"
+            :rules="(! isGIG) ? [isRequired] : []"
             placeholder="Driver First Name"
             type="text"
           />
         </x-field>
-        
-        <x-field label="Driver Last Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-          <x-input 
-            v-model="additionalDriverDetailsForm.driver_last_name" 
-            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+
+        <x-field label="Driver Last Name" :required="! isGIG">
+          <x-input
+            v-model="additionalDriverDetailsForm.driver_last_name"
+            :rules="(! isGIG) ? [isRequired] : []"
             placeholder="Driver Last Name"
             type="text"
           />
         </x-field>
-        
-        <x-field label="Driver DOB" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+
+        <x-field label="Driver DOB" :required="isSUKOON">
           <DatePicker
             v-model="additionalDriverDetailsForm.driver_dob"
-            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+            :rules="isSUKOON ? [isRequired] : []"
             placeholder="Driver DOB"
           />
         </x-field>
-        
-        <x-field label="Driver Gender" required>
-          <x-select 
-            v-model="additionalDriverDetailsForm.driver_gender" 
-            :rules="[isRequired]"
+
+        <x-field label="Driver Gender" :required="! isSUKOON">
+          <x-select
+            v-model="additionalDriverDetailsForm.driver_gender"
+            :rules="(! isSUKOON) ? [isRequired] : []"
             :options="driverGenderOptions"
             placeholder="Select Driver Gender"
           />
         </x-field>
-        
+
         <x-field label="Driver License Number" required>
-          <x-input 
-            v-model="additionalDriverDetailsForm.driver_license_number" 
+          <x-input
+            v-model="additionalDriverDetailsForm.driver_license_number"
             :rules="[isRequired]"
             placeholder="Driver License Number"
             type="text"
           />
         </x-field>
-        
-        <x-field label="License Issue Place">
-          <x-select 
-            v-model="additionalDriverDetailsForm.license_issue_place" 
+
+        <x-field label="License Issue Place" :required="isSUKOON">
+          <x-select
+            v-model="additionalDriverDetailsForm.license_issue_place"
+            :rules="isSUKOON ? [isRequired] : []"
             :options="licenseIssuePlaceOptions"
             placeholder="Select License Issue Place"
           />
         </x-field>
-        
-        <x-field label="License Issue Date">
+
+        <x-field label="License Issue Date" :required="isSUKOON">
           <DatePicker
             v-model="additionalDriverDetailsForm.license_issue_date"
+            :rules="isSUKOON ? [isRequired] : []"
             placeholder="License Issue Date"
           />
         </x-field>
-        
-        <x-field label="License Expiry Date" :required="page.props.insuranceProviderCodeEnum.AXA === page.props.insuranceProviderCodeEnum.AXA">
+
+        <x-field label="License Expiry Date" :required="! isLIVA">
           <DatePicker
             v-model="additionalDriverDetailsForm.license_expiry_date"
             placeholder="License Expiry Date"
-            :rules="page.props.insuranceProviderCodeEnum.AXA === page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+            :rules="(! isLIVA) ? [isRequired] : []"
           />
         </x-field>
-        
+
         <!-- TODO: Required only if 'Driver same as Client?' is NO -->
-        <x-field label="UAE Driving Experience" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-          <x-select 
-            v-model="additionalDriverDetailsForm.uae_driving_experience" 
-            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+        <x-field label="UAE Driving Experience" :required="isLIVA">
+          <x-select
+            v-model="additionalDriverDetailsForm.uae_driving_experience"
+            :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
             placeholder="Select UAE License Years"
           />
         </x-field>
-        
-        <x-field label="Home Country License Issuance" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+
+        <x-field label="Home Country License Issuance" :required="! isGIG">
           <ComboBox
             :single="true"
             v-model="additionalDriverDetailsForm.home_country_license_issuance"
-            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+            :rules="(! isGIG) ? [isRequired] : []"
             placeholder="Select License Home Country"
             :options="nationalitiesOptions"
             class="w-full"
           />
         </x-field>
-        
-        <x-field label="Home Country Driving Experience" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-          <x-select 
-            v-model="additionalDriverDetailsForm.home_country_driving_experience" 
-            :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+
+        <x-field label="Home Country Driving Experience" :required="isLIVA">
+          <x-select
+            v-model="additionalDriverDetailsForm.home_country_driving_experience"
+            :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
             placeholder="Select Driver Years Home Country"
           />
@@ -253,4 +267,4 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
       </div>
     </x-form>
   </div>
-</template> 
+</template>

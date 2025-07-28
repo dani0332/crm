@@ -125,6 +125,7 @@ const leadStatusForm = useForm({
   notes: page.props.quote.notes || null,
   lostReason: page.props.quote.lost_reason_id || null,
   isInertia: true,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {
@@ -1372,6 +1373,7 @@ const sendPolicyToClient = () => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
@@ -1507,6 +1509,7 @@ const sendPolicyToClient = () => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onAdditionalContactSubmit"
       >
         <div class="grid gap-4">
