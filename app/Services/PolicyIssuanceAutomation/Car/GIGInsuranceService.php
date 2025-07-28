@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Car;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -646,10 +647,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         // Get the policy documents that were uploaded in the previous step
         // These are the document types that should have been uploaded to IMCRM
         $policyDocumentTypes = [
-            QuoteDocumentsEnum::CAR_TAX_INVOICE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER,
-            QuoteDocumentsEnum::POLICY_SCHEDULE,
-            QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE,
+            DocumentTypeCode::TI,
+            DocumentTypeCode::CTIRBB,
+            DocumentTypeCode::CPD_RECEIPT,
+            DocumentTypeCode::CPS,
+            DocumentTypeCode::CPC,
         ];
 
         // Get documents that were recently uploaded (after the upload step started)
@@ -735,11 +737,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private function getPolicyIssuanceQuoteDocumentMapping($docName, $quote): ?array
     {
         $documentCodeMapping = [
-            self::POLICY_DOC_TAX_INVOICE => QuoteDocumentsEnum::CAR_TAX_INVOICE,
-            self::POLICY_DOC_COMMISSION_STATEMENT => QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER,
-            self::POLICY_DOC_RECEIPT => QuoteDocumentsEnum::RECEIPT,
-            self::POLICY_DOC_POLICY_SCHEDULE => QuoteDocumentsEnum::POLICY_SCHEDULE,
-            self::POLICY_DOC_CERTIFICATE_OF_INSURANCE => QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE,
+            self::POLICY_DOC_TAX_INVOICE => DocumentTypeCode::TI,
+            self::POLICY_DOC_COMMISSION_STATEMENT => DocumentTypeCode::CTIRBB,
+            self::POLICY_DOC_RECEIPT => DocumentTypeCode::CPD_RECEIPT,
+            self::POLICY_DOC_POLICY_SCHEDULE => DocumentTypeCode::CPS,
+            self::POLICY_DOC_CERTIFICATE_OF_INSURANCE => DocumentTypeCode::CPC,
         ];
 
         $docCode = $documentCodeMapping[$docName] ?? null;
@@ -1068,42 +1070,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quoteDetails->code.' started');
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Quote details retrieved successfully from insurer portal',
-            'data' => [
-                'rtaTransactionType' => 'RTT03',
-                'plateCode' => 'A',
-                'plateNumber' => '123456',
-                'trafficCodeNumber' => 'TFC123456',
-                'chassisNumber' => 'CHASSIS123456789',
-                'engineNumber' => 'ENGINE123456',
-                'rtaPlateCategory' => 'RPC01',
-                'vehicleColor' => '38',
-                'plateColor' => '38',
-                'bankLoan' => false,
-                'bankName' => 'FI0079',
-                'firstRegistrationDate' => '2023-01-01',
-                'policyEffectiveDate' => '2024-01-01',
-                'policyExpiryDate' => '2024-12-31',
-                'certificateStartDate' => '2024-01-01',
-                'certificateEndDate' => '2024-12-31',
-                'annualMileageEstimate' => '20000',
-                'isInsuredAndDriverSame' => 1,
-                'driverFirstName' => 'John',
-                'driverLastName' => 'Doe',
-                'driverDob' => '1990-01-01',
-                'driverGender' => 'male',
-                'driverLicenseNumber' => 'LIC123456789',
-                'licenseIssuePlace' => 'sharjah', 
-                'licenseIssueDate' => '2018-01-01',
-                'licenseExpiryDate' => '2028-01-01',
-                'uaeDrivingExperience' => '5',
-                'homeCountryLicenseIssuance' => 'Bosnian',
-                'homeCountryDrivingExperience' => '8'
-            ]
-        ]);
-        
         try {
             $payload = ['quoteTypeId' => $quoteTypeId, 'quoteUID' => $quoteDetails->uuid];
             $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
@@ -1140,12 +1106,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'homeCountryLicenseIssuance' => '', // optional
                 'homeCountryDrivingExperience' => '', // optional
             ];
-
-            // return response()->json([
-            //     'success' => true,
-            //     'message' => 'Quote details retrieved successfully from insurer portal',
-            //     'data' => $getQuoteResponseMapping ?? null
-            // ]);
 
             if (isset($response['status']) && $response['status'] === true) {
                 return response()->json([
