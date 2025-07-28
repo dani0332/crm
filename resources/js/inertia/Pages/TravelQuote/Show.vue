@@ -1075,6 +1075,37 @@ const format = date => {
   return `${day}/${month}/${year} ${hours}:${minutes} `;
 };
 
+const formatDateTimeForPicker = dateTimeString => {
+  if (!dateTimeString) return null;
+
+  // Handle format: DD-MM-YYYY HH:mm:ss from server
+  const [datePart, timePart] = dateTimeString.split(' ');
+  if (!datePart || !timePart) return null;
+
+  const [day, month, year] = datePart.split('-');
+  const [hours, minutes, seconds] = timePart.split(':');
+
+  // Create a date object but compensate for timezone to preserve exact time display
+  // The server sends local time, but DatePicker with utc="preserve" still converts
+  const date = new Date(
+    parseInt(year),
+    parseInt(month) - 1, // Month is 0-indexed
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    parseInt(seconds) || 0,
+  );
+
+  // Get timezone offset and compensate by subtracting it
+  // This ensures the DatePicker displays the exact time from server
+  const timezoneOffsetMinutes = date.getTimezoneOffset();
+  const compensatedDate = new Date(
+    date.getTime() - timezoneOffsetMinutes * 60000,
+  );
+
+  return compensatedDate;
+};
+
 const activityEdit = data => {
   activityActionEdit.value = true;
   modals.activity = true;
@@ -1082,11 +1113,10 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+
+  // Handle due_date conversion to preserve exact time
+  activityForm.due_date = formatDateTimeForPicker(data.due_date);
+
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -1094,12 +1124,12 @@ const activityEdit = data => {
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
+    // let date = new Date(activityForm.due_date);
+    // date =
+    //   date.toISOString().split('T')[0] +
+    //   ' ' +
+    //   date.toTimeString().split(' ')[0];
+    // activityForm.due_date = date;
     activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
@@ -1113,12 +1143,12 @@ const onActivitySubmit = isValid => {
       },
     });
   } else {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
+    // let date = new Date(activityForm.due_date);
+    // date =
+    //   date.toISOString().split('T')[0] +
+    //   ' ' +
+    //   date.toTimeString().split(' ')[0];
+    // activityForm.due_date = date;
     activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onSuccess: () => {
