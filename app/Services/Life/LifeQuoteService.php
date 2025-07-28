@@ -390,6 +390,7 @@ class LifeQuoteService extends BaseService
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
         $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $lifeQuote->id);
+        $lifeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_CUT_OFF_DATE)->first()->value ?? null;
 
         return [
             'documentTypes' => $documentTypes,
@@ -442,6 +443,7 @@ class LifeQuoteService extends BaseService
             'paymentTerms' => PaymentTermEnum::asArray(),
             'emailStatuses' => $emailStatuses,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+            'lifeCutOffDate' => $lifeCutOffDate,
         ];
 
     }

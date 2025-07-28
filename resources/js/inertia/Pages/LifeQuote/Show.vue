@@ -18,7 +18,7 @@ import EditPlan from './Partials/EditPlan.vue';
 import { watch } from 'vue';
 
 const page = usePage();
-defineProps({
+const props = defineProps({
   availablePlan: Object,
   quote: Object,
   quoteStatuses: Object,
@@ -67,6 +67,7 @@ defineProps({
   isFuncsEnabled: Array,
   emailStatuses: Array,
   isBetaUser: Boolean,
+  lifeCutOffDate: String,
 });
 
 const { isRequired, emiratesNumber } = useRules();
@@ -979,8 +980,7 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 const shouldShowPlanDetailsSection = computed(() => {
-  // cutoffDate = 25th July 2025 12:00:00+04:00 (UAE time 12:00) for staging
-  const cutoffDate = new Date('2025-07-25T12:00:00+04:00');
+  const cutoffDate = props.lifeCutOffDate ? new Date(props.lifeCutOffDate) : new Date('2025-07-25 12:00:00');
 
   if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
     return false;

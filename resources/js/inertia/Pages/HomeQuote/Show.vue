@@ -57,6 +57,7 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   quoteStatuses: Object,
+  homeCutOffDate: String,
 });
 
 const page = usePage();
@@ -1021,7 +1022,7 @@ const isPlanDetailEnabled = computed(() => {
 // New computed property to check lead date
 const shouldShowPlanDetailsSection = computed(() => {
   // First check if lead is created before the cutoff date
-  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
+  const cutoffDate = props.homeCutOffDate ? new Date(props.homeCutOffDate) : new Date('2025-04-10 21:30:00');
 
   if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
     return false;
