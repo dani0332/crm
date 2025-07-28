@@ -1050,7 +1050,9 @@ class SageApiService
             $response['status'] = true;
             $response['message'] = 'Prepayment created';
         } else {
-            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments Error: Document number not generated from Sage');
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments Error: Document number not generated from Sage', extra:[
+                'create receipt response' => $sageResponse
+            ]);
             $this->logSageApiCall($payLoadOptions, $sageResponse, $paymentSplit, $quote, 2, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
             $response['message'] = 'Document number not generated from sage - Ref:'.$quote->code;
         }
