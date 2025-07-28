@@ -32,9 +32,9 @@ class SendFailedCarRenewalsJob implements ShouldQueue
         if ($workflowSwitch) {
             app(CarEmailService::class)->sendFailedCarRenewals($this->failedQuotes);
             
-            LoggerService::info(self::class.' - Car PCP OCB  Switch is on | Time: '.now().' | Ref-ID: '.$carLead->uuid);
+                LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.implode(', ', $this->failedQuotes));
         } else {
-            LoggerService::info(self::class.' - Car OCB PDP  Switch is off | Time: '.now().' | Ref-ID: '.$carLead->uuid);
+            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.$this->failedQuotes);
         }
       
     }
