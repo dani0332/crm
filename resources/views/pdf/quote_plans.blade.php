@@ -656,7 +656,7 @@
                 </p>
             </th>
             @foreach ($planIds as $planId)
-                <th class="provider" style="border: solid 1px #bfbfbf;">
+                <th class="provider" style="padding: 1px;">
                     <div style="display: grid; grid-template-columns: 1fr auto; width: 100%; height: 70px; position: relative; overflow: hidden;">
                         <!-- Center logo area -->
                         <div style="display: flex; align-items: center; justify-content: center; grid-column: 1 / -1; z-index: 1;">
