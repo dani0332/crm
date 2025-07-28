@@ -338,8 +338,8 @@ class SageApiEmbeddedProductService
             $response['status'] = true;
             $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' : Prepayment created';
         } else {
-            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Document number not generated from Sage', extra:[
-                'sageResponse' => $sageResponse
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Document number not generated from Sage', extra: [
+                'sageResponse' => $sageResponse,
             ]);
             $this->logSageApiCall($payLoadOptions, $sageResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
             $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' : Document number not generated from sage - Ref:'.$quote->code;
