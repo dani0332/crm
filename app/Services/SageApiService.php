@@ -1028,8 +1028,13 @@ class SageApiService
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quote, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                 } else {
                     if (isset($postedResponse['error'])) {
-                        LoggerService::info(self::class.' fn:'.__FUNCTION__.'Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber']);
+                        LoggerService::info(self::class.' fn:'.__FUNCTION__.'Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber'], extra: [
+                            'sage error' => $postedResponse['error'],
+                        ]);
                         $response['message'] = 'Error while posting to sage - Ref:'.$quote->code;
+                        if ($this->sageHasProcessingConflict($postedResponse['error'])) {
+                            $response['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
+                        }
                         $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quote, 4, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
 
                         return $response;
@@ -1038,14 +1043,6 @@ class SageApiService
                             $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quote, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
                         }
                     }
-                    /*$postSinglePrepaymentResponse = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
-                    if (! $postSinglePrepaymentResponse['status']) {
-                        $response['status'] = $postSinglePrepaymentResponse['status'];
-                        $response['message'] = $postSinglePrepaymentResponse['message'];
-                        $response['error'] = $postSinglePrepaymentResponse['error'];
-
-                        return $response;
-                    }*/
                 }
             }
 

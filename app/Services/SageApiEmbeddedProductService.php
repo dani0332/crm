@@ -316,8 +316,13 @@ class SageApiEmbeddedProductService
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             } else {
                 if (isset($postedResponse['error'])) {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber']);
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber'], extra: [
+                        'error' => $postedResponse['error']
+                    ]);
                     $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' :  Error while posting to sage';
+                    if ($this->sageApiService->sageHasProcessingConflict($postedResponse['error'])) {
+                        $response['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
+                    }
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
 
                     return $response;
