@@ -256,4 +256,11 @@ trait QuoteAllocatable
     {
         return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
+
+    public function isFIC(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)
+            ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+            ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
 }

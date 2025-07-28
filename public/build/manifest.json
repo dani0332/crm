@@ -1,11 +1,19 @@
 {
   "resources/js/inertia/inertia.js": {
+<<<<<<< HEAD
     "file": "assets/inertia-BlBW9frM.js",
+=======
+    "file": "assets/inertia-P2PRM0_x.js",
+>>>>>>> develop
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
     "css": [
+<<<<<<< HEAD
       "assets/inertia-v21_JYvv.css"
+=======
+      "assets/inertia-DHzfzOTl.css"
+>>>>>>> develop
     ]
   }
 }
