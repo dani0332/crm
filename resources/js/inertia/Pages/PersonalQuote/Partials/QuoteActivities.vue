@@ -243,6 +243,7 @@ onMounted(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onSubmit"
     >
       <div class="grid gap-4">

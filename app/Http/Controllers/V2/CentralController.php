@@ -19,7 +19,6 @@ use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
-use App\Exports\CarQuoteExportWithEmailMobile;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
@@ -80,6 +79,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -118,6 +118,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
         ])) {
@@ -131,8 +132,6 @@ class CentralController extends Controller
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 return app(CarQuoteExportWithPlans::class)->download(ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL));
-            } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
-                return app(CarQuoteExportWithEmailMobile::class)->download(ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE));
             } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
                 return app(CarQuoteExportWithMakeModelTrims::class)->download(ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS));
             }
@@ -292,6 +291,11 @@ class CentralController extends Controller
                 'commission_vat' => $validatedData['vat_on_commission'],
                 'commission' => $validatedData['total_commission'],
                 'invoice_description' => $validatedData['invoice_description'],
+
+                // for life only
+                'commission_based_on_currency' => $bookPolicyRequest?->commission_based_on_currency ?? null,
+                'exchange_rate' => $bookPolicyRequest?->exchange_rate ?? null,
+                'currency' => $bookPolicyRequest?->currency ?? null,
             ];
 
             $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
@@ -907,5 +911,12 @@ class CentralController extends Controller
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function updateCommissionForLeads()
+    {
+        $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
+
+        return $response;
     }
 }

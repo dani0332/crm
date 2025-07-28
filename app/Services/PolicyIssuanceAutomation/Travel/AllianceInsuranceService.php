@@ -505,6 +505,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public function getStepsLockingStatus($quote): array
     {
         $policyIssuance = $quote->policyIssuance;
+        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -535,6 +536,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 $response['message'] = 'Booking Details is editable';
 
                 return $response;
+            }
+            if ($isPolicyBookingFailed) {
+                $response['isEditBookingDetailsDisabled'] = false;
+                $response['message'] = 'Booking Step is editable';
             }
 
             return $response;
