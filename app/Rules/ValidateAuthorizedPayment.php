@@ -25,13 +25,16 @@ class ValidateAuthorizedPayment
     /**
      * Validate authorized payment and add appropriate errors to validator.
      */
-    public function validate(Validator $validator, string $code): void
+    public function validate(Validator $validator, ?string $code = null): void
     {
-        if (! $code) {
+        // Use the code from constructor if not provided in method parameter
+        $codeToValidate = $code ?? $this->code;
+        
+        if (! $codeToValidate) {
             return; // No code provided, validation passes
         }
 
-        $payment = Payment::where('code', $code)->with('paymentSplits')->first();
+        $payment = Payment::where('code', $codeToValidate)->with('paymentSplits')->first();
 
         // If no payment exists, validation passes
         if (! $payment) {
