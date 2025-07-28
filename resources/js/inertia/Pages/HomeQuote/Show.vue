@@ -1,5 +1,8 @@
 <script setup>
-import { applyEmiratesNumberMasking, useIsQuoteCreatedAfterCutoff } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  useIsQuoteCreatedAfterCutoff,
+} from '@/inertia/Composables/utilities.js';
 
 import MemberDetails from '../../Components/MemberDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';

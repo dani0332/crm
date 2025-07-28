@@ -406,7 +406,8 @@ const getTotalAnnualPremiumAED = item => {
       Annually: 1,
     };
 
-    const premiumInAED = Math.round((item.actualPremium * planExchangeRate.value) * 100) / 100;
+    const premiumInAED =
+      Math.round(item.actualPremium * planExchangeRate.value * 100) / 100;
     const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
 
     return numberFormat(totalAnnualPremiumAED);
@@ -1949,15 +1950,15 @@ const enableExchangeRateEdit = () => {
       :quote-status-enum="page.props.quoteStatusEnum"
     />
 
-      <PlanDetails
-        v-if="shouldShowPlanDetailsSection"
-        :insuranceProviders="insuranceProviders"
-        :quote="quote"
-        :quoteType="quoteType"
-        :vatPrice="vatPercentage"
-        :expanded="sectionExpanded"
-        :isAddUpdate="isAddUpdate"
-      />
+    <PlanDetails
+      v-if="shouldShowPlanDetailsSection"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      :expanded="sectionExpanded"
+      :isAddUpdate="isAddUpdate"
+    />
 
     <template v-else>
       <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2155,7 +2156,13 @@ const enableExchangeRateEdit = () => {
                     class="copay-max"
                   >
                     <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
-                      {{ numberFormat(Math.round((item.actualPremium * planExchangeRate) * 100) / 100) }}
+                      {{
+                        numberFormat(
+                          Math.round(
+                            item.actualPremium * planExchangeRate * 100,
+                          ) / 100,
+                        )
+                      }}
                     </div>
 
                     <div v-else>N/A</div>
