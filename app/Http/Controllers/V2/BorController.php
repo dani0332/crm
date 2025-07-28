@@ -205,7 +205,7 @@ class BorController extends Controller
             if ($uploadedDocument) {
                 // Update BOR log status
                 $borLog->update([
-                    'status' => 'Completed',
+                    'status' => BorStatusEnum::DOCUMENT_UPLOADED,
                     'date_uploaded' => now(),
                 ]);
 

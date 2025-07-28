@@ -146,7 +146,7 @@ const requiredFields = computed(() => {
   };
 
   // Motor LOBs require policy number and expiry
-  if (isMotorLob.value) {
+  if (isMotorLob.value && form.customer_type == 'Individual') {
     fields.policy_number = true;
     fields.policy_expiry = true;
     
@@ -157,7 +157,7 @@ const requiredFields = computed(() => {
   }
 
   // Health LOB may require policy number
-  if (isHealthLob.value) {
+  if (isHealthLob.value && form.customer_type == 'Individual') {
     fields.policy_number = true;
   }
 

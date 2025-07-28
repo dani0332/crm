@@ -164,6 +164,11 @@ const onDoneModalClose = () => {
 const onViewDocumentModalClose = () => {
   showViewDocumentModal.value = false
   selectedLog.value = null
+
+  setTimeout(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, 100);
 }
 
 const onCancelConfirmed = () => {

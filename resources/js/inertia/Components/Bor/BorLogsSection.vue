@@ -207,6 +207,10 @@ const handleUploadDocument = (borLog) => {
 const closeUploadModal = () => {
   showUploadModal.value = false;
   selectedBorLog.value = null;
+  setTimeout(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, 100);
 };
 
 const handleUploadSuccess = (updatedBorLog) => {
@@ -225,6 +229,8 @@ const handleUploadSuccess = (updatedBorLog) => {
     message: 'Document uploaded successfully',
     position: 'top',
   });
+
+  fetchBorLogs(1);
 };
 
 const handleUpdateStatus = (borLogId, newStatus) => {
@@ -287,6 +293,11 @@ const closeDoneModal = () => {
 const closeViewDocumentModal = () => {
   showViewDocumentModal.value = false;
   selectedBorLog.value = null;
+
+  setTimeout(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, 100);
 };
 
 // Success handlers for modal actions
