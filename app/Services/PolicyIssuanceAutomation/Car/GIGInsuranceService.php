@@ -554,6 +554,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         foreach ($policyDocuments as $policyDocument) {
             $quoteDocument = null;
+            $docName = $policyDocument->name ?? 'Unknown Document'; // Initialize with fallback name
+            $docMapping = null;
+            
             $header = [
                 'opCo' => self::OP_CO,
                 'documentType' => $policyDocument->docId,
@@ -566,21 +569,25 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             sleep($getDocumentDelay);
 
             if ($document['status']) {
-                $docName = $document['data']?->document?->name;
+                $docName = $document['data']?->document?->name ?? $policyDocument->name ?? 'Unknown Document';
                 $docMapping = $this->getPolicyIssuanceQuoteDocumentMapping($policyDocument->name, $quote);
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document Name : '.$docName);
 
-                $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $document['data']?->document?->content, $docMapping['code'], $docName);
+                if ($docMapping && isset($docMapping['code'])) {
+                    $quoteDocument = $this->uploadAndAttachToQuoteDocuments($quote, $document['data']?->document?->content, $docMapping['code'], $docName);
+                } else {
+                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - No document mapping found for : '.$policyDocument->name);
+                }
             } else {
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Insurer Document not found for : '.$policyDocument->name, ['status' => $document['status'], 'error' => $document['error']]);
             }
 
             app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $document, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $document['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
-            // TODO:: $Docname undefined
+            
             $uploadedDocumentsToIMCRM->push([
                 'name' => $docName,
                 'uploaded' => $quoteDocument?->id ? true : false,
-                'message' => $document['message'],
+                'message' => $document['message'] ?? 'No response message',
                 'document' => $quoteDocument,
             ]);
 
@@ -639,7 +646,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         // Get the policy documents that were uploaded in the previous step
         // These are the document types that should have been uploaded to IMCRM
         $policyDocumentTypes = [
-            QuoteDocumentsEnum::CAR_TAX_INVOICE2,
+            QuoteDocumentsEnum::CAR_TAX_INVOICE,
             QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER,
             QuoteDocumentsEnum::POLICY_SCHEDULE,
             QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE,
@@ -727,11 +734,10 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     private function getPolicyIssuanceQuoteDocumentMapping($docName, $quote): ?array
     {
-        // TODO:: need to update this mapping
         $documentCodeMapping = [
-            self::POLICY_DOC_TAX_INVOICE => QuoteDocumentsEnum::CAR_TAX_INVOICE2,
+            self::POLICY_DOC_TAX_INVOICE => QuoteDocumentsEnum::CAR_TAX_INVOICE,
             self::POLICY_DOC_COMMISSION_STATEMENT => QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER,
-            self::POLICY_DOC_RECEIPT => QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER,
+            self::POLICY_DOC_RECEIPT => QuoteDocumentsEnum::RECEIPT,
             self::POLICY_DOC_POLICY_SCHEDULE => QuoteDocumentsEnum::POLICY_SCHEDULE,
             self::POLICY_DOC_CERTIFICATE_OF_INSURANCE => QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE,
         ];
