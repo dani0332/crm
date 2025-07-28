@@ -168,10 +168,13 @@ const showLackingPayment = () => {
 
 const getInitalAmountForLifeLOB = () => {
   if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-    const premiumInAED = Math.round((props.quoteRequest.premium * exchangeRate.value) * 100) / 100;
+    const premiumInAED =
+      Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
     return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
   } else {
-    return props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term;
+    return (
+      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
+    );
   }
 };
 
@@ -1091,9 +1094,6 @@ watch(
     isCreditCardViewReplicated.value = newVal;
   },
 );
-
-
-
 </script>
 
 <template>
