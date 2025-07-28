@@ -981,7 +981,9 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 const shouldShowPlanDetailsSection = computed(() => {
-  const cutoffDate = props.lifeCutOffDate ? new Date(props.lifeCutOffDate) : new Date('2025-07-25 12:00:00');
+  const cutoffDate = props.lifeCutOffDate
+    ? new Date(props.lifeCutOffDate)
+    : new Date('2025-07-25 12:00:00');
 
   if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
     return false;
