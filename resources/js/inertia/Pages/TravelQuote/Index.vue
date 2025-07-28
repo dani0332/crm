@@ -511,7 +511,7 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
-  setQueryFilters();
+  setQueryStringFilters();
   let filtersCleaned = cleanObj(filters);
 
   if (filtersCleaned.sortBy) {
