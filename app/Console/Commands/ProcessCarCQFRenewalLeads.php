@@ -29,7 +29,6 @@ class ProcessCarCQFRenewalLeads extends Command
     public function handle()
     {
         $isCarCQFRenewals = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_SWITCH);
-        $isCarCQFRenewals =1;
         if ($isCarCQFRenewals ) {
             info('Starting process to retrieve car cqf renewal leads | Time: '.now());
             app(CarCQFRenewalService::class)->processCarCQFRenewalLeads();

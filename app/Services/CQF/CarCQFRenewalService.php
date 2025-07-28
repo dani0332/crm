@@ -31,6 +31,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Enums\QuoteTypeId;
 use App\Models\Entity;
 use App\Enums\CustomerTypeEnum;
+use App\Services\InsuranceProviderService;
 
 
 class CarCQFRenewalService
@@ -45,7 +46,7 @@ class CarCQFRenewalService
         LoggerService::info(self::class . " - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
         $renewalsUploadLeads = $this->createRenewalsUploadLeads();
          CarQuote::whereDate('policy_expiry_date', '<=', $startDate)
-            ->whereIn('payment_status_id', [
+         ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
             ])
@@ -55,8 +56,8 @@ class CarCQFRenewalService
                 ]);
             })
             
-            ->take(4)
-            ->chunkById(2, function ($quotes) use ($renewalsUploadLeads) {
+            ->take(20)
+            ->chunkById(20, function ($quotes) use ($renewalsUploadLeads) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
                 if ($quoteCount > 0) {
@@ -75,7 +76,7 @@ class CarCQFRenewalService
         $uploadLeadData = [
             'renewal_import_code' => app(RenewalsUploadService::class)->generateRandomString(),
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
-            'file_name' => null,
+            'file_name' => 'cqf_renewal_leads_' . uniqid() . '_' . now()->format('Y-m-d_H-i-s') . '.xlsx',
             'file_path' => null,
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
@@ -125,7 +126,7 @@ class CarCQFRenewalService
     public function validateQuote($quote)
     {
         // Validate required fields for the quote and return error messages if missing
-        $quote->registration_type = "test";
+   
         $validator = Validator::make( $quote->toArray(), 
         [
             'policy_number'      => ['required'],
@@ -200,17 +201,22 @@ class CarCQFRenewalService
             'email' => $quote->email ?? null,
             'mobile_no' => $quote->mobile_no,
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
-            'car_make_id' => $quote->car_make_id ?? null,
-            'car_model_id' => $quote->car_model_id ?? null,
-            'registration_type' => $quote->registration_type ?? null,
-            'validation_errors' => $quote->validation_errors ?? null,
-            'source' => $quote->source ?? null,
-            'batch' => $quote->batch->name ?? null,
-            'renewal_import_code' => $quote->renewal_import_code ?? null,
-            'renewal_import_type' => $quote->renewal_import_type ?? null,
-            'renewal_import_status' => $quote->renewal_import_status ?? null,
-            'renewal_import_date' => $quote->renewal_import_date ?? null,
-            'renewal_import_time' => $quote->renewal_import_time ?? null,
+            'insurer' => app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with)->text,
+            'product' => $quote->product ?? null,
+            'product_type' => $quote->car_type_insurance_id()->text ?? null,
+            'advisor' => $quote->advisor()->email ?? null,
+            'policy_number' => $quote->policy_number,
+            'start_date' => $quote->policy_start_date,
+            'end_date' => $quote->policy_expiry_date,
+            'batch' => $quote->batch()->name ?? null,
+            'make' => $quote->carMake()->text ?? null,
+            'model' => $quote->carModel()->text ?? null,
+            'year' => $quote->year_of_manufacture ?? null,
+            'previous_advisor' => $quote->previousAdvisor()->email ?? null,
+            'premium'=> $quote->premium ?? null,
+            'source'=> $quote->source ?? null,
+            'notes' => $quote->additional_notes ?? null,
+            "plan_name"=> $quote->plan()->name ?? null,
         ];
     }
 
