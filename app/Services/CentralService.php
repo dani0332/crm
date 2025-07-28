@@ -54,6 +54,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -276,6 +277,19 @@ class CentralService extends BaseService
                 return app(CarQuoteService::class)->getPlans($id);
             case quoteTypeCode::Travel:
                 return app(TravelQuoteService::class)->sortedPlansList($id);
+            case quoteTypeCode::Life:
+                $listQuotePlans = [];
+                $quotePlans = app(LifeQuoteService::class)->getQuotePlans($id);
+
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = [];
+                } else {
+                    if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                        $listQuotePlans[] = $quotePlans->quotes->plans;
+                    }
+                }
+
+                return $listQuotePlans;
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
 
@@ -616,7 +630,7 @@ class CentralService extends BaseService
     // This method is used to update payment allocation status when lead status is updated
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {
-        $quote = $this->getQuoteObject($modelType, $quote_uuid);
+        $quote = $this->getQuoteObjectBy($modelType, $quote_uuid, 'uuid');
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             $payment = Payment::where('code', $quote->code)->with('paymentSplits')->first();
             if ($payment && $payment->paymentSplits->isNotEmpty()) {
@@ -1187,6 +1201,7 @@ class CentralService extends BaseService
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now(),
                         ]);
+                        (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     }
                     LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
                 }
@@ -1482,5 +1497,19 @@ class CentralService extends BaseService
         }
 
         return $paymentGatewayIds;
+    }
+
+    public function checkInsurerReceiptNumber($quoteType, $receiptNumber)
+    {
+        $count = PaymentSplits::where('insurer_receipt_number', $receiptNumber)->count();
+        if ($count > 0) {
+            LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number already exists: '.$receiptNumber);
+
+            return ['status' => false, 'message' => 'Receipt number already exists'];
+        }
+
+        LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number does not exist: '.$receiptNumber);
+
+        return ['status' => true, 'message' => 'Receipt number does not exist'];
     }
 }

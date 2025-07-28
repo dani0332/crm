@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteJourneyEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
@@ -46,6 +48,7 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -165,7 +168,7 @@ class SendUpdateLogService
             case LifeQuote::class:
                 $quoteRelations = [
                     'quoteRelations' => [
-                        'lifeQuoteRequestDetail' => [
+                        'quoteDetail' => [
                             'skipColumns' => $requestDetailsSkipColumns,
                             'fillColumns' => ['advisor_assigned_date' => now()],
                         ],
@@ -650,7 +653,12 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $payments = $repository::getBy('uuid', $quoteUuid)->payments;
+            $quote = $repository::getBy('uuid', $quoteUuid);
+            $payments = $quote?->payments ?? null;
+            if ($payments === null || $payments->isEmpty()) {
+                $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
+                $payments = $quote?->payments ?? null;
+            }
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
@@ -1043,6 +1051,14 @@ class SendUpdateLogService
             $quoteDetails,
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
+        $sageRequestPayload->quoteTypeId = $sendUpdateLog->quote_type_id;
+        $sageRequestPayload->customer_id = $quoteDetails->customer_id;
+        $commissionChargeIds = $preparedDetailsForEndorsement['splitPayments']->flatMap(function ($paymentSplit) {
+            return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
+                ->pluck('transaction_id')
+                ->toArray();
+        })->toArray();
+        $sageRequestPayload->commissionChargeId = count($commissionChargeIds) > 0 ? implode(',', $commissionChargeIds) : '';
 
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
@@ -1188,6 +1204,7 @@ class SendUpdateLogService
                         'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                     (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
+                    (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelled;
@@ -1200,6 +1217,7 @@ class SendUpdateLogService
                         'current_quote_status_id' => $newLeadStatus,
                         'previous_quote_status_id' => $oldLeadStatus,
                     ]);
+                    (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 }
                 // Cases for Cancel Inception and Cancel Inception Reissue End
 

@@ -52,12 +52,10 @@ class PlanDetailsRequest extends FormRequest
     {
         $quoteType = request()->quoteType;
         $code = request()->code;
-        $insuranceProviderId = request()->insurance_provider_id;
 
         $validator->after(function ($validator) use ($quoteType, $code) {
             $repository = getRepositoryObject($quoteType);
             $quoteModel = $repository::where('code', $code)->firstOrFail();
-            $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
@@ -66,7 +64,7 @@ class PlanDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
-            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code);
+            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code, $quoteModel);
         });
     }
 }

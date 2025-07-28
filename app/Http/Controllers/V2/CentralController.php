@@ -80,6 +80,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -118,6 +119,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
         ])) {
@@ -292,6 +294,11 @@ class CentralController extends Controller
                 'commission_vat' => $validatedData['vat_on_commission'],
                 'commission' => $validatedData['total_commission'],
                 'invoice_description' => $validatedData['invoice_description'],
+
+                // for life only
+                'commission_based_on_currency' => $bookPolicyRequest?->commission_based_on_currency ?? null,
+                'exchange_rate' => $bookPolicyRequest?->exchange_rate ?? null,
+                'currency' => $bookPolicyRequest?->currency ?? null,
             ];
 
             $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
@@ -882,6 +889,17 @@ class CentralController extends Controller
         return response()->json($response);
     }
 
+    public function checkInsurerReceiptNumber($quoteType, Request $request)
+    {
+        $validatedRequest = (object) $request->validate([
+            'insurer_receipt_number' => 'required|string',
+        ]);
+
+        $response = app(CentralService::class)->checkInsurerReceiptNumber($quoteType, $validatedRequest->insurer_receipt_number);
+
+        return response()->json($response);
+    }
+
     public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
     {
         LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
@@ -896,5 +914,12 @@ class CentralController extends Controller
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function updateCommissionForLeads()
+    {
+        $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
+
+        return $response;
     }
 }
