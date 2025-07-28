@@ -441,6 +441,7 @@ class LifeQuoteService extends BaseService
             'availablePlan' => $this->getQuotePlans($uuid),
             'paymentTerms' => PaymentTermEnum::asArray(),
             'emailStatuses' => $emailStatuses,
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
         ];
 
     }

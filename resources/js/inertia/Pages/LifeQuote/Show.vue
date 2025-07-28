@@ -7,6 +7,7 @@ import {
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
@@ -64,6 +65,7 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   emailStatuses: Array,
+  isBetaUser: Boolean,
 });
 
 const { isRequired, emiratesNumber } = useRules();
@@ -2687,6 +2689,17 @@ const enableExchangeRateEdit = () => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
+    />
+
+    <QuotePayments
+      v-else
+      :can="can"
+      :payments="payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
     />
 
     <EmbeddedProducts
