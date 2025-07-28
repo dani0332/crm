@@ -45,7 +45,7 @@ class ValidateAuthorizedPayment
                 PaymentStatusEnum::AUTHORISED,
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PAID,
-            ])  
+            ])
             ->exists();
 
         if (! $hasAnyAuthorizedPayment) {
