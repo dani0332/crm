@@ -169,6 +169,15 @@ const showLackingPayment = () => {
   }
 };
 
+const getInitalAmountForLifeLOB = () => {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+    const premiumInAED = Math.round((props.quoteRequest.premium * exchangeRate.value) * 100) / 100;
+    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
+  } else {
+    return props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term;
+  }
+};
+
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
@@ -1086,14 +1095,7 @@ watch(
   },
 );
 
-const getInitalAmountForLifeLOB = () => {
-  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-    const premiumInAED = Math.round((props.quoteRequest.premium * exchangeRate.value) * 100) / 100;
-    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
-  } else {
-    return props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term;
-  }
-};
+
 
 </script>
 

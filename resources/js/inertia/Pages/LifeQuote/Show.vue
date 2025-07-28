@@ -976,6 +976,51 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+const shouldShowPlanDetailsSection = computed(() => {
+  // cutoffDate = 25th July 2025 12:00:00+04:00 (UAE time 12:00) for staging
+  const cutoffDate = new Date('2025-07-25T12:00:00+04:00');
+  const str = page.props.quote.created_at;
+
+  const match = str.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
+  if (!match) return false;
+
+  const [_, day, monthStr, year, hour, min, ampm] = match;
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  let h = parseInt(hour, 10);
+  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
+
+  if (createdDate >= cutoffDate) {
+    return false;
+  }
+
+  return true;
+});
+
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -1936,8 +1981,8 @@ const enableExchangeRateEdit = () => {
       :quote-status-enum="page.props.quoteStatusEnum"
     />
 
-    <template v-if="!quote.is_ecommerce">
       <PlanDetails
+        v-if="shouldShowPlanDetailsSection"
         :insuranceProviders="insuranceProviders"
         :quote="quote"
         :quoteType="quoteType"
@@ -1945,9 +1990,8 @@ const enableExchangeRateEdit = () => {
         :expanded="sectionExpanded"
         :isAddUpdate="isAddUpdate"
       />
-    </template>
 
-    <template v-if="quote.is_ecommerce">
+    <template v-else>
       <div class="p-4 rounded shadow mb-6 bg-white">
         <Collapsible :expanded="sectionExpanded">
           <template #header>
