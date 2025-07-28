@@ -9,11 +9,11 @@ use App\Models\FtcEmailLog;
 class FtcEmailLogService
 {
     /**
-    * Create or retrieve an email tracking log
-    * 
-    * @param array $payload
-    * @return array{message: string, data: FtcEmailLog}
-    */
+     * Create or retrieve an email tracking log
+     *
+     * @param  array  $payload
+     * @return array{message: string, data: FtcEmailLog}
+     */
     public function createTrackEmail($payload): array
     {
         $checkEmailFtcLog = FtcEmailLog::where('uuid', $payload['uuid'])->first();
