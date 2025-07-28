@@ -401,8 +401,10 @@ const getTotalAnnualPremiumAED = item => {
       'Semi-Annually': 2,
       Annually: 1,
     };
-    const totalAnnualPremiumAED =
-      item.actualPremium * planExchangeRate.value * mapping[paymentTermTitle];
+
+    const premiumInAED = Math.round((item.actualPremium * planExchangeRate.value) * 100) / 100;
+    const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
+
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
     return item.isManualPlan
@@ -2139,7 +2141,7 @@ const enableExchangeRateEdit = () => {
                     class="copay-max"
                   >
                     <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
-                      {{ numberFormat(item.actualPremium * planExchangeRate) }}
+                      {{ numberFormat(Math.round((item.actualPremium * planExchangeRate) * 100) / 100) }}
                     </div>
 
                     <div v-else>N/A</div>
