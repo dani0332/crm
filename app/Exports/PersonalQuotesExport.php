@@ -297,6 +297,11 @@ class PersonalQuotesExport implements CsvExportableInterface
             ],
         ];
 
+        $quoteType = ucfirst($quoteType);
+        if ($quoteType === QuoteTypes::JETSKI->value) {
+            $quoteType = QuoteTypes::YACHT->value;
+        }
+
         return $headings[$quoteType] ?? [];
     }
 
