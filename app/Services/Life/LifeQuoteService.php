@@ -903,31 +903,29 @@ class LifeQuoteService extends BaseService
 
     public function getLifeRiderInfo($rider, $plan)
     {
-        if (empty($rider)) {
+        if ($rider === null || !$rider->active ?? false) {
             return 'Optional';
         }
-
-        // if rider options is not active then return (Optional)
-        if (! $rider->active) {
-            return 'Optional';
-        }
-
-        if (! $rider->inputRequired) {
-            if ($rider->coverType == 'VALUE') {
-                foreach ($rider->criteria as $criteria) {
-                    if (isset($criteria->currency) && isset($plan->currency) && $criteria->currency == $plan->currency && isset($criteria->coverValue)) {
-                        return is_string($criteria->coverValue) ? "Covered $criteria->coverValue" : 'Covered upto '.number_format($criteria->coverValue);
+        if (! ($rider->inputRequired ?? false)) {
+            if (($rider->coverType ?? '') === 'VALUE') {
+                foreach (($rider->criteria ?? []) as $criteria) {
+                    if (($criteria->currency ?? null) === ($plan->currency ?? null) && isset($criteria->coverValue)) {
+                        return is_string($criteria->coverValue)
+                            ? "Covered {$criteria->coverValue}"
+                            : 'Covered upto ' . number_format($criteria->coverValue);
                     }
                 }
-
                 return 'Covered';
-            } elseif ($rider->coverType == 'COVER') {
-                return is_string($plan->sumInsured) ? 'Covered '.$plan->sumInsured : 'Covered upto '.number_format($plan->sumInsured);
+            } elseif (($rider->coverType ?? '') === 'COVER') {
+                return is_string($plan->sumInsured ?? '')
+                    ? "Covered {$plan->sumInsured}"
+                    : 'Covered upto ' . number_format($plan->sumInsured ?? 0);
             }
         } else {
-            return is_string($rider?->coverValue) ? 'Covered '.$rider?->coverValue : 'Covered upto '.number_format($rider?->coverValue);
+            return is_string($rider->coverValue ?? '')
+                ? "Covered {$rider->coverValue}"
+                : 'Covered upto ' . number_format($rider->coverValue ?? 0);
         }
-
         return 'Covered';
     }
 
