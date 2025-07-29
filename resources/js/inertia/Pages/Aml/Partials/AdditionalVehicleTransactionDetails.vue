@@ -79,6 +79,9 @@ const rules = {
       'The entered value does not meet the required length of 8 to 17 characters'
     );
   },
+  bankLoanRequired: v => {
+    return (v === '0' || v === '1') || 'Please select Yes or No for Bank Loan';
+  },
 };
 
 const additionalVehicleTransactionDetailsForm = useForm({
@@ -95,7 +98,7 @@ const additionalVehicleTransactionDetailsForm = useForm({
   rta_plate_category: page.props.quoteRequest?.car_quote_request_detail?.rta_plate_category ?? '',
   vehicle_color: page.props.quoteRequest?.car_quote_request_detail?.vehicle_color ?? '',
   plate_color: page.props.quoteRequest?.car_quote_request_detail?.plate_color ?? '',
-  bank_loan: page.props.quoteRequest?.car_quote_request_detail?.bank_loan ?? '',
+  bank_loan: page.props.quoteRequest?.car_quote_request_detail?.bank_loan?.toString() ?? '',
   bank_name: page.props.quoteRequest?.car_quote_request_detail?.bank_name ?? '',
   first_registration_date: page.props.quoteRequest?.car_quote_request_detail?.first_registration_date ?? '',
   policy_effective_date: page.props.quoteRequest?.car_quote_request_detail?.policy_effective_date ?? '',
@@ -298,13 +301,13 @@ const getFieldRules = (fieldName) => {
   
   const fieldRules = [];
   
-  if (isFieldRequired(fieldName)) {
-    fieldRules.push(isRequired);
-  }
-  
   // Add field-specific rules
   if (fieldName === 'chassis_number') {
     fieldRules.push(rules.chassisNumberCheck);
+  } else if (fieldName === 'bank_loan') {
+    fieldRules.push(rules.bankLoanRequired);
+  } else if (isFieldRequired(fieldName)) {
+    fieldRules.push(isRequired);
   }
   
   return fieldRules;
@@ -583,7 +586,7 @@ onMounted(() => {
           <x-field label="Bank Loan?" required>
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.bank_loan"
-              :rules="[isRequired]"
+              :rules="getFieldRules('bank_loan')"
               :options="[
                 { value: '1', label: 'Yes' },
                 { value: '0', label: 'No' }
@@ -603,7 +606,7 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
-              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1 || isFieldDisabled('bank_name')"
+              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || isFieldDisabled('bank_name')"
               :rules="getFieldRules('bank_name')"
               class="w-full"
             />
