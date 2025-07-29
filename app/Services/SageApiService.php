@@ -893,7 +893,7 @@ class SageApiService
         $prepaymentResponses = [];
         $paidPaymentSplits = $payment->paymentSplits()->whereIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CAPTURED])->get();
 
-        foreach ($paymentSplits as $paymentSplit) {
+        foreach ($paidPaymentSplits as $paymentSplit) {
             $isPaymentMethodCA = in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditApproval]);
             if ($isPaymentMethodCA) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' Posting of prepayment skipped due to credit approval :  '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
