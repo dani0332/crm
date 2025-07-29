@@ -288,12 +288,13 @@ class BorLog extends Model
     /**
      * Transition the BOR to "Cancelled" status.
      */
-    public function markAsCancelled(string $reason = null): bool
+    public function markAsCancelled(?string $reason = null, ?string $additional_notes = null): bool
     {
         if ($this->allowsCancellation()) {
             $this->status = BorStatusEnum::CANCELLED;
             if ($reason) {
                 $this->cancellation_reason = $reason;
+                $this->additional_notes = $additional_notes;
             }
             return $this->save();
         }

@@ -468,7 +468,7 @@ class BorController extends Controller
 
             $oldStatus = $borLog->status;
             $success = $borLog->markAsCancelled($validated['reason']);
-
+            
             if (!$success) {
                 DB::rollBack();
                 return response()->json([
@@ -493,7 +493,6 @@ class BorController extends Controller
                     'id' => $borLog->id,
                     'status' => $borLog->status,
                     'cancellation_reason' => $borLog->cancellation_reason,
-                    'status_info' => $borLog->getStatusInfo(),
                     'actions' => $this->getAvailableActions($borLog),
                 ],
             ]);

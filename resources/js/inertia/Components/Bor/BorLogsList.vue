@@ -211,7 +211,7 @@ const canPerformAction = (log, action) => {
   // Fallback logic for determining action availability
   const status = log.status
   const editAndCopyLinkCondition = ![props.borStatusEnum.COMPLETED, props.borStatusEnum.CANCELLED].includes(status);
-  const uploadAndDoneCondition = ![props.borStatusEnum.COMPLETED, props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status);
+  const uploadAndDoneCondition = ![props.borStatusEnum.COMPLETED, props.borStatusEnum.CANCELLED, props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status);
 
   console.log(status);
   console.log(action);
@@ -225,9 +225,9 @@ const canPerformAction = (log, action) => {
     case 'cancel':
       return ![props.borStatusEnum.CANCELLED, props.borStatusEnum.COMPLETED].includes(status)
     case 'done':
-      return uploadAndDoneCondition
+      return [props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status)
     case 'view_document':
-      return [props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED, props.borStatusEnum.COMPLETED].includes(status)
+      return [props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED, props.borStatusEnum.CANCELLED, props.borStatusEnum.COMPLETED].includes(status)
     case 'copy_link':
       return editAndCopyLinkCondition
     default:
@@ -349,6 +349,16 @@ const canPerformAction = (log, action) => {
             </x-button>
 
             <x-button
+              v-if="canPerformAction(actions, 'done')"
+              color="emerald"
+              size="xs"
+              @click="handleMarkDone(actions)"
+              title="Done"
+            >
+              Done
+            </x-button>
+
+            <x-button
               v-if="canPerformAction(actions, 'edit')"
               color="primary"
               size="xs"
@@ -415,7 +425,7 @@ const canPerformAction = (log, action) => {
 
     <BorDoneModal
       v-if="selectedLog"
-      :show="showDoneModal"
+      :visible="showDoneModal"
       :bor-log="selectedLog"
       @close="onDoneModalClose"
       @confirmed="onDoneConfirmed"

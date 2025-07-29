@@ -14,6 +14,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'success']);
+const showModal = ref(props.visible);
 
 // Form handling
 const form = useForm({
@@ -49,22 +50,11 @@ const handleClose = () => {
 
 <template>
   <x-modal
-    :visible="visible"
-    @close="handleClose"
+    v-model="showModal"
     size="md"
-    :close-on-escape="!isSubmitting"
-    :close-on-backdrop="!isSubmitting"
+    title="Mark BOR as Complete"
   >
-    <template #header>
-      <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-        <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Mark BOR as Complete
-      </h3>
-    </template>
-
-    <template #body>
+    <template #default>
       <div class="space-y-4">
         <!-- Success Message -->
         <div class="bg-green-50 border border-green-200 rounded-md p-4">
