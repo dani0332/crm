@@ -891,10 +891,7 @@ class SageApiService
         [$sageRequest, $quote, $payment, $paymentSplits] = $sageRequestDataArray;
 
         $prepaymentResponses = [];
-        $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
-        if (! $isFrequencyUpfrontOrSplit) {
-            $paymentSplits = $payment->paymentSplits()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
-        }
+        $paidPaymentSplits = $payment->paymentSplits()->whereIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->get();
 
         foreach ($paymentSplits as $paymentSplit) {
             $isPaymentMethodCA = in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditApproval]);
