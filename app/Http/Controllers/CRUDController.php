@@ -1767,6 +1767,7 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
+        info("CrudController @manualLeadAssign");
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
@@ -2373,5 +2374,59 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
+    }
+
+    /**
+     * Assign support user to quote (dynamic for all LOBs)
+     */
+    public function assignSupportUser(Request $request)
+    {
+        $request->validate([
+            'support_user_id' => 'required|exists:users,id',
+            'assigned_lead_id' => 'required|string',
+            'modelType' => 'required|string',
+        ]);
+
+        $leadIds = explode(',', $request->assigned_lead_id);
+        $supportUserId = $request->support_user_id;
+        $modelType = $request->modelType;
+
+        $updatedLeadIds = [];
+
+        foreach ($leadIds as $leadId) {
+            // Remove any type suffix if present (e.g., "123|business" -> "123")
+            $id = explode('|', $leadId)[0];
+
+            // Get the quote object dynamically using existing pattern
+            $quote = $this->getQuoteObject($modelType, $id);
+            if ($quote) {
+                $quote->support_user_id = $supportUserId;
+                $quote->save();
+                $updatedLeadIds[] = $id;
+            }
+        }
+
+        // Send a single email for all assigned leads
+        if (!empty($updatedLeadIds) && $supportUserId) {
+            try {
+                $quoteType = QuoteTypes::from(ucfirst($modelType));
+                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
+                    $supportUserId,
+                    $updatedLeadIds,
+                    $quoteType
+                )->delay(now()->addSeconds(5));
+            } catch (Exception $e) {
+                Log::error('Failed to dispatch support user assignment email job', [
+                    'support_user_id' => $supportUserId,
+                    'lead_ids' => $updatedLeadIds,
+                    'model_type' => $modelType,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $supportUserName = User::find($supportUserId)->name;
+
+        return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$supportUserName);
     }
 }

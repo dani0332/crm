@@ -8,6 +8,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  supportUsers: {
+    type: Array,
+    default: () => [],
+  },
   quoteType: {
     type: String,
   },
@@ -37,6 +41,12 @@ const assignForm = useForm({
   modelType: props.quoteType,
 });
 
+const supportAssignForm = useForm({
+  support_user_id: null,
+  assigned_lead_id: '',
+  modelType: props.quoteType,
+});
+
 function onAssignLead(isValid) {
   // const postUrl =
   //   props.quoteType.toLowerCase() == 'car'
@@ -44,8 +54,8 @@ function onAssignLead(isValid) {
   //     : `/quotes/${props.quoteType}/leadAssign`;
 
   const postUrl =
-    props.quoteType.toLowerCase() === 'car'
-      ? '/quotes/car/manualLeadAssign'
+     Array('car','business').includes(props.quoteType.toLowerCase())
+      ? `/quotes/${props.quoteType}/manualLeadAssign`
       : props.quoteType === 'tmlead'
         ? '/telemarketing/tmLeadsAssign'
         : `/quotes/${props.quoteType}/leadAssign`;
@@ -71,6 +81,31 @@ function onAssignLead(isValid) {
       });
   }
 }
+
+function onAssignSupportUser(isValid) {
+  const postUrl = '/quotes/assignSupportUser';
+
+  if (isValid) {
+    supportAssignForm
+      .transform(data => ({
+        ...data,
+        assigned_lead_id: `${props.selected}`,
+        support_user_id: supportAssignForm.support_user_id,
+        modelType: props.quoteType,
+      }))
+      .post(postUrl, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          emit('success');
+        },
+        onError: () => {
+          emit('error');
+        },
+      });
+  }
+}
+
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -110,6 +145,36 @@ onMounted(() => {
           </div>
         </div>
       </x-form>
+
+      <!-- Support User Assignment Section -->
+      <div v-if="props.supportUsers && props.supportUsers.length > 0" class="" >
+        <x-form @submit="onAssignSupportUser" :auto-focus="false" >
+          <div class="w-full flex flex-col md:flex-row gap-4">
+            <x-select
+              v-model="supportAssignForm.support_user_id"
+              label="Assign Support User (OE)"
+              :options="props.supportUsers"
+              placeholder="Select Support User"
+              class="flex-1 w-auto"
+              filterable
+              single
+              v-if="readOnlyMode.isDisable === true"
+            />
+            <div class="mb-3 md:pt-6">
+              <x-button
+                color="blue"
+                size="sm"
+                type="submit"
+                :loading="supportAssignForm.processing"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Assign
+              </x-button>
+            </div>
+          </div>
+        </x-form>
+      </div>
+
       <x-alert
         v-if="Object.keys($page.props.errors).length > 0"
         color="error"

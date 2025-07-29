@@ -10,6 +10,7 @@ use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\ThirdPartyTagEnum;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
@@ -1692,6 +1693,27 @@ class SendEmailCustomerService extends BaseService
         } else {
             LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
         }
+    }
 
+    public function sendSupportUserAssignmentEmail($emailData){
+        $birdEmailData = [
+            'SendNewProcessRenewalEmail' => true,
+            'customerEmail' => $emailData->customerEmail,
+            'phone' => formatMobileNoWithoutPlus($mobile),
+            'customerName' => $emailData->customerName,
+            'quotePlanLink' => $emailData->quoteLink,
+            'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
+            'refID' => $emailData->carQuoteId,
+            'requestForAdvisor' => $emailData->requestAdvisorLink,
+            'quoteUUID' => $uuid,
+            'tag' => ThirdPartyTagEnum::BIRD_SIC_MOTOR_RENEWAL_TAG,
+        ];
+
+        $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
+        info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$sicEvent->value);
+
+        if ($sicEvent) {
+            // app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $birdEmailData);
+        }
     }
 }

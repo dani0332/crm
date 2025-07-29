@@ -1,4 +1,6 @@
 <script setup>
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+
 defineProps({
   model: String,
   leadStatuses: Array,
@@ -42,6 +44,9 @@ const loader = reactive({
   export: false,
 });
 
+const manualAssignmentSuccess = () => {
+  quotesSelected.value = [];
+};
 const filters = reactive({
   code: '',
   first_name: '',
@@ -79,6 +84,14 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+const supportUserOptions = computed(() => {
+  return page.props.supportUsers.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -738,35 +751,14 @@ const insurerAMLStatusOption = computed(() => {
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div
-          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
-          v-if="isManualAllocationAllowed == true"
-        >
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :error="assignForm.errors.assigned_to_id_new"
-                v-if="readOnlyMode.isDisable === true"
-                filterable
+        <div v-if="isManualAllocationAllowed == true">
+          <LeadAssignment
+            :selected="quotesSelected.map(e => e.id)"
+            :advisors="advisorOptions"
+            :supportUsers="supportUserOptions"
+            quoteType="business"
+            @success="manualAssignmentSuccess"
               />
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
         </div>
       </div>
     </Transition>

@@ -6,6 +6,7 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\HealthTeamType;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
@@ -18,6 +19,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
@@ -27,6 +29,7 @@ use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\KycLog;
 use App\Models\Nationality;
+use App\Models\Team;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -47,15 +50,17 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
+use App\Traits\TeamHierarchyTrait;
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use App\Models\User;
 
 class AmtController extends Controller
 {
-    use GenericQueriesAllLobs, RolePermissionConditions;
+    use GenericQueriesAllLobs, RolePermissionConditions,TeamHierarchyTrait;
 
     /**
      * Display a listing of the resource.
@@ -123,6 +128,10 @@ class AmtController extends Controller
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->whereIn('r.name', ['GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
+
+        // Get support users (OE role with Group Medical product access)
+        $supportUsers = $this->getSupportUsers();
+
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
@@ -246,9 +255,14 @@ class AmtController extends Controller
         $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $authorizedDays = intval($paymentAuthorizedDays->value);
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+
+        logger()->debug("toRawSql: ".$data->toRawSql(),[
+            $supportUsers
+        ]);
+
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
     }
 
     /**
@@ -510,5 +524,31 @@ class AmtController extends Controller
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),
         ]);
+    }
+
+    /**
+     * Get support users (OE role with Group Medical product access)
+     */
+    private function getSupportUsers()
+    {
+        $groupMedicalProduct = Team::where('type', TeamTypeEnum::PRODUCT)
+            ->where('name', HealthTeamType::GROUP_MEDICAL)
+            ->where('is_active', 1)
+            ->first();
+
+        if (!$groupMedicalProduct) {
+            return collect([]);
+        }
+
+        return User::activeUser()
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->join('user_products as up', 'up.user_id', '=', 'users.id')
+            ->where('r.name', 'OE_AE_CLIENT_SUPPORT')
+            ->where('up.product_id', $groupMedicalProduct->id)
+            ->selectRaw("users.id, CONCAT(users.name, ' - ', r.name) as name")
+            ->orderBy('users.name')
+            ->distinct()
+            ->get();
     }
 }
