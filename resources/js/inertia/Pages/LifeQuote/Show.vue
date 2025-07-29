@@ -406,7 +406,11 @@ const getTotalAnnualPremiumAED = item => {
     };
 
     const premiumInAED =
-      Math.round(item.actualPremium * planExchangeRate.value * 100) / 100;
+      Math.round(
+        item.isApi
+          ? item.actualPremium * planExchangeRate.value * 100
+          : item.totalPrice * planExchangeRate.value * 100,
+      ) / 100;
     const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
 
     return numberFormat(totalAnnualPremiumAED);
@@ -1167,19 +1171,17 @@ const enableExchangeRateEdit = () => {
   isExchangeRateEditable.value = true;
 };
 
-const getTotalAnnualPriceAED = (
-  isManualPlan,
-  actualPremium,
-  planExchangeRate,
-  paymentTerm,
-) => {
+const getTotalAnnualPriceAED = () => {
   const priceInAED = Math.round(
-    (isManualPlan
-      ? ecomDetail?.totalPrice * planExchangeRate
-      : actualPremium * planExchangeRate) * 100
+    (ecomDetail.value?.isManualPlan
+      ? ecomDetail.value?.totalPrice * planExchangeRate.value
+      : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100
   ) / 100;
 
-  return numberFormat(priceInAED * paymentTerm);
+
+  return numberFormat(
+    priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1)
+  );
 };
 </script>
 <template>
@@ -2175,7 +2177,9 @@ const getTotalAnnualPriceAED = (
                       {{
                         numberFormat(
                           Math.round(
-                            item.actualPremium * planExchangeRate * 100,
+                            item.isApi
+                              ? item.actualPremium * planExchangeRate * 100
+                              : item.totalPrice * planExchangeRate * 100,
                           ) / 100,
                         )
                       }}
@@ -2403,12 +2407,7 @@ const getTotalAnnualPriceAED = (
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
                   {{
-                    getTotalAnnualPriceAED(
-                      ecomDetail?.isManualPlan,
-                      ecomDetail?.actualPremium,
-                      planExchangeRate.value,
-                      quote?.life_quote?.payment_term ?? 1,
-                    )
+                    getTotalAnnualPriceAED()
                   }}
                 </dd>
               </div>
