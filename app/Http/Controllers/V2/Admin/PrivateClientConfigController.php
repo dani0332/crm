@@ -6,6 +6,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V2\Admin\PrivateClientConfig\GetPrivateClientConfigRequest;
 use App\Http\Requests\V2\Admin\PrivateClientConfig\PrivateClientConfigRequest;
+use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
 use Illuminate\Support\Arr;
 use Inertia\Inertia;
@@ -36,6 +37,11 @@ class PrivateClientConfigController extends Controller
 
             return response()->json($responseData);
         } catch (\Exception $e) {
+            LoggerService::error('Failed to load private client configuration', [
+                'quote_type_id' => $request->quote_type_id,
+                'version' => $request->version,
+            ], $e);
+
             return response()->json(['error' => 'Failed to load configuration'], 500);
         }
     }
@@ -52,6 +58,11 @@ class PrivateClientConfigController extends Controller
                 ->with('version', $config->version);
 
         } catch (\Exception $e) {
+            LoggerService::error('Failed to update private client configuration', [
+                'quote_type_id' => $request->quote_type_id,
+                'version' => $request->version,
+            ], $e);
+
             return redirect()->back()->with('error', 'An error occurred while updating the configuration: '.$e->getMessage());
         }
     }
