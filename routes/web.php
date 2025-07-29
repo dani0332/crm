@@ -197,6 +197,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/savings-plan-manual-update-process', [SavingsQuoteController::class, 'savingsPlanUpdateManualProcess'])->name('savingsPlanUpdate');
     Route::get('savings/{quoteId}/plan_details/{planId}', [SavingsQuoteController::class, 'planDetails'])->name('savings_plan_details');
     Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
+
+    // life routes with check_route_access middleware
     Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
 
     Route::group(['middleware' => ['check_route_access']], function () {
@@ -239,7 +241,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('personal-quotes/life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('life-quotes-send-oca-email');
         Route::post('personal-quotes/life/download-comparision-pdf', [LifeController::class, 'downloadComparisionPdf'])->name('life-quotes-download-comparision-pdf');
 
-        Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
         Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
         Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
         Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
