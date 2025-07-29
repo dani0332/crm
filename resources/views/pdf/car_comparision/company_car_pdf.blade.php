@@ -164,7 +164,7 @@
     }
 
     .provider {
-        border: 1px solid #bfbfbf;
+        /*border: 1px solid #bfbfbf;*/
         font-size: 14px;
         line-height: 1;
         font-weight: 400;
@@ -681,11 +681,6 @@
         ["code" => "ancillaryExcess", "title" => "Ancillary excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
     ];
 
-    if(count($planIds) == 5){
-        $tableClass = 'is-full';
-} else {
-        $tableClass = 'not-full';
-    }
 @endphp
 
     {{-- First Page --}}
@@ -728,18 +723,20 @@
             // Limit to maximum 5 plans
             $displayPlans = array_slice($planIds, 0, 5);
         @endphp
-        <table class="main-table {{ $tableClass }}">
+        <table class="main-table is-full" style="margin-top:200px">
             <thead>
-                <p style="margin-top:200px"></p>
-                <tr>
+            <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
                         </p>
                     </th>
                     @foreach($displayPlans as $planId)
-                        <th class="provider" style="border: solid 1px #bfbfbf;">
-                            <div class="rounded-full">
-                                <p class="relative top-[40%] m-auto text-xs">
+                        <th class="provider " style="padding: 1px;">
+                            <div
+                                style="display: grid; grid-template-columns: 1fr auto; width: 100%; height: 70px; position: relative; overflow: hidden;">
+                                <!-- Center logo area -->
+                                <div
+                                    style="display: flex; align-items: center; justify-content: center; grid-column: 1 / -1; z-index: 1;">
                                     @php
                                         $providerCode = strtolower($plans[$planId]->providerCode);
                                         $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
@@ -750,8 +747,17 @@
                                             $providerLogoImage = public_path('images/insurance_providers/default.png');
                                         }
                                     @endphp
-                                    <img class="provider-logo" alt="" src="{{ $providerLogoImage }}" />
-                                </p>
+                                    <img class="provider-logo" alt="" src="{{ $providerLogoImage }}"
+                                         style="max-height: 65px; width: auto; max-width: 180px;" />
+                                </div>
+
+                                <!-- Renewal tag positioned at top-right -->
+                                @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
+                                    <div class="" style="position: absolute; right: 10px; top: 0; z-index: 2;">
+                                        <img alt="Renewal Plan" src="{{ public_path('images/renewal-plan-tag.png') }}"
+                                             style="height: 40px; width: auto; max-width: 100px; display: block;" />
+                                    </div>
+                                @endif
                             </div>
                         </th>
                     @endforeach
@@ -774,9 +780,6 @@
                         <th>
                             <p class="text-center" style="font-size: 14px">
                                 {{ $plans[$planId]->name ?? '' }}
-                                @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
-                                    <span class="badge badge-success">Renewal Quote</span>
-                                @endif
                             </p>
                         </th>
                     @endforeach
