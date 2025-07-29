@@ -1,27 +1,24 @@
 <script setup>
-import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive, ref, nextTick } from 'vue';
 import NProgress from 'nprogress';
-import { computed } from 'vue';
-import { time } from 'highcharts';
+import { computed, onMounted, ref } from 'vue';
 import {
-  ImageGalleryModal,
   AmlApprovalModal,
-  RetryPaymentModal,
-  DeleteSplitPaymentModal,
   DeleteParentPaymentModal,
+  DeleteSplitPaymentModal,
+  ImageGalleryModal,
+  RetryPaymentModal,
   VoidPaymentModal,
 } from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
-import { usePayment } from '../Composables/usePayment';
 import { useAMLKYC } from '../Composables/useAMLKYC';
+import { usePayment } from '../Composables/usePayment';
 import {
-  PaymentTableHeader,
+  CreatePaymentForm,
   PaymentHeader,
   PaymentRow,
   PaymentSplitRow,
-  CreatePaymentForm,
+  PaymentTableHeader,
 } from './PaymentComponents/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
@@ -169,6 +166,18 @@ const showLackingPayment = () => {
   }
 };
 
+const getInitalAmountForLifeLOB = () => {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+    const premiumInAED =
+      Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
+    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
+  } else {
+    return (
+      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
+    );
+  }
+};
+
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
@@ -185,15 +194,7 @@ if (props.sendUpdate) {
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Life) {
-  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-    initialAmount.value =
-      props.quoteRequest.premium *
-      exchangeRate.value *
-      props.quoteRequest?.life_quote?.payment_term;
-  } else {
-    initialAmount.value =
-      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term;
-  }
+  initialAmount.value = getInitalAmountForLifeLOB();
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -802,16 +803,7 @@ const setPaymentInitialPrice = () => {
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else if (props.quoteType === quoteTypeCodeEnum.Life) {
-      if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-        initialAmount.value =
-          props.quoteRequest.premium *
-          exchangeRate.value *
-          props.quoteRequest?.life_quote?.payment_term;
-      } else {
-        initialAmount.value =
-          props.quoteRequest.premium *
-          props.quoteRequest?.life_quote?.payment_term;
-      }
+      initialAmount.value = getInitalAmountForLifeLOB();
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -1233,6 +1225,7 @@ watch(
           "
           show-close
           backdrop
+          persistent
         >
           <CreatePaymentForm
             ref="createPaymentFormRef"

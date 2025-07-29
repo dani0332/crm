@@ -391,6 +391,7 @@ class LifeQuoteService extends BaseService
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
         $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $lifeQuote->id);
+        $lifeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_CUT_OFF_DATE)->first()->value ?? null;
 
         return [
             'documentTypes' => $documentTypes,
@@ -439,10 +440,11 @@ class LifeQuoteService extends BaseService
             'ecomLifeInsuranceQuoteUrl' => $ecomLifeInsuranceQuoteUrl,
             'currencies' => $currencies,
             'lifeRiders' => $lifeRiders,
-            'availablePlan' => $this->getQuotePlans($uuid),
             'paymentTerms' => PaymentTermEnum::asArray(),
             'emailStatuses' => $emailStatuses,
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+            'lifeCutOffDate' => $lifeCutOffDate,
         ];
 
     }
@@ -902,6 +904,36 @@ class LifeQuoteService extends BaseService
         }
 
         return $quote;
+    }
+
+    public function getLifeRiderInfo($rider, $plan)
+    {
+        if ($rider === null || ! ($rider->active ?? false)) {
+            return 'Optional';
+        }
+        if (! ($rider->inputRequired ?? false)) {
+            if (($rider->coverType ?? '') === 'VALUE') {
+                foreach (($rider->criteria ?? []) as $criteria) {
+                    if (($criteria->currency ?? null) === ($plan->currency ?? null) && isset($criteria->coverValue)) {
+                        return is_string($criteria->coverValue)
+                            ? "Covered {$criteria->coverValue}"
+                            : 'Covered upto '.number_format($criteria->coverValue);
+                    }
+                }
+
+                return 'Covered';
+            } elseif (($rider->coverType ?? '') === 'COVER') {
+                return is_string($plan->sumInsured ?? '')
+                    ? "Covered {$plan->sumInsured}"
+                    : 'Covered upto '.number_format($plan->sumInsured ?? 0);
+            }
+        } else {
+            return is_string($rider->coverValue ?? '')
+                ? "Covered {$rider->coverValue}"
+                : 'Covered upto '.number_format($rider->coverValue ?? 0);
+        }
+
+        return 'Covered';
     }
 
     private function generatePdfFilename($quote): string
