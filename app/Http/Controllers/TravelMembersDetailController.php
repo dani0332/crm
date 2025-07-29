@@ -174,8 +174,8 @@ class TravelMembersDetailController extends Controller
     {
         if (ucwords($quoteType) == QuoteTypes::TRAVEL->value) {
             $name = explode(' ', $quoteMemberDetails['name'], 2);
-            $quoteMemberDetails['first_name'] = $name[0];
-            $quoteMemberDetails['last_name'] = $name[1];
+            $quoteMemberDetails['first_name'] = $name[0] ?? '';
+            $quoteMemberDetails['last_name'] = $name[1] ?? '';
         }
 
         return $quoteMemberDetails;

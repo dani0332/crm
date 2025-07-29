@@ -6,6 +6,7 @@ use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\EndorsementReportExport;
+use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
 use App\Strategies\ManagementReport;
@@ -126,6 +127,7 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.source',
                 'send_update_logs.status',
                 'ps.sage_reciept_id',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -144,6 +146,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
+            ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
@@ -216,6 +219,7 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.source',
                 'send_update_logs.status',
                 DB::raw("'N/A' as sage_reciept_id"),
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -232,6 +236,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
+            ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);

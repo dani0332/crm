@@ -505,6 +505,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public function getStepsLockingStatus($quote): array
     {
         $policyIssuance = $quote->policyIssuance;
+        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -535,6 +536,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 $response['message'] = 'Booking Details is editable';
 
                 return $response;
+            }
+            if ($isPolicyBookingFailed) {
+                $response['isEditBookingDetailsDisabled'] = false;
+                $response['message'] = 'Booking Step is editable';
             }
 
             return $response;
@@ -617,13 +622,22 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $advisorId = $quote?->advisor_id;
-        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned :  '.$advisorId);
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned ', extra: [
+            'advisorId' => $advisorId,
+        ]);
         if (! $advisorId) {
             $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
             if ($response && $response['advisorId']) {
                 $advisorId = $response['advisorId'];
+                LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                    'advisorId' => $advisorId,
+                ]);
             }
         }
+
+        LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
+            'advisorId' => $advisorId,
+        ]);
 
         if ($advisorId) {
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
@@ -632,6 +646,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
             }
 
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Quote Document Customer Email Checks', extra: [
+                'advisorId' => $advisorId,
+                'quote status id' => QuoteStatusEnum::PolicyBooked,
+            ]);
             if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
                 // Here we need to dispatch document email
                 $data = new \stdClass;

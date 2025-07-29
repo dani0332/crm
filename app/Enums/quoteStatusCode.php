@@ -20,7 +20,7 @@ final class quoteStatusCode extends Enum
     const AMLScreeningFailed = 'AMLScreeningFailed';
     const NEW_LEAD = 'New Lead';
     const TRANSACTION_APPROVED = 'transaction_approved';
-    const NEWLEAD = 'New Lead';
+    const NEWLEAD = 'NewLead';
     const QUOTED = 'Quoted';
     const FOLLOWEDUP = 'Followed Up';
     const NEGOTIATION = 'In Negotiation';
@@ -57,7 +57,7 @@ final class quoteStatusCode extends Enum
     const POLICY_ISSUED = 'Policy Issued';
     const POLICY_BOOKING_QUEUED = 'Policy Booking Queued';
     const POLICY_BOOKING_FAILED = 'Policy Booking Failed';
-    const PAYMENT_LINK_SENT_TO_CUSTOMER = 'Payment Link Sent to Customer';
+    const PAYMENT_LINK_SENT_TO_CUSTOMER = 'Payment Link Sent To Customer';
     const PaymentInitiated = 'Payment Initiated';
     const InNegotiation = 'InNegotiation';
 }

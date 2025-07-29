@@ -12,7 +12,7 @@ const emit = defineEmits(['onLoadAvailablePlansData']);
 
 const isEmptyField = ref(false);
 
-const { isRequired, isNumber } = useRules();
+const { isRequired, isNumber, maxPrice, minPrice } = useRules();
 
 const quotePlansTable = reactive({
   columns: [
@@ -167,7 +167,7 @@ const getAddonVat = item => {
           label="Price without vat"
           required
           v-model="addPlanForm.actual_premium"
-          :rules="[isRequired]"
+          :rules="[isRequired, maxPrice(999999)]"
           class="w-full"
           placeholder="Enter Price without vat"
           type="number"
@@ -179,7 +179,7 @@ const getAddonVat = item => {
           label="Car value"
           required
           v-model="addPlanForm.car_value"
-          :rules="[isRequired]"
+          :rules="[isRequired, maxPrice(99999999), minPrice(1)]"
           class="w-full"
           placeholder="Enter Car value"
           type="number"

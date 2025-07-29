@@ -13,12 +13,16 @@ use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
+use App\Services\SendEmailCustomerService;
+use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
+    use LeadDuplicatable;
+
     abstract protected function fetchAdvisor(int $onlineStatus);
 
     protected $lead;
@@ -44,15 +48,31 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         try {
             LoggerService::info(self::class.' - execute: Allocation Started');
             $this->resolveLead();
+            if ($this->lead && $this->shouldHandleDuplicateLead()) {
+                $this->resolveDuplicateLeadInfo();
+            }
 
             if (! $this->lead) {
                 LoggerService::info(self::class.' - execute: Lead not found');
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
-                $advisor = $this->fetchAvailableAdvisor();
+                $advisor = null;
+                if ($this->hasDuplicateLead) {
+                    $advisor = $this->getAdvisorForDuplicateLeadAssignment();
+                    LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
+                        'found_advisor' => $advisor ? true : false,
+                        'advisor_id' => $advisor?->id,
+                    ]);
+                }
 
                 if (! $advisor) {
+                    $advisor = $this->fetchAvailableAdvisor();
+                }
+
+                // if advisor still not found, then we need to fail the lead allocation
+                if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
+                    $this->sendNonAdvisorEmail();
 
                     LoggerService::info(self::class.' - execute: No advisor found');
 
@@ -77,6 +97,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected function getLeadBaseQuery()
     {
         return $this->quoteType->model()
+            ->with('quoteDetail')
             ->where('uuid', $this->uuid)
             ->when($this->quoteType->isPersonalQuote(), function ($q) {
                 $q->where('quote_type_id', $this->quoteType->id());
@@ -250,4 +271,29 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
         $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
+
+    private function sendNonAdvisorEmail()
+    {
+        $lobsToSend = [QuoteTypes::SAVINGS];
+
+        if (! in_array($this->quoteType, $lobsToSend)) {
+            return;
+        }
+
+        if ($this->lead->isNonAdvisorEmailSent()) {
+            LoggerService::info(self::class.' - Non Advisor Email already sent to customer');
+
+            return;
+        }
+
+        app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+            $this->lead,
+            $this->quoteType->value,
+            isNonAdvisorEmail: true,
+        );
+
+        $this->lead->touch('non_advisor_email_sent_at');
+        LoggerService::info(self::class.' - Non Advisor Email sent to customer');
+    }
+
 }

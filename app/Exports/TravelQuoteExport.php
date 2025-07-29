@@ -2,29 +2,36 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\TravelQuoteService;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class TravelQuoteExport
+class TravelQuoteExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    public function collection($requestParams = [])
+    public function __construct(
+        private TravelQuoteService $travelQuoteService
+    ) {}
+
+    public function collection(array $requestParams = []): Collection
     {
-        return app(TravelQuoteService::class)->getGridData(requestParams: $requestParams)->get();
+        return $this->travelQuoteService->getGridData(requestParams: $requestParams)->get();
     }
 
     /**
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
-        return app(TravelQuoteService::class)->getGridData(requestParams: $requestParams);
+        return $this->travelQuoteService->getGridData(requestParams: $requestParams);
     }
 
     public function headings(): array
@@ -43,8 +50,11 @@ class TravelQuoteExport
             'INSURER API STATUS',
             'CREATED DATE',
             'TRAVEL START DATE',
+            'TRAVEL END DATE',
+            'TRAVEL DURATION',
             'LAST MODIFIED DATE',
             'DOB',
+            'AGE GROUP',
             'TRANSAPP CODE',
             'LOST REASON',
             'SOURCE',
@@ -65,15 +75,17 @@ class TravelQuoteExport
             'TRAVEL COVERAGE',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
-            'ASSIGNMENT TYPE',
             'ADVISOR REQUESTED',
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
+            'PRIVATE CLIENT',
         ];
     }
 
     public function map($quote): array
     {
+        $ageGroup = $this->getAgeGroup($quote);
+
         return [
             $quote->code,
             $quote->first_name,
@@ -88,8 +100,11 @@ class TravelQuoteExport
             $quote->insurer_api_status ? $quote->insurer_api_status : '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             $quote->start_date ?? '',
+            $quote->end_date ?? '',
+            $quote->days_cover_for ?? '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
+            $ageGroup,
             optional($quote->travelQuoteRequestDetail)->transapp_code,
             optional($quote->travelQuoteRequestDetail)->lostReason?->text,
             $quote->source,
@@ -110,10 +125,36 @@ class TravelQuoteExport
             $quote->coverage_code,
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
             (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
             $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
+            $quote->customer?->pcp_tag_formatted ?? '',
         ];
+    }
+
+    /**
+     * Get export metadata with travel-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 8, // QuoteTypeId::Travel
+            'exportType' => 'travel_quotes',
+        ];
+    }
+
+    private function getAgeGroup($quote)
+    {
+        if ($quote->child || $quote->parent) {
+            return 'Both';
+        }
+
+        $age = Carbon::parse($quote->dob)->age;
+
+        return $age < 65 ? '0 - 64' : '65 and above';
     }
 }

@@ -57,16 +57,29 @@ const onAddUpdate = () => {
 };
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
+// Define record for SendUpdates component
+const record = computed(() => page.props.quote);
 </script>
 
 <template>
   <div>
     <Head title="Jetski Quotes" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Jetski Detail</h2>
+        <x-button
+          v-if="quote.customer?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
+      </template>
+    </StickyHeader>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
-        <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-          <h2 class="text-xl font-semibold">Jetski Detail</h2>
-        </div>
         <template #body>
           <div
             class="flex gap-2 mb-4 justify-end"
@@ -200,6 +213,10 @@ const dateFormat = date =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -237,7 +254,7 @@ const dateFormat = date =>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Year of manufacture</dt>
-                <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
+                <dd>{{ quote?.jetski_quote?.year_of_manufacture }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -302,6 +319,10 @@ const dateFormat = date =>
                 <dd>
                   {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
                 </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRIVATE CLIENT</dt>
+                <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
               </div>
               <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
             </dl>
@@ -421,7 +442,7 @@ const dateFormat = date =>
     <AuditLogs
       :title="'KYC Audit Logs'"
       :type="'App\\Models\\InsuredKyc'"
-      :id="quote?.insured?.insured_kyc?.id"
+      :id="quote?.latest_insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 

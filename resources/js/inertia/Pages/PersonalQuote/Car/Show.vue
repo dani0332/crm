@@ -1,5 +1,9 @@
 <script setup>
+import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import { usePage } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -170,6 +174,7 @@ const leadStatusForm = useForm({
   proof_document: null,
   car_lost_quote_log_id:
     page.props.paymentEntityModel.car_lost_quote_log?.id || 0,
+  current_quote_status_id: page.props.record.quote_status_id || null,
 });
 
 const leadApprovalStatusOptions = computed(() => {
@@ -1274,8 +1279,13 @@ onMounted(() => {
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
+  window.addEventListener('ocr-notification', handleOcrNotification);
+  window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
 });
-
+onUnmounted(() => {
+  window.removeEventListener('ocr-notification', handleOcrNotification);
+  window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
+});
 //activities
 const emailEventsTable = [
   { text: 'Type', value: 'type' },
@@ -1340,13 +1350,14 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.record.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.record.customer_id,
-  customer_type: page.props.record.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.record.id,
-
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
   emirates_id_number: page.props.record.emirates_id_number || null,
@@ -1608,14 +1619,109 @@ const isCommercialVehicle = computed(() => {
   }
   return isCConditionMeet;
 });
+
+const ocrLoadingDocType = ref(null);
+const ocrLoading = ref(false);
+const policyDetailReloadKey = ref(0);
+const bookPolicyReloadKey = ref(0);
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
+const ocrLoadingDocTypes = reactive(new Set());
+
+// Helper function to check if a document type is currently being processed
+const isDocTypeLoading = docType => {
+  const result = ocrLoadingDocTypes.has(docType);
+  return result;
+};
+
+// Helper to check if any OCR is in progress
+const hasOcrInProgress = computed(() => {
+  const result = ocrLoadingDocTypes.size > 0;
+  return result;
+});
+
+function handleLeadStatusUpdated(event) {
+  const { uuid } = event.detail || {};
+  if (uuid === page.props.quote.uuid) {
+    router.reload({
+      onSuccess: () => {},
+      preserveState: true,
+      preserveScroll: true,
+      only: ['quote', 'record'],
+    });
+  }
+}
+
+function handleOcrNotification(event) {
+  const { docType, status, userId } = event.detail || {};
+  const currentUserId = usePage().props.auth.user.id;
+
+  // Only process notifications for the current user
+  if (userId !== currentUserId) {
+    return;
+  }
+
+  // For 'start' status, add document type to loading set
+  if (status === 'start') {
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
+      ocrLoadingDocType.value = docType;
+    }
+  } else {
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
+    router.reload({
+      onSuccess: () => {
+        // Clear both the old ref and the reactive Set for immediate UI update
+        ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+      },
+      preserveState: true,
+      preserveScroll: true,
+      only: [
+        'payments',
+        'bookPolicyDetails',
+        'quote',
+        'record',
+        'quoteDocuments',
+      ],
+    });
+  }
+}
 </script>
 
 <template>
+  <OcrNotification />
+  <LeadStatusUpdatedNotification />
   <div>
     <Head title="Car Detail" />
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Car Detail</h2>
+        <x-button
+          v-if="record?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
       <template #default>
         <Link
@@ -1828,7 +1934,7 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -2051,6 +2157,13 @@ const isCommercialVehicle = computed(() => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ record.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -2139,6 +2252,7 @@ const isCommercialVehicle = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2192,7 +2306,7 @@ const isCommercialVehicle = computed(() => {
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                record.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -2213,8 +2327,7 @@ const isCommercialVehicle = computed(() => {
             <div class="text-sm">
               <dl
                 v-if="
-                  record.customer_type ===
-                  page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2340,11 +2453,15 @@ const isCommercialVehicle = computed(() => {
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ record.pcp_tag_formatted }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
                 v-if="
-                  record.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2571,7 +2688,7 @@ const isCommercialVehicle = computed(() => {
     </x-modal>
 
     <MemberDetails
-      v-if="record.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -2597,7 +2714,7 @@ const isCommercialVehicle = computed(() => {
     />
 
     <UBODetails
-      v-if="record.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -3800,10 +3917,15 @@ const isCommercialVehicle = computed(() => {
 
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
+      :key="policyDetailReloadKey"
       :quote="quote"
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <QuoteDocument
@@ -3826,11 +3948,16 @@ const isCommercialVehicle = computed(() => {
           permissionEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       :quoteType="quoteType"
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <SendUpdates
@@ -4089,6 +4216,7 @@ const isCommercialVehicle = computed(() => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">

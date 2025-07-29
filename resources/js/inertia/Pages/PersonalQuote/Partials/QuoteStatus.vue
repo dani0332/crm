@@ -20,10 +20,21 @@ const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const quoteStatusOptions = computed(() => {
-  return props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return props.quoteStatuses.map(status => {
+    var statusDisabled = false;
+    // below status are not editable by advisor
+    if (status.id == quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const quoteStatusForm = useForm({
@@ -31,6 +42,7 @@ const quoteStatusForm = useForm({
   quote_status_id: props.quote.quote_status_id,
   notes: props.quote.notes || null,
   lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
+  current_quote_status_id: props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {

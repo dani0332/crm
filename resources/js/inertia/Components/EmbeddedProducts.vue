@@ -90,6 +90,7 @@ const sendDocumentLoader = ref(false);
 const viewDocumentLoader = ref(false);
 const downloadDocumentLoader = ref(false);
 const addDocumentLoader = ref(false);
+const bookEPOnSageLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
@@ -196,6 +197,49 @@ const viewDocument = id => {
       viewDocumentLoader.value = false;
     });
 };
+const rescheduleEPBooking = async item => {
+  try {
+    let epTransactionId = getFirstPriceWithTransaction(item.prices)
+      ?.transactions[0]?.id;
+    if (!epTransactionId) {
+      notification.error({
+        title: 'System failed to schedule booking of Embedded Product',
+        position: 'top',
+      });
+      return;
+    }
+    bookEPOnSageLoader.value = true;
+    const response = await axios.post(
+      route('embedded-products.reschedule-sage-booking'),
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epTransactionId: epTransactionId,
+        insuranceProviderId: item.insurance_provider_id,
+      },
+    );
+    bookEPOnSageLoader.value = false;
+    if (response.data.success) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    } else {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    }
+  } catch (err) {
+    bookEPOnSageLoader.value = false;
+    notification.error({
+      title: 'Embedded Product Booking Failed',
+      position: 'top',
+    });
+  }
+};
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -225,6 +269,18 @@ const epTable = reactive({
     {
       text: 'Payment Status',
       value: 'payment_status',
+    },
+    {
+      text: 'Api Status',
+      value: 'policy_status',
+    },
+    {
+      text: 'Sage AR Receipt ID',
+      value: 'sage_ar_payment_receipt_id',
+    },
+    {
+      text: 'Sage Status',
+      value: 'sage_status',
     },
     {
       text: 'Actions',
@@ -268,6 +324,11 @@ const onCopyText = () => {
     page.props.quoteTypeCodeEnum.Bike.toLowerCase()
   ) {
     providerCode = props.quote.car_plan?.insurance_provider?.code;
+  } else if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Home.toLowerCase()
+  ) {
+    providerCode = props.quote.insurance_provider?.code;
   }
 
   let paymentLink =
@@ -572,6 +633,26 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
+          <template #item-sage_ar_payment_receipt_id="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.sage_ar_payment_receipt_id ?? '-'
+            }}
+          </template>
+          <template #item-sage_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.sage_status ?? '-'
+            }}
+          </template>
+
+          <template #item-policy_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.policy_status ?? '-'
+            }}
+          </template>
+
           <template #item-updated_at="item">
             <span
               v-if="
@@ -667,6 +748,19 @@ const onAddDocumentSubmit = event => {
               >
                 Void Payment
               </x-button>
+              <!--              <x-button
+                v-if="
+                  item.can_book_embedded_product &&
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.payment_gateway_id ==
+                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+                "
+                size="xs"
+                color="emerald"
+                @click.prevent="rescheduleEPBooking(item)"
+              >
+                Book Embedded Product
+              </x-button>-->
             </div>
           </template>
         </DataTable>
@@ -678,6 +772,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onActivitySubmit"
         >
           <div class="grid gap-4">
@@ -725,6 +820,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onVoidSubmit"
         >
           <div>
@@ -818,6 +914,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onAddDocumentSubmit"
         >
           <template #header>

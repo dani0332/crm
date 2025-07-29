@@ -7,13 +7,9 @@ namespace App\Console\Commands;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Jobs\WatermarkDocumentsJob;
-use App\Models\ApplicationStorage;
-use App\Models\BusinessQuote;
-use App\Models\DocumentType;
+use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Services\Logger\LoggerService;
-use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 
@@ -40,17 +36,17 @@ class PolicyBulkSendDocuments extends Command
      */
     public function handle(): int
     {
-
         LoggerService::info('PolicyBulkSendDocuments Started');
-        // Define the array of codes to process
+
         $codes = [
-            'HEA-X9HJM5HD', 'HEA-MXXDCEFX', 'HEA-7F8GXP7S', 'HEA-VJ72TGS8', 'HEA-9SK6W8Q7',
-            'HEA-MHKSVKJ6', 'HEA-ZEF3H47V', 'HEA-LWPAWGWL', 'HEA-258XRNMT', 'HEA-TT4VF2UF',
-            'HEA-VL8NZWGF', 'HEA-77AQ6B9Q', 'HEA-DW2G2WMR', 'HEA-V6WKHP8E', 'HEA-XR4NSCYC',
-            'HEA-JEL85SRG', 'HEA-ZKGSWLQ5', 'HEA-2CKMM762', 'HEA-E6XW6Z5H', 'HEA-DPTHTL5Z',
-            'HEA-HREZ4S35', 'HEA-D4K4H9QZ', 'HEA-95PL8EZF', 'HEA-6YTA8VBP', 'HEA-PEMRLX8F',
-            'HEA-MWQYXWRW', 'HEA-P5LJTVEM', 'HEA-47QFDZS4', 'HEA-EABJJTCP', 'HEA-8TZBHZTF',
-            'BUS-UFU96QAC',
+            'HEA-3PJLNKL6',
+            'CAR-QK7EHTE5',
+            'CAR-UTJB3A2V',
+            'CAR-SUQGE9NJ',
+            'CAR-6XT6SVA9',
+            'CAR-XQBJCYZX',
+            'CAR-92HB2DPQ',
+            'CAR-QPZRVRTU',
         ];
 
         if (empty($codes)) {
@@ -63,27 +59,18 @@ class PolicyBulkSendDocuments extends Command
         $notFound = [];
 
         foreach ($codes as $code) {
-            $isProcessEnabled = ApplicationStorage::where('key_name', 'IS_AML_ENTITY_SEARCH_ENABLED')->first();
-            if ($isProcessEnabled && $isProcessEnabled->value == 0) {
-                LoggerService::info('PolicyBulkSendDocuments - IS_AML_ENTITY_SEARCH_ENABLED is set to Disabled.');
-
-                return 0;
-            }
-
             if (! $code) {
                 LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
 
                 continue;
             }
 
-            $modelType = null;
-
-            if ($code == 'BUS-UFU96QAC') {
-                $quoteObject = BusinessQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Business;
-            } else {
+            if ($code == 'HEA-3PJLNKL6') {
                 $quoteObject = HealthQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
                 $modelType = quoteTypeCode::Health;
+            } else {
+                $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Car;
             }
 
             if (! $quoteObject) {
@@ -92,19 +79,6 @@ class PolicyBulkSendDocuments extends Command
 
                 continue;
             }
-
-            foreach ($quoteObject->documents as $document) {
-                LoggerService::info("PolicyBulkSendDocuments - Water mark document: {$document->id} for code: {$code}");
-                $documentType = DocumentType::where('code', $document->document_type_code)->first();
-                $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quoteObject, $documentType);
-
-                if ($quoteObject && $isWaterMarkQualifyDoc && $documentType) {
-                    WatermarkDocumentsJob::dispatchSync(
-                        $document->id, $quoteObject->uuid, $documentType->id
-                    );
-                }
-            }
-
             $payload = (object) [
                 'model_type' => $modelType,
                 'quote_id' => $quoteObject->id,

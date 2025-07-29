@@ -14,6 +14,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
+use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -327,7 +328,7 @@ class AllocationService extends BaseService
         }
 
         if ($request->isAllocated() || $request->isSameAdvisor()) {
-            $message = 'Lead allocated successfully';
+            $message = 'Advisor assigned successfully!';
 
             if ($request->isSameAdvisor()) {
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
@@ -358,5 +359,70 @@ class AllocationService extends BaseService
             'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
             'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
         ];
+    }
+
+    public function isBusinessHours(): bool
+    {
+        try {
+            $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+            $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+
+            $currentTime = now();
+            $isWeekend = $currentTime->isWeekend();
+            $isWithinTimeRange = $currentTime->between($startTime, $endTime);
+
+            $isBusinessHours = ! $isWeekend && $isWithinTimeRange;
+
+            LoggerService::info(self::class.' - isBusinessHours: Business hours calculation', extra: [
+                'start_time' => $startTime->format('H:i'),
+                'end_time' => $endTime->format('H:i'),
+                'current_time' => $currentTime->format('H:i'),
+                'is_weekend' => $isWeekend,
+                'is_within_time_range' => $isWithinTimeRange,
+                'is_business_hours' => $isBusinessHours,
+            ]);
+
+            return $isBusinessHours;
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
+
+            return false;
+        }
+    }
+
+    public function isMaxCapReached(User $advisor, $quoteTypeId): bool
+    {
+        $leadAllocation = $advisor->getFirstFromLeadAllocation($quoteTypeId);
+
+        if (! $leadAllocation) {
+            LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
+                'advisor_id' => $advisor->id,
+                'advisor_name' => $advisor->name,
+            ]);
+
+            return true;
+        }
+
+        $allocationCount = $leadAllocation->allocation_count;
+        $maxCapacity = $leadAllocation->max_capacity;
+
+        $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
+
+        return ! $isAdvisorAvailable;
+    }
+
+    public function getValidAdvisorStatuses(): array
+    {
+        $isBusinessHours = $this->isBusinessHours();
+
+        LoggerService::info(self::class.' - getValidAdvisorStatuses: Business hours check', extra: [
+            'is_business_hours' => $isBusinessHours,
+        ]);
+
+        if ($isBusinessHours) {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE];
+        } else {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+        }
     }
 }

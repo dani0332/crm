@@ -216,8 +216,11 @@ onMounted(() => {
                   v-model="planDetailsForm.price_vat_not_applicable"
                   :disabled="
                     !state.isEdit ||
-                    (quoteType != quoteTypeCodeEnum.Life &&
-                      quoteType != quoteTypeCodeEnum.Business)
+                    ![
+                      quoteTypeCodeEnum.Life,
+                      quoteTypeCodeEnum.SAVINGS,
+                      quoteTypeCodeEnum.Business,
+                    ].includes(quoteType)
                   "
                   :error="planDetailsForm.errors.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
@@ -291,7 +294,10 @@ onMounted(() => {
                   "
                   :disabled="
                     !state.isEdit ||
-                    (quoteType == quoteTypeCodeEnum.Life &&
+                    ([
+                      quoteTypeCodeEnum.Life,
+                      quoteTypeCodeEnum.SAVINGS,
+                    ].includes(quoteType) &&
                       quoteType != quoteTypeCodeEnum.Business)
                   "
                   :error="planDetailsForm.errors.price_vat_applicable"

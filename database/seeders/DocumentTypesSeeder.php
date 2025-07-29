@@ -603,6 +603,25 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
             ],
             [
+                'code' => DocumentTypeCode::Illustration_Document,
+                'text' => 'Illustration Document',
+                'description' => '',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Life,
+                'folder_path' => 'life',
+                'accepted_files' => '.pdf,.docx',
+                'max_files' => 15,
+                'max_size' => 25,
+                'is_required' => 0,
+                'send_to_customer' => 0,
+                'sort_order' => 1,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::QUOTE,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+            [
                 'code' => 'BOR_SIGN',
                 'text' => 'Bor Signature',
                 'quote_type_id' => null,
@@ -610,7 +629,7 @@ class DocumentTypesSeeder extends Seeder
                 'folder_path' => 'bor',
                 'accepted_files' => '.pdf,.png,.jpeg,.jpg',
                 'max_files' => 5,
-            ],
+            ]
         ];
 
         foreach ($quoteDocuments as $document) {

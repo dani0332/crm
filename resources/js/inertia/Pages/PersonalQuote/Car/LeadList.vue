@@ -11,12 +11,12 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
-  genericRequestEnum: Array,
+  genericRequestEnum: Object,
   isBetaUser: Boolean,
   teams: Object,
   authorizedDays: Number,
   assignmentTypes: Object,
-  insurerAMLStatus: Array,
+  insurerAMLStatus: Object,
 });
 
 const page = usePage();
@@ -105,6 +105,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
 const ecommerceOptions = [
@@ -293,6 +294,7 @@ const filters = reactive({
   registration_type: carRegistrationTypeEnum.PERSONAL,
   vehicle_use: '',
   company_name: '',
+  private_client: 'all',
 });
 
 const teamUsers =
@@ -424,13 +426,70 @@ const objToUrl = obj => {
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status_id',
+    'tier_id',
+    'vehicle_type_id',
+    'car_type_insurance_id',
+    'quote_batch_id',
+    'advisor_id',
+    'teams',
+    'payment_status_id',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    // Check for indexed array format like quote_status_id[0], quote_status_id[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status_id[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
     } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && value === '') {
+      // Empty string for ecommerce
+      filters[key] = '';
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -593,6 +652,37 @@ watch(
 );
 
 const onExport = (url, isLoading = false, exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        title: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   exportLoader.value = isLoading;
 
   // Add exportType to URL parameters if it's not already there
@@ -608,9 +698,10 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     exportType: exportType,
     url: `${window.location.origin}${url}`,
+    filters: { ...filters },
   };
 
-  console.log('onexport', payload);
+  // console.log('onexport', payload);
   logAndExportQuotes(payload)
     .then(result => {
       if (result.data.message) {
@@ -1055,6 +1146,19 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"
@@ -1160,43 +1264,6 @@ const insurerAMLStatusOption = computed(() => {
             <template #tooltip>
               <span class="font-medium">
                 Paid dates are required to export data.
-              </span>
-            </template>
-          </x-tooltip>
-
-          <x-button
-            v-if="
-              canExport &&
-              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            size="sm"
-            color="emerald"
-            @click="
-              onExport(
-                `/car/leads-details-with-email/${
-                  genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
-                }?${objToUrl(filters)}`,
-                true,
-              )
-            "
-            :loading="exportLoader"
-            class="justify-self-start mr-3"
-          >
-            Extract leads detail with email/mobile_no
-          </x-button>
-          <x-tooltip
-            v-if="
-              !canExport &&
-              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            placement="right"
-          >
-            <x-button class="mr-3" tag="div" size="sm" color="emerald"
-              >Extract leads detail with email/mobile_no</x-button
-            >
-            <template #tooltip>
-              <span class="font-medium">
-                Created dates are required to export data.
               </span>
             </template>
           </x-tooltip>
