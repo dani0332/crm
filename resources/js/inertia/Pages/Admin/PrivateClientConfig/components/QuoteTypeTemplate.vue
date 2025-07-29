@@ -185,10 +185,8 @@ const handleNationalityChange = (profileIndex, newNationalities) => {
   isUserEditing.value = true;
   profiles.value[profileIndex].nationalityIds = newNationalities;
 
-  // Reset editing flag after a short delay
-  setTimeout(() => {
-    isUserEditing.value = false;
-  }, 100);
+  // Clear any validation errors when nationality changes
+  clearFieldError(profileIndex, 'nationalityIds');
 };
 
 // Handler for profile deletion confirmation

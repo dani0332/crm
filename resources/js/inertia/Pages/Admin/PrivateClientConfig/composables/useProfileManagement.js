@@ -1,4 +1,4 @@
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue';
 
 export function useProfileManagement(
   props,
@@ -11,11 +11,24 @@ export function useProfileManagement(
   const deletingProfileIndex = ref(-1); // Track which profile is being deleted
   const showDeleteConfirmation = ref(false); // Show/hide delete confirmation dialog
   const profileToDelete = ref(-1); // Store profile index to delete
+  let highlightTimeoutId = null; // Store timeout ID for cleanup
 
   // Computed property to check if we're deleting the last profile
   const isLastProfileDeletion = computed(() => {
     return profiles.value.length === 1 && profileToDelete.value === 0;
   });
+
+  // Watch for changes in profiles and reset isUserEditing flag
+  watch(
+    profiles,
+    () => {
+      // If user was editing, the change has been applied, so reset the flag
+      if (isUserEditing.value) {
+        isUserEditing.value = false;
+      }
+    },
+    { deep: true },
+  );
 
   const getFieldKey = field => {
     if (
@@ -54,17 +67,25 @@ export function useProfileManagement(
     const newIndex = profiles.value.length - 1;
     highlightedProfileIndex.value = newIndex;
 
-    setTimeout(() => {
+    // Use nextTick for DOM operations instead of setTimeout
+    nextTick(() => {
       const element = document.querySelector(
         `[data-profile-index="${quoteTypeCode}-${newIndex}"]`,
       );
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 100);
+    });
 
-    setTimeout(() => {
+    // Clear any existing timeout to prevent memory leaks
+    if (highlightTimeoutId) {
+      clearTimeout(highlightTimeoutId);
+    }
+
+    // Set a timeout to remove the highlight effect
+    highlightTimeoutId = setTimeout(() => {
       highlightedProfileIndex.value = -1;
+      highlightTimeoutId = null;
     }, 3000);
   };
 
@@ -125,15 +146,18 @@ export function useProfileManagement(
     deletingProfileIndex.value = profileToDelete.value;
     showDeleteConfirmation.value = false;
 
-    // Add animation delay
-    setTimeout(() => {
-      const result = removeProfile(profileToDelete.value, collapsedProfiles);
-      deletingProfileIndex.value = -1;
-      profileToDelete.value = -1;
+    // Use nextTick to ensure UI updates before performing the deletion
+    await nextTick();
 
-      // Could emit an event here for additional feedback if needed
-      // emit('profileDeleted', result);
-    }, 300);
+    // Add a small delay for animation to be visible
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const result = removeProfile(profileToDelete.value, collapsedProfiles);
+    deletingProfileIndex.value = -1;
+    profileToDelete.value = -1;
+
+    // Could emit an event here for additional feedback if needed
+    // emit('profileDeleted', result);
   };
 
   const cancelProfileDeletion = () => {
@@ -168,10 +192,7 @@ export function useProfileManagement(
     clearFieldError(profileIndex, 'isDefaultCriteria');
     clearFieldError(profileIndex, 'nationalityIds');
 
-    // Reset editing flag after a short delay
-    setTimeout(() => {
-      isUserEditing.value = false;
-    }, 100);
+    // The isUserEditing flag will be reset by the watcher
   };
 
   const initializeProfiles = initialConfig => {
@@ -357,6 +378,14 @@ export function useProfileManagement(
       { deep: true },
     );
   };
+
+  // Clean up timeouts when component is unmounted
+  onBeforeUnmount(() => {
+    if (highlightTimeoutId) {
+      clearTimeout(highlightTimeoutId);
+      highlightTimeoutId = null;
+    }
+  });
 
   return {
     profiles,
