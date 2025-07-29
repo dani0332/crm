@@ -1370,7 +1370,6 @@ class SendUpdateLogService
         ];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $emailData->emirateVisaId = $quote->emirate_of_your_visa_id;
             $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
         }
 
