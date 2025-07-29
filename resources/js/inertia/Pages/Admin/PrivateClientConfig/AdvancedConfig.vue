@@ -77,6 +77,18 @@ const handleConfigurationSaved = async quoteTypeCode => {
   await loadConfigurationForTab(quoteTypeCode);
 };
 
+const templateComponents = {
+  [props.quoteTypeCodeEnum.Car]: CarTemplate,
+  [props.quoteTypeCodeEnum.Health]: HealthTemplate,
+  [props.quoteTypeCodeEnum.Life]: LifeTemplate,
+  [props.quoteTypeCodeEnum.Home]: HomeTemplate,
+  [props.quoteTypeCodeEnum.Yacht]: YachtTemplate,
+};
+
+const getTemplateComponent = quoteTypeCode => {
+  return templateComponents[quoteTypeCode];
+};
+
 onMounted(async () => {
   await nextTick();
   if (props.quoteTypes.length > 0) {
@@ -159,84 +171,15 @@ onMounted(async () => {
           </div>
 
           <div v-else class="space-y-6">
-            <CarTemplate
-              v-if="activeTab === quoteTypeCodeEnum.Car"
-              :quote-type="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Car)
-              "
-              :initial-config="configurations[quoteTypeCodeEnum.Car]"
-              :dropdown-data="dropdownData[quoteTypeCodeEnum.Car]"
-              :version-data="versionData[quoteTypeCodeEnum.Car]"
-              @configuration-saved="
-                handleConfigurationSaved(quoteTypeCodeEnum.Car)
-              "
-              @version-loaded="
-                handleVersionLoaded(quoteTypeCodeEnum.Car, $event)
-              "
-            />
-
-            <HealthTemplate
-              v-if="activeTab === quoteTypeCodeEnum.Health"
-              :quote-type="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Health)
-              "
-              :initial-config="configurations[quoteTypeCodeEnum.Health]"
-              :dropdown-data="dropdownData[quoteTypeCodeEnum.Health]"
-              :version-data="versionData[quoteTypeCodeEnum.Health]"
-              @configuration-saved="
-                handleConfigurationSaved(quoteTypeCodeEnum.Health)
-              "
-              @version-loaded="
-                handleVersionLoaded(quoteTypeCodeEnum.Health, $event)
-              "
-            />
-
-            <LifeTemplate
-              v-if="activeTab === quoteTypeCodeEnum.Life"
-              :quote-type="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Life)
-              "
-              :initial-config="configurations[quoteTypeCodeEnum.Life]"
-              :dropdown-data="dropdownData[quoteTypeCodeEnum.Life]"
-              :version-data="versionData[quoteTypeCodeEnum.Life]"
-              @configuration-saved="
-                handleConfigurationSaved(quoteTypeCodeEnum.Life)
-              "
-              @version-loaded="
-                handleVersionLoaded(quoteTypeCodeEnum.Life, $event)
-              "
-            />
-
-            <HomeTemplate
-              v-if="activeTab === quoteTypeCodeEnum.Home"
-              :quote-type="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Home)
-              "
-              :initial-config="configurations[quoteTypeCodeEnum.Home]"
-              :dropdown-data="dropdownData[quoteTypeCodeEnum.Home]"
-              :version-data="versionData[quoteTypeCodeEnum.Home]"
-              @configuration-saved="
-                handleConfigurationSaved(quoteTypeCodeEnum.Home)
-              "
-              @version-loaded="
-                handleVersionLoaded(quoteTypeCodeEnum.Home, $event)
-              "
-            />
-
-            <YachtTemplate
-              v-if="activeTab === quoteTypeCodeEnum.Yacht"
-              :quote-type="
-                quoteTypes.find(t => t.code === quoteTypeCodeEnum.Yacht)
-              "
-              :initial-config="configurations[quoteTypeCodeEnum.Yacht]"
-              :dropdown-data="dropdownData[quoteTypeCodeEnum.Yacht]"
-              :version-data="versionData[quoteTypeCodeEnum.Yacht]"
-              @configuration-saved="
-                handleConfigurationSaved(quoteTypeCodeEnum.Yacht)
-              "
-              @version-loaded="
-                handleVersionLoaded(quoteTypeCodeEnum.Yacht, $event)
-              "
+            <component
+              :is="getTemplateComponent(activeTab)"
+              v-if="activeTab && getTemplateComponent(activeTab)"
+              :quote-type="quoteTypes.find(t => t.code === activeTab)"
+              :initial-config="configurations[activeTab]"
+              :dropdown-data="dropdownData[activeTab]"
+              :version-data="versionData[activeTab]"
+              @configuration-saved="handleConfigurationSaved(activeTab)"
+              @version-loaded="handleVersionLoaded(activeTab, $event)"
             />
           </div>
         </div>
