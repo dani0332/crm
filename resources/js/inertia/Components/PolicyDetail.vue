@@ -1002,8 +1002,9 @@ const FieldLoader = defineComponent({
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Policy Sum Assured</label
-                  ><span class="text-red-500">*</span>
+                    >Policy Sum Assured
+                    <span class="text-red-500">*</span></label
+                  >
                   <template #tooltip>
                     <span>{{
                       productionProcessTooltipEnum.POLICY_SUM_ASSURED
