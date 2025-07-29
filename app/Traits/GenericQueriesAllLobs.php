@@ -12,10 +12,12 @@ use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\EmirateEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\Emirate;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
@@ -335,6 +337,12 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
+        // Check if this is an Abu Dhabi health quote lead
+        $bookPolicyDetails['isHealthAUHLead'] = strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
+                                            isset($record->emirate_of_your_visa_id) &&
+                                            $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
+
+
 
         return $bookPolicyDetails;
     }
