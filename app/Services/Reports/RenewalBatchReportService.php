@@ -20,6 +20,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\CRUDService;
+use App\Services\Logger\LoggerService;
 use App\Services\Query;
 use App\Services\Request;
 use App\Traits\GetUserTreeTrait;
@@ -62,6 +63,8 @@ class RenewalBatchReportService extends BaseService
             ->orderBy('renewal_batches.end_date');
 
         $query = $this->applyFilters($query, $request->all());
+
+        LoggerService::sql(self::class.' - Renewal Batch Report Query', $query);
 
         return $query->paginate(15)->withQueryString();
     }
