@@ -1172,15 +1172,15 @@ const enableExchangeRateEdit = () => {
 };
 
 const getTotalAnnualPriceAED = () => {
-  const priceInAED = Math.round(
-    (ecomDetail.value?.isManualPlan
-      ? ecomDetail.value?.totalPrice * planExchangeRate.value
-      : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100
-  ) / 100;
-
+  const priceInAED =
+    Math.round(
+      (ecomDetail.value?.isManualPlan
+        ? ecomDetail.value?.totalPrice * planExchangeRate.value
+        : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100,
+    ) / 100;
 
   return numberFormat(
-    priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1)
+    priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
   );
 };
 </script>
@@ -2406,9 +2406,7 @@ const getTotalAnnualPriceAED = () => {
               >
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
-                  {{
-                    getTotalAnnualPriceAED()
-                  }}
+                  {{ getTotalAnnualPriceAED() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
