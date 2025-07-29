@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Services\SplitPaymentService;
+use App\Rules\ValidateAuthorizedPayment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PlanDetailsRequest extends FormRequest
@@ -64,7 +64,8 @@ class PlanDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
-            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code, $quoteModel);
+            $rule = new ValidateAuthorizedPayment($code, $quoteModel);
+            $rule->validate($validator, $code);
         });
     }
 }

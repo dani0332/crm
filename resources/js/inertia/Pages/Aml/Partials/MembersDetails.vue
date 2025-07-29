@@ -100,7 +100,6 @@ const memberForm = useForm({
   id: null,
   first_name: null,
   last_name: null,
-  nationality_id: null,
   dob: null,
   relation_code: null,
   nationality_id: null,
@@ -264,13 +263,15 @@ function memberSubmit(isValid) {
           />
         </x-field>
         <x-field label="Nationality" required>
-          <!-- :hasError="isEmptyField" -->
-          <ComboBox
+          <x-select
             :single="true"
             v-model="memberForm.nationality_id"
             placeholder="Select Nationality"
             :options="nationalitiesOptions"
             class="w-full"
+            filterable
+            filterPlaceholder="Select Nationality...."
+            :rules="[isRequired]"
           />
         </x-field>
         <x-field label="Date of Birth" required>
