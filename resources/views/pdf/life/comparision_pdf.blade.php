@@ -884,7 +884,7 @@
                             <td style="padding:0px !important;">
                                 <ul style="text-align: left; padding-left:15px;padding-top:0px;font-size:10px;line-height:1;">
                                     @foreach($riders[$planId] as $rider)
-                                        <li>{{ $rider->text }} ({{ getLifeRiderInfo($rider, $plans[$planId]) }})</li>
+                                        <li>{{ $rider->text }} ({{ app(\App\Services\Life\LifeQuoteService::class)->getLifeRiderInfo($rider, $plans[$planId]) }})</li>
                                     @endforeach
                                 </ul>
                             </td>
