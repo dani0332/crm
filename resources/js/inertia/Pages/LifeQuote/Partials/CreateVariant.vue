@@ -739,7 +739,7 @@ const formattedActualPremium = useFormattedNumberField(
           />
         </div>
         <div
-          class="grid grid-cols-6 items-center gap-4 p-2 border-b"
+          class="grid grid-cols-6 items-center gap-4 p-2 border-b mb-4"
           v-for="(rider, index) in ridersData"
           :key="rider.riderId"
         >
@@ -747,36 +747,40 @@ const formattedActualPremium = useFormattedNumberField(
           <span class="text-gray-700">{{
             rider.active ? 'Included' : 'Optional'
           }}</span>
-          <x-input
-            type="number"
-            :rules="
-              rider.active
-                ? [
-                    isNonNegative,
-                    val => validateCoverValue(val),
-                    rider.inputRequired ? isRequired : () => true,
-                    val => validateRiderCoverValue(val, rider.riderId),
-                  ]
-                : []
-            "
-            step="any"
-            @keydown="e => preventInvalidInputs(e, false)"
-            :disabled="!rider.active"
-            class="w-full h-10 p-2 rounded-md"
-            v-model="rider.coverValue"
-          />
+          <div class="relative">
+            <x-input
+              type="number"
+              :rules="
+                rider.active
+                  ? [
+                      isNonNegative,
+                      val => validateCoverValue(val),
+                      rider.inputRequired ? isRequired : () => true,
+                      val => validateRiderCoverValue(val, rider.riderId),
+                    ]
+                  : []
+              "
+              step="any"
+              @keydown="e => preventInvalidInputs(e, false)"
+              :disabled="!rider.active"
+              class="w-full h-10 p-2 rounded-md"
+              v-model="rider.coverValue"
+            />
+          </div>
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <x-input
-            type="number"
-            :rules="
-              rider.active && props.plan.isManualPlan ? [isNonNegative] : []
-            "
-            step="any"
-            @keydown="e => preventInvalidInputs(e, false)"
-            class="w-full h-10 p-2 rounded-md"
-            :disabled="!rider.active || !props.plan.isManualPlan"
-            v-model="rider.price"
-          />
+          <div class="relative">
+            <x-input
+              type="number"
+              :rules="
+                rider.active && props.plan.isManualPlan ? [isNonNegative] : []
+              "
+              step="any"
+              @keydown="e => preventInvalidInputs(e, false)"
+              class="w-full h-10 p-2 rounded-md"
+              :disabled="!rider.active || !props.plan.isManualPlan"
+              v-model="rider.price"
+            />
+          </div>
         </div>
       </div>
     </div>
