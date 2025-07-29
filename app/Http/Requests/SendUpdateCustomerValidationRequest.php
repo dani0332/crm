@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -47,9 +48,16 @@ class SendUpdateCustomerValidationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
-            $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->select('advisor_id', 'email')->first();
+            $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->select('advisor_id', 'email', 'emirate_of_registration_id')->first();
             if (! $personalQuote?->advisor_id) {
                 $validator->errors()->add('error', 'Please select advisor');
+            }
+
+            $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
+            if ($this->sendUpdate->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+                if (in_array($this->action, [SendUpdateLogStatusEnum::ACTION_SNBU, SendUpdateLogStatusEnum::ACTION_SUC, SendUpdateLogStatusEnum::ACTION_SU])) {
+                    $validator->errors()->add('error', 'This action is currently disabled for this Send Update.');
+                }
             }
 
             // The str_contains condition is added only for the production environment and will be removed once the issue with comma-separated emails is resolved.

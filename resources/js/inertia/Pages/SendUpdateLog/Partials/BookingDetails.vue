@@ -59,6 +59,7 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
+  isEndorsementActionDisabled: Boolean,
 });
 
 const state = reactive({
@@ -782,6 +783,10 @@ const confirmationCheck = ref(false);
 const isStating = ref(false);
 
 const sendUpdatePermissionCheck = computed(() => {
+  if (props.isEndorsementActionDisabled) {
+    return true;
+  }
+  
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
     return !can(permissionsEnum.BOOK_UPDATE_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {

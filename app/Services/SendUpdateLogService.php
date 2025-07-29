@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
@@ -1812,5 +1813,17 @@ class SendUpdateLogService
     public function isReversalInvoiceEndorsement($taxInvoiceNumber)
     {
         return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
+    }
+
+    public function isEndorsementActionDisabled($sendUpdateLog)
+    {
+        $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->select('emirate_of_registration_id')->first();
+        $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
+
+        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::DUBAI) {
+            return true;
+        }
+
+        return false;
     }
 }
