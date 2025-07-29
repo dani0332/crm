@@ -31,6 +31,7 @@ use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
+use App\Repositories\CurrencyTypeRepository;
 use App\Repositories\UserRepository;
 use App\Services\BaseService;
 use App\Services\CapiRequestService;
@@ -441,6 +442,7 @@ class LifeQuoteService extends BaseService
             'lifeRiders' => $lifeRiders,
             'paymentTerms' => PaymentTermEnum::asArray(),
             'emailStatuses' => $emailStatuses,
+            'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'lifeCutOffDate' => $lifeCutOffDate,
         ];

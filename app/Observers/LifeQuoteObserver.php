@@ -84,7 +84,6 @@ class LifeQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-            event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));
         }
 
         if (
