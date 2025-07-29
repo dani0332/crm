@@ -782,7 +782,7 @@ const modals = reactive({
 const confirmationCheck = ref(false);
 const isStating = ref(false);
 
-const sendUpdatePermissionCheck = computed(() => {
+const isAUHEnable = computed(() => {
   if (
     props.isEndorsementActionDisabled &&
     [sendUpdateStatusEnum.ACTION_SNBU, sendUpdateStatusEnum.ACTION_SU].includes(
@@ -792,6 +792,10 @@ const sendUpdatePermissionCheck = computed(() => {
     return true;
   }
 
+  return false;
+});
+
+const sendUpdatePermissionCheck = computed(() => {
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
     return !can(permissionsEnum.BOOK_UPDATE_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
@@ -2477,7 +2481,9 @@ watch(
                   props.updateBtn &&
                   (isLackingPayment ||
                     disableMainBtn ||
-                    isTapCaptureProcessStart)
+                    isTapCaptureProcessStart ||
+                    isAUHEnable
+                  )
                 "
               >
                 <div>
@@ -2491,7 +2497,8 @@ watch(
                       :disabled="
                         isLackingPayment ||
                         disableMainBtn ||
-                        isTapCaptureProcessStart
+                        isTapCaptureProcessStart ||
+                        isAUHEnable
                       "
                     >
                       {{ props.updateBtn }}
@@ -2503,7 +2510,9 @@ watch(
                             ? disableMainBtn
                             : isTapCaptureProcessStart
                               ? 'Update booking already in queued.'
-                              : 'Action Needed: Please revise payment details to reflect plan changes.'
+                              : isAUHEnable
+                                ? 'Abu Dhabi policy financials will be recorded manually and not entered in Sage'
+                                : 'Action Needed: Please revise payment details to reflect plan changes.'
                         }}
                       </span>
                     </template>

@@ -1824,7 +1824,7 @@ class SendUpdateLogService
         $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->select('emirate_of_registration_id')->first();
         $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
 
-        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::DUBAI) {
+        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
             return true;
         }
 

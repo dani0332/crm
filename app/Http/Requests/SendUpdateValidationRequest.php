@@ -48,7 +48,7 @@ class SendUpdateValidationRequest extends FormRequest
             $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
             if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
                 if (in_array($this->action, [SendUpdateLogStatusEnum::ACTION_SNBU, SendUpdateLogStatusEnum::ACTION_SU])) {
-                    $validator->errors()->add('error', 'This action is currently disabled for this Send Update.');
+                    $validator->errors()->add('error', 'Abu Dhabi policy financials will be recorded manually and not entered in Sage');
                 }
             }
 
