@@ -11,6 +11,7 @@ use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\Life\LifeQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,6 +54,10 @@ class PersonalQuotesExport implements CsvExportableInterface
     private const ACCOMMODATION_TYPE = 'ACCOMMODATION TYPE';
     private const POSSESION_TYPE = 'POSSESION TYPE';
     private const REF_ID = 'REF-ID';
+    private const CURRENCY = 'CURRENCY';
+    private const SUM_ASSURED = 'SUM ASSURED';
+    private const SUM_ASSURED_CURRENCY = 'SUM ASSURED CURRENCY';
+    private const POLICY_SUM_ASSURED = 'POLICY SUM ASSURED';
 
     private string $quoteType = '';
     private array $quoteTypes = [];
@@ -75,6 +80,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
         ];
@@ -89,6 +95,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::CYCLE->value => CycleQuoteRepository::getData(true, requestParams: $requestParams)->get(),
             QuoteTypes::JETSKI->value => JetskiQuoteRepository::getData(true, requestParams: $requestParams)->get(),
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams)->get(),
+            QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true),
             default => abort(404),
         };
     }
@@ -106,6 +113,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::CYCLE->value => CycleQuoteRepository::getData(true, requestParams: $requestParams),
             QuoteTypes::JETSKI->value => JetskiQuoteRepository::getData(true, requestParams: $requestParams),
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams),
+            QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true),
             QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(forExport: true),
             default => abort(404),
         };
@@ -122,6 +130,7 @@ class PersonalQuotesExport implements CsvExportableInterface
 
     protected function getHeadings(string $quoteType): array
     {
+
         $headings = [
             QuoteTypes::BIKE->value => [
                 self::REF_ID,
@@ -259,6 +268,32 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::PREVIOUS_POLICY_NUMBER,
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
+            ],
+            QuoteTypes::LIFE->value => [
+                self::REF_ID,
+                self::FIRST_NAME,
+                self::LAST_NAME,
+                self::LEAD_STATUS,
+                self::ADVISOR,
+                self::CREATED_DATE,
+                self::LAST_MODIFIED_DATE,
+                self::TRANSAPP_CODE,
+                self::PREMIUM,
+                self::POLICY_NUMBER,
+                self::SOURCE,
+                self::LOST_REASON,
+                self::IS_ECOMMERCE,
+                self::RENEWAL_BATCH,
+                self::PREVIOUS_POLICY_EXPIRY_DATE,
+                self::PREVIOUS_POLICY_PREMIUM,
+                self::PREVIOUS_POLICY_NUMBER,
+                self::TRANSACTION_APPROVED_DATE,
+                self::BOOKING_DATE,
+                self::PRIVATE_CLIENT,
+                self::CURRENCY,
+                self::SUM_ASSURED,
+                self::SUM_ASSURED_CURRENCY,
+                self::POLICY_SUM_ASSURED,
             ],
         ];
 
@@ -441,6 +476,32 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['previous_policy_number'],
                 $baseFields['transaction_approved_date'],
                 $baseFields['booking_date'],
+            ],
+            QuoteTypes::LIFE->value => [
+                $quote->code,
+                $quote->first_name,
+                $quote->last_name,
+                optional($quote->quoteStatus)->text ?? '',
+                optional($quote->advisor)->name,
+                date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                $quote->transapp_code,
+                $quote->premium,
+                $quote->policy_number,
+                $quote->source,
+                optional($quote->quoteDetail)?->lostReason->text ?? '',
+                $quote->is_ecommerce ? 'Yes' : 'No',
+                $quote->renewal_batch,
+                $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
+                $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+                $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                $baseFields['pc_customer'],
+                $quote->lifeQuote?->sumInsuredCurrency->text ?? '',
+                $quote->lifeQuote?->sum_insured_value ?? '',
+                $quote->lifeQuote?->policySumAssuredCurrency->text ?? '',
+                $quote->lifeQuote?->policy_sum_assured ?? '',
             ],
             default => [],
         };

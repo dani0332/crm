@@ -14,6 +14,7 @@ final class RuleTypeEnum extends Enum
     public const LEAD_SOURCE = '1';
     public const CAR_MAKE_MODEL = '2';
     public const VEHICLE_USE = '3';
+    public const FIC = '4';
 
     /**
      * const @var array
@@ -22,5 +23,6 @@ final class RuleTypeEnum extends Enum
         self::LEAD_SOURCE,
         self::CAR_MAKE_MODEL,
         self::VEHICLE_USE,
+        self::FIC,
     ];
 }

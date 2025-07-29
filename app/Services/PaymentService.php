@@ -136,17 +136,13 @@ class PaymentService extends BaseService
             ]);
             LoggerService::info("Start Retry Prepayment Posting of Payment split for payment code : {$paymentCode} and sr no : {$srNo}");
             if ((new SageApiService)->isSageEnabled()) {
-                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $paymentSplit, $paymentSplit->collection_amount);
-                if ($sageResponse['status'] !== 'success') {
+                $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($request, $quoteModel, $payment, $paymentSplit, $paymentSplit->collection_amount);
+
+                if (! $sageResponse['status']) {
                     LoggerService::warning("Sage response error for payment code : {$paymentCode} and sr no : {$srNo}");
-                    return [
-                        'success' => false,
-                        'message' => 'Prepayment posting failed, please try again later.',
-                    ];
+                    vAbort($sageResponse['message']);
                 }
-                $paymentSplit->sage_reciept_id = $sageResponse['response'];
                 LoggerService::info("Sage Receipt ID created: {$paymentSplit->sage_reciept_id} for payment code : {$paymentCode} and sr no : {$srNo}");
-                $paymentSplit->save();
                 return [
                     'success' => true,
                     'message' => 'Prepayment posting to Sage successfully.',

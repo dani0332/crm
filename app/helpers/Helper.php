@@ -195,6 +195,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('quote_status_id', $statusId)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function ($query) {
+            $query->with([
+                'nationality' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     $modelQuery = $modelType::when($modelType == BusinessQuote::class, function ($query) {
@@ -209,6 +218,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('advisor_id', auth()->user()->id)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function ($query) {
+            $query->with([
+                'nationality' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     // Reminder: previous quote id is not available in personal quote

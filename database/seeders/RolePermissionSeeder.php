@@ -22,13 +22,16 @@ class RolePermissionSeeder extends Seeder
         $this->addRetryPrePaymentPermission();
         $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
+        // $this->addBridgerSkipPermission();
         $this->addBridgerSkipPermission();
+        $this->addPaymentVerificationLowerAmountPermission();
         $this->addPostPrepaymentButtonPermission();
         $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
         $this->addRenewalsUploadPermission();
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
+        $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
     }
 
@@ -154,6 +157,17 @@ class RolePermissionSeeder extends Seeder
         ]);
     }
 
+    private function addPaymentVerificationLowerAmountPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::PAYMENT_VERIFICATION_LOWER_AMOUNT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function addInsurerPaymentLinkPermission(): void
     {
         Permission::firstOrCreate([
@@ -256,6 +270,26 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+    
+    private function addPlanDetailsEditPermission(): void
+    {
+        $permission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::PLAN_DETAILS_EDIT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
     }
 
     private function addOverrideCommissionPermission(): void
