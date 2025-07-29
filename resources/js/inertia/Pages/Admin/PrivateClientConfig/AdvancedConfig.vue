@@ -74,10 +74,6 @@ const handleVersionLoaded = (quoteTypeCode, version) => {
 };
 
 const handleConfigurationSaved = async quoteTypeCode => {
-  // Add a small delay to ensure database transaction is committed
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // Force reload the configuration from server
   await loadConfigurationForTab(quoteTypeCode);
 };
 
