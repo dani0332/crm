@@ -1031,7 +1031,8 @@ class SageApiService
                             'sage error' => $postedResponse['error'],
                         ]);
                         $response['message'] = 'Error while posting to sage - Ref:'.$quote->code;
-                        if ($this->sageHasProcessingConflict($postedResponse['error'])) {
+                        $sageErrorMessage = $postedResponse['error']['message']['value'] ?? $postedResponse['error'] ?? null;
+                        if ($this->sageHasProcessingConflict($sageErrorMessage)) {
                             $response['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
                         }
                         $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, $quote, 4, 4, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);

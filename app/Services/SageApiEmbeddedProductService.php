@@ -320,7 +320,8 @@ class SageApiEmbeddedProductService
                         'error' => $postedResponse['error'],
                     ]);
                     $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' :  Error while posting to sage';
-                    if ($this->sageApiService->sageHasProcessingConflict($postedResponse['error'])) {
+                    $sageErrorMessage = $postedResponse['error']['message']['value'] ?? $postedResponse['error'] ?? null;
+                    if ($this->sageApiService->sageHasProcessingConflict($sageErrorMessage)) {
                         $response['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
                     }
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
