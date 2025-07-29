@@ -143,7 +143,9 @@ const sendDcoument = id => {
 
 const downloadFile = download => {
   const save = document.createElement('a');
-  const documentPath = download.is_watermarked ? download.watermarked_doc_path : download.path;
+  const documentPath = download.is_watermarked
+    ? download.watermarked_doc_path
+    : download.path;
 
   if (typeof save.download !== 'undefined') {
     // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
@@ -885,7 +887,10 @@ const onAddDocumentSubmit = event => {
             :loading="viewDocumentLoader"
           >
             <template #item-document_type="item">
-              <div class="flex flex-row gap-3" :class="item.is_watermarked ? 'text-primary' : 'text-secondary'">
+              <div
+                class="flex flex-row gap-3"
+                :class="item.is_watermarked ? 'text-primary' : 'text-secondary'"
+              >
                 {{ item.document_type }}
               </div>
             </template>
@@ -896,7 +901,9 @@ const onAddDocumentSubmit = event => {
                   size="xs"
                   color="primary"
                   outlined
-                  :href="item.is_watermarked ? item.watermarked_doc_url : item.url"
+                  :href="
+                    item.is_watermarked ? item.watermarked_doc_url : item.url
+                  "
                   target="_blank"
                 >
                   View
