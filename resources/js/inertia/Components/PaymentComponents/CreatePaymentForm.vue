@@ -2140,12 +2140,14 @@ const validateInsurerPaymentLink = () => {
  * @returns {boolean}
  */
 const isAllowedToApproveLowerAmount = () => {
-  const isUpdateBooked = props.sendUpdate &&
+  const isUpdateBooked =
+    props.sendUpdate &&
     props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
 
   const isPolicyBooked =
     !props.sendUpdate &&
-    props.quoteRequest?.quote_status_id === page.props.quoteStatusEnum?.PolicyBooked;
+    props.quoteRequest?.quote_status_id ===
+      page.props.quoteStatusEnum?.PolicyBooked;
 
   return isUpdateBooked || isPolicyBooked;
 };
@@ -2156,7 +2158,10 @@ const validateViewPayment = isValid => {
     parseFloat(splitAmountModels.value[splitPaymentNo.value]) >
     parseFloat(paymentMethodsForm.collection_amount)
   ) {
-    if (isAllowedToApproveLowerAmount() && can(permissionEnum.PAYMENT_VERIFICATION_LOWER_AMOUNT)) {
+    if (
+      isAllowedToApproveLowerAmount() &&
+      can(permissionEnum.PAYMENT_VERIFICATION_LOWER_AMOUNT)
+    ) {
       isApproveLowerAmountConfirmed.value = false;
     } else {
       approveErrorMessage.value =
