@@ -9,6 +9,7 @@ use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -122,6 +123,8 @@ class SaleSummaryReportService extends ManagementReport
             });
         }
         $this->applyFilters($query, $request, false, true);
+
+        LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
 
         $data = $query->get();
 

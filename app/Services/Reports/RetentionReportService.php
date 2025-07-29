@@ -60,7 +60,7 @@ class RetentionReportService extends BaseService
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($request);
 
-        LoggerService::sql(self::class.'::Retention Report', $query);
+        LoggerService::sql(self::class.' - Retention Report', $query);
 
         $allData = $query->get();
 
