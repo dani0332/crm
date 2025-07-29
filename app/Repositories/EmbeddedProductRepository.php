@@ -440,7 +440,7 @@ class EmbeddedProductRepository extends BaseRepository
                         'quoteId' => $leadId,
                         'modelType' => $modelType,
                         'epId' => $embedded_product_id,
-                        'isSalama' => true
+                        'isSalama' => true,
                     ]);
 
                 } else {
@@ -462,7 +462,7 @@ class EmbeddedProductRepository extends BaseRepository
                         $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
 
                         // make sure email required watermarked documents is not missing
-                        if(empty($missingReqWatermarkedDocTypes)) {
+                        if (empty($missingReqWatermarkedDocTypes)) {
 
                             $response = $this->fetchSendDocument([
                                 'quoteId' => $leadId,
@@ -561,12 +561,12 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         if (! $canSendDocuments) {
-            LoggerService::info('Documents cannot be sent', 
+            LoggerService::info('Documents cannot be sent',
                 extra: [
                     'et_id' => $transaction->id,
-                    'ep_category' => $ep->product_category, 
-                    'quote_status' => $quoteObject->quote_status_id, 
-                ], 
+                    'ep_category' => $ep->product_category,
+                    'quote_status' => $quoteObject->quote_status_id,
+                ],
                 context: ['ref_id' => $quoteObject->code]
             );
 
@@ -737,7 +737,7 @@ class EmbeddedProductRepository extends BaseRepository
             $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
 
             // make sure email required watermarked documents is not missing
-            if(! empty($missingReqWatermarkedDocTypes)) {
+            if (! empty($missingReqWatermarkedDocTypes)) {
                 return ['success' => false, 'message' => 'Required watermarked document is not found'];
             }
 

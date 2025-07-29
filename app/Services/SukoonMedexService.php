@@ -213,7 +213,7 @@ class SukoonMedexService
         EmbeddedProductRepository::sendDocument([
             'epId' => $this->transaction->product->embeddedProduct->id ?? null,
             'modelType' => $this->modelType,
-            'quoteId' => $this->currentQuote->id
+            'quoteId' => $this->currentQuote->id,
         ]);
     }
 
@@ -257,6 +257,7 @@ class SukoonMedexService
             } else {
                 // TODO::
                 LoggerService::error("Unsupported file type: fileMimeType: {$fileMimeType}, extension: {$extension}");
+
                 return false;
             }
 
@@ -268,14 +269,16 @@ class SukoonMedexService
                 ]);
                 LoggerService::info('watermark job completed for '.$this->currentQuote->uuid);
             }
+
             return $quoteDocument;
         } catch (\Exception $e) {
             LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->currentQuote->uuid}. Error: ".$e->getMessage());
+
             // throw $e; // Re-throw to trigger job retry TODO::
             return false;
         }
     }
-    
+
     /**
      * Check if the file is already being processed
      */
@@ -411,13 +414,13 @@ class SukoonMedexService
     {
         $savedDocuments = $this->syncSukoonDocuments();
 
-        if(count($savedDocuments) > 0) {
+        if (count($savedDocuments) > 0) {
             $this->transaction->load('documents');
         }
 
         // STEP #16 viewQuotePolicy
         $this->syncSukoonCommissions();
-        
+
         $sukoonDocuments = $this->transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonAllDocTypes())->get();
         $this->processWatermarkDocuments($sukoonDocuments);
 
@@ -442,11 +445,12 @@ class SukoonMedexService
 
                 // TODO:: need to verify watermark generate only when watermarked is not generated
                 $savedWatermarkedDocument = $this->watermarkDocument($documentItem);
-                if(! empty($savedWatermarkedDocument)) {
+                if (! empty($savedWatermarkedDocument)) {
                     array_push($watermarkedDocuments, $savedWatermarkedDocument);
                 }
             }
         }
+
         return $watermarkedDocuments;
     }
 
@@ -479,6 +483,7 @@ class SukoonMedexService
                     $savedDocuments = $this->syncGeneratedDocuments($listGeneratedDocumentResponse['documents'], $this->currentQuote, $this->transaction);
                 }
             }
+
             return $savedDocuments;
 
         } catch (Exception $e) {
@@ -1160,6 +1165,7 @@ class SukoonMedexService
                     $docCreatedTimestamp = $this->getDocumentCreatedTimestamp($docName);
                     if ($existedDocTimestamp >= $docCreatedTimestamp) {
                         $docStatus['skipped'][] = $docName;
+
                         continue;
                     }
                 }
@@ -1169,6 +1175,7 @@ class SukoonMedexService
                     $this->logFailure('DocumentType is missing', "DocumentType is not available for doc_code: {$docCode} & quote_type_id: {$this->quoteTypeId}");
 
                     $docStatus['skipped'][] = $docName;
+
                     continue;
                 }
 
@@ -1275,7 +1282,7 @@ class SukoonMedexService
                     'doc_uuid' => $docUuid,
                     'created_by_id' => null,
                     'watermarked_doc_name' => null,
-                    'watermarked_doc_url' => null
+                    'watermarked_doc_url' => null,
                 ];
 
                 return $documentData;

@@ -36,7 +36,7 @@ class QuoteDocument extends Model implements AuditableContract
 
     public function getIsWatermarkedAttribute()
     {
-        return !(empty($this->watermarked_doc_name) || empty($this->watermarked_doc_url));
+        return ! (empty($this->watermarked_doc_name) || empty($this->watermarked_doc_url));
     }
 
     public function createdBy()
