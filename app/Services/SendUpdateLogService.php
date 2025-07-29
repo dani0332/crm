@@ -1367,9 +1367,12 @@ class SendUpdateLogService
             'quote' => $sendUpdateLog->code,
             'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
             'refID' => $sendUpdateLog->code,
-            'emirateVisaId' => $quote->emirate_of_your_visa_id,
-            'isHealthAUH' => $quoteTypeId == QuoteTypeId::Health && $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI,
         ];
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->emirateVisaId = $quote->emirate_of_your_visa_id;
+            $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
+        }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
