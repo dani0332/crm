@@ -287,7 +287,7 @@ class RetentionReportService extends BaseService
                         if ($isPersonalQuote) {
                             $quoteRequestCondition = 'qsl.quote_request_id = personal_quotes.id';
                         } else {
-                            $quoteRequestCondition = "qsl.personal_quote_id = personal_quotes.id";
+                            $quoteRequestCondition = 'qsl.personal_quote_id = personal_quotes.id';
                         }
 
                         $subQuery->whereIn('quote_status_id', $cancelledStatuses)
