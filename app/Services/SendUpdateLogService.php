@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
@@ -1368,6 +1369,10 @@ class SendUpdateLogService
             'refID' => $sendUpdateLog->code,
         ];
 
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
+        }
+
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
@@ -1812,5 +1817,17 @@ class SendUpdateLogService
     public function isReversalInvoiceEndorsement($taxInvoiceNumber)
     {
         return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
+    }
+
+    public function isEndorsementActionDisabled($sendUpdateLog)
+    {
+        $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->select('emirate_of_registration_id')->first();
+        $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
+
+        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::DUBAI) {
+            return true;
+        }
+
+        return false;
     }
 }

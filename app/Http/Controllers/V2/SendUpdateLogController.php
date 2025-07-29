@@ -273,6 +273,7 @@ class SendUpdateLogController extends Controller
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
+            'isEndorsementActionDisabled' => $this->sendUpdateLogService->isEndorsementActionDisabled($sendUpdateLog),
         ]);
     }
 

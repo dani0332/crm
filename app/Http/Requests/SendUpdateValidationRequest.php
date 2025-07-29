@@ -3,9 +3,11 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\SageApiService;
@@ -41,6 +43,14 @@ class SendUpdateValidationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
+            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->select('emirate_of_registration_id')->first();
+
+            $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
+            if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+                if (in_array($this->action, [SendUpdateLogStatusEnum::ACTION_SNBU, SendUpdateLogStatusEnum::ACTION_SU])) {
+                    $validator->errors()->add('error', 'This action is currently disabled for this Send Update.');
+                }
+            }
 
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');

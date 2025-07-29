@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\SicConfigRequest;
+use App\Models\Emirate;
 use App\Models\HealthPlanType;
 use App\Repositories\NationalityRepository;
 use App\Services\LookupService;
@@ -30,6 +31,7 @@ class SICConfigurableController extends Controller
             'relations' => $sicConfigurable->relations,
             'healthTypes' => HealthPlanType::all(),
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
+            'emirates' => Emirate::where('is_active', 1)->select('id', 'text')->get(),
         ]);
     }
 
