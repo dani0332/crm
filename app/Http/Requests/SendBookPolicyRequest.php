@@ -121,7 +121,7 @@ class SendBookPolicyRequest extends FormRequest
                             $validator->errors()->add('value', 'Commission (VAT NOT APPLICABLE) OR Commission (VAT APPLICABLE) is required');
                         }
 
-                        $isQuoteTypeCar = ucfirst(request()->model_type) == QuoteTypes::CAR->value;
+                        $isQuoteTypeCar = strtolower(request()->model_type) === strtolower(QuoteTypes::CAR->value);
                         if ($isQuoteTypeCar && empty($payment->commmission_percentage)) {
                             $validator->errors()->add('value', 'Commission percentage is required');
                         }
