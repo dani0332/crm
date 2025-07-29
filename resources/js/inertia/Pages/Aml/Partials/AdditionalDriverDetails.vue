@@ -14,6 +14,9 @@ const notification = useToast();
 
 const lookups = page.props.lookups;
 
+const hasPermission = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
   { value: 'male', label: 'Male' },
@@ -255,7 +258,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         </x-field>
       </dl>
       <div class="flex justify-end my-5 gap-x-2">
-        <x-button
+        <x-button v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
           size="sm"
           color="orange"
           type="submit"

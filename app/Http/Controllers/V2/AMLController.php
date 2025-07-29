@@ -10,6 +10,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -67,6 +68,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
+use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -289,6 +291,35 @@ class AMLController extends Controller
             $businessPayload['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
+        // Add RTA configuration data for Car quotes
+        $rtaConfigurationData = [];
+        if ($quoteType->code == quoteTypeCode::Car) {
+            $rtaService = app(RtaTransactionTypeService::class);
+            
+            // Get all RTA transaction types with their configurations
+            $rtaTransactionTypes = [
+                'RTT01' => 'New Vehicle Registration',
+                'RTT03' => 'Change Vehicle Ownership',
+                'RTT04' => 'Vehicle Renewal'
+            ];
+            
+            $rtaConfigurationData = [
+                'rta_transaction_types' => $rtaTransactionTypes,
+                'rta_field_configurations' => [],
+                'rta_validation_summaries' => []
+            ];
+            
+            // Pre-generate configurations for all RTA types and both GIG/Non-GIG scenarios
+            foreach (array_keys($rtaTransactionTypes) as $rtaType) {
+                foreach ([false, true] as $isGigRenewal) {
+                    $configKey = $rtaType . ($isGigRenewal ? '_GIG' : '');
+                    
+                    $rtaConfigurationData['rta_field_configurations'][$configKey] = $rtaService->getFrontendFieldConfig($rtaType, $isGigRenewal);
+                    $rtaConfigurationData['rta_validation_summaries'][$configKey] = $rtaService->getValidationSummary($rtaType, $isGigRenewal);
+                }
+            }
+        }
+
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -315,7 +346,8 @@ class AMLController extends Controller
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType->id, $quoteRequest->id),
-        ], $businessPayload ?? []));
+            'permissionsEnum' => PermissionsEnum::asArray(),
+        ], $businessPayload ?? [], $rtaConfigurationData));    
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
@@ -860,7 +892,7 @@ class AMLController extends Controller
         $response = ['success' => false];
         $insurerAMLScreeningResponse = [];
 
-        if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+        if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual && $quote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
             $insurerAMLScreeningResponse = $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
 
             if (!empty($insurerAMLScreeningResponse)) {

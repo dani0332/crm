@@ -6,12 +6,43 @@ const props = defineProps({
   insurerPortalSyncData: {
     type: Object,
     default: null
+  },
+  // RTA Configuration props (passed from backend)
+  rta_transaction_types: {
+    type: Object,
+    default: () => ({})
+  },
+  rta_field_configurations: {
+    type: Object,
+    default: () => ({})
+  },
+  rta_validation_summaries: {
+    type: Object,
+    default: () => ({})
   }
 });
 
 const page = usePage();
 const notification = useToast();
 const lookups = page.props.lookups;
+const hasPermission = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+// RTA Transaction Type Constants
+const RTA_CONSTANTS = {
+  NEW_VEHICLE_REGISTRATION: 'RTT01',
+  CHANGE_VEHICLE_OWNERSHIP: 'RTT03',
+  VEHICLE_RENEWAL: 'RTT04',
+  UPDATE_REGISTRATION: 'RTT07',
+  VEHICLE_RENEWAL_WITH_CHANGE_NUMBER: 'RTT10',
+  POLICY_DURATION_MONTHS: 13,
+  POLICY_EFFECTIVE_DATE_MAX_DAYS: 30,
+  GIG_PROVIDER_CODE: 'AXA'
+};
+
+// Field configuration state
+const fieldConfig = ref({});
+const calculatedDates = ref({});
 
 // Computed options for dropdowns
 const rtaTransactionTypeOptions = computed(() => {
@@ -72,8 +103,254 @@ const additionalVehicleTransactionDetailsForm = useForm({
   certificate_start_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_start_date ?? '',
   certificate_end_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_end_date ?? '',
   annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
+  previous_policy_provider: '', // For GIG renewal detection
 });
 
+// Computed properties for insurance provider checks
+const isGIG = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
+});
+
+const isLIVA = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+});
+
+const isSUKOON = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
+});
+
+// RTA Transaction Type specific computed properties
+const isGigRenewal = computed(() => {
+  return additionalVehicleTransactionDetailsForm.rta_transaction_type === RTA_CONSTANTS.VEHICLE_RENEWAL &&
+         additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
+});
+
+// Field configuration computed properties
+const isFieldDisabled = (fieldName) => {
+  return fieldConfig.value[fieldName]?.disabled || fieldConfig.value[fieldName]?.readonly || false;
+};
+
+const isFieldRequired = (fieldName) => {
+  // Check RTA-specific requirements first, then fall back to insurance provider requirements
+  if (fieldConfig.value[fieldName]?.required !== undefined) {
+    return fieldConfig.value[fieldName].required;
+  }
+  
+  // Legacy insurance provider-based requirements
+  switch (fieldName) {
+    case 'plate_code':
+    case 'plate_number':
+      return !isGIG.value;
+    case 'engine_number':
+      return !isSUKOON.value;
+    case 'rta_plate_category':
+    case 'plate_color':
+      return isGIG.value;
+    case 'bank_name':
+      return !isGIG.value;
+    case 'first_registration_date':
+    case 'certificate_start_date':
+      return !isSUKOON.value;
+    case 'policy_expiry_date':
+    case 'certificate_end_date':
+    case 'annual_mileage_estimate':
+      return isLIVA.value;
+    default:
+      return false;
+  }
+};
+
+const isFieldHidden = (fieldName) => {
+  return fieldConfig.value[fieldName]?.hidden || false;
+};
+
+// Watch for RTA transaction type changes
+watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRtaType) => {
+  if (newRtaType) {
+    loadFieldConfigurationFromProps();
+  }
+}, { immediate: true });
+
+// Watch for previous policy provider changes (for GIG renewal detection)
+watch(() => additionalVehicleTransactionDetailsForm.previous_policy_provider, () => {
+  if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
+    loadFieldConfigurationFromProps();
+  }
+});
+
+// Watch for policy effective date changes to trigger auto-calculations
+watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, () => {
+  applyAutoCalculations();
+});
+
+// Watch for certificate start date changes (for GIG renewals)
+watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, () => {
+  if (isGigRenewal.value) {
+    applyAutoCalculations();
+  }
+});
+
+// Get field configuration from props (no API call needed)
+const loadFieldConfigurationFromProps = () => {
+  if (!additionalVehicleTransactionDetailsForm.rta_transaction_type) {
+    fieldConfig.value = {};
+    return;
+  }
+
+  const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
+  const isGigRenewal = additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
+  const configKey = rtaType + (isGigRenewal ? '_GIG' : '');
+
+  // Load configuration from props
+  if (props.rta_field_configurations[configKey]) {
+    fieldConfig.value = props.rta_field_configurations[configKey];
+  } else {
+    fieldConfig.value = {};
+  }
+
+  // Apply auto-calculations after configuration is loaded
+  applyAutoCalculations();
+};
+
+// Apply auto-calculations based on current form data
+const applyAutoCalculations = () => {
+  const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
+  
+  if (!rtaType) return;
+
+  switch (rtaType) {
+    case RTA_CONSTANTS.NEW_VEHICLE_REGISTRATION:
+    case RTA_CONSTANTS.CHANGE_VEHICLE_OWNERSHIP:
+      calculateDatesForNewVehicleOrOwnershipChange();
+      break;
+      
+    case RTA_CONSTANTS.VEHICLE_RENEWAL:
+      if (isGigRenewal.value) {
+        calculateDatesForGigRenewal();
+      } else {
+        calculateDatesForNonGigRenewal();
+      }
+      break;
+  }
+};
+
+// Calculate dates for New Vehicle Registration and Change Vehicle Ownership
+const calculateDatesForNewVehicleOrOwnershipChange = () => {
+  if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
+    const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
+    
+    // Policy Expiry Date = Policy Effective Date + 13 months
+    const policyExpiryDate = new Date(policyEffectiveDate);
+    policyExpiryDate.setMonth(policyExpiryDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+    
+    // Certificate Start Date = Policy Effective Date
+    // Certificate End Date = Policy Expiry Date
+    additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(policyExpiryDate);
+    additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
+    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(policyExpiryDate);
+  }
+};
+
+// Calculate dates for Non-GIG Vehicle Renewal
+const calculateDatesForNonGigRenewal = () => {
+  if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
+    const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
+    
+    // Certificate Start Date = Policy Effective Date
+    // Certificate End Date = Policy Effective Date + 13 months
+    // Policy Expiry Date = Certificate End Date
+    const certificateEndDate = new Date(policyEffectiveDate);
+    certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+    
+    additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
+    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+    additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(certificateEndDate);
+  }
+};
+
+// Calculate dates for GIG Vehicle Renewal
+const calculateDatesForGigRenewal = () => {
+  if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
+    const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
+    
+    // Certificate End Date = Certificate Start Date + 13 months
+    const certificateEndDate = new Date(certificateStartDate);
+    certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+    
+    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+  }
+};
+
+// Format date to YYYY-MM-DD
+const formatDate = (date) => {
+  return date.toISOString().split('T')[0];
+};
+
+// Get validation rules for a field
+const getFieldRules = (fieldName) => {
+  const rules = [];
+  
+  if (isFieldRequired(fieldName)) {
+    rules.push(isRequired);
+  }
+  
+  // Add field-specific rules
+  if (fieldName === 'chassis_number') {
+    rules.push(rules.chassisNumberCheck);
+  }
+  
+  return rules;
+};
+
+// Enhanced submit function with auto-calculated data
+const submitAdditionalVehicleTransactionDetailsForm = async (isValid) => {
+  if (isValid) {
+    // Apply final auto-calculations before submission
+    applyAutoCalculations();
+    
+    additionalVehicleTransactionDetailsForm.processing = true;
+    
+    try {
+      const response = await axios.post('/kyc/update-additional-vehicle-driver-details', additionalVehicleTransactionDetailsForm);
+      
+      if (response.data.success) {
+        notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+        
+        // Update form with any calculated dates from backend
+        if (response.data.calculated_dates) {
+          Object.entries(response.data.calculated_dates).forEach(([field, value]) => {
+            if (value) {
+              additionalVehicleTransactionDetailsForm[field] = value;
+            }
+          });
+        }
+        
+        router.reload({
+          replace: true,
+          preserveScroll: true,
+          preserveState: true,
+        });
+      } else {
+        notification.error({
+          title: response.data.message,
+          position: 'top',
+        });
+      }
+    } catch (error) {
+      notification.error({
+        title: 'Error saving vehicle details',
+        position: 'top',
+      });
+    } finally {
+      additionalVehicleTransactionDetailsForm.processing = false;
+    }
+  }
+};
+
+// Watch for insurer portal sync data changes
 watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
   if (vehicleTransactionDetails) {
     const fieldMappings = {
@@ -141,42 +418,11 @@ const chassisNumberValidate = eventType => {
   }
 };
 
-const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
-  if (isValid) {
-    additionalVehicleTransactionDetailsForm.processing = true;
-    axios.post('/kyc/update-additional-vehicle-driver-details', additionalVehicleTransactionDetailsForm).then(response => {
-      if (response.data.success) {
-        notification.success({
-          title: response.data.message,
-          position: 'top',
-        });
-        router.reload({
-          replace: true,
-          preserveScroll: true,
-          preserveState: true,
-        });
-      } else {
-        notification.error({
-          title: response.data.message,
-          position: 'top',
-        });
-      }
-    }).finally(() => {
-      additionalVehicleTransactionDetailsForm.processing = false;
-    });
+// Initialize field configuration on component mount
+onMounted(() => {
+  if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
+    loadFieldConfigurationFromProps();
   }
-}
-
-const isGIG = computed(() => {
-  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
-});
-
-const isLIVA = computed(() => {
-  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
-});
-
-const isSUKOON = computed(() => {
-  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
 });
 </script>
 
@@ -188,44 +434,64 @@ const isSUKOON = computed(() => {
       </h3>
     </div>
     <div>
-    <x-form @submit="submitAdditionalVehicleTransactionDetailsForm" :auto-focus="false">
-      <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
+      <x-form @submit="submitAdditionalVehicleTransactionDetailsForm" :auto-focus="false">
+        <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
+          
+          <!-- RTA Transaction Type -->
           <x-field label="RTA Transaction Type" required>
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type"
               :rules="[isRequired]"
               :options="rtaTransactionTypeOptions"
               placeholder="Select RTA Transaction Type"
+              :disabled="isFieldDisabled('rta_transaction_type')"
             />
           </x-field>
 
-          <x-field label="Plate Code" :required="! isGIG">
+          <!-- Plate Code -->
+          <x-field 
+            label="Plate Code" 
+            :required="isFieldRequired('plate_code')"
+            v-show="!isFieldHidden('plate_code')"
+          >
             <x-input
               v-model="additionalVehicleTransactionDetailsForm.plate_code"
-              :rules="(! isGIG) ? [isRequired] : []"
+              :rules="getFieldRules('plate_code')"
               placeholder="Plate Code"
               type="text"
+              :disabled="isFieldDisabled('plate_code')"
+              :readonly="fieldConfig.plate_code?.readonly"
             />
           </x-field>
 
-          <x-field label="Plate Number" :required="! isGIG">
+          <!-- Plate Number -->
+          <x-field 
+            label="Plate Number" 
+            :required="isFieldRequired('plate_number')"
+            v-show="!isFieldHidden('plate_number')"
+          >
             <x-input
               v-model="additionalVehicleTransactionDetailsForm.plate_number"
-              :rules="(! isGIG) ? [isRequired] : []"
+              :rules="getFieldRules('plate_number')"
               placeholder="Plate Number"
               type="text"
+              :disabled="isFieldDisabled('plate_number')"
+              :readonly="fieldConfig.plate_number?.readonly"
             />
           </x-field>
 
+          <!-- Traffic Code Number -->
           <x-field label="Traffic Code Number" required>
             <x-input
               v-model="additionalVehicleTransactionDetailsForm.traffic_code_number"
               :rules="[isRequired]"
               placeholder="Traffic Code Number"
               type="text"
+              :disabled="isFieldDisabled('traffic_code_number')"
             />
           </x-field>
 
+          <!-- Chassis Number -->
           <x-field label="Chassis Number" required>
             <x-input 
               v-model="additionalVehicleTransactionDetailsForm.chassis_number" 
@@ -235,45 +501,65 @@ const isSUKOON = computed(() => {
               placeholder="Chassis Number"
               type="text"
               :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
+              :disabled="isFieldDisabled('chassis_number')"
             />
           </x-field>
 
-          <x-field label="Engine Number" :required="! isSUKOON">
+          <!-- Engine Number -->
+          <x-field 
+            label="Engine Number" 
+            :required="isFieldRequired('engine_number')"
+          >
             <x-input
               v-model="additionalVehicleTransactionDetailsForm.engine_number"
-              :rules="(! isSUKOON) ? [isRequired] : []"
+              :rules="getFieldRules('engine_number')"
               placeholder="Engine Number"
               type="text"
+              :disabled="isFieldDisabled('engine_number')"
             />
           </x-field>
 
-          <x-field label="RTA Plate Category" :required="isGIG">
+          <!-- RTA Plate Category -->
+          <x-field 
+            label="RTA Plate Category" 
+            :required="isFieldRequired('rta_plate_category')"
+            v-show="!isFieldHidden('rta_plate_category')"
+          >
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.rta_plate_category"
-              :rules="isGIG ? [isRequired] : []"
+              :rules="getFieldRules('rta_plate_category')"
               :options="rtaPlateCategoryOptions"
               placeholder="Select RTA Plate Category"
+              :disabled="isFieldDisabled('rta_plate_category')"
             />
           </x-field>
 
+          <!-- Vehicle Color -->
           <x-field label="Vehicle Color" required>
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
               :options="vehicleColorOptions"
               :rules="[isRequired]"
               placeholder="Select Vehicle Color"
+              :disabled="isFieldDisabled('vehicle_color')"
             />
           </x-field>
 
-          <x-field label="Plate Color" :required="isGIG">
+          <!-- Plate Color -->
+          <x-field 
+            label="Plate Color" 
+            :required="isFieldRequired('plate_color')"
+          >
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.plate_color"
               :options="plateColorOptions"
-              :rules="isGIG ? [isRequired] : []"
+              :rules="getFieldRules('plate_color')"
               placeholder="Select Plate Color"
+              :disabled="isFieldDisabled('plate_color')"
             />
           </x-field>
 
+          <!-- Bank Loan -->
           <x-field label="Bank Loan?" required>
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.bank_loan"
@@ -283,85 +569,167 @@ const isSUKOON = computed(() => {
                 { value: 0, label: 'No' }
               ]"
               placeholder="Select Bank Loan"
+              :disabled="isFieldDisabled('bank_loan')"
             />
           </x-field>
 
-          <x-field label="Bank Name" :required="! isGIG">
+          <!-- Bank Name -->
+          <x-field 
+            label="Bank Name" 
+            :required="isFieldRequired('bank_name')"
+          >
             <ComboBox
               :single="true"
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
-              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1"
-              :rules="(! isGIG) ? [isRequired] : []"
+              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1 || isFieldDisabled('bank_name')"
+              :rules="getFieldRules('bank_name')"
               class="w-full"
             />
           </x-field>
 
-          <x-field label="First Registration Date" :required="! isSUKOON">
+          <!-- First Registration Date -->
+          <x-field 
+            label="First Registration Date" 
+            :required="isFieldRequired('first_registration_date')"
+          >
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
-              :rules="(! isSUKOON) ? [isRequired] : []"
+              :rules="getFieldRules('first_registration_date')"
               placeholder="First Registration Date"
+              :disabled="isFieldDisabled('first_registration_date')"
             />
           </x-field>
 
-          <x-field label="Policy Effective Date" required>
+          <!-- Policy Effective Date -->
+          <x-field 
+            label="Policy Effective Date" 
+            :required="isFieldRequired('policy_effective_date')"
+          >
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
-              :rules="[isRequired]"
+              :rules="getFieldRules('policy_effective_date')"
               placeholder="Policy Effective Date"
+              :disabled="isFieldDisabled('policy_effective_date')"
+              :readonly="fieldConfig.policy_effective_date?.readonly"
             />
+            <!-- <div v-if="fieldConfig.policy_effective_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
+              🔄 Auto-calculated from previous policy
+            </div>
+            <div v-else-if="fieldConfig.policy_effective_date?.required && !fieldConfig.policy_effective_date?.readonly" class="text-xs text-orange-600 mt-1">
+              ⏰ Maximum 30 days from today
+            </div> -->
           </x-field>
 
-          <x-field label="Policy Expiry Date" :required="isLIVA">
+          <!-- Policy Expiry Date -->
+          <x-field 
+            label="Policy Expiry Date" 
+            :required="isFieldRequired('policy_expiry_date')"
+          >
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
-              :rules="isLIVA ? [isRequired] : []"
+              :rules="getFieldRules('policy_expiry_date')"
               placeholder="Policy Expiry Date"
+              :disabled="isFieldDisabled('policy_expiry_date')"
+              :readonly="fieldConfig.policy_expiry_date?.readonly"
             />
+            <!-- <div v-if="fieldConfig.policy_expiry_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
+              🔄 Auto-calculated (Policy Effective Date + 13 months)
+            </div> -->
           </x-field>
 
-          <x-field label="Certificate Start Date" :required="! isSUKOON">
+          <!-- Certificate Start Date -->
+          <x-field 
+            label="Certificate Start Date" 
+            :required="isFieldRequired('certificate_start_date')"
+          >
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
-              :rules="(! isSUKOON) ? [isRequired] : []"
+              :rules="getFieldRules('certificate_start_date')"
               placeholder="Certificate Start Date"
+              :disabled="isFieldDisabled('certificate_start_date')"
+              :readonly="fieldConfig.certificate_start_date?.readonly"
             />
+            <!-- <div v-if="fieldConfig.certificate_start_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
+              🔄 Auto-set to Policy Effective Date
+            </div>
+            <div v-else-if="isGigRenewal && !fieldConfig.certificate_start_date?.readonly" class="text-xs text-orange-600 mt-1">
+              ⚠️ No backdating allowed, must be ≤ Policy Effective Date
+            </div> -->
           </x-field>
 
-          <x-field label="Certificate End Date" :required="isLIVA">
+          <!-- Certificate End Date -->
+          <x-field 
+            label="Certificate End Date" 
+            :required="isFieldRequired('certificate_end_date')"
+          >
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
-              :rules="isLIVA ? [isRequired] : []"
+              :rules="getFieldRules('certificate_end_date')"
               placeholder="Certificate End Date"
+              :disabled="isFieldDisabled('certificate_end_date')"
+              :readonly="fieldConfig.certificate_end_date?.readonly"
             />
+            <!-- <div v-if="fieldConfig.certificate_end_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
+              🔄 Auto-calculated (Certificate Start + 13 months)
+            </div> -->
           </x-field>
 
-          <x-field label="Annual Mileage Estimate" :required="isLIVA">
+          <!-- Annual Mileage Estimate -->
+          <x-field 
+            label="Annual Mileage Estimate" 
+            :required="isFieldRequired('annual_mileage_estimate')"
+          >
             <x-input
               v-if="isGIG"
               v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
-              :rules="(! isGIG) ? [isRequired] : []"
+              :rules="getFieldRules('annual_mileage_estimate')"
               placeholder="Select Annual Mileage Estimate"
               type="text"
+              :disabled="isFieldDisabled('annual_mileage_estimate')"
             />
             <x-select
               v-else
               v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
-              :rules="isLIVA ? [isRequired] : []"
+              :rules="getFieldRules('annual_mileage_estimate')"
               :options="annualMileageEstimateOptions"
               placeholder="Select Annual Mileage Estimate"
+              :disabled="isFieldDisabled('annual_mileage_estimate')"
             />
           </x-field>
         </dl>
+
+        <!-- RTA Transaction Summary (for debugging/info) -->
+        <!-- <div v-if="additionalVehicleTransactionDetailsForm.rta_transaction_type" class="mt-6 p-4 bg-blue-50 rounded-lg">
+          <h4 class="font-semibold text-blue-800 mb-2">RTA Transaction Type: 
+            {{ rtaTransactionTypeOptions.find(opt => opt.value === additionalVehicleTransactionDetailsForm.rta_transaction_type)?.label }}
+          </h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+            <div v-if="isGigRenewal" class="text-green-600">
+              ✅ GIG Renewal Detected
+            </div>
+            <div v-if="fieldConfig.policy_effective_date?.readonly" class="text-blue-600">
+              🔒 Policy Dates Locked
+            </div>
+            <div v-if="fieldConfig.plate_code?.disabled" class="text-gray-600">
+              ❌ Plate Fields Disabled
+            </div>
+            <div v-if="fieldConfig.rta_plate_category?.optional" class="text-orange-600">
+              ⚪ RTA Category Optional
+            </div>
+          </div>
+        </div> -->
+
         <div class="flex justify-end my-5 gap-x-2">
-          <x-button
+          <x-button 
+            v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
             size="sm"
             color="orange"
             type="submit"
             class="px-6"
             :loading="additionalVehicleTransactionDetailsForm.processing"
+            :disabled="isProcessingConfig"
           >
             Save
           </x-button>

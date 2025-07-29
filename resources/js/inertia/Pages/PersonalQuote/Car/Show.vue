@@ -1849,6 +1849,18 @@ function handleOcrNotification(event) {
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ insurerApiStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ apiIssuanceStatus ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RTA UPLOAD STATUS</dt>
+                <dd>{{ quote.api_issuance_status }}</dd>
+              </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
               <dt class="font-medium mb-3">ADDONS</dt>
@@ -2156,18 +2168,6 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">INSURER API STATUS</dt>
-                <dd>{{ insurerApiStatus ?? '' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">API ISSUANCE STATUS</dt>
-                <dd>{{ apiIssuanceStatus ?? '' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RTA UPLOAD STATUS</dt>
-                <dd>{{ quote.api_issuance_status }}</dd>
               </div>
               <div
                 class="grid sm:grid-cols-2"

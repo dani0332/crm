@@ -46,7 +46,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private readonly string $authUrl;
     private readonly string $clientId;
     private readonly string $clientSecret;
-    private string $accessToken;
+    private ?string $accessToken = null;
     
     public const INSURER_CODE = InsuranceProvidersEnum::AXA;
     public const POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY = InsuranceProvidersEnum::AXA.'_POLICY_ISSUANCE_API_ACCESS_TOKEN';
@@ -114,7 +114,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $this->authUrl = config('constants.GIG_API_AUTH_BASE_URL').'/oauth/token';
         $this->clientId = config('constants.GIG_API_AUTH_CLIENT_ID');
         $this->clientSecret = config('constants.GIG_API_AUTH_CLIENT_SECRET');
-        $this->accessToken = Cache::store('redis')->get(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY) ?? $this->getAccessToken();
     }
 
     private function getAPISteps(): array
@@ -136,6 +135,17 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
     {
         return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE);
+    }
+
+    private function initializeAccessToken(): bool
+    {
+        $this->accessToken = Cache::store('redis')->get(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY);
+        
+        if (!$this->accessToken) {
+            $this->accessToken = $this->getAccessToken();
+        }
+
+        return $this->accessToken !== null;
     }
 
     public function createPolicyIssuanceSchedule($quote, $insurer)
@@ -169,6 +179,15 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - GIG Car Automation is disabled');
                 $response['error'] = 'GIG Car Automation is disabled';
                 $response['message'] = 'GIG Car Automation is disabled';
+
+                return $response;
+            }
+
+            // Initialize access token when automation starts
+            if (!$this->initializeAccessToken()) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Failed to initialize access token');
+                $response['error'] = 'Failed to authenticate with insurer API';
+                $response['message'] = 'Authentication failed - unable to obtain access token';
 
                 return $response;
             }
@@ -552,6 +571,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $uploadedDocumentsToIMCRM = collect();
         $policyDocuments = json_decode($getPolicyIssuanceResponse?->response)?->documents;
         $policyId = json_decode($getPolicyIssuanceResponse?->response)?->policyId;
+        $certificateOfInsuranceAvailable = false;
 
         foreach ($policyDocuments as $policyDocument) {
             $quoteDocument = null;
@@ -592,11 +612,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'document' => $quoteDocument,
             ]);
 
-            if ($docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id) {
-                $quote->update(['rta_upload_status' => self::RTA_UPLOAD_STATUS_DONE]);
-            } else {
-                $quote->update(['rta_upload_status' => self::RTA_UPLOAD_STATUS_PENDING]);
-            }
+            $certificateOfInsuranceAvailable = $certificateOfInsuranceAvailable || ($docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id) ? true : false;
+        }
+
+        $quote->update(['rta_upload_status' => $certificateOfInsuranceAvailable ? self::RTA_UPLOAD_STATUS_DONE : self::RTA_UPLOAD_STATUS_PENDING]);
+        if (! $certificateOfInsuranceAvailable) {
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
         }
 
         $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('uploaded', false)->count() === 0;
@@ -982,7 +1003,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    private function getAccessToken()
+    private function getAccessToken(): ?string
     {
         if ($this->accessToken) {
             return $this->accessToken;
@@ -1009,7 +1030,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $this->accessToken;
         }
 
-        return $response;
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Failed to get access token: '.($response['message'] ?? 'Unknown error'));
+        return null;
     }
 
     private function httpCall($endPoint, $payload, $requestHeader = [], $method = self::REQUEST_GET)

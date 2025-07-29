@@ -7,6 +7,19 @@ import { computed, ref, watch } from 'vue';
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   quoteTypeCodeEnum: Object,
+  // RTA Configuration props (for Car quotes)
+  rta_transaction_types: {
+    type: Object,
+    default: () => ({})
+  },
+  rta_field_configurations: {
+    type: Object,
+    default: () => ({})
+  },
+  rta_validation_summaries: {
+    type: Object,
+    default: () => ({})
+  },
 });
 const page = usePage();
 const { isRequired } = useRules();
@@ -738,7 +751,12 @@ const updateInsurerPortalSyncData = (data) => {
     @submit="submitScreeningForm"
   >
     <template v-if="showVehicleAndDrvicerDetails">
-      <AdditionalVehicleTransactionDetails :insurerPortalSyncData="insurerPortalSyncData" />
+      <AdditionalVehicleTransactionDetails 
+        :insurerPortalSyncData="insurerPortalSyncData"
+        :rta_transaction_types="rta_transaction_types"
+        :rta_field_configurations="rta_field_configurations"
+        :rta_validation_summaries="rta_validation_summaries"
+      />
       <x-divider class="mb-4 mt-4" />
       <AdditionalDriverDetails :insurerPortalSyncData="insurerPortalSyncData" />
       <x-divider class="mb-4 mt-4" />

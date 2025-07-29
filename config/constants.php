@@ -163,10 +163,10 @@ return [
     'OCR_API_TIMEOUT' => env('OCR_API_TIMEOUT', 90),
 
     // GIG Policy Issuance API Credentials 
-    'GIG_API_BASE_URL' => env('GIG_API_BASE_URL', 'https://apigw.pp.atom.gig-gulf.com'),
-    'GIG_API_AUTH_BASE_URL' => env('GIG_API_AUTH_BASE_URL', 'https://gulf-insurance-pp.eu.auth0.com'),
-    'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID', 'jBsI4X7aZZ9vR0HjNmKyYu38jm7VIuXt'),
-    'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET', 'zz1w9fRrUXnfEKdJepDjhh3saMJaP5rWMBWMuI2Z64cwmApZfMOVPWmeC0k7RIwt'),
+    'GIG_API_BASE_URL' => env('GIG_API_BASE_URL'),
+    'GIG_API_AUTH_BASE_URL' => env('GIG_API_AUTH_BASE_URL'),
+    'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),
+    'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET'),
 
     'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 ];
