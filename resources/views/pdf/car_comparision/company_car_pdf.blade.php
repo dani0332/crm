@@ -577,22 +577,6 @@
         padding: 2px 0px 10px 0px;
     }
 
-    .re_border{
-        border: 1px solid red;
-    }
-    .bl_border{
-        border: 1px solid blue;
-    }
-    .gr_border{
-        border: 1px solid green;
-    }
-    .ye_border{
-        border: 1px solid yellow;
-    }
-    .pu_border{
-        border: 1px solid magenta;
-    }
-
 </style>
 </head>
 
@@ -697,11 +681,6 @@
         ["code" => "ancillaryExcess", "title" => "Ancillary excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
     ];
 
-//    if(count($planIds) == 5){
-//        $tableClass = 'is-full';
-//} else {
-//        $tableClass = 'not-full';
-//    }
 @endphp
 
     {{-- First Page --}}
@@ -744,7 +723,7 @@
             // Limit to maximum 5 plans
             $displayPlans = array_slice($planIds, 0, 5);
         @endphp
-        <table class="main-table {{ $tableClass ?? 'is-full' }}" style="margin-top:200px">
+        <table class="main-table is-full" style="margin-top:200px">
             <thead>
             <tr>
                     <th class="bg-light-blue" rowspan="2">
