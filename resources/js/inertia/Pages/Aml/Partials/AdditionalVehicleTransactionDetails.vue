@@ -127,10 +127,15 @@ const isGigRenewal = computed(() => {
 
 // Field configuration computed properties
 const isFieldDisabled = (fieldName) => {
-  return fieldConfig.value[fieldName]?.disabled || fieldConfig.value[fieldName]?.readonly || false;
+  return fieldConfig.value[fieldName]?.disabled || fieldConfig.value[fieldName]?.readonly || fieldConfig.value[fieldName]?.hidden || false;
 };
 
 const isFieldRequired = (fieldName) => {
+  // Hidden fields are never required
+  if (fieldConfig.value[fieldName]?.hidden) {
+    return false;
+  }
+  
   // Check RTA-specific requirements first, then fall back to insurance provider requirements
   if (fieldConfig.value[fieldName]?.required !== undefined) {
     return fieldConfig.value[fieldName].required;
@@ -160,78 +165,9 @@ const isFieldRequired = (fieldName) => {
   }
 };
 
-const isFieldHidden = (fieldName) => {
-  return fieldConfig.value[fieldName]?.hidden || false;
-};
-
-// Watch for RTA transaction type changes
-watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRtaType) => {
-  if (newRtaType) {
-    loadFieldConfigurationFromProps();
-  }
-}, { immediate: true });
-
-// Watch for previous policy provider changes (for GIG renewal detection)
-watch(() => additionalVehicleTransactionDetailsForm.previous_policy_provider, () => {
-  if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
-    loadFieldConfigurationFromProps();
-  }
-});
-
-// Watch for policy effective date changes to trigger auto-calculations
-watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, () => {
-  applyAutoCalculations();
-});
-
-// Watch for certificate start date changes (for GIG renewals)
-watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, () => {
-  if (isGigRenewal.value) {
-    applyAutoCalculations();
-  }
-});
-
-// Get field configuration from props (no API call needed)
-const loadFieldConfigurationFromProps = () => {
-  if (!additionalVehicleTransactionDetailsForm.rta_transaction_type) {
-    fieldConfig.value = {};
-    return;
-  }
-
-  const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
-  const isGigRenewal = additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
-  const configKey = rtaType + (isGigRenewal ? '_GIG' : '');
-
-  // Load configuration from props
-  if (props.rta_field_configurations[configKey]) {
-    fieldConfig.value = props.rta_field_configurations[configKey];
-  } else {
-    fieldConfig.value = {};
-  }
-
-  // Apply auto-calculations after configuration is loaded
-  applyAutoCalculations();
-};
-
-// Apply auto-calculations based on current form data
-const applyAutoCalculations = () => {
-  const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
-  
-  if (!rtaType) return;
-
-  switch (rtaType) {
-    case RTA_CONSTANTS.NEW_VEHICLE_REGISTRATION:
-    case RTA_CONSTANTS.CHANGE_VEHICLE_OWNERSHIP:
-      calculateDatesForNewVehicleOrOwnershipChange();
-      break;
-      
-    case RTA_CONSTANTS.VEHICLE_RENEWAL:
-      if (isGigRenewal.value) {
-        calculateDatesForGigRenewal();
-      } else {
-        calculateDatesForNonGigRenewal();
-      }
-      break;
-  }
+// Format date to YYYY-MM-DD
+const formatDate = (date) => {
+  return date.toISOString().split('T')[0];
 };
 
 // Calculate dates for New Vehicle Registration and Change Vehicle Ownership
@@ -281,38 +217,110 @@ const calculateDatesForGigRenewal = () => {
   }
 };
 
-// Format date to YYYY-MM-DD
-const formatDate = (date) => {
-  return date.toISOString().split('T')[0];
+// Apply auto-calculations based on current form data
+const applyAutoCalculations = () => {
+  const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
+  
+  if (!rtaType) return;
+
+  switch (rtaType) {
+    case RTA_CONSTANTS.NEW_VEHICLE_REGISTRATION:
+    case RTA_CONSTANTS.CHANGE_VEHICLE_OWNERSHIP:
+      calculateDatesForNewVehicleOrOwnershipChange();
+      break;
+      
+    case RTA_CONSTANTS.VEHICLE_RENEWAL:
+      if (isGigRenewal.value) {
+        calculateDatesForGigRenewal();
+      } else {
+        calculateDatesForNonGigRenewal();
+      }
+      break;
+  }
 };
+
+// Get field configuration from props (no API call needed)
+const loadFieldConfigurationFromProps = () => {
+  if (!additionalVehicleTransactionDetailsForm.rta_transaction_type) {
+    fieldConfig.value = {};
+    return;
+  }
+
+  const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
+  const isGigRenewal = additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
+  const configKey = rtaType + (isGigRenewal ? '_GIG' : '');
+
+  // Load configuration from props
+  if (props.rta_field_configurations[configKey]) {
+    fieldConfig.value = props.rta_field_configurations[configKey];
+  } else {
+    fieldConfig.value = {};
+  }
+
+  // Apply auto-calculations after configuration is loaded
+  applyAutoCalculations();
+};
+
+// Watch for RTA transaction type changes
+watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRtaType) => {
+  if (newRtaType) {
+    loadFieldConfigurationFromProps();
+  }
+}, { immediate: true });
+
+// Watch for previous policy provider changes (for GIG renewal detection)
+watch(() => additionalVehicleTransactionDetailsForm.previous_policy_provider, () => {
+  if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
+    loadFieldConfigurationFromProps();
+  }
+});
+
+// Watch for policy effective date changes to trigger auto-calculations
+watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, () => {
+  applyAutoCalculations();
+});
+
+// Watch for certificate start date changes (for GIG renewals)
+watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, () => {
+  if (isGigRenewal.value) {
+    applyAutoCalculations();
+  }
+});
+
+
 
 // Get validation rules for a field
 const getFieldRules = (fieldName) => {
-  const rules = [];
+  // Hidden fields have no validation rules
+  if (fieldConfig.value[fieldName]?.hidden) {
+    return [];
+  }
+  
+  const fieldRules = [];
   
   if (isFieldRequired(fieldName)) {
-    rules.push(isRequired);
+    fieldRules.push(isRequired);
   }
   
   // Add field-specific rules
   if (fieldName === 'chassis_number') {
-    rules.push(rules.chassisNumberCheck);
+    fieldRules.push(rules.chassisNumberCheck);
   }
   
-  return rules;
+  return fieldRules;
 };
 
 // Enhanced submit function with auto-calculated data
 const submitAdditionalVehicleTransactionDetailsForm = async (isValid) => {
   if (isValid) {
+    // Clear any previous errors
+    additionalVehicleTransactionDetailsForm.clearErrors();
+    
     // Apply final auto-calculations before submission
     applyAutoCalculations();
-    
     additionalVehicleTransactionDetailsForm.processing = true;
-    
     try {
       const response = await axios.post('/kyc/update-additional-vehicle-driver-details', additionalVehicleTransactionDetailsForm);
-      
       if (response.data.success) {
         notification.success({
           title: response.data.message,
@@ -340,10 +348,25 @@ const submitAdditionalVehicleTransactionDetailsForm = async (isValid) => {
         });
       }
     } catch (error) {
-      notification.error({
-        title: 'Error saving vehicle details',
-        position: 'top',
-      });
+      // Handle validation errors (422 status)
+      if (error.response && error.response.status === 422) {
+        const validationErrors = error.response.data.errors;
+        if (validationErrors) {
+          // Set each validation error on the form
+          Object.entries(validationErrors).forEach(([field, messages]) => {
+            notification.error({
+              title: messages[0],
+              position: 'top',
+            });
+            additionalVehicleTransactionDetailsForm.setError(field, messages[0]);
+          });
+        }
+      } else {
+        notification.error({
+          title: 'Error saving vehicle details',
+          position: 'top',
+        });
+      }
     } finally {
       additionalVehicleTransactionDetailsForm.processing = false;
     }
@@ -452,7 +475,6 @@ onMounted(() => {
           <x-field 
             label="Plate Code" 
             :required="isFieldRequired('plate_code')"
-            v-show="!isFieldHidden('plate_code')"
           >
             <x-input
               v-model="additionalVehicleTransactionDetailsForm.plate_code"
@@ -468,7 +490,6 @@ onMounted(() => {
           <x-field 
             label="Plate Number" 
             :required="isFieldRequired('plate_number')"
-            v-show="!isFieldHidden('plate_number')"
           >
             <x-input
               v-model="additionalVehicleTransactionDetailsForm.plate_number"
@@ -523,7 +544,6 @@ onMounted(() => {
           <x-field 
             label="RTA Plate Category" 
             :required="isFieldRequired('rta_plate_category')"
-            v-show="!isFieldHidden('rta_plate_category')"
           >
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.rta_plate_category"
@@ -565,8 +585,8 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.bank_loan"
               :rules="[isRequired]"
               :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' }
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' }
               ]"
               placeholder="Select Bank Loan"
               :disabled="isFieldDisabled('bank_loan')"
@@ -614,12 +634,6 @@ onMounted(() => {
               :disabled="isFieldDisabled('policy_effective_date')"
               :readonly="fieldConfig.policy_effective_date?.readonly"
             />
-            <!-- <div v-if="fieldConfig.policy_effective_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
-              🔄 Auto-calculated from previous policy
-            </div>
-            <div v-else-if="fieldConfig.policy_effective_date?.required && !fieldConfig.policy_effective_date?.readonly" class="text-xs text-orange-600 mt-1">
-              ⏰ Maximum 30 days from today
-            </div> -->
           </x-field>
 
           <!-- Policy Expiry Date -->
@@ -634,9 +648,6 @@ onMounted(() => {
               :disabled="isFieldDisabled('policy_expiry_date')"
               :readonly="fieldConfig.policy_expiry_date?.readonly"
             />
-            <!-- <div v-if="fieldConfig.policy_expiry_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
-              🔄 Auto-calculated (Policy Effective Date + 13 months)
-            </div> -->
           </x-field>
 
           <!-- Certificate Start Date -->
@@ -651,12 +662,6 @@ onMounted(() => {
               :disabled="isFieldDisabled('certificate_start_date')"
               :readonly="fieldConfig.certificate_start_date?.readonly"
             />
-            <!-- <div v-if="fieldConfig.certificate_start_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
-              🔄 Auto-set to Policy Effective Date
-            </div>
-            <div v-else-if="isGigRenewal && !fieldConfig.certificate_start_date?.readonly" class="text-xs text-orange-600 mt-1">
-              ⚠️ No backdating allowed, must be ≤ Policy Effective Date
-            </div> -->
           </x-field>
 
           <!-- Certificate End Date -->
@@ -671,9 +676,6 @@ onMounted(() => {
               :disabled="isFieldDisabled('certificate_end_date')"
               :readonly="fieldConfig.certificate_end_date?.readonly"
             />
-            <!-- <div v-if="fieldConfig.certificate_end_date?.auto_calculated" class="text-xs text-blue-600 mt-1">
-              🔄 Auto-calculated (Certificate Start + 13 months)
-            </div> -->
           </x-field>
 
           <!-- Annual Mileage Estimate -->
@@ -700,27 +702,6 @@ onMounted(() => {
           </x-field>
         </dl>
 
-        <!-- RTA Transaction Summary (for debugging/info) -->
-        <!-- <div v-if="additionalVehicleTransactionDetailsForm.rta_transaction_type" class="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 class="font-semibold text-blue-800 mb-2">RTA Transaction Type: 
-            {{ rtaTransactionTypeOptions.find(opt => opt.value === additionalVehicleTransactionDetailsForm.rta_transaction_type)?.label }}
-          </h4>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-            <div v-if="isGigRenewal" class="text-green-600">
-              ✅ GIG Renewal Detected
-            </div>
-            <div v-if="fieldConfig.policy_effective_date?.readonly" class="text-blue-600">
-              🔒 Policy Dates Locked
-            </div>
-            <div v-if="fieldConfig.plate_code?.disabled" class="text-gray-600">
-              ❌ Plate Fields Disabled
-            </div>
-            <div v-if="fieldConfig.rta_plate_category?.optional" class="text-orange-600">
-              ⚪ RTA Category Optional
-            </div>
-          </div>
-        </div> -->
-
         <div class="flex justify-end my-5 gap-x-2">
           <x-button 
             v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
@@ -729,7 +710,6 @@ onMounted(() => {
             type="submit"
             class="px-6"
             :loading="additionalVehicleTransactionDetailsForm.processing"
-            :disabled="isProcessingConfig"
           >
             Save
           </x-button>

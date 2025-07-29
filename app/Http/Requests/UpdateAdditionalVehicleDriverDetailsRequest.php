@@ -5,77 +5,57 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
+use App\Models\CarQuote;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 {
-    /**
-     * RTA Transaction Type constants
-     */
     private const RTA_NEW_VEHICLE_REGISTRATION = 'RTT01';
     private const RTA_CHANGE_VEHICLE_OWNERSHIP = 'RTT03';
     private const RTA_VEHICLE_RENEWAL = 'RTT04';
-    private const RTA_UPDATE_REGISTRATION = 'RTT07';
-    private const RTA_VEHICLE_RENEWAL_WITH_CHANGE_NUMBER = 'RTT10';
     
-    /**
-     * Policy and certificate date constants
-     */
     private const POLICY_EFFECTIVE_DATE_MAX_DAYS = 30;
     private const POLICY_DURATION_MONTHS = 13;
     
-    /**
-     * Insurance provider constants for determining renewal type
-     */
-    private const GIG_PROVIDER_CODE = 'AXA'; // GIG uses AXA code
+    private const GIG_PROVIDER_CODE = InsuranceProvidersEnum::AXA;
 
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
-     */
     public function rules(): array
     {
         $rules = [
             'quote_type_id' => 'required|integer',
             'quote_uuid' => 'required|string',
             'insurance_provider_code' => 'required|string',
-            'rta_transaction_type' => 'required',
-            'traffic_code_number' => 'required',
-            'engine_number' => 'required',
-            'chassis_number' => 'required',
-            'vehicle_color' => 'required',
-            'bank_loan' => 'required',
-            'first_registration_date' => 'required|date',
-            'is_insured_and_driver_same' => 'required|integer',
-            'driver_gender' => 'required|string|in:male,female',
-            'driver_license_number' => 'required|string|max:255',
         ];
 
-        // Add conditional rules based on RTA transaction type
-        $rules = array_merge($rules, $this->getRtaSpecificRules());
-
-        if ($this->insurance_provider_code == InsuranceProvidersEnum::AXA) {
+        if (isset($this->additional_vehicle_transaction_details) && $this->additional_vehicle_transaction_details == true) {
+            $rules['rta_transaction_type'] = 'required';
             $rules['plate_color'] = 'required|string';
-            $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
-        }
-
-        if ($this->insurance_provider_code == InsuranceProvidersEnum::RSA) {
+            $rules['traffic_code_number'] = 'required';
+            $rules['engine_number'] = 'required';
+            $rules['chassis_number'] = 'required';
+            $rules['vehicle_color'] = 'required';
+            $rules['bank_loan'] = 'required';
+            $rules['first_registration_date'] = 'required|date';
+        } else {
+            $rules['is_insured_and_driver_same'] = 'required|integer';
             $rules['driver_first_name'] = 'required|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_last_name'] = 'required|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_dob'] = 'required|date|before:today';
+            $rules['driver_gender'] = 'required|string|in:male,female';
+            $rules['driver_license_number'] = 'required|string|max:255';
             $rules['uae_driving_experience'] = 'required|numeric|min:0|max:50';
             $rules['home_country_license_issuance'] = 'required_if:is_insured_and_driver_same,0|string|max:255';
             $rules['home_country_driving_experience'] = 'required_if:is_insured_and_driver_same,0|numeric|min:0|max:50';
+            $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
+
+        $rules = array_merge($rules, $this->getRtaSpecificRules());
 
         return $rules;
     }
@@ -105,34 +85,33 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         return $rules;
     }
 
-    /**
-     * Get validation rules for New Vehicle Registration (RTT01)
-     */
     private function getNewVehicleRegistrationRules(): array
     {
         return [
             'policy_effective_date' => 'required|date',
-            'policy_expiry_date' => 'nullable', // Will be auto-calculated
-            'certificate_start_date' => 'nullable', // Will be auto-calculated  
-            'certificate_end_date' => 'nullable', // Will be auto-calculated
-            // Plate code/number not required for new vehicle registration
-            'rta_plate_category' => 'nullable', // Optional
+            'policy_expiry_date' => 'nullable', 
+            'certificate_start_date' => 'nullable', 
+            'certificate_end_date' => 'nullable', 
+            'rta_plate_category' => 'nullable',
         ];
     }
 
-    /**
-     * Get validation rules for Vehicle Renewal (RTT04)
-     */
     private function getVehicleRenewalRules(): array
     {
         $isGigRenewal = $this->isGigRenewal();
         
-        if ($isGigRenewal) {
+        // Check if parent Quote ID is set, if not return error
+        if ($isGigRenewal['parent_quote_id'] === null) {
+            // This will be handled in the validation method
+            return [];
+        }
+        
+        if ($isGigRenewal['status']) {
             return [
-                'policy_effective_date' => 'nullable', // Will be auto-calculated from previous policy
-                'policy_expiry_date' => 'nullable', // Will be retrieved from eBao
-                'certificate_start_date' => 'required|date', // Selectable
-                'certificate_end_date' => 'nullable', // Will be auto-calculated
+                'policy_effective_date' => 'nullable', 
+                'policy_expiry_date' => 'nullable', 
+                'certificate_start_date' => 'required|date', 
+                'certificate_end_date' => 'nullable', 
                 'plate_code' => 'required',
                 'plate_number' => 'required',
                 'rta_plate_category' => 'required',
@@ -140,9 +119,9 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         } else {
             return [
                 'policy_effective_date' => 'required|date',
-                'policy_expiry_date' => 'nullable', // Will be equal to certificate end date
-                'certificate_start_date' => 'nullable', // Will be auto-calculated
-                'certificate_end_date' => 'nullable', // Will be auto-calculated
+                'policy_expiry_date' => 'nullable', 
+                'certificate_start_date' => 'nullable', 
+                'certificate_end_date' => 'nullable', 
                 'plate_code' => 'required',
                 'plate_number' => 'required', 
                 'rta_plate_category' => 'required',
@@ -157,9 +136,9 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         return [
             'policy_effective_date' => 'required|date',
-            'policy_expiry_date' => 'nullable', // Will be auto-calculated
-            'certificate_start_date' => 'nullable', // Will be auto-calculated
-            'certificate_end_date' => 'nullable', // Will be auto-calculated
+            'policy_expiry_date' => 'nullable', 
+            'certificate_start_date' => 'nullable', 
+            'certificate_end_date' => 'nullable', 
             'plate_code' => 'required',
             'plate_number' => 'required',
             'rta_plate_category' => 'required',
@@ -169,17 +148,28 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     /**
      * Determine if this is a GIG renewal based on previous policy
      */
-    private function isGigRenewal(): bool
+    private function isGigRenewal()
     {
-        // TODO: Implement logic to check if previous policy is from GIG
-        // This would typically involve querying the database for the previous policy
-        // based on vehicle details or policy holder information
-        
-        // For now, you can implement this by checking if there's a previous_policy_provider field
-        // or by querying the database based on the quote information
-        
-        return $this->filled('previous_policy_provider') && 
-               $this->previous_policy_provider === self::GIG_PROVIDER_CODE;
+        // For this case the parent_duplicate_quote_id should be filled and get the insurance provider code from parent quote
+        $quoteDetails = CarQuote::where([
+            'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+            'uuid' => $this->quote_uuid
+        ])->first();
+
+        if (!$quoteDetails) {
+            return ['status' => false, 'parent_quote_id' => null, 'isGigRenewal' => false];
+        }
+
+        $parentQuote = CarQuote::where([
+            'code', $quoteDetails->parent_duplicate_quote_id
+        ])->first();
+        $parentQuoteInsuranceProviderCode = $parentQuote->plan->insurance_provider->code;
+
+        if ($parentQuoteInsuranceProviderCode === self::GIG_PROVIDER_CODE) {
+            return ['status' => true, 'parent_quote_id' => $quoteDetails->parent_duplicate_quote_id, 'isGigRenewal' => true];
+        } 
+
+        return ['status' => false, 'parent_quote_id' => $quoteDetails->parent_duplicate_quote_id, 'isGigRenewal' => false];
     }
 
     /**
@@ -333,9 +323,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         if ($this->filled('plate_code') || $this->filled('plate_number')) {
             $validator->errors()->add('plate_code', 'Plate code and plate number are not required for new vehicle registration.');
         }
-        
-        // Auto-calculated fields validation (should not be manually set)
-        $this->validateAutoCalculatedFields($validator, ['policy_expiry_date', 'certificate_start_date', 'certificate_end_date']);
     }
 
     /**
@@ -345,7 +332,13 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         $isGigRenewal = $this->isGigRenewal();
         
-        if ($isGigRenewal) {
+        // Check if parent Quote ID is set, if not return error
+        if ($isGigRenewal['parent_quote_id'] === null) {
+            $validator->errors()->add('rta_transaction_type', 'Vehicle renewal requires parent quote id to proceed.');
+            return;
+        }
+        
+        if ($isGigRenewal['status']) {
             // GIG Renewal validation
             $this->validateGigRenewal($validator);
         } else {
@@ -383,8 +376,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             }
         }
         
-        // Auto-calculated fields validation
-        $this->validateAutoCalculatedFields($validator, ['policy_expiry_date', 'certificate_end_date']);
     }
 
     /**
@@ -394,9 +385,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         // Policy Effective Date: Date can be selected, but cannot be more than 30 days from current date
         $this->validatePolicyEffectiveDateWithinLimit($validator);
-        
-        // Auto-calculated fields validation
-        $this->validateAutoCalculatedFields($validator, ['policy_expiry_date', 'certificate_start_date', 'certificate_end_date']);
     }
 
     /**
@@ -406,9 +394,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         // Policy Effective Date: Date can be selected, but cannot be more than 30 days from current date
         $this->validatePolicyEffectiveDateWithinLimit($validator);
-        
-        // Auto-calculated fields validation
-        $this->validateAutoCalculatedFields($validator, ['policy_expiry_date', 'certificate_start_date', 'certificate_end_date']);
     }
 
     /**
@@ -435,19 +420,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
                     'policy_effective_date', 
                     'Policy effective date cannot be in the past.'
                 );
-            }
-        }
-    }
-
-    /**
-     * Validate that auto-calculated fields are not manually provided
-     */
-    private function validateAutoCalculatedFields($validator, array $fields): void
-    {
-        foreach ($fields as $field) {
-            if ($this->filled($field)) {
-                $fieldName = str_replace('_', ' ', $field);
-                $validator->errors()->add($field, "The {$fieldName} is automatically calculated and should not be manually provided.");
             }
         }
     }
@@ -504,7 +476,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
                 break;
                 
             case self::RTA_VEHICLE_RENEWAL:
-                if ($this->isGigRenewal()) {
+                $gigRenewalData = $this->isGigRenewal();
+                if ($gigRenewalData['status']) {
                     // For GIG renewal, certificate end date is 13 months from certificate start date
                     if ($this->filled('certificate_start_date')) {
                         $certificateStartDate = \Carbon\Carbon::parse($this->certificate_start_date);
