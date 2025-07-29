@@ -24,7 +24,7 @@ class QuoteStatusLogObserver
 
         $lead = $quoteType->model()->where('id', $quoteStatusLog->quote_request_id)->first();
 
-        if ($lead->personal_quote_id) {
+        if ($lead?->personal_quote_id) {
             return $lead->personal_quote_id;
         }
 
@@ -34,6 +34,6 @@ class QuoteStatusLogObserver
             ->join('personal_quotes', 'personal_quotes.uuid', "{$table}.uuid")
             ->first();
 
-        return $lead->personal_quote_id ?? null;
+        return $lead?->personal_quote_id ?? null;
     }
 }
