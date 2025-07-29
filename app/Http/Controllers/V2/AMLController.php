@@ -892,7 +892,7 @@ class AMLController extends Controller
         $response = ['success' => false];
         $insurerAMLScreeningResponse = [];
 
-        if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual && $quote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+        if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
             $insurerAMLScreeningResponse = $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
 
             if (!empty($insurerAMLScreeningResponse)) {

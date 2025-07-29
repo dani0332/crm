@@ -12,6 +12,7 @@ use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -774,6 +775,11 @@ class AMLService
             'paymentable_type' => $quoteDetails->getMorphClass(),
             'paymentable_id' => $quoteDetails->id,
         ])->first();
+
+        if ($quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            return false;
+        }
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurance provider is not ('.InsuranceProvidersEnum::AXA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
