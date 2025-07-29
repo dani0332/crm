@@ -513,6 +513,8 @@ class BorController extends Controller
             DB::rollBack();
             LoggerService::error('BOR cancellation failed', [
                 'bor_id' => $id,
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
                 'error' => $e->getMessage(),
             ]);
 

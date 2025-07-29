@@ -17,4 +17,10 @@ final class BorStatusEnum extends Enum
     const DOCUMENT_UPLOADED = "Document Uploaded";
     const COMPLETED = "Completed";
     const CANCELLED = "Cancelled";
+
+
+    public static function allowsCancellation(string $status): bool
+    {
+        return in_array($status, [self::SIGNATURE_REQUESTED, self::SENT_TO_INSURER, self::DOCUMENT_SIGNED, self::DOCUMENT_UPLOADED, self::COMPLETED, self::CANCELLED]);
+    }
 }

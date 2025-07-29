@@ -407,7 +407,7 @@ const canPerformAction = (log, action) => {
     <!-- Modal Components -->
     <BorCancelModal
       v-if="selectedLog"
-      :show="showCancelModal"
+      :visible="showCancelModal"
       :bor-log="selectedLog"
       @close="onCancelModalClose"
       @confirmed="onCancelConfirmed"
