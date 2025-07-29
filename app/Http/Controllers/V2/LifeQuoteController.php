@@ -20,6 +20,7 @@ use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CurrencyTypeRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -235,6 +236,7 @@ class LifeQuoteController extends Controller
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
         ]);
     }
 
