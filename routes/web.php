@@ -197,6 +197,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/savings-plan-manual-update-process', [SavingsQuoteController::class, 'savingsPlanUpdateManualProcess'])->name('savingsPlanUpdate');
     Route::get('savings/{quoteId}/plan_details/{planId}', [SavingsQuoteController::class, 'planDetails'])->name('savings_plan_details');
     Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
+    Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
 
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
@@ -242,7 +243,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
         Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
         Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
-        Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
