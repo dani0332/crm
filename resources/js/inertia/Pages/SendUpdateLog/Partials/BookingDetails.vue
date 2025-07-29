@@ -783,10 +783,15 @@ const confirmationCheck = ref(false);
 const isStating = ref(false);
 
 const sendUpdatePermissionCheck = computed(() => {
-  if (props.isEndorsementActionDisabled) {
+  if (
+    props.isEndorsementActionDisabled &&
+    [sendUpdateStatusEnum.ACTION_SNBU, sendUpdateStatusEnum.ACTION_SU].includes(
+      props.updateBtn,
+    )
+  ) {
     return true;
   }
-  
+
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
     return !can(permissionsEnum.BOOK_UPDATE_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
