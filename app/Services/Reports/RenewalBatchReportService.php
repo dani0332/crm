@@ -710,7 +710,7 @@ class RenewalBatchReportService extends BaseService
             ->orderByDesc('end_date')
             ->get();
 
-        if (empty($defaultBatchRange)) {
+        if ($defaultBatchRange->isEmpty()) {
             $lastBatch = RenewalBatch::select('end_date')->where('quote_type_id', QuoteTypeId::Car)->orderByDesc('end_date')->first();
             $defaultBatchRange = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
@@ -720,7 +720,7 @@ class RenewalBatchReportService extends BaseService
                 ->get();
         }
 
-        if (! empty($defaultBatchRange)) {
+        if (! $defaultBatchRange->isEmpty()) {
             $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
             $startDate = Carbon::parse($defaultBatchRange->last()->start_date)->startOfDay()->format($dateTimeFormat);
             $endDate = Carbon::parse($defaultBatchRange->first()->end_date)->endOfDay()->format($dateTimeFormat);

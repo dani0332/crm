@@ -44,6 +44,7 @@ class LifeQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+    public $allowedColumns = ['others_info', 'is_smoker', 'sum_insured_value', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'tenure_of_insurance_id', 'number_of_years_id', 'height', 'weight', 'bmi', 'age', 'lang'];
     protected $appends = [
         'pc_qualified_formatted',
     ];
@@ -71,7 +72,11 @@ class LifeQuote extends Model implements AuditableContract
     public function getAuditables()
     {
         return [
-            'auditable_type' => self::class,
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => self::class, 'key' => 'personal_quote_id'],
+            ],
         ];
     }
     public function getDobAttribute($value)
@@ -193,6 +198,16 @@ class LifeQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
+
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
+    }
+
     // Get all insured records for this quote (multiple AML screenings)
     public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
@@ -219,6 +234,21 @@ class LifeQuote extends Model implements AuditableContract
         )->latest('customer_insured.updated_at');
     }
 
+    public function sumInsuredCurrency()
+    {
+        return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id');
+    }
+
+    public function policySumAssuredCurrency()
+    {
+        return $this->belongsTo(CurrencyType::class, 'policy_sum_assured_currency_id');
+    }
+
+    public function scopeFilterBySegment($query, $alias = 'lqr')
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Life);
+    }
     /**
      * Get all quote status logs for this model
      *

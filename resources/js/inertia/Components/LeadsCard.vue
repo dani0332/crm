@@ -45,7 +45,7 @@ const onLoadMore = id => {
   };
   axios
     .post(
-      route('loadMoreRecords', {
+      route('life-quotes-load-more-cards', {
         page: quotes.value.pages[id],
         modelType: props.quoteType,
         status: id,
@@ -61,6 +61,9 @@ const onLoadMore = id => {
         Number(
           useCalculateTotalSum(data.leads_list.data, 'price_starting_from '),
         );
+      quote.value.data.total_sum_insured_value =
+        Number(quote.value.data.total_sum_insured_value) +
+        Number(useCalculateTotalSum(data.leads_list.data, 'sum_insured_value'));
       quote.value.data.total_leads = data.leads_list.total;
       quote.value.data.leads_list.next_page_url = data.leads_list.next_page_url;
       quote.value.data.leads_list.data =
@@ -156,6 +159,7 @@ const UpdateLeadsCount = data => {
           ? draggedItem.price_starting_from
           : 0;
         lead.data.total_premium -= draggedItem.premium ?? 0;
+        lead.data.total_sum_insured_value -= draggedItem.sum_insured_value ?? 0;
       }
       lead.data.leads_list.data.splice(index, 1);
     }
@@ -169,6 +173,8 @@ const UpdateLeadsCount = data => {
         lead.data.total_leads += 1;
         lead.data.total_opportunity += draggedItem.price_starting_from ?? 0;
         lead.data.total_premium += draggedItem.premium ?? 0;
+        lead.data.total_sum_insured_value +=
+          +draggedItem.sum_insured_value ?? 0;
       }
     }
     return lead;
@@ -213,11 +219,19 @@ watch(
             : '0.00'
         }}</span>
       </div>
-      <div class="flex justify-between gap-1">
+      <div v-if="quoteType != 'Life'" class="flex justify-between gap-1">
         <span>Total Price </span>
         <span>{{
           Number(quote.data.total_premium) > 0
             ? Number(quote.data.total_premium).toLocaleString()
+            : '0.00'
+        }}</span>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex justify-between gap-1">
+        <span>Total Sum Assured </span>
+        <span>{{
+          Number(quote.data.total_sum_insured_value) > 0
+            ? Number(quote.data.total_sum_insured_value).toLocaleString()
             : '0.00'
         }}</span>
       </div>
