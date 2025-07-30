@@ -198,18 +198,34 @@ class ManagementReport
             if (is_array($request[$filterKey])) {
                 $dates = [];
                 foreach ($request[$filterKey] as $key => $dateString) {
-                    $carbonDate = Carbon::parse($dateString);
-                    if ($key == 0) {
-                        $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                    // Add null check before parsing
+                    if ($dateString !== null && $dateString !== '') {
+                        $carbonDate = Carbon::parse($dateString);
+                        if ($key == 0) {
+                            $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        } else {
+                            $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        }
                     } else {
-                        $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        // Provide default date if null
+                        if ($key == 0) {
+                            $dates[$key] = today()->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        } else {
+                            $dates[$key] = today()->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        }
                     }
                 }
                 $request[$filterKey] = $dates;
             } else {
-                $carbonDate = Carbon::parse($request[$filterKey]);
-                $dates = $carbonDate->startOfDay();
-                $request[$filterKey] = $dates;
+                // Add null check for single date value
+                if ($request[$filterKey] !== null && $request[$filterKey] !== '') {
+                    $carbonDate = Carbon::parse($request[$filterKey]);
+                    $dates = $carbonDate->startOfDay();
+                    $request[$filterKey] = $dates;
+                } else {
+                    // Provide default date if null
+                    $request[$filterKey] = today()->startOfDay();
+                }
             }
         }
         $dateRange = $request[$filterKey] ?? [
