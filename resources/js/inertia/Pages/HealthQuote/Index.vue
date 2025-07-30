@@ -66,6 +66,7 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'EMIRATE OF VIA', value: 'emirate.text', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
@@ -1080,8 +1081,8 @@ const insurerAMLStatusOption = computed(() => {
         />
         <ComboBox
           v-model="filters.emirate_of_your_visa_id"
-          label="Visa Emirate"
-          placeholder="Search by Visa Emirate"
+          label="Emirate of Visa"
+          placeholder="Search by Emirate of Visa"
           :options="emirates"
           class="w-full"
           :single="false"
