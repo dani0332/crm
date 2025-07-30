@@ -69,6 +69,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'health_quote_request.updated_at',
             'assignment_type',
             'gender',
+            'emirate_of_your_visa_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -128,6 +129,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
+            ->filterIn('emirate_of_your_visa_id', requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', requestParams: $requestParams)
             ->filterBySegment()

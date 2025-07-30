@@ -18,6 +18,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -58,6 +59,8 @@ class RetentionReportService extends BaseService
 
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($request);
+
+        LoggerService::sql(self::class.' - Retention Report', $query);
 
         $allData = $query->get();
 
@@ -101,12 +104,7 @@ class RetentionReportService extends BaseService
         if ($isPersonalQuote) {
             $quoteRequestCondition = 'AND qsl.quote_request_id = personal_quotes.id';
         } else {
-            $quoteRequestCondition = "
-                AND qsl.quote_request_id = (
-                    SELECT id FROM {$tableName}
-                    WHERE {$tableName}.uuid = personal_quotes.uuid
-                    LIMIT 1
-                )";
+            $quoteRequestCondition = 'AND qsl.personal_quote_id = personal_quotes.id';
         }
 
         $queryTemplate = '
@@ -289,11 +287,7 @@ class RetentionReportService extends BaseService
                         if ($isPersonalQuote) {
                             $quoteRequestCondition = 'qsl.quote_request_id = personal_quotes.id';
                         } else {
-                            $quoteRequestCondition = "qsl.quote_request_id = (
-                                SELECT id FROM {$tableName}
-                                WHERE {$tableName}.uuid = personal_quotes.uuid
-                                LIMIT 1
-                            )";
+                            $quoteRequestCondition = 'qsl.personal_quote_id = personal_quotes.id';
                         }
 
                         $subQuery->whereIn('quote_status_id', $cancelledStatuses)
