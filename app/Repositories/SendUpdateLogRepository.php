@@ -607,11 +607,6 @@ class SendUpdateLogRepository extends BaseRepository
         info('function fetchUpdateQuoteStatusLog ended - quote UUID: '.$quoteUuid);
     }
 
-    public static function getLogById($id)
-    {
-        return (new static)->fetchGetLogById($id);
-    }
-
     public function fetchGetQuoteFromSendUpdateLog($sendUpdateLog)
     {
         $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
