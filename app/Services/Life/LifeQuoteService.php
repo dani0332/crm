@@ -11,6 +11,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -50,7 +51,6 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
-use App\Enums\QuoteSegmentEnum;
 
 class LifeQuoteService extends BaseService
 {
