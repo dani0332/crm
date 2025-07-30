@@ -906,8 +906,21 @@ const linkEntity = () => {
 const readOnlyMode = reactive({
   isDisable: true,
 });
+
+const shouldShowPlanDetailsSection = computed(() => {
+  const cutoffDate = props.lifeCutOffDate
+    ? new Date(props.lifeCutOffDate)
+    : new Date('2025-07-25 12:00:00');
+
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
+    return false;
+  }
+
+  return true;
+});
+
 onMounted(() => {
-  if (page.props.quote.is_ecommerce) {
+  if (!shouldShowPlanDetailsSection.value) {
     onLoadAvailablePlansData();
   }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
@@ -982,18 +995,6 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-
-const shouldShowPlanDetailsSection = computed(() => {
-  const cutoffDate = props.lifeCutOffDate
-    ? new Date(props.lifeCutOffDate)
-    : new Date('2025-07-25 12:00:00');
-
-  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
-    return false;
-  }
-
-  return true;
-});
 
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
