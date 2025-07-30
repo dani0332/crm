@@ -251,6 +251,7 @@ const triggerPostPrepayment = async () => {
         'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
       position: 'top',
     });
+    return;
   }
   try {
     const response = await axios.post(route('can-post-premium-prepayment'), {
