@@ -129,13 +129,13 @@ class PaymentService extends BaseService
             } else {
                 $quoteModel = $mainLeadObject;
             }
-
-            $request = [
+            $request = new Request;
+            $request->merge([
                 'modelType' => $data['quote_type'],
                 'quote_id' => $data['quote_request_id'],
                 'customer_id' => $quoteModel->customer_id,
                 'advisor_id' => $quoteModel->advisor_id,
-            ];
+            ]);
 
             LoggerService::info("Start Retry Prepayment Posting of Payment split for payment code : {$paymentCode} and sr no : {$srNo}");
             if ((new SageApiService)->isSageEnabled()) {
