@@ -196,83 +196,41 @@ class BorController extends Controller
     }
 
     /**
-     * Get BOR by document ID (for customer portal)
+     * View BOR PDF document (generates PDF on-the-fly like API - base64 preview only)
      */
-    public function getByToken(Request $request, $token): JsonResponse
+    public function viewSignedPdf(Request $request, $borLogId)
     {
         try {
-            $borLog = BorLog::where('document_id', $token)->firstOrFail();
+            $borLog = BorLog::findOrFail($borLogId);
             
-            // Load related lead data
-            $lead = PersonalQuote::find($borLog->lead_id);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'bor_log' => $borLog,
-                    'lead' => $lead ? [
-                        'id' => $lead->id,
-                        'first_name' => $lead->first_name,
-                        'last_name' => $lead->last_name,
-                        'email' => $lead->email,
-                        'phone' => $lead->phone,
-                        'lob' => $lead->lob,
-                    ] : null,
-                ],
-            ]);
-
-        } catch (\Exception $e) {
-            LoggerService::error('Failed to fetch BOR by document ID', [
-                'document_id' => $token,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or expired BOR document ID',
-            ], 404);
-        }
-    }
-
-
-    /**
-     * Generate preview PDF for BOR document (before signing)
-     */
-    public function generatePreviewPdf(Request $request, $token): JsonResponse
-    {
-        try {
-            $borLog = BorLog::where('document_id', $token)->firstOrFail();
-
-            // Generate preview PDF
-            $pdfUrl = $this->borPdfService->generatePreviewBorPdf($borLog);
-
-            if (!$pdfUrl) {
+            // Generate BOR PDF using the same service as API
+            $pdf = $this->borPdfService->generatePreviewBorPdf($borLog);
+            
+            if (!$pdf) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to generate PDF preview',
+                    'message' => 'Failed to generate BOR PDF',
                 ], 500);
             }
 
+            // Return base64 encoded PDF content for viewing only (same as API)
             return response()->json([
                 'success' => true,
-                'message' => 'PDF preview generated successfully',
-                'data' => [
-                    'pdf_url' => $pdfUrl,
-                    'bor_reference' => $borLog->bor_reference,
-                ],
+                'data' => 'data:application/pdf;base64,' . base64_encode($pdf['pdf']->output()),
+                'name' => $pdf['name'],
+                'message' => 'BOR PDF generated successfully for viewing',
             ]);
 
         } catch (\Exception $e) {
-            LoggerService::error('BOR PDF preview generation failed', [
-                'token' => $token,
+            LoggerService::error('Failed to generate BOR PDF for viewing', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'bor_log_id' => $borLogId,
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'message' => 'Failed to generate PDF preview',
+                'message' => 'Failed to generate PDF for viewing: ' . $e->getMessage(),
             ], 500);
         }
     }

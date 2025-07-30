@@ -231,6 +231,7 @@ const canPerformAction = (log, action) => {
     case 'done':
       return [props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status)
     case 'view_document':
+      return true;
       return [props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED, props.borStatusEnum.CANCELLED, props.borStatusEnum.COMPLETED].includes(status)
     case 'copy_link':
       return editAndCopyLinkCondition

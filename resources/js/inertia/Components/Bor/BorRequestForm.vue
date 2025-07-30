@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { formatDate } from '../../Composables/utilities';
+import axios from 'axios';
 
 // Fix: Use proper notification import
 const notification = useNotifications('toast');
@@ -45,6 +46,15 @@ const page = usePage();
 // Edit mode computed property
 const isEditMode = computed(() => {
   return props.borLog && props.borLog.id;
+});
+
+// Computed properties - use embedded document data from getBorLogs
+const hasSignedDocument = computed(() => {
+  return props.borLog.has_signed_pdf && props.borLog.signed_pdf?.length > 0;
+});
+
+const signedDocuments = computed(() => {
+  return props.borLog.signed_pdf || [];
 });
 
 // Form data using Inertia's useForm with proper field mapping
@@ -429,6 +439,47 @@ const downloadFile = download => {
   }, 1300);
 };
 
+// View BOR PDF document (generates PDF on-the-fly - base64 preview only)
+const viewSignedPdf = async () => {
+  try {
+    downloadLoader.value = true;
+    
+    const response = await axios.get(route('bor.logs.view-signed-pdf', {
+      borLogId: props.borLog.id
+    }));
+    if (response.data.success) {
+      // Open PDF in new window for viewing only
+      const newWindow = window.open();
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>View: ${response.data.name}</title>
+            <style>
+              body { margin: 0; padding: 0; }
+              iframe { width: 100%; height: 100vh; border: none; }
+            </style>
+          </head>
+          <body>
+            <iframe src="${response.data.data}" type="application/pdf"></iframe>
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    } else {
+      throw new Error(response.data.message || 'Failed to load document');
+    }
+  } catch (error) {
+    console.error('Error viewing signed PDF:', error);
+    notification.error({
+      title: 'View Error',
+      message: 'Failed to view signed document. Please try again.',
+      position: 'top',
+    });
+  } finally {
+    downloadLoader.value = false;
+  }
+};
+
 // Initialize form on mount
 onMounted(() => {
   resetForm();
@@ -469,19 +520,19 @@ onMounted(() => {
                   <strong>BOR Reference:</strong> {{ borLog.bor_reference }}
                 </div>
                 <div class="text-sm text-blue-600">
-                  <strong>Created:</strong> {{ new Date(borLog.created_at).toLocaleDateString() }}
+                  <strong>Created:</strong> {{ borLog.created_at }}
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Uploaded Documents (Edit Mode Only) -->
-          <div v-if="isEditMode && uploadedDocuments.length > 0" class="bg-gray-50 p-4 rounded-lg">
+          <div v-if="isEditMode && ( hasSignedDocument || uploadedDocuments.length > 0 )" class="bg-gray-50 p-4 rounded-lg">
             <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
               <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Broker on Record Letter
+              Documents
             </h4>
             <div class="space-y-2">
               <div 
@@ -507,6 +558,48 @@ onMounted(() => {
                 >
                   View
                 </x-button>
+              </div>
+              <!-- Signed PDF Documents -->
+              <div v-if="hasSignedDocument" class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                  <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Signed BOR Documents
+                  <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Signed
+                  </span>
+                </h4>
+                <div class="space-y-2">
+                  <div 
+                    v-for="document in signedDocuments" 
+                    :key="document.id"
+                    class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <div>
+                        <p class="text-sm font-medium text-gray-900">{{ document.doc_name }}</p>
+                        <p class="text-xs text-gray-500">{{ document.doc_mime_type }}</p>
+                        <p class="text-xs text-gray-400">Uploaded: {{ formatDate(document.updated_at) }}</p>
+                        <p class="text-xs text-gray-400">Type: {{ document.document_type_text }}</p>
+                      </div>
+                    </div>
+                    <x-button
+                      size="xs"
+                      color="primary"
+                      :loading="downloadLoader"
+                      @click.prevent="viewSignedPdf()"
+                    >
+                      View PDF
+                    </x-button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

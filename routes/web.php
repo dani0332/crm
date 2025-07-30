@@ -902,21 +902,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // BOR (Broker on Record) Routes
     Route::group(['prefix' => 'bor'], function () {
         // BOR Request Management
-        Route::resource('requests', BorController::class)->names('bor.requests');
-        // Route::post('requests', [BorController::class, 'createBorRequest'])->name('bor.requests.store');
-        Route::get('logs/{leadId}', [BorController::class, 'getBorLogs'])->name('bor.logs.index');
+        Route::resource('requests', BorController::class)->names('bor.requests')->only(['index', 'store', 'update']);
         
         // BOR Status and Action Management (CRM Interface)
-        Route::put('logs/{id}/status', [BorController::class, 'updateStatus'])->name('bor.logs.update-status');
         Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.logs.cancel');
         Route::post('logs/{id}/done', [BorController::class, 'markDone'])->name('bor.logs.mark-done');
         Route::get('logs/{id}/download', [BorController::class, 'downloadDocument'])->name('bor.logs.download-document');
+        Route::get('logs/{borLogId}/signed-pdf', [BorController::class, 'viewSignedPdf'])->name('bor.logs.view-signed-pdf');
         
         // Document Management
         Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
-        Route::get('documents/{token}', [BorController::class, 'getByToken'])->name('bor.documents.view');
-        
-        // Customer Portal (for external access)
-        Route::post('signature/{token}', [BorController::class, 'submitSignature'])->name('bor.signature.submit');
     });
 });

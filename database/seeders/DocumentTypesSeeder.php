@@ -622,7 +622,7 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'BOR_SIGN',
+                'code' => DocumentTypeCode::BOR_SIGN,
                 'text' => 'Bor Signature',
                 'quote_type_id' => null,
                 'is_active' => 1,

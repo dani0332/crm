@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { formatDate } from '../../Composables/utilities';
+import axios from 'axios';
 
 const props = defineProps({
   visible: {
@@ -28,7 +29,6 @@ const hasSignedDocument = computed(() => {
 const closeModal = () => {
   // Reset form state
   showModal.value = false;
-  uploadedDocuments.value = [];
   emit('close');
 };
 
@@ -83,6 +83,49 @@ const downloadFile = (doc) => {
   setTimeout(() => {
     downloadLoader.value = false;
   }, 1300);
+};
+
+// View BOR PDF document (generates PDF on-the-fly - base64 preview only)
+const viewSignedPdf = async () => {
+  try {
+    downloadLoader.value = true;
+    
+    const response = await axios.get(route('bor.logs.view-signed-pdf', {
+      borLogId: props.borLog.id
+    }));
+
+    if (response.data.success) {
+      // Open PDF in new window for viewing only
+      const newWindow = window.open();
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>View: ${response.data.name}</title>
+            <style>
+              body { margin: 0; padding: 0; }
+              iframe { width: 100%; height: 100vh; border: none; }
+            </style>
+          </head>
+          <body>
+            <iframe src="${response.data.data}" type="application/pdf"></iframe>
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    } else {
+      throw new Error(response.data.message || 'Failed to load document');
+    }
+  } catch (error) {
+    console.error('Error viewing signed PDF:', error);
+    const notification = useNotifications('toast');
+    notification.error({
+      title: 'View Error',
+      message: 'Failed to view signed document. Please try again.',
+      position: 'top',
+    });
+  } finally {
+    downloadLoader.value = false;
+  }
 };
 
 // Handle close
@@ -262,14 +305,14 @@ watch(() => props.visible, (newVisible) => {
                   <p class="text-xs text-gray-400">Type: {{ document.document_type_text }}</p>
                 </div>
               </div>
-              <!-- <x-button
+              <x-button
                 size="xs"
                 color="primary"
                 :loading="downloadLoader"
-                @click.prevent="downloadFile(document)"
+                @click.prevent="viewSignedPdf()"
               >
-                View
-              </x-button> -->
+                View PDF
+              </x-button>
             </div>
           </div>
         </div>

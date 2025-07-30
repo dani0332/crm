@@ -39,7 +39,7 @@ class BorService
         $logs = BorLog::where('lead_id', $personalQuote->id)
             ->with(['insuranceProvider', 'personalQuote'])
             ->orderBy('created_at', 'desc')
-            ->simplePaginate(10)
+            ->simplePaginate(15)
             ->withQueryString();
         
         // Total count for backward compatibility
@@ -59,7 +59,7 @@ class BorService
      * @param BorLog $borLog
      * @return BorLog
      */
-    private function enrichBorLogWithDocuments(BorLog $borLog): BorLog
+    public function enrichBorLogWithDocuments(BorLog $borLog): BorLog
     {
         try {
             $personalQuote = $borLog->personalQuote;
@@ -93,9 +93,9 @@ class BorService
             });
 
             // Filter signed PDF documents
-            $signedPdf = $personalQuote->documents->filter(function ($doc) {
+            $signedPdf = $personalQuote->documents->filter(function ($doc) use($borRefId) {
                 $code = $doc->document_type_code;
-                return $code == DocumentTypeCode::BOR_SIGN;
+                return $code == DocumentTypeCode::BOR_SIGN && $doc->document_category == $borRefId;
             });
 
             // Add document collections to the BOR log object
