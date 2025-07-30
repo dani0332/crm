@@ -103,6 +103,9 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
         foreach ($failedLeads as $lead) {
             if ($lead->data) {
                 $leadData = $lead->data;
+                if (isset($leadData['renewal_batch_id'])) {
+                    unset($leadData['renewal_batch_id']);
+                }
                 $leadData['errors'] = $lead->validation_errors;
                 $exportLeads->push($leadData);
             }
