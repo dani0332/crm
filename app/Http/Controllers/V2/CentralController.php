@@ -352,7 +352,7 @@ class CentralController extends Controller
             if ($isAUHHealthLead) {
                 return response()->json(['message' => 'This is an Abu Dhabi health quote lead. Please book the policy manually.'], 200);
             }
-            
+
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',

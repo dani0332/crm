@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
@@ -12,12 +13,10 @@ use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
-use App\Enums\EmirateEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
-use App\Models\Emirate;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
@@ -341,8 +340,6 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isHealthAUHLead'] = strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
                                             isset($record->emirate_of_your_visa_id) &&
                                             $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
-
-
 
         return $bookPolicyDetails;
     }
