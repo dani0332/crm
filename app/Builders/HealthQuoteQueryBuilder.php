@@ -128,6 +128,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
+            ->filterBy('emirate_of_your_visa_id', requestParams: $requestParams, ignoreAll: true)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', requestParams: $requestParams)
             ->filterBySegment()

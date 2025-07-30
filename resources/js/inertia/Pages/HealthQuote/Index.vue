@@ -20,6 +20,7 @@ defineProps({
   authorizedDays: Number,
   assignmentTypes: Object,
   insurerAMLStatus: Array,
+  emirates: Array,
 });
 
 const page = usePage();
@@ -200,6 +201,7 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   private_client: 'all',
+  emirate_of_your_visa_id: 'all',
 });
 
 const canExport = ref(false);
@@ -1073,6 +1075,14 @@ const insurerAMLStatusOption = computed(() => {
             { value: 'no', label: 'No' },
             { value: 0, label: 'Ex-Pc' },
           ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.emirate_of_your_visa_id"
+          label="Emirate"
+          placeholder="Search by emirate"
+          :options="emirates"
           class="w-full"
           :single="true"
         />

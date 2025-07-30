@@ -290,6 +290,7 @@ class CRUDController extends Controller
             $quote_status = collect($quote_status)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::Lost;
             })->values();
+            $emirates = Emirate::getOptions(withAll: true);
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
             $userMaxCap = $todaysAllocationData['max_capacity'];
@@ -315,6 +316,7 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'emirates' => $emirates,
             ]);
         }
 
