@@ -84,7 +84,6 @@ class PolicyIssuanceService
         /* Get Unique Insurer per lob to get the statuses for which automation is enabled */
         $uniqueInsurerListByLob = PolicyIssuance::with(['insuranceProvider:id,code,text'])
             ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS])
-            ->where('id', 1098) // TODO:: Remove this after testing
             ->select(['quote_type', 'insurance_provider_id'])
             ->distinct()->get();
 
@@ -153,7 +152,7 @@ class PolicyIssuanceService
             $policyIssuanceQuery->chunk(100, function ($policyIssuanceProcesses) {
                 foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
-                    PolicyIssuanceJob::dispatchSync($policyIssuanceProcess);
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess)->onQueue('policy-issuance-automation');
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
                 }
             });

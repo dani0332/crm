@@ -444,7 +444,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private function executeIssuePolicyStep($quote, $process): array
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::ISSUE_POLICY);
-        $policyIssuanceResponse = $this->issuePolicy($quote, $process);
+        $policyIssuanceResponse = $this->issuePolicy($quote);
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$policyIssuanceResponse['message'] ?? 'Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);

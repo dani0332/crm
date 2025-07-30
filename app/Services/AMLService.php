@@ -874,7 +874,7 @@ class AMLService
                     'code' => $carQuoteRequestDetails->plate_color ?? null,
                     'value' => $vehicleColor[$carQuoteRequestDetails->plate_color] ?? null,
                 ];
-                $insurerScreeningPayload['bankLoan'] = (bool) $carQuoteRequestDetails->bank_loan ?? null;
+                $insurerScreeningPayload['bankLoan'] = $carQuoteRequestDetails->bank_loan !== null ? (bool) $carQuoteRequestDetails->bank_loan : null;
                 $insurerScreeningPayload['bankName'] = [
                     'code' => $carQuoteRequestDetails->bank_name ?? null,
                     'value' => $bankName?->text ?? null,
@@ -885,7 +885,7 @@ class AMLService
                 $insurerScreeningPayload['certificateStartDate'] = $carQuoteRequestDetails->certificate_start_date ?? null;
                 $insurerScreeningPayload['certificateEndDate'] = $carQuoteRequestDetails->certificate_end_date ?? null;
                 $insurerScreeningPayload['annualMilageEstimation'] = $carQuoteRequestDetails->annual_mileage_estimate ?? null;
-                $insurerScreeningPayload['driverName'] = $carQuoteRequestDetails->driver_first_name ?? null; // TODO:: Need to confirm with Denber.' '.$carQuoteRequestDetails->driver_last_name
+                $insurerScreeningPayload['driverName'] = trim(($carQuoteRequestDetails->driver_first_name ?? '') . ' ' . ($carQuoteRequestDetails->driver_last_name ?? '')) ?: null;
                 $insurerScreeningPayload['driverDob'] = $carQuoteRequestDetails->driver_dob ?? null;
                 $insurerScreeningPayload['driverGender'] = strtolower($this->formatGender($carQuoteRequestDetails->driver_gender)) ?? null;
                 $insurerScreeningPayload['driverLicenseNumber'] = $carQuoteRequestDetails->driver_license_number ?? null;
@@ -895,7 +895,7 @@ class AMLService
                 $insurerScreeningPayload['uaeDrivingExperience'] = $carQuoteRequestDetails->driver_uae_driving_experience ?? null;
                 $insurerScreeningPayload['homeCountryLicenseInsurance'] = $nationality?->text ?? null;
                 $insurerScreeningPayload['homeCountryDrivingExperience'] = $carQuoteRequestDetails->home_country_driving_experience ?? null;
-                $insurerScreeningPayload['insuredAndDriverSame'] = (bool) $carQuoteRequestDetails->is_insured_and_driver_same ?? null;
+                $insurerScreeningPayload['insuredAndDriverSame'] = $carQuoteRequestDetails->is_insured_and_driver_same !== null ? (bool) $carQuoteRequestDetails->is_insured_and_driver_same : null;
             }
 
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Insurer AML Screening API called - Ref-ID: '.$quoteDetails->code);

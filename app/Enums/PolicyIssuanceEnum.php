@@ -27,8 +27,6 @@ final class PolicyIssuanceEnum extends Enum
     const AUTO_CAPTURE_FAILED_STATUS_ID = 1;
     const AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
     const AUTO_CAPTURE_ACTION_MESSAGE = 'Auto Capture Payment';
-
-    // Reminder:: These should be moved into their own Automation Service Class
     const POLICY_DETAIL_API_FAILED_STATUS_ID = 2;
     const POLICY_DETAIL_API_FAILED = 'Policy Details API Failed';
     const POLICY_DETAIL_API_ACTION_MESSAGE = 'Retrieval of Required Policy Details via API / Policy Issuance API';

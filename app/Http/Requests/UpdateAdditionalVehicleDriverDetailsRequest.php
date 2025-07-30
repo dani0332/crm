@@ -149,8 +149,9 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         }
 
         $parentQuote = CarQuote::where([
-            'code', $quoteDetails->parent_duplicate_quote_id
+            'code' => $quoteDetails->parent_duplicate_quote_id
         ])->first();
+        
         $parentQuoteInsuranceProviderCode = $parentQuote->plan->insurance_provider->code;
 
         if ($parentQuoteInsuranceProviderCode === self::GIG_PROVIDER_CODE) {
