@@ -43,7 +43,7 @@ const emit = defineEmits([
   'view-payment',
   'generate-cc-link',
   'delete-split-payment',
-  'retry-split-payment'
+  'retry-split-payment',
 ]);
 
 // Add can function for permission checks
@@ -110,7 +110,7 @@ const triggerPostRetryPrepayment = () => {
         only: ['payments'],
       });
     },
-    onError: (errors) => {
+    onError: errors => {
       Object.keys(errors).forEach(function (key) {
         notification.error({
           title: errors[key],
@@ -277,7 +277,7 @@ const triggerPostPrepayment = async () => {
       });
     });
   } finally {
-    postPrepaymentProcessing.value = false; 
+    postPrepaymentProcessing.value = false;
   }
 };
 </script>

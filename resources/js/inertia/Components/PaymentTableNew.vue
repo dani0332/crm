@@ -1158,7 +1158,7 @@ watch(
                       @retry-split-payment="
                         (jobId, message) =>
                           retrySplitPaymentModal(jobId, message)
-                        "
+                      "
                     />
                   </template>
                 </template>
