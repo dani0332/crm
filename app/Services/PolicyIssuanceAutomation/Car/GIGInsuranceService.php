@@ -522,33 +522,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return $uploadPolicyDocumentsToIMCRMResponse;
     }
 
-    private function executeOCRProcessingStep($quote, $process): array
-    {
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::EXECUTE_OCR_PROCESSING);
-        $executeOCRProcessingResponse = $this->executeOCRProcessing($quote, $process);
-
-        if (! $executeOCRProcessingResponse['status']) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$executeOCRProcessingResponse['message'] ?? 'OCR processing failed', extra: ['response' => $executeOCRProcessingResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::OCR_PROCESSING_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
-
-            return $executeOCRProcessingResponse;
-        }
-
-        if (isset($executeOCRProcessingResponse['processing']) && $executeOCRProcessingResponse['processing']) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR processing is in progress, will continue via batch callback');
-            
-            return $executeOCRProcessingResponse;
-        }
-
-        if (isset($executeOCRProcessingResponse['completed_step'])) {
-            $process->update(['completed_step' => $executeOCRProcessingResponse['completed_step']]);
-            $process = $process->refresh();
-            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$executeOCRProcessingResponse['completed_step']);
-        }
-
-        return $executeOCRProcessingResponse;
-    }
-
     public function uploadPolicyDocumentsToIMCRM($quote, $process): array
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$this->policyIssuance->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
@@ -603,7 +576,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Insurer Document not found for : '.$policyDocument->name, ['status' => $document['status'], 'error' => $document['error']]);
             }
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $document, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $document['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, ['documentType' => $policyDocument->docId, 'referenceType' => 'policy', 'referenceValue' => $policyId], $document, $this->baseUrl.$endPoint, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $document['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
             
             $uploadedDocumentsToIMCRM->push([
                 'name' => $docName,
@@ -648,6 +621,33 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - ended with '.$uploadedDocuments->count().' documents ready for OCR processing');
 
         return $response;
+    }
+
+    private function executeOCRProcessingStep($quote, $process): array
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Step Executing : '.self::EXECUTE_OCR_PROCESSING);
+        $executeOCRProcessingResponse = $this->executeOCRProcessing($quote, $process);
+
+        if (! $executeOCRProcessingResponse['status']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$executeOCRProcessingResponse['message'] ?? 'OCR processing failed', extra: ['response' => $executeOCRProcessingResponse]);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::OCR_PROCESSING_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+
+            return $executeOCRProcessingResponse;
+        }
+
+        if (isset($executeOCRProcessingResponse['processing']) && $executeOCRProcessingResponse['processing']) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR processing is in progress, will continue via batch callback');
+            
+            return $executeOCRProcessingResponse;
+        }
+
+        if (isset($executeOCRProcessingResponse['completed_step'])) {
+            $process->update(['completed_step' => $executeOCRProcessingResponse['completed_step']]);
+            $process = $process->refresh();
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$executeOCRProcessingResponse['completed_step']);
+        }
+
+        return $executeOCRProcessingResponse;
     }
 
     public function executeOCRProcessing($quote, $process): array

@@ -1576,15 +1576,15 @@ class CentralService extends BaseService
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
                 // TODO:: This should be dynamic as per insurance provider and need to check with API team about the response message
-                $messages = [
-                    'Capture amount exceeds the authorized amount' => 'Capture amount in IMCRM and either is greater than Authorized amount',
-                    'Capture amount exceeds the authorized amount and differs from premium in GIG portal' => 'Capture amount in IMCRM and both are greater than Authorized amount',
-                    'Premium mismatch with GIG portal' => 'Capture amount in IMCRM and both are less than or equal to Authorized amount',
-                    'Premium in GIG portal exceeds the authorized amount and differs from capture amount' => 'Capture amount in IMCRM and getQuote premium is greater than Authorized amount, but the Capture amount is less than or equal to the Authorized amount',
-                    'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
-                ];
+                // $messages = [
+                //     'Capture amount exceeds the authorized amount' => 'Capture amount in IMCRM and either is greater than Authorized amount',
+                //     'Capture amount exceeds the authorized amount and differs from premium in GIG portal' => 'Capture amount in IMCRM and both are greater than Authorized amount',
+                //     'Premium mismatch with GIG portal' => 'Capture amount in IMCRM and both are less than or equal to Authorized amount',
+                //     'Premium in GIG portal exceeds the authorized amount and differs from capture amount' => 'Capture amount in IMCRM and getQuote premium is greater than Authorized amount, but the Capture amount is less than or equal to the Authorized amount',
+                //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
+                // ];
                 
-                return ['status' => false, 'message' => $messages[$logExtra['responseMessage']] ?? 'Premium mismatch on Insurer portal'];
+                return ['status' => false, 'message' => $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal'];
             }
 
             LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);

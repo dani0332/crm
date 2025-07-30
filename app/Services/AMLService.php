@@ -2082,13 +2082,13 @@ class AMLService
 
     public function isInsurerSyncEnabled($quoteTypeId, $quoteRequestId)
     {
-        $insuranceProvider = InsuranceProvidersEnum::AXA;
-        // where([
-        //     'quote_request_id' => $quoteRequestId,
-        //     'quote_type_id' => $quoteTypeId,
-        //     'screening_type' => $insuranceProvider,
-        // ])
-        $kycLogs = KycLog::withTrashed()->where('id', 196999)->latest()->first();
+        $insurerScreenType = [InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA];
+        
+        $kycLogs = KycLog::withTrashed()->where([
+            'quote_request_id' => $quoteRequestId,
+            'quote_type_id' => $quoteTypeId,
+        ])->where('screening_type', $insurerScreenType[InsuranceProvidersEnum::AXA])->latest()->first();
+
         if(!$kycLogs) {
             return false;
         }
