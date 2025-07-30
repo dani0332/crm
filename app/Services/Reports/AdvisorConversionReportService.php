@@ -28,6 +28,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -82,6 +83,9 @@ class AdvisorConversionReportService extends BaseService
             $query = $this->getPersonsalQuoteQuery($lob);
             $query = $this->applyFilters($query, $filters);
         }
+
+        LoggerService::sql(self::class.' - Advisor Conversion Report Query', $query);
+
         $query = $query->get();
 
         // map operation to calculate gross and net conversions of records

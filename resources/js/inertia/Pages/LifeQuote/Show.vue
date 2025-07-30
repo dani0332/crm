@@ -406,7 +406,11 @@ const getTotalAnnualPremiumAED = item => {
     };
 
     const premiumInAED =
-      Math.round(item.actualPremium * planExchangeRate.value * 100) / 100;
+      Math.round(
+        item.isApi
+          ? item.actualPremium * planExchangeRate.value * 100
+          : item.totalPrice * planExchangeRate.value * 100,
+      ) / 100;
     const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
 
     return numberFormat(totalAnnualPremiumAED);
@@ -1165,6 +1169,19 @@ const updateExchangeRate = item => {
 
 const enableExchangeRateEdit = () => {
   isExchangeRateEditable.value = true;
+};
+
+const getTotalAnnualPriceAED = () => {
+  const priceInAED =
+    Math.round(
+      (ecomDetail.value?.isManualPlan
+        ? ecomDetail.value?.totalPrice * planExchangeRate.value
+        : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100,
+    ) / 100;
+
+  return numberFormat(
+    priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
+  );
 };
 </script>
 <template>
@@ -2160,7 +2177,9 @@ const enableExchangeRateEdit = () => {
                       {{
                         numberFormat(
                           Math.round(
-                            item.actualPremium * planExchangeRate * 100,
+                            item.isApi
+                              ? item.actualPremium * planExchangeRate * 100
+                              : item.totalPrice * planExchangeRate * 100,
                           ) / 100,
                         )
                       }}
@@ -2387,14 +2406,7 @@ const enableExchangeRateEdit = () => {
               >
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
-                  {{
-                    numberFormat(
-                      (ecomDetail?.isManualPlan
-                        ? ecomDetail?.totalPrice * planExchangeRate
-                        : ecomDetail?.actualPremium * planExchangeRate) *
-                        (page.props.quote?.life_quote?.payment_term ?? 1),
-                    )
-                  }}
+                  {{ getTotalAnnualPriceAED() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
