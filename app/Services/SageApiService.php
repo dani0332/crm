@@ -1191,7 +1191,7 @@ class SageApiService
             }
             LoggerService::info('SAGE API : '.$quote->code.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' completed successfully');
             if ($isLiveApiCallStep4) {
-                //                TODO:: This need to be improve, posted response undefined if status not posted
+                // TODO:: This need to be improve, posted response undefined if status not posted
                 $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
             }
         } else {

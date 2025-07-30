@@ -1291,7 +1291,18 @@ class SagePayloadFactory
         $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
-        $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
+
+        if (! isset($sageRequest->insurerReceiptNumber)) {
+            $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
+        }
+        if (! isset($sageRequest->premiumWithTax)) {
+            $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
+        }
+        if (! isset($sageRequest->insurerPremiumNumber)) {
+            $sageRequest->insurerPremiumNumber = (string) mb_substr($payment->insurer_tax_number, -18);
+            $sageRequest->originalInsurerPremiumNumber = (string) $payment->insurer_tax_number;
+        }
+
         $sageRequest->policyNumber = $policyNumber;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
 
