@@ -103,6 +103,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOcrEnabled();
         $this->seedGIGCarPolicyIssuance();
         $this->seedSukoonMedexProductSlug();
+        $this->seedLOBCutOffDates();
     }
 
     private function seedBirdWorkflowUrls()
@@ -431,6 +432,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::FIC_LIFE_EMAIL_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function savingsLOB()
@@ -507,6 +518,29 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::SUKOON_MEDEX_PRODUCT_SLUG],
             [
                 'value' => 'afia_driver_medex',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedLOBCutOffDates()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_CUT_OFF_DATE],
+            [
+                'value' => '2025-04-10 21:30:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LIFE_CUT_OFF_DATE],
+            [
+                'value' => '2025-07-25 12:00:00',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

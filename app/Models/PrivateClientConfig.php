@@ -14,20 +14,15 @@ class PrivateClientConfig extends Model implements AuditableContract
     protected $table = 'pcp_config';
     protected $fillable = [
         'quote_type_id',
-        'field_name',
-        'operator',
-        'value',
-        'currency_type_id',
-        'status',
+        'quote_type',
+        'config',
         'version',
         'active_version',
     ];
+    protected $casts = [
+        'config' => 'array',
+    ];
 
-    /**
-     * Get the auditable data for the model.
-     *
-     * @return array
-     */
     public function getAuditables()
     {
         return [
@@ -35,25 +30,28 @@ class PrivateClientConfig extends Model implements AuditableContract
         ];
     }
 
-    /**
-     * Format created_at attribute
-     *
-     * @param  mixed  $date
-     * @return string
-     */
-    public function getCreatedAtAttribute($date)
+    public function scopeActiveVersion($query)
     {
-        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT', 'Y-m-d H:i:s'));
+        $query->where('active_version', true);
     }
 
-    /**
-     * Format updated_at attribute
-     *
-     * @param  mixed  $date
-     * @return string
-     */
-    public function getUpdatedAtAttribute($date)
+    public function scopeByQuoteTypeId($query, int $quoteTypeId)
     {
-        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT', 'Y-m-d H:i:s'));
+        $query->where('quote_type_id', $quoteTypeId);
+    }
+
+    public static function getCurrentVersion(int $quoteTypeId)
+    {
+        return self::byQuoteTypeId($quoteTypeId)->activeVersion()->first();
+    }
+
+    public static function getLatestVersion(int $quoteTypeId)
+    {
+        return self::byQuoteTypeId($quoteTypeId)->orderBy('version', 'desc')->first();
+    }
+
+    public static function findByVersion(int $quoteTypeId, int $version)
+    {
+        return self::byQuoteTypeId($quoteTypeId)->whereVersion($version)->first();
     }
 }

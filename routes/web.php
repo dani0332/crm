@@ -198,6 +198,22 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('savings/{quoteId}/plan_details/{planId}', [SavingsQuoteController::class, 'planDetails'])->name('savings_plan_details');
     Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
 
+    // life routes with check_route_access middleware
+    Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
+    Route::post('personal-quotes/life/load-more-cards', [LifeController::class, 'getCardsViewLoadMore'])->name('life-quotes-load-more-cards');
+    Route::get('personal-quotes/life/rider-details/{planId}', [LifeController::class, 'riderDetails'])->name('life-plan-rider-details');
+    Route::get('personal-quotes/life/currency-coverages/{planId}', [LifeController::class, 'currencyCoverages'])->name('life-plan-currency-coverage');
+    Route::post('personal-quotes/life/toggle-life-plan-visibility', [LifeController::class, 'toggleLifePlanVisibility'])->name('life-plan-toggle-visibility');
+    Route::get('personal-quotes/life/riders/{planId}', [LifeController::class, 'riders'])->name('life-plan-riders');
+    Route::post('personal-quotes/life/update-exchange-rate', [LifeController::class, 'updateExchangeRate'])->name('life-plan-update-exchange-rate');
+
+    Route::post('personal-quotes/life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('life-quotes-send-oca-email');
+    Route::post('personal-quotes/life/download-comparision-pdf', [LifeController::class, 'downloadComparisionPdf'])->name('life-quotes-download-comparision-pdf');
+
+    Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
+    Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
+    Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -224,25 +240,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
         Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
 
-        Route::get('personal-quotes/life/pdf', [LifeController::class, 'comparisionPdf'])->name('life-quotes.comparision-pdf');
-
-        Route::get('personal-quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
-        Route::post('personal-quotes/life/load-more-cards', [LifeController::class, 'getCardsViewLoadMore'])->name('life-quotes-load-more-cards');
-        Route::get('personal-quotes/life/rider-details/{planId}', [LifeController::class, 'riderDetails'])->name('life-plan-rider-details');
-        Route::get('personal-quotes/life/currency-coverages/{planId}', [LifeController::class, 'currencyCoverages'])->name('life-plan-currency-coverage');
-        Route::post('personal-quotes/life/toggle-life-plan-visibility', [LifeController::class, 'toggleLifePlanVisibility'])->name('life-plan-toggle-visibility');
-        Route::get('personal-quotes/life/riders/{planId}', [LifeController::class, 'riders'])->name('life-plan-riders');
-        Route::post('personal-quotes/life/update-exchange-rate', [LifeController::class, 'updateExchangeRate'])->name('life-plan-update-exchange-rate');
-
         Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
-        Route::post('personal-quotes/life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('life-quotes-send-oca-email');
-        Route::post('personal-quotes/life/download-comparision-pdf', [LifeController::class, 'downloadComparisionPdf'])->name('life-quotes-download-comparision-pdf');
-
-        Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
-        Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
-        Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
-        Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
-        Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
+        Route::get('personal-quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
@@ -279,7 +278,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
         Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
         Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-plan-detail');
-        Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-leads-detail-with-email-mobile');
         Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-makes-models');
 
         Route::group(['prefix' => 'renewals'], function () {
@@ -354,6 +352,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
     Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('can-post-premium-prepayment')->middleware('check_route_access');
+    Route::post('/payment-split/retry-prepayment', [CentralController::class, 'retryPrepaymentCreation'])->name('can-post-premium-prepayment-retry')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     // Child payment approve
@@ -371,7 +370,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/payments-capture-validation', [CentralController::class, 'paymentsCaptureValidtion'])->name('capture-validation');
     Route::post('/payments/{quoteType}/delete-payment', [CentralController::class, 'deletePayment'])->name('payments-delete');
 
-    Route::post('/payments/{quoteType}/check-insurer-receipt-number', [CentralController::class, 'checkInsurerReceiptNumber'])->name('check-insurer-receipt-number')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/check-insurer-receipt-number', [CentralController::class, 'checkInsurerReceiptNumber'])->name('check-insurer-receipt-number');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
 
@@ -551,6 +550,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::prefix('private-client-config')->group(function () {
             Route::get('show', [PrivateClientConfigController::class, 'show'])->name('admin.private-client-config.show');
+            Route::get('latest-by-quote-type', [PrivateClientConfigController::class, 'getLatestConfigByQuoteType'])->name('admin.private-client-config.latest-by-quote-type');
             Route::post('upsert', [PrivateClientConfigController::class, 'upsert'])->name('admin.private-client-config.upsert');
         });
 

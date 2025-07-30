@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\Modelable;
+use App\Traits\Optionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -11,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class CurrencyType extends Model implements AuditableContract
 {
-    use Auditable, HasFactory, Modelable;
+    use Auditable, HasFactory, Modelable, Optionable;
 
     protected $table = 'currency_type';
 

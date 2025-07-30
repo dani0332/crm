@@ -608,9 +608,9 @@ class SukoonMedexService
 
         $quoteType = $quote->quote_type_id ?? null;
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
-        $emirateIdNumber = $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '';
+        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
 
-        if (! empty($emirateIdNumber) && ! str_contains($emirateIdNumber, '-') && strlen($emirateIdNumber) == 15) {
+        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
             $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
                 .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
         }

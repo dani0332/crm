@@ -48,6 +48,9 @@ enum QuoteSegmentEnum: string
             $caseList = collect($caseList)->whereNotIn('value', self::SIC_REVIVAL->value);
         }
 
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            $caseList = collect($caseList)->whereNotIn('value', [self::FIC->value, self::NON_FIC->value]);
+        }
         foreach ($caseList as $case) {
             $values[] = [
                 'value' => $case->value,

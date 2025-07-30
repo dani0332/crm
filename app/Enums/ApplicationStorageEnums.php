@@ -241,4 +241,8 @@ final class ApplicationStorageEnums extends Enum
     public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
     public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';
     public const OCR_ENABLED = 'OCR_ENABLED';
+
+    /* Cut Off Dates */
+    public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
+    public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
 }
