@@ -9,6 +9,7 @@ use App\Exports\Reports\EndorsementReportExport;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -263,6 +264,8 @@ class EndorsementReportService extends ManagementReport
 
         $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
+
+        LoggerService::sql(self::class.' - Endorsement Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();

@@ -28,6 +28,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -82,6 +83,9 @@ class AdvisorConversionReportService extends BaseService
             $query = $this->getPersonsalQuoteQuery($lob);
             $query = $this->applyFilters($query, $filters);
         }
+
+        LoggerService::sql(self::class.' - Advisor Conversion Report Query', $query);
+
         $query = $query->get();
 
         // map operation to calculate gross and net conversions of records
@@ -393,6 +397,7 @@ class AdvisorConversionReportService extends BaseService
                     quoteTypeCode::Car,
                     quoteTypeCode::Health,
                     quoteTypeCode::Travel,
+                    quoteTypeCode::Life,
                 ],
             ],
         ];
@@ -652,6 +657,10 @@ class AdvisorConversionReportService extends BaseService
             })
             ->when($lob === quoteTypeCode::Car, function ($q) {
                 $q->filterBySegment(request()->segment_filter, QuoteTypeId::Car);
+            })
+            ->when($lob === quoteTypeCode::Life, function ($q) {
+
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Life);
             })
             ->when($freshLoad || isset($filters->advisorAssignedDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);

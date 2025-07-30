@@ -6,6 +6,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
@@ -116,13 +117,15 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commission (VAT NOT APPLICABLE) OR Commission (VAT APPLICABLE) is required');
                         }
-                        if (empty($payment->commmission_percentage)) {
+
+                        $isQuoteTypeCar = strtolower(request()->model_type) === strtolower(QuoteTypes::CAR->value);
+                        if ($isQuoteTypeCar && empty($payment->commmission_percentage)) {
                             $validator->errors()->add('value', 'Commission percentage is required');
                         }
-                        if (empty($payment->commission_vat)) {
+                        if ($isQuoteTypeCar && empty($payment->commission_vat)) {
                             $validator->errors()->add('value', 'Commission VAT is required');
                         }
-                        if (empty($payment->commission)) {
+                        if ($isQuoteTypeCar && empty($payment->commission)) {
                             $validator->errors()->add('value', 'Total commission is required');
                         }
                     } else {
