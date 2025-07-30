@@ -654,6 +654,7 @@ const editPaymentModal = async (
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
+    !props.sendUpdate?.id &&
     (props.quoteType === quoteTypeCodeEnum.Bike ||
       props.quoteType === quoteTypeCodeEnum.Car ||
       props.quoteType === quoteTypeCodeEnum.Home ||
@@ -1003,47 +1004,6 @@ const fetchInsurerAMLStatus = async () => {
   }
 };
 
-const triggerPostPrepayment = async splitPayment => {
-  console.log(' triggerPostPrepayment : ', splitPayment.id);
-  let quoteStatusId = props.quoteRequest.quote_status_id;
-  let isPolicyBooked =
-    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
-  if (!isPolicyBooked) {
-    notification.warning({
-      title:
-        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
-      position: 'top',
-    });
-  }
-  try {
-    NProgress.start();
-    const response = await axios.post(route('can-post-premium-prepayment'), {
-      paymentSplitId: splitPayment.id,
-      quoteRequestId: props.quoteRequest.id,
-      quoteType: page.props.quoteType,
-      sendUpdateId: props.sendUpdate?.id,
-    });
-    NProgress.done();
-    if (response.data.success) {
-      notification.success({
-        title: 'Post Prepayment to Sage Process Started',
-        position: 'top',
-      });
-      router.reload({
-        only: ['payments'],
-      });
-    }
-  } catch (error) {
-    let errorMessages = error.response.data.errors;
-    Object.keys(errorMessages).forEach(function (key) {
-      notification.error({
-        title: errorMessages[key],
-        position: 'top',
-      });
-    });
-  }
-};
-
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
@@ -1200,7 +1160,6 @@ watch(
                         (jobId, message) =>
                           retrySplitPaymentModal(jobId, message)
                       "
-                      @post-prepayment="triggerPostPrepayment"
                     />
                   </template>
                 </template>
