@@ -21,6 +21,11 @@ final class BorStatusEnum extends Enum
 
     public static function allowsCancellation(string $status): bool
     {
-        return in_array($status, [self::SIGNATURE_REQUESTED, self::SENT_TO_INSURER, self::DOCUMENT_SIGNED, self::DOCUMENT_UPLOADED, self::COMPLETED, self::CANCELLED]);
+        return in_array($status, [self::SIGNATURE_REQUESTED, self::SENT_TO_INSURER]);
+    }
+
+    public static function allowsMarkingDone(string $status): bool
+    {
+        return in_array($status, [self::DOCUMENT_SIGNED, self::DOCUMENT_UPLOADED]);
     }
 }

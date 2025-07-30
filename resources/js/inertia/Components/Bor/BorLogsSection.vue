@@ -156,8 +156,8 @@ const openBorRequestForm = () => {
 };
 
 // Handle BOR edit
-const handleEditBor = (borLog) => {
-  isEditMode.value = true;
+const handleEditBor = (borLog = null) => {
+  isEditMode.value = borLog ? true : false;
   editingBorLog.value = borLog;
   showBorRequestForm.value = true;
 };
@@ -222,15 +222,6 @@ const handleUploadSuccess = (updatedBorLog) => {
   
   // Close the modal
   closeUploadModal();
-  
-  // Show success notification
-  notification.success({
-    title: 'Success',
-    message: 'Document uploaded successfully',
-    position: 'top',
-  });
-
-  fetchBorLogs(1);
 };
 
 const handleUpdateStatus = (borLogId, newStatus) => {
@@ -316,6 +307,13 @@ const handleActionSuccess = (updatedBorLog) => {
   });
 };
 
+const handleUpdateLog = (index, updatedBorLog) => {
+  // Update the specific BOR log in the list by index
+  if (index >= 0 && index < borLogs.value.length) {
+    borLogs.value[index] = updatedBorLog;
+  }
+};
+
 // Watch for lead ID changes
 watch(() => props.leadId, (newLeadId) => {
   if (newLeadId) {
@@ -344,17 +342,6 @@ onMounted(() => {
       <template #body>
         <x-divider class="my-4" />
         
-        <div class="mb-4 flex justify-end">
-          <x-button
-            size="sm"
-            color="orange"
-            @click="openBorRequestForm"
-            :disabled="isLoading"
-          >
-            Request BOR
-          </x-button>
-        </div>
-
         <!-- Loading State -->
         <div v-if="isLoading" class="text-center py-8">
           <div class="inline-flex items-center">
@@ -425,6 +412,7 @@ onMounted(() => {
             @refresh="fetchBorLogs"
             @page-change="handlePageChange"
             @edit-bor="handleEditBor"
+            @update-log="handleUpdateLog"
           />
         </div>
       </template>

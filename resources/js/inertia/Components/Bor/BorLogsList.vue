@@ -33,7 +33,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['upload-document', 'update-status', 'cancel-bor', 'mark-done', 'view-document', 'refresh', 'page-change', 'edit-bor'])
+const emit = defineEmits(['upload-document', 'update-status', 'cancel-bor', 'mark-done', 'view-document', 'refresh', 'page-change', 'edit-bor', 'update-log'])
 
 // Permission management
 const page = usePage()
@@ -107,7 +107,7 @@ const handleViewDocument = (log) => {
   showViewDocumentModal.value = true
 }
 
-const handleEditBor = (log) => {
+const handleEditBor = (log = null) => {
   emit('edit-bor', log)
 }
 
@@ -171,16 +171,20 @@ const onViewDocumentModalClose = () => {
   }, 100);
 }
 
-const onCancelConfirmed = () => {
-  onCancelModalClose()
-  // The modal will handle the API call, but we might want to refresh the list
-  emit('refresh')
+const onCancelSuccess = (updatedBorLog) => {
+  // Update the specific BOR log in the list
+  emit('refresh');
+  onCancelModalClose();
 }
 
-const onDoneConfirmed = () => {
-  onDoneModalClose()
-  // The modal will handle the API call, but we might want to refresh the list
-  emit('refresh')
+const onDoneSuccess = (updatedBorLog) => {
+  // Update the specific BOR log in the list
+  const index = props.logs.findIndex(log => log.id === updatedBorLog.id);
+  if (index !== -1) {
+    // Update the log in the parent component
+    emit('update-log', index, updatedBorLog);
+  }
+  onDoneModalClose();
 }
 
 const handleRefresh = () => {
@@ -237,29 +241,33 @@ const canPerformAction = (log, action) => {
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <div>
     <!-- Header -->
-    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-      <div>
-        <h3 class="text-lg font-medium text-gray-900">BOR Logs</h3>
-        <p class="text-sm text-gray-500 mt-1">
-          Manage Broker on Record requests and documentation
-        </p>
+    <div class="flex justify-end items-center mb-4">
+      <div class="flex justify-end space-x-2">
+        <x-button
+          size="sm"
+          color="orange"
+          @click="handleEditBor()"
+          :disabled="isLoading"
+        >
+          Request BOR
+        </x-button>
+        <x-button 
+          color="primary" 
+          size="sm" 
+          @click="handleRefresh"
+          :disabled="loading"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </x-button>
       </div>
-      <x-button 
-        color="primary" 
-        size="sm" 
-        @click="handleRefresh"
-        :disabled="loading"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      </x-button>
     </div>
 
     <!-- DataTable -->
-    <div class="p-6">
+    <div class="">
       <DataTable
         v-if="!loading && logs.length > 0"
         hide-rows-per-page
@@ -420,7 +428,7 @@ const canPerformAction = (log, action) => {
       :visible="showCancelModal"
       :bor-log="selectedLog"
       @close="onCancelModalClose"
-      @confirmed="onCancelConfirmed"
+      @success="onCancelSuccess"
     />
 
     <BorDoneModal
@@ -428,7 +436,7 @@ const canPerformAction = (log, action) => {
       :visible="showDoneModal"
       :bor-log="selectedLog"
       @close="onDoneModalClose"
-      @confirmed="onDoneConfirmed"
+      @success="onDoneSuccess"
     />
 
     <BorViewDocumentModal

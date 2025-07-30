@@ -100,7 +100,7 @@ watch(() => props.visible, (newVisible) => {
 <template>
   <x-modal
     v-model="showModal"
-    :title="'View BOR Documents - {{ borLog.bor_reference }}'"
+    :title="'View BOR Documents - '+borLog.bor_reference"
     size="xl"
     backdrop
   >

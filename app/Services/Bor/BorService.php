@@ -6,7 +6,10 @@ use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\BorLog;
+use App\Models\DocumentType;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\DB;
 
 class BorService
 {
@@ -36,7 +39,7 @@ class BorService
         $logs = BorLog::where('lead_id', $personalQuote->id)
             ->with(['insuranceProvider', 'personalQuote'])
             ->orderBy('created_at', 'desc')
-            ->simplePaginate(15)
+            ->simplePaginate(10)
             ->withQueryString();
         
         // Total count for backward compatibility
@@ -195,5 +198,182 @@ class BorService
         ];
 
         return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';
+    }
+
+    /**
+     * Cancel a BOR log
+     *
+     * @param array $data
+     * @param int $id
+     * @return array
+     */
+    public function cancelBorLog(array $data, $id)
+    {
+        $borLog = BorLog::findOrFail($id);
+
+        if (!$borLog->allowsCancellation()) {
+            throw new \Exception('This BOR cannot be cancelled in its current status: ' . $borLog->status);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $oldStatus = $borLog->status;
+            $success = $borLog->markAsCancelled($data['reason']);
+            
+            if (!$success) {
+                throw new \Exception('Failed to cancel BOR request. Please try again.');
+            }
+
+            // Send cancellation notification
+            $this->borEmailService->sendBorStatusUpdateEmail(
+                $borLog,
+                $oldStatus,
+                BorStatusEnum::CANCELLED
+            );
+
+            DB::commit();
+
+            // Enrich the updated BOR log with document data
+            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+            
+            return ['borLog' => $enrichedBorLog];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Mark a BOR log as done/completed
+     *
+     * @param array $data
+     * @param int $id
+     * @return array
+     */
+    public function markBorLogAsDone(array $data, $id)
+    {
+        $borLog = BorLog::findOrFail($id);
+
+        if (!$borLog->allowsMarkingDone()) {
+            throw new \Exception('This BOR cannot be marked as done in its current status: ' . $borLog->status);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $oldStatus = $borLog->status;
+            $success = $borLog->markAsCompleted();
+
+            if (!$success) {
+                throw new \Exception('Failed to mark BOR as completed. Please try again.');
+            }
+
+            // Save optional completion notes if provided
+            if (!empty($data['notes'])) {
+                $borLog->completion_notes = $data['notes'];
+                $borLog->save();
+            }
+
+            // Send completion notifications
+            $this->borEmailService->sendBorCompletionNotifications($borLog);
+
+            DB::commit();
+
+            // Enrich the updated BOR log with document data
+            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+            
+            return ['borLog' => $enrichedBorLog];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Upload a BOR document
+     *
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param array $data
+     * @param int $borLogId
+     * @return array
+     */
+    public function uploadBorDocument($file, array $data, $borLogId)
+    {
+        $borLog = BorLog::findOrFail($borLogId);
+        $personalQuote = $borLog->personalQuote;
+        $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
+        $quoteObject = $this->getQuoteObject($quoteType, $personalQuote->quote_id);
+        
+        // Auto-determine document type code based on the lead's LOB if not provided
+        $documentTypeCode = $data['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
+        
+        // Get the document type for this LOB  
+        $documentType = DocumentType::where('code', $documentTypeCode)
+            ->where('is_active', 1)
+            ->whereNull('business_type_of_insurance_id')
+            ->first();
+        
+        if (!$documentType) {
+            throw new \Exception('Invalid document type for BOR upload: ' . $documentTypeCode);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Leverage existing document upload service
+            $quoteDocumentService = app(QuoteDocumentService::class);
+            
+            // Prepare data for existing upload logic
+            $uploadData = [
+                'document_type_code' => $documentTypeCode,
+                'quote_uuid' => $borLog->bor_reference, // Use BOR reference as identifier
+                'document_category' => $borLog->bor_reference,
+            ];
+
+            // Upload using existing service, leveraging polymorphic relationship
+            $uploadedDocument = $quoteDocumentService->uploadQuoteDocument(
+                $file,
+                $uploadData,
+                $quoteObject
+            );
+
+            if (!$uploadedDocument) {
+                throw new \Exception('Failed to upload document');
+            }
+
+            // Update BOR log status
+            $borLog->update([
+                'status' => BorStatusEnum::DOCUMENT_UPLOADED,
+                'date_uploaded' => now(),
+            ]);
+
+            // Send completion notifications
+            $this->borEmailService->sendBorCompletionEmail($borLog);
+            
+            // Send insurer notification if insurer email is available
+            if ($borLog->insurer_name) {
+                $this->borEmailService->sendBorInsurerNotification(
+                    $borLog,
+                    'insurer@example.com' // This should be configurable or retrieved from insurer data
+                );
+            }
+
+            DB::commit();
+
+            // Enrich the updated BOR log with document data
+            $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+            
+            return [
+                'borLog' => $enrichedBorLog,
+                'document' => $uploadedDocument
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 } 

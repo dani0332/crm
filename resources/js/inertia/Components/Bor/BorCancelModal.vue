@@ -15,6 +15,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'success']);
 const showModal = ref(props.visible);
+const notification = useNotifications('toast');
 
 // Form handling
 const form = useForm({
@@ -37,19 +38,31 @@ const isSubmitting = ref(false);
 // Submit cancellation
 const submitCancellation = () => {
   if (!form.reason.trim()) {
+    form.setError('reason', 'Please select a cancellation reason');
     return;
   }
 
-  isSubmitting.value = true;
-
   form.post(route('bor.logs.cancel', props.borLog.id), {
     preserveScroll: true,
+    onBefore: () => {
+      isSubmitting.value = true;
+      form.clearErrors();
+    },
     onSuccess: (page) => {
-      emit('success', page.props.updatedBorLog || props.borLog);
-      emit('close');
+      // Emit success with updated BOR log
+      emit('success');
+      handleClose();
     },
     onError: (errors) => {
-      console.error('BOR cancellation failed:', errors);
+      // Show error notification
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        notification.error({
+          title: 'Cancellation Failed',
+          message: Array.isArray(firstError) ? firstError[0] : firstError,
+          position: 'top',
+        });
+      }
     },
     onFinish: () => {
       isSubmitting.value = false;
@@ -59,6 +72,10 @@ const submitCancellation = () => {
 
 const handleClose = () => {
   form.reset();
+  setTimeout(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, 100);
   emit('close');
 };
 </script>

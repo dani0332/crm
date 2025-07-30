@@ -278,7 +278,7 @@ class BorLog extends Model
      */
     public function markAsCompleted(): bool
     {
-        if ($this->isUploaded()) {
+        if ($this->isUploaded() || $this->isSigned()) {
             $this->status = BorStatusEnum::COMPLETED;
             return $this->save();
         }

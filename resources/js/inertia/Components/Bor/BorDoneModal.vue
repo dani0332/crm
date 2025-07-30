@@ -15,6 +15,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'success']);
 const showModal = ref(props.visible);
+const notification = useNotifications('toast');
 
 // Form handling
 const form = useForm({
@@ -25,16 +26,29 @@ const isSubmitting = ref(false);
 
 // Submit completion
 const submitCompletion = () => {
-  isSubmitting.value = true;
-
   form.post(route('bor.logs.mark-done', props.borLog.id), {
     preserveScroll: true,
+    onBefore: () => {
+      isSubmitting.value = true;
+      form.clearErrors();
+    },
     onSuccess: (page) => {
+      // Show success notification
+      
+      // Emit success with updated BOR log
       emit('success', page.props.updatedBorLog || props.borLog);
-      emit('close');
+      handleClose();
     },
     onError: (errors) => {
-      console.error('BOR completion failed:', errors);
+      // Show error notification
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        notification.error({
+          title: 'Completion Failed',
+          message: Array.isArray(firstError) ? firstError[0] : firstError,
+          position: 'top',
+        });
+      }
     },
     onFinish: () => {
       isSubmitting.value = false;
@@ -44,6 +58,10 @@ const submitCompletion = () => {
 
 const handleClose = () => {
   form.reset();
+  setTimeout(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, 100);
   emit('close');
 };
 </script>
@@ -120,12 +138,6 @@ const handleClose = () => {
               </svg>
               <span class="text-blue-700">All necessary parties have been informed</span>
             </div>
-            <div class="flex items-center text-sm">
-              <svg class="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-blue-700">Policy ownership transfer is ready to finalize</span>
-            </div>
           </div>
         </div>
 
@@ -149,7 +161,7 @@ const handleClose = () => {
       </div>
     </template>
 
-    <template #footer>
+    <template #actions>
       <div class="flex justify-end space-x-3">
         <x-button
           color="secondary"
@@ -164,9 +176,6 @@ const handleClose = () => {
           :disabled="isSubmitting"
           :loading="isSubmitting"
         >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
           {{ isSubmitting ? 'Completing...' : 'Mark as Complete' }}
         </x-button>
       </div>

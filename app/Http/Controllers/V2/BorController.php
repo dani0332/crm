@@ -152,109 +152,45 @@ class BorController extends Controller
     }
 
     /**
-     * Upload BOR document leveraging existing document infrastructure
-     * Uses the polymorphic relationship with quote_documents table
+     * Upload BOR document
      */
     public function uploadDocument(Request $request, $id = null): JsonResponse
     {
+        // Support both route parameter and request parameter for flexibility
+        $borLogId = $id ?? $request->input('bor_log_id');
+        
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB max
+            'document_type_code' => 'nullable|string', // Will be auto-determined if not provided
+            'bor_log_id' => $borLogId ? 'nullable' : 'required|exists:bor_logs,id',
+        ]);
+
         try {
-            // Support both route parameter and request parameter for flexibility
-            $borLogId = $id ?? $request->input('bor_log_id');
-            
-            $validated = $request->validate([
-                'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB max
-                'document_type_code' => 'nullable|string', // Will be auto-determined if not provided
-                'bor_log_id' => $borLogId ? 'nullable' : 'required|exists:bor_logs,id',
-            ]);
-
-            $borLog = BorLog::findOrFail($borLogId ?: $validated['bor_log_id']);
-            $personalQuote = $borLog->personalQuote;
-            $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
-            $quoteObject = $this->getQuoteObject($quoteType, $personalQuote->quote_id);
-            
-            // Auto-determine document type code based on the lead's LOB if not provided
-            $documentTypeCode = $validated['document_type_code'] ?? $this->borService->determineBorDocumentType($quoteType);
-            
-            // Get the document type for this LOB  
-            $documentType = DocumentType::where('code', $documentTypeCode)->where('is_active', 1)->whereNull('business_type_of_insurance_id')->first();
-            
-            if (!$documentType) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid document type for BOR upload: ' . $documentTypeCode
-                ], 400);
-            }
-
-            // Leverage existing document upload service
-            $quoteDocumentService = app(QuoteDocumentService::class);
-            
-            // Prepare data for existing upload logic
-            $uploadData = [
-                'document_type_code' => $documentTypeCode,
-                'quote_uuid' => $borLog->bor_reference, // Use BOR reference as identifier
-                'document_category' => $borLog->bor_reference,
-            ];
-
-            // Upload using existing service, leveraging polymorphic relationship
-            $uploadedDocument = $quoteDocumentService->uploadQuoteDocument(
+            $result = $this->borService->uploadBorDocument(
                 $request->file('file'),
-                $uploadData,
-                $quoteObject
+                $validated,
+                $borLogId ?: $validated['bor_log_id']
             );
 
-            if ($uploadedDocument) {
-                // Update BOR log status
-                $borLog->update([
-                    'status' => BorStatusEnum::DOCUMENT_UPLOADED,
-                    'date_uploaded' => now(),
-                ]);
-
-                // Send completion notifications
-                $this->borEmailService->sendBorCompletionEmail($borLog);
-                
-                // Send insurer notification if insurer email is available
-                if ($borLog->insurer_name) {
-                    $this->borEmailService->sendBorInsurerNotification(
-                        $borLog,
-                        'insurer@example.com' // This should be configurable or retrieved from insurer data
-                    );
-                }
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'BOR document uploaded successfully',
-                    'data' => [
-                        'bor_log' => $borLog->fresh(['personalQuote']),
-                        'document' => $uploadedDocument
-                    ]
-                ]);
-            }
-
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to upload document'
-            ], 500);
+                'success' => true,
+                'message' => 'BOR document uploaded successfully',
+                'borLog' => $result['borLog'],
+                'document' => $result['document']
+            ]);
 
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->validator->errors()
-            ], 422);
         } catch (\Exception $e) {
-            dd($e);
             LoggerService::error('BOR document upload failed', [
                 'bor_log_id' => $borLogId ?? $request->input('bor_log_id'),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'file' => $request->file('file'),
                 'line' => $e->getLine(),
-                'request' => $request->except(['file']) // Exclude file data from logs
+                'request_data' => $request->except(['file', 'password']),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Document upload failed: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -341,284 +277,67 @@ class BorController extends Controller
         }
     }
 
-
     /**
-     * API endpoint to update BOR status with validation and automatic transitions
+     * Cancel a BOR request
      */
-    public function updateStatus(Request $request, $id): JsonResponse
+    public function cancelBor(Request $request, $id)
     {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
         try {
-            $borLog = BorLog::findOrFail($id);
-            
-            $validated = $request->validate([
-                'status' => 'required|string|in:' . implode(',', BorStatusEnum::values()),
-                'reason' => 'nullable|string|max:500',
+            $result = $this->borService->cancelBorLog($validated, $id);
+
+            return redirect()->back()->with([
+                'success' => 'BOR request cancelled successfully.',
+                'updatedBorLog' => $result['borLog']
             ]);
 
-            $oldStatus = $borLog->status;
-            $newStatus = $validated['status'];
-
-            // Check if the status transition is allowed
-            $allowedNextStatuses = $borLog->getNextStatuses();
-            if (!empty($allowedNextStatuses) && !in_array($newStatus, $allowedNextStatuses)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Invalid status transition from '{$oldStatus}' to '{$newStatus}'",
-                    'allowed_statuses' => $allowedNextStatuses,
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            // Update status using the appropriate method
-            $success = match ($newStatus) {
-                BorStatusEnum::DOCUMENT_SIGNED => $borLog->markAsSigned(),
-                BorStatusEnum::DOCUMENT_UPLOADED => $borLog->markAsUploaded(),
-                BorStatusEnum::COMPLETED => $borLog->markAsCompleted(),
-                BorStatusEnum::CANCELLED => $borLog->markAsCancelled($validated['reason'] ?? null),
-                default => (function () use ($borLog, $newStatus) {
-                    $borLog->status = $newStatus;
-                    return $borLog->save();
-                })(),
-            };
-
-            if (!$success) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to update BOR status. Invalid transition.',
-                ], 422);
-            }
-
-            // Send status update email for significant changes
-            if ($oldStatus !== $newStatus && in_array($newStatus, [
-                BorStatusEnum::DOCUMENT_SIGNED,
-                BorStatusEnum::COMPLETED,
-                BorStatusEnum::CANCELLED
-            ])) {
-                $this->borEmailService->sendBorStatusUpdateEmail(
-                    $borLog,
-                    $oldStatus,
-                    $newStatus
-                );
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'BOR status updated successfully',
-                'data' => [
-                    'id' => $borLog->id,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus,
-                    'status_info' => $borLog->getStatusInfo(),
-                    'next_statuses' => $borLog->getNextStatuses(),
-                    'actions' => $this->getAvailableActions($borLog),
-                ],
-            ]);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'BOR not found',
-            ], 404);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
         } catch (\Exception $e) {
-            DB::rollBack();
-            LoggerService::error('BOR status update failed', [
-                'bor_id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update BOR status. Please try again.',
-            ], 500);
-        }
-    }
-
-    /**
-     * API endpoint to cancel a BOR with reason
-     */
-    public function cancelBor(Request $request, $id): JsonResponse
-    {
-        try {
-            $borLog = BorLog::findOrFail($id);
-
-            if (!$borLog->allowsCancellation()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This BOR cannot be cancelled in its current status',
-                    'current_status' => $borLog->status,
-                ], 422);
-            }
-
-            $validated = $request->validate([
-                'reason' => 'required|string|max:500',
-            ]);
-
-            DB::beginTransaction();
-
-            $oldStatus = $borLog->status;
-            $success = $borLog->markAsCancelled($validated['reason']);
-            
-            if (!$success) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to cancel BOR',
-                ], 500);
-            }
-
-            // Send cancellation notification
-            $this->borEmailService->sendBorStatusUpdateEmail(
-                $borLog,
-                $oldStatus,
-                BorStatusEnum::CANCELLED
-            );
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'BOR cancelled successfully',
-                'data' => [
-                    'id' => $borLog->id,
-                    'status' => $borLog->status,
-                    'cancellation_reason' => $borLog->cancellation_reason,
-                    'actions' => $this->getAvailableActions($borLog),
-                ],
-            ]);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'BOR not found',
-            ], 404);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            DB::rollBack();
             LoggerService::error('BOR cancellation failed', [
                 'bor_id' => $id,
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'line' => $e->getLine(),
-                'error' => $e->getMessage(),
+                'request_data' => $request->except(['password']),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to cancel BOR. Please try again.',
-            ], 500);
+            return redirect()->back()->withErrors([
+                'general' => $e->getMessage()
+            ])->withInput();
         }
     }
 
     /**
-     * API endpoint to mark a BOR as done (complete the upload flow)
+     * Mark a BOR as done (complete the upload flow)
      */
-    public function markDone(Request $request, $id): JsonResponse
+    public function markDone(Request $request, $id)
     {
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
         try {
-            $borLog = BorLog::findOrFail($id);
+            $result = $this->borService->markBorLogAsDone($validated, $id);
 
-            if (!$borLog->allowsMarkingDone()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This BOR cannot be marked as done in its current status',
-                    'current_status' => $borLog->status,
-                    'required_status' => BorStatusEnum::DOCUMENT_UPLOADED,
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            $oldStatus = $borLog->status;
-            $success = $borLog->markAsCompleted();
-
-            if (!$success) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to mark BOR as completed',
-                ], 500);
-            }
-
-            // Send completion notifications
-            $this->borEmailService->sendBorCompletionNotifications($borLog);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'BOR marked as completed successfully',
-                'data' => [
-                    'id' => $borLog->id,
-                    'status' => $borLog->status,
-                    'status_info' => $borLog->getStatusInfo(),
-                    'actions' => $this->getAvailableActions($borLog),
-                ],
+            return redirect()->back()->with([
+                'success' => 'BOR request marked as completed successfully.',
+                'updatedBorLog' => $result['borLog']
             ]);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'BOR not found',
-            ], 404);
         } catch (\Exception $e) {
-            DB::rollBack();
             LoggerService::error('BOR completion failed', [
                 'bor_id' => $id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'request_data' => $request->except(['password']),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to mark BOR as done. Please try again.',
-            ], 500);
+            return redirect()->back()->withErrors([
+                'general' => $e->getMessage()
+            ])->withInput();
         }
-    }
-
-    /**
-     * Get available actions for a BOR based on its current status
-     */
-    private function getAvailableActions(BorLog $borLog): array
-    {
-        $actions = [];
-        $status = $borLog->status;
-
-        // Define actions based on status and permissions
-        $editAndCopyLinkCondition = !in_array($status, [BorStatusEnum::COMPLETED, BorStatusEnum::CANCELLED]);
-        $uploadAndDoneCondition = !in_array($status, [BorStatusEnum::DOCUMENT_SIGNED, BorStatusEnum::DOCUMENT_UPLOADED]);
-
-        if ($editAndCopyLinkCondition) {
-            $actions[] = 'edit';
-            $actions[] = 'copy_link';
-        }
-
-        if ($uploadAndDoneCondition) {
-            $actions[] = 'upload';
-            $actions[] = 'done';
-        }
-
-        if (!in_array($status, [BorStatusEnum::CANCELLED, BorStatusEnum::COMPLETED])) {
-            $actions[] = 'cancel';
-        }
-
-        if ($borLog->signed_pdf_path || $borLog->document_path) {
-            $actions[] = 'view_document';
-        }
-
-        return $actions;
     }
 }

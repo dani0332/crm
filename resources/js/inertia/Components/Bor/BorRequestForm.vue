@@ -718,7 +718,7 @@ onMounted(() => {
           color="orange"
           type="submit"
         >
-          {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update BOR Request' : 'Create BOR Request') }}
+          {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update and Send' : 'Save and Send') }}
         </x-button>
       </div>
     </template>
