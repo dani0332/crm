@@ -611,7 +611,7 @@ class SendUpdateLogRepository extends BaseRepository
     {
         return (new static)->fetchGetLogById($id);
     }
-    
+
     public function fetchGetQuoteFromSendUpdateLog($sendUpdateLog)
     {
         $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
