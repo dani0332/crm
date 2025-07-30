@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Services\SplitPaymentService;
+use App\Rules\ValidateAuthorizedPayment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PlanDetailsRequest extends FormRequest
@@ -52,12 +52,10 @@ class PlanDetailsRequest extends FormRequest
     {
         $quoteType = request()->quoteType;
         $code = request()->code;
-        $insuranceProviderId = request()->insurance_provider_id;
 
         $validator->after(function ($validator) use ($quoteType, $code) {
             $repository = getRepositoryObject($quoteType);
             $quoteModel = $repository::where('code', $code)->firstOrFail();
-            $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
@@ -66,7 +64,8 @@ class PlanDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
-            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code);
+            $rule = new ValidateAuthorizedPayment($code, $quoteModel);
+            $rule->validate($validator, $code);
         });
     }
 }

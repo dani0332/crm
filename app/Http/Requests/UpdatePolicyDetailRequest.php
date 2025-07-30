@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
@@ -42,7 +43,7 @@ class UpdatePolicyDetailRequest extends FormRequest
             ];
         } else {
 
-            return [
+            $rules = [
 
                 'quote_policy_number' => 'required|max:75',
                 'quote_policy_issuance_date' => 'required',
@@ -57,8 +58,14 @@ class UpdatePolicyDetailRequest extends FormRequest
                 'quote_policy_issuance_status_other' => 'nullable',
                 'modelType' => 'required',
                 'quote_id' => 'required',
-
             ];
+
+            if (request()->modelType == strtolower(quoteTypeCode::Life)) {
+                $rules['policy_sum_assured_currency_id'] = 'required';
+                $rules['policy_sum_assured'] = 'required|numeric|min:1';
+            }
+
+            return $rules;
         }
     }
 

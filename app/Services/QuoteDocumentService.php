@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\DocumentTypeText;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -928,6 +929,18 @@ class QuoteDocumentService extends BaseService
             $split->save();
         }
         $payment->save();
+    }
+
+    /**
+     * This function bring proof document for all lob's except car and bike
+     *
+     * @return array
+     */
+    public function bringProofDocumentForAllLobs()
+    {
+        $documentTypeCodes = DocumentType::where('text', DocumentTypeText::PAYMENT_PROOF)->whereNotIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Bike])->pluck('code')->toArray();
+
+        return $documentTypeCodes;
     }
 
     public function checkHandbookDocuments($quoteType)

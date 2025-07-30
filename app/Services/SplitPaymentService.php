@@ -26,10 +26,12 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
+use App\Models\EmbeddedTransaction;
 use App\Models\FtcEmailLog;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
@@ -47,6 +49,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use stdClass;
 
 class SplitPaymentService
 {
@@ -101,7 +104,8 @@ class SplitPaymentService
         return $childPaymentStatus;
     }
 
-    public function createSageRecipt($request, $splitPayment, $splitAmount = null)
+    /* Will be removed once Sage Enhancements are verified */
+    /*public function createSageRecipt($request, $splitPayment, $splitAmount = null)
     {
         if ($splitAmount != null) {
             $request->collection_amount = $splitAmount;
@@ -139,6 +143,7 @@ class SplitPaymentService
         } else {
             LoggerService::info('SAGE API :  Send createPrepaymentReceipts for '.$quote->code);
             $request->merge(['sage_payment_code' => $splitPayment->payment_method]);
+            $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
         }
@@ -220,7 +225,7 @@ class SplitPaymentService
         }
 
         return $returnMessage;
-    }
+    }*/
 
     // function to check if the payment structure is new
     public function isNewPaymentStructure($payments)
@@ -548,33 +553,68 @@ class SplitPaymentService
 
     public function generateSplitPaymentLink($request)
     {
+        LoggerService::info('Generate split payment link called for payment code: '.$request->paymentCode.' and sr no: '.$request->splitPaymentId);
+
+        // Fetch the split payment record from the database.
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
-        if (! $splitPayment) {
-            return response()->json(['success' => false]);
+
+        // Validate that the split payment and its parent payment exist.
+        if (! $splitPayment || ! $splitPayment->payment) {
+            return response()->json(['success' => false, 'message' => 'Payment split or payments not found.']);
         }
+
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
 
-        if (! $payment) {
-            return response()->json(['success' => false]);
+        if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard) {
+            // Check if the transaction is an "embedded" transaction from the main website's quote flow.
+            $isEmbedded = EmbeddedTransaction::where('quote_request_type', $payment->paymentable_type)
+                ->where('quote_request_id', $payment->paymentable_id)
+                ->select('id')
+                ->limit(1)
+                ->exists();
+
+            if ($isEmbedded) {
+                // For embedded transactions, generate a link that directs the user back to the website's payment page.
+                LoggerService::info("Generating embedded payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
+                $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
+                $lob = strtolower($modelType);
+                $paymentLink = "{$paymentLink}/{$lob}-insurance/quote/{$request->quoteUuid}/payment";
+
+                $insuranceProvider = getInsuranceProvider($payment, $lob);
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+                $paymentParams = [
+                    'planId' => $payment->plan_id,
+                    'providerCode' => $insuranceProvider->code,
+                    'quoteTypeId' => $quoteTypeId,
+                ];
+                $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+
+                return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+            }
         }
 
+        // For standard transactions, check if a valid, non-expired payment link already exists.
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
+            LoggerService::info("Returning existing payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
+
             return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
-        } else {
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-
-            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
-
-            $paymentParams = [
-                'code' => $payment->code.'-'.$splitPayment->sr_no,
-                'quoteTypeId' => $quoteTypeId,
-            ];
-            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
-
-            return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
+
+        // If no valid link exists, generate a new one.
+        LoggerService::info("Generating standard payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
+        $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
+        $paymentLink .= $splitPayment->payment_method === PaymentMethodsEnum::InsureNowPayLater ? 'tabby' : 'checkout';
+
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $paymentParams = [
+            'code' => $payment->code.'-'.$splitPayment->sr_no,
+            'quoteTypeId' => $quoteTypeId,
+        ];
+        $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+
+        return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
     }
 
     public function generateInsurerPaymentLink($request)
@@ -681,27 +721,24 @@ class SplitPaymentService
             // Log message for creating Sage receipt
             LoggerService::info("Creating Sage receipt for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} - Current Sage receipt ID: {$paymentSplit->sage_reciept_id}");
 
-            // Handle Sage API call outside transaction
-            if ((new SageApiService)->isSageEnabled() && empty($paymentSplit->sage_reciept_id)) {
+            $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quoteModel, $paymentSplit); /* Handle NRA case where payment is approved after policy/send update is booked */
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
+            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
-                $request = Request::createFromGlobals();
-                $request->merge([
-                    'modelType' => $modelType,
-                    'quote_id' => $quoteId,
-                    'customer_id' => $quoteModel->customer_id,
-                    'advisor_id' => $quoteModel->advisor_id,
-                ]);
+                $sageRequest = new stdClass;
+                $sageRequest->userId = auth()->id();
+                $sageRequest->quoteType = $modelType;
+                $sageRequest->modelType = $modelType;
+                $sageRequest->quote_id = $quoteId;
+                $sageRequest->customer_id = $quoteModel?->customer_id;
+                $sageRequest->advisor_id = $quoteModel?->advisor_id;
 
-                // Make Sage API call outside transaction
-                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
-                if ($sageResponse['status'] == 'success') {
-                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['response']}");
-                    $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
-                        $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                        $paymentSplit->save();
-                    }, $maxRetries);
+                /* Handle NRA case where payment is approved after policy/send update is booked */
+                $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
+                if ($sageResponse['status']) {
+                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['message']}");
                 } else {
-                    $sageMessage = $sageResponse['response'];
+                    $sageMessage = $sageResponse['message'];
                     LoggerService::info("Sage receipt creation failed for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with error: {$sageMessage}");
 
                     if ($isFromJob) {
@@ -741,7 +778,6 @@ class SplitPaymentService
             }
         }
 
-        // Move determination of shouldCreateReceipt outside transaction
         $paymentSplit = PaymentSplits::with([
             'payment' => function ($query) {
                 $query->with(['insuranceProvider', 'sendUpdateLog']);
@@ -967,6 +1003,7 @@ class SplitPaymentService
     // Update lead status for ecomm quotes
     public function updateLeadStatus($payment)
     {
+        $quoteTypeId = null;
         $quoteModel = $payment->paymentable;
         $ecommQuotes = [
             CarQuote::class,
@@ -976,8 +1013,10 @@ class SplitPaymentService
         if ($quoteModel) {
             $oldPaymentStatus = $quoteModel->payment_status_id;
             $quoteModel->payment_status_id = $payment->payment_status_id;
-
-            if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            if ($payment->paymentable_type == PersonalQuote::class) {
+                $quoteTypeId = $quoteModel->quote_type_id;
+            }
+            if ((in_array($payment->paymentable_type, $ecommQuotes) || $quoteTypeId === QuoteTypeId::Life) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
                 LoggerService::info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type}");
 
@@ -1317,27 +1356,6 @@ class SplitPaymentService
         }
 
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
-    }
-
-    public function hasAnyAuthorizedPayment($splitPayment)
-    {
-        return $splitPayment->where('payment_method', PaymentMethodsEnum::CreditCard)
-            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
-            ->first();
-    }
-
-    public function validateAuthorizedPayment($validator, $code)
-    {
-
-        $payment = Payment::where('code', $code)->with('paymentSplits')->first();
-
-        // Check if payment is authorized
-        if ($payment) {
-            $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
-            if ($hasAnyAuthorizedPayment) {
-                $validator->errors()->add('authorized', 'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.');
-            }
-        }
     }
 
     private function shouldProcessPayment($paymentSplit, $isFromJob, $modelType)

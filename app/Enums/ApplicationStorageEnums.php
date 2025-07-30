@@ -116,6 +116,7 @@ final class ApplicationStorageEnums extends Enum
     public const ALFRED_PROTECT_BOOK_POLICY_TEMPLATE = 'ALFRED_PROTECT_BOOK_POLICY_TEMPLATE';
     public const SUKOON_PAYMENT_GATEWAY = 'SUKOON_PAYMENT_GATEWAY';
     public const SUKOON_PRODUCT_SLUG = 'SUKOON_PRODUCT_SLUG';
+    public const SUKOON_MEDEX_PRODUCT_SLUG = 'SUKOON_MEDEX_PRODUCT_SLUG';
     public const SUKOON_TEMPLATE_POLICY_CERTIFICATE = 'SUKOON_TEMPLATE_POLICY_CERTIFICATE';
     public const SUKOON_TEMPLATE_TAX_CREDIT = 'SUKOON_TEMPLATE_TAX_CREDIT';
     public const SUKOON_TEMPLATE_TAX_CREDIT_BUYER = 'SUKOON_TEMPLATE_TAX_CREDIT_BUYER';
@@ -226,6 +227,10 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_UNIVERSAL_SEARCH = 'ENABLE_UNIVERSAL_SEARCH';
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
+    public const LIFE_OCA_EMAIL_FLOW = 'LIFE_OCA_EMAIL_FLOW';
+    public const FIC_LIFE_EMAIL = 'FIC_LIFE_EMAIL';
+    public const FIC_LIFE_EMAIL_SWITCH = 'FIC_LIFE_EMAIL_SWITCH';
+    public const AUTOMATED_LIFE_FOLLOWUP_SWITCH = 'AUTOMATED_LIFE_FOLLOWUP_SWITCH';
 
     /* Savings Book Policy Template */
     public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
@@ -234,4 +239,8 @@ final class ApplicationStorageEnums extends Enum
     public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
     public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';
     public const OCR_ENABLED = 'OCR_ENABLED';
+
+    /* Cut Off Dates */
+    public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
+    public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
 }

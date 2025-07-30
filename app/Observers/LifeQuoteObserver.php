@@ -14,12 +14,10 @@ use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class LifeQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    // use PersonalQuoteSyncTrait;
 
     public function updating(LifeQuote $quote): void
     {
@@ -62,16 +60,16 @@ class LifeQuoteObserver
                 info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
             }
         }
-        $this->syncQuote($lifeQuote, $dirty);
+        // $this->syncQuote($lifeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
-                $this->updatePersonalQuote($lifeQuote->uuid, QuoteTypeId::Life, $dirty);
-            } catch (Exception $e) {
-                Log::error('LifeQuoteObserver - update personal quote failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $lifeQuote->uuid,
-                ]);
+                // $this->updatePersonalQuote($lifeQuote->uuid, QuoteTypeId::Life, $dirty);
+            } catch (\Exception $e) {
+                // Log::error('LifeQuoteObserver - update personal quote failed', [
+                //     'error' => $e->getMessage(),
+                //     'uuid' => $lifeQuote->uuid,
+                // ]);
             }
 
         }
@@ -86,7 +84,6 @@ class LifeQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-            event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));
         }
 
         if (

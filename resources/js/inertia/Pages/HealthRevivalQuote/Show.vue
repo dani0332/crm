@@ -614,6 +614,7 @@ const leadStatusForm = useForm({
   notes: page.props.quote.notes || null,
   trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quote.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const genderText = gender =>
