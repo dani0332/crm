@@ -6,6 +6,7 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\EndingPoliciesReportExport;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -73,6 +74,8 @@ class EndingPoliciesReportService extends ManagementReport
         } else {
             $query->groupBy('personal_quotes.code');
         }
+
+        LoggerService::sql(self::class.' - Ending Policies Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();
