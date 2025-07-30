@@ -382,7 +382,7 @@ const activityForm = useForm({
   parentType: 'Business',
   quoteType: 5,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -392,7 +392,7 @@ const activityForm = useForm({
 
 const addActivity = () => {
   activityForm.title = null;
-  activityForm.description = null;
+  activityForm.description = '';
   activityForm.due_date = null;
   activityForm.assignee_id = null;
   activityForm.status = null;

@@ -1032,7 +1032,7 @@ const activityForm = useForm({
   parentType: 'Travel',
   quoteType: 8,
   title: null,
-  description: null,
+  description: '',
   due_date: '',
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -1042,7 +1042,7 @@ const activityForm = useForm({
 
 const addActivity = () => {
   activityForm.title = null;
-  activityForm.description = null;
+  activityForm.description = '';
   activityForm.due_date = null;
   activityForm.assignee_id = null;
   activityForm.status = null;

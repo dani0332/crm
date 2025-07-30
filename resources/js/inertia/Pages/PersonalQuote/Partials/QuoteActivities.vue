@@ -55,7 +55,7 @@ const activityForm = useForm({
   quote_id: page.props.quote.id,
   quote_type: page.props.quoteType,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,

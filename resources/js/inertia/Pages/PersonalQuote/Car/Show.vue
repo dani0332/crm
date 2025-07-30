@@ -814,7 +814,7 @@ const activityForm = useForm({
   parentType: 'Car',
   quoteType: 1,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props.auth?.user?.id ?? null,
   status: null,
