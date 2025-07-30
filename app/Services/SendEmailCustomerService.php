@@ -382,8 +382,6 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
 
-            LoggerService::info('fn: attachments count: '.count($attachments));
-
             $ccAdvisor = [];
             if (isset($emailData->advisorEmail) && isset($emailData->advisorName)) {
                 $ccAdvisor = [[
