@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
-            DocumentTypesSeeder::class,
+            // DocumentTypesSeeder::class,
             // CommercialCarPlanSeeder::class,
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
