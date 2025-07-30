@@ -37,22 +37,25 @@ class RetryPrepaymentRequest extends FormRequest
 
             // Validate payment split exists
             $paymentSplit = PaymentSplits::find($paymentSplitId);
-            if (!$paymentSplit) {
+            if (! $paymentSplit) {
                 $validator->errors()->add('payment_split_id', 'Payment split not found.');
+
                 return;
             }
 
             // Validate payment exists
             $payment = $paymentSplit->payment;
-            if (!$payment) {
+            if (! $payment) {
                 $validator->errors()->add('payment_split_id', 'Payment not found.');
+
                 return;
             }
 
             // Validate main lead object exists
             $mainLeadObject = app(CentralController::class)->getQuoteObject($quoteType, $quoteRequestId);
-            if (!$mainLeadObject) {
+            if (! $mainLeadObject) {
                 $validator->errors()->add('quote_request_id', 'Main lead object not found.');
+
                 return;
             }
         });

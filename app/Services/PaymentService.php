@@ -91,7 +91,7 @@ class PaymentService extends BaseService
         $srNo = $data['sr_no'];
         $paymentCode = $data['payment_code'];
         LoggerService::info("retryCreatePrepayment called for payment code : {$paymentCode} and sr no : {$srNo}");
-        
+
         try {
             $paymentSplit = PaymentSplits::find($data['payment_split_id']);
             $payment = $paymentSplit->payment;
