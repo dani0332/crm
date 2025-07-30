@@ -1149,7 +1149,6 @@ class SplitPaymentService
                 ]);
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-                $quoteCode = $quoteModel->code;
                 LoggerService::info('SplitPaymentService - Processing non-ecommLob quote for payment code: '.$paymentCode, extra: [
                     'modelType' => $modelType,
                 ]);

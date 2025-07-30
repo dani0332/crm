@@ -313,6 +313,9 @@ class LifeQuoteService extends BaseService
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'latestInsured' => function ($q) {
+                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
+                },
             ])
             ->select([
                 'personal_quotes.*',
