@@ -2135,7 +2135,7 @@ const validateInsurerPaymentLink = () => {
  * Determines if the user is allowed to approve a lower payment amount.
  * Approval is allowed if:
  * - There is a sendUpdate and its status is UPDATE_BOOKED, or
- * - There is no sendUpdate and the quote status is PolicyBooked.
+ * - There is no sendUpdate and the quote status is PolicyBooked, CancellationPending, PolicyCancelledReissued, or PolicyCancelled.
  *
  * @returns {boolean}
  */
@@ -2144,10 +2144,12 @@ const isAllowedToApproveLowerAmount = () => {
     props.sendUpdate &&
     props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
 
-  const isPolicyBooked =
-    !props.sendUpdate &&
-    props.quoteRequest?.quote_status_id ===
-      page.props.quoteStatusEnum?.PolicyBooked;
+  const isPolicyBooked = !props.sendUpdate && [
+    page.props.quoteStatusEnum?.PolicyBooked,
+    page.props.quoteStatusEnum?.CancellationPending,
+    page.props.quoteStatusEnum?.PolicyCancelledReissued,
+    page.props.quoteStatusEnum?.PolicyCancelled,
+  ].includes(props.quoteRequest?.quote_status_id);
 
   return isUpdateBooked || isPolicyBooked;
 };
