@@ -1080,11 +1080,11 @@ const insurerAMLStatusOption = computed(() => {
         />
         <ComboBox
           v-model="filters.emirate_of_your_visa_id"
-          label="Emirate"
-          placeholder="Search by emirate"
+          label="Visa Emirate"
+          placeholder="Search by Visa Emirate"
           :options="emirates"
           class="w-full"
-          :single="true"
+          :single="false"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
