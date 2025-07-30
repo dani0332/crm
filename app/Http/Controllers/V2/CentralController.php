@@ -369,19 +369,33 @@ class CentralController extends Controller
                     ['payment_status_id', PaymentStatusEnum::AUTHORISED],
                 ])
                     ->whereHas('product.embeddedProduct', function ($query) {
-                        $query->where('product_category', EpCategoryEnum::BOLT_ON)
-                            ->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes() ?? []);
-                    })->select('code', 'payment_status_id', 'policy_status')->get();
+                        $query->where('product_category', EpCategoryEnum::BOLT_ON);
+                    })
+                    ->with(['product.embeddedProduct:id,short_code'])
+                    ->select('code', 'payment_status_id', 'policy_status', 'product_id')
+                    ->get();
 
                 if ($captureableEmbeddedTransactions->isNotEmpty()) {
                     try {
                         EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
 
-                        LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
-                            extra: $captureableEmbeddedTransactions->toArray()
-                        );
+                        $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
+                        $hasSukoonMedexProducts = $captureableEmbeddedTransactions
+                            ->filter(function ($transaction) use ($sukoonMedexCodes) {
+                                $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
 
-                        return response()->json(['message' => 'The embedded product payment is being captured, once done, the booking process will begin.'], 200);
+                                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
+                            })
+                            ->isNotEmpty();
+
+                        // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
+                        if ($hasSukoonMedexProducts) {
+                            LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
+                                extra: $captureableEmbeddedTransactions->toArray()
+                            );
+
+                            return response()->json(['message' => 'The embedded product payment is being captured, once done, booking process will begin.'], 200);
+                        }
 
                     } catch (Exception $e) {
                         LoggerService::error('Embedded Product payment capture failed', [
