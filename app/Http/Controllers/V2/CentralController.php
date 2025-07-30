@@ -76,7 +76,6 @@ use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
-use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
@@ -93,7 +92,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
@@ -842,7 +840,7 @@ class CentralController extends Controller
 
     public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
     {
-            $request = $postPrepaymentToSageRequest->safe();
+        $request = $postPrepaymentToSageRequest->safe();
 
         try {
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
@@ -938,11 +936,12 @@ class CentralController extends Controller
                 'success' => $result['message'],
             ]);
         }
+
         return redirect()->back()->with([
             'error' => $result['message'],
         ]);
     }
-    
+
     public function updateCommissionForLeads()
     {
         $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();

@@ -260,7 +260,6 @@ class RolePermissionSeeder extends Seeder
         ]);
     }
 
-    
     private function addRetryPrePaymentPermission(): void
     {
         Permission::firstOrCreate([
@@ -271,7 +270,7 @@ class RolePermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
     }
-    
+
     private function addPlanDetailsEditPermission(): void
     {
         $permission = Permission::firstOrCreate(

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -94,16 +93,18 @@ class PaymentService extends BaseService
         LoggerService::info("retryCreatePrepayment called for payment code : {$paymentCode} and sr no : {$srNo}");
         try {
             $paymentSplit = PaymentSplits::find($data['payment_split_id']);
-            if (!$paymentSplit) {
+            if (! $paymentSplit) {
                 LoggerService::info("Payment Split not found for payment split code : {$paymentCode} and sr no : {$srNo}");
+
                 return [
                     'success' => false,
                     'message' => 'Payment split not found.',
                 ];
             }
             $payment = $paymentSplit->payment;
-            if (!$payment) {
+            if (! $payment) {
                 LoggerService::info("Payment not found for payment split code : {$paymentCode} and sr no : {$srNo}");
+
                 return [
                     'success' => false,
                     'message' => 'Payment not found',
@@ -111,14 +112,15 @@ class PaymentService extends BaseService
             }
             $sendUpdateId = $payment->send_update_log_id;
             $mainLeadObject = app(CentralController::class)->getQuoteObject($data['quote_type'], $data['quote_request_id']);
-            if (!$mainLeadObject) {
+            if (! $mainLeadObject) {
                 LoggerService::info("Main lead object not found for payment split code : {$paymentCode} and sr no : {$srNo}");
+
                 return [
                     'success' => false,
                     'message' => 'Main lead object not found.',
                 ];
             }
-            if (!empty($sendUpdateId) && $sendUpdateId > 0) {
+            if (! empty($sendUpdateId) && $sendUpdateId > 0) {
                 $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
                 $quoteModel->fill([
                     'customer_id' => $mainLeadObject->customer_id,
@@ -127,7 +129,7 @@ class PaymentService extends BaseService
             } else {
                 $quoteModel = $mainLeadObject;
             }
-            $request = new Request();
+            $request = new Request;
             $request->merge([
                 'modelType' => $data['quote_type'],
                 'quote_id' => $data['quote_request_id'],
@@ -143,18 +145,21 @@ class PaymentService extends BaseService
                     vAbort($sageResponse['message']);
                 }
                 LoggerService::info("Sage Receipt ID created: {$paymentSplit->sage_reciept_id} for payment code : {$paymentCode} and sr no : {$srNo}");
+
                 return [
                     'success' => true,
                     'message' => 'Prepayment posting to Sage successfully.',
                     'sage_receipt_id' => $paymentSplit->sage_reciept_id,
                 ];
             }
+
             return [
                 'success' => false,
                 'message' => 'Sage integration is not enabled.',
             ];
         } catch (\Exception $exception) {
             LoggerService::warning("Exception in retryPrepaymentPostingToSage: {$exception->getMessage()} for payment code : {$paymentCode} and sr no : {$srNo}");
+
             return [
                 'success' => false,
                 'message' => 'Prepayment posting failed, please try again later.',
