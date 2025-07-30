@@ -630,8 +630,8 @@ class AdvisorConversionReportService extends BaseService
             })->when(! empty($filters->travel_coverage) && $filters->travel_coverage != '', function ($sq) use ($filters) {
                 $sq->where('travel_quote_request.coverage_code', $filters->travel_coverage);
             })->when(isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false', function ($sq) use ($isTravelQuote) {
-                $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
-                $sq->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                $sourceCol = $isTravelQuote ? 'travel_quote_request.source' : 'personal_quotes.source';
+                $sq->where($sourceCol, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             });
         });
     }
