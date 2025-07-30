@@ -202,10 +202,10 @@ class EmbeddedProduct
             })
             ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null') 
+                    $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null')
                         ? Carbon::parse($filters['date_of_purchase'][0])->startOfDay()
                         : today()->startOfDay();
-                    $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null') 
+                    $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null')
                         ? Carbon::parse($filters['date_of_purchase'][1])->endOfDay()
                         : today()->endOfDay();
                     $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
