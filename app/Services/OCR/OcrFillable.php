@@ -7,6 +7,9 @@ use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
+use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
+use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
 use App\Services\SplitPaymentService;
 use Carbon\Carbon;
 use Exception;
@@ -236,6 +239,96 @@ trait OcrFillable
         return true;
     }
 
+    private function fillEmiratesId(Model $quote, object $data)
+    {
+        try {
+            $success = (new EmiratesIdDataProcessor($quote, $data))->processEmiratesIdData();
+
+            if ($success) {
+                // we can remove after testing
+                $summary = (new EmiratesIdDataProcessor($quote, $data))->getProcessingSummary();
+
+                LoggerService::info(self::class.' - Emirates ID data processing completed successfully', extra: [
+                    'quote_uuid' => $quote->uuid,
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Emirates ID data processing failed', extra: [
+                    'quote_uuid' => $quote->uuid,
+                ]);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Emirates ID data filling', exception: $e, extra: [
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return false;
+        }
+    }
+
+    private function fillMulkiya(Model $quote, object $data)
+    {
+        try {
+            $success = (new MulkiyaDataProcessor($quote, $data))->processMulkiyaData();
+
+            if ($success) {
+                // we can remove after testing
+                $summary = (new MulkiyaDataProcessor($quote, $data))->getProcessingSummary($quote);
+
+                LoggerService::info(self::class.' - Mulkiya data processing completed successfully', extra: [
+                    'quote_uuid' => $quote->uuid,
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Mulkiya data processing failed', extra: [
+                    'quote_uuid' => $quote->uuid,
+                ]);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Mulkiya data filling', exception: $e, extra: [
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return false;
+        }
+    }
+
+    private function fillDrivingLicense(Model $quote, object $data)
+    {
+        try {
+            $success = (new DrivingLicenseDataProcessor($quote, $data))->processDrivingLicenseData();
+
+            if ($success) {
+                // we can remove after testing
+                $summary = (new DrivingLicenseDataProcessor($quote, $data))->getProcessingSummary();
+
+                LoggerService::info(self::class.' - Driving License data processing completed successfully', extra: [
+                    'quote_uuid' => $quote->uuid,
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class.' - Driving License data processing failed', extra: [
+                    'quote_uuid' => $quote->uuid,
+                ]);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Driving License data filling', exception: $e, extra: [
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return false;
+        }
+    }
+
     private function fill(
         Model $quote,
         OCRDocumentTypeEnum $documentType,
@@ -254,6 +347,9 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => $this->fillMotorInsurancePolicySchedule($quote, $data),
+                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data),
+                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
+                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data),
                 default => false,
             };
         } catch (Exception $e) {

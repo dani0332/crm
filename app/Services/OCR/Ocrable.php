@@ -15,6 +15,8 @@ trait Ocrable
             'endpoint' => $endpoint,
             'status' => $status,
             'response' => $response->body(),
+            'response_size' => strlen($response->body()),
+            'response_time' => $response->transferStats?->getTransferTime() ?? 'unknown',
         ]);
 
         $result = [
@@ -25,8 +27,12 @@ trait Ocrable
 
         if ($response->successful()) {
             $result['ok'] = true;
+        } elseif ($response->clientError()) {
+            $result['message'] = "Client error occurred while calling OCR API (Status: {$status}): {$response->body()}";
         } elseif ($response->serverError()) {
-            $result['message'] = "Server error occurred while calling OCR API: {$response->body()}";
+            $result['message'] = "Server error occurred while calling OCR API (Status: {$status}): {$response->body()}";
+        } else {
+            $result['message'] = "Unexpected response from OCR API (Status: {$status}): {$response->body()}";
         }
 
         return $result;

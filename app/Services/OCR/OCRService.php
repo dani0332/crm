@@ -6,13 +6,16 @@ use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
+use App\Jobs\OCR\PopulateDocumentData;
 use App\Models\DocumentType;
+use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 class OCRService
@@ -237,6 +240,80 @@ class OCRService
         }
     }
 
+    public function dispatchJobIfEligible(
+        DocumentType $documentType,
+        $quote,
+        string $filePathAzure,
+        string $fileMimeType,
+        ?string $quoteTypeParam = null
+    ): void {
+        if ($quote instanceof SendUpdateLog) {
+            LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog', [
+                'quote_uuid' => $quote->uuid,
+                'document_type' => $documentType->code,
+            ]);
+
+            return;
+        }
+
+        $quoteType = $this->determineQuoteType($quoteTypeParam);
+        if (! $quoteType) {
+            LoggerService::info('OCR Dispatch - Unable to determine quote type', [
+                'quote_uuid' => $quote->uuid ?? 'unknown',
+                'document_type' => $documentType->code,
+                'quote_type_param' => $quoteTypeParam,
+            ]);
+
+            return;
+        }
+
+        $userId = Auth::id();
+
+        if ($quote && $filePathAzure && $userId) {
+            LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job', [
+                'quote_uuid' => $quote->uuid,
+                'quote_type' => $quoteType->value,
+                'document_type' => $documentType->code,
+                'file_path' => $filePathAzure,
+                'user_id' => $userId,
+            ]);
+
+            PopulateDocumentData::dispatch(
+                $quoteType,
+                $quote,
+                $documentType,
+                $filePathAzure,
+                $fileMimeType,
+                $userId,
+            );
+        } else {
+            LoggerService::warning('OCR Dispatch - Missing required parameters', [
+                'quote_exists' => ! is_null($quote),
+                'file_path_exists' => ! empty($filePathAzure),
+                'user_id_exists' => ! is_null($userId),
+                'document_type' => $documentType->code,
+            ]);
+        }
+    }
+
+    private function determineQuoteType(?string $quoteTypeParam = null): ?QuoteTypes
+    {
+        $candidates = array_filter([
+            $quoteTypeParam,
+            request('quoteType'),    // API route parameter: /api/quotes/{quoteType}/documents
+            request('quote_type'),   // Web route context
+        ]);
+
+        foreach ($candidates as $candidate) {
+            $quoteType = QuoteTypes::tryFrom(ucfirst($candidate));
+            if ($quoteType) {
+                return $quoteType;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Check if the document type requires OCR notifications
      */
@@ -246,6 +323,9 @@ class OCRService
             OCRDocumentTypeEnum::TAX_INVOICE,
             OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
             OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE,
+            OCRDocumentTypeEnum::ID_CARD,
+            OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
+            OCRDocumentTypeEnum::DRIVING_LICENSE,
         ]);
     }
 }
