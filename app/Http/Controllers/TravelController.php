@@ -62,6 +62,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
+use App\Enums\QuoteSegmentEnum;
 
 class TravelController extends Controller
 {
@@ -129,6 +130,7 @@ class TravelController extends Controller
             'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
             'travelPlans' => TravelPlan::all(),
             'insurerAMLStatus' => $insurerAMLStatus,
+            'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Travel),
             'assignmentTypes' => AssignmentTypeEnum::withLabels(),
         ]);
     }
