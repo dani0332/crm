@@ -202,7 +202,7 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   private_client: 'all',
-  emirate_of_your_visa_id: 'all',
+  emirate_of_your_visa_id: [],
 });
 
 const canExport = ref(false);
@@ -377,8 +377,16 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
+  const arrayParams = {};
+
   for (const [key, value] of Object.entries(params)) {
-    if (key.includes('[]')) {
+    if (key.match(/^(.+)\[\d+\]$/)) {
+      const baseKey = key.match(/^(.+)\[\d+\]$/)[1];
+      if (!arrayParams[baseKey]) {
+        arrayParams[baseKey] = [];
+      }
+      arrayParams[baseKey].push(+value);
+    } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = value;
     } else {
       // Handle different data types appropriately
@@ -396,6 +404,10 @@ function setQueryStringFilters() {
         filters[key] = value;
       }
     }
+  }
+
+  for (const [key, values] of Object.entries(arrayParams)) {
+    filters[key] = values;
   }
 }
 
