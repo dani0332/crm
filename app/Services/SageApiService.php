@@ -791,6 +791,9 @@ class SageApiService
                 return $createPremiumPrepayment;
             }
 
+            $payment = $payment->refresh();
+            $paymentSplits = $payment->paymentSplits;
+
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
             if (! $createARInvoicePremAndComm['status']) {
