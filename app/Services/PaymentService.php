@@ -91,35 +91,12 @@ class PaymentService extends BaseService
         $srNo = $data['sr_no'];
         $paymentCode = $data['payment_code'];
         LoggerService::info("retryCreatePrepayment called for payment code : {$paymentCode} and sr no : {$srNo}");
+        
         try {
             $paymentSplit = PaymentSplits::find($data['payment_split_id']);
-            if (! $paymentSplit) {
-                LoggerService::info("Payment Split not found for payment split code : {$paymentCode} and sr no : {$srNo}");
-
-                return [
-                    'success' => false,
-                    'message' => 'Payment split not found.',
-                ];
-            }
             $payment = $paymentSplit->payment;
-            if (! $payment) {
-                LoggerService::info("Payment not found for payment split code : {$paymentCode} and sr no : {$srNo}");
-
-                return [
-                    'success' => false,
-                    'message' => 'Payment not found',
-                ];
-            }
             $sendUpdateId = $payment->send_update_log_id;
             $mainLeadObject = app(CentralController::class)->getQuoteObject($data['quote_type'], $data['quote_request_id']);
-            if (! $mainLeadObject) {
-                LoggerService::info("Main lead object not found for payment split code : {$paymentCode} and sr no : {$srNo}");
-
-                return [
-                    'success' => false,
-                    'message' => 'Main lead object not found.',
-                ];
-            }
             if (! empty($sendUpdateId) && $sendUpdateId > 0) {
                 $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
                 $quoteModel->fill([
