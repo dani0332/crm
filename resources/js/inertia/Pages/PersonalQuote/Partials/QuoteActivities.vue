@@ -259,6 +259,8 @@ onMounted(() => {
           label="Description*"
           :adjust-to-text="false"
           class="w-full"
+          :rules="[rules.isRequired]"
+          :required="true"
         />
 
         <x-select

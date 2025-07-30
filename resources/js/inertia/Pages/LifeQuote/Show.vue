@@ -1533,6 +1533,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
             :adjust-to-text="false"
             class="w-full"
             label="Description"
+            :rules="[isRequired]"
+            :required="true"
           />
           <x-select
             v-model="activityForm.assignee_id"

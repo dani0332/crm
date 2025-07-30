@@ -3739,6 +3739,8 @@ const fullAddress = computed(() => {
             v-model="activityForm.description"
             :adjust-to-text="false"
             class="w-full"
+            :rules="[isRequired]"
+            :required="true"
           />
 
           <x-select

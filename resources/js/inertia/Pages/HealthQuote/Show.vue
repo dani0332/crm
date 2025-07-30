@@ -3998,6 +3998,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Description"
           :adjust-to-text="false"
           class="w-full"
+          :rules="[isRequired]"
+          :required="true"
         />
 
         <x-select
