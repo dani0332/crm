@@ -833,11 +833,6 @@ const setPlanDetail = () => {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan;
-    if (props.sendUpdate) {
-      initalPlanDetails =
-        props.quoteRequest.insurance_provider_details ??
-        props.quoteRequest.insurance_provider;
-    }
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else {
