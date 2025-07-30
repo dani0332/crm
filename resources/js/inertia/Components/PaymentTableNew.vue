@@ -654,6 +654,7 @@ const editPaymentModal = async (
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
+    !props.sendUpdate?.id &&
     (props.quoteType === quoteTypeCodeEnum.Bike ||
       props.quoteType === quoteTypeCodeEnum.Car ||
       props.quoteType === quoteTypeCodeEnum.Home ||

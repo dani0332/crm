@@ -1305,7 +1305,7 @@ class HomeQuoteService extends BaseService
         // Get quote details with relations
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
-        if (!$quote) {
+        if (! $quote) {
             throw ValidationException::withMessages(['error' => 'Quote not found with the provided UUID.']);
         }
 
