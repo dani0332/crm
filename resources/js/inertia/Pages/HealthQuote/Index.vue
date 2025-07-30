@@ -66,7 +66,7 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'EMIRATE OF VIA', value: 'emirate.text', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
