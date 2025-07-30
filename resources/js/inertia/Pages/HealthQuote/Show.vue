@@ -69,6 +69,7 @@ const props = defineProps({
   noteDocumentType: Array,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  isAUHLead: Boolean,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -3305,7 +3306,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
-              <x-tooltip placement="top" align="left">
+              <x-tooltip placement="top" align="left" v-if="!isAUHLead">
                 <x-button
                   @click.prevent="validateEmailSending"
                   size="sm"

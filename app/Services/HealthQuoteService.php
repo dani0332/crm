@@ -249,6 +249,13 @@ class HealthQuoteService extends BaseService
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
+    public function isAUHLead($id)
+    {
+        $quote = HealthQuote::findOrFail($id);
+
+        return $quote->isAUHLead();
+    }
+
     public function getEntityPlain($id)
     {
         return HealthQuote::where('id', $id)->with([
