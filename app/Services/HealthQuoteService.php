@@ -249,7 +249,7 @@ class HealthQuoteService extends BaseService
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
-    public function isAUHLead($id)
+    public function isAUHLead($id): bool
     {
         $quote = HealthQuote::findOrFail($id);
 
