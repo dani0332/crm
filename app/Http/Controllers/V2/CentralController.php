@@ -46,6 +46,7 @@ use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
@@ -81,6 +82,7 @@ use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
+use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -852,8 +854,9 @@ class CentralController extends Controller
 
     public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
     {
+        $request = $postPrepaymentToSageRequest->safe();
+
         try {
-            $request = $postPrepaymentToSageRequest->safe();
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
             $sendUpdateLog = null;
@@ -925,6 +928,32 @@ class CentralController extends Controller
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function retryPrepaymentCreation(RetryPrepaymentRequest $request)
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_PREPAYMENT_POSTING);
+        $request = $request->safe();
+        $paymentCode = $request->paymentCode;
+        $srNo = $request->srNo;
+        LoggerService::info("retryPrepaymentCreation called for payment code : {$paymentCode} and sr no : {$srNo}");
+        $data = [
+            'quote_type' => $request->quoteType,
+            'quote_request_id' => $request->quoteRequestId,
+            'payment_split_id' => $request->paymentSplitId,
+            'payment_code' => $paymentCode,
+            'sr_no' => $srNo,
+        ];
+        $result = app(PaymentService::class)->retryCreatePrepayment($data);
+        if ($result['success']) {
+            return redirect()->back()->with([
+                'success' => $result['message'],
+            ]);
+        }
+
+        return redirect()->back()->with([
+            'error' => $result['message'],
+        ]);
     }
 
     public function updateCommissionForLeads()
