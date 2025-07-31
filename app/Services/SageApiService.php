@@ -1200,6 +1200,10 @@ class SageApiService
                 if (isset($postedResponse['error'])) {
                     LoggerService::info(self::class.' fn:'.__FUNCTION__.'Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments Error: Failed to post AP Receipts for batch '.$sageResponse['BatchNumber']);
                     $response['message'] = 'Error while posting to sage - Ref:'.$quote->code;
+                    $sageErrorMessage = $postedResponse['error']['message']['value'] ?? $postedResponse['error'] ?? null;
+                    if ($this->sageHasProcessingConflict($sageErrorMessage)) {
+                        $response['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
+                    }
                     $this->logSageApiCall($aPPostReceipts, $postedResponse, $paymentSplit, $quote, 7, 7, SageEnum::STATUS_FAIL, $sageRequest->advisor_id);
 
                     return $response;
