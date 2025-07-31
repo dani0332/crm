@@ -11,6 +11,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -71,8 +72,9 @@ class LifeQuoteService extends BaseService
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
         $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
+        $quoteSegments = QuoteSegmentEnum::withLabels(QuoteTypeId::Life);
 
-        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes');
+        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes', 'quoteSegments');
     }
 
     public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
@@ -312,6 +314,9 @@ class LifeQuoteService extends BaseService
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
+                },
+                'latestInsured' => function ($q) {
+                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
                 },
             ])
             ->select([
