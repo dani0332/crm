@@ -177,13 +177,14 @@ const uploadFile = (doc, filesWithInfo) => {
       });
     })
     .catch(error => {
-      errorMsg.value[doc.id] =
-        error.response.data.message || 'File upload failed';
+      const errorMessage = error.response?.data?.message || 'File upload failed';
+      errorMsg.value[doc.id] = errorMessage;
+      
       notification.error({
         title: 'File upload failed',
         position: 'top',
       });
-      let errorMessages = error.response.data.errors;
+      let errorMessages = error.response?.data?.errors || {};
       if (errorMessages && typeof errorMessages === 'object') {
         Object.keys(errorMessages).forEach(function (key) {
           notification.error({
