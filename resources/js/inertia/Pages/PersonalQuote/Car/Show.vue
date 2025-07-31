@@ -103,6 +103,7 @@ defineProps({
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
   businessActivities: Object,
+  previousQuote:Object,
 });
 
 const page = usePage();
@@ -2703,11 +2704,13 @@ function handleOcrNotification(event) {
       :quote_type="quoteType"
       :expanded="sectionExpanded"
     />
-
+   
+  
     <LastYearPolicyDetail
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :expanded="sectionExpanded"
       :quote="record"
+      :previousQuote="previousQuote"
       modelType="Car"
       :insly-id="record?.insly_id"
       v-if="

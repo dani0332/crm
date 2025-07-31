@@ -2121,4 +2121,10 @@ class CarQuoteService extends BaseService
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
+
+    public function getPreviousQuote($id)
+    {
+        return CarQuote::where('id', $id)->select('id','uuid','code')->first();
+    }
+
 }

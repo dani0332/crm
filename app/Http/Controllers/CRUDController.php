@@ -815,6 +815,7 @@ class CRUDController extends Controller
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
             $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
+            $previousQuote = $this->carQuoteService->getPreviousQuote($record->previous_quote_id);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',
@@ -908,6 +909,7 @@ class CRUDController extends Controller
                 'paymentGatewayEnum',
                 'isFuncsEnabled',
                 'businessActivities',
+                'previousQuote'
             ]));
         }
 
