@@ -1412,8 +1412,10 @@ class HealthQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
 
+        $isAUH = $quote->isAUHLead();
+
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-            ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+            ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'isAUH'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Health Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
