@@ -96,8 +96,8 @@ const retryPrepaymentForm = useForm({
 
 const triggerPostRetryPrepayment = () => {
   const splitPayment = props.splitPayment;
-  retryPrepaymentForm.paymentSplitId = 6565656565;
-  retryPrepaymentForm.quoteRequestId = 44545454;
+  retryPrepaymentForm.paymentSplitId = splitPayment.id;
+  retryPrepaymentForm.quoteRequestId = props.quoteRequest.id;
   retryPrepaymentForm.quoteType = page.props.quoteType;
   retryPrepaymentForm.sendUpdateId = props.sendUpdate?.id;
   retryPrepaymentForm.paymentCode = props.splitPayment.code;
