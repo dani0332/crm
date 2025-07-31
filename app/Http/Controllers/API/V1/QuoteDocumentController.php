@@ -60,7 +60,7 @@ class QuoteDocumentController extends Controller
      */
     public function store($quoteType, QuoteDocumentRequest $request)
     {
-        LoggerService::info('QuoteDocumentController::store', [
+        LoggerService::info(self::class.'::store', [
             'quote_type' => $quoteType,
             'request' => $request->all(),
         ]);
