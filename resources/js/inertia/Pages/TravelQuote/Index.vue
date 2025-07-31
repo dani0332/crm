@@ -347,7 +347,7 @@ function onAssignLead(isValid) {
   }
 }
 
-function setQueryStringFilters() {
+function setQueryFilters() {
   for (const [key, value] of Object.entries(params)) {
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = value;
@@ -511,7 +511,7 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
-  setQueryStringFilters();
+  setQueryFilters();
   let filtersCleaned = cleanObj(filters);
 
   if (filtersCleaned.sortBy) {
