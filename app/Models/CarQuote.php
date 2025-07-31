@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
+use App\Models\RegistrationCertificate;
 
 class CarQuote extends BaseModel
 {
@@ -528,5 +529,10 @@ class CarQuote extends BaseModel
     {
         return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function registrationCertificate()
+    {
+        return $this->morphOne(RegistrationCertificate::class, 'certificatable');
     }
 }
