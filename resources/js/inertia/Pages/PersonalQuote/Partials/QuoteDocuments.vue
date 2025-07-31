@@ -177,9 +177,10 @@ const uploadFile = (doc, filesWithInfo) => {
       });
     })
     .catch(error => {
-      const errorMessage = error.response?.data?.message || 'File upload failed';
+      const errorMessage =
+        error.response?.data?.message || 'File upload failed';
       errorMsg.value[doc.id] = errorMessage;
-      
+
       notification.error({
         title: 'File upload failed',
         position: 'top',
