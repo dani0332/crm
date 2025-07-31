@@ -23,7 +23,7 @@ class BorFormRequest extends FormRequest
     {
         $rules = [
             'customer_type' => ['required', 'string', Rule::in(['Individual', 'Entity'])],
-            'lead_id' => ['required', 'integer', 'exists:personal_quotes,quote_id'],
+            'lead_id' => ['required', 'integer'],
             'lob' => ['required', 'string'],
             'insurance_provider_id' => 'nullable|integer',
         ];
@@ -89,7 +89,6 @@ class BorFormRequest extends FormRequest
             'customer_type.required' => 'Customer type is required.',
             'customer_type.in' => 'Customer type must be either Individual or Entity.',
             'lead_id.required' => 'Lead ID is required.',
-            'lead_id.exists' => 'The selected lead does not exist.',
             'insurer_name.required' => 'Insurer name is required for individual insurers.',
             'company_name.required' => 'Company name is required for entity insurers.',
             'insurance_provider_id.exists' => 'The selected insurance provider does not exist.',

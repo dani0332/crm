@@ -99,6 +99,7 @@ class BorController extends Controller
             LoggerService::error('BOR request creation failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
                 'request_data' => $request->except(['password']),
             ]);
 

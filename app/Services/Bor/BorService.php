@@ -33,7 +33,7 @@ class BorService
     public function getBorLogs(array $data)
     {
         $quoteObject = $this->getQuoteObject($data['lob'], $data['leadId']);
-        $isPersonalQuote = checkPersonalQuotes($data['lob']);
+        $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         !$isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
 
@@ -136,7 +136,7 @@ class BorService
     public function createBorLog(array $data)
     {
         $quoteObject = $this->getQuoteObject($data['lob'], $data['lead_id']);
-        $isPersonalQuote = checkPersonalQuotes($data['lob']);
+        $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         !$isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
 
@@ -164,7 +164,7 @@ class BorService
     public function updateBorLog(array $data, $id)
     {
         $quoteObject = $this->getQuoteObject($data['lob'], $data['lead_id']);
-        $isPersonalQuote = checkPersonalQuotes($data['lob']);
+        $isPersonalQuote = checkPersonalQuotes(ucfirst($data['lob']));
         !$isPersonalQuote && $quoteObject->load('personalQuote');
         $personalQuote = $isPersonalQuote ? $quoteObject : $quoteObject->personalQuote;
 
