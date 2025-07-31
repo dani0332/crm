@@ -707,12 +707,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             $sageRequest->sage_customer_number = $sageResponse['sageCustomerNumber'];
 
-             $sageResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
+            $sageResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
 
-             if (! $sageResponse['status']) {
-                 vAbort($sageResponse['message']);
+            if (! $sageResponse['status']) {
+                vAbort($sageResponse['message']);
 
-             }
+            }
 
             $sageResponseStatus = $sageResponse['status'];
         }
