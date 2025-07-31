@@ -10,7 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
-use App\Jobs\OCR\PopulateDocumentData;
+
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
@@ -18,6 +18,7 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\OCR\OCRService;
 use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
@@ -205,24 +206,12 @@ class PersonalQuoteRepository extends BaseRepository
 
     private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType)
     {
-        if ($quote instanceof SendUpdateLog) {
-            info(self::class."::populateDocumentData - Send Update Log found, skipping document data population for UUID: {$quote->uuid}");
-
-            return;
-        }
-
-        $quoteType = QuoteTypes::tryFrom(ucfirst(request('quote_type')));
-        $userId = Auth::user()->id;
-        if ($quote && $quoteType && $filePathAzure) {
-            PopulateDocumentData::dispatch(
-                $quoteType,
-                $quote,
-                $documentType,
-                $filePathAzure,
-                $fileMimeType,
-                $userId,
-            );
-        }
+        app(OCRService::class)->dispatchJobIfEligible(
+            $documentType,
+            $quote,
+            $filePathAzure,
+            $fileMimeType
+        );
     }
 
     /**

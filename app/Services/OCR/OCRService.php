@@ -100,6 +100,7 @@ class OCRService
         string $documentPath,
         string $fileMimeType,
         int $userId,
+        bool $isEcom,
     ): ?bool {
         // Record start time for OCR processing
         $startTime = microtime(true);
@@ -111,6 +112,7 @@ class OCRService
             'document_type' => $documentType->code,
             'file_mime_type' => $fileMimeType,
             'user_id' => $userId,
+            'is_ecom' => $isEcom,
             'start_time' => date('Y-m-d H:i:s', (int) $startTime),
         ]);
 
@@ -122,8 +124,8 @@ class OCRService
             return null;
         }
 
-        // Send start notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types
-        if ($this->requiresOcrNotifications($docType)) {
+        // Send start notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types (skip for ecom)
+        if (!$isEcom && $this->requiresOcrNotifications($docType)) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
         }
 
@@ -168,12 +170,12 @@ class OCRService
                 $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
                 if ($isQuoteStatusTransectionApproved) {
                     (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
-                } else {
+                } else if (!$isEcom) {
                     event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
                 }
 
-                // Send end notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types when processing completes successfully
-                if ($this->requiresOcrNotifications($docType) && $dataFilledResponse) {
+                // Send end notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types when processing completes successfully (skip for ecom)
+                if (!$isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
                     event(new OcrNotifications($quote, 'end', 'OCR processing completed successfully', null, $docType?->value, $userId));
                 }
 
@@ -194,6 +196,7 @@ class OCRService
                     'end_time' => date('Y-m-d H:i:s', (int) $endTime),
                     'data_filled_response' => $dataFilledResponse,
                     'user_id' => $userId,
+                    'is_ecom' => $isEcom,
                 ]);
 
                 return $dataFilledResponse;
@@ -234,6 +237,7 @@ class OCRService
                 'error_file' => $e->getFile(),
                 'error_line' => $e->getLine(),
                 'user_id' => $userId,
+                'is_ecom' => $isEcom,
             ]);
 
             throw $e;
@@ -269,13 +273,17 @@ class OCRService
 
         $userId = Auth::id();
 
-        if ($quote && $filePathAzure && $userId) {
+        // if userId is null, it means the request is from ecom
+        $isEcom = is_null($userId);
+
+        if ($quote && $filePathAzure) {
             LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job', [
                 'quote_uuid' => $quote->uuid,
                 'quote_type' => $quoteType->value,
                 'document_type' => $documentType->code,
                 'file_path' => $filePathAzure,
                 'user_id' => $userId,
+                'is_ecom' => $isEcom,
             ]);
 
             PopulateDocumentData::dispatch(
@@ -284,13 +292,13 @@ class OCRService
                 $documentType,
                 $filePathAzure,
                 $fileMimeType,
-                $userId,
+                $userId ?? 0,
+                $isEcom,
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters', [
                 'quote_exists' => ! is_null($quote),
                 'file_path_exists' => ! empty($filePathAzure),
-                'user_id_exists' => ! is_null($userId),
                 'document_type' => $documentType->code,
             ]);
         }

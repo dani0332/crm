@@ -34,6 +34,7 @@ class PopulateDocumentData implements ShouldQueue
         protected string $documentPath,
         protected string $fileMimeType,
         protected int $userId,
+        protected bool $isEcom = false,
     ) {
         $this->onQueue('shared');
     }
@@ -64,6 +65,7 @@ class PopulateDocumentData implements ShouldQueue
                 $this->documentPath,
                 $this->fileMimeType,
                 $this->userId,
+                $this->isEcom,
             );
 
             if ($isSuccess === null) {
@@ -103,9 +105,9 @@ class PopulateDocumentData implements ShouldQueue
 
     public function failed(\Throwable $exception)
     {
-        // Send OCR fail notification for supported document types
+        // Send OCR fail notification for supported document types (skip for ecom)
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
-        if (app(OCRService::class)->requiresOcrNotifications($docType)) {
+        if (!$this->isEcom && app(OCRService::class)->requiresOcrNotifications($docType)) {
             event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', null, $docType?->value, $this->userId));
         }
     }
