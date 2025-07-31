@@ -45,7 +45,7 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   cancelOptions: Array,
-  isEndorsementActionDisabled: Boolean,
+  isEndorsementBookingActionDisabled: Boolean,
 });
 
 const page = usePage();
@@ -801,7 +801,7 @@ const cancelOptionsList = computed(() => {
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
       :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
       :disable-main-btn="props.disableMainBtn"
-      :is-endorsement-action-disabled="props.isEndorsementActionDisabled"
+      :is-endorsement-booking-action-disabled="props.isEndorsementBookingActionDisabled"
     />
 
     <AuditLogs

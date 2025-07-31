@@ -45,11 +45,9 @@ class SendUpdateValidationRequest extends FormRequest
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
             $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->select('emirate_of_registration_id')->first();
 
-            $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
-            if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
-                if (in_array($this->action, [SendUpdateLogStatusEnum::ACTION_SNBU, SendUpdateLogStatusEnum::ACTION_SU])) {
-                    $validator->errors()->add('error', 'Abu Dhabi policy financials will be recorded manually and not entered in Sage');
-                }
+            $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+            if ($isEndorsementActionDisabled) {
+                $validator->errors()->add('error', 'Abu Dhabi policy financials will be recorded manually and not entered in Sage');
             }
 
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {

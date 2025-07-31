@@ -59,7 +59,7 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
-  isEndorsementActionDisabled: Boolean,
+  isEndorsementBookingActionDisabled: Boolean,
 });
 
 const state = reactive({
@@ -784,7 +784,7 @@ const isStating = ref(false);
 
 const isAUHEnable = computed(() => {
   if (
-    props.isEndorsementActionDisabled &&
+    props.isEndorsementBookingActionDisabled &&
     [sendUpdateStatusEnum.SNBU, sendUpdateStatusEnum.SU].includes(
       props.updateBtn,
     )

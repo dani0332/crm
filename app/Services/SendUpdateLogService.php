@@ -1825,13 +1825,18 @@ class SendUpdateLogService
         return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
     }
 
-    public function isEndorsementActionDisabled($sendUpdateLog)
+    public function isEndorsementBookingActionDisabled($sendUpdateLog)
     {
-        $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->select('emirate_of_registration_id')->first();
-        $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
+        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health) {
+            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->first();
+            $quoteDetails = HealthQuote::where('code', $personalQuote->code)->first();
 
-        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
-            return true;
+            $emirateOfYourVisaId = $quoteDetails?->emirate_of_your_visa_id;
+            if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+                return true;
+            }
+            
+            return false;
         }
 
         return false;

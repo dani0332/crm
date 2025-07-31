@@ -11,6 +11,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendUpdateCustomerValidationRequest extends FormRequest
@@ -53,11 +54,9 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 $validator->errors()->add('error', 'Please select advisor');
             }
 
-            $emirateOfYourVisaId = $personalQuote?->emirate_of_registration_id;
-            if ($this->sendUpdate->quote_type_id == QuoteTypeId::Health && $emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
-                if (in_array($this->action, [SendUpdateLogStatusEnum::ACTION_SNBU, SendUpdateLogStatusEnum::ACTION_SU])) {
-                    $validator->errors()->add('error', 'Abu Dhabi policy financials will be recorded manually and not entered in Sage');
-                }
+            $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($this->sendUpdate);
+            if ($isEndorsementActionDisabled) {
+                $validator->errors()->add('error', 'Abu Dhabi policy financials will be recorded manually and not entered in Sage');
             }
 
             // The str_contains condition is added only for the production environment and will be removed once the issue with comma-separated emails is resolved.
