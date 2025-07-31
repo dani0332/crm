@@ -1,11 +1,16 @@
 <script setup>
 defineProps({
   quotes: Object,
-  quoteStatuses: Array,
+  leadStatuses: Array,
   renewalBatches: Array,
   advisors: Array,
   authorizedDays: Number,
+  typesOfInsurance: Array,
+  numberOfYears: Array,
+  currency: Array,
   insurerAMLStatus: Array,
+  planSubTypes: Array,
+  quoteSegments: Object,
 });
 
 const page = usePage();
@@ -14,6 +19,15 @@ let params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const quoteSegments = page.props.quoteSegments;
+const quoteSegmentsLife = [
+  { value: 'all', label: 'All' },
+  ...quoteSegments.filter(
+    segment => segment.value === 'fic' || segment.value === 'non-fic',
+  ),
+];
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -71,15 +85,53 @@ const filters = reactive({
   advisor_assigned_date: null,
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  tenure_of_insurance_id: '',
+  sum_insured_currency_id: null,
+  sum_insured_range: '',
+  plan_type: '',
+  segment_filter: '',
   private_client: 'all',
 });
+
+const filterButtonStatuses = [
+  {
+    text: 'Policy Booked',
+    value: 1,
+    quoteCodes: ['Policy Booked'],
+    tooltip: '',
+  },
+  {
+    text: 'In Negotiation',
+    value: 2,
+    quoteCodes: ['In Negotiation'],
+    tooltip: '',
+  },
+  {
+    text: 'Application Submitted',
+    value: 3,
+    quoteCodes: ['Application Submitted'],
+    tooltip: '',
+  },
+  {
+    text: 'Followed Up',
+    value: 4,
+    quoteCodes: ['Followed Up'],
+    tooltip: '',
+  },
+  {
+    text: 'Quoted',
+    value: 5,
+    quoteCodes: ['Quoted'],
+    tooltip: '',
+  },
+];
 
 const loader = reactive({
   table: false,
   export: false,
 });
 
-const tableHeader = reactive([
+const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
@@ -97,8 +149,14 @@ const tableHeader = reactive([
     text: 'CREATED DATE',
     value: 'created_at',
     is_active: true,
+    sortable: true,
   },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    sortable: true,
+    is_active: true,
+  },
   {
     text: 'POLICY EXPIRY DATE',
     value: 'previous_policy_expiry_date',
@@ -109,7 +167,7 @@ const tableHeader = reactive([
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
+  { text: 'PRICE', value: 'premium', sortable: true, is_active: true },
   {
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
@@ -125,12 +183,26 @@ const tableHeader = reactive([
     value: 'renewal_batch_model',
     is_active: true,
   },
+  { text: 'Tenure of Cover', value: 'number_of_years', is_active: true },
+  { text: 'Sum Assured', value: 'sum_insured_value', is_active: true },
   {
     text: 'Private Client',
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
 ]);
+
+const filteredTableHeader = computed(() => {
+  let headers = [];
+  if (!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])) {
+    headers = tableHeader.value;
+  } else {
+    headers = tableHeader.value.filter(
+      column => column.value !== 'source' && column.value !== 'assignment_type',
+    );
+  }
+  return headers.filter(x => x.is_active);
+});
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -160,13 +232,18 @@ function filterQuotes(isValid) {
     });
     return;
   }
+
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
     }
   }
 
+  const filtersCleaned = cleanObj(filters);
+  filtersCount.value = Object.keys(filtersCleaned).length;
+
   serverOptions.value.page = 1;
+
   router.visit(route('life-quotes-list'), {
     method: 'get',
     data: {
@@ -179,11 +256,23 @@ function filterQuotes(isValid) {
       loader.table = false;
     },
     onBefore: () => {
-      filters.page = 1;
       loader.table = true;
     },
   });
 }
+
+const handleSelectedFilters = selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+  }
+
+  if (selectedFilters.quote_status) {
+    filters.quote_status_id = selectedFilters.quote_status;
+  }
+
+  filterQuotes(true);
+};
 
 function resetFilters() {
   router.visit(route('life-quotes-list'), {
@@ -396,6 +485,7 @@ onMounted(() => {
   }
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
 const resetDateFilters = filterName => {
@@ -458,12 +548,14 @@ watch(
   { deep: true },
 );
 
-const insurerAMLStatusOption = computed(() => {
-  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
-    value: key,
-    label: value,
-  }));
-});
+const quoteStatuses = computed(() => page.props.leadStatuses || []);
+
+const insurerAMLStatusOption = computed(() =>
+  (page.props.insurerAMLStatus || []).map(item => ({
+    value: item.id || item.value,
+    label: item.text || item.label,
+  })),
+);
 </script>
 
 <template>
@@ -472,7 +564,19 @@ const insurerAMLStatusOption = computed(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
-        <Link href="/quotes/life/cards">
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="life-list"
+        />
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          :filterStatuses="filterButtonStatuses"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
+        <Link href="/personal-quotes/life/cards">
           <x-button
             size="sm"
             color="#1d83bc"
@@ -495,7 +599,7 @@ const insurerAMLStatusOption = computed(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="filterQuotes" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip placement="bottom">
@@ -715,7 +819,15 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-
+        <x-select
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegmentsLife"
+          filterable
+          filterPlaceholder="Filter Segment...."
+          :single="true"
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"
@@ -736,6 +848,55 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <x-select
+          v-model="filters.tenure_of_insurance_id"
+          placeholder="Plan Type"
+          label="Plan Type"
+          :options="
+            planSubTypes.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+        />
+        <x-select
+          v-model="filters.number_of_years_id"
+          placeholder="Tenure of Cover"
+          label="Tenure of Cover"
+          :options="
+            numberOfYears.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+        />
+
+        <div v-if="!hasRole(rolesEnum.LifeAdvisor)">
+          <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-1">
+            <x-select
+              v-model="filters.sum_insured_currency_id"
+              placeholder="Currency"
+              label="Sum Assured"
+              :options="
+                currency.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+            />
+            <x-select
+              v-model="filters.sum_insured_range"
+              placeholder="Value Range"
+              :options="[
+                { value: 'lt500k', label: 'Less than 500k' },
+                { value: '500k-1m', label: '500k to less than 1M' },
+                { value: 'gte1m', label: 'Greater than or equal to 1M' },
+              ]"
+              class="border-l-0 rounded-tl-none rounded-bl-none"
+              label="&nbsp;"
+            />
+          </div>
+        </div>
         <ComboBox
           v-model="filters.private_client"
           label="Private Client"
@@ -838,7 +999,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="tableHeader"
+      :headers="filteredTableHeader"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
@@ -858,7 +1019,12 @@ const insurerAMLStatusOption = computed(() => {
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+        <p
+          v-if="
+            item?.payment_status?.text === 'AUTHORISED' &&
+            item?.payments[0]?.authorized_at
+          "
+        >
           {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
         </p>
       </template>
@@ -883,8 +1049,8 @@ const insurerAMLStatusOption = computed(() => {
       <template #item-nationality="{ nationality }">
         {{ nationality?.code }}
       </template>
-      <template #item-lost_reason="{ life_quote_request_detail }">
-        {{ life_quote_request_detail?.lost_reason?.text }}
+      <template #item-lost_reason="{ quote_detail }">
+        {{ quote_detail?.lost_reason?.text }}
       </template>
 
       <!-- <template #item-is_ecommerce="{ is_ecommerce }">
@@ -897,6 +1063,16 @@ const insurerAMLStatusOption = computed(() => {
       <template #item-renewal_batch_model="item">
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
+      </template>
+      <template #item-number_of_years="item">
+        <p>
+          {{ item?.life_quote?.number_of_years?.text ?? '' }}
+        </p>
+      </template>
+      <template #item-sum_insured_value="item">
+        <p>
+          {{ item?.life_quote?.sum_insured_value ?? '' }}
         </p>
       </template>
     </DataTable>

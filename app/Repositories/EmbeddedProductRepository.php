@@ -51,7 +51,6 @@ use Carbon\Carbon;
 use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
 
@@ -1154,7 +1153,9 @@ class EmbeddedProductRepository extends BaseRepository
             LoggerService::info('Embedded product payment capture in process', extra: ['payload' => $payload]);
             Marshall::request("/payment/{$paymentGatewayEndpoint}/capture", 'post', $payload);
         } catch (Exception $e) {
-            Log::error('Capture Payment Error: '.$e->getMessage());
+            LoggerService::warning('Capture Payment Error: '.$e->getMessage(), extra: [
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 

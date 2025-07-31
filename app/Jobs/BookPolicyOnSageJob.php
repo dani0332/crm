@@ -73,7 +73,7 @@ class BookPolicyOnSageJob implements ShouldQueue
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'BookPolicyOnSageJob : '.$this->quote->code);
             }
 
-            LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished', extra : ['Response' => json_encode($response)]);
+            LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished ', extra: ['Response' => json_encode($response)]);
         } else {
             LoggerService::info('job:BookPolicyOnSageJob - Process Skipped - Sage Process ID : '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }

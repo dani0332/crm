@@ -10,7 +10,7 @@ use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
-use App\Services\LifeQuoteService;
+use App\Services\Life\LifeQuoteService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use Carbon\Carbon;

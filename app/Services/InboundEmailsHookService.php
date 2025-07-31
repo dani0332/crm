@@ -13,7 +13,7 @@ use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
-use App\Models\HomeQuote;
+use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -255,8 +255,10 @@ class InboundEmailsHookService extends BaseService
                 case QuoteTypes::HEALTH->id():
                     $quote = HealthQuote::where('id', $emailStatusData->quote_id)->first();
                     break;
+                case QuoteTypes::LIFE->id():
+                case QuoteTypes::SAVINGS->id():
                 case QuoteTypes::HOME->id():
-                    $quote = HomeQuote::where('id', $emailStatusData->quote_id)->first();
+                    $quote = PersonalQuote::where('id', $emailStatusData->quote_id)->first();
                     break;
                 default:
                     $quote = null;
