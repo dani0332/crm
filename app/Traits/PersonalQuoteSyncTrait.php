@@ -139,7 +139,6 @@ trait PersonalQuoteSyncTrait
             $newValues = json_decode($entry->updated_fields, true);
             $this->syncTable($quote, $newValues, 'personal_quotes');
             $quote->quote_type_id = $entry->quote_type_id;
-            $this->transformAttributes($quote, $newValues, $entry->quote_type_id);
             $quote->save();
             QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
             // info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
@@ -151,11 +150,9 @@ trait PersonalQuoteSyncTrait
             if ($sourceQuote) {
                 $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
                 $quote->quote_type_id = $entry->quote_type_id;
-                $this->transformAttributes($quote, $sourceQuote->getAttributes(), $quote->quote_type_id);
                 $quote->save();
                 $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
                 $quote->quote_type_id = $entry->quote_type_id;
-                $this->transformAttributes($quote, json_decode($entry->updated_fields, true), $quote->quote_type_id);
                 $quote->save();
                 QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
             }
@@ -219,7 +216,6 @@ trait PersonalQuoteSyncTrait
         // update missing required fields
         $this->updateMissingFields($personalQuote, 'personal_quotes', $quoteTypeId);
         $this->syncTable($personalQuote, $newValues, 'personal_quotes');
-        $this->transformAttributes($personalQuote, $newValues, $quoteTypeId->quote_type_id);
 
         $quoteTypeShortCode = QuoteTypeShortCode::getName($quoteTypeId);
         $code = $quoteTypeShortCode.'-'.$quoteUuid;
@@ -485,27 +481,6 @@ trait PersonalQuoteSyncTrait
                 info($error.' --- '.$e->getTraceAsString());
                 QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
-        }
-    }
-
-    private function transformAttributes($personalQuote, $attributes, $quoteTypeId)
-    {
-        try {
-            $quoteTypeAttributes = [
-                QuoteTypeId::Health => [
-                    'emirate_of_your_visa_id' => 'emirate_of_registration_id',
-                ],
-            ];
-
-            if (isset($quoteTypeAttributes[$quoteTypeId])) {
-                foreach ($quoteTypeAttributes[$quoteTypeId] as $colFrom => $colTo) {
-                    if (isset($attributes[$colFrom])) {
-                        $personalQuote->{$colTo} = $attributes[$colFrom];
-                    }
-                }
-            }
-        } catch (Exception $e) {
-            LoggerService::warning('Error transforming attributes: '.$e->getMessage() . ' - '.json_encode($attributes).' - '.$quoteTypeId . ' - ' . $personalQuote->code);
         }
     }
 }
