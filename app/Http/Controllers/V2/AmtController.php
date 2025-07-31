@@ -210,7 +210,6 @@ class AmtController extends Controller
             if (count($request->support_user_id) === 1 && $request->support_user_id[0] == '-1') {
                 $data->whereNull('bqr.support_user_id');
             } else {
-                info("where in suppor");
                 $data->whereIn('bqr.support_user_id', $request->support_user_id);
             }
         }
