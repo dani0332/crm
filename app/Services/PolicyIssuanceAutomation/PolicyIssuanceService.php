@@ -293,7 +293,7 @@ class PolicyIssuanceService
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insurer = getInsuranceProvider($payment, $quoteType);
-        $insurerAutomation = $this->init($quoteType, $insurer->code);
+        $insurerAutomation = $this->init($quoteType, $insurer?->code);
 
         // /* If Quote API issuance status is not already set, than set insurer api and api issuance status */
         if (! $apiIssuanceStatus) {
@@ -348,7 +348,7 @@ class PolicyIssuanceService
         $payment = $quoteObject->payments()->mainLeadPayment()->first();
         $insurer = getInsuranceProvider($payment, $quoteType);
 
-        $insurerAutomation = $this->init($quoteType, $insurer->code);
+        $insurerAutomation = $this->init($quoteType, $insurer?->code);
         if($insurerAutomation) {
             $insurerApiStatuses = $insurerAutomation->getInsurerAPIStatuses();
         }
@@ -361,7 +361,7 @@ class PolicyIssuanceService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insurer = getInsuranceProvider($payment, $quoteType);
 
-        $insurerAutomation = $this->init($quoteType, $insurer->code);
+        $insurerAutomation = $this->init($quoteType, $insurer?->code);
 
         return $insurerAutomation::BOOK_POLICY_API_FAILED_STATUS_ID;
     }
@@ -371,7 +371,7 @@ class PolicyIssuanceService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insurer = getInsuranceProvider($payment, $quoteType);
 
-        $insurerAutomation = $this->init($quoteType, $insurer->code);
+        $insurerAutomation = $this->init($quoteType, $insurer?->code);
 
         return $insurerAutomation->getFailedIssuanceAPIStatuses();
     }   
