@@ -271,6 +271,10 @@ class CarCQFRenewalService
             'newPolicyExpiryDate' => $newPolicyExpiryDate,
         ]);
         $batch = $this->getRenewalBatch($newPolicyExpiryDate);
+        if(!$batch){
+            $this->markQuoteAsCompleted($quote,$renewalsUploadLeads,false,['batch' => 'Batch not found']);
+            return;
+        }
 
         $quoteData = $this->mapCarCQFRenewalQuote($quote, $batch,$renewalsUploadLeads);
         $newQuote = CarQuote::create($quoteData);
@@ -291,7 +295,7 @@ class CarCQFRenewalService
     {
         return RenewalBatch::where('start_date', '<=', $newPolicyExpiryDate)
             ->where('end_date', '>=', $newPolicyExpiryDate)
-            ->whereNull('quote_type_id')
+            ->where('quote_type_id', QuoteTypeId::Car)
             ->first();
     }
     public function generateUUID()
