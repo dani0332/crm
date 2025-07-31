@@ -1378,6 +1378,7 @@ class CentralService extends BaseService
             'policyPeriodStart' => Carbon::parse($quote->policy_start_date)->format('d/m/Y'),
             'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d/m/Y'),
             'refID' => $quote->code,
+            'code' => $quote->code,
         ];
 
         $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType);
@@ -1403,6 +1404,7 @@ class CentralService extends BaseService
             'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d/m/Y'),
             'reason' => $notes,
             'refID' => $sendUpdateLog->code,
+            'code' => $sendUpdateLog->code,
         ];
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $sendUpdateLog, $workflowType);
@@ -1539,6 +1541,7 @@ class CentralService extends BaseService
 
     public function sendInslyEmailToCustomer($lead, $emailData, $quoteTypeId, $emailType = '')
     {
+        dd('working');
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
             $birdUrlKey = 'BIRD_MOTOR_SEND_UPDATE';
