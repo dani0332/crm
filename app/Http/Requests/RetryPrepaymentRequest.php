@@ -45,6 +45,7 @@ class RetryPrepaymentRequest extends FormRequest
             $paymentSplit = PaymentSplits::find($paymentSplitId);
             if (! $paymentSplit) {
                 $validator->errors()->add('payment_split_id', 'Payment split not found.');
+
                 return;
             }
 
