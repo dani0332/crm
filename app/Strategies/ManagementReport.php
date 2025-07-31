@@ -140,6 +140,8 @@ class ManagementReport
 
         $departments = $request['department_id'] ?? [];
         $departments = is_array($departments) ? $request['department_id'] : [$departments];
+        $pcpTag = $request['pcp_tag'] ?? [];
+        $pcpTag = is_array($pcpTag) ? $request['pcp_tag'] : [$pcpTag];
         $user = auth()->user();
         if ($user->isDepartmentManager() && empty($departments)) {
             $departments = $user->departments->pluck('id');
@@ -177,6 +179,16 @@ class ManagementReport
             });
         }
 
+        $query->when(! empty($pcpTag) && ! in_array('all', $pcpTag), function ($q) use ($pcpTag) {
+            $filteredTags = array_diff($pcpTag, ['no']);
+            $hasNoTag = in_array('no', $pcpTag);
+
+            $q->when($hasNoTag, function ($subQ) use ($filteredTags) {
+                $subQ->whereNull('pcp_tag')
+                    ->when(! empty($filteredTags), fn ($q) => $q->orWhereIn('pcp_tag', $filteredTags));
+            }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
+        });
+
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
 
@@ -186,18 +198,34 @@ class ManagementReport
             if (is_array($request[$filterKey])) {
                 $dates = [];
                 foreach ($request[$filterKey] as $key => $dateString) {
-                    $carbonDate = Carbon::parse($dateString);
-                    if ($key == 0) {
-                        $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                    // Add null check before parsing (including string 'null')
+                    if ($dateString != null && $dateString != '' && $dateString != 'null') {
+                        $carbonDate = Carbon::parse($dateString);
+                        if ($key == 0) {
+                            $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        } else {
+                            $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        }
                     } else {
-                        $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        // Provide default date if null
+                        if ($key == 0) {
+                            $dates[$key] = today()->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        } else {
+                            $dates[$key] = today()->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        }
                     }
                 }
                 $request[$filterKey] = $dates;
             } else {
-                $carbonDate = Carbon::parse($request[$filterKey]);
-                $dates = $carbonDate->startOfDay();
-                $request[$filterKey] = $dates;
+                // Add null check for single date value (including string 'null')
+                if ($request[$filterKey] != null && $request[$filterKey] != '' && $request[$filterKey] != 'null') {
+                    $carbonDate = Carbon::parse($request[$filterKey]);
+                    $dates = $carbonDate->startOfDay();
+                    $request[$filterKey] = $dates;
+                } else {
+                    // Provide default date if null
+                    $request[$filterKey] = today()->startOfDay();
+                }
             }
         }
         $dateRange = $request[$filterKey] ?? [
@@ -242,7 +270,7 @@ class ManagementReport
 
             case ManagementReportCategoriesEnum::ENDING_POLICIES:
                 if ($this->isReportType($request, ManagementReportTypeEnum::EXPIRING_POLICIES)) {
-                    $this->getDateFilter($query, $request, 'p.policy_expiry_date', 'policyExpiredDate');
+                    $this->getDateFilter($query, $request, 'personal_quotes.policy_expiry_date', 'policyExpiredDate');
                 }
                 break;
 
@@ -514,6 +542,7 @@ class ManagementReport
             9 => 'pet-quotes-show',
             10 => 'cycle-quotes-show',
             11 => 'jetski-quotes-show',
+            18 => 'savings-quotes-show',
         ];
 
         $routeName = $types[$quoteTypeID];

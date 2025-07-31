@@ -537,6 +537,7 @@ class ReportsController extends Controller
             QuoteTypes::CORPLINE,
             QuoteTypes::CYCLE,
             QuoteTypes::YACHT,
+            QuoteTypes::SAVINGS,
         ];
 
         $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();

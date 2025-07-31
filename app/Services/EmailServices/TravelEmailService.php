@@ -4,17 +4,21 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
+use App\Models\QuoteFlowDetails;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -336,5 +340,97 @@ class TravelEmailService extends BaseService
         }
 
         return null;
+    }
+    /**
+     * Creates quote flow details for tracking email campaigns
+     */
+    public function createQuoteFlowDetails($lead, $response)
+    {
+        try {
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => QuoteTypeId::Travel,
+                    'flow_type' => QuoteFlowType::TRAVEL_SIC_FOLLOWUPS->value,
+                    'flow_id' => $runId,
+                ]);
+                LoggerService::info(self::class." - createQuoteFlowDetails  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                LoggerService::info(self::class." - createQuoteFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Throwable $th) {
+            $errorMessage = self::class." - createQuoteFlowDetails-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            LoggerService::error($errorMessage);
+            LoggerService::error(self::class." - createQuoteFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+
+        }
+    }
+
+    private function buildAIGWorkflowData($lead, $advisor, $type, $templateType = null)
+    {
+        return (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'uuid' => $lead->uuid,
+            'refID' => $lead->code,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorDetails' => $advisor ?? null,
+            'quotePlanLink' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => $type,
+            'templateType' => $templateType ?? null,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'createdAt' => $lead->created_at,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::TRAVEL, $lead->uuid),
+        ];
+    }
+
+    public function sendTravelAIGWorkflow($lead)
+    {
+        try {
+            LoggerService::info('Sending AIGWorkflow for travel');
+
+            // Refresh the lead to get the latest state
+            $lead->refresh();
+
+            if (empty($lead->travel_aig_flow_executed_at)) {
+                LoggerService::info('AIGWorkflow not executed yet, but should be already marked in the database. Skipping to avoid duplication.');
+
+                return null;
+            }
+
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);
+            // using the same event for AIG and BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL and have a Travel AIG branch in that event workflow
+            $birdAIGEvent = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL, useCache: true);
+
+            if ($birdAIGEvent) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent, $emailData);
+                LoggerService::info('AIGWorkflow event triggered for travel');
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                    LoggerService::info('AIGWorkflow flow details created successfully');
+                }
+
+                return $response;
+            } else {
+                LoggerService::info('AIGWorkflow key not found for travel');
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            LoggerService::error('AIGWorkflow-Error: while sending workflow for travel', exception: $e);
+            throw $e;
+        }
     }
 }

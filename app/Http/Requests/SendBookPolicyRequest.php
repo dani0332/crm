@@ -2,13 +2,13 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PaymentFrequency;
-use App\Enums\PaymentStatusEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
-use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -43,6 +43,24 @@ class SendBookPolicyRequest extends FormRequest
     public function withValidator($validator)
     {
         $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
+
+        if ($quote->quote_type_id == QuoteTypeId::Savings) {
+            $validator->after(function ($validator) use ($quote) {
+                $uploadedDocuments = $quote?->documents()->pluck('document_type_code')->toArray();
+                $requiredDocuments = [
+                    DocumentTypeCode::PS_SAV,
+                    DocumentTypeCode::PC_SAV,
+                    DocumentTypeCode::AC_SAV,
+                ];
+
+                // Check if all required documents are present in uploaded documents
+                if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
+                    $validator->errors()->add('error', 'Required documents are not uploaded');
+                }
+
+                // TODO : need to also check for Policy Handbook from Savings plan section.
+            });
+        }
 
         if (request()->send_policy_type == 'customer') {
             $validator->after(function ($validator) use ($quote) {
@@ -99,31 +117,16 @@ class SendBookPolicyRequest extends FormRequest
                             $validator->errors()->add('value', 'Commission (VAT NOT APPLICABLE) OR Commission (VAT APPLICABLE) is required');
                         }
 
-                        $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
-                        $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
-                        $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
-                        $isQuoteFallUnderSkippableCriteria = (new SageApiService)->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $splits);
-                        if (! $isQuoteFallUnderSkippableCriteria['status']) {
-                            if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
-                                if (! empty($splits)) {
-                                    $isSageReceiptIdEmpty = empty($splits[0]->sage_reciept_id);
-                                    if ($isSageReceiptIdEmpty) {
-                                        $validator->errors()->add('value', 'Payment sage reciept id can not be null');
-                                    }
-                                }
-                            }
-
-                            if (strtolower($payment->invoicePaymentStatus) == PaymentFrequency::PAID && in_array($payment->frequency, [PaymentFrequency::SPLIT_PAYMENTS, PaymentFrequency::PAID])) {
-                                if (! empty($splits)) {
-                                    foreach ($splits as $item) {
-                                        if (empty($item->sage_reciept_id)) {
-                                            $validator->errors()->add('value', 'Payment sage reciept id can not be null');
-                                        }
-                                    }
-                                }
-                            }
+                        $isQuoteTypeCar = strtolower(request()->model_type) === strtolower(QuoteTypes::CAR->value);
+                        if ($isQuoteTypeCar && empty($payment->commmission_percentage)) {
+                            $validator->errors()->add('value', 'Commission percentage is required');
                         }
-
+                        if ($isQuoteTypeCar && empty($payment->commission_vat)) {
+                            $validator->errors()->add('value', 'Commission VAT is required');
+                        }
+                        if ($isQuoteTypeCar && empty($payment->commission)) {
+                            $validator->errors()->add('value', 'Total commission is required');
+                        }
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');
                     }

@@ -125,6 +125,7 @@ const leadStatusForm = useForm({
   notes: page.props.quote.notes || null,
   lostReason: page.props.quote.lost_reason_id || null,
   isInertia: true,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {
@@ -1244,7 +1245,7 @@ const sendPolicyToClient = () => {
       >
         <template #item-original_name="item">
           <a
-            :href="cdnPath + (item.watermarked_doc_url ?? item.doc_url)"
+            :href="cdnPath + (item.watermarked_doc_url || item.doc_url)"
             target="_blank"
             class="text-primary-600"
           >
@@ -1372,6 +1373,7 @@ const sendPolicyToClient = () => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
@@ -1507,6 +1509,7 @@ const sendPolicyToClient = () => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onAdditionalContactSubmit"
       >
         <div class="grid gap-4">

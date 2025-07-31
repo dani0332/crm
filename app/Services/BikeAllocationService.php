@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BikePlanType;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -40,6 +41,17 @@ use Illuminate\Support\Facades\DB;
 
 class BikeAllocationService extends AllocationService
 {
+    protected bool $hasNationalityConfig = false;
+    protected array $advisorIDs = [];
+    protected array $excludedAdvisorIds = [];
+
+    protected function resetProps(): void
+    {
+        $this->hasNationalityConfig = false;
+        $this->advisorIDs = [];
+        $this->excludedAdvisorIds = [];
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
@@ -198,76 +210,98 @@ class BikeAllocationService extends AllocationService
 
     public function findTier($bikeLead): ?Tier
     {
-        [$plans, $yearOfManufacture] = $this->getPlanAndYear($bikeLead);
+        if (empty($bikeLead->bikeQuote)) {
+            LoggerService::error('Bike Quote is missing for lead ID: '.$bikeLead->id);
 
-        // Query to get all active tiers.
-        $tiersQuery = Tier::where('is_active', 1);
-
-        // Check if the bike's year of manufacture is newer than 15 years.
-        if ($bikeLead->bikeQuote->year_of_manufacture < $yearOfManufacture) {
-            // Check if more than one plan is found against the bike lead.
-            if (count($plans) > 0) {
-                LoggerService::info('More than one plan found');
-                // Determine the tier based on a value and return the first matching tier.
-                $this->getTierBasedOnValue($bikeLead, $tiersQuery);
-
-                return $tiersQuery->first();
-            } else {
-                // Check bike value and age to determine the tier.
-                if ($bikeLead->bikeQuote->bike_value >= 300000) {
-                    return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
-                }
-
-                $ageInYears = $this->getUserAgeInYears($bikeLead->dob);
-
-                if ($bikeLead->bikeQuote->bike_value < 300000 || $ageInYears >= 21) {
-                    return $tiersQuery->Where('name', $bikeLead->is_ecommerce ? TiersEnum::TIER6_ECOM : 't6 non ecommerce')->first();
-                }
-            }
-        } else {
-            // Determine the tier based on a value and return the first matching tier.
-            $this->getTierBasedOnValue($bikeLead, $tiersQuery);
-
-            return $tiersQuery->first();
+            return $this->fetchTierL($bikeLead->id, 'Bike Quote is missing');
         }
 
-        // Return null if no matching tier is found.
-        return null;
+        $bikeQuote = $bikeLead->bikeQuote;
+        $tier = null;
+
+        // If model detail is missing, default to Tier L
+        if (is_null($bikeQuote->model_detail_id)) {
+            $tier = $this->fetchTierL($bikeLead->id, 'Model detail is missing');
+        } else {
+            // Fetch valuations based on model detail and year
+            $valuations = $this->getValuation($bikeQuote->model_detail_id, $bikeQuote->year_of_manufacture);
+
+            if (empty($valuations)) {
+                $tier = $this->fetchTierL($bikeLead->id, 'No valuations found');
+            } else {
+                // Extract bike value from AXA valuation
+                $bikeValue = $this->getBikeValueFromAxa($valuations);
+
+                if ($bikeValue <= 0) {
+                    $tier = $this->fetchTierL($bikeLead->id, 'AXA valuation missing or bike value is zero');
+                } else {
+                    // Determine tier based on bike value
+                    $tier = $this->fetchTierByPrice($bikeValue, $bikeLead->id);
+                }
+            }
+        }
+
+        return $tier;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
+    private function fetchTierL(int $leadId, string $reason): ?Tier
     {
+        LoggerService::info($reason.'. Assigning default tier for lead ID: '.$leadId);
+
+        return Tier::where('is_active', 1)
+            ->where('name', TiersEnum::TIER_L)
+            ->first();
+    }
+
+    private function fetchTierByPrice(float $bikeValue, int $leadId): ?Tier
+    {
+        LoggerService::info('Bike value from AXA valuation for lead ID '.$leadId.' is: '.$bikeValue);
+
+        return Tier::where('is_active', 1)
+            ->where('min_price', '<=', $bikeValue)
+            ->where('max_price', '>=', $bikeValue)
+            ->first();
+    }
+
+    private function getBikeValueFromAxa(array $valuations): float
+    {
+        $axaProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->value('id');
+
+        if (empty($axaProviderId)) {
+            LoggerService::info('AXA insurance provider not found.');
+
+            return 0;
+        }
+
+        foreach ($valuations as $valuation) {
+            if ($valuation->providerId == $axaProviderId) {
+                return $valuation->bikeValue;
+            }
+        }
+
+        return 0;
+    }
+
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $bikeLead)
+    {
+        $this->resetProps();
+
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         LoggerService::info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
-        // Define the order in which user statuses should be considered.
-        $statusOrder = [
-            UserStatusEnum::ONLINE,
-            UserStatusEnum::OFFLINE,
-        ];
+        $this->resolveNationalityConfig($bikeLead);
 
-        if (! $isReassignmentJob) {
-            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        $eligibleUsers = $this->findEligibleUsers($tierUserIds, $advisorId, $isReassignmentJob);
+
+        if (empty($eligibleUsers) && $this->hasNationalityConfig) {
+            LoggerService::info(self::class.' - findEligibleUsers: No advisors found with nationality configuration, resetting nationality config and trying again');
+            $this->resetNationalityConfig();
+            $eligibleUsers = $this->findEligibleUsers($tierUserIds, $advisorId, $isReassignmentJob);
         }
 
-        // Iterate through user statuses in the specified order.
-        foreach ($statusOrder as $status) {
-            // Get eligible users with the specified status.
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId);
-
-            // If eligible users are found, log the results and return them.
-            if ($eligibleUsers && count($eligibleUsers) > 0) {
-                LoggerService::info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
-
-                return $eligibleUsers->toArray();
-            }
-            LoggerService::info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
-        }
-
-        // If no eligible users are found, return an empty array.
-        return [];
+        return $eligibleUsers;
     }
 
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null)
@@ -293,6 +327,15 @@ class BikeAllocationService extends AllocationService
             })
             ->where('quote_type_id', QuoteTypes::BIKE->id())
             ->activeUser()
+            ->when(
+                $this->hasNationalityConfig,
+                fn ($q) => $q->whereIn('user_id', $this->advisorIDs),
+                function ($q) {
+                    if (! empty($this->excludedAdvisorIds)) {
+                        $q->whereNotIn('user_id', $this->excludedAdvisorIds);
+                    }
+                },
+            )
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -306,6 +349,10 @@ class BikeAllocationService extends AllocationService
 
     public function getRules($bikeLead)
     {
+        if ($this->hasNationalityConfig) {
+            return collect([]);
+        }
+
         return $this->getRulesForLeadSource($bikeLead);
     }
 
@@ -378,26 +425,30 @@ class BikeAllocationService extends AllocationService
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
         LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
 
-        if (count($rules) > 0) {
-            // If there are rules, retrieve user IDs from the rule records.
-            $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
-
-            LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
-
-            // Find the intersection of available user IDs and rule user IDs.
-            $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
-
-            LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+        if ($this->hasNationalityConfig) {
+            $finalEligibleUserIds = $availableUserIds;
         } else {
-            // If no rules are found, get user IDs from rule lead sources.
-            $ruleUsers = $this->getRuleUsers();
+            if (count($rules) > 0) {
+                // If there are rules, retrieve user IDs from the rule records.
+                $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
 
-            LoggerService::info('No rule found so filtering rule users: '.json_encode($ruleUsers));
+                LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
 
-            // Find the difference between available user IDs and rule users.
-            $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
+                // Find the intersection of available user IDs and rule user IDs.
+                $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
-            LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+                LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+            } else {
+                // If no rules are found, get user IDs from rule lead sources.
+                $ruleUsers = $this->getRuleUsers();
+
+                LoggerService::info('No rule found so filtering rule users: '.json_encode($ruleUsers));
+
+                // Find the difference between available user IDs and rule users.
+                $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
+
+                LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+            }
         }
 
         $finalEligibleUserIds = $this->fetchOnlyBikeEligibleAdvisors($finalEligibleUserIds);
@@ -463,6 +514,8 @@ class BikeAllocationService extends AllocationService
         $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId, QuoteTypes::BIKE->id()) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::BIKE->id());
 
         LoggerService::info('Completed assignment of lead, and lead count update is done for quote with code: '.$bikeQuote->code);
+
+        $this->resetProps();
     }
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
@@ -480,6 +533,13 @@ class BikeAllocationService extends AllocationService
         $lead->auto_assigned = true;
         $lead->assignment_type = $assignmentType;
 
+        LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
+        ]);
+        if (empty($lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
         // Get the latest quote batch and assign it to the lead.
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
@@ -606,5 +666,69 @@ class BikeAllocationService extends AllocationService
         LoggerService::info('Final eligible users after filtering for bike advisors: '.json_encode($finalEligibleUserIds));
 
         return $finalEligibleUserIds;
+    }
+
+    private function resolveNationalityConfig($lead)
+    {
+        $config = NationalityAllocationService::find(QuoteTypes::BIKE, $lead->nationality_id);
+
+        if ($config) {
+            $this->hasNationalityConfig = true;
+            $this->advisorIDs = NationalityAllocationService::getUserIDs($config);
+            LoggerService::info(self::class." - Nationality Config found for Nationality ID: {$lead->nationality_id} | Advisor IDs: ".implode(', ', $this->advisorIDs));
+        } else {
+            $this->resolveExcludedAdvisorIds();
+        }
+
+        return $config;
+    }
+
+    private function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds(QuoteTypes::BIKE);
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->excludedAdvisorIds = $excludedAdvisorIds;
+    }
+
+    private function findEligibleUsers($tierUserIds, $advisorId, $isReassignmentJob)
+    {
+        // Define the order in which user statuses should be considered.
+        $statusOrder = [
+            UserStatusEnum::ONLINE,
+            UserStatusEnum::OFFLINE,
+        ];
+
+        if (! $isReassignmentJob) {
+            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
+
+        // Iterate through user statuses in the specified order.
+        foreach ($statusOrder as $status) {
+            // Get eligible users with the specified status.
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId);
+
+            // If eligible users are found, log the results and return them.
+            if ($eligibleUsers && count($eligibleUsers) > 0) {
+                LoggerService::info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+
+                return $eligibleUsers->toArray();
+            }
+            LoggerService::info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+        }
+
+        // If no eligible users are found, return an empty array.
+        return [];
+    }
+
+    private function resetNationalityConfig()
+    {
+        LoggerService::info(self::class.' - resetNationalityConfig: Resetting nationality config');
+        $this->resetProps();
+
+        $this->resolveExcludedAdvisorIds();
     }
 }

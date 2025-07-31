@@ -477,7 +477,6 @@ const customerProfileForm = useForm({
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
@@ -615,6 +614,7 @@ const leadStatusForm = useForm({
   notes: page.props.quote.notes || null,
   trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quote.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const genderText = gender =>
@@ -2307,6 +2307,11 @@ const updateProfileDetails = isValid => {
                   :uuid="quote.uuid"
                   :insuranceProviderId="item.id"
                   :code="quote.code"
+                  :plans="listQuotePlansFiltered || []"
+                  :extraDetails="{
+                    selectedPlansIds: [selectedProviderPlan?.id],
+                  }"
+                  :payments="payments"
                 />
 
                 <x-button

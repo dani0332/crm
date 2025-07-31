@@ -234,4 +234,11 @@ class LookupService extends BaseService
     {
         return Lookup::where('key', LookupsEnum::SEND_UPDATE_CANCEL_OPTIONS)->get();
     }
+
+    public function getSavingsQuoteLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::SAVINGS_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-all-savings-lookups', 'post');
+        });
+    }
 }

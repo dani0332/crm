@@ -7,9 +7,12 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
+use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
+use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
@@ -126,7 +129,12 @@ class PersonalQuoteRepository extends BaseRepository
             while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
                 $docUuid = uniqid().rand(1, 100);
             }
+            $documentTypeText = $documentType->text;
 
+            if ($data['document_type_code'] == DocumentTypeCode::Illustration_Document && $quote->quote_type_id == QuoteTypeId::Life) {
+                $documentTypeText = $quote->insuranceProvider ? $quote->insuranceProvider->text.' - '.$documentType->text : $documentType->text;
+                $originalName = $quote->insuranceProvider ? $quote->insuranceProvider->text.' Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.'.$file->getClientOriginalExtension() : 'Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.'.$file->getClientOriginalExtension();
+            }
             // This data will store in quote documents table
             $document = [
                 'doc_name' => 'original_'.$docName,
@@ -134,7 +142,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'doc_url' => $filePathAzure,
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
-                'document_type_text' => $documentType->text,
+                'document_type_text' => $documentTypeText,
                 'doc_uuid' => $docUuid,
                 'created_by_id' => auth()->id(),
             ];
@@ -172,9 +180,9 @@ class PersonalQuoteRepository extends BaseRepository
                     WatermarkDocumentsJob::dispatch(
                         $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     )->afterCommit();
-                } else {
-                    info('Watermark job not dispatched - Ref: '.$quote->code);
                 }
+
+                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType);
 
                 if (! $insuranceProviderId && request()->is_send_update) {
                     LoggerService::info('File Uploaded - Insurance Provider is required to generate broker invoice number');
@@ -192,6 +200,28 @@ class PersonalQuoteRepository extends BaseRepository
             info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
             return ['status' => true, 'message' => $fileName.' :  Document upload failed, please try again'];
+        }
+    }
+
+    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType)
+    {
+        if ($quote instanceof SendUpdateLog) {
+            info(self::class."::populateDocumentData - Send Update Log found, skipping document data population for UUID: {$quote->uuid}");
+
+            return;
+        }
+
+        $quoteType = QuoteTypes::tryFrom(ucfirst(request('quote_type')));
+        $userId = Auth::user()->id;
+        if ($quote && $quoteType && $filePathAzure) {
+            PopulateDocumentData::dispatch(
+                $quoteType,
+                $quote,
+                $documentType,
+                $filePathAzure,
+                $fileMimeType,
+                $userId,
+            );
         }
     }
 
@@ -296,5 +326,10 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchGetById($quoteId)
     {
         return $this->where('id', $quoteId)->first();
+    }
+
+    public function fetchGetBy($column, $value)
+    {
+        return $this->where($column, $value)->with(['payments'])->first();
     }
 }

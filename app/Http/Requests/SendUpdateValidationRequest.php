@@ -75,52 +75,43 @@ class SendUpdateValidationRequest extends FormRequest
                 }
             }
 
-            if (in_array($sendUpdateCategoryCode, [
-                SendUpdateLogStatusEnum::EF,
-            ])) {
-                switch ($sendUpdateLog->quote_type_id) {
-                    case QuoteTypeId::Business:
+            if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $sendUpdateLog->quote_type_id == QuoteTypeId::Business) {
+                $requiredDocuments = [
+                    DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
+                    DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
+                ];
+                $requiredDocumentsForMPC = [
+                    DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
+                    DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
+                ];
 
-                        $requiredDocuments = [
-                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
-                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
-                        ];
-                        $requiredDocumentsForMPC = [
-                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
-                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
-                        ];
+                if (in_array($categorySubType, [
+                    SendUpdateLogStatusEnum::MAOM,
+                    SendUpdateLogStatusEnum::MDOM,
+                    SendUpdateLogStatusEnum::MD,
+                    SendUpdateLogStatusEnum::MSC,
+                    SendUpdateLogStatusEnum::PU,
+                    SendUpdateLogStatusEnum::SC,
+                    SendUpdateLogStatusEnum::AOLOPFMP,
+                    SendUpdateLogStatusEnum::AC,
+                    SendUpdateLogStatusEnum::AL,
+                    SendUpdateLogStatusEnum::EA,
+                    SendUpdateLogStatusEnum::ED,
+                    SendUpdateLogStatusEnum::EFMP,
+                    SendUpdateLogStatusEnum::I_CLILLR,
+                    SendUpdateLogStatusEnum::IEAF_T,
+                    SendUpdateLogStatusEnum::IISI,
+                    SendUpdateLogStatusEnum::PPE,
+                ])) {
+                    if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
+                        return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
+                    }
+                }
 
-                        if (in_array($categorySubType, [
-                            SendUpdateLogStatusEnum::MAOM,
-                            SendUpdateLogStatusEnum::MDOM,
-                            SendUpdateLogStatusEnum::MD,
-                            SendUpdateLogStatusEnum::MSC,
-                            SendUpdateLogStatusEnum::PU,
-                            SendUpdateLogStatusEnum::SC,
-                            SendUpdateLogStatusEnum::AOLOPFMP,
-                            SendUpdateLogStatusEnum::AC,
-                            SendUpdateLogStatusEnum::AL,
-                            SendUpdateLogStatusEnum::EA,
-                            SendUpdateLogStatusEnum::ED,
-                            SendUpdateLogStatusEnum::EFMP,
-                            SendUpdateLogStatusEnum::I_CLILLR,
-                            SendUpdateLogStatusEnum::IEAF_T,
-                            SendUpdateLogStatusEnum::IISI,
-                            SendUpdateLogStatusEnum::PPE,
-                        ])) {
-                            if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
-                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
-                            }
-                        }
-
-                        if (in_array($categorySubType, [
-                            SendUpdateLogStatusEnum::MPC,
-                        ])) {
-                            if (count(array_intersect($uploadedDocuments, $requiredDocumentsForMPC)) < count($requiredDocumentsForMPC)) {
-                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
-                            }
-                        }
-                        break;
+                if ($categorySubType == SendUpdateLogStatusEnum::MPC) {
+                    if (count(array_intersect($uploadedDocuments, $requiredDocumentsForMPC)) < count($requiredDocumentsForMPC)) {
+                        return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
+                    }
                 }
             }
 
@@ -149,6 +140,12 @@ class SendUpdateValidationRequest extends FormRequest
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
 
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD && ! $checkTransactionApprovedInSUStatusLogs &&
+                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
+                    ! in_array($sendUpdateLog->status, $bypassStatuses)) {
+                    $validator->errors()->add('error', 'Transaction approval is required');
+                }
+
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedInSUStatusLogs &&
                     ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($sendUpdateLog->status, $bypassStatuses) &&
@@ -161,7 +158,6 @@ class SendUpdateValidationRequest extends FormRequest
                         SendUpdateLogStatusEnum::DTSI,
                         SendUpdateLogStatusEnum::DOV,
                         SendUpdateLogStatusEnum::ATIB,
-                        SendUpdateLogStatusEnum::ATICB,
                         SendUpdateLogStatusEnum::ACB,
                         SendUpdateLogStatusEnum::ATCRNB,
                         SendUpdateLogStatusEnum::ATCRNB_RBB,

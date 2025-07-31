@@ -3,17 +3,29 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
-use App\Services\HealthAllocationService;
+use App\Pipes\Allocation\Common\FetchLeadPipe;
+use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
+use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
+use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Pipes\Allocation\Health\AssignLeadPipe;
+use App\Pipes\Allocation\Health\AssignTeamPipe;
+use App\Pipes\Allocation\Health\FetchAvailableAdvisorPipe;
+use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Pipeline;
 
 class ReAssignHealthLeadsJob implements ShouldQueue
 {
@@ -22,29 +34,29 @@ class ReAssignHealthLeadsJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 15;
     public $backoff = 30;
-    private $healthAllocationService;
     private $advisorId;
+    private AllocationService $allocationService;
 
-    public function __construct(HealthAllocationService $healthAllocationService, $advisorId)
+    public function __construct($advisorId)
     {
-        $this->healthAllocationService = $healthAllocationService;
+        $this->allocationService = app(AllocationService::class);
         $this->advisorId = $advisorId;
     }
 
     public function handle()
     {
-        info('-------- Reassignment health job started at : '.now().' ---------');
-        if (! $this->healthAllocationService->shouldProceed() && ! now()->isWeekend()) {
-            info('Reassignment job is not proceeding as per business timings');
+        LoggerService::info('-------- Reassignment health job started ---------');
+        if (! $this->shouldProceed() && ! now()->isWeekend()) {
+            LoggerService::info('Reassignment job is not proceeding as per business timings');
 
             return false;
         }
 
-        $leads = $this->fetchLead();
+        $leads = $this->fetchReAssignmentLeads();
 
         if (count($leads) == 0) {
-            info('No health lead found or either lead is not under assignment criteria');
-            info('-------- Reassignment health job ended at : '.now().' ---------');
+            LoggerService::info('No health lead found or either lead is not under assignment criteria');
+            LoggerService::info('-------- Reassignment health job ended ---------');
 
             return false; // when lead is not on criteria or not found
         }
@@ -52,72 +64,70 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
-            info('-------- Reassignment started ---------');
+            LoggerService::info('-------- Reassignment started ---------');
 
-            if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started at {$lead->allocation_started_at}");
+            $allocationRequest = new AllocationRequest(
+                quoteType: QuoteTypes::HEALTH,
+                quoteUUID: $lead->uuid,
+                overrideAdvisorId: true,
+                isReassignmentJob: true,
+                reAssigFromAdvisorId: $this->advisorId,
+                assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED
+            );
 
-                continue;
+            try {
+                Pipeline::send($allocationRequest)->through([
+                    FetchLeadPipe::class,
+                    VerifyAlreadyInProgressAllocationPipe::class,
+                    ValidateNationalityConfigPipe::class,
+                    AssignTeamPipe::class,
+                    FetchAvailableAdvisorPipe::class,
+                    ResetNationalityConfigPipe::class,
+                    FetchAvailableAdvisorPipe::class,
+                    AssignLeadPipe::class,
+                    MakeResponsePipe::class,
+                ])->thenReturn();
+            } catch (Exception $e) {
+                app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
             }
 
-            $lead->startAllocation();
-
-            $this->assignTeamBasedOnPrices($lead);
-
-            if (! $lead->health_team_type) {
-                info('No health team found');
-
-                $lead->endAllocation();
-
-                continue;
-            }
-
-            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type, $lead);
-
-            if (! $advisor) {
-                info('No advisors found');
-
-                $lead->endAllocation();
-
-                continue;
-            }
-
-            $this->assignLead($lead, $advisor); // Assign the lead to the advisor
-
-            $lead->endAllocation();
-            info('-------- Reassignment ended ---------');
+            LoggerService::info('-------- Reassignment ended ---------');
         }
 
         LoggerService::endLogging();
-        info('-------- Reassignment health job ended at : '.now().' ---------');
+        LoggerService::info('-------- Reassignment health job ended at : '.now().' ---------');
     }
 
-    private function fetchLead()
+    private function shouldProceed(): bool
     {
-        return $this->healthAllocationService->fetchReAssignmentLead($this->advisorId);
+        return $this->allocationService->shouldProceedWithReAllocation('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 
-    private function assignTeamBasedOnPrices($lead)
+    private function fetchReAssignmentLeads()
     {
-        $this->healthAllocationService->assignTeamBasedOnPrices($lead);
-    }
+        $advisorId = $this->advisorId;
 
-    private function fetchAvailableAdvisor($leadTeam, HealthQuote $lead)
-    {
-        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, true, $lead);
-    }
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        LoggerService::info('leads will be picked up in reassignment from : '.$from);
 
-    private function assignLead($lead, $advisor)
-    {
-        DB::beginTransaction();
-        try {
-            $this->healthAllocationService->assignLead($lead, $advisor, AssignmentTypeEnum::SYSTEM_REASSIGNED);
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollback();
-            $this->healthAllocationService->endBuyLeadProcessing();
-            Log::error($e->getMessage());
+        $leads = HealthQuote::whereBetween('created_at', [$from, now()])
+            ->whereNotNull('health_quote_request.price_starting_from')
+            ->where('health_quote_request.is_error_email_sent', false)
+            ->whereIn('quote_status_id', [QuoteStatusEnum::Quoted])
+            ->where('source', '!=', LeadSourceEnum::IMCRM);
+        if ($advisorId != 0) {
+            $leads->where('advisor_id', $advisorId);
+        } else {
+            // If advisor ID is not provided, get unavailable advisors and filter leads by them
+            $advisors = $this->allocationService->getUnavailableAdvisor();
+            if (count($advisors) > 0) {
+                $advisorIds = $advisors->pluck('user_id');
+                LoggerService::info('Inside reassignment general run');
+                $leads->whereIn('advisor_id', $advisorIds);
+            }
         }
+
+        return $leads->get();
     }
 
     public function middleware()

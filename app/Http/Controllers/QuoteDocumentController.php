@@ -150,7 +150,8 @@ class QuoteDocumentController extends Controller
             $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
         }
 
-        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink() && $request->document_type_code === DocumentTypeCode::HPD) {
+        $docTypes = $this->quoteDocumentService->bringProofDocumentForAllLobs();
+        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink() && in_array($request->document_type_code, $docTypes)) {
             $this->quoteDocumentService->updateQuoteAndPaymentStatusToPaymentPending($quote);
         }
 
@@ -246,7 +247,7 @@ class QuoteDocumentController extends Controller
             $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('is_active', 1)->first();
 
             if ($documentType && $documentType->send_to_customer == 1) {
-                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->watermarked_doc_url ?? $quoteDocument->doc_url;
+                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.(! empty($quoteDocument->watermarked_doc_url) ? $quoteDocument->watermarked_doc_url : $quoteDocument->doc_url);
             }
         }
 

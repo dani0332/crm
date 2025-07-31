@@ -15,9 +15,7 @@ use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
-use App\Services\CarAllocationService;
 use App\Services\CRUDService;
-use App\Services\HealthAllocationService;
 use App\Services\LeadAllocationService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
@@ -158,13 +156,13 @@ class LeadAllocationController extends Controller
                             $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
                             if ($this->userHaveProduct($item['userId'], $car?->id)) {
                                 info('user belong to car so dispatching car reassignment job');
-                                dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $item['userId']));
+                                dispatch(new ReAssignCarLeadsJob($item['userId']));
                             }
 
                             $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
                             if ($this->userHaveProduct($item['userId'], $health?->id)) {
                                 info('user belong to health so dispatching health reassignment job');
-                                dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $item['userId']));
+                                dispatch(new ReAssignHealthLeadsJob($item['userId']));
                             }
 
                             foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {

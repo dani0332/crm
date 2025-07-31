@@ -226,15 +226,29 @@ const permissionsEnum = page.props.permissionsEnum;
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
-    let diff = calculateDaysDifference(
-      filters.created_at_start,
-      filters.created_at_end,
-    );
+    let diff, maxLimit, maxPeriod;
 
-    if (diff > 31) {
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
       notification.error({
-        message:
-          'Maximum of 31 days (created date) are allowed to be exported.',
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
         position: 'top',
       });
       return;

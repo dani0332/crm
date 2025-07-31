@@ -67,6 +67,7 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   isAllianceProvider: Boolean,
+  customerAddressData: Object,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -108,6 +109,49 @@ const dateTimeFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
 };
+
+const calculateAge = dateOfBirth => {
+  if (!dateOfBirth) return 0;
+
+  const today = new Date();
+  let birthDate;
+
+  // Handle both DD-MM-YYYY and YYYY-MM-DD formats
+  if (typeof dateOfBirth === 'string' && dateOfBirth.includes('-')) {
+    const parts = dateOfBirth.split('-');
+
+    // Check if first part is a 4-digit year (YYYY-MM-DD format)
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD format
+      const [year, month, day] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      // DD-MM-YYYY format
+      const [day, month, year] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+  } else {
+    birthDate = new Date(dateOfBirth);
+  }
+
+  // Check if the date is valid
+  if (isNaN(birthDate.getTime())) {
+    return 0;
+  }
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
+
 const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
@@ -1210,13 +1254,14 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
@@ -1571,6 +1616,44 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const fullAddress = computed(() => {
+  const address = page.props?.customerAddressData;
+
+  if (!address) {
+    return null; // Return null if customerAddressData is null or undefined
+  }
+
+  const {
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  } = address;
+
+  const parts = [
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  ];
+
+  // Check if all parts are null or undefined
+  const allPartsAreNull = parts.every(part => part == null);
+
+  if (allPartsAreNull) {
+    return null;
+  }
+
+  // Filter out null or undefined parts and join the rest with comma and space
+  return parts.filter(part => part).join(', ');
+});
 </script>
 
 <template>
@@ -1582,6 +1665,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
     >
       <h2 class="text-xl font-semibold">
         Travel Detail
+        <x-button
+          v-if="quote?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
         <span
           class="inline-flex items-center rounded-md bg-yellow-300 px-2 py-1 text-xs font-medium text-yellow-900 ring-1 ring-inset ring-yellow-300/10"
           v-if="isEmbeddedProduct(quote.code)"
@@ -1678,6 +1769,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2081,6 +2173,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">API ISSUANCE STATUS</dt>
                 <dd>{{ quote.api_issuance_status }}</dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -2093,7 +2192,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -2109,65 +2208,81 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="quoteRequest.child || quoteRequest.parent"
-          >
-            <template v-if="quoteRequest.child">
-              <dt>
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                  >
-                    CHILD REF ID
-                  </label>
-                  <template #tooltip
-                    >Navigation key from parent to child in data
-                    hierarchy.</template
-                  >
-                </x-tooltip>
-              </dt>
-              <dt class="font-medium">
-                <a
-                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
-                  target="_blank"
-                  class="text-primary-600"
-                >
-                  {{ quoteRequest.child?.code }}
-                </a>
-              </dt>
-            </template>
-            <template v-if="quoteRequest.parent">
-              <dt>
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                  >
-                    PARENT REF ID
-                  </label>
-                  <template #tooltip>Parent Ref Id</template>
-                </x-tooltip>
-              </dt>
-              <dt class="font-medium">
-                <a
-                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
-                  target="_blank"
-                  class="text-primary-600"
-                >
-                  {{ quoteRequest.parent.code }}
-                </a>
-              </dt>
-            </template>
-          </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Age group</dt>
+                  <dd>
+                    <span v-if="quoteRequest.child || quoteRequest.parent">
+                      Both
+                    </span>
+                    <span v-else-if="calculateAge(quote.dob) < 65">
+                      0 - 64
+                    </span>
+                    <span v-else-if="calculateAge(quote.dob) >= 65">
+                      65 and above
+                    </span>
+                  </dd>
+                </div>
+
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="quoteRequest.child || quoteRequest.parent"
+                >
+                  <template v-if="quoteRequest.child">
+                    <dt>
+                      <x-tooltip placement="bottom">
+                        <label
+                          class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                        >
+                          CHILD REF ID
+                        </label>
+                        <template #tooltip
+                          >Navigation key from parent to child in data
+                          hierarchy.</template
+                        >
+                      </x-tooltip>
+                    </dt>
+                    <dt class="font-medium">
+                      <a
+                        :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                        target="_blank"
+                        class="text-primary-600"
+                      >
+                        {{ quoteRequest.child?.code }}
+                      </a>
+                    </dt>
+                  </template>
+                  <template v-if="quoteRequest.parent">
+                    <dt>
+                      <x-tooltip placement="bottom">
+                        <label
+                          class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                        >
+                          PARENT REF ID
+                        </label>
+                        <template #tooltip>Parent Ref Id</template>
+                      </x-tooltip>
+                    </dt>
+                    <dt class="font-medium">
+                      <a
+                        :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                        target="_blank"
+                        class="text-primary-600"
+                      >
+                        {{ quoteRequest.parent.code }}
+                      </a>
+                    </dt>
+                  </template>
+                </div>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -2253,11 +2368,30 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     />
                   </dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
+                </div>
               </dl>
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2350,6 +2484,21 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
               </dl>
               <div class="flex justify-end">
@@ -2459,7 +2608,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     </x-modal>
 
     <div
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
       <Collapsible :expanded="sectionExpanded">
@@ -2602,6 +2751,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         show-close
         backdrop
         is-form
+        persistent
         @submit="submitTraveler"
       >
         <div class="grid md:grid-cols-2 gap-4">
@@ -2698,7 +2848,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     </div>
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -3225,6 +3375,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       }"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :payments="payments"
                     />
                     <x-button
                       v-else
@@ -3327,6 +3479,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         }"
                         :insuranceProviderId="item.id"
                         :code="quote.code"
+                        :plans="availableSeniorPlansTable.data || []"
+                        :payments="payments"
                       />
                       <x-button
                         v-else
@@ -3421,7 +3575,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
       :quote="quote"
-      :modelType="quoteType"
+      :modelType="modelType.toLowerCase()"
       :expanded="sectionExpanded"
     />
 
@@ -3582,6 +3736,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
@@ -3717,6 +3872,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :quoteType="$page.props.modelType"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured_kyc_id"
       :expanded="sectionExpanded"
     />
 

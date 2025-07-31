@@ -1,0 +1,111 @@
+---
+description: Guideline for doing any kind of work on Car AIG
+globs:
+alwaysApply: false
+---
+# Car AIG Workflow Rules
+
+## Rule: Car AIG Workflow Triggers API Endpoint
+
+**Type:** Agent Requested
+
+**Trigger:** `routes/api.php` - `/imcrm/trigger-aig-workflow` endpoint
+
+**Description:** This API endpoint serves as the main entry point for triggering Car AIG workflows. It's designed to accept a quote UUID and optionally a quote type ID. The endpoint follows a simple workflow where it validates the lead exists before dispatching the actual job. This endpoint is crucial for initiating the Car AIG workflow process from external systems.
+
+## Rule: Car AIG Workflow Request Validation
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Http/Requests/AIGWorkflowRequest.php`
+
+**Description:** Defines the request validation rules for the Car AIG workflow API endpoint. The request requires a `quoteUuid` and optionally a `quoteTypeId`. Any changes to these validation rules could affect how the workflow is triggered and potentially cause errors if required parameters are missing.
+
+## Rule: Car AIG Workflow Job Processing
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Jobs/AIGWorkflowJob.php`
+
+**Description:** This job handles the asynchronous processing of Car AIG workflows. It takes a quote UUID and quote type, validates them, retrieves the lead, and then calls the CarEmailService to send the AIG workflow email. The job includes error handling and logging. It has retry settings (3 attempts) and a timeout of 15 seconds with a 60-second backoff between attempts.
+
+## Rule: Car AIG Workflow Email Construction
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Services/EmailServices/CarEmailService.php::sendAIGWorkflow()`
+
+**Description:** This method builds and sends the Car AIG workflow emails through Bird service webhooks. It uses the `aig_flow_executed_at` timestamp to prevent duplicate processing. The workflow data is constructed using the `buildAIGWorkflowData` method, and it creates quote flow details for tracking purposes. This endpoint relies on the `BIRD_NB_MOTOR_WORKFLOW` config key from ApplicationStorageEnums.
+
+## Rule: AIG Lead Tagging and Identification
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Enums/QuoteSegmentEnum.php` - `AIG` enum case
+
+**Description:** The AIG segment enum is used to identify and tag leads that should be processed through the AIG workflow. This enum defines the label ("AIG Leads") and tag name ("AIG") used throughout the application. Any changes to this enum could affect how AIG leads are identified and filtered in various parts of the system.
+
+## Rule: Car AIG Workflow Type Definition
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Enums/WorkflowTypeEnum.php` - `AIG_WORKFLOW` constant
+
+**Description:** This constant defines the workflow type identifier "aig_workflow" used by the Bird service to route the workflow to the correct template. This constant is referenced in the CarEmailService to set the workflow type when building the email data. Any changes to this constant would break the connection to the Bird service workflows.
+
+## Rule: Quote Segment Filtering for AIG
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Traits/QuoteTraits/QuoteAllocatable.php` - AIG segment filtering logic
+
+**Description:** Contains logic for filtering quotes by AIG segment. This trait provides methods to check if a quote is tagged as AIG (`isAIG`) and to filter quotes by AIG status (`scopeIsAIG` and `scopeIsNotAIG`). It's used throughout the application to target AIG-specific leads for processing. Any changes to this logic could affect which leads get processed by the Car AIG workflow.
+
+## Rule: Car AIG Workflow API Service Implementation
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Services/ApiService.php::triggerAIGWorkflow()`
+
+**Description:** This method processes the Car AIG workflow request, validates the lead, and dispatches the workflow job. It ensures proper validation of the quote UUID and quote type before initiating the workflow process. Any changes to this method could affect the reliability of the workflow triggering process.
+
+## Rule: Bird Service Webhook Integration
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Services/EmailServices/CarEmailService.php::buildAIGWorkflowData()`
+
+**Description:** This method constructs the payload for the Bird service webhook that triggers the actual email workflow. It includes customer details, advisor information, and various links needed by the email templates. This method structures data specifically for the Car AIG workflow in a format expected by the Bird service. Any changes to this method could break the integration with the Bird service.
+
+## Rule: Car Quote Model AIG Flag
+
+**Type:** Agent Requested
+
+**Trigger:** `aig_flow_executed_at` field in Car Quote model
+
+**Description:** This timestamp field in the Car Quote model is used to track whether an AIG workflow has been executed for a particular lead. The CarEmailService checks this field to ensure workflows are only triggered once per lead. This field is critical for preventing duplicate processing of leads.
+
+## Rule: AIG Bird Webhook URL Configuration
+
+**Type:** Agent Requested
+
+**Trigger:** `ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW`
+
+**Description:** This configuration key stores the Bird service webhook URL that receives the Car AIG workflow data. The same webhook is used for both AIG and regular car followups, with the workflow type parameter determining how the data is processed. Any changes to this key would require corresponding changes in the Bird service configuration.
+
+## Rule: Car Allocation Service AIG Logic
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Services/CarAllocationService.php` - AIG allocation logic
+
+**Description:** Contains specialized logic for handling lead allocation when a lead is tagged as AIG. It considers the AIG status when determining if a lead is eligible for allocation to advisors. This ensures AIG leads are properly routed according to business rules. Any changes to this logic could affect how AIG leads are assigned to advisors.
+
+## Rule: Car AIG Lead Allocation Eligibility Check
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Strategies/Allocations/CarAllocation.php::isAIGLeadEligibleForAllocation()`
+
+**Description:** This method contains specific logic for determining if an AIG-tagged car lead is eligible for allocation. It checks if the lead is tagged as AIG, if no team is specified, and if the SIC advisor was requested. This method ensures that AIG leads are properly allocated to advisors based on specific business rules. Any modifications could impact how AIG leads are distributed.
+

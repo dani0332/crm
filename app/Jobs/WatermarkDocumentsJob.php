@@ -43,7 +43,6 @@ class WatermarkDocumentsJob implements ShouldQueue
     public function handle()
     {
         LoggerService::startQuoteLogging($this->uuid);
-        LoggerService::info('watermark job started for '.$this->uuid.' attempt: '.$this->attempts());
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
@@ -58,7 +57,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         // Ensure the quoteDocument and documentType exist
         if (! $quoteDocument || ! $documentType) {
-            LoggerService::error('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
+            LoggerService::warning('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
 
             return;
         }

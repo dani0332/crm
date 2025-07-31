@@ -63,15 +63,14 @@ class KenService
         $url = config('constants.KEN2_API_ENDPOINT').$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
-                // Only log 5XX errors
-                if ($response->status() >= 500) {
-                    LoggerService::error('KEN Service Server Error', [
-                        'data' => $data,
-                        'url' => $url,
-                        'status_code' => $response->status(),
-                        'response' => $response->json(),
-                    ]);
-                }
+                // log all errors in renewal request
+                LoggerService::error('KEN Service Server Error', [
+                    'data' => $data,
+                    'url' => $url,
+                    'response' => $response,
+                    'status_code' => $response->status(),
+                    'jsonResponse' => $response->json() ?? $response->body(),
+                ]);
 
                 if (isset($response->json()['msg'])) {
                     vAbort($response->json()['msg']);

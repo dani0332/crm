@@ -155,11 +155,6 @@ return [
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
             'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
-            'timeout' => env('REDIS_CONNECT_TIMEOUT', 5.0),
-            'read_timeout' => env('REDIS_READ_TIMEOUT', 5.0),
-            'write_timeout' => env('REDIS_WRITE_TIMEOUT', 5.0),
-            'retry_interval' => env('REDIS_RETRY_INTERVAL', 100),
-            'retry_attempts' => env('REDIS_RETRY_ATTEMPTS', 3),
         ],
 
         'default' => [
@@ -167,10 +162,7 @@ return [
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
-            'read_write_timeout' => env('REDIS_RW_TIMEOUT', '5'),
-            'persistent' => true,
-            'tcp_keepalive' => 60,
-            'tcp_nodelay' => true,
+            'read_write_timeout' => env('REDIS_RW_TIMEOUT', '0'),
         ],
 
         'cache' => [
@@ -179,7 +171,6 @@ return [
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
             'read_write_timeout' => env('REDIS_RW_TIMEOUT', '0'),
-            'persistent' => true,
         ],
 
     ],

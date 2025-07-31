@@ -13,7 +13,6 @@ use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LifeQuote;
-use App\Models\LifeQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
@@ -32,7 +31,6 @@ use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
 use App\Observers\HealthQuoteDetailObserver;
 use App\Observers\HealthQuoteObserver;
-use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\PaymentSplitsObserver;
@@ -42,8 +40,8 @@ use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
+use App\Services\CsvExportService;
+use App\Services\EmailExportService;
 use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -58,17 +56,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind(CarAllocationService::class, function ($app) {
-            return new CarAllocationService;
-        });
-
-        $this->app->bind(HealthAllocationService::class, function ($app) {
-            return new HealthAllocationService;
-        });
-
         $this->app->singletonIf(LeadsCountService::class, function ($app) {
             return new LeadsCountService;
         });
+
+        // Register new CSV export services
+        $this->app->singleton(CsvExportService::class);
+        $this->app->singleton(EmailExportService::class);
     }
 
     /**
@@ -85,7 +79,6 @@ class AppServiceProvider extends ServiceProvider
         BusinessQuote::observe(BusinessQuoteObserver::class);
         CarQuoteRequestDetail::observe(CarQuoteDetailObserver::class);
         HealthQuoteRequestDetail::observe(HealthQuoteDetailObserver::class);
-        LifeQuoteRequestDetail::observe(LifeQuoteDetailObserver::class);
         TravelQuoteRequestDetail::observe(TravelQuoteDetailObserver::class);
         BusinessQuoteRequestDetail::observe(BusinessQuoteDetailObserver::class);
         PetQuote::observe(PetQuoteObserver::class);

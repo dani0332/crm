@@ -5,7 +5,9 @@ namespace App\Traits;
 use App\Enums\EnvEnum;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -76,7 +78,7 @@ trait ExcelExportable
             $requestParams['recipientEmail'],
             $requestParams
         );
-        info('Dispatched ExportCsvAndSendEmailJob');
+        // info('Dispatched ExportCsvAndSendEmailJob');
 
         // Return response to the user that export is being processed
         return response()->json([
@@ -96,61 +98,66 @@ trait ExcelExportable
      */
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
     {
-        if (! isset($this->quoteType)) {
-            $this->quoteType = $requestParams['quoteType'] ?? null;
-        }
-
-        // Get environment variables for email configuration
-        $emailL_sys = config('constants.APP_ENV');
-
-        // Set email from details based on environment
-        if ($emailL_sys == EnvEnum::PRODUCTION) {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML', config('constants.MAIL_FROM_ADDRESS'));
-            $fromName = config('constants.MAIL_FROM_NAME_AML', config('constants.MAIL_FROM_NAME'));
-        } else {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
-            $fromName = config('constants.MAIL_FROM_NAME');
-        }
-
-        // Generate CSV content in memory using chunking
-        $csvFileName = $fileName.'.csv';
-        $stream = fopen('php://temp', 'r+');
-
-        $requestParams['user'] = User::where(['email' => $requestParams['recipientEmail']])->first();
-
-        // Write CSV headers
-        fputcsv($stream, $this->headings());
-
-        $startDate = isset($requestParams['created_at_start']) ? Carbon::parse($requestParams['created_at_start'])->format('d M Y') : '';
-        $endDate = isset($requestParams['created_at_end']) ? Carbon::parse($requestParams['created_at_end'])->format('d M Y') : '';
-
-        if ($startDate && $endDate) {
-            $diff = abs(Carbon::parse($requestParams['created_at_start'])->diffInDays(Carbon::parse($requestParams['created_at_end']))) + 1;
-            logger()->debug("Processing export between: {$startDate} - {$endDate} ({$diff} days)");
-        }
-
-        $totalRecords = 0;
-        $chunkSize = 5000; // Adjust based on your data complexity
-        $exportName = class_basename($this);
-        $chunkCount = 0;
-        $totalChunkTime = 0;
+        // Set read database connection for export operations
+        DB::setDefaultConnection('mysql_read');
 
         try {
+            if (! isset($this->quoteType)) {
+                $this->quoteType = $requestParams['quoteType'] ?? null;
+            }
+
+            // Get environment variables for email configuration
+            $emailL_sys = config('constants.APP_ENV');
+
+            // Set email from details based on environment
+            if ($emailL_sys == EnvEnum::PRODUCTION) {
+                $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML', config('constants.MAIL_FROM_ADDRESS'));
+                $fromName = config('constants.MAIL_FROM_NAME_AML', config('constants.MAIL_FROM_NAME'));
+            } else {
+                $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+                $fromName = config('constants.MAIL_FROM_NAME');
+                $emailSubject = $emailL_sys.' - '.$emailSubject;
+            }
+
+            // Generate CSV content in memory using chunking
+            $csvFileName = $fileName.'.csv';
+            $csvFilePath = storage_path('temp/'.$csvFileName); // Temporary file path
+
+            $stream = fopen($csvFilePath, 'w'); // Open file on disk for writing
+
+            $requestParams['user'] = User::where(['email' => $requestParams['recipientEmail']])->first();
+
+            // Write CSV headers
+            fputcsv($stream, $this->headings());
+
+            $startDate = isset($requestParams['created_at_start']) ? Carbon::parse($requestParams['created_at_start'])->format('d M Y') : '';
+            $endDate = isset($requestParams['created_at_end']) ? Carbon::parse($requestParams['created_at_end'])->format('d M Y') : '';
+
+            if ($startDate && $endDate) {
+                $diff = abs(Carbon::parse($requestParams['created_at_start'])->diffInDays(Carbon::parse($requestParams['created_at_end']))) + 1;
+                logger()->debug("Processing export between: {$startDate} - {$endDate} ({$diff} days)");
+            }
+
+            $totalRecords = 0;
+            $chunkSize = 1000; // Adjust based on your data complexity
+            $exportName = class_basename($this);
+            $chunkCount = 0;
+            $totalChunkTime = 0;
+
             // Use the query builder version of collection if available
             if (method_exists($this, 'getQuery')) {
                 // Process data in memory-efficient chunks
-                logger()->info('Starting CSV data export with chunking');
+                LoggerService::info('Starting CSV export with chunking');
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
-                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, &$chunkCount, &$totalChunkTime, $exportName) {
+                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, &$chunkCount, &$totalChunkTime) {
                     $chunkStartTime = microtime(true);
                     $chunkCount++;
 
                     // Track memory before mapping records
                     $memoryBeforeMapping = round(memory_get_usage(true) / 1024 / 1024, 2);
 
-                    $i = 0;
                     foreach ($records as $record) {
                         $mappedRow = $this->map($record);
                         fputcsv($stream, $mappedRow);
@@ -162,7 +169,7 @@ trait ExcelExportable
                     $chunkTime = round((microtime(true) - $chunkStartTime) * 1000, 2); // in milliseconds
                     $totalChunkTime += $chunkTime;
 
-                    logger()->debug("{$exportName}: Chunk #{$chunkCount} processed. Memory: {$currentMemory}MB, Memory diff: {$memoryDiff}MB, Chunk Time: {$chunkTime}ms, Total time: {$totalChunkTime}ms");
+                    // logger()->debug("{$exportName}: Chunk #{$chunkCount} processed. Memory: {$currentMemory}MB, Memory diff: {$memoryDiff}MB, Chunk Time: {$chunkTime}ms, Total time: {$totalChunkTime}ms");
 
                     // Force garbage collection to free memory
                     gc_collect_cycles();
@@ -171,7 +178,7 @@ trait ExcelExportable
             } else {
                 // Fallback to less efficient memory approach if query builder not available
                 $data = $this->collection($requestParams);
-                logger()->debug('Using regular collection method - may use more memory');
+                LoggerService::info('Using regular collection method - may use more memory');
 
                 foreach ($data as $record) {
                     fputcsv($stream, $this->map($record));
@@ -180,14 +187,12 @@ trait ExcelExportable
                     // Free up memory every 100 records
                     if ($totalRecords % 100 === 0) {
                         $currentMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
-                        logger()->debug("Processed {$totalRecords} records. Memory: {$currentMemory}MB");
+                        // logger()->debug("Processed {$totalRecords} records. Memory: {$currentMemory}MB");
                     }
                 }
             }
 
-            // Get CSV content
-            rewind($stream);
-            $csvContent = stream_get_contents($stream);
+            // Close the file stream
             fclose($stream);
 
             $currentDate = Carbon::now()->format('d-m-Y');
@@ -200,8 +205,8 @@ trait ExcelExportable
                 $recipientName = auth()->user()->name;
             }
 
-            // Get the data collection and size information
-            $fileSize = round(strlen($csvContent) / 1024, 2); // Size in KB
+            // Get the file size
+            $fileSize = round(filesize($csvFilePath) / 1024, 2); // Size in KB
 
             $emailParams = [
                 'recipientName' => $recipientName,
@@ -221,7 +226,7 @@ trait ExcelExportable
             Mail::send(
                 ['html' => 'ExportCSVMail'],
                 $emailParams,
-                function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvContent, $csvFileName) {
+                function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvFilePath, $csvFileName) {
                     $message->to($recipientEmail);
 
                     if (! empty($ccRecipients)) {
@@ -231,25 +236,38 @@ trait ExcelExportable
                     $message->subject($emailSubject);
                     $message->from($fromEmail, $fromName);
 
-                    // Attach the CSV file
-                    $message->attachData($csvContent, $csvFileName, [
+                    // Attach the CSV file from disk
+                    $message->attach($csvFilePath, [
+                        'as' => $csvFileName,
                         'mime' => 'text/csv',
                     ]);
                 }
             );
+
+            // Clean up the temporary file
+            if (file_exists($csvFilePath)) {
+                unlink($csvFilePath);
+            }
 
             // Clean up
             gc_collect_cycles();
 
             $finalMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
             $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
-            logger()->info("CSV export completed. Records: {$totalRecords}, Final memory: {$finalMemory}MB, Peak memory: {$peakMemory}MB");
+            LoggerService::info("CSV export completed. Records: {$totalRecords}, Final memory: {$finalMemory}MB, Peak memory: {$peakMemory}MB");
 
         } catch (\Throwable $e) {
-            logger()->error('Error in CSV export: '.$e->getMessage(), [
+            // Clean up the file in case of an error
+            if (file_exists($csvFilePath)) {
+                unlink($csvFilePath);
+            }
+            LoggerService::error('Error in CSV export: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
+        } finally {
+            // Always reset database connection back to default
+            DB::setDefaultConnection('mysql');
         }
     }
 }

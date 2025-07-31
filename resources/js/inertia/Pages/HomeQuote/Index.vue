@@ -86,6 +86,11 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
+  {
+    text: 'Private Client',
+    value: 'customer.pcp_tag_formatted',
+    is_active: true,
+  },
 ]);
 
 const filters = reactive({
@@ -112,6 +117,7 @@ const filters = reactive({
   advisor_assigned_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  private_client: 'all',
 });
 
 const canExport = ref(false);
@@ -165,6 +171,37 @@ const renewalBatchOptions = computed(() => {
 
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
+  // Check date range restriction for created dates
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff, maxLimit, maxPeriod;
+
+    if (exportType === 'email') {
+      // For email export, use months-based validation
+      diff = calculateMonthsDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 3;
+      maxPeriod = '3 months';
+    } else {
+      // For download export, use days-based validation
+      diff = calculateDaysDifference(
+        filters.created_at_start,
+        filters.created_at_end,
+      );
+      maxLimit = 31;
+      maxPeriod = '31 days';
+    }
+
+    if (diff > maxLimit) {
+      notification.error({
+        message: `Maximum of ${maxPeriod} (created date) are allowed to be exported.`,
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   filters.exportType = exportType;
 
   const data = useObjToUrl(filters);
@@ -717,6 +754,19 @@ const formatDate = dateString =>
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

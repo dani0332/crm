@@ -172,7 +172,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function rangeLookup()
     {
-        return $this->belongsTo(RangeLookup::class, 'owner_occupancy_type_id', 'id');
+        return $this->belongsTo(Lookup::class, 'owner_occupancy_type_id', 'id');
     }
 
     public function hasContents(): bool

@@ -51,7 +51,7 @@ class CarEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
-            info('Inside plans of count: '.$lead->uuid.'    ');
+            LoggerService::info('Inside plans of count: ');
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
@@ -60,6 +60,14 @@ class CarEmailService extends BaseService
             if (isset($pdf['error'])) {
                 info('Failed to generate PDF for UUID in car email service: '.$lead->uuid.' Error: '.$pdf['error']);
             } else {
+                $validationResult = $this->validatePdfFileSize($pdf['pdf']);
+
+                if (! $validationResult['isValid']) {
+                    LoggerService::error(self::class." - PDF validation failed: {$validationResult['message']}");
+
+                    return;
+                }
+
                 $emailData->pdfAttachment = (object) $pdf;
                 info('attaching pdf: '.$lead->uuid.'    ');
             }
@@ -119,6 +127,38 @@ class CarEmailService extends BaseService
         }
 
         return $responseCode;
+    }
+
+    private function validatePdfFileSize($pdfObject): array
+    {
+        try {
+            $pdfContent = $pdfObject->output();
+            $fileSizeBytes = strlen($pdfContent);
+            $fileSizeMB = round($fileSizeBytes / (1024 * 1024), 2);
+
+            // Set maximum file size to 17MB
+            $maxSizeBytes = 17 * 1024 * 1024; // 17MB
+
+            $sizeMessage = "Size: {$fileSizeMB} MB";
+
+            if ($fileSizeBytes > $maxSizeBytes) {
+                return [
+                    'isValid' => false,
+                    'message' => "{$sizeMessage} exceeds 17MB limit",
+                ];
+            }
+
+            return [
+                'isValid' => true,
+                'message' => $sizeMessage,
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'isValid' => false,
+                'message' => 'Error calculating PDF size: '.$e->getMessage(),
+            ];
+        }
     }
 
     private function buildNoPlansEmailData($carQuote, $previousAdvisor, $tierRId)
@@ -393,6 +433,7 @@ class CarEmailService extends BaseService
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'companyName' => $lead->company_name ?? '',
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
@@ -697,4 +738,32 @@ class CarEmailService extends BaseService
         // Use a job to handle file deletion
         DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(5));
     }
+
+    public function sendCarCompanyCommercialOCB($lead)
+    {
+        LoggerService::startQuoteLogging(QuoteTypes::CAR->refId($lead->uuid));
+        try {
+            LoggerService::info(self::class.' - Sending Car Company Commercial OCB email');
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $pdfUrl = $this->attachCarCompanyOCBPDFToEmail($lead->uuid, $lead->code);
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::CAR_COMMERCIAL_OCB, pdfUrl: $pdfUrl);
+
+            $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+            if ($birdMotorEventNB) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
+                LoggerService::info(self::class.' - sendCarCompanyCommercialOCB - Event triggered ', ['response_status_code' => $response->status_code, 'lead_status_id' => $lead->quote_status_id]);
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                }
+            } else {
+                LoggerService::info(self::class.' - sendCarCompanyCommercialOCB key not found ');
+            }
+
+            return $response ?? null;
+        } catch (\Exception  $exception) {
+            LoggerService::error(self::class.' - sendCarCompanyCommercialOCB - Error while sending quote workflow for lead ', exception: $exception);
+        }
+    }
+
 }

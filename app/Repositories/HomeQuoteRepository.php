@@ -84,13 +84,13 @@ class HomeQuoteRepository extends BaseRepository
         }
 
         // Check if any of the exclude filters are active
-        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters);
+        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters, $requestParams);
 
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
-            ->when(request()->filled('advisors'), function ($query) {
-                $advisors = (array) request('advisors');
+            ->when($this->hasFilterValue('advisors', $requestParams), function ($query) use ($requestParams) {
+                $advisors = (array) $this->getFilterValue('advisors', $requestParams);
                 $hasUnassigned = in_array('-1', $advisors);
                 $hasOtherAdvisors = count(array_filter($advisors, fn ($id) => $id !== '-1')) > 0;
 
@@ -112,37 +112,79 @@ class HomeQuoteRepository extends BaseRepository
                 // If only specific advisors are selected
                 return $query->whereIn('advisor_id', $advisors);
             })
-            ->when(request()->has('is_renewal'), fn ($query) => $this->applyRenewalFilter($query))
-            ->tap(fn ($query) => $this->applyFilters($query))
-            ->when(! $shouldExcludeCreatedAtFilters, function ($query) {
-                if (request()->filled('created_at_start') && request()->filled('created_at_end')) {
-                    $query->whereBetween('personal_quotes.created_at', [request('created_at_start'), request('created_at_end')]);
+            ->when($this->hasFilterValue('is_renewal', $requestParams), fn ($query) => $this->applyRenewalFilter($query, $requestParams))
+            ->tap(fn ($query) => $this->applyFilters($query, $requestParams))
+            ->when(! $shouldExcludeCreatedAtFilters, function ($query) use ($requestParams) {
+                if ($this->hasFilterValue('created_at_start', $requestParams) && $this->hasFilterValue('created_at_end', $requestParams)) {
+                    $query->whereBetween('personal_quotes.created_at', [
+                        $this->getFilterValue('created_at_start', $requestParams),
+                        $this->getFilterValue('created_at_end', $requestParams),
+                    ]);
                 } else {
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('personal_quotes.created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
-                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate()->withQueryString())
+                fn ($query) => $query->when($forExport, fn ($query) => $query, fn ($query) => $query->simplePaginate()->withQueryString())
             );
     }
 
     /**
      * Check if any of the specified filters are active.
      */
-    private function hasActiveFilters(array $fields): bool
+    private function hasActiveFilters(array $fields, array $requestParams = []): bool
     {
         foreach ($fields as $field) {
+            // Check requestParams first (for export context)
+            if (! empty($requestParams) && isset($requestParams[$field])) {
+                $value = $requestParams[$field];
+                if (! empty($value) || (is_array($value) && count($value) > 0)) {
+                    return true;
+                }
+            }
+            // Fallback to request object
             if (request()->filled($field)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
     /**
@@ -159,6 +201,9 @@ class HomeQuoteRepository extends BaseRepository
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
             'homeQuote.homeQuoteRequestDetail.lostReason',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
+            },
             'payments' => function ($query) {
                 $query->with([
                     'paymentStatus',
@@ -174,6 +219,7 @@ class HomeQuoteRepository extends BaseRepository
                     'paymentSplits.processJob',
                 ]);
             },
+            'customer',
         ];
     }
 
@@ -182,11 +228,13 @@ class HomeQuoteRepository extends BaseRepository
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
-    private function applyRenewalFilter($query): void
+    private function applyRenewalFilter($query, array $requestParams = []): void
     {
-        if (request('is_renewal') === quoteTypeCode::yesText) {
+        $renewalValue = $this->getFilterValue('is_renewal', $requestParams);
+
+        if ($renewalValue === quoteTypeCode::yesText) {
             $query->whereNotNull('personal_quotes.previous_quote_policy_number');
-        } elseif (request('is_renewal') === quoteTypeCode::noText) {
+        } elseif ($renewalValue === quoteTypeCode::noText) {
             $query->whereNull('personal_quotes.previous_quote_policy_number');
         }
     }
@@ -320,6 +368,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Check if TAP integration is enabled
         $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
+        $homeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_CUT_OFF_DATE)->first()?->value ?? null;
 
         return [
             'documentTypes' => $documentTypes,
@@ -376,6 +425,7 @@ class HomeQuoteRepository extends BaseRepository
             'lookUpData' => $lookUpData,
             'isFuncsEnabled' => $isFuncsEnabled,
             'homePossessionTypeEnum' => HomePossessionType::asArray(),
+            'homeCutOffDate' => $homeCutOffDate,
         ];
     }
 
@@ -573,18 +623,18 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Apply dynamic filters to the query.
      */
-    private function applyFilters($query): void
+    private function applyFilters($query, array $requestParams = []): void
     {
         $filters = $this->getFilterMappings();
 
         foreach ($filters as $field => $condition) {
-            if (request()->filled($field)) {
-                $condition($query, request($field));
+            if ($this->hasFilterValue($field, $requestParams)) {
+                $condition($query, $this->getFilterValue($field, $requestParams));
             }
         }
 
         // Handle date range filters using adjustQueryByDateFilters
-        if (request()->filled('payment_due_date') || request()->filled('booking_date')) {
+        if ($this->hasFilterValue('payment_due_date', $requestParams) || $this->hasFilterValue('booking_date', $requestParams)) {
             $this->adjustQueryByDateFilters($query, 'personal_quotes');
         }
     }
@@ -682,6 +732,7 @@ class HomeQuoteRepository extends BaseRepository
                 'quoteStatus',
                 'advisor',
                 'nationality',
+                'renewalBatchModel',
                 'plans',
                 'homeQuote',
                 'homeQuote.nationality',
@@ -695,9 +746,10 @@ class HomeQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-                'insured' => function ($q) {
+                'latestInsured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
                 },
+                'latestInsured.insuredKyc:id,insured_id',
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
@@ -723,18 +775,13 @@ class HomeQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
             ])
             ->first();
 
         if ($response) {
+            $response->customer_type = $response->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
             // Only access insured property if response exists
-            $insured = $response->insured ?? null;
+            $insured = $response->latestInsured ?? null;
             if ($insured && $insured->id_type === 'emiratesId') {
                 $response->emirates_id_number = $insured->id_number;
             } else {

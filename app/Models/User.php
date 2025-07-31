@@ -7,6 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Traits\Logable;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -24,6 +25,7 @@ class User extends Authenticatable implements AuditableContract
     use HasFactory;
     use HasRoles;
     use Impersonate;
+    use Logable;
     use Notifiable;
 
     /**
@@ -87,14 +89,14 @@ class User extends Authenticatable implements AuditableContract
 
     public function getCreatedAtAttribute($table)
     {
-        $date_time_format = env('DATETIME_FORMAT');
+        $date_time_format = config('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     public function getUpdatedAtAttribute($table)
     {
-        $date_time_format = env('DATETIME_FORMAT');
+        $date_time_format = config('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
@@ -445,5 +447,10 @@ class User extends Authenticatable implements AuditableContract
     public function scopeChs($query)
     {
         return $query->where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL);
+    }
+
+    public function getFirstFromLeadAllocation($quoteTypeId)
+    {
+        return $this->hasOne(LeadAllocation::class, 'user_id', 'id')->where('quote_type_id', $quoteTypeId)->first();
     }
 }

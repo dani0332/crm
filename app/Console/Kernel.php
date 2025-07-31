@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
@@ -41,6 +42,7 @@ class Kernel extends ConsoleKernel
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
         PolicyIssuanceMarkFailedCommand::class,
+        PolicyBulkSendDocuments::class,
     ];
 
     /**
@@ -137,6 +139,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('quotes-syncing:retry')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
 
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
+        $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
     }
 
     /**

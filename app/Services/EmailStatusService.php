@@ -22,17 +22,18 @@ class EmailStatusService extends BaseService
         });
     }
 
-    public function addEmailStatus($emailData, $messageId, $emailSubject, $status = ProcessStatusCode::IN_PROGRESS)
+    public function addEmailStatus($emailData, $messageId, $emailSubject, $status = ProcessStatusCode::IN_PROGRESS, $reason = null)
     {
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailData->quoteTypeId;
         $newEmailStatus->quote_id = $emailData->quoteId;
         $newEmailStatus->email_address = $emailData->customerEmail;
         $newEmailStatus->msg_id = $messageId;
-        $newEmailStatus->template_id = $emailData->templateId;
+        $newEmailStatus->template_id = $emailData->templateId ?? $emailData->emailTemplateId;
         $newEmailStatus->customer_id = $emailData->customerId;
         $newEmailStatus->email_status = $status ?? ProcessStatusCode::IN_PROGRESS;
         $newEmailStatus->email_subject = $emailSubject;
+        $newEmailStatus->reason = $reason;
         $newEmailStatus->save();
 
         Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
@@ -50,8 +51,11 @@ class EmailStatusService extends BaseService
                 $quote = HealthQuote::where('uuid', $request->uuid)->first();
                 break;
             case QuoteTypeId::Home:
+            case QuoteTypeId::Savings:
+            case QuoteTypeId::Life:
                 $quote = PersonalQuote::where('uuid', $request->uuid)->first();
                 break;
+
             default:
                 $quote = null;
                 break;

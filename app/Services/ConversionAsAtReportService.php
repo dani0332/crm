@@ -93,6 +93,7 @@ class ConversionAsAtReportService extends BaseService
                 'tag' => $request->tag,
                 'registration_type' => $request->registration_type,
                 'vehicle_use' => $request->vehicle_use,
+                'segment_filter' => $request->segment_filter,
                 'page' => $request->page,
             ];
 
@@ -226,6 +227,15 @@ class ConversionAsAtReportService extends BaseService
                 $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
             }
         }
+        if (isset($filters->segment_filter)) {
+            $tagName = QuoteSegmentEnum::FIC->tag();
+            $query->join('quote_tags', 'quote_tags.quote_uuid', "{$alias}.uuid");
+            $query->when($filters->segment_filter == QuoteSegmentEnum::FIC->value, function ($q) use ($tagName) {
+                $q->where('quote_tags.name', $tagName);
+            })->when($filters->segment_filter == QuoteSegmentEnum::NON_FIC->value, function ($q) use ($tagName) {
+                $q->whereNotIn('quote_tags.name', [$tagName]);
+            });
+        }
 
         if (isset($filters->lob) && $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
             if (isset($filters->registration_type) && $filters->registration_type != 'All') {
@@ -315,11 +325,11 @@ class ConversionAsAtReportService extends BaseService
     {
         return $query
             ->addSelect(
-                'teams.id as sub_team_id',
-                'teams.name as sub_team'
+                'sub_teams.id as sub_team_id',
+                'sub_teams.name as sub_team'
             )
-            ->join('teams', 'users.sub_team_id', '=', 'teams.id')
-            ->where('teams.type', TeamTypeEnum::SUB_TEAM)
+            ->join('teams as sub_teams', 'users.sub_team_id', '=', 'sub_teams.id')
+            ->where('sub_teams.type', TeamTypeEnum::SUB_TEAM)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('sub_team', 'asc')
             ->groupBy('sub_team_id');

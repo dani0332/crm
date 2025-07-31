@@ -34,6 +34,7 @@ const tableHeader = [
   { text: 'Submitted By', value: 'uploaded_by' },
   { text: 'Submitted At', value: 'created_at' },
   { text: 'Updated At', value: 'updated_at' },
+  { text: 'Actions', value: 'actions' },
 ];
 
 const can = permission => useCan(permission);
@@ -89,6 +90,16 @@ const permissionsEnum = page.props.permissionsEnum;
       </template>
       <template #item-uploaded_by="{ uploaded_by }">
         {{ uploaded_by }}
+      </template>
+      <template #item-actions="{ id, cannot_upload, status }">
+        <x-button
+          v-if="hasAnyRole([rolesEnum.Engineering])"
+          onclick="return confirm('Are you sure you want to retry this lead?');"
+          :disabled="cannot_upload <= 0 || status == 'In Progress'"
+          :href="route('renewals.retry', id)"
+        >
+          Retry
+        </x-button>
       </template>
     </DataTable>
 

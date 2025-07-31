@@ -15,8 +15,10 @@ use App\Models\CycleQuote;
 use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
+use App\Models\LifeQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
+use App\Models\SavingsQuote;
 use App\Models\YachtQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
@@ -263,6 +265,12 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
+        /* Temp Code - assign email for particular Policy id/number */
+        if ($policyID == 40523841) {
+            $email = 'soniax711@gmail.com';
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
         if (empty($email)) {
             return [
                 'status' => 400,
@@ -411,8 +419,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::LIFE->value:
-                            $obj->lifeQuoteRequestDetail()->updateOrCreate(
-                                ['life_quote_request_id' => $obj->id],
+                            $obj->lifeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new LifeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
@@ -481,6 +493,16 @@ class InslyDetailRepository extends BaseRepository
                                 ['insly_id' => $policy->_id]
                             );
                             break;
+                        case QuoteTypes::SAVINGS->value:
+                            $obj->savingsQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new SavingsQuote)->fillable)
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                ['insly_id' => $policy->_id]
+                            );
+                            break;
                     }
                     $policy->moved_to_imcrm = true;
                     if ($isPersonalQuote) {
@@ -537,6 +559,16 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* Temp Code - assign email for particular Policy id/number */
+
+        $tempEmail = 'soniax711@gmail.com';
+        $tempPolicyId = 40523841;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+
+        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
@@ -646,6 +678,10 @@ class InslyDetailRepository extends BaseRepository
         if ($user->hasRole(RolesEnum::YachtAdvisor)) {
 
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::YACHT->value]);
+        }
+        if ($user->hasRole(RolesEnum::SavingsAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::SAVINGS->value]);
         }
         if (! empty($coverage)) {
             // converted all values to lower case because some time data in mongodb have different case values.

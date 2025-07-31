@@ -2,18 +2,36 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\TiersEnum;
+use App\Models\CarQuote;
 use App\Models\Tier;
-use App\Services\CarAllocationService;
+use App\Pipes\Allocation\Car\ApplyRuleExclusionPipe;
+use App\Pipes\Allocation\Car\AssignLeadPipe;
+use App\Pipes\Allocation\Car\EvaluateTierPipe;
+use App\Pipes\Allocation\Car\FetchEligibleAdvisorsPipe;
+use App\Pipes\Allocation\Car\FetchTierUsersPipe;
+use App\Pipes\Allocation\Car\FinalizeEligibleAdvisorPipe;
+use App\Pipes\Allocation\Common\FetchLeadPipe;
+use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
+use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
+use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Pipeline;
 
 class ReAssignCarLeadsJob implements ShouldQueue
 {
@@ -22,130 +40,126 @@ class ReAssignCarLeadsJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 15;
     public $backoff = 30;
-    private CarAllocationService $carAllocationService;
     private $advisorId;
 
-    public function __construct(CarAllocationService $carAllocationService, $advisorId)
+    public function __construct($advisorId)
     {
-        $this->carAllocationService = $carAllocationService;
         $this->advisorId = $advisorId;
     }
 
-    public function handle()
+    public function handle(AllocationService $allocationService)
     {
-        info('-------- Reassignment car job started at : '.now().' ---------');
+        LoggerService::info('-------- Reassignment car job started ---------');
+
         if (! $this->shouldProceed() && ! now()->isWeekend()) {
-            info('Reassignment job is not proceeding as per business timings');
+            LoggerService::info('Reassignment job is not proceeding as per business timings');
 
             return false;
         }
+
         // Fetch the leads to process, including deferred leads if needed
-        $leads = $this->fetchLeads();
+        $leads = $this->fetchLeadsForReAssignment();
         if (count($leads) == 0) {
-            info('No car lead found or either lead is not under assignment criteria');
-            info('-------- Reassignment car job ended at : '.now().' ---------');
+            LoggerService::info('No car lead found or either lead is not under assignment criteria');
+            LoggerService::info('-------- Reassignment car job ended ---------');
 
             return false; // when lead is not on criteria or not found
         }
+
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
-            info('--------------- ReAssignment processing ---------------');
+            LoggerService::info('--------------- ReAssignment processing ---------------');
 
-            if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started at {$lead->allocation_started_at}");
+            $allocationRequest = new AllocationRequest(
+                quoteType: QuoteTypes::CAR,
+                quoteUUID: $lead->uuid,
+                overrideAdvisorId: true,
+                isReassignmentJob: true,
+                reAssigFromAdvisorId: $this->advisorId,
+                assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED
+            );
 
-                continue;
+            try {
+                Pipeline::send($allocationRequest)->through([
+                    FetchLeadPipe::class,
+                    VerifyAlreadyInProgressAllocationPipe::class,
+                    EvaluateTierPipe::class,
+                    ValidateNationalityConfigPipe::class,
+                    FetchTierUsersPipe::class,
+                    ApplyRuleExclusionPipe::class,
+                    FetchEligibleAdvisorsPipe::class,
+                    ResetNationalityConfigPipe::class,
+                    ApplyRuleExclusionPipe::class,
+                    FetchEligibleAdvisorsPipe::class,
+                    FinalizeEligibleAdvisorPipe::class,
+                    AssignLeadPipe::class,
+                    MakeResponsePipe::class,
+                ])->thenReturn();
+            } catch (Exception $e) {
+                $allocationService->resolveAllocationResponse($allocationRequest, $e);
             }
 
-            $lead->startAllocation();
-
-            // Find the appropriate tier for the lead
-            $tier = $this->findTier($lead);
-
-            // If a valid tier is found
-            if ($tier) {
-                // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier, $lead->source, $lead);
-
-                // Find custom rules for the lead
-                $rules = $this->findRules($lead);
-
-                // Determine the final advisor for the lead based on tier, users, and rules
-                $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
-
-                if ($advisorId) {
-                    DB::beginTransaction();
-                    try {
-                        // Assign the lead to the advisor and send an email
-                        $this->assignLead($lead, $advisorId, $tier);
-                        DB::commit();
-                    } catch (\Exception $e) {
-                        DB::rollback();
-                        $this->carAllocationService->endBuyLeadProcessing();
-                        Log::error($e->getMessage());
-                    }
-                } else {
-                    // Update the lead's tier information
-                    $this->updateLeadTier($lead, $tier);
-                    $this->carAllocationService->endBuyLeadProcessing();
-                }
-            } else {
-                // Log that tier was not found for the lead and skip processing
-                LoggerService::info('Tier not found. Skipping for now.');
-            }
-
-            $lead->endAllocation();
-
-            info('--------------- ReAssignment processing ended ---------------');
+            LoggerService::info('--------------- ReAssignment processing ended ---------------');
         }
 
         LoggerService::endLogging();
-        info('-------- Reassignment car job ended at : '.now().' ---------');
+        LoggerService::info('-------- Reassignment car job ended at : '.now().' ---------');
     }
 
-    protected function shouldProceed(): bool
+    private function shouldProceed(): bool
     {
-        return $this->carAllocationService->shouldProceed();
+        return app(AllocationService::class)->shouldProceedWithReAllocation('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 
-    protected function fetchLeads(): mixed
+    public function fetchLeadsForReAssignment()
     {
-        return $this->carAllocationService->fetchLeadsForReAssignment($this->advisorId);
-    }
+        $advisorId = $this->advisorId;
 
-    protected function findTier($lead): ?Tier
-    {
-        if ($lead->tier_id == null) {
-            return $this->carAllocationService->findTier($lead);
+        // Calculate the start date for lead retrieval
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        LoggerService::info("Leads will be picked up in reassignment from : {$from}");
+
+        // Check if Dubai Now exclusion should be applied
+        $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+
+        // List of exempted lead sources
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+
+        // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
+        if ($shouldIncludeDubaiNow) {
+            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
 
-        return $this->carAllocationService->getTierById($lead->tier_id);
-    }
+        // Get the Tier R
+        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
-    protected function findAvailableUsers($tier, $leadSource, $lead)
-    {
-        return $this->carAllocationService->getEligibleUserForAllocation($tier, $this->advisorId, true, $leadSource, null, $lead);
-    }
+        // Query to fetch leads
+        $leads = CarQuote::whereBetween('created_at', [$from, now()])
+            ->whereNotIn('source', $exemptedLeadSources)
+            ->where('quote_status_id', QuoteStatusEnum::NewLead)
+            ->where('is_renewal_tier_email_sent', 0);
 
-    protected function findRules($lead)
-    {
-        return $this->carAllocationService->getRules($lead);
-    }
+        // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
+        if ($advisorId != 0) {
+            $leads->where('advisor_id', $advisorId);
+            LoggerService::info('Inside reassignment single run and selected advisor is: '.$advisorId);
+        } else {
+            // If advisor ID is not provided, get unavailable advisors and filter leads by them
+            $advisors = app(AllocationService::class)->getUnavailableAdvisor();
+            if (count($advisors) > 0) {
+                $advisorIds = $advisors->pluck('user_id');
+                LoggerService::info('Inside reassignment general run');
+                $leads->whereIn('advisor_id', $advisorIds);
+            }
+        }
 
-    protected function finalizeAdvisors($lead, $tier, $users, $rules)
-    {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, null, $tier);
-    }
+        // Filter leads by tier (if applicable)
+        if (! empty($tierR)) {
+            $leads->where('tier_id', '!=', $tierR->id);
+        }
 
-    protected function assignLead($lead, $userId, $tier)
-    {
-        $this->carAllocationService->processLeadAssignment($lead, $userId, $tier, AssignmentTypeEnum::SYSTEM_REASSIGNED);
-    }
-
-    private function updateLeadTier($lead, $tier)
-    {
-        $this->carAllocationService->updateLeadTier($lead, $tier);
+        return $leads->get();
     }
 
     public function middleware()

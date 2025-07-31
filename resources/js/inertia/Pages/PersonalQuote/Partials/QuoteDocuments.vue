@@ -27,10 +27,9 @@ const props = defineProps({
     type: String,
     required: false,
   },
-  isSentOrBooked: {
+  isEndorsementBooked: {
     type: Boolean,
     required: false,
-    default: false,
   },
 });
 
@@ -407,7 +406,7 @@ const getS3TempUrl = async docURL => {
             </a>
             <a
               v-else
-              :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url)"
+              :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
@@ -419,7 +418,7 @@ const getS3TempUrl = async docURL => {
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
-              <x-tooltip placement="bottom" v-if="props.isSentOrBooked">
+              <x-tooltip placement="bottom" v-if="props.isEndorsementBooked">
                 <x-button size="xs" color="error" outlined disabled>
                   Delete
                 </x-button>
@@ -542,7 +541,7 @@ const getS3TempUrl = async docURL => {
                   :key="quoteDocument.id"
                   :href="
                     storageUrl +
-                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
                   "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
@@ -570,7 +569,7 @@ const getS3TempUrl = async docURL => {
                   :key="quoteDocument.id"
                   :href="
                     storageUrl +
-                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
                   "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"

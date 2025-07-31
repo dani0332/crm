@@ -81,7 +81,7 @@ class CarQuoteController extends Controller
     {
         $quoteStatus = QuoteStatus::find($request->quote_status_id)->code ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($request->quote_type);
-        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, [], $request->notes);
+        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, $request->notes);
 
         return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
     }

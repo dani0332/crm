@@ -51,6 +51,7 @@ final class WorkflowTypeEnum extends Enum
     public const TRADE_NEW_POLICY = 'trade_new_policy';
     public const SU_PROFESSIONAL_UPDATE = 'su_professional_update';
     public const PROFESSIONAL_NEW_POLICY = 'professional_new_policy';
+    public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
     public const MOTOR_PCP_FOLLOWUPS = 'motor_pcp_followups';
@@ -58,4 +59,12 @@ final class WorkflowTypeEnum extends Enum
     public const COMPANY_CAR_AUTOMATED_FOLLOWUPS = 'company_car_automated_followups';
     public const COMPANY_CAR_OCB = 'company_car_ocb';
     public const AIG_WORKFLOW = 'aig_workflow';
+    public const LIFE_OCA_EMAIL = 'life_oca_email';
+    public const CAR_COMMERCIAL_OCB = 'car_commercial_ocb';
+    public const TRAVEL_AIG_WORKFLOW = 'travel_aig_workflow';
+    public const LIFE_FIC_EMAIL = 'life_fic_email';
+    public const LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL = 'life_advance_birthday_wish_email';
+    public const LIFE_BIRTHDAY_WISH_EMAIL = 'life_birthday_wish_email';
+    public const LIFE_AUTOMATED_FOLLOWUPS = 'life_automated_followups';
+    public const SIC_HEALTH_FOLLOWUPS_WA = 'sic_health_followups_wa';
 }

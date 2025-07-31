@@ -10,7 +10,7 @@ final class PaymentProcessJobEnum extends Enum
     const IN_PROCESS = 'in-process';
     const FAILED = 'failed';
     const SUCCESS = 'success';
-    const SUCCESS_MESSAGE = 'transaction completed successfully';
+    const SUCCESS_MESSAGE = 'Transaction completed successfully';
     const QUOTE_NOTFOUND_MESSAGE = 'quote not found';
     const QUEUED = 'queued';
 }

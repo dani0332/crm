@@ -40,6 +40,7 @@ class SendOCBIntroEmailForBikeJob implements ShouldQueue
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
+        $this->afterCommit();
     }
 
     /**
