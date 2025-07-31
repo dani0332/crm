@@ -8,6 +8,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SagePaymentMethodsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -1256,6 +1257,10 @@ class SagePayloadFactory
         $sageRequest->collection_amount = $paymentSplit->collection_amount;
         if ($splitAmount != null) {
             $sageRequest->collection_amount = $splitAmount;
+        }
+
+        if (! isset($sageRequest->quoteTypeId)) {
+            $sageRequest->quoteTypeId = QuoteTypes::getIdFromValue($sageRequest->modelType);
         }
 
         if (! isset($sageRequest->advisor_id)) {
