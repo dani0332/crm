@@ -157,10 +157,8 @@ const uploadFile = (doc, filesWithInfo) => {
   const formData = new FormData();
   formData.append('quote_id', docForm.quote_id);
   formData.append('quote_uuid', docForm.quote_uuid);
-  formData.append('quote_type_id', doc.quote_type_id);
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
-  formData.append('quote_type', usePage().props.quoteType);
   formData.append('is_send_update', isSendUpdatePage);
   formData.append('send_update_id', props.extras.sendLogId || null);
 
@@ -518,6 +516,24 @@ const getS3TempUrl = async docURL => {
               <p class="text-xs">
                 Max file size: {{ documentType.max_size }} MB
               </p>
+              
+              <x-alert
+                v-if="successStatus[documentType.id]"
+                type="success"
+                color="success"
+                light
+              >
+                <p class="text-sm">File uploaded successfully</p>
+              </x-alert>
+
+              <x-alert
+                v-if="errorMsg[documentType.id]"
+                type="error"
+                color="error"
+                light
+              >
+                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+              </x-alert>
             </div>
             <div class="pb-4">
               <Dropzone
