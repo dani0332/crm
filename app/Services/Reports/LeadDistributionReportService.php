@@ -21,6 +21,7 @@ use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -42,6 +43,8 @@ class LeadDistributionReportService extends BaseService
 
         $filters = $this->getFilters($request);
         $reportDataQuery = $this->buildQuery($lob, $filters);
+
+        LoggerService::sql(self::class.' - Lead Distribution Report Query', $reportDataQuery);
 
         return $reportDataQuery->paginate(15)->withQueryString();
     }

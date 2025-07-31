@@ -29,7 +29,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, Logable, QuoteAllocatable;
+    use Filterable, Logable, Optionable, QuoteAllocatable;
 
     /**
      * @return mixed|void
@@ -129,7 +129,25 @@ trait QuoteModelTrait
                         ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
                 });
-            });
+            })->when($segmentFilter === QuoteSegmentEnum::FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
+            })
+                ->when($segmentFilter === QuoteSegmentEnum::NON_FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                    $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                        $query->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                            ->where('quote_tags.quote_type_id', $quoteTypeId);
+                    });
+                });
         }
     }
 
