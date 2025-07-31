@@ -1580,6 +1580,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             label="Title"
             :rules="[isRequired]"
             class="w-full"
+            required
           />
 
           <x-textarea
@@ -1588,7 +1589,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :adjust-to-text="false"
             class="w-full"
             :rules="[isRequired]"
-            :required="true"
+            required
           />
 
           <x-select
@@ -1598,6 +1599,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :rules="[isRequired]"
             placeholder="Select Assignee"
             class="w-full"
+            required
           />
 
           <DatePicker
@@ -1607,6 +1609,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             class="w-full"
             withTime
             :min-date="new Date()"
+            required
           />
         </div>
 

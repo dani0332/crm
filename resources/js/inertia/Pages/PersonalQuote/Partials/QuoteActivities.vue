@@ -252,6 +252,7 @@ onMounted(() => {
           label="Title*"
           :rules="[rules.isRequired]"
           class="w-full"
+          required
         />
 
         <x-textarea
@@ -270,6 +271,7 @@ onMounted(() => {
           :rules="[rules.isRequired]"
           placeholder="Select Assignee"
           class="w-full"
+          required
         />
 
         <x-input
@@ -278,6 +280,7 @@ onMounted(() => {
           type="datetime-local"
           :rules="[rules.isRequired]"
           class="w-full"
+          required
         />
       </div>
 

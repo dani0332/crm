@@ -3991,6 +3991,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Title"
           :rules="[isRequired]"
           class="w-full"
+          required
         />
 
         <x-textarea
@@ -3999,7 +4000,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :adjust-to-text="false"
           class="w-full"
           :rules="[isRequired]"
-          :required="true"
+          required
         />
 
         <x-select
@@ -4009,6 +4010,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :rules="[isRequired]"
           placeholder="Select Assignee"
           class="w-full"
+          required
         />
 
         <date-picker
@@ -4018,6 +4020,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           class="w-full"
           withTime
           :timezone="'UTC'"
+          required
         />
       </div>
 

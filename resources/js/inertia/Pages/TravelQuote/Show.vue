@@ -3740,7 +3740,7 @@ const fullAddress = computed(() => {
             :adjust-to-text="false"
             class="w-full"
             :rules="[isRequired]"
-            :required="true"
+            required
           />
 
           <x-select
@@ -3759,6 +3759,7 @@ const fullAddress = computed(() => {
             :rules="[isRequired]"
             class="w-full"
             withTime
+            required
           />
         </div>
 
