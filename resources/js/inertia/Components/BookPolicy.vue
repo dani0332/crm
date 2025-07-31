@@ -119,11 +119,9 @@ const dateToDMYWithTime = date => {
   return '';
 };
 
-
 let isHealthAUHLead = ref(
   page.props.bookPolicyDetails.isHealthAUHLead || false,
 );
-
 
 const commissionErrorMessage =
   'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.';
@@ -628,7 +626,7 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
 });
 
 const isSendTypeSage = computed(() => {
-  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType; 
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   return sendPolicyType == sendPolicyTypeEnum.SAGE;
 });
 
@@ -1968,6 +1966,11 @@ const isDocTypeLoading = docType => {
                 </template>
               </template>
             </div>
+            <template v-if="isHealthAUHLead">
+              <p class="text-gray-500 text-sm text-right mt-3 mb-2 mx-4">
+                {{ productionProcessTooltipEnum.HEALTH_AUH_BOOKING_NOTE }}
+              </p>
+            </template>
           </div>
         </x-form>
       </template>
