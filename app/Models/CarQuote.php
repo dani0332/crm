@@ -10,7 +10,6 @@ use App\Events\QuoteEmailUpdated;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
@@ -160,14 +159,14 @@ class CarQuote extends BaseModel
     {
         $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return Carbon::parse($value)->format($date_time_format);
+        return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     public function getUpdatedAtAttribute($value)
     {
         $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return Carbon::parse($value)->format($date_time_format);
+        return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     /*****  NewRelationships so old should not effect */
