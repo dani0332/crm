@@ -1260,7 +1260,7 @@ class SagePayloadFactory
         }
 
         if (! isset($sageRequest->quoteTypeId)) {
-            $sageRequest->quoteTypeId = QuoteTypes::getIdFromValue($sageRequest->modelType);
+            $sageRequest->quoteTypeId = QuoteTypes::getIdFromValue($sageRequest->quoteType);
         }
 
         if (! isset($sageRequest->advisor_id)) {
