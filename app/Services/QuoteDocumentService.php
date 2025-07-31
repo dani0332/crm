@@ -26,6 +26,7 @@ use App\Models\SendUpdateLog;
 use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OCRService;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -251,6 +252,8 @@ class QuoteDocumentService extends BaseService
                     $documentType->id
                 )->afterCommit();
             }
+
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
 
             return $quoteDocument;
         } catch (\Exception $exception) {
@@ -1014,6 +1017,18 @@ class QuoteDocumentService extends BaseService
         } catch (RequestException $e) {
             return ['exists' => false, 'size' => null];
         }
+    }
+
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    {
+        LoggerService::info('Dispatching OCR job from API');
+
+        app(OCRService::class)->dispatchJobIfEligible(
+            $documentType,
+            $quote,
+            $filePathAzure,
+            $fileMimeType
+        );
     }
 
 }
