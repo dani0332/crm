@@ -27,6 +27,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
+use App\Enums\QuoteJourneyEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -57,6 +58,7 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
@@ -92,13 +94,14 @@ use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
-use App\Services\LifeQuoteService;
+use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
+use App\Services\QuoteJourneyService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
@@ -1863,6 +1866,16 @@ class CRUDController extends Controller
             $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
+        if ($request->current_quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
+            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId);
+        }
+
+        if ($request->current_quote_status_id != $entity->quote_status_id && in_array($entity->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
+            $quoteTypeId = $this->activityService->getQuoteTypeId($request->modelType);
+            (new QuoteJourneyService)->policyIssuedQuoteJourney($entity->uuid, $quoteTypeId, QuoteJourneyEnum::CANCELLED);
+        }
+
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         // Update payment allocation status
@@ -2044,6 +2057,7 @@ class CRUDController extends Controller
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
         info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
+
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
             'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
@@ -2057,6 +2071,20 @@ class CRUDController extends Controller
             'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? null,
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
+
+        if ($request->modelType == strtolower(quoteTypeCode::Life)) {
+            $model = $quoteModel;
+            if ($quoteModel instanceof PersonalQuote) {
+                $model = $quoteModel->lifeQuote;
+            }
+
+            if ($model) {
+                $model->update([
+                    'policy_sum_assured_currency_id' => $request->policy_sum_assured_currency_id ?? null,
+                    'policy_sum_assured' => $request->policy_sum_assured ?? null,
+                ]);
+            }
+        }
 
         if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
             $quoteModel->update([
@@ -2286,7 +2314,7 @@ class CRUDController extends Controller
             if ($ocbEmailJob) {
                 LoggerService::info('sendOCBEmailNB OCB email sending started');
                 dispatch(new $ocbEmailJob($quoteUuId, null));
-                LoggerService::info('sendOCBEmailNB OCB email Job dispatched');
+                LoggerService::info(message: 'sendOCBEmailNB OCB email Job dispatched');
             }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);

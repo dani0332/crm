@@ -34,17 +34,17 @@
         "bold": "ubuntu_bold_102fbdc70ebc97d5aacdcb5ef9ac8de3"
     },
     "prompt": {
-        "300": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/prompt_300_45116809930de15cab87ad5cde4a922d",
-        "normal": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/prompt_normal_e3f188baead447247bd77ce0abe9d8a5",
-        "500": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/prompt_500_cfce2555afc7d6fb39dd8331ab85613d",
-        "600": "prompt_600_1a623c9a3c7d56df975e0d074acf579d",
-        "bold": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/prompt_bold_dea4c5c1a128f1422de6563c30cffca3"
+        "300": "\/var\/www\/storage\/fonts\/prompt_300_45116809930de15cab87ad5cde4a922d",
+        "normal": "\/var\/www\/storage\/fonts\/prompt_normal_e3f188baead447247bd77ce0abe9d8a5",
+        "500": "\/var\/www\/storage\/fonts\/prompt_500_cfce2555afc7d6fb39dd8331ab85613d",
+        "600": "\/var\/www\/storage\/fonts\/prompt_600_1a623c9a3c7d56df975e0d074acf579d",
+        "bold": "prompt_bold_dea4c5c1a128f1422de6563c30cffca3"
     },
     "raleway": {
-        "300": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/raleway_300_ad9d3f8761ee766fd1da75743110796e",
-        "normal": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/raleway_normal_bc54d000e5dbd8710dedfacb3c55fbc6",
-        "500": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/raleway_500_4ce758b4be4147fef0e8474693332d58",
-        "600": "C:\\Users\\Admin\\Desktop\\insurance-market\\blanka\\storage\\fonts\/raleway_600_1ee23db0df4b5ff88a0eeec9bd0fd06a",
+        "300": "\/var\/www\/storage\/fonts\/raleway_300_ad9d3f8761ee766fd1da75743110796e",
+        "normal": "\/var\/www\/storage\/fonts\/raleway_normal_bc54d000e5dbd8710dedfacb3c55fbc6",
+        "500": "\/var\/www\/storage\/fonts\/raleway_500_4ce758b4be4147fef0e8474693332d58",
+        "600": "\/var\/www\/storage\/fonts\/raleway_600_1ee23db0df4b5ff88a0eeec9bd0fd06a",
         "bold": "raleway_bold_e1b2db3aec0c8685f707c0058f82d2d9"
     }
 }

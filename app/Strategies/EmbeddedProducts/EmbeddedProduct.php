@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\EmbeddedTransaction;
+use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -246,16 +247,37 @@ class EmbeddedProduct
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
 
+    public static function checkSukoonMedex($product)
+    {
+        $product = strtoupper(trim($product));
+
+        return in_array($product, EmbeddedProductEnum::getSukoonMedexCodes());
+    }
+
     public function getDocumentList($ep, $transaction)
     {
-        $epDocuments = $this->getPolicyWordings($ep);
+        $isSalama = false;
+        if (! $transaction->isEmpty()) {
+            $paidAt = $transaction->first()->paid_at ?? null;
+            $isSalama = $paidAt && Carbon::parse($paidAt)->lt(Carbon::parse(EmbeddedProductRepository::SALAMA_DATE));
+        }
+
+        $epDocuments = $this->getPolicyWordings($ep, $isSalama);
         $epDocuments = array_merge($epDocuments, $this->getadditionalDocuments($transaction));
 
         return $epDocuments;
     }
 
-    protected function getPolicyWordings($ep)
+    protected function getPolicyWordings($ep, $isSalama)
     {
+        if ($isSalama) {
+            return [[
+                'document_type' => 'Policy Wordings',
+                'document_number' => 'Not Applicable',
+                'url' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+                'path' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+            ]];
+        }
         $epDocuments = [];
 
         // get policy wordings

@@ -7,6 +7,7 @@ use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\TransactionReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -116,6 +117,8 @@ class TransactionReportService extends ManagementReport
         } else {
             $query->groupBy('personal_quotes.code');
         }
+
+        LoggerService::sql(self::class.' - Transaction Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();

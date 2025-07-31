@@ -8,6 +8,7 @@ use App\Enums\PaymentFrequency;
 use App\Exports\Reports\InstallmentReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -99,6 +100,8 @@ class InstallmentReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
+
+        LoggerService::sql(self::class.' - Installment Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();

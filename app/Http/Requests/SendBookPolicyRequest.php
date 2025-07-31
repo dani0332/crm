@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Services\SageApiService;
@@ -120,7 +121,18 @@ class SendBookPolicyRequest extends FormRequest
                             $validator->errors()->add('value', 'Commission (VAT NOT APPLICABLE) OR Commission (VAT APPLICABLE) is required');
                         }
 
-                        $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+                        $isQuoteTypeCar = strtolower(request()->model_type) === strtolower(QuoteTypes::CAR->value);
+                        if ($isQuoteTypeCar && empty($payment->commmission_percentage)) {
+                            $validator->errors()->add('value', 'Commission percentage is required');
+                        }
+                        if ($isQuoteTypeCar && empty($payment->commission_vat)) {
+                            $validator->errors()->add('value', 'Commission VAT is required');
+                        }
+                        if ($isQuoteTypeCar && empty($payment->commission)) {
+                            $validator->errors()->add('value', 'Total commission is required');
+                        }
+
+                        /*$isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
                         $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
                         $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
                         $isQuoteFallUnderSkippableCriteria = (new SageApiService)->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $splits);
@@ -143,7 +155,7 @@ class SendBookPolicyRequest extends FormRequest
                                     }
                                 }
                             }
-                        }
+                        }*/
 
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');

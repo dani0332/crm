@@ -1,5 +1,8 @@
 <script setup>
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  useIsQuoteCreatedAfterCutoff,
+} from '@/inertia/Composables/utilities.js';
 
 import MemberDetails from '../../Components/MemberDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
@@ -57,6 +60,7 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   quoteStatuses: Object,
+  homeCutOffDate: String,
 });
 
 const page = usePage();
@@ -1021,42 +1025,11 @@ const isPlanDetailEnabled = computed(() => {
 // New computed property to check lead date
 const shouldShowPlanDetailsSection = computed(() => {
   // First check if lead is created before the cutoff date
-  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
-  const str = page.props.quote.created_at;
+  const cutoffDate = props.homeCutOffDate
+    ? new Date(props.homeCutOffDate)
+    : new Date('2025-04-10 21:30:00');
 
-  const match = str.match(
-    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
-  );
-  if (!match) return false;
-
-  const [_, day, monthStr, year, hour, min, ampm] = match;
-  const months = {
-    jan: 0,
-    feb: 1,
-    mar: 2,
-    apr: 3,
-    may: 4,
-    jun: 5,
-    jul: 6,
-    aug: 7,
-    sep: 8,
-    oct: 9,
-    nov: 10,
-    dec: 11,
-  };
-  let h = parseInt(hour, 10);
-  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
-  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
-
-  const createdDate = new Date(
-    parseInt(year),
-    months[monthStr.toLowerCase().slice(0, 3)],
-    parseInt(day),
-    h,
-    parseInt(min),
-  );
-
-  if (createdDate >= cutoffDate) {
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
     return false;
   }
 
@@ -1162,6 +1135,7 @@ const shouldShowPlanDetailsSection = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2325,6 +2299,13 @@ const shouldShowPlanDetailsSection = computed(() => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
+    />
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
 
     <AuditLogs

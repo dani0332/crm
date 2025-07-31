@@ -1304,6 +1304,11 @@ class HomeQuoteService extends BaseService
 
         // Get quote details with relations
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+        if (!$quote) {
+            throw ValidationException::withMessages(['error' => 'Quote not found with the provided UUID.']);
+        }
+
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer', 'homeQuote']);
@@ -1337,11 +1342,15 @@ class HomeQuoteService extends BaseService
 
     public function createRenewalPlan(string $quoteUID, array $data)
     {
-        $planId = InsuranceProviderPlan::where([
-            'text' => $data['plan_name'],
-            'quote_type_id' => QuoteTypeId::Home,
-        ])->value('id');
+        $planId = InsuranceProviderPlan::whereRaw('LOWER(text) = ?', [strtolower(trim($data['plan_name']))])
+            ->where('quote_type_id', QuoteTypeId::Home)
+            ->value('id');
 
+        if (! $planId) {
+            LoggerService::error('No plan found for plan name: '.$data['plan_name']);
+
+            return false;
+        }
         $request = [[
             'planId' => $planId,
             'actualPremium' => $data['premium'],

@@ -31,4 +31,6 @@ enum LoggerFeatureEnum: string
     case SAGE_ENDORSEMENT_BOOKING = 'sage-endorsement-booking';
     case SAGE_POST_PREPAYMENT = 'sage-post-prepayment';
     case CAR_OCB_INTRO_EMAIL = 'car-ocb-intro-email';
+    case SAGE_EP_BOOKING = 'sage-ep-booking';
+    case SAGE_EP_BOOKING_REVERSAL = 'sage-ep-booking-reversal';
 }

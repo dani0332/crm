@@ -13,6 +13,9 @@ enum QuoteFlowType: int
     case NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS = 7;
     case HOME_AUTOMATED_FOLLOWUPS = 8;
     case MOTOR_PCP_FOLLOWUPS = 9;
+    case LIFE_AUTOMATED_FOLLOWUPS = 12;
+    case LIFE_ADVANCE_BIRTHDAY_WISH = 13;
+    case LIFE_BIRTHDAY_WISH = 14;
     case SIC_HEALTH_FOLLOWUPS_WA = 10;
 
     public function label(): string

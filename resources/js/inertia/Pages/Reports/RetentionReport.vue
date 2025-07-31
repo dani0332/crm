@@ -746,7 +746,7 @@ function handleDateChange(dateRange) {
             filters?.policyExpiryDate?.length === 0
           "
           :min-date="filters?.policyExpiryDate && filters?.policyExpiryDate[0]"
-          :max-date="filters?.policyExpiryDate && filters?.policyExpiryDate[1]"
+          :max-date="new Date()"
           model-type="yyyy-MM-dd"
         />
 

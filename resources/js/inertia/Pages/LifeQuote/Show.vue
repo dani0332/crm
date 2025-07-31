@@ -1,12 +1,24 @@
 <script setup>
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  numberFormat,
+  preventInvalidInputs,
+  useIsQuoteCreatedAfterCutoff,
+} from '@/inertia/Composables/utilities.js';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import CreatePlanVariant from './Partials/CreateVariant.vue';
+import EditPlan from './Partials/EditPlan.vue';
+import { watch } from 'vue';
 
 const page = usePage();
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteStatuses: Object,
   quoteType: String,
@@ -18,6 +30,7 @@ defineProps({
   lostReasons: Array,
   embeddedProducts: Array,
   customerTypeEnum: Object,
+  can: Object,
   nationalities: Array,
   memberRelations: Array,
   membersDetails: Array,
@@ -32,11 +45,9 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   insuranceProviders: Array,
-  enums: Object,
   permissions: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -44,26 +55,430 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  quoteNotes: Object,
+  noteDocumentType: Array,
+  modelType: String,
+  cdnPath: String,
+  ecomLifeInsuranceQuoteUrl: String,
+  currencies: Array,
+  lifeRiders: Array,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  emailStatuses: Array,
+  isBetaUser: Boolean,
+  lifeCutOffDate: String,
 });
+
 const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
 const modelClass = 'App\\Models\\LifeQuote';
+const personalModelClass = 'App\\Models\\PersonalQuote';
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const quoteStatusEnum = page.props.quoteStatuses;
+const selectPlanLoader = ref({});
+const emit = defineEmits(['success', 'error']);
 const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
   doc: false,
   docConfirm: false,
+  createPlan: false,
+  sendConfirm: false,
+  createPlanVariant: false,
+  editPlan: false,
 });
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
+};
+
+const { copy, copied } = useClipboard();
+const loader = ref({
+  link: false,
+  download: false,
+  exchangeRate: false,
+});
+
+const planExchangeRate = ref(page.props.quote?.life_quote?.exchange_rate ?? 0);
+const isExchangeRateEditable = ref(false);
+
+const selectedProviderPlan = page.props.quote.plan_id;
+const selectedProviderPlanVersion =
+  page.props?.quote?.quote_customer_plan?.plan?.version ?? 0;
+
+const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
+  createReusableTemplate();
+
+const variantPlan = ref(null);
+const selectedPlans = ref([]);
+let selectedPlan = ref(null);
+
+let ecomDetail = ref(null);
+let riders = ref({});
+
+const activeRiders = data => {
+  if (!data) {
+    return 'N/A';
+  }
+  return data
+    .filter(item => item.active === true)
+    .map(item => item.text)
+    .join(', ');
+};
+
+const viewPlan = item => {
+  selectedPlan = item;
+  modals.editPlan = true;
+};
+
+// watch (
+//   () => selectedPlan,
+//    (editPlan) => {
+//     if(editPlan){
+
+//     }
+//   }
+// )
+
+// plans
+const planDataTable = ref();
+
+const plansTable = reactive({
+  isLoading: false,
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+      sortable: true,
+      fixed: true,
+      width: 400,
+    },
+    {
+      text: 'Plan',
+      value: 'planName',
+      width: 100,
+    },
+    {
+      text: 'Variant',
+      value: 'variantVersion',
+      width: 100,
+    },
+    {
+      text: 'Type of Plan',
+      value: 'planTypeId',
+      sortable: true,
+    },
+    {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteNo',
+    },
+    {
+      text: 'Price',
+      value: 'totalPrice',
+      sortable: true,
+    },
+    {
+      text: 'Exchange Rate (%)',
+      value: 'exchangeRate',
+      sortable: true,
+    },
+    {
+      text: 'Price in (AED)',
+      value: 'priceInAED',
+      sortable: true,
+    },
+    {
+      text: 'Payment Frequency',
+      value: 'paymentTerm',
+      sortable: true,
+    },
+    {
+      text: 'Currency',
+      value: 'currency',
+      sortable: true,
+    },
+    {
+      text: 'Sum Assured',
+      value: 'sumInsured',
+      sortable: true,
+    },
+    {
+      text: 'Policy Term (Years)',
+      value: 'policyTerm',
+      sortable: true,
+    },
+    {
+      text: 'Total Annual Price',
+      value: 'totalAnnualPremium',
+      sortable: true,
+    },
+    {
+      text: 'Total Annual Price (AED)',
+      value: 'totalAnnualPremiumAED',
+      sortable: true,
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const listQuotePlansFiltered = ref([]);
+
+watchEffect(() => {
+  listQuotePlansFiltered.value = plansTable.data
+    .slice()
+    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+});
+
+const computedListQuotePlans = computed(() => {
+  return listQuotePlansFiltered.value;
+});
+
+const sendOCAEmail = () => {
+  const hiddenPlans = selectedPlans.value.filter(plan => plan.isDisabled);
+  if (hiddenPlans.length > 0) {
+    notification.error({
+      title: 'You cannot select a hidden plan',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+
+  if (selectedPlans.value.length < 1) {
+    notification.error({
+      title: 'Minimum 1 plan should be selected',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+
+  if (selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Maximum 5 plans can be selected',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+
+  loader.value.link = true;
+
+  // send email
+  axios
+    .post(route('life-quotes-send-oca-email'), {
+      quote_uuid: page.props.quote.uuid,
+      plan_ids: selectedPlans.value.map(plan => plan.planId),
+    })
+    .then(res => {
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+      loader.value.link = false;
+    })
+    .catch(err => {
+      console.log(err);
+      notification.error({
+        title: 'Something went wrong',
+        position: 'top',
+      });
+      loader.value.link = false;
+    });
+};
+
+const downloadComparisionPdf = () => {
+  const hiddenPlans = selectedPlans.value.filter(plan => plan.isDisabled);
+  if (hiddenPlans.length > 0) {
+    notification.error({
+      title: 'You cannot select a hidden plan',
+      position: 'top',
+    });
+    loader.value.download = false;
+    return;
+  }
+
+  if (selectedPlans.value.length < 1) {
+    notification.error({
+      title: 'Minimum 1 plan should be selected',
+      position: 'top',
+    });
+    loader.value.download = false;
+    return;
+  }
+
+  if (selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Maximum 5 plans can be selected',
+      position: 'top',
+    });
+    loader.value.download = false;
+    return;
+  }
+
+  loader.value.download = true;
+
+  axios
+    .post(
+      route('life-quotes-download-comparision-pdf'),
+      {
+        quote_uuid: page.props.quote.uuid,
+        plan_ids: selectedPlans.value.map(plan => plan.planId),
+      },
+      {
+        responseType: 'blob',
+      },
+    )
+    .then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Extract filename from response headers or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'Life Insurance Comparison Table.pdf';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      loader.value.download = false;
+      notification.success({
+        title: 'PDF downloaded successfully',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      loader.value.download = false;
+      notification.error({
+        title: 'Error downloading PDF',
+        position: 'top',
+      });
+    });
+};
+
+const getPaymentTermTitle = months => {
+  const mapping = {
+    12: 'Monthly',
+    4: 'Quarterly',
+    2: 'Semi-Annually',
+    1: 'Annually',
+  };
+  return mapping[months] || '';
+};
+
+const getTotalAnnualPremium = (paymentTerm, premium) => {
+  const paymentTermTitle = getPaymentTermTitle(paymentTerm);
+  const mapping = {
+    Monthly: 12,
+    Quarterly: 4,
+    'Semi-Annually': 2,
+    Annually: 1,
+  };
+  let value = premium * mapping[paymentTermTitle];
+  return numberFormat(value);
+};
+
+const getTotalAnnualPremiumAED = item => {
+  if (item.currency !== 'AED' && selectedProviderPlan === item.planId) {
+    const paymentTermTitle = getPaymentTermTitle(item.paymentTerm);
+    const mapping = {
+      Monthly: 12,
+      Quarterly: 4,
+      'Semi-Annually': 2,
+      Annually: 1,
+    };
+
+    const premiumInAED =
+      Math.round(
+        item.isApi
+          ? item.actualPremium * planExchangeRate.value * 100
+          : item.totalPrice * planExchangeRate.value * 100,
+      ) / 100;
+    const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
+
+    return numberFormat(totalAnnualPremiumAED);
+  } else if (item.currency === 'AED') {
+    return item.isManualPlan
+      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
+      : getTotalAnnualPremium(item.paymentTerm, item.actualPremium);
+  }
+  return 'N/A';
+};
+
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+
+const onCreatePlan = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['plansTable.data'],
+    onStart: () => {
+      modals.createPlan = false;
+    },
+    onFinish: () => {
+      onLoadAvailablePlansData();
+
+      notification.success({
+        title: 'Life Plan created successfully',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const onCreateVariant = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['plansTable.data'],
+    onStart: () => {
+      modals.createPlanVariant = false;
+    },
+    onFinish: () => {
+      notification.success({
+        title: 'Plan Variant created successfully',
+        position: 'top',
+      });
+
+      onLoadAvailablePlansData();
+    },
+  });
+};
+
+const addVariant = plan => {
+  variantPlan.value = plan;
+  modals.createPlanVariant = true;
+};
+
+const onPlanError = error => {
+  notification.error({
+    title: error?.message || 'An error occurred while processing your request',
+    position: 'top',
+  });
 };
 
 const advisorOptions = computed(() => {
@@ -196,6 +611,7 @@ const activityEdit = data => {
     : null;
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
+  activityForm.quote_id = page.props.quote.id;
 };
 
 const onActivitySubmit = isValid => {
@@ -291,10 +707,20 @@ const industryTypeOptions = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.quoteStatuses.map(status => {
+    let statusDisabled = false;
+    if (status.id == quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const allowStatusUpdate = computed(() => {
@@ -312,9 +738,8 @@ const leadStatusForm = useForm({
   quote_uuid: page.props.quote.uuid,
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
-  notes: page.props.quote.life_quote_request_detail?.notes || null,
-  lostReason:
-    page.props.quote.life_quote_request_detail?.lost_reason_id || null,
+  notes: page.props.quote.quote_detail?.notes || null,
+  lostReason: page.props.quote.quote_detail?.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -482,10 +907,94 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
+  if (page.props.quote.is_ecommerce) {
+    onLoadAvailablePlansData();
+  }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
+const onLoadAvailablePlansData = async () => {
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/life/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      const planData = res?.data[0];
+
+      const foundPlan = planData.find(
+        plan =>
+          plan.planId === selectedProviderPlan &&
+          plan.version === selectedProviderPlanVersion &&
+          !plan.isDisabled,
+      );
+
+      ecomDetail.value = foundPlan;
+
+      plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+    })
+    .catch(err => {
+      console.log(err);
+      notification.error({
+        title: 'Error loading plans',
+        position: 'top',
+      });
+    });
+};
+
+const confirmSendEmail = () => {
+  loader.value.link = true;
+};
+
+const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
+  selectPlanLoader.value[planUuid] = true;
+  axios
+    .post('/personal-quotes/life-plan-selected', {
+      planId: planId,
+      quoteId: quoteId,
+      version: version,
+      isUW: isUW,
+    })
+    .then(response => {
+      selectPlanLoader.value[planUuid] = false;
+      notification.success({
+        title: 'Plan selected successfully',
+        position: 'top',
+      });
+      emit('success');
+
+      setTimeout(() => {
+        location.reload();
+      }, 2000);
+
+      // onLoadAvailablePlansData()
+    })
+    .catch(error => {
+      notification.error({
+        title: error?.response?.data?.message ?? 'something went wrong',
+        position: 'top',
+      });
+      console.log('error', error);
+      emit('error');
+      selectPlanLoader.value[planUuid] = true;
+    });
+};
+
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+const shouldShowPlanDetailsSection = computed(() => {
+  const cutoffDate = props.lifeCutOffDate
+    ? new Date(props.lifeCutOffDate)
+    : new Date('2025-07-25 12:00:00');
+
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
+    return false;
+  }
+
+  return true;
+});
+
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -508,11 +1017,173 @@ const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
 
+const getBMITag = () => {
+  const bmi = page.props.quote.life_quote?.bmi;
+
+  const bmiRanges = [
+    {
+      min: 0,
+      max: 15.99,
+      text: 'High Risk-Underweight',
+      color: 'red',
+      bgColor: 'red-100',
+    },
+    {
+      min: 16,
+      max: 18.4,
+      text: 'Low Risk-Underweight',
+      color: 'yellow',
+      bgColor: 'yellow-300',
+    },
+    {
+      min: 18.41,
+      max: 25,
+      text: 'Normal',
+      color: 'green',
+      bgColor: 'green-200',
+    },
+    {
+      min: 25.01,
+      max: 30,
+      text: 'Low Risk-Overweight',
+      color: 'yellow',
+      bgColor: 'yellow-300',
+    },
+    {
+      min: 30.01,
+      max: 40,
+      text: 'Low Risk-Obese',
+      color: 'yellow',
+      bgColor: 'yellow-300',
+    },
+    {
+      min: 40.01,
+      max: Infinity,
+      text: 'High Risk-Obese',
+      color: 'red',
+      bgColor: 'red-100',
+    },
+  ];
+
+  const tag = bmiRanges.find(range => bmi >= range.min && bmi <= range.max);
+
+  return tag || { text: 'Invalid BMI', color: 'gray' };
+};
+
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
-</script>
 
+const totalAnnualPrice = computed(() => {
+  if (!ecomDetail.value) return 'N/A';
+
+  let totalPrice =
+    (ecomDetail.value?.isManualPlan
+      ? ecomDetail.value?.totalPrice
+      : ecomDetail.value?.actualPremium) *
+    (page.props.quote?.life_quote?.payment_term ?? 1);
+
+  return totalPrice;
+});
+
+const emailStatusesTable = reactive({
+  isLoading: false,
+  columns: [
+    {
+      text: 'Id',
+      value: 'id',
+    },
+    {
+      text: 'Email Subject',
+      value: 'email_subject',
+    },
+    {
+      text: 'Email Address',
+      value: 'email_address',
+    },
+    {
+      text: 'Status',
+      value: 'email_status',
+    },
+    {
+      text: 'Reason',
+      value: 'reason',
+    },
+    {
+      text: 'Template Id',
+      value: 'template_id',
+    },
+    {
+      text: 'Customer Id',
+      value: 'customer_id',
+    },
+    {
+      text: 'Created At',
+      value: 'created_at',
+    },
+    {
+      text: 'Updated At',
+      value: 'updated_at',
+    },
+  ],
+});
+
+const emailStatusesTableColumns = computed(() => {
+  return emailStatusesTable.columns.filter(column => {
+    if (!page.props.isAdmin) {
+      return column.value !== 'customer_id' && column.value !== 'template_id';
+    }
+    return column;
+  });
+});
+
+const updateExchangeRate = item => {
+  loader.value.exchangeRate = true;
+
+  axios
+    .post('/personal-quotes/life/update-exchange-rate', {
+      quoteUID: page.props.quote.uuid,
+      exchangeRate: planExchangeRate.value,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Exchange rate updated successfully',
+        position: 'top',
+      });
+      isExchangeRateEditable.value = false;
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Failed to update exchange rate',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loader.value.exchangeRate = false;
+    });
+};
+
+const enableExchangeRateEdit = () => {
+  isExchangeRateEditable.value = true;
+};
+
+const getTotalAnnualPriceAED = () => {
+  const priceInAED =
+    Math.round(
+      (ecomDetail.value?.isManualPlan
+        ? ecomDetail.value?.totalPrice * planExchangeRate.value
+        : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100,
+    ) / 100;
+
+  return numberFormat(
+    priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
+  );
+};
+</script>
 <template>
   <div>
     <Head title="Life Quotes" />
@@ -567,6 +1238,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
           >
             Duplicate Lead
           </x-button>
+
+          <LeadNotes
+            :documentType="noteDocumentType"
+            :notes="quoteNotes"
+            :modelType="modelType"
+            :quote="quote"
+            :cdn="cdnPath"
+          />
+
           <Link
             v-if="can(permissionsEnum.LifeQuotesList)"
             :href="route('life-quotes-list')"
@@ -628,6 +1308,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -726,18 +1407,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUM INSURED VALUE</dt>
-                <dd>{{ quote.sum_insured_value }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
                 <dd>
-                  {{ quote.life_quote_request_detail?.next_followup_date }}
+                  {{ quote.quote_detail?.next_followup_date }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSAPP CODE</dt>
-                <dd>{{ quote.life_quote_request_detail?.transapp_code }}</dd>
+                <dd>{{ quote.quote_detail?.transapp_code }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
@@ -746,32 +1423,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>
-                  {{ quote.life_quote_request_detail?.lost_reason?.text }}
+                  {{ quote.quote_detail?.lost_reason?.text }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote.premium }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CURRENCY</dt>
-                <dd>{{ quote.currency?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PURPOSE OF INSURANCE</dt>
-                <dd>{{ quote.purpose_of_insurance?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TYPE OF INSURANCE</dt>
-                <dd>{{ quote.insurance_tenure?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TENURE OF COVER</dt>
-                <dd>{{ quote.number_of_years?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">OTHERS INFO</dt>
-                <dd>{{ quote.others_info }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY EXPIRY DATE</dt>
@@ -846,6 +1503,38 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     {{ linkedQuoteDetails.childLeads ?? '' }}
                   </Link>
                 </div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TYPE OF INSURANCE</dt>
+                <dd>{{ quote.life_quote?.insurance_tenure?.text }}</dd>
+              </div>
+            </dl>
+          </div>
+          <hr class="mt-1 mb-1" />
+          <div class="mt-2">
+            <h3 class="font-semibold text-primary-800 text-lg mb-2">
+              Quote Details
+            </h3>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PURPOSE OF INSURANCE</dt>
+                <dd>{{ quote.life_quote?.purpose_of_insurance?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TENURE OF COVER</dt>
+                <dd>{{ quote.life_quote?.number_of_years?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENCY</dt>
+                <dd>{{ quote.life_quote?.currency?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUM INSURED VALUE</dt>
+                <dd>{{ numberFormat(quote.life_quote?.sum_insured_value) }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL INFORMATION</dt>
+                <dd>{{ quote.life_quote?.others_info }}</dd>
               </div>
             </dl>
           </div>
@@ -925,13 +1614,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality?.text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">AGE</dt>
+                  <dd>{{ quote.life_quote?.age }}</dd>
+                </div>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
                   <dd>{{ quote.gender }}</dd>
@@ -974,16 +1664,50 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">HEIGHT</dt>
+                  <dd>{{ quote.life_quote?.height }} CM</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">WEIGHT</dt>
+                  <dd>{{ quote.life_quote?.weight }} KG</dd>
+                </div>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="quote.life_quote?.age && quote.life_quote?.age >= 20"
+                >
+                  <dt class="font-medium">BMI</dt>
+                  <dd>
+                    {{ quote.life_quote?.bmi }}
+                    <span
+                      :class="`inline-block px-2 py-1 text-xs font-medium rounded-full bg-${getBMITag().bgColor} text-${getBMITag().color}-800`"
+                    >
+                      {{ getBMITag().text }}
+                    </span>
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
-                  <dd>{{ quote.marital_status?.text }}</dd>
+                  <dd>{{ quote.life_quote?.marital_status?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">CHILDREN</dt>
-                  <dd>{{ quote.children?.text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">IS SMOKER</dt>
-                  <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
+                  <x-tooltip position="left">
+                    <dt class="font-medium">
+                      HAVE YOU CONSUMED ANY PRODUCTS WITH<br />NICOTINE FOR THE
+                      PAST 12 MONTHS?
+                    </dt>
+                    <template #tooltip>
+                      <div class="whitespace-normal text-xs">
+                        Nicotine-containing products cover a range of items such
+                        as tobacco, sisha, vape, nicotine gums, and related
+                        products.
+                      </div>
+                    </template>
+                  </x-tooltip>
+                  <dd>{{ quote.life_quote?.is_smoker == 1 ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">PRIVATE CLIENT</dt>
@@ -1231,105 +1955,21 @@ const applyEmiratesIdNumMasking = emiratesId =>
       "
       modelType="Life"
       :quote="quote"
-      :insly-id="quote?.life_quote_request_detail?.insly_id"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  :options="leadStatusOptions"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                  placeholder="Lead Status"
-                  class="w-full"
-                  filterable
-                  label="Status"
-                />
-                <x-textarea
-                  v-model="leadStatusForm.notes"
-                  type="text"
-                  placeholder="Lead Notes"
-                  class="w-full"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                  label="Notes"
-                />
-              </div>
-            </div>
-            <div class="w-full md:w-2/3">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-if="
-                    leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
-                  "
-                  v-model="leadStatusForm.lostReason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                  :disabled="lockLeadSectionsDetails.lead_status"
-                  label="Lost Reason"
-                />
-                <x-input
-                  type="text"
-                  v-model="quote.transaction_type_text"
-                  class="w-full"
-                  :disabled="true"
-                  label="Transaction Type"
-                />
-              </div>
-            </div>
-          </div>
-          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate || isDisabled"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Change Status
-            </x-button>
-          </StatusUpdateButtonTemplate>
-          <div class="flex justify-end">
-            <x-tooltip
-              v-if="lockLeadSectionsDetails.lead_status"
-              placement="bottom"
-            >
-              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                The lead status cannot be manually updated once it has reached
-                'Transaction Approved'
-              </template>
-            </x-tooltip>
-            <StatusUpdateButtonReuseTemplate v-else />
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="page.props.quoteStatusEnum"
+    />
 
     <PlanDetails
+      v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
@@ -1337,6 +1977,715 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :isAddUpdate="isAddUpdate"
     />
+
+    <template v-else>
+      <div class="p-4 rounded shadow mb-6 bg-white">
+        <Collapsible :expanded="sectionExpanded">
+          <template #header>
+            <div class="flex flex-wrap gap-4 justify-between items-center">
+              <h3 class="font-semibold text-primary-800 text-lg">
+                Available Plans
+                <x-tag size="sm">{{
+                  listQuotePlansFiltered.length || 0
+                }}</x-tag>
+              </h3>
+            </div>
+          </template>
+
+          <template #body>
+            <x-divider class="my-4" />
+            <div class="flex flex-wrap gap-3 justify-end mb-3">
+              <x-button
+                size="sm"
+                @click.prevent="downloadComparisionPdf"
+                :loading="loader.download"
+                color="emerald"
+                v-if="selectedPlans.length > 0"
+              >
+                Download PDF Comparison
+              </x-button>
+
+              <x-button
+                @click.prevent="sendOCAEmail"
+                size="sm"
+                :loading="loader.link"
+                color="orange"
+                :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Send OCA Email to Customer
+              </x-button>
+              <x-button
+                v-if="plansTable.data.length > 0"
+                size="sm"
+                color="orange"
+                @click.prevent="
+                  onCopyText(ecomLifeInsuranceQuoteUrl + quote.uuid)
+                "
+              >
+                Copy Link
+              </x-button>
+              <x-modal
+                v-model="modals.sendConfirm"
+                title="Send Email"
+                show-close
+                backdrop
+              >
+                <p>Are you sure send email to customer?</p>
+                <template #actions>
+                  <div class="text-right space-x-4">
+                    <x-button
+                      size="sm"
+                      ghost
+                      @click.prevent="modals.sendConfirm = false"
+                    >
+                      Cancel
+                    </x-button>
+                    <x-button
+                      size="sm"
+                      color="error"
+                      @click.prevent="confirmSendEmail"
+                      :loading="loader.link"
+                    >
+                      Send
+                    </x-button>
+                  </div>
+                </template>
+              </x-modal>
+
+              <AddPlanButtonTemplate v-slot="{ isDisabled }">
+                <x-button
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="modals.createPlan = true"
+                  :disabled="isDisabled"
+                >
+                  Add Plan
+                </x-button>
+              </AddPlanButtonTemplate>
+
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.plan_selection"
+                position="left"
+                align="center"
+                class="yoyo-tip"
+              >
+                <AddPlanButtonReuseTemplate :isDisabled="true" />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    No further actions can be taken on an issued policy. For
+                    changes, such as a change in insurer, go to 'Send Update',
+                    select 'Add Update', and choose 'Cancellation from inception
+                    and reissuance.
+                  </div>
+                </template>
+              </x-tooltip>
+              <AddPlanButtonReuseTemplate v-else />
+
+              <DataTable
+                ref="planDataTable"
+                v-model:items-selected="selectedPlans"
+                table-class-name="tablefixed compact"
+                :headers="plansTable.columns"
+                :items="computedListQuotePlans || []"
+                border-cell
+                hide-rows-per-page
+                :rows-per-page="15"
+                class="flex-wrap"
+                :hide-footer="computedListQuotePlans.length < 15"
+              >
+                <template #item-totalPrice="item">
+                  <span class="copay-max">{{
+                    item.isManualPlan
+                      ? numberFormat(item.totalPrice)
+                      : numberFormat(item.actualPremium)
+                  }}</span>
+                </template>
+
+                <template #item-sumInsured="item">
+                  <span class="copay-max">{{
+                    numberFormat(item.sumInsured)
+                  }}</span>
+                </template>
+
+                <template #item-planTypeId="item">
+                  <span class="copay-max">{{ item.planType }}</span>
+                </template>
+
+                <template #item-variantVersion="item">
+                  <span v-if="item.version" class="copay-max"
+                    >v.{{ item.version }}</span
+                  >
+                </template>
+
+                <template #item-paymentTerm="item">
+                  <span class="copay-max">{{
+                    getPaymentTermTitle(item.paymentTerm)
+                  }}</span>
+                </template>
+
+                <template #item-exchangeRate="item">
+                  <div
+                    v-if="
+                      item.currency != 'AED' &&
+                      selectedProviderPlan == item.planId &&
+                      selectedProviderPlanVersion == (item.version || 0)
+                    "
+                    class="flex items-center gap-2"
+                  >
+                    <div class="flex-1">
+                      <x-input
+                        v-model="planExchangeRate"
+                        type="text"
+                        class="w-full"
+                        :disabled="!isExchangeRateEditable"
+                        @keydown="e => preventInvalidInputs(e, false, true)"
+                        placeholder="Exchange rate"
+                      />
+                    </div>
+                    <x-button
+                      v-if="!isExchangeRateEditable"
+                      size="xs"
+                      color="blue"
+                      @click="enableExchangeRateEdit"
+                    >
+                      Edit
+                    </x-button>
+                    <x-button
+                      v-if="isExchangeRateEditable"
+                      size="xs"
+                      color="emerald"
+                      :loading="loader.exchangeRate"
+                      :disabled="loader.exchangeRate"
+                      @click="updateExchangeRate(item)"
+                    >
+                      Update
+                    </x-button>
+                  </div>
+                </template>
+
+                <template #item-priceInAED="item">
+                  <div
+                    v-if="
+                      item.currency != 'AED' &&
+                      selectedProviderPlan == item.planId &&
+                      selectedProviderPlanVersion == (item.version || 0)
+                    "
+                    class="copay-max"
+                  >
+                    <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
+                      {{
+                        numberFormat(
+                          Math.round(
+                            item.isApi
+                              ? item.actualPremium * planExchangeRate * 100
+                              : item.totalPrice * planExchangeRate * 100,
+                          ) / 100,
+                        )
+                      }}
+                    </div>
+
+                    <div v-else>N/A</div>
+                  </div>
+                  <div v-else-if="item.currency != 'AED'" class="copay-max">
+                    N/A
+                  </div>
+                  <div v-else class="copay-max">
+                    {{ numberFormat(item.actualPremium) }}
+                  </div>
+                </template>
+
+                <template #item-totalAnnualPremium="item">
+                  <span class="copay-max">{{
+                    item.isManualPlan
+                      ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
+                      : getTotalAnnualPremium(
+                          item.paymentTerm,
+                          item.actualPremium,
+                        )
+                  }}</span>
+                </template>
+
+                <template #item-totalAnnualPremiumAED="item">
+                  <span class="copay-max">{{
+                    getTotalAnnualPremiumAED(item)
+                  }}</span>
+                </template>
+
+                <template #item-providerName="{ providerName, isDisabled }">
+                  <p>
+                    {{ providerName }}
+                  </p>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="isDisabled"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      Hidden
+                    </x-tag>
+                  </div>
+                </template>
+
+                <template
+                  #item-planName="{
+                    planName,
+                    isUnderwritten,
+                    isManualPlan,
+                    isApi,
+                    isRateCalculator,
+                  }"
+                >
+                  <p>
+                    {{ planName }}
+                  </p>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="isUnderwritten"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-green-300 text-green-800 font-semibold px-2 py-1 rounded-md"
+                    >
+                      UW
+                    </x-tag>
+                    <x-tag
+                      v-else-if="isManualPlan && !isApi"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"
+                    >
+                      Manual
+                    </x-tag>
+                    <x-tag
+                      v-else-if="isApi"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-orange-200 text-orange-700 font-semibold px-2 py-1 rounded-md"
+                    >
+                      API
+                    </x-tag>
+                    <x-tag
+                      v-else-if="isRateCalculator"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px] bg-green-200 text-green-700 font-semibold px-2 py-1 rounded-md"
+                    >
+                      Rate Calculator
+                    </x-tag>
+                  </div>
+                </template>
+
+                <template #item-action="item">
+                  <div class="flex gap-2 pr-2">
+                    <x-button
+                      size="xs"
+                      color="primary"
+                      outlined
+                      @click.prevent="viewPlan(item)"
+                    >
+                      View
+                    </x-button>
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      outlined
+                      @click.prevent="
+                        onCopyText(
+                          ecomLifeInsuranceQuoteUrl +
+                            quote.uuid +
+                            `/payment/?providerCode=${item.providerCode}&planId=${item.planId}&version=${item.version}`,
+                        )
+                      "
+                    >
+                      Copy
+                    </x-button>
+                    <span>
+                      <x-button
+                        v-if="
+                          selectedProviderPlan == item.planId &&
+                          selectedProviderPlanVersion == (item.version || 0) &&
+                          !item.isDisabled
+                        "
+                        size="xs"
+                        color="orange"
+                        outlined
+                        :disabled="true"
+                        >Selected</x-button
+                      >
+
+                      <x-button
+                        v-else-if="
+                          !(
+                            ecomDetail?.isUnderwritten &&
+                            selectedProviderPlan == item.planId
+                          )
+                        "
+                        size="xs"
+                        color="emerald"
+                        outlined
+                        :loading="selectPlanLoader[`${item._id}`]"
+                        @click.prevent="
+                          selectPlan(
+                            item.planId,
+                            page.props.quote.uuid,
+                            item.version,
+                            item._id,
+                            item.isUnderwritten,
+                          )
+                        "
+                      >
+                        Select
+                      </x-button>
+                    </span>
+                    <span v-if="!item.isUnderwritten">
+                      <x-button
+                        size="xs"
+                        color="emerald"
+                        @click.prevent="addVariant(item)"
+                      >
+                        Add Variant
+                      </x-button>
+                    </span>
+                  </div>
+                </template>
+              </DataTable>
+            </div>
+          </template>
+        </Collapsible>
+      </div>
+    </template>
+
+    <!-- Ecom Plan Detail -->
+    <div v-show="ecomDetail != null" class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">E-COM Detail</h3>
+          </div>
+        </template>
+
+        <template #body>
+          <x-divider class="my-4" />
+          <div>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Price</dt>
+                <dd>
+                  {{
+                    ecomDetail?.isManualPlan
+                      ? numberFormat(ecomDetail?.totalPrice)
+                      : (numberFormat(ecomDetail?.actualPremium) ?? 'N/A')
+                  }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Total Annual Price</dt>
+                <dd>
+                  {{ numberFormat(totalAnnualPrice) }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
+                <dt class="font-medium uppercase">Total Price AED</dt>
+                <dd>
+                  {{
+                    ecomDetail?.isManualPlan
+                      ? numberFormat(ecomDetail?.totalPrice * planExchangeRate)
+                      : numberFormat(
+                          ecomDetail?.actualPremium * planExchangeRate,
+                        )
+                  }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
+                <dt class="font-medium uppercase">Total Annual Price AED</dt>
+                <dd>
+                  {{ getTotalAnnualPriceAED() }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Payment Term</dt>
+                <dd>
+                  {{
+                    getPaymentTermTitle(quote?.life_quote?.payment_term) ??
+                    'N/A'
+                  }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Authorised AT</dt>
+                <dd>{{ quote?.payments[0]?.authorized_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">PAID AT</dt>
+                <dd>{{ quote?.payment_paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote?.payment_status?.text ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ ecomDetail?.providerName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT METHOD</dt>
+                <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ ecomDetail?.planName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ECOMMERCE</dt>
+                <dd>{{ quote.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">QUOTE LINK</dt>
+                <dd>{{ ecomLifeInsuranceQuoteUrl + quote.uuid }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UNDER WRITTEN</dt>
+                <dd v-if="ecomDetail == null">N/A</dd>
+                <dd v-else>{{ ecomDetail?.isUnderwritten ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN SOURCE</dt>
+                <dd v-if="ecomDetail == null">N/A</dd>
+                <dd v-else>{{ ecomDetail?.isApi ? 'API' : 'Manual' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">VARIENT</dt>
+                <dd>
+                  {{ ecomDetail?.version ? 'V' + ecomDetail?.version : 'N/A' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT REFERENCE</dt>
+                <dd>{{ quote?.life_quote?.payment_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ORDER REFERENCE</dt>
+                <dd>{{ quote?.order_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDONS</dt>
+                <dd>{{ activeRiders(ecomDetail?.riders) ?? 'N/A' }}</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="emailStatusesTableColumns"
+            :items="emailStatuses || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="emailStatuses.length < 15"
+          >
+            <template #item-email_status="item">
+              <span class="text-primary-600 uppercase">{{
+                item.email_status
+              }}</span>
+            </template>
+            <template #item-reason="item">
+              <span class="text-primary-600 uppercase">{{ item.reason }}</span>
+            </template>
+          </DataTable>
+        </template>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Documents
+            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+          </h3>
+          <div class="flex gap-2">
+            <Link
+              v-if="
+                quote?.insly_id &&
+                canAny([
+                  permissionsEnum.VIEW_LEGACY_DETAILS,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+              :href="`/legacy-policy/${quote.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
+            <x-tooltip placement="top">
+              <x-button
+                @click.prevent="getupdateDocumentValidate(true)"
+                v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
+                size="sm"
+                color="green"
+              >
+                Verify Documents
+              </x-button>
+              <template #tooltip>
+                Verify Documents: Clicking this button confirms that all
+                submitted documents are accurate and valid.</template
+              >
+            </x-tooltip>
+            <x-button
+              @click.prevent="modals.doc = true"
+              size="sm"
+              color="primary"
+              v-if="readOnlyMode.isDisable === true"
+            >
+              Upload Documents
+            </x-button>
+            <x-button
+              size="sm"
+              color="red"
+              v-if="
+                displaySendPolicyButton &&
+                permissions.notProductionApproval &&
+                permissions.isQuoteDocumentEnabled
+              "
+              @click="sendPolicyToClient"
+            >
+              Send Policy
+            </x-button>
+          </div>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="quoteDocumentsTable.columns"
+          :items="quoteDocuments || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="quoteDocuments.length < 15"
+        >
+          <template #item-original_name="item">
+            <a
+              :href="cdnPath + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+            >
+              {{ item.original_name }}
+            </a>
+          </template>
+          <template #item-action="{ doc_name }">
+            <div>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+
+        <x-modal
+          v-model="modals.doc"
+          size="xl"
+          title="Upload Documents"
+          show-close
+          backdrop
+        >
+          <LazyDocumentUploader
+            :members="memberDataDocs(travelers)"
+            :doc-types="documentTypes"
+            :docs="quoteDocuments || []"
+            :cdn="cdnPath"
+          />
+        </x-modal>
+        <x-modal
+          v-model="modals.docConfirm"
+          title="Delete Document"
+          show-close
+          backdrop
+        >
+          <p>Are you sure you want to delete this document?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.docConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                @click.prevent="confirmDeleteDoc"
+                :loading="quoteDocumentsTable.isLoading"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </Collapsible>
+    </div>
+
+    <LazyCreatePlan
+      v-model="modals.createPlan"
+      :uuid="quote.uuid"
+      :insuranceProviders="insuranceProviders"
+      :currencies="currencies"
+      :plans="computedListQuotePlans"
+      :lifeRiders="lifeRiders"
+      :paymentTermEnum="page.props.paymentTerms"
+      @success="onCreatePlan"
+      @error="onPlanError"
+    />
+
+    <CreatePlanVariant
+      v-model="modals.createPlanVariant"
+      :uuid="quote.uuid"
+      :insuranceProviders="insuranceProviders"
+      :currencies="currencies"
+      :plan="variantPlan"
+      :lifeRiders="lifeRiders"
+      :quote="quote"
+      :paymentTermEnum="page.props.paymentTerms"
+      @success="onCreateVariant"
+      @error="onPlanError"
+    />
+
+    <template>
+      <EditPlan
+        v-if="modals.editPlan"
+        v-model="modals.editPlan"
+        :selectedPlan="selectedPlan"
+        :uuid="quote.uuid"
+        :insuranceProviders="insuranceProviders"
+        :currencies="currencies"
+        :plans="computedListQuotePlans"
+        :lifeRiders="lifeRiders"
+        :paymentTermEnum="page.props.paymentTerms"
+        @success="onLoadAvailablePlansData"
+        @error="onPlanError"
+      />
+    </template>
 
     <MigratePayment
       v-if="!isNewPaymentStructure"
@@ -1371,7 +2720,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="true"
+      :isPlanDetailSectionEnabled="false"
+    />
+
+    <QuotePayments
+      v-else
+      :can="can"
+      :payments="payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
     />
 
     <EmbeddedProducts
@@ -1386,7 +2746,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
-      :quoteStatusEnum="enums.quoteStatusEnum"
+      :quoteStatusEnum="page.props.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
       :expanded="sectionExpanded"
@@ -1395,10 +2755,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <QuoteDocument
       :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
+      :quote-documents="quote?.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
-      :insly-id="quote?.life_quote_request_detail?.insly_id"
+      :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -1413,7 +2773,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       "
       :quote="quote"
       quoteType="life"
-      :modelClass="modelClass"
+      :modelClass="personalModelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -1428,171 +2788,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @onAddUpdate="onAddUpdate"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Activities
-              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="my-4 flex justify-end">
-            <x-button
-              size="sm"
-              color="orange"
-              @click.prevent="addActivity"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Add Activity
-            </x-button>
-          </div>
-          <DataTable
-            table-class-name="compact"
-            :headers="activityTable"
-            :items="activities"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="activities.length < 15"
-          >
-            <template #item-status="{ status, id }">
-              <x-checkbox
-                color="emerald"
-                size="xl"
-                :modelValue="status === 1"
-                :disabled="status === 1"
-                @change="onActivityStatusUpdate(id)"
-              />
-            </template>
-            <template #item-advisor="{ assignee }">
-              {{ assignee?.name }}
-            </template>
-            <template #item-action="item">
-              <div class="space-x-4">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  :disabled="item.status === 1"
-                  @click.prevent="activityEdit(item)"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  :disabled="item.status === 1"
-                  outlined
-                  @click.prevent="activityDelete(item.id)"
-                  v-if="
-                    readOnlyMode.isDisable === true &&
-                    item.user_id &&
-                    item.user_id != null
-                  "
-                  :key="item.user_id"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-      <x-modal
-        v-model="modals.activity"
-        size="lg"
-        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-        show-close
-        backdrop
-        is-form
-        @submit="onActivitySubmit"
-      >
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            :rules="[rules.isRequired]"
-            class="w-full"
-            label="Title"
-            required
-          />
-          <x-textarea
-            v-model="activityForm.description"
-            :adjust-to-text="false"
-            class="w-full"
-            label="Description"
-          />
-          <x-select
-            v-model="activityForm.assignee_id"
-            :options="advisorOptions"
-            :rules="[rules.isRequired]"
-            placeholder="Select Assignee"
-            class="w-full"
-            label="Assignee"
-            required
-          />
-          <DatePicker
-            v-model="activityForm.due_date"
-            withTime
-            :rules="[rules.isRequired]"
-            label="Due Date"
-            required
-          />
-        </div>
-
-        <template #secondary-action>
-          <x-button
-            ghost
-            size="sm"
-            tabindex="-1"
-            @click.prevent="modals.activity = false"
-          >
-            Cancel
-          </x-button>
-        </template>
-        <template #primary-action>
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </template>
-      </x-modal>
-      <x-modal
-        v-model="modals.activityConfirm"
-        title="Delete Activity"
-        show-close
-        backdrop
-      >
-        <p>Are you sure you want to delete this activity?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.activityConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              :loading="activityForm.processing"
-              @click.prevent="activityDeleteConfirmed"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </div>
+    <QuoteActivities
+      :can="can"
+      :quote="quote"
+      :activities="activities"
+      :advisors="advisors"
+      :quote-type="quoteType"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -1628,10 +2830,25 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </template>
       </Collapsible>
     </div>
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <ApiLogs
+      :type="modelClass"
+      :id="$page.props.quote?.life_quote?.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />

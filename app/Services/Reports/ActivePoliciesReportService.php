@@ -6,6 +6,7 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\ActivePoliciesReportExport;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -41,6 +42,8 @@ class ActivePoliciesReportService extends ManagementReport
             ->groupBy('ip.text', 'personal_quotes.quote_type_id');
 
         $this->applyFilters($query, $request, isSSR: true);
+
+        LoggerService::sql(self::class.' - Active Policies Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();

@@ -199,6 +199,12 @@ const onLoadAuditLogData = async () => {
           <dt class="font-medium">Call Type:</dt>
           <dd>{{ selectedLog.call_type }}</dd>
         </div>
+
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Execution Method:</dt>
+          <dd>{{ selectedLog.execution_method }}</dd>
+        </div>
+
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Status:</dt>
           <dd>
