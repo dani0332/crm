@@ -1769,6 +1769,7 @@ const fullAddress = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2750,6 +2751,7 @@ const fullAddress = computed(() => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="submitTraveler"
       >
         <div class="grid md:grid-cols-2 gap-4">
@@ -3734,6 +3736,7 @@ const fullAddress = computed(() => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">

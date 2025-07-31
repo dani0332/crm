@@ -49,9 +49,8 @@ const memberRelationOptions = computed(() => {
   }));
 });
 
-const members = ref(props.membersDetails);
 const computedMembers = computed(() => {
-  return members?.value?.filter(x => !x.is_third_party_payer);
+  return props.membersDetails?.filter(x => !x.is_third_party_payer);
 });
 
 const memberActionEdit = ref(false);
@@ -99,6 +98,11 @@ const addMemberModal = () => {
   memberForm.reset();
   memberActionEdit.value = false;
   modals.member = true;
+
+  memberForm.first_name = '';
+  memberForm.dob = null;
+  memberForm.relation_code = null;
+  memberForm.nationality_id = null;
 };
 function onEditMember(data) {
   memberActionEdit.value = true;
@@ -189,6 +193,8 @@ const emit = defineEmits(['memberUpdated']);
 const emitEvent = () => {
   emit('memberUpdated');
 };
+
+const members = ref([]);
 
 watch(
   () => props.membersDetails,
@@ -354,6 +360,7 @@ watch(
       show-close
       backdrop
       is-form
+      persistent
       @submit="onMemberSubmit"
     >
       <div class="grid md:grid-cols-2 gap-4">
@@ -379,6 +386,7 @@ watch(
           label="DOB*"
           :hasError="memberFieldReq.dob"
           :rules="[isRequired]"
+          :max-date="quote_type == 'Life' ? new Date() : null"
         />
         <x-select
           v-model="memberForm.relation_code"

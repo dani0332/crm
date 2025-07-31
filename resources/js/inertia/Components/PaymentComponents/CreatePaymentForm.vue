@@ -136,7 +136,9 @@ const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
 const homePlanText = ref();
+const lifePlanText = ref();
 const paymentForm = ref();
+
 const totalPayments = ref([{ value: '1', label: '1' }]);
 const isApproveLowerAmountConfirmed = ref(true);
 const paymentTypes = ref(
@@ -295,7 +297,6 @@ const rules = {
     } else {
       return !!v || 'This field is required';
     }
-    return true;
   },
   reference: v => {
     if (
@@ -1082,7 +1083,24 @@ const initializePaymentForm = (
   paymentMethodsForm.collection_type = payment.collection_type;
   paymentMethodsForm.payment_no = payment.total_payments;
   oldTotalPayments.value = payment.total_payments;
-  paymentMethodsForm.frequency = payment.frequency;
+  // Special handling for life quotes - map payment term to frequency during edit
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.quoteRequest?.life_quote?.payment_term
+  ) {
+    // Map numeric payment term to frequency enum
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      4: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentMethodsForm.frequency =
+      paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
+  } else {
+    paymentMethodsForm.frequency = payment.frequency;
+  }
   showDiscountOptions.value = true;
   paymentMethodsForm.discount_reason =
     payment.discount_reason !== null ? payment.discount_reason : '';
@@ -1964,7 +1982,9 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: data => {
           let quoteTypes = props.quoteTypesToCheck.filter(
-            quoteType => quoteType !== quoteTypeCodeEnum.Home,
+            quoteType =>
+              quoteType !== quoteTypeCodeEnum.Home &&
+              quoteType !== quoteTypeCodeEnum.Life,
           );
           let quoteDocuments =
             quoteTypes.includes(props.quoteType) ||
@@ -2299,6 +2319,13 @@ const getPlanName = computed(() => {
     return props.quoteRequest?.insurance_provider_plan?.text || 'Not Available';
   }
 
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      lifePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return lifePlanText.value || 'Not Available';
+  }
+
   return props.quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
     : 'Not Available';
@@ -2587,6 +2614,8 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :paymentMethodsModels="paymentMethodsModels"
       :payments="payments"
       :paymentStatusEnum="paymentStatusEnum"
+      :quoteType="quoteType"
+      :quoteTypeCodeEnum="quoteTypeCodeEnum"
       @handle-collection-type-change="handleCollectionTypeChange"
       @handle-frequency-change="handleFrequencyChange"
       @calculate-payment-breakup="calculatePaymentBreakup"

@@ -54,6 +54,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -276,6 +277,19 @@ class CentralService extends BaseService
                 return app(CarQuoteService::class)->getPlans($id);
             case quoteTypeCode::Travel:
                 return app(TravelQuoteService::class)->sortedPlansList($id);
+            case quoteTypeCode::Life:
+                $listQuotePlans = [];
+                $quotePlans = app(LifeQuoteService::class)->getQuotePlans($id);
+
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = [];
+                } else {
+                    if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                        $listQuotePlans[] = $quotePlans->quotes->plans;
+                    }
+                }
+
+                return $listQuotePlans;
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
 

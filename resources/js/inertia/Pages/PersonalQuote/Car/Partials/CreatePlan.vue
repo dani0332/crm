@@ -12,19 +12,7 @@ const emit = defineEmits(['onLoadAvailablePlansData']);
 
 const isEmptyField = ref(false);
 
-const { isRequired, isNumber } = useRules();
-
-// Custom validation rule for maximum price
-const maxPrice = maxValue => {
-  return value => {
-    if (!value) return true; // Allow empty values (required rule handles that)
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return 'Must be a valid number';
-    return (
-      numValue <= maxValue || `Price cannot exceed ${maxValue.toLocaleString()}`
-    );
-  };
-};
+const { isRequired, isNumber, maxPrice, minPrice } = useRules();
 
 const quotePlansTable = reactive({
   columns: [
@@ -191,7 +179,7 @@ const getAddonVat = item => {
           label="Car value"
           required
           v-model="addPlanForm.car_value"
-          :rules="[isRequired]"
+          :rules="[isRequired, maxPrice(99999999), minPrice(1)]"
           class="w-full"
           placeholder="Enter Car value"
           type="number"

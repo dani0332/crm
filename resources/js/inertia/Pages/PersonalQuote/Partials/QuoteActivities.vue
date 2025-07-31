@@ -243,6 +243,7 @@ onMounted(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onSubmit"
     >
       <div class="grid gap-4">
@@ -258,6 +259,7 @@ onMounted(() => {
           label="Description*"
           :adjust-to-text="false"
           class="w-full"
+          :rules="[rules.isRequired]"
         />
 
         <x-select

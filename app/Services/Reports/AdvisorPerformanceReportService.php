@@ -15,6 +15,7 @@ use App\Models\Team;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -60,6 +61,8 @@ class AdvisorPerformanceReportService extends BaseService
         }
 
         $query = $this->applyFilters($query, $request->all());
+
+        LoggerService::sql(self::class.' - Advisor Performance Report Query', $query);
 
         return $query->paginate(15)
             ->withQueryString();

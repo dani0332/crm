@@ -815,6 +815,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -1586,6 +1587,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
