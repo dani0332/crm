@@ -695,7 +695,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $sageRequest->advisor_id = $quote->advisor_id;
             $sageRequest->collection_amount = $request->collection_amount;
             $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;
-            if(!$sageRequest->quoteType){
+            if (! $sageRequest->quoteType) {
                 $sageRequest->quoteType = $request->modelType;
             }
 
