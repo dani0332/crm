@@ -15,6 +15,14 @@ const props = defineProps({
   quoteType: {
     type: String,
   },
+  canAssignClientSupport: {
+    type: Boolean,
+    default: false,
+  },
+  canAssignLeadAdvisor: {
+    type: Boolean,
+    default: false,
+  },
 });
 const page = usePage();
 const emit = defineEmits(['success', 'error']);
