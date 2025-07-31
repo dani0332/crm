@@ -785,7 +785,7 @@ const isStating = ref(false);
 const isAUHEnable = computed(() => {
   if (
     props.isEndorsementActionDisabled &&
-    [sendUpdateStatusEnum.ACTION_SNBU, sendUpdateStatusEnum.ACTION_SU].includes(
+    [sendUpdateStatusEnum.SNBU, sendUpdateStatusEnum.SU].includes(
       props.updateBtn,
     )
   ) {
