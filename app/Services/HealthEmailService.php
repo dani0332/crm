@@ -210,6 +210,7 @@ class HealthEmailService extends BaseService
             'members' => $members,
             'plan' => $plan,
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
+            'emirateOfYourVisaId' => $lead->emirate_of_your_visa_id,
         ];
 
         if ($advisor) {
