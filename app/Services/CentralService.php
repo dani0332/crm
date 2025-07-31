@@ -1413,6 +1413,7 @@ class CentralService extends BaseService
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null): void
     {
         $emailData->advisorEmail = $quote->advisor->email ?? '';
+        $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
         $emailData->advisorLandLine = $quote->advisor->landline_no ?? '';
         $emailData->advisorMobilePhone = $quote->advisor->mobile_no ?? '';
         $emailData->advisorName = $quote->advisor->name ?? '';
