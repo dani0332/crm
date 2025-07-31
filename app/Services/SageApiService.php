@@ -987,6 +987,7 @@ class SageApiService
         if ($sageCustomerNumberResponse['status'] === false) {
             $response['message'] = $sageCustomerNumberResponse['message'];
             $response['sageCustomerNumber'] = $sageCustomerNumberResponse['sageCustomerNumber'];
+
             return $response;
         }
         $sageRequest->sage_customer_number = $sageCustomerNumberResponse['sageCustomerNumber'];
@@ -2874,9 +2875,9 @@ class SageApiService
         $response = ['status' => false, 'message' => null, 'error' => null];
 
         [$paymentSplit, $sageRequest, $request] = $data;
-        
+
         $paymentSplit = $paymentSplit->refresh();
-        
+
         try {
 
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
@@ -2893,7 +2894,7 @@ class SageApiService
                 'message' => $arPrepaymentReceiptResponse['message'],
             ]);
 
-            if (!$arPrepaymentReceiptResponse['status']) { 
+            if (! $arPrepaymentReceiptResponse['status']) {
                 $response['message'] = $arPrepaymentReceiptResponse['message'];
                 $response['error'] = $arPrepaymentReceiptResponse['error'];
 
@@ -2907,16 +2908,15 @@ class SageApiService
                 'message' => $apPrepaymentReceiptResponse['message'],
             ]);
 
-            if (!$apPrepaymentReceiptResponse['status']) { 
+            if (! $apPrepaymentReceiptResponse['status']) {
                 $response['message'] = $apPrepaymentReceiptResponse['message'];
                 $response['error'] = $apPrepaymentReceiptResponse['error'];
 
                 return $response;
-            } 
+            }
 
             $response['status'] = true;
             $response['message'] = 'AR and AP Prepayments are posted to Sage';
-
 
             return $response;
         } catch (\Exception $e) {
