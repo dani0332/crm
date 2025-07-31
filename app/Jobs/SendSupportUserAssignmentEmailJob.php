@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -47,6 +48,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
     public $timeout = 60;
     public $backoff = 300;
 
+    private $assignerUserId;
     private $supportUserId;
     private $leadIds;
     private $quoteType;
@@ -58,8 +60,9 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
      * @param array|string $leadIds - Array of lead IDs or comma-separated string
      * @param QuoteTypes $quoteType
      */
-    public function __construct(int $supportUserId, $leadIds, QuoteTypes $quoteType)
+    public function __construct(int $userId, int $supportUserId, $leadIds, QuoteTypes $quoteType)
     {
+        $this->assignerUserId = $userId;
         $this->supportUserId = $supportUserId;
         $this->leadIds = is_array($leadIds) ? $leadIds : explode(',', $leadIds);
         $this->quoteType = $quoteType;
@@ -82,8 +85,15 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
 
             // Get support user
             $supportUser = User::find($this->supportUserId);
+            $assignerUser = User::find($this->assignerUserId);
+
             if (!$supportUser) {
                 LoggerService::error('Support user not found', ['support_user_id' => $this->supportUserId]);
+                return;
+            }
+
+            if (!$assignerUser) {
+                LoggerService::error('Assigner user not found', ['support_user_id' => $this->assignerUserId]);
                 return;
             }
 
@@ -94,11 +104,8 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
                 return;
             }
 
-            // Prepare email data
-            $emailData = $this->buildEmailData($supportUser, $leads);
-
             // Send email
-            $this->sendAssignmentEmail($emailData);
+            $this->sendAssignmentEmail($assignerUser,$supportUser, $leads);
 
             LoggerService::info('Support user assignment email sent successfully');
 
@@ -138,11 +145,52 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
                     'code' => $lead->code ?? $lead->id,
                     'customer_name' => $lead->customer->name ?? 'N/A',
                     'customer_email' => $lead->customer->email ?? 'N/A',
-                    'created_at' => $lead->created_at->format('d M Y H:i'),
+                    'created_at' => Carbon::parse($lead->created_at)->format('d M Y H:i'),
                     'lead_url' => $this->quoteType->url($lead->uuid),
                 ];
             });
     }
+
+    /**
+     * Send assignment email to support user
+     */
+    private function sendAssignmentEmail($assignerUser,$supportUser, $leads): void
+    {
+        // For now, we'll use a simple email template
+        // In production, you should create a proper email template ID
+        $emailTemplateId = config('mail.templates.support_user_assignment', 123); // Replace with actual template ID
+
+        $emailService = app(SendEmailCustomerService::class);
+
+        $emailData = [
+            'to' => [[
+                'email' => $supportUser->email,
+                'name' => $supportUser->name,
+            ]],
+            'templateId' => (int) $emailTemplateId,
+            'params' => [
+                'supportUserName' => $supportUser->name,
+                'quoteTypeName' => $this->quoteType->value,
+//                'totalLeads' => $emailData->totalLeads,
+                'leads' => $leads,
+//                'assignedAt' => $emailData->assignedAt,
+            ],
+            'tags' => [
+                'support-user-assignment',
+                $this->quoteType->value . '-assignment',
+            ],
+        ];
+
+        logger()->debug("sendAssignmentEmail: ".print_r([
+                '$emailData' => $emailData,
+            ],1));
+
+        // Send the email (you may need to adjust this based on your email service implementation)
+        LoggerService::info('Sending email with data', $emailData);
+
+        $emailService->sendSupportUserAssignmentEmail($emailData);
+    }
+
 
     /**
      * Prepare email data for the template
@@ -157,42 +205,6 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
             'leads' => $leads->toArray(),
             'assignedAt' => now()->format('d M Y H:i'),
         ];
-    }
-
-    /**
-     * Send assignment email to support user
-     */
-    private function sendAssignmentEmail($emailData): void
-    {
-        // For now, we'll use a simple email template
-        // In production, you should create a proper email template ID
-        $emailTemplateId = config('mail.templates.support_user_assignment', 123); // Replace with actual template ID
-
-        $emailService = app(SendEmailCustomerService::class);
-
-        $emailData = [
-            'to' => [[
-                'email' => $emailData->supportUserEmail,
-                'name' => $emailData->supportUserName,
-            ]],
-            'templateId' => (int) $emailTemplateId,
-            'params' => [
-                'supportUserName' => $emailData->supportUserName,
-                'quoteTypeName' => $emailData->quoteTypeName,
-                'totalLeads' => $emailData->totalLeads,
-                'leads' => $emailData->leads,
-                'assignedAt' => $emailData->assignedAt,
-            ],
-            'tags' => [
-                'support-user-assignment',
-                $this->quoteType->value . '-assignment',
-            ],
-        ];
-
-        // Send the email (you may need to adjust this based on your email service implementation)
-        LoggerService::info('Sending email with data', $emailData);
-
-        $emailService->sendSupportUserAssignmentEmail($emailData);
     }
 
 }

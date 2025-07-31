@@ -2411,6 +2411,7 @@ class CRUDController extends Controller
             try {
                 $quoteType = QuoteTypes::from(ucfirst($modelType));
                 \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
+                    Auth::id(),
                     $supportUserId,
                     $updatedLeadIds,
                     $quoteType
