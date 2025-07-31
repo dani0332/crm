@@ -33,8 +33,9 @@ class BorService
     public function getBorLogs(array $data)
     {
         $quoteObject = $this->getQuoteObject($data['lob'], $data['leadId']);
+        $quoteObject->load('personalQuote');
         $personalQuote = checkPersonalQuotes($data['lob']) ? $quoteObject : $quoteObject->personalQuote;
-        
+
         // Get paginated BOR logs with relationships
         $logs = BorLog::where('lead_id', $personalQuote->id)
             ->with(['insuranceProvider', 'personalQuote'])
@@ -134,6 +135,7 @@ class BorService
     public function createBorLog(array $data)
     {
         $quoteObject = $this->getQuoteObject($data['lob'], $data['lead_id']);
+        $quoteObject->load('personalQuote');
         $personalQuote = $quoteObject->personalQuote;
 
         $data['lead_id'] = $personalQuote->id;
@@ -160,6 +162,7 @@ class BorService
     public function updateBorLog(array $data, $id)
     {
         $quoteObject = $this->getQuoteObject($data['lob'], $data['lead_id']);
+        $quoteObject->load('personalQuote');
         $personalQuote = $quoteObject->personalQuote;
 
         $data['lead_id'] = $personalQuote->id;
