@@ -102,13 +102,14 @@ class OCRService
         int $userId,
         bool $isEcom,
     ): ?bool {
+        LoggerService::startQuoteLogging(self::class.'::process - OCR processing', $quote->uuid);
+
         // Record start time for OCR processing
         $startTime = microtime(true);
 
-        LoggerService::info('Starting OCR processing', extra: [
+        LoggerService::info('Starting OCR processing for quote', extra: [
             'quote_type' => $quoteType->value,
             'quote_code' => $quote->code,
-            'quote_uuid' => $quote->uuid,
             'document_type' => $documentType->code,
             'file_mime_type' => $fileMimeType,
             'user_id' => $userId,
@@ -119,7 +120,7 @@ class OCRService
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
         if (! $docType?->isEnabled($quoteType)) {
-            info(self::class."::process - OCR is not enabled for this document type {$documentType->code}");
+            LoggerService::info(self::class."::process - OCR is not enabled for this document type {$documentType->code}");
 
             return null;
         }
@@ -160,7 +161,9 @@ class OCRService
             ]);
 
             if ($data) {
-                LoggerService::info(self::class.'::process - Data received from getData', extra: ['data' => $data]);
+                LoggerService::info(self::class.'::process - Data received from getData', extra: [
+                    'data' => $data
+                ]);
                 $dataFilledResponse = $this->fill(
                     $quote,
                     $docType,
@@ -187,7 +190,6 @@ class OCRService
                 LoggerService::info('OCR processing completed successfully', extra: [
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
-                    'quote_uuid' => $quote->uuid,
                     'document_type' => $documentType->code,
                     'total_execution_time_ms' => $executionTime,
                     'total_execution_time_seconds' => round($executionTime / 1000, 2),
@@ -208,7 +210,6 @@ class OCRService
                 LoggerService::warning('OCR processing failed - no data received', extra: [
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
-                    'quote_uuid' => $quote->uuid,
                     'document_type' => $documentType->code,
                     'total_execution_time_ms' => $executionTime,
                     'total_execution_time_seconds' => round($executionTime / 1000, 2),
@@ -228,7 +229,6 @@ class OCRService
             LoggerService::error('OCR processing failed with exception', extra: [
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
-                'quote_uuid' => $quote->uuid,
                 'document_type' => $documentType->code,
                 'total_execution_time_ms' => $executionTime,
                 'total_execution_time_seconds' => round($executionTime / 1000, 2),
@@ -251,9 +251,10 @@ class OCRService
         string $fileMimeType,
         ?string $quoteTypeParam = null
     ): void {
+        LoggerService::startQuoteLogging(self::class.'::dispatchJobIfEligible - Dispatching PopulateDocumentData job', $quote->uuid);
+
         if ($quote instanceof SendUpdateLog) {
             LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog', [
-                'quote_uuid' => $quote->uuid,
                 'document_type' => $documentType->code,
             ]);
 
@@ -263,7 +264,6 @@ class OCRService
         $quoteType = $this->determineQuoteType($quoteTypeParam);
         if (! $quoteType) {
             LoggerService::info('OCR Dispatch - Unable to determine quote type', [
-                'quote_uuid' => $quote->uuid ?? 'unknown',
                 'document_type' => $documentType->code,
                 'quote_type_param' => $quoteTypeParam,
             ]);
@@ -278,7 +278,6 @@ class OCRService
 
         if ($quote && $filePathAzure) {
             LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job', [
-                'quote_uuid' => $quote->uuid,
                 'quote_type' => $quoteType->value,
                 'document_type' => $documentType->code,
                 'file_path' => $filePathAzure,
