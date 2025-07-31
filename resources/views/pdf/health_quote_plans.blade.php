@@ -427,8 +427,13 @@
 
             // Add Basma Price
             if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
-                $quotePlan->discountPremium += $quotePlan->basmah;
-                $quotePlan->total += $quotePlan->basmah;
+                $quotePlan->discountPremium += ($quotePlan->basmah ?? 0);
+                $quotePlan->total += ($quotePlan->basmah ?? 0);
+            }
+
+            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::ABU_DHABI) {
+                $quotePlan->discountPremium += ($quotePlan->icpFee ?? 0);
+                $quotePlan->total += ($quotePlan->icpFee ?? 0);
             }
 
             // Add Policy Price
@@ -581,7 +586,7 @@
                         foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
                             if ($coPayVal->healthPlanCoPaymentId == $coPayId) {
                                 $discountPremiumValue =
-                                    $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                                    $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0);
                                 $vatValue += $coPayVal->vat;
                                 $totalValue += $discountPremiumValue;
                             }
@@ -596,7 +601,7 @@
                     ) {
                         foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
                             $discountPremium[] =
-                                $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                                $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0);
                             $vat[] = $coPayVal->vat;
                         }
                         $discountPremiumValue = collect($discountPremium)->min();
@@ -643,7 +648,10 @@
             }
             // Add Basma Price
             if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
-                $quotePlan->discountPremium += $quotePlan->basmah;
+                $quotePlan->discountPremium += ($quotePlan->basmah ?? 0);
+            }
+            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::ABU_DHABI) {
+                $quotePlan->discountPremium += ($quotePlan->icpFee ?? 0);
             }
             // Add Policy Price
             $policyFee = isset($providers[$quotePlan->providerId]['health_policy_fee'])
