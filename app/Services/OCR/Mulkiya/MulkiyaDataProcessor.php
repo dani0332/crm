@@ -6,6 +6,7 @@ namespace App\Services\OCR\Mulkiya;
 
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Nationality;
 use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\Mulkiya\MulkiyaExtractor;
@@ -127,6 +128,23 @@ class MulkiyaDataProcessor
     private function updateRegistrationCertificate(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
+            // Convert nationality string to nationality_id if nationality is provided
+            if (!empty($fieldsToUpdate['nationality'])) {
+                $nationalityId = $this->getNationalityId($fieldsToUpdate['nationality']);
+                if ($nationalityId) {
+                    $fieldsToUpdate['nationality_id'] = $nationalityId;
+                    // Remove the nationality string since we only want to store the ID
+                    unset($fieldsToUpdate['nationality']);
+                } else {
+                    LoggerService::warning('Nationality could not be matched', extra: [
+                        'quote_uuid' => $quote->uuid,
+                        'nationality_string' => $fieldsToUpdate['nationality'],
+                    ]);
+                    // Remove the nationality field since we can't match it
+                    unset($fieldsToUpdate['nationality']);
+                }
+            }
+
             $registrationCertificate = $quote->registrationCertificate()->firstOrCreate(
                 ['certificatable_type' => CarQuote::class, 'certificatable_id' => $quote->id],
                 $fieldsToUpdate
@@ -168,7 +186,16 @@ class MulkiyaDataProcessor
         }
     }
 
+    private function getNationalityId(?string $nationality): ?int
+    {
+        if (empty($nationality)) {
+            return null;
+        }
 
+        return Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+            ->orWhere('code', $nationality)
+            ->value('id');
+    }
 
     public function getProcessingSummary(): array
     {
@@ -193,7 +220,8 @@ class MulkiyaDataProcessor
                 'place_of_issue' => $registrationCertificate->place_of_issue,
                 'expiry_date' => $registrationCertificate->expiry_date?->format('Y-m-d'),
                 'owner' => $registrationCertificate->owner,
-                'nationality' => $registrationCertificate->nationality,
+                'nationality_id' => $registrationCertificate->nationality_id,
+                'nationality' => $registrationCertificate->nationality?->text, // Get nationality name via relationship
                 'mortgage_by' => $registrationCertificate->mortgage_by,
                 'notes' => $registrationCertificate->notes,
                 'insured_with' => $registrationCertificate->insured_with,

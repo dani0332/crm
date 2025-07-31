@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class RegistrationCertificate extends Model
@@ -15,7 +16,7 @@ class RegistrationCertificate extends Model
         'place_of_issue',
         'expiry_date',
         'owner',
-        'nationality',
+        'nationality_id',
         'mortgage_by',
         'notes',
         'insured_with',
@@ -35,7 +36,13 @@ class RegistrationCertificate extends Model
     protected $casts = [
         'expiry_date' => 'date',
         'number_of_passengers' => 'integer',
+        'nationality_id' => 'integer',
     ];
+
+    public function nationality(): BelongsTo
+    {
+        return $this->belongsTo(Nationality::class);
+    }
 
     /**
      * Get the parent certificatable model (CarQuote).
