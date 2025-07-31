@@ -5,9 +5,12 @@ defineProps({
   model: String,
   leadStatuses: Array,
   advisors: Array,
+  supportUsers: Array,
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
+  canAssignClientSupport: Boolean,
+  canAssignLeadAdvisor: Boolean,
   authorizedDays: Number,
   insurerAMLStatus: Array,
 });
@@ -58,6 +61,7 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
+  support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
@@ -92,6 +96,24 @@ const supportUserOptions = computed(() => {
   }));
 });
 
+const assignableSupportUserOptions = computed(() => {
+
+  // Check if user has only OE_AE_CLIENT_SUPPORT role and not OE_AE_CLIENT_SUPPORT_LEAD
+  const userRoles = page.props.auth.roles;
+  const hasOnlyClientSupport = userRoles.includes('OE_AE_CLIENT_SUPPORT') &&
+                               !userRoles.includes('OE_AE_CLIENT_SUPPORT_LEAD');
+
+  // Filter support users based on user's role
+  const filteredSupportUsers = hasOnlyClientSupport
+    ? page.props.supportUsers.filter(advisor => advisor.id === page.props.auth.user.id)
+    : page.props.supportUsers;
+
+  return filteredSupportUsers.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -101,6 +123,7 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'OE / AE', value: 'support_user_name' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -648,6 +671,27 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
+        <x-select
+          v-model="filters.support_user_id"
+          name="support_user_id"
+          placeholder="Search by OE / AE"
+          :options="supportUserOptions"
+          class="w-full"
+          filterable
+          label="OE / AE"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.support_user_id = supportUserOptions.map(item => item.value)
+              "
+              @clear="filters.support_user_id = []"
+            />
+          </template>
+        </x-select>
+
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
@@ -755,7 +799,9 @@ const insurerAMLStatusOption = computed(() => {
           <LeadAssignment
             :selected="quotesSelected.map(e => e.id)"
             :advisors="advisorOptions"
-            :supportUsers="supportUserOptions"
+            :supportUsers="assignableSupportUserOptions"
+            :canAssignClientSupport="canAssignClientSupport"
+            :canAssignLeadAdvisor="canAssignLeadAdvisor"
             quoteType="business"
             @success="manualAssignmentSuccess"
               />

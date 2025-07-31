@@ -120,7 +120,7 @@ onMounted(() => {
     <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
       <h3 class="font-semibold text-primary-800">Assign Leads</h3>
       <x-divider class="mb-4 mt-1" />
-      <x-form @submit="onAssignLead" :auto-focus="false">
+      <x-form @submit="onAssignLead" :auto-focus="false" v-if="props.canAssignLeadAdvisor">
         <div class="w-full flex flex-col md:flex-row gap-4">
           <x-select
             v-model="assignForm.assigned_advisor_id"
@@ -147,7 +147,7 @@ onMounted(() => {
       </x-form>
 
       <!-- Support User Assignment Section -->
-      <div v-if="props.supportUsers && props.supportUsers.length > 0" class="" >
+      <div v-if="(props.supportUsers && props.supportUsers.length > 0) && props.canAssignClientSupport" class="" >
         <x-form @submit="onAssignSupportUser" :auto-focus="false" >
           <div class="w-full flex flex-col md:flex-row gap-4">
             <x-select
@@ -162,7 +162,7 @@ onMounted(() => {
             />
             <div class="mb-3 md:pt-6">
               <x-button
-                color="blue"
+                color="orange"
                 size="sm"
                 type="submit"
                 :loading="supportAssignForm.processing"

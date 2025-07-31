@@ -73,6 +73,7 @@ class AmtController extends Controller
             ->leftJoin('business_quote_request_detail as bqrd', 'bqr.id', '=', 'bqrd.business_quote_request_id')
             ->leftJoin('business_type_of_insurance as bit', 'bqr.business_type_of_insurance_id', '=', 'bit.id')
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
+            ->leftJoin('users as su', 'bqr.support_user_id', '=', 'su.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -89,9 +90,11 @@ class AmtController extends Controller
                 DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%b-%Y %r") as updated_at'),
                 'bit.text as leadType',
                 'bqr.advisor_id',
+                'bqr.support_user_id',
                 'bqr.source',
                 'ls.text as lost_reason',
                 'u.name as advisor_id_text',
+                'su.name as support_user_name',
                 'bqr.premium',
                 'bqr.company_name',
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
@@ -133,6 +136,11 @@ class AmtController extends Controller
         $supportUsers = $this->getSupportUsers();
 
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
+
+        /* Below conditions have AND relationship between them */
+        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)?: false;
+        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(HealthTeamType::GROUP_MEDICAL) : false;
+
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
@@ -197,6 +205,15 @@ class AmtController extends Controller
                 $data->whereIn('bqr.advisor_id', $request->advisor_id);
             }
         }
+
+        if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
+            if (count($request->support_user_id) === 1 && $request->support_user_id[0] == '-1') {
+                $data->whereNull('bqr.support_user_id');
+            } else {
+                info("where in suppor");
+                $data->whereIn('bqr.support_user_id', $request->support_user_id);
+            }
+        }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date_end)->endOfDay()->toDateTimeString();
@@ -254,15 +271,27 @@ class AmtController extends Controller
         }
         $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $authorizedDays = intval($paymentAuthorizedDays->value);
-        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
 
-        logger()->debug("toRawSql: ".$data->toRawSql(),[
-            $supportUsers
+        $canAssignLeadAdvisor = auth()->user()->isAdmin() ||
+            $isManagerORDeputy ||
+            Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
+
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+
+        /*
+         *         $isManualAllocationAllowed = auth()->user()->isAdmin() ||
+            $isManagerORDeputy ||
+            Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
+         * */
+
+        logger()->debug("toRawSql: "/*.$data->toRawSql()*/,[
+            //$supportUsers
+            'Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)' => Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)
         ]);
 
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers','canAssignClientSupport','canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
     }
 
     /**
@@ -540,13 +569,20 @@ class AmtController extends Controller
             return collect([]);
         }
 
+        $loggedInUserRoles = Auth::user()->roles->pluck('name')->toArray();
+
+        if ((!in_array(RolesEnum::CLIENTSUPPORTLEAD, $loggedInUserRoles) &&
+            !in_array(RolesEnum::CLIENTSUPPORT, $loggedInUserRoles))) {
+            return collect([]);
+        }
+
         return User::activeUser()
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_products as up', 'up.user_id', '=', 'users.id')
-            ->where('r.name', 'OE_AE_CLIENT_SUPPORT')
+            ->where('r.name', RolesEnum::CLIENTSUPPORT)
             ->where('up.product_id', $groupMedicalProduct->id)
-            ->selectRaw("users.id, CONCAT(users.name, ' - ', r.name) as name")
+            ->selectRaw("users.id, CONCAT(users.name, ' - ', r.name) as name, r.name as role ")
             ->orderBy('users.name')
             ->distinct()
             ->get();
