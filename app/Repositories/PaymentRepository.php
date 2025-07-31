@@ -694,9 +694,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $sageRequest->userId = auth()->id();
             $sageRequest->quoteType = $request->modelType;
             $sageRequest->advisor_id = $quote->advisor_id;
+            $sageRequest->collection_amount = $request->collection_amount;
+            $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;
 
             /* Handle NRA case where payment is approved after policy/send update is booked */
-            $sageResponse = (new SageApiService)->createPrepaymentPremiumARReceipt($sageRequest, $quote, $masterPayment, $splitPayment);
+            $sageResponse = (new SageApiService)->createPrepaymentPremiumARReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
 
             if (! $sageResponse['status']) {
                 vAbort($sageResponse['message']);

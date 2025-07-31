@@ -9,6 +9,7 @@ use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -30,13 +31,13 @@ class SaleSummaryReportService extends ManagementReport
         $this->groupByColumn = $request['groupBy'];
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['policyBookDate'][0]) && $request['policyBookDate'][0] != null && $request['policyBookDate'][0] != 'null' ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['policyBookDate'][1])->toDateString();
+                (isset($request['policyBookDate'][1]) && $request['policyBookDate'][1] != null && $request['policyBookDate'][1] != 'null' ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && $request['paymentDueDate'][0] != null && $request['paymentDueDate'][0] != 'null' ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
             .' - '.
-            Carbon::parse($request['paymentDueDate'][1])->toDateString();
+            (isset($request['paymentDueDate'][1]) && $request['paymentDueDate'][1] != null && $request['paymentDueDate'][1] != 'null' ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         // Subquery to get distinct payment splits with minimum due_date
@@ -122,6 +123,8 @@ class SaleSummaryReportService extends ManagementReport
             });
         }
         $this->applyFilters($query, $request, false, true);
+
+        LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
 
         $data = $query->get();
 
