@@ -1601,7 +1601,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           />
 
           <DatePicker
-            :format="format"
             v-model="activityForm.due_date"
             label="Due Date"
             :rules="[isRequired]"
