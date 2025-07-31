@@ -184,12 +184,14 @@ const uploadFile = (doc, filesWithInfo) => {
         position: 'top',
       });
       let errorMessages = error.response.data.errors;
-      Object.keys(errorMessages).forEach(function (key) {
-        notification.error({
-          title: errorMessages[key][0] ?? errorMessages[key],
-          position: 'top',
+      if (errorMessages && typeof errorMessages === 'object') {
+        Object.keys(errorMessages).forEach(function (key) {
+          notification.error({
+            title: errorMessages[key][0] ?? errorMessages[key],
+            position: 'top',
+          });
         });
-      });
+      }
     })
     .finally(() => {
       uploadingStatus.value[doc.id] = false;
