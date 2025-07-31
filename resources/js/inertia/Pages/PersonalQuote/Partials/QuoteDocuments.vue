@@ -518,7 +518,7 @@ const getS3TempUrl = async docURL => {
               <p class="text-xs">
                 Max file size: {{ documentType.max_size }} MB
               </p>
-              
+
               <x-alert
                 v-if="successStatus[documentType.id]"
                 type="success"
