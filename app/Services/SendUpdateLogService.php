@@ -499,10 +499,10 @@ class SendUpdateLogService
 
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
         $quoteModel = $this->getModelObject($quoteTypeCode);
-        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get()->toArray();
 
-        if ($childRecords->count() > 0) {
-            $childRecords = array_filter($childRecords->toArray(), function ($item) use ($quote) {
+        if (count($childRecords) > 0) {
+            $childRecords = array_filter($childRecords, function ($item) use ($quote) {
                 return str_starts_with($item['code'], $quote->code);
             });
         }
@@ -522,8 +522,8 @@ class SendUpdateLogService
         }
 
         if (count($childRecords) == 1) {
-            $_return['childLeads'] = $childRecords->value('code');
-            $_return['childLeadsUuid'] = $childRecords->value('uuid');
+            $_return['childLeads'] = $childRecords[0]['code'];
+            $_return['childLeadsUuid'] = $childRecords[0]['uuid'];
         }
 
         return $_return;
