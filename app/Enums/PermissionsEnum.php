@@ -423,6 +423,7 @@ final class PermissionsEnum extends Enum
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
+    public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
 

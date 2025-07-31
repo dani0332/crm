@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\QuoteStatusLogObserver;
 use Config;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(QuoteStatusLogObserver::class)]
 class QuoteStatusLog extends Model
 {
     use HasFactory;

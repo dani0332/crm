@@ -77,6 +77,7 @@ use App\Models\HealthPlanCoPayment;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceProviderPlan;
 use App\Models\Lookup;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
@@ -2392,8 +2393,9 @@ class RenewalsUploadService
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HOM) {
 
                             if ($leadData->location_area) {
-                                $locationArea = SubArea::where('text', $leadData->location_area)->exists();
+                                $locationArea = SubArea::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->location_area))])->exists();
                                 if (! $locationArea) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - location area is invalid '.$leadData->location_area);
                                     $leadValidationErrors->push('Invalid Location Area Text');
                                     break;
                                 }
@@ -2401,97 +2403,132 @@ class RenewalsUploadService
 
                             if ($leadData->insurance_type) {
                                 if ($leadData->insurance_type !== QuoteTypeShortCode::HOM) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - insurance type is invalid '.$leadData->insurance_type);
                                     $leadValidationErrors->push('Invalid Insurance Type Text');
                                     break;
                                 }
                             }
                             if ($leadData->current_insurance_provider) {
                                 if (! InsuranceProvider::where('code', $leadData->current_insurance_provider)->first()) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - current insurance provider is invalid '.$leadData->current_insurance_provider);
                                     $leadValidationErrors->push('Invalid Current Insurance Provider Text');
                                     break;
                                 }
                             }
                             if ($leadData->you_are_a) {
-                                $leadPossessionType = Lookup::where('text', $leadData->you_are_a)
+                                $leadPossessionType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->you_are_a))])
                                     ->where('key', LookupsEnum::POSSESSION_TYPE->value)
                                     ->first();
                                 if (! $leadPossessionType) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - ownership status is invalid '.$leadData->you_are_a);
                                     $leadValidationErrors->push('Invalid Ownership Status Text');
                                     break;
                                 }
 
                                 if ($leadPossessionType->code === RangeLookupCodeEnum::LANDLORD_RENTING_OUT->value) {
+                                    LoggerService::info("fn - uploadedLeadsValidation - occupancy status for owners is required with selected ownership status $leadData->occupancy_status_for_owners");
                                     if (! $leadData->occupancy_status_for_owners) {
+                                        LoggerService::info("fn - uploadedLeadsValidation - occupancy status for owners is required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Occupancy Status for Owners is required with Selected Ownership Status');
                                         break;
                                     }
                                     if ($leadData->contents) {
+                                        LoggerService::info("fn - uploadedLeadsValidation - content is not required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Content is not required with Selected Ownership Status');
                                         break;
                                     }
                                     if ($leadData->personal_belongings) {
+                                        LoggerService::info("fn - uploadedLeadsValidation - personal belongings is not required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Personal Belonging is not required with Selected Ownership Status');
                                         break;
                                     }
                                     if (! $leadData->building) {
+                                        LoggerService::info("fn - uploadedLeadsValidation - building is required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Building is required with Selected Ownership Status');
                                         break;
                                     }
                                 }
                             }
                             if ($leadData->i_live_in_a) {
-                                $leadAccommodationType = Lookup::where('text', $leadData->i_live_in_a)
+                                $leadAccommodationType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->i_live_in_a))])
                                     ->where('key', LookupsEnum::ACCOMMODATION_TYPE)
                                     ->first();
                                 if (! $leadAccommodationType) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - type of property is invalid '.$leadData->i_live_in_a);
                                     $leadValidationErrors->push('Invalid Type of Property Text');
                                     break;
                                 }
                             }
                             if ($leadData->occupancy_status_for_owners) {
-                                $leadOccupancyType = Lookup::where('text', $leadData->occupancy_status_for_owners)
+                                $leadOccupancyType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->occupancy_status_for_owners))])
                                     ->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)
                                     ->first();
                                 if (! $leadOccupancyType) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - occupancy status for owners is invalid '.$leadData->occupancy_status_for_owners);
                                     $leadValidationErrors->push('Invalid Occupancy Status for Owners Text');
                                     break;
                                 }
                             }
                             if ($leadData->cover_required) {
-                                $leadCoverageType = Lookup::where('text', $leadData->cover_required)
+                                $leadCoverageType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->cover_required))])
                                     ->where('key', LookupsEnum::COVERAGE_TYPE)
                                     ->first();
                                 if (! $leadCoverageType) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - cover required is invalid '.$leadData->cover_required);
                                     $leadValidationErrors->push('Invalid Cover Required Text');
                                     break;
                                 }
                             }
                             if ($leadData->contents) {
-                                $leadContents = RangeLookup::where('text', $leadData->contents)
+                                $leadContents = RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->contents))])
                                     ->where('key', RangeLookupKeyEnums::CONTENT_VALUES)
                                     ->first();
                                 if (! $leadContents) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - contents is invalid '.$leadData->contents);
                                     $leadValidationErrors->push('Invalid Contents Text');
                                     break;
                                 }
                             }
                             if ($leadData->personal_belongings) {
-                                $leadPersonalBelongings = RangeLookup::where('text', $leadData->personal_belongings)
+                                $leadPersonalBelongings = RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->personal_belongings))])
                                     ->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)
                                     ->first();
                                 if (! $leadPersonalBelongings) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - personal belongings is invalid '.$leadData->personal_belongings);
                                     $leadValidationErrors->push('Invalid Personal Belongings Text');
                                     break;
                                 }
                             }
                             if ($leadData->premium) {
                                 if (! $leadData->insurance_provider) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - insurance provider is required with premium');
                                     $leadValidationErrors->push('Insurance Provider is required with Premium');
                                     break;
                                 }
                                 if (! $leadData->plan_name) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - plan name is required with premium');
                                     $leadValidationErrors->push('Plan Name is required with Premium');
                                     break;
+                                }
+                                if ($leadData->insurance_provider) {
+                                    $insuranceProvider = InsuranceProvider::whereRaw('LOWER(code) = ?', [strtolower(trim($leadData->insurance_provider))])->first();
+                                    if (! $insuranceProvider) {
+                                        LoggerService::info('fn - uploadedLeadsValidation - insurance provider is invalid '.$leadData->insurance_provider);
+                                        $leadValidationErrors->push('Insurance Provider is invalid');
+                                        break;
+                                    }
+                                }
+                                if ($leadData->plan_name) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - plan name: '.$leadData->plan_name);
+                                    $plan = InsuranceProviderPlan::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->plan_name))])
+                                        ->where('quote_type_id', QuoteTypeId::Home)
+                                        ->first();
+
+                                    if (! $plan) {
+                                        LoggerService::info('fn - uploadedLeadsValidation - plan name is invalid');
+                                        $leadValidationErrors->push('Plan name is invalid');
+                                        break;
+                                    }
                                 }
                             }
                             if (isset($leadData->previous_advisor_email) && ! empty($leadData->previous_advisor_email)) {
