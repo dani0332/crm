@@ -35,11 +35,16 @@ class RetryPrepaymentRequest extends FormRequest
             $quoteType = $this->input('quoteType');
             $quoteRequestId = $this->input('quoteRequestId');
 
+            // Validate main lead object exists
+            $mainLeadObject = app(CentralController::class)->getQuoteObject($quoteType, $quoteRequestId);
+            if (! $mainLeadObject) {
+                $validator->errors()->add('quote_request_id', 'Main lead object not found.');
+            }
+
             // Validate payment split exists
             $paymentSplit = PaymentSplits::find($paymentSplitId);
             if (! $paymentSplit) {
                 $validator->errors()->add('payment_split_id', 'Payment split not found.');
-
                 return;
             }
 
@@ -47,16 +52,6 @@ class RetryPrepaymentRequest extends FormRequest
             $payment = $paymentSplit->payment;
             if (! $payment) {
                 $validator->errors()->add('payment_split_id', 'Payment not found.');
-
-                return;
-            }
-
-            // Validate main lead object exists
-            $mainLeadObject = app(CentralController::class)->getQuoteObject($quoteType, $quoteRequestId);
-            if (! $mainLeadObject) {
-                $validator->errors()->add('quote_request_id', 'Main lead object not found.');
-
-                return;
             }
         });
     }
