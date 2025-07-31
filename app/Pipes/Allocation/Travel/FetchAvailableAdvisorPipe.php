@@ -51,7 +51,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $next($request);
     }
 
-    private function fetchAvailableAdvisor()
+    protected function fetchAvailableAdvisor()
     {
         // Use the team ID that was already evaluated in EvaluateTeamPipe
         $teamId = $this->allocationRequest->getTeamId();
@@ -121,7 +121,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     }
 
-    private function determineFinalAdvisorIdsBasedOnRules($availableUserIds, $rules, $teamId = null): mixed
+    protected function determineFinalAdvisorIdsBasedOnRules($availableUserIds, $rules, $teamId = null): mixed
     {
         if (! $teamId) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -154,7 +154,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $finalEligibleUserIds;
     }
 
-    private function getUserIdsFromRuleRecords($matchedRuleRecords): array
+    protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
     {
         // Get the lead source users from the first matched rule record.
         $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
@@ -171,7 +171,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         // Return the array of user IDs.
         return $userIds;
     }
-    private function getFinalAdvisorId($finalEligibleUserIds)
+    protected function getFinalAdvisorId($finalEligibleUserIds)
     {
         // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
