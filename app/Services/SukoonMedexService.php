@@ -47,6 +47,7 @@ class SukoonMedexService
     private $paymentPlan;
     private $amountDisclaimerText;
     private array $sukoonReqDocTypeCodes;
+    private array $sukoonInitialDocTypeCodes;
     private $providerId;
     private $modelType;
     private string $logPrefix = 'SukoonMedex - Service:';
@@ -56,6 +57,7 @@ class SukoonMedexService
     {
         $this->sukoonRequestUrl = config('constants.SUKOON_API_URL').'/api/v'.config('constants.SUKOON_API_VERSION');
         $this->sukoonReqDocTypeCodes = QuoteDocumentsEnum::getSukoonAllDocTypes();
+        $this->sukoonInitialDocTypeCodes = QuoteDocumentsEnum::getSukoonInitialDocTypes();
     }
 
     private function viewQuotePolicy()
@@ -186,10 +188,10 @@ class SukoonMedexService
 
             if ($isSendEmail) {
                 $reqWatermarkedDocumentTypes = $this->transaction->documents
-                    ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonAllDocTypes())
+                    ->whereIn('document_type_code', $this->sukoonInitialDocTypeCodes)
                     ->where('is_watermarked', true)->pluck('document_type_code')->toArray();
 
-                $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $reqWatermarkedDocumentTypes);
+                $missingReqWatermarkedDocTypes = array_diff($this->sukoonInitialDocTypeCodes, $reqWatermarkedDocumentTypes);
 
                 // make sure email required watermarked documents is not missing
                 if (empty($missingReqWatermarkedDocTypes)) {
@@ -427,7 +429,7 @@ class SukoonMedexService
         // STEP #16 viewQuotePolicy
         $this->syncSukoonCommissions();
 
-        $sukoonDocuments = $this->transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonAllDocTypes())->get();
+        $sukoonDocuments = $this->transaction->documents()->whereIn('document_type_code', $this->sukoonReqDocTypeCodes)->get();
         $watermarkedDocuments = $this->processWatermarkDocuments($sukoonDocuments);
         $this->transaction->load('documents');
 
@@ -441,7 +443,7 @@ class SukoonMedexService
             foreach ($sukoonDocuments as $documentItem) {
 
                 // skip iteration when document_type_code is not from initial document types
-                if (! in_array($documentItem->document_type_code, QuoteDocumentsEnum::getSukoonInitialDocTypes())) {
+                if (! in_array($documentItem->document_type_code, $this->sukoonInitialDocTypeCodes)) {
                     continue;
                 }
 
@@ -527,7 +529,7 @@ class SukoonMedexService
         }
 
         $missingDocTypes = array_diff($this->sukoonReqDocTypeCodes, $savedDocTypes);
-        $missingInitialDocuments = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $savedDocTypes);
+        $missingInitialDocuments = array_diff($this->sukoonInitialDocTypeCodes, $savedDocTypes);
         if (empty($missingInitialDocuments) && $this->policyStatus == EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED) {
             $this->policyStatus = $data['policy_status'] = EmbeddedTransactionEnum::STATUS_BOOKED;
         }
