@@ -39,7 +39,7 @@ class HandleTravelAdvisorUpdated
      */
     public function handle(TravelQuoteAdvisorUpdated $event): void
     {
-        
+
         info(self::class.' - inside handle travel update advisor');
 
         $lead = $event->lead;
