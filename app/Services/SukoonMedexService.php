@@ -299,7 +299,7 @@ class SukoonMedexService
         $cacheKey = "processing_{$lockKey}";
         $lockAcquired = cache()->add($cacheKey, true, now()->addMinutes(5));
 
-        return !$lockAcquired;
+        return ! $lockAcquired;
     }
 
     /**
@@ -1228,7 +1228,6 @@ class SukoonMedexService
      *  - Prepares document data array for database operations
      *
      * @param  string  $docId  Document identifier from Sukoon API
-     * @param  DocumentType  $documentType
      * @param  array  $logContext  Additional context for logging (optional)
      * @return array|false Success: Document data array with fields matching App\Models\QuoteDocument for create/update operations
      *                     Failure: false when document is unavailable or upload fails
