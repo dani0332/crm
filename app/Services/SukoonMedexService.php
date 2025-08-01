@@ -22,6 +22,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -217,7 +218,7 @@ class SukoonMedexService
         ]);
     }
 
-    public function watermarkDocument($quoteDocument)
+    public function watermarkDocument(QuoteDocument $quoteDocument): QuoteDocument|false
     {
         $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('quote_type_id', $this->quoteTypeId)->first();
 
@@ -238,7 +239,7 @@ class SukoonMedexService
         }
 
         // Check if the source file exists
-        if (! $this->fileExists($quoteDocument->doc_url)) {
+        if (empty($quoteDocument->doc_url) || ! $this->fileExists($quoteDocument->doc_url)) {
             LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
 
             return false;
@@ -273,8 +274,6 @@ class SukoonMedexService
             return $quoteDocument;
         } catch (\Exception $e) {
             LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->currentQuote->uuid}. Error: ".$e->getMessage());
-
-            // throw $e; // Re-throw to trigger job retry TODO::
             return false;
         }
     }
@@ -299,7 +298,7 @@ class SukoonMedexService
     /**
      * Check if a file exists
      */
-    private function fileExists($path)
+    private function fileExists(string $path): bool
     {
         try {
             // For local storage
@@ -424,10 +423,10 @@ class SukoonMedexService
         $sukoonDocuments = $this->transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonAllDocTypes())->get();
         $this->processWatermarkDocuments($sukoonDocuments);
 
-        return $sukoonDocuments->refresh();
+        return $sukoonDocuments->fresh();
     }
 
-    public function processWatermarkDocuments($sukoonDocuments)
+    public function processWatermarkDocuments(Collection $sukoonDocuments): array
     {
         $watermarkedDocuments = [];
         if ((count($sukoonDocuments) > 0)) {
@@ -446,7 +445,7 @@ class SukoonMedexService
                 // TODO:: need to verify watermark generate only when watermarked is not generated
                 $savedWatermarkedDocument = $this->watermarkDocument($documentItem);
                 if (! empty($savedWatermarkedDocument)) {
-                    array_push($watermarkedDocuments, $savedWatermarkedDocument);
+                    $watermarkedDocuments[] = $savedWatermarkedDocument;
                 }
             }
         }
@@ -1179,7 +1178,8 @@ class SukoonMedexService
                     continue;
                 }
 
-                $documentData = $this->downloadDocument($quote, $embeddedTransaction, $docId, $documentType);
+                $logContext = ['ref_id' => $quote->code, 'ep_code' => $embeddedTransaction->code];
+                $documentData = $this->downloadDocument($docId, $documentType, $logContext);
                 if (! empty($documentData)) {
 
                     if (isset($document)) {
@@ -1213,25 +1213,26 @@ class SukoonMedexService
     }
 
     /**
-     * Download, upload & save the document
-     *  - Download from sukoon-api
-     *  - Upload document to azure
-     *  - Save into database
+     * Download document from Sukoon API and upload to Azure storage
+     * 
+     * This method performs the following operations:
+     *  - Downloads document content from Sukoon API using document ID
+     *  - Uploads document to Azure storage
+     *  - Prepares document data array for database operations
      *
-     * @param  mixed  $quote  The quote object
-     * @param  mixed  $embeddedTransaction  The embedded transaction object
-     * @param  string  $docId  The document ID
-     * @param  string  $docCode  The document code
-     * @return array|bool The result of the document save operation
+     * @param  string  $docId  Document identifier from Sukoon API
+     * @param  DocumentType  $documentType
+     * @param  array  $logContext  Additional context for logging (optional)
+     * @return array|false Success: Document data array with fields matching App\Models\QuoteDocument for create/update operations
+     *                     Failure: false when document is unavailable or upload fails
      *
-     * @throws Exception If the document save operation fails
+     * @throws Exception Throws exceptions for critical failures
      */
-    // TODO:: remove $quote & $embeddedTransaction it's only using for log
-    // public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode)
-    public function downloadDocument($quote, $embeddedTransaction, $docId, $documentType)
+    public function downloadDocument($docId, DocumentType $documentType, array $logContext = [])
     {
+        $docCode = $documentType->code ?? '';
+
         try {
-            $docCode = $documentType->code ?? '';
 
             $result = $this->request('/policy/download-document/'.$docId, 'get', headers: ['x-session-id' => $this->sessionId]);
             $content = $result->body();
@@ -1293,7 +1294,7 @@ class SukoonMedexService
                 return false;
             }
         } catch (Exception $e) {
-            $this->logFailure('Get Document doc_code : '.$docCode, $e->getMessage(), ['ref_id' => $quote->code, 'embeddedTransaction' => $embeddedTransaction]);
+            $this->logFailure('downloadDocument', $e->getMessage(), [...$logContext, 'doc_code' => $docCode]);
             throw new Exception('downloadDocument ERROR: '.$e->getMessage());
         }
     }
