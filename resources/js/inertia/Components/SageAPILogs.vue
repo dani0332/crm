@@ -177,7 +177,7 @@ onBeforeMount(() => {
     <x-modal v-model="sageLogModel" size="xxl" backdrop>
       <template #header>
         <div class="flex items-center justify-between w-full px-6 py-4">
-          <div class="flex items-center space-x-3"> 
+          <div class="flex items-center space-x-3">
             <div>
               <h2 class="text-xl font-bold text-gray-900 tracking-tight">
                 Sage API Logs
@@ -188,15 +188,20 @@ onBeforeMount(() => {
             </div>
           </div>
           <div class="flex items-center space-x-3">
-            <div class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg border">
-              {{ sageAPILogs.data?.length || 0 }} {{ sageAPILogs.data?.length === 1 ? 'entry' : 'entries' }}
+            <div
+              class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg border"
+            >
+              {{ sageAPILogs.data?.length || 0 }}
+              {{ sageAPILogs.data?.length === 1 ? 'entry' : 'entries' }}
             </div>
           </div>
         </div>
       </template>
-      
+
       <template #actions>
-        <div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div
+          class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200"
+        >
           <div class="text-sm text-gray-500">
             Last refreshed: {{ lastRefreshed.toLocaleTimeString() }}
           </div>
@@ -219,7 +224,7 @@ onBeforeMount(() => {
           </div>
         </div>
       </template>
-      
+
       <DataTable
         table-class-name="compact tablefixed"
         :headers="sageAPILogs.table"
@@ -233,7 +238,7 @@ onBeforeMount(() => {
           {{ user?.name }}
         </template>
         <template #item-sage_request_type="{ sage_request_type }">
-          {{ sage_request_type }} 
+          {{ sage_request_type }}
         </template>
         <template #item-sage_end_point="{ sage_end_point }">
           {{ sage_end_point?.substr(0, 10) }}
