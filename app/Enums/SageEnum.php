@@ -68,9 +68,9 @@ final class SageEnum extends Enum
     const SRT_POST_AP_PP_REC = 'POST_AP_PP_REC';
 
     // AR Commission Pre Payments Receipts
-    const CREATE_COM_PP_REC = 'CREATE_COM_PP_REC';
-    const RTP_COM_PP_REC = 'RTP_COM_PP_REC';
-    const POST_COM_PP_REC = 'POST_COM_PP_REC';
+    const CREATE_AR_COM_PP_REC = 'CREATE_AR_COM_PP_REC';
+    const RTP_AR_COM_PP_REC = 'RTP_AR_COM_PP_REC';
+    const POST_AR_COM_PP_REC = 'POST_COM_PP_REC';
 
     // AR Invoices - Upfront
     const EP_SRT_CREATE_AR_PREM_COMM_INV = 'EP_SRT_CREATE_AR_PREM_COMM_INV';
@@ -231,8 +231,8 @@ final class SageEnum extends Enum
     const SAGE_EMPTY_RESPONSE_MESSAGE = 'empty reply from server';
 
     // Sage Payload
-    const BANK_CODE = 'INSBANK';
-    const PAYMENT_CODE = 'IP';
+    const BANK_CODE_INS = 'INSBANK';
+    const PAYMENT_CODE_IP = 'IP';
     const BANK_CODE_TAP = 'TAP';
     const PAYMENT_CODE_CREDIT_CARD = 'CC';
 }

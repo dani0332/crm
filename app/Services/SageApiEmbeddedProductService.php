@@ -1076,8 +1076,8 @@ class SageApiEmbeddedProductService
 
         $entryType = SageEnum::SCT_STRAIGHT;
         $customerNumber = $sageRequest->customerId;
-        $bankCode = SageEnum::BANK_CODE;
-        $paymentCode = SageEnum::PAYMENT_CODE;
+        $bankCode = SageEnum::BANK_CODE_INS;
+        $paymentCode = SageEnum::PAYMENT_CODE_IP;
         $bankReceiptAmount = roundNumber(floatval($sageRequestEmbeddedProduct->collectionAmount));
         $checkReceiptNumber = 'N/A';
 
@@ -1585,12 +1585,12 @@ class SageApiEmbeddedProductService
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => SageEnum::BANK_CODE_INS,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $sageRequest->customerId,
-                    'BankCode' => SageEnum::BANK_CODE,
+                    'BankCode' => SageEnum::BANK_CODE_INS,
                     'ReceiptTransactionType' => 'Receipt',
                     'AppliedReceiptsAdjustments' => [
                         [
@@ -1682,7 +1682,7 @@ class SageApiEmbeddedProductService
         ];
 
         $vendorNumber = $sageRequestEmbeddedProduct->sageVendorId;
-        $bankCode = SageEnum::BANK_CODE;
+        $bankCode = SageEnum::BANK_CODE_INS;
         $bankReceiptAmount = roundNumber(floatval($sageRequestEmbeddedProduct->collectionAmount), 2);
 
         // Payment code logic - for embedded products, we typically use standard bank code
@@ -1877,7 +1877,7 @@ class SageApiEmbeddedProductService
         $payLoad = [
             'BatchSelector' => 'PY',
             'Description' => 'CLIENT PAYMENT MAPPING',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => SageEnum::BANK_CODE_INS,
             'PaymentsAdjustments' => [
                 [
                     'BatchType' => 'PY',

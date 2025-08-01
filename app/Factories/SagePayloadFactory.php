@@ -69,12 +69,12 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => SageEnum::BANK_CODE_INS,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $sage_customer_number,
-                    'BankCode' => SageEnum::BANK_CODE,
+                    'BankCode' => SageEnum::BANK_CODE_INS,
                     'ReceiptTransactionType' => 'Receipt',
                     'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
@@ -683,14 +683,14 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
 
         $customerNumber = $sageRequest->sage_customer_number;
-        $bankCode = SageEnum::BANK_CODE;
-        $paymentCode = SageEnum::PAYMENT_CODE;
+        $bankCode = SageEnum::BANK_CODE_INS;
+        $paymentCode = SageEnum::PAYMENT_CODE_IP;
         $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount));
         $checkReceiptNumber = $sageRequest->checkDetails;
 
         if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
-            $bankCode = SageEnum::BANK_CODE;
-            $paymentCode = SageEnum::PAYMENT_CODE;
+            $bankCode = SageEnum::BANK_CODE_INS;
+            $paymentCode = SageEnum::PAYMENT_CODE_IP;
         }
 
         if ($isCommissionReceipt) {
@@ -728,7 +728,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => $isCommissionReceipt ? SageEnum::CREATE_COM_PP_REC : SageEnum::SRT_CREATE_PP_REC,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::CREATE_AR_COM_PP_REC : SageEnum::SRT_CREATE_PP_REC,
             'entry_type' => $entryType,
         ];
     }
@@ -743,7 +743,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => $isCommissionReceipt ? SageEnum::RTP_COM_PP_REC : SageEnum::SRT_RTP_PAY_REC_ONE_INV,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::RTP_AR_COM_PP_REC : SageEnum::SRT_RTP_PAY_REC_ONE_INV,
             'entry_type' => $entryType,
         ];
     }
@@ -766,7 +766,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => $isCommissionReceipt ? SageEnum::POST_COM_PP_REC : SageEnum::SRT_POST_PP_REC,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::POST_AR_COM_PP_REC : SageEnum::SRT_POST_PP_REC,
             'entry_type' => $entryType,
         ];
     }
@@ -1181,12 +1181,12 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => SageEnum::BANK_CODE_INS,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $sage_customer_number,
-                    'BankCode' => SageEnum::BANK_CODE,
+                    'BankCode' => SageEnum::BANK_CODE_INS,
                     'ReceiptTransactionType' => 'Receipt',
                     'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
@@ -1483,11 +1483,11 @@ class SagePayloadFactory
         ];
 
         $vendorNumber = $sageRequest->sageVenderId;
-        $bankCode = SageEnum::BANK_CODE;
+        $bankCode = SageEnum::BANK_CODE_INS;
         $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount), 2);
 
         if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
-            $bankCode = SageEnum::BANK_CODE;
+            $bankCode = SageEnum::BANK_CODE_INS;
         }
         $entryDescription = 'CLIENT DIRECT PAYMENT TO '.$sageRequest->insurerCode;
         $payLoad = [
@@ -1568,7 +1568,7 @@ class SagePayloadFactory
         $payLoad = [
             'BatchSelector' => 'PY',
             'Description' => 'CLIENT PAYMENT MAPPING',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => SageEnum::BANK_CODE_INS,
             'PaymentsAdjustments' => [
                 [
                     'BatchType' => 'PY',
@@ -1652,7 +1652,7 @@ class SagePayloadFactory
         $payLoad = [
             'BatchSelector' => 'PY',
             'Description' => 'CLIENT PAYMENT MAPPING',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => SageEnum::BANK_CODE_INS,
             'PaymentsAdjustments' => [
                 [
                     'BatchType' => 'PY',
