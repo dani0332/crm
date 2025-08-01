@@ -31,6 +31,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
+use App\Facades\Ken;
 
 class CarCQFRenewalService
 {
@@ -301,6 +302,7 @@ class CarCQFRenewalService
         if ($newQuote) {
             $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, true);
             $this->getCustomerEntity($newQuote, $quote);
+            $this->saveEmbeddedTransaction($newQuote);
             LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully', self::class), [
                 'previous_quote_uuid' => $quote->uuid,
                 'new_quote_uuid' => $newQuote->uuid,
@@ -430,6 +432,17 @@ class CarCQFRenewalService
             'car_model_id.required' => 'Car model is required.',
             'registration_type.required' => 'Registration type is required.',
         ];
+    }
+
+
+    public function saveEmbeddedTransaction($quote)
+    {
+        $response = Ken::request('/save-embedded-transaction', 'post',
+        ['quoteUID' => $quote->uuid, 'quoteTypeId' => QuoteTypeId::Car]);
+        if($response->status == 200){
+            return $response->data;
+        }
+        return null;
     }
 
 }
