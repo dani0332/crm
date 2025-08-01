@@ -734,11 +734,14 @@ class SplitPaymentService
                 $sageRequest->advisor_id = $quoteModel?->advisor_id;
 
                 /* Handle NRA case where payment is approved after policy/send update is booked */
-                $sageResponse = (new SageApiService)->createARPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
-                if ($sageResponse['status']) {
-                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['message']}");
+                $sageARPrepaymentResponse = (new SageApiService)->createARPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
+                $sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+                $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
+
+                if ($sageARPrepaymentResponse['status'] && $sageAPPrepaymentResponse['status']) {
+                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageARPrepaymentResponse['message']}");
                 } else {
-                    $sageMessage = $sageResponse['message'];
+                    $sageMessage = $sageAPPrepaymentResponse['message'];
                     LoggerService::info("Sage receipt creation failed for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with error: {$sageMessage}");
 
                     if ($isFromJob) {

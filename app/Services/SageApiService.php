@@ -969,10 +969,12 @@ class SageApiService
         $sageCustomerNumberResponse = $sageApiService->getSageCustomerNumber($quoteDetails, $sageRequest->customer_id, $customerData, $paymentSplit, $sageRequest->advisor_id);
         if ($sageCustomerNumberResponse['status'] === false) {
             $response['message'] = $sageCustomerNumberResponse['message'];
-            $response['sageCustomerNumber'] = $sageCustomerNumberResponse['sageCustomerNumber'];
 
             return $response;
         }
+
+        $response['sageCustomerNumber'] = $sageCustomerNumberResponse['sageCustomerNumber'];
+        
         $sageRequest->sage_customer_number = $sageCustomerNumberResponse['sageCustomerNumber'];
 
         $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($sageRequest);
