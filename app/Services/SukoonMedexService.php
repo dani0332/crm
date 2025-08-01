@@ -284,14 +284,9 @@ class SukoonMedexService
     {
         // Use cache to track processing status
         $cacheKey = "processing_{$lockKey}";
-        if (cache()->has($cacheKey)) {
-            return true;
-        }
+        $lockAcquired = cache()->add($cacheKey, true, now()->addMinutes(5));
 
-        // Set a processing flag with a 5-minute expiration
-        cache()->put($cacheKey, true, now()->addMinutes(5));
-
-        return false;
+        return !$lockAcquired;
     }
 
     /**
