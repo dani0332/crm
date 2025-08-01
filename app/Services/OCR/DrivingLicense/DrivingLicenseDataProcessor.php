@@ -6,7 +6,6 @@ namespace App\Services\OCR\DrivingLicense;
 
 use App\Models\CarQuote;
 use App\Services\Logger\LoggerService;
-use App\Services\OCR\DrivingLicense\DrivingLicenseExtractor;
 use App\Services\OCR\OcrUtils;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +29,7 @@ class DrivingLicenseDataProcessor
             LoggerService::info('Driving License data processor started', extra: [
                 'quote_uuid' => $this->quote->uuid,
                 'quote_type' => class_basename($this->quote),
-                'extracted_fields' => array_keys(array_filter($processedData, fn ($v) => !empty($v))),
+                'extracted_fields' => array_keys(array_filter($processedData, fn ($v) => ! empty($v))),
             ]);
 
             if (empty($processedData['car_quote_detail_fields'])) {
@@ -45,7 +44,7 @@ class DrivingLicenseDataProcessor
 
             // Update CarQuoteRequestDetail fields
             $carQuoteDetailUpdated = false;
-            if (!empty($processedData['car_quote_detail_fields'])) {
+            if (! empty($processedData['car_quote_detail_fields'])) {
                 $carQuoteDetailUpdated = $this->updateCarQuoteRequestDetail($this->quote, $processedData['car_quote_detail_fields']);
             }
 
@@ -74,17 +73,18 @@ class DrivingLicenseDataProcessor
         try {
             $carQuoteDetail = $quote->carQuoteRequestDetail;
 
-            if (!$carQuoteDetail) {
+            if (! $carQuoteDetail) {
                 LoggerService::warning('CarQuoteRequestDetail not found for quote', extra: [
                     'quote_uuid' => $this->quote->uuid,
                 ]);
+
                 return false;
             }
 
             // Only update fields that have values and are not already filled
             $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate, $carQuoteDetail);
 
-            if (!empty($dataToUpdate)) {
+            if (! empty($dataToUpdate)) {
                 $carQuoteDetail->update($dataToUpdate);
 
                 LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data', extra: [

@@ -38,7 +38,7 @@ class DrivingLicenseExtractor
         $ocrDataArray = [$this->data];
 
         foreach ($ocrDataArray as $ocrData) {
-            if (!is_object($ocrData) && !is_array($ocrData)) {
+            if (! is_object($ocrData) && ! is_array($ocrData)) {
                 continue;
             }
 
@@ -113,6 +113,7 @@ class DrivingLicenseExtractor
         }
 
         $nameParts = explode(' ', trim($fullName));
+
         return $nameParts[0] ?? null;
     }
 

@@ -9,11 +9,8 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Nationality;
 use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
-use App\Services\OCR\Mulkiya\MulkiyaExtractor;
 use App\Services\OCR\OcrUtils;
 use Exception;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class MulkiyaDataProcessor

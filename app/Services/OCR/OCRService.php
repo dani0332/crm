@@ -130,7 +130,7 @@ class OCRService
         }
 
         // Send start notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types (skip for ecom)
-        if (!$isEcom && $this->requiresOcrNotifications($docType)) {
+        if (! $isEcom && $this->requiresOcrNotifications($docType)) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
         }
 
@@ -171,7 +171,7 @@ class OCRService
             if ($data) {
                 LoggerService::info(self::class.'::process - Data received from getData', extra: [
                     'quote_uuid' => $quote->uuid,
-                    'data' => $data
+                    'data' => $data,
                 ]);
                 $dataFilledResponse = $this->fill(
                     $quote,
@@ -183,12 +183,12 @@ class OCRService
                 $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
                 if ($isQuoteStatusTransectionApproved) {
                     (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
-                } else if (!$isEcom) {
+                } elseif (! $isEcom) {
                     event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
                 }
 
                 // Send end notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types when processing completes successfully (skip for ecom)
-                if (!$isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
+                if (! $isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
                     event(new OcrNotifications($quote, 'end', 'OCR processing completed successfully', null, $docType?->value, $userId));
                 }
 

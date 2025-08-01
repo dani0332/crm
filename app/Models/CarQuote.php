@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
-use App\Models\RegistrationCertificate;
 
 class CarQuote extends BaseModel
 {

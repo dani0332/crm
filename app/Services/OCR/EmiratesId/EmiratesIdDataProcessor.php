@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
-use App\Services\OCR\EmiratesId\EmiratesIdExtractor;
 use App\Services\OCR\OcrUtils;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Models\CustomerInsured;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 
 class EmiratesIdDataProcessor
 {
@@ -39,11 +38,11 @@ class EmiratesIdDataProcessor
             LoggerService::info('Emirates ID data processor started', extra: [
                 'quote_uuid' => $this->quote->uuid,
                 'quote_type' => class_basename($this->quote),
-                'extracted_fields' => array_keys(array_filter($this->extractedData, fn ($v) => !empty($v))),
+                'extracted_fields' => array_keys(array_filter($this->extractedData, fn ($v) => ! empty($v))),
             ]);
 
             $insured = $this->getOrCreateInsuredRecord();
-            if (!$insured) {
+            if (! $insured) {
                 throw new Exception('Failed to get or create Insured record');
             }
 
@@ -78,7 +77,7 @@ class EmiratesIdDataProcessor
         try {
             $insured = $this->quote->latestInsured ?? null;
 
-            if (!$insured && !empty($this->extractedData['eid_number'])) {
+            if (! $insured && ! empty($this->extractedData['eid_number'])) {
                 $insured = Insured::where('id_number', $this->extractedData['eid_number'])
                     ->where('id_type', 'emiratesId')
                     ->first();
@@ -88,7 +87,7 @@ class EmiratesIdDataProcessor
                 }
             }
 
-            if (!$insured) {
+            if (! $insured) {
                 $insured = $this->createInsuredRecord();
             }
 
@@ -126,27 +125,27 @@ class EmiratesIdDataProcessor
         try {
             $updateData = [];
 
-            if (!empty($this->extractedData['name'])) {
+            if (! empty($this->extractedData['name'])) {
                 $updateData['first_name'] = $this->extractFirstName($this->extractedData['name']);
                 $updateData['last_name'] = $this->extractLastName($this->extractedData['name']);
             }
 
-            if (!empty($this->extractedData['date_of_birth'])) {
+            if (! empty($this->extractedData['date_of_birth'])) {
                 $updateData['dob'] = $this->extractedData['date_of_birth'];
             }
 
-            if (!empty($this->extractedData['nationality'])) {
+            if (! empty($this->extractedData['nationality'])) {
                 $nationalityId = $this->getNationalityId($this->extractedData['nationality']);
                 if ($nationalityId) {
                     $updateData['nationality_id'] = $nationalityId;
                 }
             }
 
-            if (!empty($this->extractedData['sex'])) {
+            if (! empty($this->extractedData['sex'])) {
                 $updateData['gender'] = $this->formatGender($this->extractedData['sex']);
             }
 
-            if (!empty($this->extractedData['eid_number'])) {
+            if (! empty($this->extractedData['eid_number'])) {
                 $updateData['id_type'] = 'emiratesId';
                 $updateData['id_number'] = $this->extractedData['eid_number'];
             }
@@ -154,7 +153,7 @@ class EmiratesIdDataProcessor
             // Only update fields that have values and are not already filled
             $dataToUpdate = OcrUtils::getFieldsToUpdate($updateData, $insured);
 
-            if (!empty($dataToUpdate)) {
+            if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
 
                 LoggerService::info('Insured table updated successfully', extra: [
@@ -185,22 +184,22 @@ class EmiratesIdDataProcessor
         try {
             $kycData = [];
 
-            if (!empty($this->extractedData['country'])) {
+            if (! empty($this->extractedData['country'])) {
                 $kycData['country_of_residence'] = $this->extractedData['country'];
             }
 
-            if (!empty($this->extractedData['issuing_date'])) {
+            if (! empty($this->extractedData['issuing_date'])) {
                 $kycData['id_issuance_date'] = $this->extractedData['issuing_date'];
             }
 
-            if (!empty($this->extractedData['expiry_date'])) {
+            if (! empty($this->extractedData['expiry_date'])) {
                 $kycData['id_expiry_date'] = $this->extractedData['expiry_date'];
             }
 
-            if (!empty($this->extractedData['issuing_place'])) {
+            if (! empty($this->extractedData['issuing_place'])) {
                 $kycData['issuance_place'] = $this->extractedData['issuing_place'];
                 // add residential_address by appending 'UAE' to issuance_place as per business request
-                $kycData['residential_address'] = $this->extractedData['issuing_place'] . ', UAE';
+                $kycData['residential_address'] = $this->extractedData['issuing_place'].', UAE';
             }
 
             // Sync insured table data to insured_kyc table
@@ -215,7 +214,7 @@ class EmiratesIdDataProcessor
                 // Only update fields that have values and are not already filled
                 $dataToUpdate = OcrUtils::getFieldsToUpdate($kycData, $insuredKyc);
 
-                if (!empty($dataToUpdate)) {
+                if (! empty($dataToUpdate)) {
                     $insuredKyc->update($dataToUpdate);
 
                     LoggerService::info('InsuredKyc table updated successfully', extra: [
@@ -299,12 +298,13 @@ class EmiratesIdDataProcessor
 
     private function createCustomerInsuredLink(Insured $insured): void
     {
-        if (!$this->quote->customer_id || !$insured->id) {
+        if (! $this->quote->customer_id || ! $insured->id) {
             LoggerService::warning('CustomerInsured relationship creation skipped - missing required data', extra: [
                 'customer_id' => $this->quote->customer_id ?? 'null',
                 'insured_id' => $insured->id ?? 'null',
                 'quote_id' => $this->quote->id ?? 'null',
             ]);
+
             return;
         }
 
@@ -318,7 +318,7 @@ class EmiratesIdDataProcessor
                 'quote_request_id' => $this->quote->id,
             ])->first();
 
-            if (!$existingLink) {
+            if (! $existingLink) {
                 CustomerInsured::create([
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
@@ -362,7 +362,7 @@ class EmiratesIdDataProcessor
         try {
             $insured = $this->quote->latestInsured;
 
-            if (!$insured) {
+            if (! $insured) {
                 return [
                     'status' => 'no_insured_found',
                     'message' => 'No insured record found for this quote',
@@ -374,7 +374,7 @@ class EmiratesIdDataProcessor
             return [
                 'status' => 'success',
                 'insured_id' => $insured->id,
-                'has_kyc_data' => !is_null($insuredKyc),
+                'has_kyc_data' => ! is_null($insuredKyc),
                 'insured_data' => [
                     'name' => trim(($insured->first_name ?? '').' '.($insured->last_name ?? '')),
                     'dob' => $insured->dob,

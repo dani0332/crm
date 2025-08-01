@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class RegistrationCertificate extends Model
 {
     protected $table = 'registration_certificates';
-
     protected $fillable = [
         'place_of_issue',
         'expiry_date',
@@ -32,7 +31,6 @@ class RegistrationCertificate extends Model
         'doc_type',
         'provider_id',
     ];
-
     protected $casts = [
         'expiry_date' => 'date',
         'number_of_passengers' => 'integer',

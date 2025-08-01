@@ -29,6 +29,7 @@ class OcrUtils
                 $dataToUpdate[$field] = $value;
             }
         }
+
         return $dataToUpdate;
     }
 }
