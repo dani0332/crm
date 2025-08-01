@@ -3238,14 +3238,7 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
-
-        /* Start: Temporary code for historic data to allow book polciy after m2 launch */
-        $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
-        if ($isQuoteFallUnderSkippableCriteria['status']) {
-            return $isQuoteFallUnderSkippableCriteria;
-        }
-        /* End: Temporary code for historic data to allow book polciy after m2 launch */
-
+ 
         /* applyPaymentAPInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 

@@ -1909,14 +1909,14 @@ class SageApiEmbeddedProductService
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::EP_SRT_CREATE_APPLY_PAYMENT_RECEIPT,
+            'sage_request_type' => SageEnum::EP_AP_SRT_CREATE_APPLY_PAYMENT_RECEIPT,
             'entry_type' => $entryType,
         ];
     }
 
     public static function readyToPostApplyAPPrepaymentPayload($batchNumber)
     {
-        $sageRequestType = SageEnum::EP_SRT_READY_TO_POST_APPLY_PAYMENT_RECEIPT;
+        $sageRequestType = SageEnum::EP_AP_SRT_READY_TO_POST_APPLY_PAYMENT_RECEIPT;
         $payLoad = [
             'BatchStatus' => 'ReadyToPost',
         ];
@@ -1931,7 +1931,7 @@ class SageApiEmbeddedProductService
 
     public static function postApplyAPPrepaymentPayload($batchNumber)
     {
-        $sageRequestType = SageEnum::EP_SRT_POST_APPLY_PAYMENT_RECEIPT;
+        $sageRequestType = SageEnum::EP_AP_SRT_POST_APPLY_PAYMENT_RECEIPT;
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchType' => 'PY',
