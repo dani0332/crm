@@ -1715,7 +1715,7 @@ class SageApiEmbeddedProductService
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_CREATE_AP_PP_REC,
+            'sage_request_type' => SageEnum::EP_SRT_CREATE_AP_PP_REC,
             'entry_type' => $entryType,
         ];
     }
@@ -1730,7 +1730,7 @@ class SageApiEmbeddedProductService
         return [
             'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.'(BatchSelector=\'PY\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_RTP_AP_PP_REC,
+            'sage_request_type' => SageEnum::EP_SRT_RTP_AP_PP_REC,
             'entry_type' => $entryType,
         ];
     }
@@ -1753,7 +1753,7 @@ class SageApiEmbeddedProductService
         return [
             'endPoint' => 'AP/APPostPaymentsAndAdjustments'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_POST_AP_PP_REC,
+            'sage_request_type' => SageEnum::EP_SRT_POST_AP_PP_REC,
             'entry_type' => $entryType,
         ];
     }
