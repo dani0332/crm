@@ -558,13 +558,18 @@ onMounted(() => {
           </x-field>
 
           <!-- Vehicle Color -->
-          <x-field label="Vehicle Color" required>
-            <x-select
+          <x-field
+            label="Vehicle Color"
+            required
+          >
+            <ComboBox
+              :single="true"
               v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
               :options="vehicleColorOptions"
               :rules="[isRequired]"
               placeholder="Select Vehicle Color"
               :disabled="isFieldDisabled('vehicle_color')"
+              class="w-full"
             />
           </x-field>
 
@@ -573,12 +578,14 @@ onMounted(() => {
             label="Plate Color"
             :required="isFieldRequired('plate_color')"
           >
-            <x-select
+            <ComboBox
+              :single="true"
               v-model="additionalVehicleTransactionDetailsForm.plate_color"
               :options="plateColorOptions"
               :rules="getFieldRules('plate_color')"
               placeholder="Select Plate Color"
               :disabled="isFieldDisabled('plate_color')"
+              class="w-full"
             />
           </x-field>
 
