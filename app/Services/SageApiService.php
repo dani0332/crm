@@ -974,7 +974,7 @@ class SageApiService
         }
 
         $response['sageCustomerNumber'] = $sageCustomerNumberResponse['sageCustomerNumber'];
-        
+
         $sageRequest->sage_customer_number = $sageCustomerNumberResponse['sageCustomerNumber'];
 
         $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($sageRequest);
@@ -3610,7 +3610,7 @@ class SageApiService
 
             return $response;
         }
-                    LoggerService::info(self::class.' fn: '.__FUNCTION__.' - SAGE API: Quote Code: '.$quoteDetails->code.' - Payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' - Verified Sage customer number: '.$sageCustomerNumber);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - SAGE API: Quote Code: '.$quoteDetails->code.' - Payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' - Verified Sage customer number: '.$sageCustomerNumber);
 
         $response['status'] = true;
         $response['message'] = 'Sage customer number verified';
