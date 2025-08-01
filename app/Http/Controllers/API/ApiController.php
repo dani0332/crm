@@ -446,4 +446,9 @@ class ApiController extends Controller
             'public_url' => $publicUrl,
         ]);
     }
+
+    public function documentNotification(Request $request)
+    {
+        return $this->apiService->documentNotification($request);
+    }
 }

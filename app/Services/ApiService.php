@@ -474,4 +474,9 @@ class ApiService
 
         return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow triggered successfully!');
     }
+
+    public function documentNotification($request)
+    {
+        return apiResponse(null, Response::HTTP_OK, 'Document notification received!');
+    }
 }
