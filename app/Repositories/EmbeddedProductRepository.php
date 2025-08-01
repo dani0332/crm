@@ -554,6 +554,9 @@ class EmbeddedProductRepository extends BaseRepository
 
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
+        if($transaction->isEmpty()) {
+            return ['success' => false, 'message' => 'Transaction not found'];
+        }
 
         $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
         if (! $isSalama) {
@@ -563,7 +566,7 @@ class EmbeddedProductRepository extends BaseRepository
         if (! $canSendDocuments) {
             LoggerService::info('Documents cannot be sent',
                 extra: [
-                    'et_id' => $transaction->id,
+                    'et_ids' => $transaction->pluck('id'),
                     'ep_category' => $ep->product_category,
                     'quote_status' => $quoteObject->quote_status_id,
                 ],
