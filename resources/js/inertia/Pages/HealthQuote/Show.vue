@@ -3488,6 +3488,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   actualPremium,
                   policyFee,
                   basmah,
+                  icpFee,
                   vat,
                   loadingPrice,
                   adjustedPrice,
@@ -3498,6 +3499,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     actualPremium +
                       (policyFee || 0) +
                       (basmah || 0) +
+                      (icpFee || 0) +
                       vat +
                       (loadingPrice || 0) +
                       (adjustedPrice || 0),
