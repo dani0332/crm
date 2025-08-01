@@ -814,7 +814,7 @@ const activityForm = useForm({
   parentType: 'Car',
   quoteType: 1,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props.auth?.user?.id ?? null,
   status: null,
@@ -881,11 +881,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -4215,6 +4211,7 @@ function handleOcrNotification(event) {
             v-model="activityForm.description"
             :adjust-to-text="false"
             class="w-full"
+            :rules="[isRequired]"
           />
 
           <x-select
@@ -4234,7 +4231,6 @@ function handleOcrNotification(event) {
             :rules="[isRequired]"
             class="w-full"
             withTime
-            :timezone="'UTC'"
           />
         </div>
 
