@@ -1159,37 +1159,21 @@ class CentralService extends BaseService
     public function updateQuoteInformation($type, $id)
     {
         if ($type == 'send-update') {
-            return true;
+            return;
         }
         if (request()->has('quote_type')) {
             $type = request()->quote_type;
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
-
-        // Define final statuses that should not be changed by document uploads
-        $finalStatuses = [
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-            // We are adding these statuses to avoid the status change due to document uploads will inform to BA
-
-            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
-            QuoteStatusEnum::POLICY_BOOKING_FAILED,
-        ];
-
-        LoggerService::info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
         
-        // Check if quote is in a final status - if so, don't change status due to document uploads
-        if (in_array($quote->quote_status_id, $finalStatuses)) {
-            LoggerService::info('Quote Code: '.$quote->code.' is in final status ('.$quote->quote_status_id.'), skipping status update for document uploads');
+        // Check if quote status is locked - if so, don't change status due to document uploads
+        if ($this->isQuoteStatusLocked($quote)) {
             return;
         }
 
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+        
         $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
         LoggerService::info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
         if ($isPolicyDetailsFilled) {
@@ -1225,6 +1209,33 @@ class CentralService extends BaseService
                 LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
+    }
+
+    /**
+     * Check if quote is in a locked status that prevents document uploads from changing status
+     */
+    private function isQuoteStatusLocked($quote): bool
+    {
+        $lockedQuoteStatuses = [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+            // These statuses prevent document uploads from changing quote status
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+        ];
+
+        LoggerService::info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
+        
+        if (in_array($quote->quote_status_id, $lockedQuoteStatuses)) {
+            LoggerService::info('Quote Code: '.$quote->code.' status is locked ('.$quote->quote_status_id.'), preventing document uploads from changing status');
+            return true;
+        }
+
+        return false;
     }
 
     /**
