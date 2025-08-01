@@ -138,12 +138,12 @@ const isFieldRequired = (fieldName) => {
   if (fieldConfig.value[fieldName]?.hidden) {
     return false;
   }
-  
+
   // Check RTA-specific requirements first, then fall back to insurance provider requirements
   if (fieldConfig.value[fieldName]?.required !== undefined) {
     return fieldConfig.value[fieldName].required;
   }
-  
+
   // Legacy insurance provider-based requirements
   switch (fieldName) {
     case 'plate_code':
@@ -177,11 +177,11 @@ const formatDate = (date) => {
 const calculateDatesForNewVehicleOrOwnershipChange = () => {
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
     const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
-    
+
     // Policy Expiry Date = Policy Effective Date + 13 months
     const policyExpiryDate = new Date(policyEffectiveDate);
     policyExpiryDate.setMonth(policyExpiryDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
-    
+
     // Certificate Start Date = Policy Effective Date
     // Certificate End Date = Policy Expiry Date
     additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(policyExpiryDate);
@@ -194,13 +194,13 @@ const calculateDatesForNewVehicleOrOwnershipChange = () => {
 const calculateDatesForNonGigRenewal = () => {
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
     const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
-    
+
     // Certificate Start Date = Policy Effective Date
     // Certificate End Date = Policy Effective Date + 13 months
     // Policy Expiry Date = Certificate End Date
     const certificateEndDate = new Date(policyEffectiveDate);
     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
-    
+
     additionalVehicleTransactionDetailsForm.certificate_start_date = additionalVehicleTransactionDetailsForm.policy_effective_date;
     additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
     additionalVehicleTransactionDetailsForm.policy_expiry_date = formatDate(certificateEndDate);
@@ -211,11 +211,11 @@ const calculateDatesForNonGigRenewal = () => {
 const calculateDatesForGigRenewal = () => {
   if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
     const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
-    
+
     // Certificate End Date = Certificate Start Date + 13 months
     const certificateEndDate = new Date(certificateStartDate);
     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
-    
+
     additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
   }
 };
@@ -223,7 +223,7 @@ const calculateDatesForGigRenewal = () => {
 // Apply auto-calculations based on current form data
 const applyAutoCalculations = () => {
   const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
-  
+
   if (!rtaType) return;
 
   switch (rtaType) {
@@ -231,7 +231,7 @@ const applyAutoCalculations = () => {
     case RTA_CONSTANTS.CHANGE_VEHICLE_OWNERSHIP:
       calculateDatesForNewVehicleOrOwnershipChange();
       break;
-      
+
     case RTA_CONSTANTS.VEHICLE_RENEWAL:
       if (isGigRenewal.value) {
         calculateDatesForGigRenewal();
@@ -298,9 +298,9 @@ const getFieldRules = (fieldName) => {
   if (fieldConfig.value[fieldName]?.hidden) {
     return [];
   }
-  
+
   const fieldRules = [];
-  
+
   // Add field-specific rules
   if (fieldName === 'chassis_number') {
     fieldRules.push(rules.chassisNumberCheck);
@@ -309,7 +309,7 @@ const getFieldRules = (fieldName) => {
   } else if (isFieldRequired(fieldName)) {
     fieldRules.push(isRequired);
   }
-  
+
   return fieldRules;
 };
 
@@ -318,7 +318,7 @@ const submitAdditionalVehicleTransactionDetailsForm = async (isValid) => {
   if (isValid) {
     // Clear any previous errors
     additionalVehicleTransactionDetailsForm.clearErrors();
-    
+
     // Apply final auto-calculations before submission
     applyAutoCalculations();
     additionalVehicleTransactionDetailsForm.processing = true;
@@ -329,7 +329,7 @@ const submitAdditionalVehicleTransactionDetailsForm = async (isValid) => {
           title: response.data.message,
           position: 'top',
         });
-        
+
         // Update form with any calculated dates from backend
         if (response.data.calculated_dates) {
           Object.entries(response.data.calculated_dates).forEach(([field, value]) => {
@@ -338,7 +338,7 @@ const submitAdditionalVehicleTransactionDetailsForm = async (isValid) => {
             }
           });
         }
-        
+
         router.reload({
           replace: true,
           preserveScroll: true,
@@ -387,16 +387,16 @@ watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
         trafficCodeNumber: 'traffic_code_number',
         chassisNumber: 'chassis_number',
         engineNumber: 'engine_number',
-        rtaPlateCategory: 'rta_plate_category', 
+        rtaPlateCategory: 'rta_plate_category',
         vehicleColor: 'vehicle_color',
         plateColor: 'plate_color',
-        bankLoan: 'bank_loan', 
+        bankLoan: 'bank_loan',
         bankName: 'bank_name',
-        firstRegistrationDate: 'first_registration_date', 
-        policyEffectiveDate: 'policy_effective_date', 
-        policyExpiryDate: 'policy_expiry_date', 
-        certificateStartDate: 'certificate_start_date', 
-        certificateEndDate: 'certificate_end_date', 
+        firstRegistrationDate: 'first_registration_date',
+        policyEffectiveDate: 'policy_effective_date',
+        policyExpiryDate: 'policy_expiry_date',
+        certificateStartDate: 'certificate_start_date',
+        certificateEndDate: 'certificate_end_date',
         annualMileageEstimate: 'annual_mileage_estimate',
       },
     };
@@ -462,7 +462,7 @@ onMounted(() => {
     <div>
       <x-form @submit="submitAdditionalVehicleTransactionDetailsForm" :auto-focus="false">
         <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
-          
+
           <!-- RTA Transaction Type -->
           <x-field label="RTA Transaction Type" required>
             <x-select
@@ -475,8 +475,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Plate Code -->
-          <x-field 
-            label="Plate Code" 
+          <x-field
+            label="Plate Code"
             :required="isFieldRequired('plate_code')"
           >
             <x-input
@@ -490,8 +490,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Plate Number -->
-          <x-field 
-            label="Plate Number" 
+          <x-field
+            label="Plate Number"
             :required="isFieldRequired('plate_number')"
           >
             <x-input
@@ -517,8 +517,8 @@ onMounted(() => {
 
           <!-- Chassis Number -->
           <x-field label="Chassis Number" required>
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.chassis_number" 
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.chassis_number"
               :rules="[isRequired, rules.chassisNumberCheck]"
               @keypress="chassisNumberValidate('keypress')"
               @blur="chassisNumberValidate('blur')"
@@ -530,8 +530,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Engine Number -->
-          <x-field 
-            label="Engine Number" 
+          <x-field
+            label="Engine Number"
             :required="isFieldRequired('engine_number')"
           >
             <x-input
@@ -544,8 +544,8 @@ onMounted(() => {
           </x-field>
 
           <!-- RTA Plate Category -->
-          <x-field 
-            label="RTA Plate Category" 
+          <x-field
+            label="RTA Plate Category"
             :required="isFieldRequired('rta_plate_category')"
           >
             <x-select
@@ -569,8 +569,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Plate Color -->
-          <x-field 
-            label="Plate Color" 
+          <x-field
+            label="Plate Color"
             :required="isFieldRequired('plate_color')"
           >
             <x-select
@@ -597,8 +597,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Bank Name -->
-          <x-field 
-            label="Bank Name" 
+          <x-field
+            label="Bank Name"
             :required="isFieldRequired('bank_name')"
           >
             <ComboBox
@@ -613,8 +613,8 @@ onMounted(() => {
           </x-field>
 
           <!-- First Registration Date -->
-          <x-field 
-            label="First Registration Date" 
+          <x-field
+            label="First Registration Date"
             :required="isFieldRequired('first_registration_date')"
           >
             <DatePicker
@@ -626,8 +626,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Policy Effective Date -->
-          <x-field 
-            label="Policy Effective Date" 
+          <x-field
+            label="Policy Effective Date"
             :required="isFieldRequired('policy_effective_date')"
           >
             <DatePicker
@@ -640,8 +640,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Policy Expiry Date -->
-          <x-field 
-            label="Policy Expiry Date" 
+          <x-field
+            label="Policy Expiry Date"
             :required="isFieldRequired('policy_expiry_date')"
           >
             <DatePicker
@@ -654,8 +654,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Certificate Start Date -->
-          <x-field 
-            label="Certificate Start Date" 
+          <x-field
+            label="Certificate Start Date"
             :required="isFieldRequired('certificate_start_date')"
           >
             <DatePicker
@@ -668,8 +668,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Certificate End Date -->
-          <x-field 
-            label="Certificate End Date" 
+          <x-field
+            label="Certificate End Date"
             :required="isFieldRequired('certificate_end_date')"
           >
             <DatePicker
@@ -682,8 +682,8 @@ onMounted(() => {
           </x-field>
 
           <!-- Annual Mileage Estimate -->
-          <x-field 
-            label="Annual Mileage Estimate" 
+          <x-field
+            label="Annual Mileage Estimate"
             :required="isFieldRequired('annual_mileage_estimate')"
           >
             <x-input
@@ -706,7 +706,7 @@ onMounted(() => {
         </dl>
 
         <div class="flex justify-end my-5 gap-x-2">
-          <x-button 
+          <x-button
             v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
             size="sm"
             color="orange"
