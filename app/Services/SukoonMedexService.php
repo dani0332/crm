@@ -182,10 +182,12 @@ class SukoonMedexService
 
             // sync documents then update commission
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
-            $sukoonDocuments = $this->syncAndProcessSukoonDocuments();
+            $this->syncAndProcessSukoonDocuments();
 
             if ($isSendEmail) {
-                $reqWatermarkedDocumentTypes = $sukoonDocuments->where('is_watermarked', true)->pluck('document_type_code')->toArray();
+                $reqWatermarkedDocumentTypes = $this->transaction->documents
+                    ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonAllDocTypes())
+                    ->where('is_watermarked', true)->pluck('document_type_code')->toArray();
 
                 $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $reqWatermarkedDocumentTypes);
 
@@ -220,12 +222,22 @@ class SukoonMedexService
 
     public function watermarkDocument(QuoteDocument $quoteDocument): QuoteDocument|false
     {
+        $extraLog = [
+            'document_id' => $quoteDocument?->id,
+            'document_type_code' => $quoteDocument?->document_type_code,
+            'quoteUID' => $this->currentQuote->uuid,
+        ];
+
+        if(! $quoteDocument) {
+            LoggerService::warning('Document not found', extra: $extraLog);
+            return false;
+        }
+
         $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('quote_type_id', $this->quoteTypeId)->first();
 
         // Ensure the quoteDocument and documentType exist
-        if (! $quoteDocument || ! $documentType) {
-            LoggerService::warning('Document or DocumentType not found. Document Id:'.$quoteDocument->id.' Document Type Id: '.$documentType->id.' - Ref ID: '.$this->currentQuote->uuid);
-
+        if (! $documentType) {
+            LoggerService::warning('DocumentType not found', extra: $extraLog);
             return false;
         }
 
@@ -416,9 +428,10 @@ class SukoonMedexService
         $this->syncSukoonCommissions();
 
         $sukoonDocuments = $this->transaction->documents()->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonAllDocTypes())->get();
-        $this->processWatermarkDocuments($sukoonDocuments);
+        $watermarkedDocuments = $this->processWatermarkDocuments($sukoonDocuments);
+        $this->transaction->load('documents');
 
-        return $sukoonDocuments->fresh();
+        return $watermarkedDocuments;
     }
 
     public function processWatermarkDocuments(Collection $sukoonDocuments): array
