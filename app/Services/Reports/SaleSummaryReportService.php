@@ -46,6 +46,7 @@ class SaleSummaryReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
@@ -80,6 +81,12 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'advisor') {
             $query
                 ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+        }
+
+        if ($request->groupBy == 'support_user') {
+            $query
+                ->addSelect(DB::raw('IFNULL(support_user.name, "N/A") as support_user'))
                 ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
@@ -182,6 +189,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
@@ -219,6 +227,12 @@ class SaleSummaryReportService extends ManagementReport
             // Endorsements
             $query
                 ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+        }
+
+        if ($request->groupBy == 'support_user') {
+            $query
+                ->addSelect(DB::raw('IFNULL(support_user.name, "N/A") as support_user'))
                 ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
@@ -262,6 +276,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
@@ -300,6 +315,12 @@ class SaleSummaryReportService extends ManagementReport
             // Endorsements
             $reversalQuery
                 ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+        }
+
+        if ($request->groupBy == 'support_user') {
+            $reversalQuery
+                ->addSelect(DB::raw('IFNULL(support_user.name, "N/A") as support_user'))
                 ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
