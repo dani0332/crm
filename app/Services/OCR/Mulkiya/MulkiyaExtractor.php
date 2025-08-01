@@ -15,8 +15,6 @@ class MulkiyaExtractor
         private object $data,
     ) {}
 
-
-
     public function extractMulkiyaData(): self
     {
         $this->extractedData = [
@@ -28,6 +26,9 @@ class MulkiyaExtractor
             'engine_number' => null,
             'chassis_number' => null,
             'rta_plate_category' => null,
+
+            // Car Quote fields
+            'policy_expiry_date' => null,
 
             // Registration Certificate fields
             'place_of_issue' => null,
@@ -58,7 +59,7 @@ class MulkiyaExtractor
         $ocrDataArray = [$this->data];
 
         foreach ($ocrDataArray as $ocrData) {
-            if (!is_object($ocrData) && !is_array($ocrData)) {
+            if (! is_object($ocrData) && ! is_array($ocrData)) {
                 continue;
             }
 
@@ -73,6 +74,9 @@ class MulkiyaExtractor
                 'engine_number' => $data['engineNumber'] ?? $this->extractedData['engine_number'],
                 'chassis_number' => $data['chassisNumber'] ?? $this->extractedData['chassis_number'],
                 'rta_plate_category' => $data['plateType'] ?? $this->extractedData['rta_plate_category'],
+
+                // Car Quote fields
+                'policy_expiry_date' => $this->formatDate($data['insuranceExpiryDate'] ?? null) ?: $this->extractedData['policy_expiry_date'],
 
                 // Registration Certificate fields
                 'place_of_issue' => $data['placeOfIssue'] ?? $this->extractedData['place_of_issue'],
@@ -121,6 +125,13 @@ class MulkiyaExtractor
         ]);
     }
 
+    public function getCarQuoteFields(): array
+    {
+        return OcrUtils::getCleanData([
+            'policy_expiry_date' => $this->extractedData['policy_expiry_date'] ?? null,
+        ]);
+    }
+
     public function getRegistrationCertificateFields(): array
     {
         return OcrUtils::getCleanData([
@@ -162,6 +173,7 @@ class MulkiyaExtractor
     {
         return [
             'car_quote_detail_fields' => $this->getCarQuoteDetailFields(),
+            'car_quote_fields' => $this->getCarQuoteFields(),
             'registration_certificate_fields' => $this->getRegistrationCertificateFields(),
         ];
     }
