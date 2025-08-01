@@ -1541,7 +1541,6 @@ class CentralService extends BaseService
 
     public function sendInslyEmailToCustomer($lead, $emailData, $quoteTypeId, $emailType = '')
     {
-        dd('working');
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
             $birdUrlKey = 'BIRD_MOTOR_SEND_UPDATE';
