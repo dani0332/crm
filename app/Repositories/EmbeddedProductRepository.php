@@ -554,7 +554,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
-        if($transaction->isEmpty()) {
+        if ($transaction->isEmpty()) {
             return ['success' => false, 'message' => 'Transaction not found'];
         }
 
