@@ -230,8 +230,9 @@ class SukoonMedexService
             'quoteUID' => $this->currentQuote->uuid,
         ];
 
-        if(! $quoteDocument) {
+        if (! $quoteDocument) {
             LoggerService::warning('Document not found', extra: $extraLog);
+
             return false;
         }
 
@@ -240,6 +241,7 @@ class SukoonMedexService
         // Ensure the quoteDocument and documentType exist
         if (! $documentType) {
             LoggerService::warning('DocumentType not found', extra: $extraLog);
+
             return false;
         }
 
