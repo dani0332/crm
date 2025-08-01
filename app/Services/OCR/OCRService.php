@@ -102,12 +102,12 @@ class OCRService
         int $userId,
         bool $isEcom,
     ): ?bool {
-        LoggerService::startQuoteLogging(self::class.'::process - OCR processing', $quote->uuid);
+        LoggerService::startQuoteLogging($quote->uuid);
 
         // Record start time for OCR processing
         $startTime = microtime(true);
 
-        LoggerService::info('Starting OCR processing for quote', extra: [
+        LoggerService::info('Starting OCR processing', extra: [
             'quote_type' => $quoteType->value,
             'quote_code' => $quote->code,
             'document_type' => $documentType->code,
@@ -251,7 +251,7 @@ class OCRService
         string $fileMimeType,
         ?string $quoteTypeParam = null
     ): void {
-        LoggerService::startQuoteLogging(self::class.'::dispatchJobIfEligible - Dispatching PopulateDocumentData job', $quote->uuid);
+        LoggerService::startQuoteLogging($quote->uuid);
 
         if ($quote instanceof SendUpdateLog) {
             LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog', [

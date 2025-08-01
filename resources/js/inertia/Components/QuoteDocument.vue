@@ -241,6 +241,16 @@ const getS3TempUrl = async docURL => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
+        <span
+            :class="[
+              'px-4 py-2 text-sm font-semibold text-black inline-block',
+              quote.documents_verified
+                ? 'bg-lime-400'
+                : 'bg-yellow-300'
+            ]"
+          >
+            {{ quote.documents_verified ? 'Verified' : 'Verification Pending' }}
+          </span>
           <DownloadDocuments
             v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
             :quote="page.props.quote"
