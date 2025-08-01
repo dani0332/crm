@@ -1689,7 +1689,7 @@ class SagePayloadFactory
     public static function postSplitApplyPaymentAPInvoicePayload($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = SageEnum::SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV;
-        $entryType = SageEnum::SCT_STRAIGHT;
+        $entryType = $type;
         $payLoad = [
             'BatchType' => 'PY',
             'PostAllBatches' => 'Donotpostallbatches',
