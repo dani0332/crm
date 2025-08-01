@@ -2,6 +2,7 @@
 
 namespace App\Services\OCR;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -102,7 +103,7 @@ class OCRService
         int $userId,
         bool $isEcom,
     ): ?bool {
-        LoggerService::startQuoteLogging($quote->uuid);
+        LoggerService::startQuoteLogging($quote->uuid, LoggerFeatureEnum::OCR);
 
         // Record start time for OCR processing
         $startTime = microtime(true);
@@ -251,7 +252,7 @@ class OCRService
         string $fileMimeType,
         ?string $quoteTypeParam = null
     ): void {
-        LoggerService::startQuoteLogging($quote->uuid);
+        LoggerService::startQuoteLogging($quote->uuid, LoggerFeatureEnum::OCR);
 
         if ($quote instanceof SendUpdateLog) {
             LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog', [
