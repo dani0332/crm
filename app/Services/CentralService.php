@@ -1171,23 +1171,17 @@ class CentralService extends BaseService
         if ($this->isQuoteStatusLocked($quote)) {
             return;
         }
-
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
         
         $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
         LoggerService::info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
         if ($isPolicyDetailsFilled) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
             $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-            $hasTransactionApprovedStatus = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-                ->where('quote_request_id', $quote->id)
-                ->where(function ($query) {
-                    $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
-                        ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
-                })->exists();
 
+            $hasTransactionApprovedStatus = QuoteStatusRepository::hasTransactionApprovedStatus($quoteTypeId, $quote->id);
             $isCurrentlyTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
             $hasRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
-
+            
             if (($hasTransactionApprovedStatus || $isCurrentlyTransactionApproved) && $hasRequiredDocuments) {
                 $oldQuoteStatus = $quote->quote_status_id;
                 $dataNeededToUpdate = [
@@ -1203,7 +1197,7 @@ class CentralService extends BaseService
                 // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
                 // No need to create quote status log
                 if ($oldQuoteStatus != $quote->quote_status_id) {
-                    QuoteStatusRepository::create($quoteTypeId, $quote, $oldQuoteStatus);
+                    QuoteStatusRepository::fetchCreate($quoteTypeId, $quote, $oldQuoteStatus);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                 }
                 LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');

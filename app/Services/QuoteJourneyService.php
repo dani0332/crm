@@ -37,4 +37,6 @@ class QuoteJourneyService
         $response = Capi::request('/api/v1-quote-journey', 'post', $payload);
         LoggerService::info('Received response from CAPI for quote journey', extra: ['response' => $response]);
     }
+
+    
 }
