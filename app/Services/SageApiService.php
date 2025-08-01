@@ -139,7 +139,10 @@ class SageApiService
             if ($response->failed()) {
                 $responseBody = is_array($response->json()) ? $response->json() : json_decode($response->body(), true);
                 $errorMessage = data_get($responseBody, 'error.message.value', 'Something went wrong with Sage Server.');
-                LoggerService::info(self::class.' fn: '.__FUNCTION__." - Sage API request failed - Endpoint: {$endPoint} - Error: {$errorMessage}");
+                LoggerService::info(self::class.' fn: '.__FUNCTION__." - Sage API request failed - Endpoint: {$endPoint} - Error: {$errorMessage}" , extra:[
+                    'response' => $responseBody,
+                    'payLoad' => $payLoad,
+                ]);
             }
 
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();

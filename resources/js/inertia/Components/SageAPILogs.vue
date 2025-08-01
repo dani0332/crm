@@ -172,7 +172,7 @@ onBeforeMount(() => {
   </template>
 
   <div>
-    <x-modal v-model="sageLogModel" size="xl" backdrop show-close>
+    <x-modal v-model="sageLogModel" size="xxl" backdrop show-close>
       <template #header>
         <span>Sage API Logs </span>
       </template>
@@ -182,14 +182,14 @@ onBeforeMount(() => {
         :items="sageAPILogs.data || []"
         border-cell
         hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="sageAPILogs.data?.length < 15"
+        :rows-per-page="20"
+        :hide-footer="sageAPILogs.data?.length < 20"
       >
         <template #item-user="{ user }">
           {{ user?.name }}
         </template>
         <template #item-sage_request_type="{ sage_request_type }">
-          {{ sage_request_type?.substr(0, 10) }}
+          {{ sage_request_type }}
           <x-icon
             v-if="sage_request_type"
             @click.prevent="copyToClipboard(sage_request_type)"

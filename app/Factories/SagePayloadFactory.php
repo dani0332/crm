@@ -1133,7 +1133,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'ORICOMTAXNUM',
-                'Value' => $sageRequest->orignalCommissionTaxInvoiceNumber,
+                'Value' => $sageRequest->originalCommissionTaxInvoiceNumber,
             ],
             [
                 'OptionalField' => 'PAYMENTGTWAY',
@@ -1283,6 +1283,7 @@ class SagePayloadFactory
         }
         $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : ($personalQuote?->code ?? $quote?->code);
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
+        $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
         $sageRequest->insurerCode = $insuranceProvider?->code;
@@ -1290,7 +1291,7 @@ class SagePayloadFactory
         $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
         $sageRequest->sage_payment_code = $paymentSplit->payment_method;
         $sageRequest->checkNumber = $paymentSplit->check_detail;
-        $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
+        $sageRequest->originalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
 
@@ -1508,7 +1509,7 @@ class SagePayloadFactory
                             'TransactionType' => 'PrepaymentPosted',
                         ],
                     ],
-                    'ReceiptAdjustmentOptionalField' => $optionalFields,
+                    'PaymentAdjustmentOptionalField' => $optionalFields,
                 ],
 
             ],

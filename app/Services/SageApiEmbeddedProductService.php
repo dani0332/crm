@@ -1707,7 +1707,7 @@ class SageApiEmbeddedProductService
                             'TransactionType' => 'PrepaymentPosted',
                         ],
                     ],
-                    'ReceiptAdjustmentOptionalField' => $optionalFields,
+                    'PaymentAdjustmentOptionalField' => $optionalFields,
                 ],
             ],
         ];

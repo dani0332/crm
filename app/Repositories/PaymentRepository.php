@@ -714,9 +714,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             }
 
-            $sageResponseStatus = $sageAPPrepaymentResponse['status'];
-
-            return $sageAPPrepaymentResponse;
+            return $$sageAPPrepaymentResponse['message'];
         }
 
         // Now handle database operations within transaction
