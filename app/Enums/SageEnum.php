@@ -48,9 +48,9 @@ final class SageEnum extends Enum
     const SRT_CREATE_CUSTOMER = 'CREATE_CUSTOMER';
 
     // AR Pre Payments Receipts
-    const SRT_CREATE_PP_REC = 'CREATE_PP_REC';
-    const SRT_RTP_PP_REC = 'RTP_PP_REC';
-    const SRT_POST_PP_REC = 'POST_PP_REC';
+    const SRT_CREATE_PP_REC = 'AR_CREATE_PP_REC';
+    const SRT_RTP_PP_REC = 'AR_RTP_PP_REC';
+    const SRT_POST_PP_REC = 'AR_POST_PP_REC';
 
     // EP AR Pre Payments Receipts
     const EP_SRT_CREATE_AR_PP_REC = 'EP_SRT_CREATE_AR_PP_REC';

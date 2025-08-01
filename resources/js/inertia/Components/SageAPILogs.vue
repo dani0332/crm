@@ -25,6 +25,7 @@ const can = permission => useCan(permission);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 
 const sageLogModel = ref(false);
+const lastRefreshed = ref(new Date());
 const sageAPILogs = reactive({
   data: [],
   loader: false,
@@ -88,6 +89,7 @@ const fetchSageAPILogs = async () => {
   NProgress.done();
   if (response.data?.success) {
     sageAPILogs.data = response?.data?.sageApiLogs;
+    lastRefreshed.value = new Date();
     return true;
   } else {
     return false;
@@ -172,10 +174,52 @@ onBeforeMount(() => {
   </template>
 
   <div>
-    <x-modal v-model="sageLogModel" size="xxl" backdrop show-close>
+    <x-modal v-model="sageLogModel" size="xxl" backdrop>
       <template #header>
-        <span>Sage API Logs </span>
+        <div class="flex items-center justify-between w-full px-6 py-4">
+          <div class="flex items-center space-x-3"> 
+            <div>
+              <h2 class="text-xl font-bold text-gray-900 tracking-tight">
+                Sage API Logs
+              </h2>
+              <p class="text-sm text-gray-600 uppercase font-medium">
+                {{ quoteType }} - Record #{{ record.id }}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg border">
+              {{ sageAPILogs.data?.length || 0 }} {{ sageAPILogs.data?.length === 1 ? 'entry' : 'entries' }}
+            </div>
+          </div>
+        </div>
       </template>
+      
+      <template #actions>
+        <div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <div class="text-sm text-gray-500">
+            Last refreshed: {{ lastRefreshed.toLocaleTimeString() }}
+          </div>
+          <div class="flex items-center space-x-3">
+            <button
+              @click="fetchSageAPILogs"
+              :disabled="sageAPILogs.loader"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-700 bg-primary-50 border border-primary-200 rounded-lg shadow-sm hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <x-icon icon="reset" class="mr-2" size="sm" />
+              Refresh
+            </button>
+            <button
+              @click="sageLogModel = false"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+            >
+              <x-icon icon="xmark" class="mr-2" size="sm" />
+              Close
+            </button>
+          </div>
+        </div>
+      </template>
+      
       <DataTable
         table-class-name="compact tablefixed"
         :headers="sageAPILogs.table"
@@ -189,14 +233,7 @@ onBeforeMount(() => {
           {{ user?.name }}
         </template>
         <template #item-sage_request_type="{ sage_request_type }">
-          {{ sage_request_type }}
-          <x-icon
-            v-if="sage_request_type"
-            @click.prevent="copyToClipboard(sage_request_type)"
-            icon="copy"
-            class="text-primary"
-            size="md"
-          />
+          {{ sage_request_type }} 
         </template>
         <template #item-sage_end_point="{ sage_end_point }">
           {{ sage_end_point?.substr(0, 10) }}
