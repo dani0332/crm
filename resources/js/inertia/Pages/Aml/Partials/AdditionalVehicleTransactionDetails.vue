@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 const { isRequired } = useRules();
 
 const page = usePage();
@@ -53,6 +53,10 @@ const additionalVehicleTransactionDetailsForm = useForm({
   certificate_start_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_start_date ?? '',
   certificate_end_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_end_date ?? '',
   annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
+});
+
+const state = reactive({
+  isEdit: false,
 });
 
 const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
@@ -110,6 +114,7 @@ const isSUKOON = computed(() => {
               :rules="[isRequired]"
               :options="rtaTransactionTypeOptions"
               placeholder="Select RTA Transaction Type"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -119,6 +124,7 @@ const isSUKOON = computed(() => {
               :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Plate Code"
               type="text"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -128,6 +134,7 @@ const isSUKOON = computed(() => {
               :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Plate Number"
               type="text"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -137,6 +144,7 @@ const isSUKOON = computed(() => {
               :rules="[isRequired]"
               placeholder="Traffic Code Number"
               type="text"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -146,6 +154,7 @@ const isSUKOON = computed(() => {
               :rules="[isRequired]"
               placeholder="Chassis Number"
               type="text"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -155,6 +164,7 @@ const isSUKOON = computed(() => {
               :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="Engine Number"
               type="text"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -164,6 +174,7 @@ const isSUKOON = computed(() => {
               :rules="isGIG ? [isRequired] : []"
               :options="rtaPlateCategoryOptions"
               placeholder="Select RTA Plate Category"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -173,6 +184,7 @@ const isSUKOON = computed(() => {
               :options="vehicleColorOptions"
               :rules="[isRequired]"
               placeholder="Select Vehicle Color"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -182,6 +194,7 @@ const isSUKOON = computed(() => {
               :options="plateColorOptions"
               :rules="isGIG ? [isRequired] : []"
               placeholder="Select Plate Color"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -194,6 +207,7 @@ const isSUKOON = computed(() => {
                 { value: 0, label: 'No' }
               ]"
               placeholder="Select Bank Loan"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -203,7 +217,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
-              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1"
+              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1 || !state.isEdit"
               :rules="(! isGIG) ? [isRequired] : []"
               class="w-full"
             />
@@ -214,6 +228,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
               :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="First Registration Date"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -222,6 +237,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
               :rules="[isRequired]"
               placeholder="Policy Effective Date"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -230,6 +246,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
               :rules="isLIVA ? [isRequired] : []"
               placeholder="Policy Expiry Date"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -238,6 +255,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
               :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="Certificate Start Date"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -246,6 +264,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
               :rules="isLIVA ? [isRequired] : []"
               placeholder="Certificate End Date"
+              :disabled="!state.isEdit"
             />
           </x-field>
 
@@ -256,6 +275,7 @@ const isSUKOON = computed(() => {
               :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Select Annual Mileage Estimate"
               type="text"
+              :disabled="!state.isEdit"
             />
             <x-select
               v-else
@@ -263,19 +283,55 @@ const isSUKOON = computed(() => {
               :rules="isLIVA ? [isRequired] : []"
               :options="annualMileageEstimateOptions"
               placeholder="Select Annual Mileage Estimate"
+              :disabled="!state.isEdit"
             />
           </x-field>
         </dl>
         <div class="flex justify-end my-5 gap-x-2">
-          <x-button
-            size="sm"
-            color="orange"
-            type="submit"
-            class="px-6"
-            :loading="additionalVehicleTransactionDetailsForm.processing"
-          >
-            Save
-          </x-button>
+          <template v-if="!state.isEdit">
+            <x-tooltip v-if="false">
+              <x-button
+                class="focus:ring-2 focus:ring-black"
+                size="sm"
+                :disabled="false"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  You don't have permission to edit this section.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="state.isEdit = true"
+            >
+              Edit
+            </x-button>
+          </template>
+
+          <template v-else>
+            <x-button
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              color="blue"
+              @click="state.isEdit = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="orange"
+              type="submit"
+              class="px-6"
+              :loading="additionalVehicleTransactionDetailsForm.processing"
+            >
+              Save
+            </x-button>
+          </template>
         </div>
       </x-form>
     </div>

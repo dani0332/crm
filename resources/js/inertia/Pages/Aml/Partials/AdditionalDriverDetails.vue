@@ -52,6 +52,10 @@ const additionalDriverDetailsForm = useForm({
   home_country_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.home_country_driving_experience ?? '',
 });
 
+const state = reactive({
+  isEdit: false,
+});
+
 const submitAdditionalDriverDetailsForm = (isValid) => {
   if (isValid) {
     additionalDriverDetailsForm.processing = true;
@@ -116,6 +120,7 @@ const isSUKOON = computed(() => {
               { value: 0, label: 'No' }
             ]"
             placeholder="Select Is Insured and Driver Same"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -126,6 +131,7 @@ const isSUKOON = computed(() => {
             :rules="(! isGIG) ? [isRequired] : []"
             placeholder="Driver First Name"
             type="text"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -135,6 +141,7 @@ const isSUKOON = computed(() => {
             :rules="(! isGIG) ? [isRequired] : []"
             placeholder="Driver Last Name"
             type="text"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -143,6 +150,7 @@ const isSUKOON = computed(() => {
             v-model="additionalDriverDetailsForm.driver_dob"
             :rules="isSUKOON ? [isRequired] : []"
             placeholder="Driver DOB"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -152,6 +160,7 @@ const isSUKOON = computed(() => {
             :rules="(! isSUKOON) ? [isRequired] : []"
             :options="driverGenderOptions"
             placeholder="Select Driver Gender"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -161,6 +170,7 @@ const isSUKOON = computed(() => {
             :rules="[isRequired]"
             placeholder="Driver License Number"
             type="text"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -170,6 +180,7 @@ const isSUKOON = computed(() => {
             :rules="isSUKOON ? [isRequired] : []"
             :options="licenseIssuePlaceOptions"
             placeholder="Select License Issue Place"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -178,6 +189,7 @@ const isSUKOON = computed(() => {
             v-model="additionalDriverDetailsForm.license_issue_date"
             :rules="isSUKOON ? [isRequired] : []"
             placeholder="License Issue Date"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -186,6 +198,7 @@ const isSUKOON = computed(() => {
             v-model="additionalDriverDetailsForm.license_expiry_date"
             placeholder="License Expiry Date"
             :rules="(! isLIVA) ? [isRequired] : []"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -196,6 +209,7 @@ const isSUKOON = computed(() => {
             :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
             placeholder="Select UAE License Years"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -207,6 +221,7 @@ const isSUKOON = computed(() => {
             placeholder="Select License Home Country"
             :options="nationalitiesOptions"
             class="w-full"
+            :disabled="!state.isEdit"
           />
         </x-field>
 
@@ -216,19 +231,55 @@ const isSUKOON = computed(() => {
             :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
             placeholder="Select Driver Years Home Country"
+            :disabled="!state.isEdit"
           />
         </x-field>
       </dl>
       <div class="flex justify-end my-5 gap-x-2">
-        <x-button
-          size="sm"
-          color="orange"
-          type="submit"
-          class="px-6"
-          :loading="additionalDriverDetailsForm.processing"
-        >
-          Save
-        </x-button>
+        <template v-if="!state.isEdit">
+          <x-tooltip v-if="false">
+            <x-button
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              :disabled="false"
+            >
+              Edit
+            </x-button>
+            <template #tooltip>
+              <span class="custom-tooltip-content">
+                You don't have permission to edit this section.
+              </span>
+            </template>
+          </x-tooltip>
+          <x-button
+            v-else
+            class="focus:ring-2 focus:ring-black"
+            size="sm"
+            @click="state.isEdit = true"
+          >
+            Edit
+          </x-button>
+        </template>
+
+        <template v-else>
+          <x-button
+            class="focus:ring-2 focus:ring-black"
+            size="sm"
+            color="blue"
+            @click="state.isEdit = false"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="orange"
+            type="submit"
+            class="px-6"
+            :loading="additionalDriverDetailsForm.processing"
+          >
+            Save
+          </x-button>
+        </template>
       </div>
     </x-form>
   </div>
