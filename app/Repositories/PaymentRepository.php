@@ -722,7 +722,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentStatusId = PaymentStatusEnum::CAPTURED;
                 if ($request->actual_amount && $request->actual_amount > $request->collection_amount) {
-                    $paymentStatusId = PaymentStatusEnum::PARTIAL_CAPTURED;
+                    $paymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
                 }
                 LoggerService::info("Split payment approval started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
