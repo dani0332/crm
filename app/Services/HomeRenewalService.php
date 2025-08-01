@@ -60,7 +60,7 @@ class HomeRenewalService extends RenewalsUploadService
                         LoggerService::info($logPrefix.' all quotes updated successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
-                    ->catch(function (Throwable $e) use ($logPrefix, $renewalsUploadLead) {
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
                         // Bus batch failed
                         LoggerService::info($logPrefix.' batch failed for updateQuotes . '.$e->getMessage());
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
@@ -232,7 +232,7 @@ class HomeRenewalService extends RenewalsUploadService
                             app(self::class)->scheduleHomeRenewalsOcbEmails($batch, $userId);
                         })->onQueue('renewals');
                     })
-                    ->catch(function (Throwable $e) use ($logPrefix, $renewalStatusProcess) {
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalStatusProcess) {
                         LoggerService::info($logPrefix.' batch failed for fetchRenewalPlans. '.$e->getMessage());
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
@@ -386,7 +386,7 @@ class HomeRenewalService extends RenewalsUploadService
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
 
                     })
-                    ->catch(function (Throwable $e) use ($logPrefix, $renewalsBatchEmail) {
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsBatchEmail) {
                         LoggerService::info($logPrefix.' batch failed for scheduleHomeOCB. '.$e->getMessage());
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
                     })
@@ -505,12 +505,12 @@ class HomeRenewalService extends RenewalsUploadService
 
     private function createHomeQuoteData(array &$quoteData, array $data): array
     {
-        $quoteData['insurance_provider_id'] = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
-        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? Lookup::where('text', $data['you_are_a'])->where('key', LookupsEnum::POSSESSION_TYPE)->first()->id : null;
-        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? Lookup::where('text', $data['i_live_in_a'])->where('key', LookupsEnum::ACCOMMODATION_TYPE)->first()->id : null;
-        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? Lookup::where('text', $data['occupancy_status_for_owners'])->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)->first()->id : null;
-        $quoteData['sub_area_id'] = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
-        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? Lookup::where('text', $data['cover_required'])->where('key', LookupsEnum::COVERAGE_TYPE)->first()->id : null;
+        $quoteData['insurance_provider_id'] = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::whereRaw('LOWER(code) = ?', [strtolower(trim($data['current_insurance_provider']))])->first()->id : null;
+        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['you_are_a']))])->where('key', LookupsEnum::POSSESSION_TYPE)->first()->id : null;
+        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['i_live_in_a']))])->where('key', LookupsEnum::ACCOMMODATION_TYPE)->first()->id : null;
+        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['occupancy_status_for_owners']))])->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)->first()->id : null;
+        $quoteData['sub_area_id'] = (! empty($data['location_area'])) ? SubArea::whereRaw('LOWER(text) = ?', [strtolower(trim($data['location_area']))])->first()->id : null;
+        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['cover_required']))])->where('key', LookupsEnum::COVERAGE_TYPE)->first()->id : null;
         $quoteData['contents_value_id'] = $this->getContentsAed($data);
         $quoteData['personal_belongings_value_id'] = $this->getPersonalBelongingsAed($data);
         $quoteData['building_value'] = $this->getBuildingAed($data);
@@ -534,7 +534,7 @@ class HomeRenewalService extends RenewalsUploadService
             return null;
         }
 
-        $homeContents = (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
+        $homeContents = (! empty($data['contents'])) ? RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['contents']))])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
         LoggerService::info('fn: getContentsAed - contents: '.$homeContents);
 
         return $homeContents;
@@ -553,7 +553,7 @@ class HomeRenewalService extends RenewalsUploadService
             return null;
         }
 
-        $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
+        $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['personal_belongings']))])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
         LoggerService::info('fn: getPersonalBelongingsAed - personal belongings: '.$homePersonalBelongings);
 
         return $homePersonalBelongings;

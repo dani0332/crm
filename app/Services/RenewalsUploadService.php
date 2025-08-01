@@ -2394,6 +2394,7 @@ class RenewalsUploadService
 
                             if ($leadData->location_area) {
                                 $locationArea = SubArea::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->location_area))])->exists();
+                                LoggerService::info('fn - uploadedLeadsValidation - location area is '.$leadData->location_area);
                                 if (! $locationArea) {
                                     LoggerService::info('fn - uploadedLeadsValidation - location area is invalid '.$leadData->location_area);
                                     $leadValidationErrors->push('Invalid Location Area Text');
@@ -2402,20 +2403,23 @@ class RenewalsUploadService
                             }
 
                             if ($leadData->insurance_type) {
-                                if ($leadData->insurance_type !== QuoteTypeShortCode::HOM) {
+                                LoggerService::info('fn - uploadedLeadsValidation - insurance type is '.$leadData->insurance_type);
+                                if (strtoupper($leadData->insurance_type) !== QuoteTypeShortCode::HOM) {
                                     LoggerService::info('fn - uploadedLeadsValidation - insurance type is invalid '.$leadData->insurance_type);
                                     $leadValidationErrors->push('Invalid Insurance Type Text');
                                     break;
                                 }
                             }
                             if ($leadData->current_insurance_provider) {
-                                if (! InsuranceProvider::where('code', $leadData->current_insurance_provider)->first()) {
+                                LoggerService::info('fn - uploadedLeadsValidation - current insurance provider is '.$leadData->current_insurance_provider);
+                                if (! InsuranceProvider::whereRaw('LOWER(code) = ?', [strtolower(trim($leadData->current_insurance_provider))])->first()) {
                                     LoggerService::info('fn - uploadedLeadsValidation - current insurance provider is invalid '.$leadData->current_insurance_provider);
                                     $leadValidationErrors->push('Invalid Current Insurance Provider Text');
                                     break;
                                 }
                             }
                             if ($leadData->you_are_a) {
+                                LoggerService::info('fn - uploadedLeadsValidation - ownership status is '.$leadData->you_are_a);
                                 $leadPossessionType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->you_are_a))])
                                     ->where('key', LookupsEnum::POSSESSION_TYPE->value)
                                     ->first();
@@ -2425,7 +2429,7 @@ class RenewalsUploadService
                                     break;
                                 }
 
-                                if ($leadPossessionType->code === RangeLookupCodeEnum::LANDLORD_RENTING_OUT->value) {
+                                if (isset($leadPossessionType?->code) && $leadPossessionType->code === RangeLookupCodeEnum::LANDLORD_RENTING_OUT->value) {
                                     LoggerService::info("fn - uploadedLeadsValidation - occupancy status for owners is required with selected ownership status $leadData->occupancy_status_for_owners");
                                     if (! $leadData->occupancy_status_for_owners) {
                                         LoggerService::info("fn - uploadedLeadsValidation - occupancy status for owners is required with selected ownership status $leadData->occupancy_status_for_owners");
@@ -2441,15 +2445,17 @@ class RenewalsUploadService
                                         LoggerService::info("fn - uploadedLeadsValidation - personal belongings is not required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Personal Belonging is not required with Selected Ownership Status');
                                         break;
+                                       
                                     }
                                     if (! $leadData->building) {
                                         LoggerService::info("fn - uploadedLeadsValidation - building is required with selected ownership status $leadData->occupancy_status_for_owners");
-                                        $leadValidationErrors->push('Building is required with Selected Ownership Status');
+                                        $leadValidationErrors->push('Building is required with Selected Ownership Status'); 
                                         break;
-                                    }
+                                    }   
                                 }
                             }
                             if ($leadData->i_live_in_a) {
+                                LoggerService::info('fn - uploadedLeadsValidation - type of property is '.$leadData->i_live_in_a);
                                 $leadAccommodationType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->i_live_in_a))])
                                     ->where('key', LookupsEnum::ACCOMMODATION_TYPE)
                                     ->first();
@@ -2460,6 +2466,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->occupancy_status_for_owners) {
+                                LoggerService::info('fn - uploadedLeadsValidation - occupancy status for owners is '.$leadData->occupancy_status_for_owners);
                                 $leadOccupancyType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->occupancy_status_for_owners))])
                                     ->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)
                                     ->first();
@@ -2470,6 +2477,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->cover_required) {
+                                LoggerService::info('fn - uploadedLeadsValidation - cover required is '.$leadData->cover_required);
                                 $leadCoverageType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->cover_required))])
                                     ->where('key', LookupsEnum::COVERAGE_TYPE)
                                     ->first();
@@ -2480,6 +2488,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->contents) {
+                                LoggerService::info('fn - uploadedLeadsValidation - contents is '.$leadData->contents);
                                 $leadContents = RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->contents))])
                                     ->where('key', RangeLookupKeyEnums::CONTENT_VALUES)
                                     ->first();
@@ -2490,6 +2499,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->personal_belongings) {
+                                LoggerService::info('fn - uploadedLeadsValidation - personal belongings is '.$leadData->personal_belongings);
                                 $leadPersonalBelongings = RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->personal_belongings))])
                                     ->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)
                                     ->first();
@@ -2500,6 +2510,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->premium) {
+                                LoggerService::info('fn - uploadedLeadsValidation - premium is '.$leadData->premium);
                                 if (! $leadData->insurance_provider) {
                                     LoggerService::info('fn - uploadedLeadsValidation - insurance provider is required with premium');
                                     $leadValidationErrors->push('Insurance Provider is required with Premium');
@@ -2532,7 +2543,9 @@ class RenewalsUploadService
                                 }
                             }
                             if (isset($leadData->previous_advisor_email) && ! empty($leadData->previous_advisor_email)) {
+                                LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
                                 if (! $this->renewalsAddonService->getUserInfo($leadData->previous_advisor_email)) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
                                     $leadValidationErrors->push('Invalid Previous Advisor Email');
                                     break;
                                 }
