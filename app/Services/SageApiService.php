@@ -363,16 +363,6 @@ class SageApiService
             }
         }
 
-        // TODO : Finance said they don't need it any more
-        /*if ($preparedData['sendUpdateLog']?->category?->code == SendUpdateLogStatusEnum::CPD || (isset($preparedData['sendUpdateLog']?->option?->code) &&
-            ! in_array($preparedData['sendUpdateLog']?->option?->code, [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATCRNB]))
-        ) {
-            $createPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment']]);
-            if (! $createPrepayment['status']) {
-                return $createPrepayment;
-            }
-        }*/
-
         LoggerService::info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Completed on Sage - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
 
         return ['status' => true, 'message' => 'Straight Forward Endorsement Booking Completed on Sage'];
@@ -834,14 +824,7 @@ class SageApiService
             $applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
             if (! $applyPaymentAPInvoices['status']) {
                 return $applyPaymentAPInvoices;
-            }
-
-            // create AR Prepayment Commission Receipt
-            // TODO : Finance said they don't need it any more
-            /* $createCommissionPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequest, $quote, $payment]);
-             if (! $createCommissionPrepayment['status']) {
-                 return $createCommissionPrepayment;
-             }*/
+            } 
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
@@ -3099,6 +3082,7 @@ class SageApiService
         return $postedReceiptStatus;
     }
 
+    // TODO : Finance said they don't need it any more
     private function createARPrepaymentCommissionReceipts($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment] = $sageRequestDataArray;
@@ -3122,15 +3106,15 @@ class SageApiService
 
         LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Start Create Commission Prepayment Receipt for '.$quote->code);
 
-        $totalSteps = 21;
-        $stepsMapping = ['step_1' => 19, 'step_2' => 20, 'step_3' => 21];
+        $totalSteps = 24;
+        $stepsMapping = ['step_1' => 22, 'step_2' => 23, 'step_3' => 24];
 
-        $isLiveApiCallStep2 = true;
+        $isLiveApiCallStep22 = true;
         $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($sageRequest, true);
 
         if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
             LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Commission Prepayment Receipt Already created');
-            $isLiveApiCallStep2 = false;
+            $isLiveApiCallStep22 = false;
             $sageResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
         } else {
             LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' SAGE API : Send  Create Commission Prepayment Receipt for '.$quote->code);
@@ -3154,14 +3138,14 @@ class SageApiService
             ]);
 
             LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' :  Commission Prepayment Receipt Batch Number - '.$sageResponse['BatchNumber']);
-            if ($isLiveApiCallStep2) {
+            if ($isLiveApiCallStep22) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS);
             }
-            $isLiveApiCallStep3 = true;
+            $isLiveApiCallStep23 = true;
             $readyToPostComPrepaymentReceipt = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber'], true);
             if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Commission Prepayment Receipt Already change to Ready To Post Status '.$quote->code);
-                $isLiveApiCallStep3 = false;
+                $isLiveApiCallStep23 = false;
                 $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
             } else {
                 LoggerService::info('SAGE API :  Send readyToPostComPrepaymentReceipt  for '.$quote->code);
@@ -3175,15 +3159,15 @@ class SageApiService
                 return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostComPrepaymentReceipt, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL]);
             }
             LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' : readyToPostComPrepaymentReceipt - '.$sageResponse['BatchNumber'].' completed successfully');
-            if ($isLiveApiCallStep3) {
+            if ($isLiveApiCallStep23) {
                 $this->logSageApiCall($readyToPostComPrepaymentReceipt, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS);
             }
 
-            $isLiveApiCallStep4 = true;
+            $isLiveApiCallStep24 = true;
             $postComPrepaymentReceipt = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber'], true);
             if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                 LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Post Commission Prepayment Receipt  Sent Already for '.$quote->code);
-                $isLiveApiCallStep4 = false;
+                $isLiveApiCallStep24 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
 
@@ -3217,7 +3201,7 @@ class SageApiService
                 return $this->logErrorAndReturn([$quote, $message, $errorMessage, $postComPrepaymentReceipt, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL]);
             }
             LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' : Post Commission Prepayment receipt - '.$sageResponse['BatchNumber'].' completed successfully');
-            if ($isLiveApiCallStep4) {
+            if ($isLiveApiCallStep24) {
                 $this->logSageApiCall($postComPrepaymentReceipt, $postedResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS);
             }
         } else {
