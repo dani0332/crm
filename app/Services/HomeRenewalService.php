@@ -268,7 +268,7 @@ class HomeRenewalService extends RenewalsUploadService
 
         LoggerService::startQuoteLogging($quote);
 
-        $logPrefix = get_class($this).' FN: fetchPlans';
+        $logPrefix = get_class($this)." FN: fetchPlans  Renewals Process ID: {$renewalQuoteProcessId } | Renewal Status ID: {$renewalStatusProcessId}";
 
         LoggerService::info("$logPrefix  - Fetching plans For Home Renewal Quote");
 
@@ -288,11 +288,9 @@ class HomeRenewalService extends RenewalsUploadService
             }
 
             // fetch plans
-            $plansResponse = app(HomeQuoteService::class)->getQuotePlans($quote->uuid, [
-                'getLatestRating' => true,
-            ]);
+            $plansResponse = $this->getPlans($quote->uuid);
 
-            if ($plansResponse) {
+            if ($plansResponse === true) {
                 LoggerService::info('FN: fetchPlans'.' Plans Fetched for Home Renewal Completed..');
 
                 // update status to plans fetched
@@ -306,6 +304,22 @@ class HomeRenewalService extends RenewalsUploadService
             LoggerService::info('Non Motors FetchPlans FN: fetchHomeQuotePlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
             $this->updateTotalFailed($renewalStatusProcess);
         }
+    }
+    public function getPlans($uuid)
+    {
+        $quotePlans = app(HomeQuoteService::class)->getQuotePlans($uuid, [
+            'getLatestRating' => true,
+        ]);
+    
+        if (isset($quotePlans->quotes)) {
+            return true;
+        }
+
+        if (! empty($quotePlans->message)) {
+            return $quotePlans->message;
+        }
+
+        return $quotePlans;
     }
 
     /*
