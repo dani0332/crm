@@ -2,6 +2,7 @@
 
 namespace App\Traits\QuoteTraits;
 
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
@@ -49,6 +50,12 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailed()
     {
+        if ($this->advisor_id) {
+            // if advisor is already assigned then we don't need to mark it as failed
+
+            return;
+        }
+
         if ($this->lead_allocation_failed_at) {
             self::withoutEvents(function () {
                 $this->update([
@@ -158,10 +165,10 @@ trait QuoteAllocatable
         return $this->insuranceProvider?->payment_gateway_id === PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK;
     }
 
-    public function isEligibleForOrganicAssignmentForPlanB(): bool
+    public function isEligibleForOrganicAssignmentForPlanB(QuoteTypes $quoteType): bool
     {
         return $this->isInsurerPlanB()
-            && $this->isSIC(QuoteTypes::CAR)
+            && $this->isSIC($quoteType)
             && ! $this->sic_advisor_requested
             && $this->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
@@ -169,6 +176,8 @@ trait QuoteAllocatable
     /**
      * Filters leads that are eligible for allocation.
      * Includes both flow-based and AIG-specific filtering logic.
+     * Its being used in QuoteAllocation.php and for generic purpose for LOBs
+     * So kindly do not change the logic without discussing with team
      */
     public function scopeEligibleForAllocation(Builder $query, QuoteTypes $quoteType): Builder
     {
@@ -236,5 +245,22 @@ trait QuoteAllocatable
     public function isAIG(QuoteTypes $quoteType): bool
     {
         return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isLeadFromInstantAlfred(): bool
+    {
+        return $this->lead_assignment_trigger == LeadAssignmentTriggerEnum::INSTANT_ALFRED;
+    }
+
+    public function isPaymentAuthorizedOrLinkRequested()
+    {
+        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    public function isFIC(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)
+            ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+            ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
     }
 }

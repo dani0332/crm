@@ -11,6 +11,17 @@ class EmailStatus extends Model
     use HasFactory;
 
     protected $table = 'email_status';
+    protected $fillable = [
+        'quote_type_id',
+        'quote_id',
+        'email_address',
+        'msg_id',
+        'reason',
+        'email_status',
+        'email_subject',
+        'template_id',
+        'customer_id',
+    ];
 
     public function getCreatedAtAttribute($date)
     {

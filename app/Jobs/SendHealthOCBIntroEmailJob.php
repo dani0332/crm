@@ -32,6 +32,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
         $this->triggerSICWorkflow = $triggerSICWorkflow;
+        $this->afterCommit();
     }
 
     /**

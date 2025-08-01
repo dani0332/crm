@@ -18,8 +18,6 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\UserStatusAuditLog;
 use App\Services\BikeAllocationService;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -100,11 +98,11 @@ class UpdateUserStatus extends Command
                         $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()?->id;
                         if ($this->userHaveProduct($userId, $carId)) {
                             info('System triggered car reassignment job for user : '.$session->user->name);
-                            ReAssignCarLeadsJob::dispatch(new CarAllocationService, $userId);
+                            ReAssignCarLeadsJob::dispatch($userId);
                         }
                         if ($this->userHaveProduct($userId, $healthId)) {
                             info('System triggered health reassignment job for user : '.$session->user->name);
-                            ReAssignHealthLeadsJob::dispatch(new HealthAllocationService, $userId);
+                            ReAssignHealthLeadsJob::dispatch($userId);
                         }
                         if ($this->userHaveProduct($userId, $bikeId)) {
                             info('System triggered bike reassignment job for user : '.$session->user->name);
@@ -112,7 +110,7 @@ class UpdateUserStatus extends Command
                         }
 
                         // Disabled Leads Auto Re Assignment for below Types as this is not needed at the moment
-                        // foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+                        // foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE, QuoteTypes::SAVINGS] as $quoteType) {
                         //     $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
                         //     if ($this->userHaveProduct($userId, $team->id)) {
                         //         info("user belongs to {$quoteType->value} so dispatching {$quoteType->value} reassignment job");

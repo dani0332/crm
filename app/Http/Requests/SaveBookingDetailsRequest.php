@@ -70,7 +70,7 @@ class SaveBookingDetailsRequest extends FormRequest
         }
 
         if ($validatedCatForPrices) {
-            if (! in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Health])) {
+            if (! in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Life, QuoteTypeId::Savings, QuoteTypeId::Business, QuoteTypeId::Health])) {
                 $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
                 $rules['total_vat_amount'] = 'required|numeric';
             }

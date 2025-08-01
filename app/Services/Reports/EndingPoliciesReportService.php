@@ -6,6 +6,7 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\EndingPoliciesReportExport;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -24,9 +25,9 @@ class EndingPoliciesReportService extends ManagementReport
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::EXPIRING_POLICIES;
 
         if ($request['policyExpiredDate'] && ! empty($request['policyExpiredDate']) && is_array($request['policyExpiredDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyExpiredDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['policyExpiredDate'][0]) && $request['policyExpiredDate'][0] != null && $request['policyExpiredDate'][0] != 'null' ? Carbon::parse($request['policyExpiredDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['policyExpiredDate'][1])->toDateString();
+                (isset($request['policyExpiredDate'][1]) && $request['policyExpiredDate'][1] != null && $request['policyExpiredDate'][1] != 'null' ? Carbon::parse($request['policyExpiredDate'][1])->toDateString() : today()->toDateString());
         }
 
         $query = PersonalQuote::query()
@@ -46,7 +47,7 @@ class EndingPoliciesReportService extends ManagementReport
                 'ip.text as insurer',
                 'qt.code as line_of_business',
                 'personal_quotes.policy_start_date',
-                'p.policy_expiry_date as policy_end_date',
+                'personal_quotes.policy_expiry_date as policy_end_date',
                 DB::raw('SUM(premium) as collected_amount'),
                 DB::raw('SUM(personal_quotes.price_vat_applicable) as price_vat_applicable'),
                 DB::raw('SUM(vat) as total_vat'),
@@ -73,6 +74,8 @@ class EndingPoliciesReportService extends ManagementReport
         } else {
             $query->groupBy('personal_quotes.code');
         }
+
+        LoggerService::sql(self::class.' - Ending Policies Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();

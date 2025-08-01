@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Models\Role;
 use App\Services\Logger\LoggerService;
@@ -106,6 +107,7 @@ class SearchService extends BaseService
                 ->join('personal_quotes', 'personal_quotes.id', 'send_update_logs.personal_quote_id')
                 ->join('lookups as cat_lookup', 'send_update_logs.category_id', 'cat_lookup.id')
                 ->leftJoin('lookups as opt_lookup', 'send_update_logs.option_id', 'opt_lookup.id')
+                ->leftJoin('customer as c', 'personal_quotes.customer_id', 'c.id')
                 ->leftJoin('business_type_of_insurance', function ($query) {
                     $query->on('business_type_of_insurance.id', 'personal_quotes.business_type_of_insurance_id');
                     $query->where('personal_quotes.quote_type_id', QuoteTypeId::Business);
@@ -117,6 +119,7 @@ class SearchService extends BaseService
         return DB::table($baseTable)
             ->join('quote_type', 'personal_quotes.quote_type_id', 'quote_type.id')
             ->leftJoin('quote_status', 'personal_quotes.quote_status_id', 'quote_status.id')
+            ->leftJoin('customer as c', 'personal_quotes.customer_id', 'c.id')
             ->leftJoin('business_type_of_insurance', function ($query) {
                 $query->on('business_type_of_insurance.id', 'personal_quotes.business_type_of_insurance_id');
                 $query->where('personal_quotes.quote_type_id', QuoteTypeId::Business);
@@ -282,6 +285,7 @@ class SearchService extends BaseService
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::SAVINGS->value,
         ];
 
         // Get manager roles based on quote types
@@ -318,6 +322,7 @@ class SearchService extends BaseService
             RolesEnum::PetAdvisor,
             RolesEnum::CycleAdvisor,
             RolesEnum::JetskiAdvisor,
+            RolesEnum::SavingsAdvisor,
         ];
 
         // Check if user has any of these roles

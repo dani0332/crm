@@ -46,6 +46,7 @@ class InstallmentReportExport extends BaseReportsExport
             'Transaction Type',
             'Lead Source',
             'Sage Receipt ID',
+            'Private Client',
         ];
     }
 
@@ -91,6 +92,7 @@ class InstallmentReportExport extends BaseReportsExport
             $quote->transaction_type ?? 'N/A',
             $quote->source ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 

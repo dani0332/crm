@@ -49,6 +49,7 @@ class EndorsementReportExport extends BaseReportsExport
             'Lead Source',
             'SU Status',
             'Sage Receipt ID',
+            'Private Client',
         ];
     }
 
@@ -97,6 +98,7 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->source ?? 'N/A',
             $quote->status ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 

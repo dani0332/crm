@@ -2,6 +2,7 @@
 
 namespace App\Observers\Traits;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
 
 trait Observable
@@ -39,6 +40,6 @@ trait Observable
             $logData['Ref ID'] = $model->uuid;
         }
 
-        info('Observer Change Set', $logData);
+        LoggerService::info('Observer Change Set', $logData);
     }
 }

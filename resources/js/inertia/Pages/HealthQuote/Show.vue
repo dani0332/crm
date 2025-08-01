@@ -393,6 +393,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
   lostReason: page.props.quote.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {
@@ -477,7 +478,8 @@ const memberForm = useForm({
   relation_code: null,
   quote_type: page.props.modelType,
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type:
+    page.props.quote.customer_type ?? page.props.customerTypeEnum.Individual,
   customer_member_id: null,
   quoteId: page.props.quote.uuid,
 });
@@ -1108,6 +1110,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
         element.copayName = value.text;
+        element.copayCode = value.code;
       }
     });
   });
@@ -1172,7 +1175,7 @@ const documentsTableItems = computed(() => {
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
       created_by: doc.created_by ? doc.created_by.name : '',
-      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
+      watermarked_doc_url: doc.watermarked_doc_url || doc.doc_url,
     };
   });
 });
@@ -1195,7 +1198,7 @@ const activityForm = useForm({
   parentType: 'Health',
   quoteType: 3,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -1229,11 +1232,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -1488,13 +1487,14 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
@@ -1861,7 +1861,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
 <template>
   <div>
     <Head title="Health Detail" />
-
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Health Detail</h2>
@@ -1871,6 +1870,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Stale for {{ countDays }}
         </p>
+        <x-button
+          v-if="quote?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
+        </x-button>
       </template>
 
       <template #default v-if="readOnlyMode.isDisable === true">
@@ -1935,6 +1942,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2081,7 +2089,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -2220,16 +2228,23 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote.details }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ADDITIONAL NOTES</dt>
-                <dd>{{ quote.additional_notes }}</dd>
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ quote.enquiry_count }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                <dd>{{ quote.transaction_approved_at }}</dd>
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote.additional_notes }}</dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
               </div>
             </dl>
           </div>
@@ -2243,7 +2258,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer'
                   : 'Entity '
               }}
@@ -2264,7 +2279,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             <div class="text-sm">
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType === page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -2369,11 +2384,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   <dt class="font-medium">MEMBER CATEGORY</dt>
                   <dd>{{ quote.member_category_id_text }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
                 v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity //Here we go
+                  enabledCustomerType === page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -2578,7 +2597,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
     </x-modal>
 
     <x-accordion
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       show-icon
     >
       <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
@@ -2726,6 +2745,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             show-close
             backdrop
             is-form
+            persistent
             @submit="onMemberSubmit"
           >
             <div
@@ -2908,7 +2928,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       </x-accordion-item>
     </x-accordion>
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -2981,6 +3001,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         show-close
         backdrop
         is-form
+        persistent
         @submit="onAdditionalContactSubmit"
       >
         <div class="grid gap-4">
@@ -3407,7 +3428,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
 
               <template
-                #item-providerName="{ providerName, isManualPlan, isHidden }"
+                #item-providerName="{
+                  providerName,
+                  isManualPlan,
+                  isHidden,
+                  id,
+                  copayCode,
+                  planCode,
+                }"
               >
                 <p>
                   {{ providerName }}
@@ -3436,6 +3464,16 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     class="mt-0.5 text-[10px]"
                   >
                     Currently Online
+                  </x-tag>
+                  <x-tag
+                    v-if="
+                      copayCode == quote.renewal_upload_copay_code &&
+                      planCode == quote.renewal_upload_plan_code
+                    "
+                    size="xs"
+                    class="mt-0.5 text-[10px] bg-red-500 text-white"
+                  >
+                    Renewal
                   </x-tag>
                 </div>
               </template>
@@ -3531,6 +3569,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       :uuid="quote.uuid"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="computedListQuotePlans || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
                     />
 
                     <x-button
@@ -3939,6 +3982,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onActivitySubmit"
     >
       <div class="grid gap-4">
@@ -3947,6 +3991,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Title"
           :rules="[isRequired]"
           class="w-full"
+          required
         />
 
         <x-textarea
@@ -3954,6 +3999,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Description"
           :adjust-to-text="false"
           class="w-full"
+          :rules="[isRequired]"
+          required
         />
 
         <x-select
@@ -3963,6 +4010,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :rules="[isRequired]"
           placeholder="Select Assignee"
           class="w-full"
+          required
         />
 
         <date-picker
@@ -3972,6 +4020,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           class="w-full"
           withTime
           :timezone="'UTC'"
+          required
         />
       </div>
 
@@ -4083,6 +4132,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="props.quote?.insured_kyc_id"
     />
 
     <ClientInquiryLogs

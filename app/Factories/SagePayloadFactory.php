@@ -112,16 +112,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
-                    'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
+                    'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => roundNumber($request->totalPrice),
-                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
+                            'DistributedAmount' => roundNumber($request->premiumWithTax),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->premiumWithTax),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -199,8 +199,8 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
-                    'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
+                    'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'Terms' => self::getTermsCode(count($paymentSplits)),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
@@ -208,8 +208,8 @@ class SagePayloadFactory
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => roundNumber($request->totalPrice),
-                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
+                            'DistributedAmount' => roundNumber($request->premiumWithTax),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->premiumWithTax),
                         ],
                     ],
                     'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits, $invoicePaymentSchedulesDueDate),
@@ -522,8 +522,8 @@ class SagePayloadFactory
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => roundNumber($request->totalPrice),
-                            'ExtendedAmountWithoutTIP' => roundNumber($request->totalPrice),
+                            'ExtendedAmountWithTIP' => roundNumber($request->premiumWithTax),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->premiumWithTax),
                         ],
                     ],
 
@@ -672,47 +672,68 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createPrepaymentPayload($request)
+    public static function createPrepaymentReceiptPayload($sageRequest, $isCommissionReceipt = false)
     {
+        $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
+        $optionalFields[] = [
+            'OptionalField' => 'INSURERRCTNO',
+            'Value' => $sageRequest->insurerReceiptNumber ?? 'N/A',
+        ];
+
         $entryType = SageEnum::SCT_STRAIGHT;
+
+        $customerNumber = $sageRequest->sage_customer_number;
+        $bankCode = SageEnum::BANK_CODE;
+        $paymentCode = SageEnum::PAYMENT_CODE;
+        $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount));
+        $checkReceiptNumber = $sageRequest->checkDetails;
+
+        if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
+            $bankCode = SageEnum::BANK_CODE;
+            $paymentCode = SageEnum::PAYMENT_CODE;
+        }
+
+        if ($isCommissionReceipt) {
+            $bankCode = SageEnum::BANK_CODE_TAP;
+            $customerNumber = $sageRequest->sageInsurerCustomerId;
+            $paymentCode = SageEnum::PAYMENT_CODE_CREDIT_CARD;
+            $bankReceiptAmount = $sageRequest->commission;
+            $checkReceiptNumber = $sageRequest->commissionChargeId;
+        }
+
         $payLoad = [
             'BatchRecordType' => 'CA',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => $bankCode,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
-                    'CustomerNumber' => $request->sage_customer_number,
-                    'BankCode' => SageEnum::BANK_CODE,
-                    'BankReceiptAmount' => roundNumber(floatval($request->collection_amount)),
-                    'CheckReceiptNumber' => $request->checkDetails,
-                    'PaymentCode' => SageEnum::PAYMENT_CODE,
+                    'CustomerNumber' => $customerNumber,
+                    'BankCode' => $bankCode,
+                    'BankReceiptAmount' => $bankReceiptAmount,
+                    'CheckReceiptNumber' => $checkReceiptNumber,
+                    'PaymentCode' => $paymentCode,
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
                             'BatchType' => 'CA',
-                            'CustomerNumber' => $request->sage_customer_number,
+                            'CustomerNumber' => $customerNumber,
                             'ReceiptTransactionType' => 'Prepayment',
                         ],
                     ],
+                    'ReceiptAdjustmentOptionalField' => $optionalFields,
                 ],
             ],
         ];
 
-        if (in_array($request->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
-            $payLoad['BankCode'] = SageEnum::BANK_CODE;
-            $payLoad['ReceiptsAdjustments'][0]['BankCode'] = SageEnum::BANK_CODE;
-            $payLoad['ReceiptsAdjustments'][0]['PaymentCode'] = SageEnum::PAYMENT_CODE;
-        }
-
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_CREATE_PP_REC,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::CREATE_COM_PP_REC : SageEnum::SRT_CREATE_PP_REC,
             'entry_type' => $entryType,
         ];
     }
 
-    public static function readyToPostReceiptArPayment($batchNumber)
+    public static function readyToPostReceiptArPayment($batchNumber, $isCommissionReceipt = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -722,11 +743,11 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_RTP_PAY_REC_ONE_INV,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::RTP_COM_PP_REC : SageEnum::SRT_RTP_PAY_REC_ONE_INV,
             'entry_type' => $entryType,
         ];
     }
-    public static function aRPostReceiptsPayment($batchNumber)
+    public static function aRPostReceiptsPayment($batchNumber, $isCommissionReceipt = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -745,7 +766,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_POST_PP_REC,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::POST_COM_PP_REC : SageEnum::SRT_POST_PP_REC,
             'entry_type' => $entryType,
         ];
     }
@@ -1090,6 +1111,70 @@ class SagePayloadFactory
         return $optionalArray;
     }
 
+    private static function createPrepaymentOptionalFields($sageRequest)
+    {
+        $optionalArray = [
+            [
+                'OptionalField' => 'CHEQUENO',
+                'Value' => $sageRequest->checkNumber ?? 'N/A',
+            ],
+            [
+                'OptionalField' => 'DEPARTMENT',
+                'Value' => $sageRequest->advisorDepartment,
+            ],
+            [
+                'OptionalField' => 'INSURER',
+                'Value' => $sageRequest->insurerName,
+            ],
+            [
+                'OptionalField' => 'LINEOFBUSNSS',
+                'Value' => $sageRequest->mainClassInsurance,
+            ],
+            [
+                'OptionalField' => 'ORICOMTAXNUM',
+                'Value' => $sageRequest->orignalCommissionTaxInvoiceNumber,
+            ],
+            [
+                'OptionalField' => 'PAYMENTGTWAY',
+                'Value' => $sageRequest->paymentGateway ?? 'N/A',
+            ],
+            [
+                'OptionalField' => 'PAYMENTMETHD',
+                'Value' => $sageRequest->paymentMethod,
+            ],
+            [
+                'OptionalField' => 'POLICY',
+                'Value' => $sageRequest->policyNumber,
+            ],
+            [
+                'OptionalField' => 'POLICYBKNGDT',
+                'Value' => $sageRequest->bookingDate,
+            ],
+            [
+                'OptionalField' => 'REFID',
+                'Value' => $sageRequest->quoteCode,
+            ],
+            [
+                'OptionalField' => 'SUREFID',
+                'Value' => $sageRequest->endorsementNumber ?? 'N/A',
+            ],
+            [
+                'OptionalField' => 'ENDORSEMENT',
+                'Value' => $sageRequest->sendUpdateEndorsementNumber ?? 'N/A',
+            ],
+            [
+                'OptionalField' => 'INSTAXINVAMT',
+                'Value' => (string) $sageRequest->premiumWithTax,
+            ],
+            [
+                'OptionalField' => 'INSTAXINVNO',
+                'Value' => $sageRequest->originalInsurerPremiumNumber,
+            ],
+        ];
+
+        return $optionalArray;
+    }
+
     public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -1163,17 +1248,80 @@ class SagePayloadFactory
         return $receiptsAndAdjustmentsData;
     }
 
+    public static function globalSagePrepaymentReceiptPayloadData($sageRequestData)
+    {
+        [$quote,$payment, $paymentSplit , $sageRequest , $splitAmount] = $sageRequestData;
+        $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+        $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';
+        $sageRequest->collection_amount = $paymentSplit->collection_amount;
+        if ($splitAmount != null) {
+            $sageRequest->collection_amount = $splitAmount;
+        }
+
+        if (! isset($sageRequest->advisor_id)) {
+            $sageRequest->advisor_id = $quote->advisor_id;
+        }
+        if (! isset($sageRequest->customer_id)) {
+            $sageRequest->customer_id = $quote->customer_id;
+        }
+        if ($paymentSplit->sr_no == 1) {
+            $sageRequest->discount = $payment->discount_value;
+        }
+
+        if (! isset($sageRequest->advisorDepartment)) {
+            $advisorDepartment = '';
+            if (! empty($quote->advisor_id)) {
+                $advisor = User::with('department')->where('id', $quote->advisor_id)->first();
+                $advisorDepartment = $advisor?->department?->name;
+            }
+
+            $sageRequest->advisorDepartment = $advisorDepartment;
+        }
+        if (! isset($sageRequest->mainClassInsurance)) {
+            $sageRequest->mainClassInsurance = $sageRequest->quoteType;
+        }
+        $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : ($personalQuote?->code ?? $quote?->code);
+        $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
+        $sageRequest->insurerName = $insuranceProvider?->text;
+        $sageRequest->insurerID = $insuranceProvider?->id;
+        $sageRequest->insurerPaymentGatewayId = $insuranceProvider?->payment_gateway_id;
+        $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
+        $sageRequest->sage_payment_code = $paymentSplit->payment_method;
+        $sageRequest->checkNumber = $paymentSplit->check_detail;
+        $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
+        $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
+        $sageRequest->paymentMethod = $paymentSplit?->payment_method;
+
+        if (! isset($sageRequest->insurerReceiptNumber)) {
+            $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
+        }
+        if (! isset($sageRequest->premiumWithTax)) {
+            $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
+        }
+        if (! isset($sageRequest->insurerPremiumNumber)) {
+            $sageRequest->insurerPremiumNumber = (string) mb_substr($payment->insurer_tax_number, -18);
+            $sageRequest->originalInsurerPremiumNumber = (string) $payment->insurer_tax_number;
+        }
+
+        $sageRequest->policyNumber = $policyNumber;
+        $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
+
+        return $sageRequest;
+    }
+
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits): object
     {
         // TODO:: Need to update the insurer details when contact and insured person FR approved
         $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
-        $latestEndorsementCode = '';
+        $latestEndorsementCode = null;
+        $latestEndorsementNumber = null;
         $endorsementSubType = '';
 
         if ($quote?->personal_quote_id && $quote?->send_update_log_id) {
             $latestEndorsement = SendUpdateLog::where('id', $quote->send_update_log_id)->first();
             $latestEndorsementCode = $latestEndorsement?->code;
+            $latestEndorsementNumber = $latestEndorsement?->endorsement_number;
 
             if (! empty($latestEndorsement->option_id)) {
                 $endorsementSubType = Lookup::find($latestEndorsement?->option_id)?->text ?? '';
@@ -1194,13 +1342,15 @@ class SagePayloadFactory
             $policyIssuer = $payment->policyIssuer?->name ?? '';
         }
 
+        $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+
         $sageRequest = new stdClass;
 
-        $sageRequest->quoteRefId = PersonalQuote::find($quote?->personal_quote_id)?->code ?? '';
+        $sageRequest->quoteRefId = $personalQuote?->code ?? '';
         $sageRequest->userId = auth()->id();
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
-        //        TODO:: Need to check with Ali Array to Std
+        // TODO:: Need to check with Ali Array to Std
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
         $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
@@ -1210,9 +1360,12 @@ class SagePayloadFactory
             $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($firstChildPayment->due_date));
         }
 
+        $policyNumber = $quote?->policy_number ?? $personalQuote?->policy_number ?? '';
+
         $sageRequest->mainClassInsurance = $modelType;
-        $sageRequest->policyNumber = mb_substr($quote->policy_number, 60);
-        $sageRequest->originalPolicyNumber = $quote->policy_number;
+        $sageRequest->planId = $quote->plan_id ?? null;
+        $sageRequest->policyNumber = mb_substr($policyNumber, 60);
+        $sageRequest->originalPolicyNumber = $policyNumber;
         $sageRequest->policyIssuer = $policyIssuer;
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
         $sageRequest->subClass = $businessTypeOfInsuranceCode;
@@ -1220,6 +1373,7 @@ class SagePayloadFactory
         $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
         $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
         $sageRequest->endorsementNumber = $latestEndorsementCode;
+        $sageRequest->sendUpdateEndorsementNumber = $latestEndorsementNumber;
         $sageRequest->endorsementSubType = $endorsementSubType;
         $sageRequest->insured = $insuredFullName;
         $sageRequest->policyHolder = $insuredFullName;
@@ -1287,6 +1441,7 @@ class SagePayloadFactory
         $sageRequest->sageInsurerCustomerId = $sageInsurerCustomerId;
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
+        $sageRequest->insurerPaymentGatewayId = $insuranceProvider?->payment_gateway_id;
 
         return $sageRequest;
     }

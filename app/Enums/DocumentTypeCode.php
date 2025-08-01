@@ -72,12 +72,18 @@ class DocumentTypeCode extends Enum
     const GMQPD_RECEIPT = 'GMQPDR';
     const PPD_RECEIPT = 'PPDR';
     const YPD_RECEIPT = 'YPDR';
+    const SPD_RECEIPT = 'SPDR';
     const QD = 'QD';
     const AML = 'AML';
     const E_TICKETS = 'E_TICKETS';
     const AUDIT = 'AUDIT';
     const TRVLPAS = 'TRVLPAS';
+    const Illustration_Document = 'LIFE_ID';
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';
+    const PS_SAV = 'PS_SAV';
+    const PC_SAV = 'PC_SAV';
+    const AC_SAV = 'AC_SAV';
+    const PAYMENT_RECEIPT = 'SPD';
 }

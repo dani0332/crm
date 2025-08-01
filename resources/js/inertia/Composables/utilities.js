@@ -55,6 +55,7 @@ export const useGetShowPageRoute = (
     8: route('travel.show', uuid),
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
+    18: route('savings-quotes-show', uuid),
   };
 
   return routesObj[quoteTypeId];
@@ -217,6 +218,7 @@ export const saveQueryParams = () => {
     'CorpLineQuote/Index',
     'YachtQuote/Index',
     'HomeQuote/Index',
+    'SavingsQuote/Index',
   ];
 
   if (routes.includes(component)) {
@@ -326,7 +328,7 @@ export const parseDate = dateString => {
 export function getQuoteType(id, returnType = 'code') {
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
-    2: { code: 'HOM', id: 'home', link: '/quotes' },
+    2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
     4: { code: 'LIF', id: 'life', link: '/quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
@@ -335,6 +337,8 @@ export function getQuoteType(id, returnType = 'code') {
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
     9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
+    11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
+    18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
   };
   return types[id] ? types[id][returnType] : '';
 }
@@ -364,6 +368,25 @@ export const calculateDaysDifference = (start_date, end_date) => {
   return 0;
 };
 
+export const calculateMonthsDifference = (start_date, end_date) => {
+  if (start_date && end_date) {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+
+    // Calculate year and month difference
+    const yearDiff = end.getFullYear() - start.getFullYear();
+    const monthDiff = end.getMonth() - start.getMonth();
+
+    // Total months difference
+    const totalMonths = yearDiff * 12 + monthDiff;
+
+    // Return absolute difference in months
+    // (e.g., March 31 to April 1 = 1 month, March 15 to March 20 = 0 months)
+    return Math.abs(totalMonths);
+  }
+  return 0;
+};
+
 // Function to get the quote type ID based on quote type name
 export const getQuoteTypeId = (quoteTypes, quoteType) => {
   return quoteTypes.filter(item => item.name === quoteType)[0]?.id;
@@ -375,8 +398,11 @@ export const logAndExportQuotes = async payload => {
   return axios
     .post('/quotes/export-logs/create', payload)
     .then(async res => {
-      const exportResponse = await axios
-        .get(payload.url)
+      const exportResponse = await axios({
+        method: payload.method || 'get',
+        url: payload.url,
+        data: payload.data || null,
+      })
         .then(resp => {
           return resp.data;
         })
@@ -405,6 +431,36 @@ export const getIp = async () => {
   } catch (err) {
     return null;
   }
+};
+
+// Function to calculate age
+export const calculateAge = birthDateString => {
+  const birthDate = new Date(birthDateString);
+
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  const dayDifference = today.getDate() - birthDate.getDate();
+
+  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+    age--;
+  }
+
+  return age;
+};
+
+// Function to calculate BMI
+export const calculateBMI = (heightInCm, weightInKg) => {
+  if (!heightInCm || !weightInKg) {
+    return 0;
+  }
+
+  const heightInMeters = heightInCm / 100;
+  const bmi = weightInKg / heightInMeters ** 2;
+
+  return parseFloat(bmi.toFixed(2));
 };
 
 export const resolveUserStatusText = statusId => {
@@ -479,4 +535,157 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
     value: item[valueKey],
     label: item[labelKey],
   }));
+};
+
+export const useformatDateTimeForPicker = dateTimeString => {
+  if (!dateTimeString) return null;
+
+  // Handle format: DD-MM-YYYY HH:mm:ss from server
+  const [datePart, timePart] = dateTimeString.split(' ');
+  if (!datePart || !timePart) return null;
+
+  const [day, month, year] = datePart.split('-');
+  const [hours, minutes, seconds] = timePart.split(':');
+
+  // Create a date object but compensate for timezone to preserve exact time display
+  // The server sends local time, but DatePicker with utc="preserve" still converts
+  const date = new Date(
+    parseInt(year),
+    parseInt(month) - 1, // Month is 0-indexed
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    parseInt(seconds) || 0,
+  );
+
+  // Get timezone offset and compensate by subtracting it
+  // This ensures the DatePicker displays the exact time from server
+  const timezoneOffsetMinutes = date.getTimezoneOffset();
+  const compensatedDate = new Date(
+    date.getTime() - timezoneOffsetMinutes * 60000,
+  );
+
+  return compensatedDate;
+};
+// prevent charaters, accepts only numbers, comma, and decimal point
+export const preventInvalidInputs = (
+  event,
+  allowComma = false,
+  allowDecimal = false,
+) => {
+  const key = event.key;
+
+  const controlKeys = [
+    'Backspace',
+    'Delete',
+    'ArrowLeft',
+    'ArrowRight',
+    'Tab',
+    'Enter',
+    'Home',
+    'End',
+  ];
+  if (controlKeys.includes(key)) return;
+
+  // Allow comma if specified
+  if (allowComma && key === ',') return;
+
+  // Allow dot (.)
+  if (allowDecimal && key === '.') return;
+
+  // Allow digits 0-9
+  if (/^[0-9]$/.test(key)) return;
+
+  // Block everything else
+  event.preventDefault();
+};
+
+export const numberFormat = (price, decimals = 2) => {
+  price = parseFloat(price);
+  return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+// life lob specific function
+export const useFormattedNumberField = (source, fieldName) => {
+  return computed({
+    get() {
+      const val = source[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+// Helper function to create formatted fields for rider arrays
+export const useFormattedRiderField = (ridersArray, index, fieldName) => {
+  return computed({
+    get() {
+      const rider = ridersArray.value[index];
+      if (!rider) return '';
+      const val = rider[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const rider = ridersArray.value[index];
+      if (!rider) return;
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      rider[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+export const cleanFormattedValueToFloat = value => {
+  if (typeof value !== 'string') return 0;
+
+  // Remove commas
+  const cleaned = value.replace(/,/g, '');
+
+  // Parse to float
+  const num = parseFloat(cleaned);
+
+  // If NaN or empty, return 0
+  return isNaN(num) ? 0 : num;
+};
+
+export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
+  if (!createdAtString || !cutoffDate) return false;
+
+  const match = createdAtString.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
+  if (!match) return false;
+
+  const [_, day, monthStr, year, hour, min, ampm] = match;
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  let h = parseInt(hour, 10);
+  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
+
+  return createdDate >= cutoffDate;
 };

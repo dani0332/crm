@@ -28,6 +28,7 @@ final class AMLStatusCode extends Enum
     {
         return self::$statuses;
     }
+
     public static function getName($value, $defaultValue = 'AML Pending')
     {
         return self::$statuses[$value] ?? $defaultValue;

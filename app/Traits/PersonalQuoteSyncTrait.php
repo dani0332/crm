@@ -77,6 +77,7 @@ trait PersonalQuoteSyncTrait
             ->where('quote_uuid', $uuid)
             ->where('quote_type_id', $quoteTypeId)
             ->count();
+
         if ($personalQuote == 0 && $entries == 0) {
             Log::warning("Quote not synced from quote_sync table, uuid: {$uuid}");
             $quoteTypeId = $this->getQuoteTypeId($quote::class);

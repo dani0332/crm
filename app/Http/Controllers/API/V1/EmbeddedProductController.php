@@ -33,10 +33,11 @@ class EmbeddedProductController extends Controller
             info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : '.$quote->uuid);
             $address = CustomerAddress::where('quote_uuid', $quote->uuid)->first();
             if (empty($address?->type)) {
-                AddressReminderJob::dispatch($quote)->delay(now()->addSeconds(15));
+                AddressReminderJob::dispatch($quote, $modelType)->delay(now()->addSeconds(15));
             }
         }
 
         return apiResponse(null, Response::HTTP_OK, '');
     }
+
 }

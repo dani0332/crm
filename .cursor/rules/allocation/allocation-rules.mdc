@@ -1,0 +1,69 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Allocation Strategy Rules
+
+## Common Patterns
+
+1. All allocation classes must:
+   - Implement the `Allocation` interface
+   - Be placed in the `App\Strategies\Allocations` namespace
+   - Implement an `execute()` method that returns pipeline result
+   - Use the Pipeline pattern for processing allocation steps
+   - Handle exceptions with `AllocationService::resolveAllocationResponse`
+
+2. Constructor pattern:
+   - First parameter must be `$uuid` (required)
+   - Second parameter should be `$teamId` (optional, default `null` or `false`)
+   - Additional boolean parameters should follow consistent naming
+
+3. Request initialization:
+   - Create `AllocationRequest` with appropriate `QuoteTypes` enum
+   - Pass all constructor parameters to request
+
+4. Pipeline steps:
+   - All pipelines should start with `FetchLeadPipe`
+   - All pipelines should end with `MakeResponsePipe`
+   - Verify steps should come early in the pipeline
+   - Lead assignment should come near the end
+
+## Type-Specific Rules
+
+### Car Allocation
+- Must include tier evaluation (`EvaluateTierPipe`)
+- Must include team evaluation (`EvaluateTeamPipe`)
+- Must have rule exclusion handling (`ApplyRuleExclusionPipe`)
+- Requires fetching eligible advisors by tier
+
+### Health Allocation
+- Simpler allocation strategy with fewer pipes
+- Must include team assignment logic
+- Fetches available advisors with a single pipe
+
+### Travel Allocation
+- Must include child lead assignment handling
+- Similar to Health allocation in structure
+- Requires nationality validation
+
+## Variable Naming Standards
+
+- Use consistent variable names (`$allocationRequest` not `$alloctionRequest`)
+- Boolean parameters should use clear prefixes (`is`, `has`, `should`, etc.)
+- Override flags should be clearly identified as such
+
+## Pipeline Order Guidelines
+
+1. Data Fetching (lead information)
+2. Verification Steps
+3. Evaluation/Analysis
+4. Eligibility Determination
+5. Selection/Assignment
+6. Response Formatting
+
+## Error Handling
+
+- All exceptions should be caught and handled with `AllocationService`
+- Error responses should maintain the same structure as successful responses
+- Avoid exposing sensitive details in error messages

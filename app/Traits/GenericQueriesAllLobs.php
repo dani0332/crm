@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
@@ -14,6 +15,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
@@ -25,6 +27,7 @@ use App\Services\CentralService;
 use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -242,6 +245,7 @@ trait GenericQueriesAllLobs
             QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
             QuoteTypes::PET->value => ['Pet insurance'],
             QuoteTypes::YACHT->value => ['Yacht insurance'],
+            QuoteTypes::SAVINGS->value => ['Savings'],
         ];
     }
 
@@ -648,11 +652,24 @@ trait GenericQueriesAllLobs
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 
-    public function adjustQueryByDateFilters($query, $tablePrefix, $requestParams = [])
+    public function adjustQueryByDateFilters($query, $tablePrefix, $requestParams = [], $useJoin = true)
     {
         $request = $requestParams ? collect($requestParams) : request();
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
+        if (! empty($request->get('payment_due_date')) && ! $useJoin) {
+            $startDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][0])->startOfDay() : $defaultDate;
+            $endDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][1])->endOfDay() : $defaultDate;
+
+            $query->whereHas('paymentSplits', function ($q) use ($startDate, $endDate, $dateFormat) {
+                $q->whereBetween('due_date', [
+                    $startDate->format($dateFormat),
+                    $endDate->format($dateFormat),
+                ]);
+            });
+
+            return;
+        }
         if (! empty($request->get('payment_due_date'))) {
             $query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
             $columnName = 'pays.due_date';
@@ -768,5 +785,17 @@ trait GenericQueriesAllLobs
         ];
 
         return in_array($lead_status_id, $skipStatus);
+    }
+
+    public function getPaymentAuthorisedDays()
+    {
+        $paymentAuthorisedDays = intval(ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->value('value'));
+
+        return intval($paymentAuthorisedDays ?? 0);
+    }
+
+    public function getRenewalBaches()
+    {
+        return app(RenewalBatchReportService::class)->getAllNonMotorBatches();
     }
 }

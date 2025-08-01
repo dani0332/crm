@@ -37,6 +37,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
         $this->triggerSICWorkflow = $triggerSICWorkflow;
         $this->handleZeroPlans = $handleZeroPlans;
         $this->forceSicWorkflow = $forceSicWorkflow;
+        $this->afterCommit();
     }
 
     private function verifyPreChecks($lead)

@@ -42,6 +42,8 @@ const modals = reactive({
 const filters = reactive({
   assignee_id: '',
   status: '',
+  due_date_start: '',
+  due_date_end: '',
   due_date_time_start: '',
   due_date_time_end: '',
   page: 1,
@@ -77,16 +79,22 @@ function filterActivities(isValid) {
     }
   }
 
+  // Create a clean copy of filters, removing empty values
+  const cleanFilters = {};
   for (const key in filters) {
-    if (filters[key] === '') {
-      delete filters[key];
+    if (
+      filters[key] !== '' &&
+      filters[key] !== null &&
+      filters[key] !== undefined
+    ) {
+      cleanFilters[key] = filters[key];
     }
   }
 
   router.visit('/activities', {
     method: 'get',
     data: {
-      ...filters,
+      ...cleanFilters,
     },
     preserveState: true,
     preserveScroll: true,
@@ -101,6 +109,19 @@ function filterActivities(isValid) {
 }
 
 function resetFilters() {
+  // Reset all filter values
+  Object.keys(filters).forEach(key => {
+    if (key !== 'page') {
+      filters[key] = '';
+    }
+  });
+
+  // Reset UI state
+  selectedOption.value = '';
+  customStartDate.value = null;
+  customEndDate.value = null;
+  isOverDue.value = false;
+
   router.visit('/activities', {
     method: 'get',
     data: { page: 1 },
@@ -136,6 +157,10 @@ function resetDates(option) {
   }
   isOverDue.value = false;
   selectedOption.value = option;
+
+  // Clear all date filters first
+  clearAllDateFilters();
+
   if (option == 'today') {
     startDate = endDate = useDateFormat(today, 'DD-MM-YYYY');
   } else if (option == 'tomorrow') {
@@ -174,19 +199,34 @@ function resetDates(option) {
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
     filters.isCustom = true;
+    return; // Exit early for custom dates
   }
-  if (option != 'custom') {
-    filters.due_date_time_start = startDate.value;
-    filters.due_date_time_end = endDate.value;
 
-    filterActivities(1); // Call the filterActivities function
+  // For preset date options, use due_date_start and due_date_end
+  if (option != 'custom') {
+    filters.due_date_start = startDate.value;
+    filters.due_date_end = endDate.value;
+    filters.isCustom = false;
+    filterActivities(1);
   }
 }
+
+function clearAllDateFilters() {
+  filters.due_date_start = '';
+  filters.due_date_end = '';
+  filters.due_date_time_start = '';
+  filters.due_date_time_end = '';
+}
+
 function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
+    // Clear preset date filters and use datetime filters for custom dates
+    filters.due_date_start = '';
+    filters.due_date_end = '';
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
-    filterActivities(1); // Call the filterActivities function
+    filters.isCustom = true;
+    filterActivities(1);
   }
 }
 
@@ -519,6 +559,7 @@ onMounted(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onSubmit"
     >
       <div class="grid gap-4">

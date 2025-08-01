@@ -46,6 +46,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->previous_quote_policy_premium = 'Gross Premium';
             $firstRow->source = 'Sales channel';
             $firstRow->notes = 'Notes';
+            $firstRow->plan_name = 'Plan Name';
             $firstRow->errors = 'Errors';
             $exportLeads->push($firstRow);
         } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
@@ -55,6 +56,10 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->mobile_no = 'Customer Mobile';
             $firstRow->quote_type = 'Insurance Type';
             $firstRow->insurer = 'Insurance Provider';
+            $firstRow->registration_type = 'Registration Type';
+            $firstRow->vehicle_usage = 'Vehicle Use';
+            $firstRow->business_activity = 'Business Activity';
+            $firstRow->driver_name = 'Driver Name';
             $firstRow->product_type = 'Product Type';
             $firstRow->advisor = 'Advisor Email';
             $firstRow->policy_number = 'Policy Number';
@@ -98,6 +103,9 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
         foreach ($failedLeads as $lead) {
             if ($lead->data) {
                 $leadData = $lead->data;
+                if (isset($leadData['renewal_batch_id'])) {
+                    unset($leadData['renewal_batch_id']);
+                }
                 $leadData['errors'] = $lead->validation_errors;
                 $exportLeads->push($leadData);
             }

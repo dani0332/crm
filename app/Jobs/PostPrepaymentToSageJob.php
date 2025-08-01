@@ -2,7 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\SageEnum;
+use App\Models\PaymentSplits;
+use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
@@ -30,10 +33,9 @@ class PostPrepaymentToSageJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($request, $paymentSplit, $sageRequest, $sageProcess)
+    public function __construct($request, $sageRequest, $sageProcess)
     {
         $this->sageApiService = new SageApiService;
-        $this->paymentSplit = $paymentSplit;
         $this->sageRequest = $sageRequest;
         $this->request = $request;
         $this->sageProcess = $sageProcess;
@@ -45,9 +47,14 @@ class PostPrepaymentToSageJob implements ShouldQueue
      */
     public function handle(): void
     {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID : '.$this->paymentSplit->id.' - Started');
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SAGE_POST_PREPAYMENT);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' : SageProcessID : '.$this->sageProcess->id.' - Started');
 
-        $this->sageProcess = $this->sageProcess->refresh();
+        $this->sageProcess = SageProcess::find($this->sageProcess->id);
+
+        $this->paymentSplit = PaymentSplits::find($this->sageProcess->model_id);
+
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' : fetched paymentSplitID : '.$this->paymentSplit?->id);
 
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
             $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
@@ -83,34 +90,35 @@ class PostPrepaymentToSageJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         $message = $exception->getMessage();
+        $code = $exception->getCode();
 
         if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
-            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
+            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message, 'PostPrepaymentToSageJob : SageProcessID : '.$this->sageProcess->id);
         } else {
-            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'PostPrepaymentToSageJob : SageProcessID : '.$this->sageProcess->id);
         }
 
-        if ($this->isFailedDueToAttempts($message)) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID  : '.$this->paymentSplit->id.' Error : '.$message);
+        if ($this->isFailedDueToAttemptsOrTimeout($message)) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' : SageProcessID  : '.$this->sageProcess->id.' - Code : '.$code.' Error : '.$message);
         } else {
-            LoggerService::error(self::class.' fn: '.__FUNCTION__.' : paymentSplitID  : '.$this->paymentSplit->id.' Error : '.$message);
+            LoggerService::error(self::class.' fn: '.__FUNCTION__.' : SageProcessID  : '.$this->sageProcess->id.' - Code : '.$code.' Error : '.$message);
         }
 
         $this->sageApiService->scheduleSageProcesses($this->sageRequest->insurerID);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' : scheduleSageProcesses fn:failed triggered for paymentSplitID -'.$this->paymentSplit->id.' Insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' : scheduleSageProcesses fn:failed triggered for SageProcessID -'.$this->sageProcess->id.' Insurer - '.$this->sageRequest->insurerID);
 
     }
 
     public function middleware()
     {
         // release the WithoutOverlapping lock 5 minutes after the job has processed
-        return [(new WithoutOverlapping($this->paymentSplit->id.'-'.$this->lockPostfix))->dontRelease()];
+        return [(new WithoutOverlapping($this->sageProcess->id.'-'.$this->lockPostfix))->dontRelease()];
     }
 
-    private function isFailedDueToAttempts($errorMessage): bool
+    private function isFailedDueToAttemptsOrTimeout($errorMessage): bool
     {
         $errorMessage = strtolower($errorMessage);
 
-        return str_contains($errorMessage, 'has been attempted too many times');
+        return str_contains($errorMessage, 'has been attempted too many times') || str_contains($errorMessage, 'has timed out');
     }
 }

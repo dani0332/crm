@@ -71,7 +71,7 @@ class AmtController extends Controller
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -500,14 +500,12 @@ class AmtController extends Controller
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $leadStatuses = $leadStatuses->filter(function ($item) {
-            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::POLICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
-        })->toArray();
-
-        $leadStatuses = array_map(function ($item) use ($request) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id'], $request);
+            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::POLICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER || $item->text == quoteStatusCode::PaymentInitiated || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
+        })->map(function ($item) use ($request) {
+            $item->data = getDataAgainstStatus('Business', $item->id, $request);
 
             return $item;
-        }, $leadStatuses);
+        })->toArray();
 
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),

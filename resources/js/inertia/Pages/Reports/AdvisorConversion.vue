@@ -149,6 +149,10 @@ const totalLeads = reactive({
       value: 'premium',
       sortable: true,
     },
+    {
+      text: 'Private Client',
+      value: 'pcp_tag_formatted',
+    },
   ],
 });
 
@@ -534,6 +538,7 @@ const onLobChange = (e, isOnMounted = false) => {
       quoteTypeCodeEnum.Health,
       quoteTypeCodeEnum.CORPLINE,
       quoteTypeCodeEnum.GroupMedical,
+      quoteTypeCodeEnum.Life,
     ].includes(filters.lob)
   ) {
     if (filters.lob == quoteTypeCodeEnum.Health) {
@@ -541,6 +546,15 @@ const onLobChange = (e, isOnMounted = false) => {
         segment => segment.value !== 'sic-revival',
       );
     }
+
+    quoteSegments = page.props.quoteSegments.filter(segment => {
+      const isLifeQuote = filters.lob === quoteTypeCodeEnum.Life;
+      const allowedSegments = isLifeQuote ? ['all', 'fic', 'non-fic'] : null;
+      const excludedSegments = !isLifeQuote ? ['fic', 'non-fic'] : null;
+      return isLifeQuote
+        ? allowedSegments.includes(segment.value)
+        : !excludedSegments.includes(segment.value);
+    });
 
     loadTeams(e);
   } else {
@@ -877,6 +891,7 @@ const getRouteByLob = computed(() => {
     [quoteTypeCodeEnum.Cycle]: 'cycle-quotes-show',
     [quoteTypeCodeEnum.Jetski]: 'jetski-quotes-show',
     [quoteTypeCodeEnum.Yacht]: 'yacht-quotes-show',
+    [quoteTypeCodeEnum.SAVINGS]: 'savings-quotes-show',
   };
   return routeMap[filters.lob];
 });
@@ -1171,6 +1186,7 @@ function sortPremium(order) {
           class="w-full"
           @update:model-value="onInsuranceTypeChange"
         />
+
         <x-select
           v-if="canShow('insurance_for')"
           v-model="filters.insurance_for"

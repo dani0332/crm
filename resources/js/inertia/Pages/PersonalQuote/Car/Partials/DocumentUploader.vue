@@ -48,7 +48,7 @@ const documentsTableItems = computed(() => {
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
       created_by: doc.created_by ? doc.created_by.name : '',
-      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
+      watermarked_doc_url: doc.watermarked_doc_url || doc.doc_url,
     };
   });
 });
@@ -169,7 +169,7 @@ const uploadFile = (doc, filesWithInfo) => {
     >
       <template #item-original_name="item">
         <a
-          :href="storageUrl + item.watermarked_doc_url"
+          :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
           target="_blank"
           class="text-primary-600"
         >

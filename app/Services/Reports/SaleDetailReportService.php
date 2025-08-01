@@ -5,7 +5,9 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Exports\Reports\SaleDetailReportExport;
+use App\Models\Customer;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -24,13 +26,13 @@ class SaleDetailReportService extends ManagementReport
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['policyBookDate'][0]) && $request['policyBookDate'][0] != null && $request['policyBookDate'][0] != 'null' ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['policyBookDate'][1])->toDateString();
+                (isset($request['policyBookDate'][1]) && $request['policyBookDate'][1] != null && $request['policyBookDate'][1] != 'null' ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
-            .' - '.
-            Carbon::parse($request['paymentDueDate'][1])->toDateString();
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && $request['paymentDueDate'][0] != null && $request['paymentDueDate'][0] != 'null' ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
+                .' - '.
+                (isset($request['paymentDueDate'][1]) && $request['paymentDueDate'][1] != null && $request['paymentDueDate'][1] != 'null' ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         $query = PersonalQuote::query()
@@ -80,6 +82,7 @@ class SaleDetailReportService extends ManagementReport
                 'p.commmission_percentage',
                 'personal_quotes.policy_booking_date',
                 'ps.sage_reciept_id',
+                DB::raw(Customer::formattedPcpTagCase('cm').' as pcp_tag_formatted')
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -106,6 +109,8 @@ class SaleDetailReportService extends ManagementReport
         } else {
             $query->groupBy('personal_quotes.code');
         }
+
+        LoggerService::sql(self::class.' - Sale Detail Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();

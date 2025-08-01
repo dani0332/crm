@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteJourneyEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
@@ -41,11 +43,13 @@ use App\Models\PetQuote;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
+use App\Models\SavingsQuote;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -117,6 +121,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -134,6 +139,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -151,6 +157,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -162,12 +169,13 @@ class SendUpdateLogService
             case LifeQuote::class:
                 $quoteRelations = [
                     'quoteRelations' => [
-                        'lifeQuoteRequestDetail' => [
+                        'quoteDetail' => [
                             'skipColumns' => $requestDetailsSkipColumns,
                             'fillColumns' => ['advisor_assigned_date' => now()],
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -185,6 +193,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -202,6 +211,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                         'travelDestinations' => [],
@@ -273,6 +283,14 @@ class SendUpdateLogService
                             ],
                         ];
                         break;
+
+                    case quoteTypeCode::SAVINGS:
+                        $personalQuoteRelation = [
+                            'savingsQuote' => [
+                                'parentClass' => SavingsQuote::class,
+                            ],
+                        ];
+                        break;
                 }
 
                 $quoteRelations = [
@@ -283,6 +301,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -345,6 +364,7 @@ class SendUpdateLogService
                         $customerMemberCode = generateQuoteMemberCode($morphRelation->customer_type, $morphRelation->customer_entity_id);
                         $fillColumns = array_merge($fillColumns, [
                             'code' => $customerMemberCode,
+                            'updated_at' => null,
                         ]);
                     }
                     $newMorphRelation = $morphRelation->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
@@ -381,7 +401,17 @@ class SendUpdateLogService
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
-        $countChildRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)->count();
+        $countChildRecords = 0;
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)
+            ->select('id', 'code')
+            ->get();
+
+        if ($childRecords->count() > 0) {
+            $countChildRecords = count(array_filter($childRecords->toArray(), function ($item) use ($quoteObject) {
+                return str_starts_with($item['code'], $quoteObject->code);
+            }));
+        }
+
         // for travel mix.
         if ($quoteTypeCode == quoteTypeCode::Travel && (! is_null($quoteObject->child))) {
             $countChildRecords += 1;
@@ -470,13 +500,19 @@ class SendUpdateLogService
 
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
         $quoteModel = $this->getModelObject($quoteTypeCode);
-        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get()->toArray();
+
+        if (count($childRecords) > 0) {
+            $childRecords = array_filter($childRecords, function ($item) use ($quote) {
+                return str_starts_with($item['code'], $quote->code);
+            });
+        }
 
         $_return = [
             'quote_type_id' => $quoteTypeId,
             'parent_lead_ref_id' => '',
             'uuid' => '',
-            'childLeadsCount' => $childRecords->count(),
+            'childLeadsCount' => count($childRecords),
             'childLeads' => '',
             'childLeadsUuid' => '',
         ];
@@ -486,9 +522,9 @@ class SendUpdateLogService
             $_return['uuid'] = explode('-', $quote->parent_duplicate_quote_id)[1];
         }
 
-        if ($childRecords->count() <= 1) {
-            $_return['childLeads'] = $childRecords->value('code');
-            $_return['childLeadsUuid'] = $childRecords->value('uuid');
+        if (count($childRecords) == 1) {
+            $_return['childLeads'] = $childRecords[0]['code'];
+            $_return['childLeadsUuid'] = $childRecords[0]['uuid'];
         }
 
         return $_return;
@@ -624,7 +660,12 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $payments = $repository::getBy('uuid', $quoteUuid)->payments;
+            $quote = $repository::getBy('uuid', $quoteUuid);
+            $payments = $quote?->payments ?? null;
+            if ($payments === null || $payments->isEmpty()) {
+                $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
+                $payments = $quote?->payments ?? null;
+            }
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
@@ -1017,6 +1058,14 @@ class SendUpdateLogService
             $quoteDetails,
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
+        $sageRequestPayload->quoteTypeId = $sendUpdateLog->quote_type_id;
+        $sageRequestPayload->customer_id = $quoteDetails->customer_id;
+        $commissionChargeIds = $preparedDetailsForEndorsement['splitPayments']->flatMap(function ($paymentSplit) {
+            return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
+                ->pluck('transaction_id')
+                ->toArray();
+        })->toArray();
+        $sageRequestPayload->commissionChargeId = count($commissionChargeIds) > 0 ? implode(',', $commissionChargeIds) : '';
 
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
@@ -1146,6 +1195,7 @@ class SendUpdateLogService
                         'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                     (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
+                    (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $oldLeadStatus = $quote->quote_status_id;
                     $newLeadStatus = QuoteStatusEnum::PolicyCancelled;
@@ -1158,6 +1208,7 @@ class SendUpdateLogService
                         'current_quote_status_id' => $newLeadStatus,
                         'previous_quote_status_id' => $oldLeadStatus,
                     ]);
+                    (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 }
                 // Cases for Cancel Inception and Cancel Inception Reissue End
 
@@ -1247,7 +1298,7 @@ class SendUpdateLogService
         return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmailData($sendUpdateLog, $action): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog): array
     {
         LoggerService::info('fn:sendUpdateToCustomerEmailData - SendUpdateLogService');
 
@@ -1265,12 +1316,19 @@ class SendUpdateLogService
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
+        } elseif ($quoteTypeId == QuoteTypeId::Savings) {
+            // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
+                DocumentTypeCode::SEND_UPDATE_RECEIPT,
+                DocumentTypeCode::PAYMENT_RECEIPT,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
+            ])->toArray();
         }
 
         $emailData = (object) [
@@ -1290,6 +1348,11 @@ class SendUpdateLogService
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documents' => $documents,
+            'quoteTypeId' => $quoteTypeId,
+            'code' => $sendUpdateLog->code,
+            'quote' => $sendUpdateLog->code,
+            'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
+            'refID' => $sendUpdateLog->code,
         ];
 
         if ($quoteTypeId == QuoteTypeId::Business) {
@@ -1307,6 +1370,9 @@ class SendUpdateLogService
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
             $templateId = getAppStorageValueByKey(constant($constantName));
         }
+
+        $emailData->templateId = $templateId;
+        $emailData->customerId = $quote->customer_id;
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
@@ -1326,6 +1392,19 @@ class SendUpdateLogService
                     $emailData->roadsideAssistance = $roadsideAssistanceNumber;
                 }
             }
+        } elseif ($quoteTypeId == QuoteTypeId::Savings) {
+            $emailData->refID = $sendUpdateLog->code;
+            $start_date = $quote->policy_start_date ?? '';
+            $expiry_date = $quote->policy_expiry_date ?? '';
+
+            if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                $start_date = $sendUpdateLog->start_date ?? $quote->policy_start_date;
+                $expiry_date = $sendUpdateLog->expiry_date ?? $quote->policy_expiry_date;
+            }
+            $emailData->policyStartDate = date('d/m/Y', strtotime($start_date)) ?? '';
+            $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
+
+            $emailData->planName = ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
         }
 
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
@@ -1359,7 +1438,7 @@ class SendUpdateLogService
         return true;
     }
 
-    public function getSendUpdateDocuments($category, $option): array
+    public function getSendUpdateDocuments($category, $option, $quoteTypeId = null): array
     {
         LoggerService::info('fn:getSendUpdateDocuments - Start - SendUpdateLogService');
 
@@ -1394,6 +1473,10 @@ class SendUpdateLogService
                     ])
                 ) {
                     $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) false;
+                }
+
+                if ($quoteTypeId == QuoteTypeId::Savings && $documentTypesByCategory['SEND_UPDATE'][$key]['code'] == DocumentTypeCode::SEND_UPDATE_RECEIPT) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
                 }
             }
         }

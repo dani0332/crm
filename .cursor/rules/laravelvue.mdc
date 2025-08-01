@@ -30,6 +30,7 @@ alwaysApply: true
     - Apply try-catch blocks for predictable errors.
   - Use Laravel's request validation and middleware effectively.
   - Implement Eloquent ORM for database modeling and queries.
+  - This project uses doppler, when running a local command make sure to use `doppler run -- ` before the php command like `doppler run -- php artisan --version`
 
   Vue.js
   - Use Vue 3 with Composition API as your project is running Vue 3.5.x

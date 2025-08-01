@@ -29,6 +29,18 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isSavings: {
+    type: Boolean,
+    default: false,
+  },
+  todayTotalRegularUnAssignedLeadCount: {
+    type: Number,
+    default: 0,
+  },
+  todayTotalLumpsumUnAssignedLeadCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const autoRefresh = ref(true);
@@ -294,9 +306,17 @@ onMounted(() => {
         <h3>Total Advisors</h3>
         <p>{{ data.length }}</p>
       </div>
-      <div class="labox border-red-500">
+      <div class="labox border-red-500" v-if="!isSavings">
         <h3>Unassigned Leads Count</h3>
         <p>{{ props.todayTotalUnAssignedLeadCount }}</p>
+      </div>
+      <div class="labox border-red-500" v-if="isSavings">
+        <h3>Unassigned Lumpsum Leads Count</h3>
+        <p>{{ props.todayTotalLumpsumUnAssignedLeadCount }}</p>
+      </div>
+      <div class="labox border-red-500" v-if="isSavings">
+        <h3>Unassigned Regular Leads Count</h3>
+        <p>{{ props.todayTotalRegularUnAssignedLeadCount }}</p>
       </div>
 
       <TransitionGroup name="fade">

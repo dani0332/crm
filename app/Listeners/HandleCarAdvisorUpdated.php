@@ -10,7 +10,6 @@ use App\Jobs\SendFTCEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\User;
-use App\Services\CarAllocationService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
@@ -20,7 +19,6 @@ use Illuminate\Support\Facades\Log;
 
 class HandleCarAdvisorUpdated
 {
-    protected $carQuoteService;
     protected $smsService;
     protected $carEmailService;
     protected $httpService;
@@ -30,9 +28,8 @@ class HandleCarAdvisorUpdated
      *
      * @return void
      */
-    public function __construct(CarAllocationService $carQuoteService, SendSmsCustomerService $smsService, CarEmailService $carEmailService, HttpRequestService $httpService)
+    public function __construct(SendSmsCustomerService $smsService, CarEmailService $carEmailService, HttpRequestService $httpService)
     {
-        $this->carQuoteService = $carQuoteService;
         $this->smsService = $smsService;
         $this->carEmailService = $carEmailService;
         $this->httpService = $httpService;

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 
 class QuoteType extends Model
 {
@@ -16,6 +16,7 @@ class QuoteType extends Model
     {
         return $query->where('is_active', 1);
     }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

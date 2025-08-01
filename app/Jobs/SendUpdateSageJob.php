@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SageProcess;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -45,6 +47,7 @@ class SendUpdateSageJob implements ShouldQueue
      */
     public function handle(SageApiService $sageApiService): void
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SAGE_ENDORSEMENT_BOOKING);
         info('job:SendUpdateSageJob - Process Start - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);

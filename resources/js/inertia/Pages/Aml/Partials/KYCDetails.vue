@@ -115,6 +115,11 @@ function activePatternField() {
   // Enable the pattern field if the user is compliance or has update permission
   patternFieldDisable.value = !(isCompliance || canUpdateAmlDecision);
 }
+
+const noEscalated = computed(() => {
+  return page.props.isAnyEscalated ? null : 1;
+});
+
 const kycFormDetails = useForm({
   customer_id: page.props.quoteRequest.customer_id,
   quote_uuid: page.props.quoteRequest.uuid,
@@ -155,13 +160,18 @@ const kycFormDetails = useForm({
   mode_of_delivery:
     insuredDetails?.insured?.insured_kyc?.mode_of_delivery ??
     'mod-delivery-pse',
-  pep: insuredDetails?.insured?.insured_kyc?.pep ?? page.props.quoteAmlStatus,
+  pep:
+    insuredDetails?.insured?.insured_kyc?.pep ??
+    page.props.quoteAmlStatus ??
+    (noEscalated.value ? 2 : null),
   financial_sanctions:
     insuredDetails?.insured?.insured_kyc?.financial_sanctions ??
-    page.props.quoteAmlStatus,
+    page.props.quoteAmlStatus ??
+    noEscalated.value,
   dual_nationality:
     insuredDetails?.insured?.insured_kyc?.dual_nationality ??
-    page.props.quoteAmlStatus,
+    page.props.quoteAmlStatus ??
+    noEscalated.value,
   transaction_pattern:
     insuredDetails?.insured?.insured_kyc?.transaction_pattern ?? 'no_changes',
   // Individual Customer Type
@@ -175,15 +185,20 @@ const kycFormDetails = useForm({
     insuredDetails?.insured?.insured_kyc?.resident_status ?? 'uaeResident',
   in_sanction_list:
     insuredDetails?.insured?.insured_kyc?.in_sanction_list ??
-    page.props.quoteAmlStatus,
+    page.props.quoteAmlStatus ??
+    noEscalated.value,
   is_partner:
-    insuredDetails?.insured?.insured_kyc?.is_partner ?? incomeSource.value,
+    insuredDetails?.insured?.insured_kyc?.is_partner ??
+    incomeSource.value ??
+    noEscalated.value,
   deal_sanction_list:
     insuredDetails?.insured?.insured_kyc?.deal_sanction_list ??
-    page.props.quoteAmlStatus,
+    page.props.quoteAmlStatus ??
+    noEscalated.value,
   is_operation_high_risk:
     insuredDetails?.insured?.insured_kyc?.is_operation_high_risk ??
-    page.props.quoteAmlStatus,
+    page.props.quoteAmlStatus ??
+    noEscalated.value,
   professional_title: insuredDetails?.insured?.insured_kyc?.job_title ?? null,
   employment_sector:
     insuredDetails?.insured?.insured_kyc?.employment_sector ?? null,
@@ -217,12 +232,15 @@ const kycFormDetails = useForm({
   manager_position:
     page.props.entityDetails?.entity?.quote_member?.relation_code ?? null,
   is_sanction_match:
-    insuredDetails?.insured?.insured_kyc?.is_sanction_match ?? null,
-  in_fatf: insuredDetails?.insured?.insured_kyc?.in_fatf ?? null,
+    insuredDetails?.insured?.insured_kyc?.is_sanction_match ??
+    noEscalated.value,
+  in_fatf: insuredDetails?.insured?.insured_kyc?.in_fatf ?? noEscalated.value,
   deal_sanction_list:
-    insuredDetails?.insured?.insured_kyc?.deal_sanction_list ?? null,
+    insuredDetails?.insured?.insured_kyc?.deal_sanction_list ??
+    noEscalated.value,
   is_owner_high_risk:
-    insuredDetails?.insured?.insured_kyc?.is_owner_high_risk ?? null,
+    insuredDetails?.insured?.insured_kyc?.is_owner_high_risk ??
+    noEscalated.value,
   transaction_volume:
     insuredDetails?.insured?.insured_kyc?.transaction_volume ?? null,
   transaction_activities:

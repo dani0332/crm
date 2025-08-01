@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteStatusEnum;
@@ -124,12 +125,7 @@ class TravelAllocationService extends AllocationService
                 QuoteStatusEnum::Lost,
             ])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
-            ->where(function ($query) {
-                $query->sicFlowDisabled()
-                    ->orWhere(function ($subQuery) {
-                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                    });
-            })
+            ->eligibleForAllocation(QuoteTypes::TRAVEL)
             ->first();
     }
 
@@ -263,6 +259,14 @@ class TravelAllocationService extends AllocationService
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
+
+        LoggerService::info(self::class.' - assignLead: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
+        ]);
+        if (empty($lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - assignLead: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();

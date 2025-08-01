@@ -14,13 +14,11 @@ use App\Services\EmailServices\TravelEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
-use App\Services\TravelAllocationService;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Log;
 
 class HandleTravelAdvisorUpdated
 {
-    public $travelAllocationService;
     public $smsService;
     public $travelEmailService;
     public $httpService;
@@ -28,9 +26,8 @@ class HandleTravelAdvisorUpdated
     /**
      * Create the event listener.
      */
-    public function __construct(TravelAllocationService $travelAllocationService, SendSmsCustomerService $smsService, TravelEmailService $travelEmailService, HttpRequestService $httpService)
+    public function __construct(SendSmsCustomerService $smsService, TravelEmailService $travelEmailService, HttpRequestService $httpService)
     {
-        $this->travelAllocationService = $travelAllocationService;
         $this->smsService = $smsService;
         $this->travelEmailService = $travelEmailService;
         $this->httpService = $httpService;

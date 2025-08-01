@@ -22,6 +22,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -53,6 +54,8 @@ class AdvisorDistributionReportService extends BaseService
             $request->assignmentType && strtolower($request->assignmentType) !== 'all',
             fn ($q) => $q->where('assignment_type', $request->assignmentType)
         );
+
+        LoggerService::sql(self::class.' - Advisor Distribution Report Query', $query);
 
         return $query->paginate(15)->withQueryString();
     }
@@ -209,6 +212,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
         ];
 
         return [
@@ -228,6 +232,7 @@ class AdvisorDistributionReportService extends BaseService
                     quoteTypeCode::Yacht,
                     quoteTypeCode::CORPLINE,
                     quoteTypeCode::GroupMedical,
+                    quoteTypeCode::SAVINGS,
                 ],
             ],
             'sub_teams' => [
@@ -291,6 +296,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Yacht => PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
             quoteTypeCode::Life => PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_DISTRIBUTION_REPORT,
+            quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {

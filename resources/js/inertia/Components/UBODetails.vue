@@ -125,8 +125,6 @@ function onEditUBO(data) {
 }
 
 const onUBOSubmit = isValid => {
-  UBOFieldReq.nationality = UBOForm.nationality_id == null;
-  UBOFieldReq.dob = UBOForm.dob == null;
   if (!isValid) return;
   isLoading.value = true;
 
@@ -341,62 +339,67 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] =
       show-close
       backdrop
       is-form
-      @submit="onUBOSubmit"
+      persistent
     >
-      <div class="grid md:grid-cols-2 gap-4">
-        <input type="hidden" :value="UBOForm.id" />
-        <x-input
-          v-model="UBOForm.first_name"
-          :rules="[isRequired]"
-          label="Name"
-          placeholder="Name"
-        />
-        <x-select
-          v-model="UBOForm.relation_code"
-          :rules="[isRequired]"
-          label="Owner / Partner"
-          :options="UBORelationOptions"
-          placeholder="Select Owner / Partner"
-          class="w-full"
-        />
-        <DatePicker
-          :rules="[isRequired]"
-          v-model="UBOForm.dob"
-          label="DOB"
-          :hasError="UBOFieldReq.dob"
-        />
-        <x-select
-          v-model="UBOForm.nationality_id"
-          label="Nationality"
-          :options="nationalitiesOptions"
-          placeholder="Select Nationality"
-          filterable
-          filterPlaceholder="Filter Nationality...."
-          :rules="[isRequired]"
-          required
-        />
-      </div>
+      <x-form @submit="onUBOSubmit">
+        <div class="grid md:grid-cols-2 gap-4">
+          <input type="hidden" :value="UBOForm.id" />
+          <x-input
+            v-model="UBOForm.first_name"
+            :rules="[isRequired]"
+            label="Name"
+            placeholder="Name"
+            required
+          />
+          <x-select
+            v-model="UBOForm.relation_code"
+            :rules="[isRequired]"
+            label="Owner / Partner"
+            :options="UBORelationOptions"
+            placeholder="Select Owner / Partner"
+            class="w-full"
+            required
+          />
+          <DatePicker
+            :rules="[isRequired]"
+            v-model="UBOForm.dob"
+            label="DOB"
+            :hasError="UBOFieldReq.dob"
+            required
+          />
+          <x-select
+            v-model="UBOForm.nationality_id"
+            label="Nationality"
+            :options="nationalitiesOptions"
+            placeholder="Select Nationality"
+            filterable
+            filterPlaceholder="Filter Nationality...."
+            :rules="[isRequired]"
+            required
+          />
+        </div>
 
-      <template #secondary-action>
-        <x-button
-          ghost
-          tabindex="-1"
-          size="sm"
-          @click.prevent="modals.UBO = false"
-        >
-          Cancel
-        </x-button>
-      </template>
-      <template #primary-action>
-        <x-button
-          size="sm"
-          color="emerald"
-          :loading="UBOForm.processing"
-          type="submit"
-        >
-          {{ UBOActionEdit ? 'Update' : 'Save' }}
-        </x-button>
-      </template>
+        <template #secondary-action>
+          <x-button
+            ghost
+            tabindex="-1"
+            size="sm"
+            @click.prevent="modals.UBO = false"
+          >
+            Cancel
+          </x-button>
+        </template>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="UBOForm.processing"
+            type="submit"
+          >
+            {{ UBOActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </template>
+      </x-form>
     </x-modal>
 
     <x-modal

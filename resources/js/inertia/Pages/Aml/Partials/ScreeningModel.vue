@@ -438,6 +438,7 @@ const searchInsuredDetails = customerType => {
       .finally(() => (loader.insuredSearch = false));
   }
 };
+
 function clearInsurerDetails(customerType) {
   screeningFormDetails.insured_first_name = null;
   screeningFormDetails.insured_last_name = null;
@@ -449,6 +450,9 @@ function clearInsurerDetails(customerType) {
   screeningFormDetails.company_address = null;
   screeningFormDetails.industry_type_code = null;
   screeningFormDetails.emirate_of_registration_id = null;
+  screeningFormDetails.screening_id_type = null;
+  screeningFormDetails.screening_id_number = null;
+  updateScreeningIdType();
 
   // Clear search results
   searchResultData.value = null;
@@ -676,7 +680,7 @@ const updateScreeningType = () => {
   }
 };
 
-watch(() => {
+function updateScreeningIdType() {
   if (
     screeningFormDetails.screening_id_type === '' ||
     screeningFormDetails.screening_id_type === null
@@ -687,6 +691,10 @@ watch(() => {
         ? 'passport'
         : 'emiratesId';
   }
+}
+
+watch(() => {
+  updateScreeningIdType();
 });
 watch(
   () => screeningFormDetails.nationality_id,
@@ -715,6 +723,7 @@ const handleModalClose = () => {
     show-close
     backdrop
     is-form
+    persistent
     @submit="submitScreeningForm"
   >
     <x-field label="Customer Type" required>
@@ -1052,8 +1061,7 @@ const handleModalClose = () => {
     <x-modal
       v-model="customerTypeConfirmationModel"
       size="lg"
-      :backdrop="false"
-      :close-on-backdrop="false"
+      backdrop
       persistent
     >
       <div class="text-lg text-center">

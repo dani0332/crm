@@ -101,13 +101,28 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::JETSKI->id())
+        $quoteTypeId = QuoteTypes::JETSKI->id();
+
+        return $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
-            ->with(['jetskiQuote', 'nationality', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'jetskiQuote',
+                'nationality',
+                'advisor',
+                'quoteDetail.lostReason',
+                'latestInsured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
+                'latestInsured.insuredKyc:id,insured_id',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
+                },
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                }])->firstOrFail();
     }
 
     /**
@@ -130,11 +145,15 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::JETSKI->id());
+            },
+            'customer',
         ])->when(auth()->user() && auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->id());
         })
-            ->when(request()->filled('advisor_assigned_date'), function ($query) {
-                $dateArray = request('advisor_assigned_date');
+            ->when($this->hasFilterValue('advisor_assigned_date', $requestParams), function ($query) use ($requestParams) {
+                $dateArray = $this->getFilterValue('advisor_assigned_date', $requestParams);
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
@@ -142,6 +161,7 @@ class JetskiQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
@@ -159,9 +179,39 @@ class JetskiQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $query->orderBy('personal_quotes.'.(request()->get('sortBy') ?? 'created_at'), request()->get('sortType') ?? 'desc');
+        $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query;
+        return $query;
+    }
+
+    /**
+     * Get filter value from requestParams or request object.
+     */
+    private function getFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            return $requestParams[$filterName];
+        }
+
+        // Fallback to request object
+        return request($filterName);
+    }
+
+    /**
+     * Check if filter value exists in requestParams or request object.
+     */
+    private function hasFilterValue($filterName, $requestParams = [])
+    {
+        // First check if we have requestParams (for export context)
+        if (! empty($requestParams) && isset($requestParams[$filterName])) {
+            $value = $requestParams[$filterName];
+
+            return ! empty($value) || (is_array($value) && count($value) > 0);
+        }
+
+        // Fallback to request object
+        return request()->filled($filterName);
     }
 
 }

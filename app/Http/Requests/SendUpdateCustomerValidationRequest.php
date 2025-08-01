@@ -48,12 +48,25 @@ class SendUpdateCustomerValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
             $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->select('advisor_id', 'email')->first();
-            if (! $personalQuote->advisor_id) {
+            if (! $personalQuote?->advisor_id) {
                 $validator->errors()->add('error', 'Please select advisor');
             }
 
-            if (! $personalQuote->email) {
+            // The str_contains condition is added only for the production environment and will be removed once the issue with comma-separated emails is resolved.
+            if (! $personalQuote?->email || str_contains($personalQuote?->email, ',')) {
                 $validator->errors()->add('error', 'Customer email is required');
+            }
+
+            if ($this->sendUpdate->quote_type_id == QuoteTypeId::Savings) {
+                $uploadedDocuments = $this->sendUpdate?->documents()->pluck('document_type_code')->toArray();
+                if (
+                    ! (
+                        in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) &&
+                        (in_array(DocumentTypeCode::PAYMENT_RECEIPT, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_RECEIPT, $uploadedDocuments))
+                    )
+                ) {
+                    $validator->errors()->add('error', 'Required documents are not uploaded');
+                }
             }
 
             $this->sendUpdateDocuemnts = $this->sendUpdate?->documents()->pluck('document_type_code');
@@ -140,6 +153,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                             quoteTypeCode::Cycle,
                             quoteTypeCode::Yacht,
                             quoteTypeCode::CORPLINE,
+                            quoteTypeCode::SAVINGS,
                         ]
                     )) {
                         if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(

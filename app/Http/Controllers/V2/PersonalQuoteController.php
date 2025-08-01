@@ -30,7 +30,7 @@ class PersonalQuoteController extends Controller
         $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
-        app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
+        app(CentralService::class)->updatePaymentAllocation($quoteType, $request->quote_uuid);
 
         if (! $response['activity_created']) {
             return back()->with('message', 'Status updated successfully');
@@ -41,6 +41,7 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
+        $documentService = app(QuoteDocumentService::class);
         $files = request()->file('files');
         $responses = collect();
 
@@ -65,10 +66,11 @@ class PersonalQuoteController extends Controller
             return back()->with('error', implode(', ', $errors));
         }
 
-        if ($request->document_type_code === DocumentTypeCode::HPD) {
+        $docTypes = $documentService->bringProofDocumentForAllLobs();
+        if (in_array($request->document_type_code, $docTypes)) {
             $quote = $this->getQuoteObject($request->quote_type, $quoteId);
             if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
-                app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
+                $documentService->updateQuoteAndPaymentStatusToPaymentPending($quote);
             }
         }
 

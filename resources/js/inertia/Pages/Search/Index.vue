@@ -92,10 +92,11 @@ let tableData = props.leadsOrEndorsementData.data;
 function getTableHeader() {
   return [
     { text: 'Ref-ID', value: 'code', sortingOrder: 1 },
-    { text: 'First Name', value: 'first_name', sortingOrder: 2 },
-    { text: 'Last Name', value: 'last_name', sortingOrder: 3 },
-    { text: 'Company Name', value: 'company_name', sortingOrder: 4 },
-    { text: 'Line of Business', value: 'quote_type', sortingOrder: 5 },
+    { text: 'Private Client', value: 'pcp_tag_formatted', sortingOrder: 2 },
+    { text: 'First Name', value: 'first_name', sortingOrder: 3 },
+    { text: 'Last Name', value: 'last_name', sortingOrder: 4 },
+    { text: 'Company Name', value: 'company_name', sortingOrder: 5 },
+    { text: 'Line of Business', value: 'quote_type', sortingOrder: 6 },
     {
       text: 'Business Insurance Type',
       value: 'business_insurance_type',
@@ -654,6 +655,7 @@ onMounted(() => {
       title="Search Filters"
       show-close
       backdrop
+      persistent
     >
       <x-form :auto-focus="false" @keydown.enter="onSubmit">
         <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">

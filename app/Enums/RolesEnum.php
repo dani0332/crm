@@ -99,5 +99,7 @@ final class RolesEnum extends Enum
     public const OperationExecutive = 'OPERATION_EXECUTIVE';
     public const NonCCPaymentVerifier = 'NON_CC_PAYMENT_VERIFIER';
     public const TravelHapex = 'HAPEX';
+    public const SavingsAdvisor = 'SAVINGS_ADVISOR';
+    public const SavingsManager = 'SAVINGS_MANAGER';
     public const BusinessIntelligenceUnit = 'BUSINESS_INTELLIGENCE_UNIT';
 }

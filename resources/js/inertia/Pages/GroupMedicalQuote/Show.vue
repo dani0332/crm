@@ -131,13 +131,26 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
   lostReason: page.props.quoteDetails.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.quoteStatuses.map(status => {
+    var statusDisabled = false;
+    // below status are not editable by advisor
+    if (status.id == quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const onLeadStatus = () => {
@@ -202,19 +215,21 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType =
+  page.props.quote.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Entity;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
   insured_first_name:
-    page.props.quote.insured_first_name ??
+    page.props.quote.latest_insured?.first_name ??
     page.props.quote.customer_insured_first_name ??
     '',
   insured_last_name:
-    page.props.quote.insured_last_name ??
+    page.props.quote.latest_insured?.last_name ??
     page.props.quote.customer_insured_last_name ??
     '',
   emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
@@ -485,6 +500,7 @@ const allowStatusUpdate = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -559,7 +575,7 @@ const allowStatusUpdate = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -970,7 +986,7 @@ const allowStatusUpdate = computed(() => {
     </x-modal>
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -1213,10 +1229,24 @@ const allowStatusUpdate = computed(() => {
       </Collapsible>
     </div>
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 

@@ -16,7 +16,6 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use OwenIt\Auditing\Models\Audit;
 
 class UpdateStaleLeads extends Command
 {
@@ -128,15 +127,6 @@ class UpdateStaleLeads extends Command
                             ]);
 
                             info('Quote Found - '.$eligibleQuoteType." - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $staleLead->updated_at");
-                            Audit::create([
-                                'event' => 'updated',
-                                'auditable_type' => $eligibleQuoteType,
-                                'auditable_id' => $staleLead->id,
-                                'old_values' => ['quote_status_id' => $staleLead->quote_status_id],
-                                'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 90 days'],
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
 
                             switch ($eligibleQuoteType) {
                                 case HomeQuote::class:

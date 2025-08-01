@@ -6,6 +6,7 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Models\CustomerMembers;
 use App\Models\KycLog;
 use App\Models\ManualAMLLog;
 use App\Models\QuoteType;
@@ -13,6 +14,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class BridgerInsightService
 {
@@ -35,8 +37,15 @@ class BridgerInsightService
 
     public function getJWTToken()
     {
-        LoggerService::info('fn:getJWTToken - BridgerInsightService - Token Generation started');
+        $cacheKey = 'bridger_jwt_token';
 
+        // Check if we have a cached token
+        $cachedToken = Cache::get($cacheKey);
+        if ($cachedToken) {
+            return $cachedToken;
+        }
+
+        // Generate new token
         $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
         $bridgerClient = new \GuzzleHttp\Client;
@@ -56,11 +65,15 @@ class BridgerInsightService
             if ($tokenRequest->getStatusCode() == 200) {
                 $getDecodeContents = json_decode($tokenRequest->getBody());
                 $_return['response'] = $getDecodeContents->access_token;
-                LoggerService::info('Bridger Insight Service - JWT Token Generated');
+
+                // Only cache successful responses for 50 minutes
+                Cache::put($cacheKey, $_return, 50 * 60);
+                LoggerService::info('Bridger Insight Service - JWT Token Generated and cached for 50 minutes');
 
                 return $_return;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            Cache::forget($cacheKey);
             $_return['status'] = false;
             $responseErrorCode = $e->getResponse()->getStatusCode();
             LoggerService::error('Bridger Insight Service - JWT Token Error: '.$responseErrorCode);
@@ -181,6 +194,12 @@ class BridgerInsightService
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail, isAutomation: $isAutomation);
                                 LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
+                            }
+
+                            if (isset($memberUboDetails['customer_entity_id']) && is_null($memberUboDetails['updated_at'])) {
+                                $customerMember = CustomerMembers::where('id', $memberUboDetails['id'])->first();
+                                $customerMember->updated_at = Carbon::now();
+                                $customerMember->save();
                             }
                         }
                     }
@@ -310,7 +329,7 @@ class BridgerInsightService
                         'X-API-Key' => $this->bridgerAPIKey,
                     ],
                     'body' => json_encode($amlUpdateData),
-                    'timeout' => 10,
+                    'timeout' => 30,
                 ]
             );
 

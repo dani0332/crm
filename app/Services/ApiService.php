@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -11,10 +12,13 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
+use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\AIGWorkflowJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
+use App\Jobs\SendHealthSICWAFollowupJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -88,7 +92,7 @@ class ApiService
 
     public function isLeadAllocationEndpointDisabled()
     {
-        return config('services.lead_allocation.disabled');
+        return config('constants.DISABLE_LEAD_ALLOCATION_ENDPOINT') == '1';
     }
 
     public function processAssignLead(AssignLeadRequest $request)
@@ -377,5 +381,97 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'AIG workflow trigger failed!');
         }
+    }
+
+    public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
+    {
+        LoggerService::startQuoteLogging(QuoteTypes::TRAVEL->refId($request->quoteUuid));
+        LoggerService::info('------ Travel AIG workflow trigger request received ------');
+
+        try {
+            $quoteTypeId = $request->quoteTypeId;
+            $quoteUuid = $request->quoteUuid;
+
+            if (! $quoteUuid) {
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Quote UUID is required!');
+            }
+
+            // Get the quote type if provided, or default to Travel
+            if ($quoteTypeId) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+            } else {
+                $quoteType = QuoteTypes::TRAVEL;
+                $quoteTypeId = QuoteTypes::TRAVEL->id();
+            }
+
+            if (! $quoteType) {
+                LoggerService::info('Invalid Quote Type');
+
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+            }
+
+            // Get model class for the quote type
+            $modelClass = $quoteType->model();
+
+            // Verify the quote exists
+            $quote = $modelClass->where('uuid', $quoteUuid)->first();
+            if (! $quote) {
+                LoggerService::info('Quote not found');
+
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+            }
+
+            // Atomic update - only proceeds if travel_aig_flow_executed_at is null
+            $updated = $modelClass->where('uuid', $quoteUuid)
+                ->whereNull('travel_aig_flow_executed_at')
+                ->update(['travel_aig_flow_executed_at' => now()]);
+
+            if ($updated) {
+                // Only dispatch the job if we successfully updated the record
+                LoggerService::info('------ Dispatching Travel AIG workflow job ------');
+                dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteType));
+                LoggerService::info('------ Travel AIG workflow trigger request completed ------');
+
+                return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow triggered successfully!');
+            } else {
+                // The workflow has already been triggered
+                LoggerService::info('------ Travel AIG workflow already triggered for this quote ------');
+
+                return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow already triggered for this quote');
+            }
+        } catch (\Exception $e) {
+            LoggerService::error('Travel AIG workflow trigger failed', exception: $e);
+
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Travel AIG workflow trigger failed!');
+        }
+    }
+
+    public function triggerSICWhatsapp(SICWhatsappRequest $request)
+    {
+        //  Implement triggerSICWhatsapp
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        switch ($quoteType) {
+            case QuoteTypes::HEALTH:
+                $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+                if (! $lead) {
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Lead not found!');
+                }
+                if (getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid)) {
+                    if (! app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)) {
+                        SendHealthSICWAFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(50));
+                    } else {
+                        LoggerService::info('SIC Health Followups WA already executed');
+
+                        return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow already executed for this lead!');
+                    }
+                } else {
+                    return apiResponse(null, Response::HTTP_OK, 'WhatsApp consent not given for this lead!');
+                }
+                break;
+            default:
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow triggered successfully!');
     }
 }

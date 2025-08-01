@@ -131,6 +131,7 @@ class ComprehensiveConversionDashboardService extends BaseService
                     quoteTypeCode::Yacht,
                     quoteTypeCode::CORPLINE,
                     quoteTypeCode::GroupMedical,
+                    quoteTypeCode::SAVINGS,
                 ],
             ],
             'sub_teams' => [
@@ -188,6 +189,7 @@ class ComprehensiveConversionDashboardService extends BaseService
             quoteTypeCode::Yacht => PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
             quoteTypeCode::Life => PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
             quoteTypeCode::Home => PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
+            quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_COMPREHENSIVE_DASHBOARD,
         ];
 
         $lobs = array_filter($lobs, function ($permission) {
