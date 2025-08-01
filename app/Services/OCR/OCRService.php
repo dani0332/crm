@@ -110,6 +110,7 @@ class OCRService
 
         LoggerService::info('Starting OCR processing', extra: [
             'quote_type' => $quoteType->value,
+            'quote_uuid' => $quote->uuid,
             'quote_code' => $quote->code,
             'document_type' => $documentType->code,
             'file_mime_type' => $fileMimeType,
@@ -138,6 +139,7 @@ class OCRService
             $apiCallStartTime = microtime(true);
 
             LoggerService::info('Starting OCR API call', extra: [
+                'quote_uuid' => $quote->uuid,
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'document_type' => $documentType->code,
@@ -152,6 +154,7 @@ class OCRService
             $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
 
             LoggerService::info('OCR API call completed', extra: [
+                'quote_uuid' => $quote->uuid,
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'document_type' => $documentType->code,
@@ -163,6 +166,7 @@ class OCRService
 
             if ($data) {
                 LoggerService::info(self::class.'::process - Data received from getData', extra: [
+                    'quote_uuid' => $quote->uuid,
                     'data' => $data
                 ]);
                 $dataFilledResponse = $this->fill(
@@ -189,6 +193,7 @@ class OCRService
                 $dataProcessingTime = round($executionTime - $apiCallExecutionTime, 2);
 
                 LoggerService::info('OCR processing completed successfully', extra: [
+                    'quote_uuid' => $quote->uuid,
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
                     'document_type' => $documentType->code,
@@ -209,6 +214,7 @@ class OCRService
                 $executionTime = round(($endTime - $startTime) * 1000, 2);
 
                 LoggerService::warning('OCR processing failed - no data received', extra: [
+                    'quote_uuid' => $quote->uuid,
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
                     'document_type' => $documentType->code,
@@ -228,6 +234,7 @@ class OCRService
             $apiCallExecutionTime = isset($apiCallStartTime) ? round(($endTime - $apiCallStartTime) * 1000, 2) : 0;
 
             LoggerService::error('OCR processing failed with exception', extra: [
+                'quote_uuid' => $quote->uuid,
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'document_type' => $documentType->code,
@@ -279,6 +286,7 @@ class OCRService
 
         if ($quote && $filePathAzure) {
             LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job', [
+                'quote_uuid' => $quote->uuid,
                 'quote_type' => $quoteType->value,
                 'document_type' => $documentType->code,
                 'file_path' => $filePathAzure,
@@ -297,6 +305,7 @@ class OCRService
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters', [
+                'quote_uuid' => $quote->uuid,
                 'quote_exists' => ! is_null($quote),
                 'file_path_exists' => ! empty($filePathAzure),
                 'document_type' => $documentType->code,

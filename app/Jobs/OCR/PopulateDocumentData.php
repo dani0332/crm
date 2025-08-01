@@ -69,17 +69,17 @@ class PopulateDocumentData implements ShouldQueue
             );
 
             if ($isSuccess === null) {
-                LoggerService::info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                LoggerService::info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
 
                 return;
             }
 
             if ($isSuccess) {
-                LoggerService::info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                LoggerService::info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
             } else {
-                LoggerService::info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                LoggerService::info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
                 if ($this->attempts() >= $this->tries) {
-                    $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
+                    $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}";
                     LoggerService::info(self::class." - {$errorMessage}");
                     $this->fail(new Exception($errorMessage));
                 } else {
