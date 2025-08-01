@@ -824,7 +824,7 @@ class SageApiService
             $applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
             if (! $applyPaymentAPInvoices['status']) {
                 return $applyPaymentAPInvoices;
-            } 
+            }
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
@@ -3224,7 +3224,7 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
- 
+
         /* applyPaymentAPInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
