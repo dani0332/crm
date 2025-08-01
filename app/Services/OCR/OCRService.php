@@ -107,6 +107,7 @@ class OCRService
 
         // Record start time for OCR processing
         $startTime = microtime(true);
+        $documentCategory = $documentType->category;
 
         LoggerService::info('Starting OCR processing', extra: [
             'quote_type' => $quoteType->value,
@@ -117,6 +118,7 @@ class OCRService
             'user_id' => $userId,
             'is_ecom' => $isEcom,
             'start_time' => date('Y-m-d H:i:s', (int) $startTime),
+            'document_category' => $documentCategory,
         ]);
 
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
@@ -145,6 +147,7 @@ class OCRService
                 'document_type' => $documentType->code,
                 'doc_type_enum' => $docType->value,
                 'api_url' => $url,
+                'document_category' => $documentCategory,
             ]);
 
             $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
@@ -162,6 +165,7 @@ class OCRService
                 'api_execution_time_seconds' => round($apiCallExecutionTime / 1000, 2),
                 'data_received' => ! is_null($data),
                 'data_size' => is_array($data) ? count($data) : (is_string($data) ? strlen($data) : 0),
+                'document_category' => $documentCategory,
             ]);
 
             if ($data) {
@@ -172,7 +176,8 @@ class OCRService
                 $dataFilledResponse = $this->fill(
                     $quote,
                     $docType,
-                    $data
+                    $data,
+                    $documentCategory
                 );
 
                 $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
@@ -205,6 +210,7 @@ class OCRService
                     'data_filled_response' => $dataFilledResponse,
                     'user_id' => $userId,
                     'is_ecom' => $isEcom,
+                    'document_category' => $documentCategory,
                 ]);
 
                 return $dataFilledResponse;
@@ -223,6 +229,7 @@ class OCRService
                     'api_call_time_ms' => $apiCallExecutionTime,
                     'end_time' => date('Y-m-d H:i:s', (int) $endTime),
                     'user_id' => $userId,
+                    'document_category' => $documentCategory,
                 ]);
 
                 return false;
@@ -246,6 +253,7 @@ class OCRService
                 'error_line' => $e->getLine(),
                 'user_id' => $userId,
                 'is_ecom' => $isEcom,
+                'document_category' => $documentCategory,
             ]);
 
             throw $e;

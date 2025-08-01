@@ -3,6 +3,7 @@
 namespace App\Services\OCR;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Services\ApplicationStorageService;
@@ -332,9 +333,10 @@ trait OcrFillable
     private function fill(
         Model $quote,
         OCRDocumentTypeEnum $documentType,
-        object $data
+        object $data,
+        $documentCategory
     ) {
-        if (! $this->isSupportedProvider($quote)) {
+        if (! $this->isSupportedProvider($quote) && $documentCategory != DocumentTypeCategory::QUOTE) {
             LoggerService::info(self::class.' - Not a Valid Provider');
 
             return false;
