@@ -256,7 +256,6 @@ class SukoonMedexService
             if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
                 $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->currentQuote->uuid, $documentType);
             } else {
-                // TODO::
                 LoggerService::error("Unsupported file type: fileMimeType: {$fileMimeType}, extension: {$extension}");
 
                 return false;
@@ -442,7 +441,6 @@ class SukoonMedexService
                     continue;
                 }
 
-                // TODO:: need to verify watermark generate only when watermarked is not generated
                 $savedWatermarkedDocument = $this->watermarkDocument($documentItem);
                 if (! empty($savedWatermarkedDocument)) {
                     $watermarkedDocuments[] = $savedWatermarkedDocument;
@@ -1184,10 +1182,10 @@ class SukoonMedexService
 
                     if (isset($document)) {
                         $document->update($documentData);
-                        $docStatus['updated'][] = $documentData['original_name'] ?? 'TODO::';
+                        $docStatus['updated'][] = $documentData['original_name'] ?? $docName;
                     } else {
                         $document = $embeddedTransaction->documents()->create($documentData);
-                        $docStatus['created'][] = $documentData['original_name'] ?? 'TODO::';
+                        $docStatus['created'][] = $documentData['original_name'] ?? $docName;
                     }
 
                     $savedDocuments[] = $documentData;
