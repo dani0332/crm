@@ -19,6 +19,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Repositories\ActivityRepository;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -35,6 +36,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
@@ -390,6 +392,17 @@ class AmtController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
+        $activities = ActivityRepository::where([
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
+            'quote_request_id' => $record->id,
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
+
+        $advisors = DB::table('users as u')
+        ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+        ->join('roles as r', 'r.id', '=', 'mr.role_id')
+        ->whereIn('r.name', ['GM_ADVISOR'])
+        ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -439,6 +452,8 @@ class AmtController extends Controller
             'paymentDocument' => $paymentDocuments,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'activities' => $activities,
+            'advisors' => $advisors,
         ]);
     }
 

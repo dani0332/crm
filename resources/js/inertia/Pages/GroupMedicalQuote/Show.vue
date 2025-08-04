@@ -38,6 +38,8 @@ defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  activities: Array,
+  advisors: Array,
 });
 
 const page = usePage();
@@ -405,6 +407,33 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+const activityDelete = id => {
+  modals.activityConfirm = true;
+  confirmDeleteData.activity = id;
+};
+
+const activityDeleteConfirmed = () => {
+  router.post(
+    `/activities/${confirmDeleteData.activity}/delete`,
+    {
+      isInertia: true,
+      quote_uuid: page.props.quote.uuid,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.error({
+          title: 'Activity Deleted',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activityConfirm = false;
+      },
+    },
+  );
+};
 </script>
 
 <template>
@@ -1193,6 +1222,16 @@ const allowStatusUpdate = computed(() => {
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+    />
+
+    <Activities
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+      :modelType="page.props.modelType"
+      :advisors="advisors"
+      :activities="activities"
+      :expanded="sectionExpanded"
+      :readOnlyMode="readOnlyMode"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
