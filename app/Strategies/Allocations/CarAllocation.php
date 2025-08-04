@@ -33,6 +33,10 @@ class CarAllocation implements Allocation
 
     public function execute()
     {
+        if ($response = AiAdvisorAllocator::try(QuoteTypes::CAR, $this->uuid, $this->evaluateTierOnly)) {
+            return $response;
+        }
+
         $allocationRequest = new AllocationRequest(
             quoteType: QuoteTypes::CAR,
             quoteUUID: $this->uuid,
@@ -42,7 +46,6 @@ class CarAllocation implements Allocation
         );
 
         try {
-
             return Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
