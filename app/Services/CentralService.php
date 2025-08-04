@@ -1434,10 +1434,10 @@ class CentralService extends BaseService
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
         $emailData->planName = 'NA';
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             $emailData->assistanceNumber = $quote?->plan?->insuranceProvider?->roadside_phone_number ?? $emailData->assistanceNumber ?? '';
             $emailData->insuranceCompany = $quote?->plan?->insuranceProvider?->text ?? $emailData->insuranceCompany ?? '';
-            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
+            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? 'NA';
         }
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
