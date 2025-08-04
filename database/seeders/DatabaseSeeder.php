@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Database\Seeders\AiAdvisorSeeder;
 
 class DatabaseSeeder extends Seeder
 {
