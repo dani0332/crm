@@ -28,6 +28,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use App\Events\DocumentNotificationEvent;
 
 class ApiService
 {
@@ -477,6 +478,21 @@ class ApiService
 
     public function documentNotification($request)
     {
-        return apiResponse(null, Response::HTTP_OK, 'Document notification received!');
+        try {
+            
+            $data = $request->all();
+            $notificationData = [
+                'quoteUID' => $data['quoteUID'],
+                'status' => 'success',
+            ];
+            
+            event(new DocumentNotificationEvent($notificationData, 'success'));
+            
+            return apiResponse(null, Response::HTTP_OK, 'Document notification received!');
+            
+        } catch (Exception $e) {
+            LoggerService::error('Document notification processing failed', exception: $e);
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Document notification processing failed!');
+        }
     }
 }
