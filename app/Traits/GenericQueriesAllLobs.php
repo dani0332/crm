@@ -747,6 +747,8 @@ trait GenericQueriesAllLobs
      */
     private function isSplitPaymentFullyPaid($payment)
     {
+        LoggerService::info('fn:isSplitPaymentFullyPaid - Start - GenericQueriesAllLobs');
+        
         // Check if the payment exists and has a frequency of split payments
         if ($payment && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
             // Get the payment splits associated with the payment
