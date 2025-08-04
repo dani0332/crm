@@ -54,6 +54,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Repositories\QuoteStatusLogRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
@@ -1194,7 +1195,7 @@ class CentralService extends BaseService
 
                 // Create status log and trigger journey if status actually changed
                 if ($previousQuoteStatus != $quote->quote_status_id) {
-                    QuoteStatusRepository::create($quoteTypeId, $quote, $previousQuoteStatus);
+                    QuoteStatusLogRepository::create($quoteTypeId, $quote, $previousQuoteStatus);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
                 } else {
@@ -1247,7 +1248,7 @@ class CentralService extends BaseService
         }
         
         // Only check transaction approved status if documents are uploaded
-        $hasTransactionApprovedHistory = QuoteStatusRepository::hasTransactionApprovedStatus($quoteTypeId, $quote->id);
+        $hasTransactionApprovedHistory = QuoteStatusLogRepository::hasTransactionApprovedStatus($quoteTypeId, $quote->id);
         $isCurrentlyTransactionApproved = $quote->quote_status_id === QuoteStatusEnum::TransactionApproved;
         
         return ($hasTransactionApprovedHistory || $isCurrentlyTransactionApproved);
