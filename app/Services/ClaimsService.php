@@ -65,7 +65,7 @@ class ClaimsService extends BaseService
         $filters = $this->getFilters($request);
         $query = $this->applyFilters($this->query, $filters);
 
-        return $query->paginate(25);
+        return $query->simplePaginate(25)->withQueryString();
     }
 
     /**

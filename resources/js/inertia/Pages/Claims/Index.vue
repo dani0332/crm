@@ -592,35 +592,20 @@ watch(
           >
             Edit
           </Link>
-          <button
-            v-if="can(permissionsEnum.CLAIM_DELETE)"
-            @click="deleteClaim(id)"
-            class="text-red-600 hover:underline"
-          >
-            Delete
-          </button>
         </div>
       </template>
     </DataTable>
 
-    <!-- Pagination -->
-    <div class="flex justify-center mt-4" v-if="claims.links">
-      <div class="flex gap-2">
-        <Link
-          v-for="(link, index) in claims.links"
-          :key="`pagination-${index}-${link.label}`"
-          :href="link.url"
-          :class="[
-            'px-3 py-2 text-sm border rounded',
-            link.active
-              ? 'bg-blue-500 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100',
-            !link.url ? 'opacity-50 cursor-not-allowed' : '',
-          ]"
-        >
-          {{ link.label }}
-        </Link>
-      </div>
-    </div>
+     <!-- Pagination -->
+    <Pagination
+      :links="{
+        next: claims.next_page_url,
+        prev: claims.prev_page_url,
+        current: claims.current_page,
+        from: claims.from,
+        to: claims.to,
+      }"
+    />
+ 
   </div>
 </template>
