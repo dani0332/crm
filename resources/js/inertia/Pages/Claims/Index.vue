@@ -259,15 +259,6 @@ watch(
         <Link v-if="can(permissionsEnum.CLAIM_CREATE)" href="/claims/create">
           <x-button size="sm" color="primary">Add New Claim</x-button>
         </Link>
-        <x-button
-          v-if="can(permissionsEnum.CLAIMS_EXPORT_DATA)"
-          size="sm"
-          color="success"
-          @click="exportClaims"
-          :loading="loader.export"
-        >
-          Export Claims
-        </x-button>
       </div>
     </div>
     <x-divider class="my-4" />
@@ -486,11 +477,22 @@ watch(
           />
         </template>
       </div>
-      <div class="flex justify-end gap-2 mb-4 mt-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 mt-4">
+        <x-button
+            v-if="can(permissionsEnum.CLAIMS_EXPORT_DATA)"
+            size="sm"
+            color="emerald"
+            class="justify-self-start mr-3"
+             @click="exportClaims"
+          :loading="loader.export"
+          >
+            Export
+          </x-button>
+          <div class="flex gap-3 justify-self-end">
+            <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+            <x-button size="sm" color="primary" @click.prevent="onReset">  Reset  </x-button>
+          </div>
+       
       </div>
     </x-form>
 
