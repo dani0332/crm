@@ -317,8 +317,11 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           />
         </x-field>
       </dl>
-      <div class="flex justify-end my-5 gap-x-2">
-        <x-button v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
+      <div
+        class="flex justify-end my-5 gap-x-2"
+        v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
+      >
+        <x-button
           size="sm"
           color="orange"
           type="submit"
@@ -327,6 +330,25 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         >
           Save
         </x-button>
+      </div>
+      <div
+        class="flex justify-end my-5 gap-x-2"
+        v-else
+      >
+        <x-tooltip>
+          <x-button
+            size="sm"
+            color="orange"
+            type="submit"
+            class="px-6"
+            disabled
+          >
+            Save
+          </x-button>
+          <template #tooltip>
+            You don't have permission to edit this section.
+          </template>
+        </x-tooltip>
       </div>
     </x-form>
   </div>
