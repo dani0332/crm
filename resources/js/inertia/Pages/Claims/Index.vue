@@ -534,6 +534,18 @@ watch(
       <template #item-line_of_business="{ line_of_business }">
         {{ line_of_business?.text }}
       </template>
+      
+      <template #item-quote_type="{ quote_type }">
+        {{ quote_type?.text }}
+      </template>
+      
+      <template #item-insurance_provider="{ insurance_provider }">
+        {{ insurance_provider?.text }}
+      </template>
+
+      <template #item-claim_status="{ claim_status }">
+        {{ claim_status?.text }}
+      </template>
 
       <template #item-claim_type="{ claim_type }">
         {{ claim_type?.text }}

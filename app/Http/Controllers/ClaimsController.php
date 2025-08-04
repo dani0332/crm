@@ -41,9 +41,7 @@ class ClaimsController extends Controller
             $claims = $this->claimsService->getClaimsData($request);
 
             // Get dropdown data for filters
-            $claimDropdownOptions = $this->claimsService->getDropdownData();
-            // Get statistics
-            /* $statistics = $this->claimsService->getClaimsStatistics(); */
+            $claimDropdownOptions = $this->claimsService->getDropdownData(); 
 
             return Inertia::render('Claims/Index', [
                 'claims' => $claims,
@@ -56,6 +54,8 @@ class ClaimsController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
+
+            dd($e->getMessage());
 
             return Inertia::render('Claims/Index', [
                 'claims' => collect([]),

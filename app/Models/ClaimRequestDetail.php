@@ -32,7 +32,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  */
 class ClaimRequestDetail extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, SoftDeletes;
+    use Auditable, FilterCriteria, HasFactory/* , SoftDeletes */;
 
     protected $table = 'claim_request_details';
 

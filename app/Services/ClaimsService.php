@@ -59,7 +59,7 @@ class ClaimsService extends BaseService
                 'manager:id,name',
                 'claimStatus:id,text',
                 'claimSubStatus:id,text',
-                'insuranceProvider:id,name',
+                'insuranceProvider:id,text',
                 'claimRequestType:id,text',
                 'claimRequestDetails',
             ]);
