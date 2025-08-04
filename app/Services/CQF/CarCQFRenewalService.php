@@ -49,12 +49,6 @@ class CarCQFRenewalService
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
             ])
-            ->whereHas('embeddedTransactions', function ($query) {
-                $query->whereIn('payment_status_id', [
-                    PaymentStatusEnum::CAPTURED,
-                ]);
-            })
-
             ->first();
 
         if (empty($isQuoteExists)) {
@@ -67,14 +61,9 @@ class CarCQFRenewalService
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
-            ])
-            ->whereHas('embeddedTransactions', function ($query) {
-                $query->whereIn('payment_status_id', [
-                    PaymentStatusEnum::CAPTURED,
-                ]);
-            })
-            ->take(10)
-            ->chunkById(10, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
+            ])           
+            ->take(50)
+            ->chunkById(50, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
                 if ($quoteCount > 0) {
