@@ -82,8 +82,6 @@ const modals = reactive({
   docConfirm: false,
   plan: false,
   createPlan: false,
-  activity: false,
-  activityConfirm: false,
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
@@ -407,33 +405,6 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
-
-const activityDelete = id => {
-  modals.activityConfirm = true;
-  confirmDeleteData.activity = id;
-};
-
-const activityDeleteConfirmed = () => {
-  router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
-    {
-      isInertia: true,
-      quote_uuid: page.props.quote.uuid,
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.error({
-          title: 'Activity Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.activityConfirm = false;
-      },
-    },
-  );
-};
 </script>
 
 <template>
