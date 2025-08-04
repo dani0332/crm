@@ -103,8 +103,6 @@ class OCRService
         int $userId,
         bool $isEcom,
     ): ?bool {
-        LoggerService::startQuoteLogging($quote->uuid, LoggerFeatureEnum::OCR);
-
         // Record start time for OCR processing
         $startTime = microtime(true);
         $documentCategory = $documentType->category;
@@ -267,7 +265,7 @@ class OCRService
         string $fileMimeType,
         ?string $quoteTypeParam = null
     ): void {
-        LoggerService::startQuoteLogging($quote->uuid, LoggerFeatureEnum::OCR);
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::OCR);
 
         if ($quote instanceof SendUpdateLog) {
             LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog', [
