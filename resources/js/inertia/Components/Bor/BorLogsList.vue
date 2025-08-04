@@ -217,9 +217,6 @@ const canPerformAction = (log, action) => {
   const editAndCopyLinkCondition = ![props.borStatusEnum.COMPLETED, props.borStatusEnum.CANCELLED].includes(status);
   const uploadAndDoneCondition = ![props.borStatusEnum.COMPLETED, props.borStatusEnum.CANCELLED, props.borStatusEnum.DOCUMENT_SIGNED, props.borStatusEnum.DOCUMENT_UPLOADED].includes(status);
 
-  console.log(status);
-  console.log(action);
-  console.log(uploadAndDoneCondition);
 
   switch (action) {
     case 'edit':
@@ -328,7 +325,8 @@ const canPerformAction = (log, action) => {
             <x-button
               v-if="canPerformAction(actions, 'upload')"
               color="orange"
-              size="xs"
+              class="mt-1"
+              size="sm"
               @click="handleUploadDocument(actions)"
               title="Upload signed document"
             >
@@ -339,7 +337,7 @@ const canPerformAction = (log, action) => {
             <x-button
               v-if="canPerformAction(actions, 'cancel')"
               color="error"
-              size="xs"
+              size="sm"
               @click="handleCancelBor(actions)"
               title="Cancel BOR request"
             >
@@ -350,7 +348,7 @@ const canPerformAction = (log, action) => {
             <x-button
               v-if="canPerformAction(actions, 'view_document')"
               color="primary"
-              size="xs"
+              size="sm"
               @click="handleViewDocument(actions)"
               title="View documents"
             >
@@ -360,7 +358,7 @@ const canPerformAction = (log, action) => {
             <x-button
               v-if="canPerformAction(actions, 'done')"
               color="emerald"
-              size="xs"
+              size="sm"
               @click="handleMarkDone(actions)"
               title="Done"
             >
@@ -370,7 +368,7 @@ const canPerformAction = (log, action) => {
             <x-button
               v-if="canPerformAction(actions, 'edit')"
               color="primary"
-              size="xs"
+              size="sm"
               @click="handleEditBor(actions)"
               title="Edit BOR request"
             >
@@ -380,7 +378,7 @@ const canPerformAction = (log, action) => {
             <x-button
               v-if="canPerformAction(actions, 'copy_link')"
               color="primary"
-              size="xs"
+              size="sm"
               @click="handleCopyLink(actions)"
               title="Copy link"
             >

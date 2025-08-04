@@ -75,9 +75,11 @@ class BorService
 
             // Get the quote object to access documents
             $quoteName = QuoteTypes::getName($personalQuote->quote_type_id);
-            $quoteObject = $this->getQuoteObject($quoteName->value, $personalQuote->quote_id);
-            
+            $isPersonalQuote = checkPersonalQuotes($quoteName->value);
+            $quoteObject = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $personalQuote->id) : $this->getQuoteObject($quoteName->value, $personalQuote->quote_id);
+
             // Filter uploaded documents (BOR letters)
+            $quoteObject->load('documents');
             $uploadedDocuments = $quoteObject->documents->filter(function ($doc) use ($borRefId) {
                 $code = $doc->document_type_code;
                 $allowedCodes = [
@@ -108,7 +110,6 @@ class BorService
             $borLog->has_uploaded_documents = $uploadedDocuments->isNotEmpty();
             $borLog->has_signed_pdf = $signedPdf->isNotEmpty();
             $borLog->total_documents = $uploadedDocuments->count() + $signedPdf->count();
-
         } catch (\Exception $e) {
             // Log error but don't fail the entire request
             \Illuminate\Support\Facades\Log::warning('Failed to load documents for BOR log', [
