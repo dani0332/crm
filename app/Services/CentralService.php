@@ -1194,7 +1194,7 @@ class CentralService extends BaseService
 
                 // Create status log and trigger journey if status actually changed
                 if ($previousQuoteStatus != $quote->quote_status_id) {
-                    QuoteStatusRepository::fetchCreate($quoteTypeId, $quote, $previousQuoteStatus);
+                    QuoteStatusRepository::create($quoteTypeId, $quote, $previousQuoteStatus);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
                 } else {
@@ -1234,25 +1234,23 @@ class CentralService extends BaseService
     private function canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId): bool
     {
         $quoteCode = $quote->code;
-        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-
-        // Check if quote has been transaction approved in the past
-        $hasTransactionApprovedHistory = QuoteStatusRepository::hasTransactionApprovedStatus($quoteTypeId, $quote->id);
         
-        // Check if quote is currently in transaction approved status
+        // First, check if all required documents are uploaded (most expensive check first)
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
+        $hasAllRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
+        
+        LoggerService::info("Quote Code: {$quoteCode} - Document check: Required docs uploaded=" . ($hasAllRequiredDocuments ? 'YES' : 'NO'));
+        
+        // If documents are not uploaded, no need to check other conditions
+        if (!$hasAllRequiredDocuments) {
+            return false;
+        }
+        
+        // Only check transaction approved status if documents are uploaded
+        $hasTransactionApprovedHistory = QuoteStatusRepository::hasTransactionApprovedStatus($quoteTypeId, $quote->id);
         $isCurrentlyTransactionApproved = $quote->quote_status_id === QuoteStatusEnum::TransactionApproved;
         
-        // Check if all required documents are uploaded
-        $hasAllRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
-
-        LoggerService::info("Quote Code: {$quoteCode} - Policy Issued validation: History={$hasTransactionApprovedHistory}, Current={$isCurrentlyTransactionApproved}, Documents={$hasAllRequiredDocuments}");
-
-        // Only allow update if quote is (or was) Transaction Approved and all required documents are uploaded
-        $canUpdate = ($hasTransactionApprovedHistory || $isCurrentlyTransactionApproved) && $hasAllRequiredDocuments;
-        
-        LoggerService::info("Quote Code: {$quoteCode} - Can update to Policy Issued: " . ($canUpdate ? 'YES' : 'NO'));
-        
-        return $canUpdate;
+        return ($hasTransactionApprovedHistory || $isCurrentlyTransactionApproved);
     }
 
     /**
