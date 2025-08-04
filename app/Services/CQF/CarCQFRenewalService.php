@@ -32,12 +32,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use App\Facades\Ken;
+use App\Repositories\EmbeddedProductRepository;
+use App\Enums\EmbeddedProductEnum;
+use App\Models\EmbeddedTransaction;
 
 class CarCQFRenewalService
 {
     private $totalQuotesProcessed = 0;
     private $errorQuotes = 0;
     private $failedQuotes = [];
+    private $epCodes = [];
     public function processCarCQFRenewalLeads()
     {
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_DAYS_THRESHOLD);
@@ -83,6 +87,17 @@ class CarCQFRenewalService
             else {
                 $renewalsUploadLeads->is_deleted = 1;
                 $renewalsUploadLeads->save();
+            }
+
+            if(count($this->epCodes) > 0){
+            // Chunk-wise update of epCodes for performance and memory efficiency
+            collect($this->epCodes)
+                ->chunk(500)
+                ->each(function ($epCodeChunk) {
+                    EmbeddedTransaction::whereIn('code', $epCodeChunk->toArray())
+                        ->update(['is_selected' => 1]);
+                    LoggerService::info(self::class . " - Updated is_selected for EP codes chunk. Count: " . count($epCodeChunk));
+                });
             }
             if($this->errorQuotes > 0){
                 SendFailedCarRenewalsJob::dispatch($this->failedQuotes);
@@ -291,7 +306,9 @@ class CarCQFRenewalService
         if ($newQuote) {
             $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, true);
             $this->getCustomerEntity($newQuote, $quote);
-            $this->saveEmbeddedTransaction($newQuote);
+             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote,QuoteTypeId::Car);
+            $this->epCodes[] =  EmbeddedProductEnum::MDX.'-'.$newQuote->code;
+
             LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully', self::class), [
                 'previous_quote_uuid' => $quote->uuid,
                 'new_quote_uuid' => $newQuote->uuid,
@@ -425,14 +442,6 @@ class CarCQFRenewalService
     }
 
 
-    public function saveEmbeddedTransaction($quote)
-    {
-        $response = Ken::request('/save-embedded-transaction', 'post',
-        ['quoteUID' => $quote->uuid, 'quoteTypeId' => QuoteTypeId::Car]);
-        if($response->status == 200){
-            return $response->data;
-        }
-        return null;
-    }
+   
 
 }

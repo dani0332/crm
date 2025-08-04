@@ -54,6 +54,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use App\Facades\Ken;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -1279,4 +1280,14 @@ class EmbeddedProductRepository extends BaseRepository
             });
         }
     }
+
+    public function saveEmbeddedTransaction($quote,$quoteTypeId)
+    {
+        $response = Ken::request('/save-embedded-transaction', 'post',
+        ['quoteUID' => $quote->uuid, 'quoteTypeId' =>$quoteTypeId]);
+        if($response->status == 200){
+            return $response->data;
+        }
+        return null;
+    } 
 }
