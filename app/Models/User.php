@@ -453,4 +453,9 @@ class User extends Authenticatable implements AuditableContract
     {
         return $this->hasOne(LeadAllocation::class, 'user_id', 'id')->where('quote_type_id', $quoteTypeId)->first();
     }
+
+    public static function getAiAdvisor()
+    {
+        return self::where('email', 'ai@insurancemarket.ae')->first();
+    }
 }
