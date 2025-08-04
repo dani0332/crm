@@ -262,7 +262,7 @@ watch(
           <x-button size="sm" color="primary">Add New Claim</x-button>
         </Link>
         <x-button
-          v-if="can(permissionsEnum.CLAIM_LIST)"
+          v-if="can(permissionsEnum.CLAIMS_EXPORT_DATA)"
           size="sm"
           color="success"
           @click="exportClaims"
