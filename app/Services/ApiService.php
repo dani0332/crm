@@ -265,6 +265,7 @@ class ApiService
                 'tierId' => $responsePayload['tierId'] ?? 0,
                 'tierName' => $responsePayload['tierName'] ?? null,
                 'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
+                'isAIAdvisor' => $responsePayload['isAIAdvisor'] ?? false,
                 'status' => $status,
             ],
             'message' => $message,
