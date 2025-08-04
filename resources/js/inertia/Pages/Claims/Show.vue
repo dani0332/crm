@@ -21,32 +21,28 @@ const sectionExpanded = ref(true);
 
 // Assignment form for managers
 const assignmentForm = useForm({
-  manager_id:
-    props.claim.assigned_claims_manager_id ||
-    props.claim.claims_manager_id ||
-    '',
+  manager_id: props.claim.manager_id || '',
   manager_type: 'primary',
 });
 
 // Status update form
 const statusForm = useForm({
-  status: props.claim.claim_status || '',
+  claim_status_id: props.claim.claim_status_id || '',
 });
 
 // Sub-status update form
 const subStatusForm = useForm({
-  sub_status_id: props.claim.claim_sub_status_id || '',
+  claim_sub_status_id: props.claim.claim_sub_status_id || '',
 });
 
-// Complaint status update form
-const complaintStatusForm = useForm({
-  complaint_status: props.claim.complaint_status || '',
+// Source update form
+const sourceForm = useForm({
+  source: props.claim.source || '',
 });
 
-// Follow-up form
-const followUpForm = useForm({
-  next_follow_up_date: props.claim.next_follow_up_date || '',
-  notes: '',
+// WhatsApp consent form
+const whatsappForm = useForm({
+  whatsapp_consent: props.claim.whatsapp_consent || false,
 });
 
 const managersOptions = computed(() => {
@@ -467,8 +463,8 @@ function deleteClaim() {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">REF ID</dt>
-                <dd class="font-mono">{{ claim.ref_id }}</dd>
+                <dt class="font-medium">CODE</dt>
+                <dd class="font-mono">{{ claim.code }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FIRST NAME</dt>
@@ -480,15 +476,15 @@ function deleteClaim() {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">EMAIL</dt>
-                <dd>{{ claim.email_address || claim.email }}</dd>
+                <dd>{{ claim.email }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PHONE NUMBER</dt>
-                <dd>{{ claim.phone_number }}</dd>
+                <dt class="font-medium">MOBILE NUMBER</dt>
+                <dd>{{ claim.mobile_no }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">LINE OF BUSINESS</dt>
-                <dd>{{ claim.lineOfBusiness?.text }}</dd>
+                <dt class="font-medium">QUOTE TYPE</dt>
+                <dd>{{ claim.quoteType?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CLAIM TYPE</dt>
@@ -499,9 +495,32 @@ function deleteClaim() {
                 <dd>{{ claim.policy_number || '-' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">INSURER CLAIM NUMBER</dt>
-                <dd>{{ claim.insurer_claim_number || '-' }}</dd>
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ claim.source || '-' }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INCIDENT</dt>
+                <dd>{{ claim.incident || '-' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURANCE PROVIDER</dt>
+                <dd>{{ claim.insuranceProvider?.name || '-' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">WHATSAPP CONSENT</dt>
+                <dd>{{ claim.whatsapp_consent ? 'Yes' : 'No' }}</dd>
+              </div>
+              <!-- Vehicle Details if available -->
+              <template v-if="claim.claimRequestDetails?.length > 0">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">VEHICLE MAKE</dt>
+                  <dd>{{ claim.claimRequestDetails[0].car_make || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">VEHICLE MODEL</dt>
+                  <dd>{{ claim.claimRequestDetails[0].car_model || '-' }}</dd>
+                </div>
+              </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">STATUS</dt>
                 <dd>

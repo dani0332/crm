@@ -13,18 +13,27 @@ const claimForm = useForm({
   // IMCRM Required Fields
   first_name: props.claim?.first_name || '',
   last_name: props.claim?.last_name || '',
-  email: props.claim?.email_address || '',
-  phone_number: props.claim?.phone_number || '',
-  line_of_business_id: props.claim?.line_of_business_id || '',
+  email: props.claim?.email || props.claim?.email_address || '',
+  mobile_no: props.claim?.mobile_no || props.claim?.phone_number || '',
+  quote_type_id: props.claim?.quote_type_id || props.claim?.line_of_business_id || '',
 
   // Additional Fields
-  insurer_claim_number: props.claim?.insurer_claim_number || '',
   claim_type_id: props.claim?.claim_type_id || '',
-  incident_date: props.claim?.incident_date || '',
+  incident: props.claim?.incident || props.claim?.incident_date || '',
   policy_number: props.claim?.policy_number || '',
+  claim_status_id: props.claim?.claim_status_id || '',
+  claim_sub_status_id: props.claim?.claim_sub_status_id || '',
+  claim_request_type_id: props.claim?.claim_request_type_id || '',
+  insurance_provider_id: props.claim?.insurance_provider_id || '',
+  whatsapp_consent: props.claim?.whatsapp_consent || false,
+
+  // Vehicle Details (for ClaimRequestDetail)
+  car_make: props.claim?.claimRequestDetails?.[0]?.car_make || '',
+  car_model: props.claim?.claimRequestDetails?.[0]?.car_model || '',
+  service_type_id: props.claim?.claimRequestDetails?.[0]?.service_type_id || '',
 
   // System Fields
-  lead_source: props.claim?.lead_source || 'IMCRM',
+  source: props.claim?.source || 'IMCRM',
 });
 
 const lineOfBusinessOptions = computed(() => {

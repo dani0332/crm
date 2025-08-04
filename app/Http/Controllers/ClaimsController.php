@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Models\Claim;
+use App\Models\ClaimRequest;
 use App\Services\ClaimsService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -114,25 +115,25 @@ class ClaimsController extends Controller
     }
 
     /**
-     * Display the specified claim
+     * Display the specified claim request
      */
-    public function show(Claim $claim)
+    public function show(ClaimRequest $claimRequest)
     {
         try {
-            // Load claim with all relationships
-            $claim = $this->claimsService->getClaimById($claim->id);
+            // Load claim request with all relationships
+            $claimRequest = $this->claimsService->getClaimById($claimRequest->id);
 
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
             return Inertia::render('Claims/Show', [
-                'claim' => $claim,
+                'claim' => $claimRequest,
                 'dropdowns' => $dropdownData,
             ]);
         } catch (Exception $e) {
-            Log::error('Error loading claim details', [
+            Log::error('Error loading claim request details', [
                 'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
+                'claim_request_id' => $claimRequest->id,
                 'user_id' => Auth::id(),
             ]);
 
@@ -142,48 +143,48 @@ class ClaimsController extends Controller
     }
 
     /**
-     * Show the form for editing the specified claim
+     * Show the form for editing the specified claim request
      */
-    public function edit(Claim $claim)
+    public function edit(ClaimRequest $claimRequest)
     {
 
         try {
-            // Load claim with relationships
-            $claim = $this->claimsService->getClaimById($claim->id);
+            // Load claim request with relationships
+            $claimRequest = $this->claimsService->getClaimById($claimRequest->id);
 
             // Get dropdown data for the form
             $dropdownData = $this->claimsService->getDropdownData();
 
             return Inertia::render('Claims/Edit', [
-                'claim' => $claim,
+                'claim' => $claimRequest,
                 'dropdowns' => $dropdownData,
             ]);
         } catch (Exception $e) {
-            Log::error('Error loading claim edit form', [
+            Log::error('Error loading claim request edit form', [
                 'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
+                'claim_request_id' => $claimRequest->id,
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.show', $claim->id)
+            return redirect()->route('claims.show', $claimRequest->id)
                 ->with('error', 'Failed to load edit form.');
         }
     }
 
     /**
-     * Update the specified claim
+     * Update the specified claim request
      */
-    public function update(ClaimUpdateRequest $request, Claim $claim): RedirectResponse
+    public function update(ClaimUpdateRequest $request, ClaimRequest $claimRequest): RedirectResponse
     {
         try {
-            $updatedClaim = $this->claimsService->updateClaim($claim, $request->validated());
+            $updatedClaimRequest = $this->claimsService->updateClaim($claimRequest, $request->validated());
 
-            return redirect()->route('claims.show', $updatedClaim->id)
-                ->with('success', "Claim {$updatedClaim->ref_id} has been updated successfully.");
+            return redirect()->route('claims.show', $updatedClaimRequest->id)
+                ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
         } catch (Exception $e) {
-            Log::error('Error updating claim', [
+            Log::error('Error updating claim request', [
                 'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
+                'claim_request_id' => $claimRequest->id,
                 'data' => $request->validated(),
                 'user_id' => Auth::id(),
             ]);
@@ -195,12 +196,12 @@ class ClaimsController extends Controller
     }
 
     /**
-     * Assign claim to a manager (AJAX endpoint)
+     * Assign claim request to a manager (AJAX endpoint)
      */
-    public function assign(Request $request, Claim $claim): JsonResponse
+    public function assign(Request $request, ClaimRequest $claimRequest): JsonResponse
     {
         // Check permission
-        $this->authorize('update', $claim);
+        $this->authorize('update', $claimRequest);
 
         $request->validate([
             'manager_id' => 'required|integer|exists:users,id',
@@ -208,21 +209,21 @@ class ClaimsController extends Controller
         ]);
 
         try {
-            $updatedClaim = $this->claimsService->assignClaim(
-                $claim,
+            $updatedClaimRequest = $this->claimsService->assignClaim(
+                $claimRequest,
                 $request->manager_id,
                 $request->manager_type
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Claim has been assigned successfully.',
-                'claim' => $updatedClaim,
+                'message' => 'Claim request has been assigned successfully.',
+                'claim' => $updatedClaimRequest,
             ]);
         } catch (Exception $e) {
-            Log::error('Error assigning claim', [
+            Log::error('Error assigning claim request', [
                 'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
+                'claim_request_id' => $claimRequest->id,
                 'manager_id' => $request->manager_id,
                 'user_id' => Auth::id(),
             ]);

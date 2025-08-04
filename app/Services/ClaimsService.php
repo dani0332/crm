@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\ClaimsEnum;
 use App\Enums\LookupsEnum;
 use App\Models\Claim;
+use App\Models\ClaimRequest;
+use App\Models\ClaimRequestDetail;
 use App\Models\Lookup;
 use App\Models\QuoteType;
 use App\Models\User;
@@ -26,33 +28,40 @@ class ClaimsService extends BaseService
     {
         parent::__construct();
 
-        $this->query = Claim::select([
+        $this->query = ClaimRequest::select([
             'id',
-            'ref_id',
+            'uuid',
+            'code',
+            'incident',
             'first_name',
             'last_name',
-            'email_address',
-            'phone_number',
+            'email',
+            'mobile_no',
+            'customer_id',
+            'source',
+            'manager_id',
+            'manager_assigned_date',
+            'quote_uuid',
+            'quote_type_id',
+            'personal_quote_id',
+            'insurance_provider_id',
             'policy_number',
-            'insurer_claim_number',
-            'plate_number',
-            'vehicle_make',
-            'vehicle_model',
-            'vehicle_year',
-            'claim_status',
-            'claims_status_id',
-            'created_at',
-            'line_of_business_id',
+            'claim_status_id',
+            'claim_sub_status_id',
             'claim_type_id',
-            'assigned_claims_manager_id',
-            'assigned_to_id',
+            'claim_request_type_id',
+            'whatsapp_consent',
+            'created_at',
         ])
             ->with([
-                'lineOfBusiness:id,text',
+                'quoteType:id,text',
                 'claimType:id,text',
-                'assignedClaimsManager:id,name',
-                'assignedTo:id,name',
-                'claimsStatus:id,text',
+                'manager:id,name',
+                'claimStatus:id,text',
+                'claimSubStatus:id,text',
+                'insuranceProvider:id,name',
+                'claimRequestType:id,text',
+                'claimRequestDetails',
             ]);
     }
 
@@ -69,36 +78,55 @@ class ClaimsService extends BaseService
     }
 
     /**
-     * Get claims data with flexible filtering options
+     * Get claim request data with flexible filtering options
      */
-    public function getClaimById($claimId)
+    public function getClaimById($claimRequestId)
     {
-        return $this->query->find($claimId);
+        return $this->query->find($claimRequestId);
     }
 
     /**
-     * Create a new claim
+     * Create a new claim request
      */
-    public function createClaim(array $data): Claim
+    public function createClaim(array $data): ClaimRequest
     {
         try {
             DB::beginTransaction();
 
-            $claim = Claim::create($data);
+            // Separate claim request data from detail data
+            $claimRequestData = collect($data)->only([
+                'uuid', 'code', 'incident', 'first_name', 'last_name', 'email', 'mobile_no',
+                'customer_id', 'source', 'manager_id', 'manager_assigned_date', 'quote_uuid',
+                'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
+                'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
+                'whatsapp_consent'
+            ])->toArray();
+
+            $claimRequest = ClaimRequest::create($claimRequestData);
+
+            // Create claim request detail if vehicle info or service type is provided
+            $detailData = collect($data)->only([
+                'car_make', 'car_model', 'service_type_id', 'request_referrence_number', 'user_ip'
+            ])->filter()->toArray();
+
+            if (!empty($detailData)) {
+                $detailData['claim_request_id'] = $claimRequest->id;
+                ClaimRequestDetail::create($detailData);
+            }
 
             // Log the creation
-            LoggerService::info('Claims created successfully', [
-                'claim_id' => $claim->id,
-                'ref_id' => $claim->ref_id,
+            LoggerService::info('Claim request created successfully', [
+                'claim_request_id' => $claimRequest->id,
+                'code' => $claimRequest->code,
                 'created_by' => Auth::id(),
             ]);
 
             DB::commit();
 
-            return $claim;
+            return $claimRequest->load(['claimRequestDetails', 'manager', 'claimStatus']);
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error creating claim', [
+            Log::error('Error creating claim request', [
                 'error' => $e->getMessage(),
                 'data' => $data,
             ]);
@@ -107,34 +135,99 @@ class ClaimsService extends BaseService
     }
 
     /**
-     * Update an existing claim
+     * Update an existing claim request
      */
-    public function updateClaim(Claim $claim, array $data): Claim
+    public function updateClaim(ClaimRequest $claimRequest, array $data): ClaimRequest
     {
         try {
             DB::beginTransaction();
 
-            $claim->update($data);
+            // Separate claim request data from detail data
+            $claimRequestData = collect($data)->only([
+                'uuid', 'code', 'incident', 'first_name', 'last_name', 'email', 'mobile_no',
+                'customer_id', 'source', 'manager_id', 'manager_assigned_date', 'quote_uuid',
+                'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
+                'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
+                'whatsapp_consent'
+            ])->filter()->toArray();
+
+            $claimRequest->update($claimRequestData);
+
+            // Handle claim request detail updates
+            $detailData = collect($data)->only([
+                'car_make', 'car_model', 'service_type_id', 'request_referrence_number', 'user_ip'
+            ])->filter()->toArray();
+
+            if (!empty($detailData)) {
+                $detail = $claimRequest->claimRequestDetails()->first();
+                if ($detail) {
+                    $detail->update($detailData);
+                } else {
+                    $detailData['claim_request_id'] = $claimRequest->id;
+                    ClaimRequestDetail::create($detailData);
+                }
+            }
 
             // Log the update
-            LoggerService::info('Claims updated successfully', [
-                'claim_id' => $claim->id,
-                'ref_id' => $claim->ref_id,
+            LoggerService::info('Claim request updated successfully', [
+                'claim_request_id' => $claimRequest->id,
+                'code' => $claimRequest->code,
                 'updated_by' => Auth::id(),
             ]);
 
             DB::commit();
 
-            return $claim->fresh();
+            return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error updating claim', [
+            Log::error('Error updating claim request', [
                 'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
+                'claim_request_id' => $claimRequest->id,
                 'data' => $data,
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Assign claim request to a manager
+     */
+    public function assignClaim(ClaimRequest $claimRequest, int $managerId, string $managerType): ClaimRequest
+    {
+        try {
+            DB::beginTransaction();
+
+            // For the new structure, we only have manager_id (unified approach)
+            $claimRequest->assignManager($managerId);
+
+            LoggerService::info('Claim request assigned successfully', [
+                'claim_request_id' => $claimRequest->id,
+                'manager_id' => $managerId,
+                'assigned_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+
+            return $claimRequest->fresh(['manager', 'claimStatus']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error assigning claim request', [
+                'error' => $e->getMessage(),
+                'claim_request_id' => $claimRequest->id,
+                'manager_id' => $managerId,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get claims for follow-up
+     */
+    public function getFollowUpClaims()
+    {
+        // For the new structure, we don't have follow-up dates yet
+        // This would need to be implemented based on business requirements
+        return ClaimRequest::where('created_at', '<=', now()->subDays(7));
     }
 
     /**
@@ -231,44 +324,7 @@ class ClaimsService extends BaseService
         ];
     }
 
-    /**
-     * Assign claim to a manager
-     */
-    public function assignClaim(Claim $claim, int $managerId, string $managerType = 'claims_manager'): Claim
-    {
-        try {
-            DB::beginTransaction();
 
-            $field = $managerType === 'assigned_claims_manager' ? 'assigned_claims_manager_id' : 'claims_manager_id';
-            $dateField = $managerType === 'assigned_claims_manager' ? 'assigned_claims_manager_date' : 'claims_manager_assigned_date';
-
-            $claim->update([
-                $field => $managerId,
-                $dateField => now(),
-            ]);
-
-            // Log the assignment
-            LoggerService::info('Claims assigned successfully', [
-                'claim_id' => $claim->id,
-                'ref_id' => $claim->ref_id,
-                'manager_id' => $managerId,
-                'manager_type' => $managerType,
-                'assigned_by' => Auth::id(),
-            ]);
-
-            DB::commit();
-
-            return $claim->fresh();
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error assigning claim', [
-                'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'manager_id' => $managerId,
-            ]);
-            throw $e;
-        }
-    }
 
     /**
      * Get claims statistics
