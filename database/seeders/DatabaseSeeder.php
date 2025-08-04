@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Database\Seeders\AiAdvisorSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -29,6 +30,7 @@ class DatabaseSeeder extends Seeder
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
+            AiAdvisorSeeder::class,
         ]);
     }
 }
