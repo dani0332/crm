@@ -109,6 +109,7 @@ class PaymentService extends BaseService
             $request = new Request;
             $request->merge([
                 'modelType' => $data['quote_type'],
+                'quoteType' => $data['quote_type'],
                 'quote_id' => $data['quote_request_id'],
                 'customer_id' => $quoteModel->customer_id,
                 'advisor_id' => $quoteModel->advisor_id,
