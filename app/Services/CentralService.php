@@ -1560,7 +1560,7 @@ class CentralService extends BaseService
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
-            return ['status' => false, 'message' => 'Auto capture payment process failed'];
+            return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
         if ($premiumCheckEnabled) {
@@ -1586,7 +1586,9 @@ class CentralService extends BaseService
                 //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
                 // ];
                 
-                return ['status' => false, 'message' => $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal'];
+                $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
+
+                return ['status' => false, 'message' => $message, 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to '.$message];
             }
 
             LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
@@ -1612,6 +1614,9 @@ class CentralService extends BaseService
 
         $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
         LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
+
+        $response['autoCaptureStatus'] = GenericRequestEnum::SUCCESS;
+        $response['autoCaptureMessage'] = 'Auto capture payment process started';
 
         return $response;
     }

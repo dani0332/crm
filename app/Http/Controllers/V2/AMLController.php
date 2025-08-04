@@ -525,6 +525,11 @@ class AMLController extends Controller
                         'message' => $getInsurerScreeningResponse['message'],
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                     ];
+                    
+                    if(isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
+                        $insurerAMLScreeningResponse['autoCaptureStatus'] = $getInsurerScreeningResponse['autoCaptureStatus'];
+                        $insurerAMLScreeningResponse['autoCaptureMessage'] = $getInsurerScreeningResponse['autoCaptureMessage'];
+                    }
                 }
                 session()->forget('insurerAMLScreeningResponse');
             }
@@ -900,6 +905,8 @@ class AMLController extends Controller
                     'status' => $insurerAMLScreeningResponse['status'],
                     'message' => $insurerAMLScreeningResponse['message'],
                     'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched'] ?? false,
+                    'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
+                    'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
                 ];
             }
         }

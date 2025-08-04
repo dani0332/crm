@@ -957,10 +957,18 @@ class AMLService
         LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
     
         if($quoteTypeId == QuoteTypes::CAR->id() && $insurerAMLStatus['insurer_aml_status'] == AMLStatusCode::InsurerAMLScreeningCleared) {
+            $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
+            $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
+
             LoggerService::info(__FUNCTION__.' - Auto Capture Payment Process Triggered - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
             if (app(PolicyIssuanceService::class)->checkAllowedAutomations(QuoteTypes::getName($quoteTypeId)->value, $quoteDetails)) {
-                app(CentralService::class)->autoCapturePaymentProcess($quoteTypeId, $quoteDetails);
+                $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($quoteTypeId, $quoteDetails);
+
+                $insurerAMLScreeningResponse['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
+                $insurerAMLScreeningResponse['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
             }
+
+            session()->put('insurerAMLScreeningResponse', [$insurerAMLScreeningResponse]);
         }
     }
 

@@ -54,4 +54,5 @@ final class GenericRequestEnum extends Enum
     const DEFAULT_NATIONALITY = 56;
     const EBAO_QUOTE_STATUS = 'Quote';
     const EBAO_UW_APPROVAL_STATUS_NO = 'N';
+    const SUCCESS = 'success';
 }

@@ -312,6 +312,28 @@ const submitInsuredKycForm = isValid => {
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
+        if(response.data.insurer_screening) {
+          if(response.data.insurer_screening.status == 'AML_SCREENING_FAILED') {
+            notification.error({
+              title: response.data.insurer_screening.message || 'GIG server connection issue. Please check API logs for details of the error',
+              position: 'top',
+            });
+          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED') {
+            if(response.data.insurer_screening.autoCaptureStatus == 'success') {
+              notification.success({
+                title: response.data.insurer_screening.autoCaptureMessage,
+                timeout: 30000,
+              });
+            }
+            if(response.data.insurer_screening.autoCaptureStatus == 'failed') {
+              notification.error({
+                title: response.data.insurer_screening.autoCaptureMessage ?? 'Auto capture payment process failed',
+                position: 'top',
+                timeout: 30000,
+              });
+            }
+          }
+        } 
         if (response.data.success) {
           notification.success({
             title: 'KYC Document uploaded successfully',
@@ -329,12 +351,7 @@ const submitInsuredKycForm = isValid => {
           });
           kycFormDetails.processing = false;
         }
-        if (response.data.insurer_screening && response.data.insurer_screening.status == 'AML_SCREENING_FAILED') { // TODO:: Need to update with ENUM
-          notification.error({
-            title: response.data.insurer_screening.message || 'GIG server connection issue. Please check API logs for details of the error',
-            position: 'top',
-          });
-        }
+        
       })
       .catch(errors => {
         Object.keys(errors.response.data.errors).forEach(function (key) {
