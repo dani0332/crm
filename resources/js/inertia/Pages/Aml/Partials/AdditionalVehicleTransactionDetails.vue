@@ -109,6 +109,10 @@ const additionalVehicleTransactionDetailsForm = useForm({
   previous_policy_provider: '', // For GIG renewal detection
 });
 
+const hasNotEditPermission = computed(() => {
+  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS);
+});
+
 // Computed properties for insurance provider checks
 const isGIG = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
@@ -470,7 +474,7 @@ onMounted(() => {
               :rules="[isRequired]"
               :options="rtaTransactionTypeOptions"
               placeholder="Select RTA Transaction Type"
-              :disabled="isFieldDisabled('rta_transaction_type')"
+              :disabled="isFieldDisabled('rta_transaction_type') || hasNotEditPermission"
             />
           </x-field>
 
@@ -484,7 +488,7 @@ onMounted(() => {
               :rules="getFieldRules('plate_code')"
               placeholder="Plate Code"
               type="text"
-              :disabled="isFieldDisabled('plate_code')"
+              :disabled="isFieldDisabled('plate_code') || hasNotEditPermission"
               :readonly="fieldConfig.plate_code?.readonly"
             />
           </x-field>
@@ -499,7 +503,7 @@ onMounted(() => {
               :rules="getFieldRules('plate_number')"
               placeholder="Plate Number"
               type="text"
-              :disabled="isFieldDisabled('plate_number')"
+              :disabled="isFieldDisabled('plate_number') || hasNotEditPermission"
               :readonly="fieldConfig.plate_number?.readonly"
             />
           </x-field>
@@ -511,7 +515,7 @@ onMounted(() => {
               :rules="[isRequired]"
               placeholder="Traffic Code Number"
               type="text"
-              :disabled="isFieldDisabled('traffic_code_number')"
+              :disabled="isFieldDisabled('traffic_code_number') || hasNotEditPermission"
             />
           </x-field>
 
@@ -525,7 +529,7 @@ onMounted(() => {
               placeholder="Chassis Number"
               type="text"
               :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
-              :disabled="isFieldDisabled('chassis_number')"
+              :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission"
             />
           </x-field>
 
@@ -539,7 +543,7 @@ onMounted(() => {
               :rules="getFieldRules('engine_number')"
               placeholder="Engine Number"
               type="text"
-              :disabled="isFieldDisabled('engine_number')"
+              :disabled="isFieldDisabled('engine_number') || hasNotEditPermission"
             />
           </x-field>
 
@@ -553,7 +557,7 @@ onMounted(() => {
               :rules="getFieldRules('rta_plate_category')"
               :options="rtaPlateCategoryOptions"
               placeholder="Select RTA Plate Category"
-              :disabled="isFieldDisabled('rta_plate_category')"
+              :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission"
             />
           </x-field>
 
@@ -568,7 +572,7 @@ onMounted(() => {
               :options="vehicleColorOptions"
               :rules="[isRequired]"
               placeholder="Select Vehicle Color"
-              :disabled="isFieldDisabled('vehicle_color')"
+              :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission"
               class="w-full"
             />
           </x-field>
@@ -584,7 +588,7 @@ onMounted(() => {
               :options="plateColorOptions"
               :rules="getFieldRules('plate_color')"
               placeholder="Select Plate Color"
-              :disabled="isFieldDisabled('plate_color')"
+              :disabled="isFieldDisabled('plate_color') || hasNotEditPermission"
               class="w-full"
             />
           </x-field>
@@ -599,7 +603,7 @@ onMounted(() => {
                 { value: '0', label: 'No' }
               ]"
               placeholder="Select Bank Loan"
-              :disabled="isFieldDisabled('bank_loan')"
+              :disabled="isFieldDisabled('bank_loan') || hasNotEditPermission"
             />
           </x-field>
 
@@ -613,7 +617,7 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
-              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || isFieldDisabled('bank_name')"
+              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || isFieldDisabled('bank_name') || hasNotEditPermission"
               :rules="getFieldRules('bank_name')"
               class="w-full"
             />
@@ -628,7 +632,7 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
               :rules="getFieldRules('first_registration_date')"
               placeholder="First Registration Date"
-              :disabled="isFieldDisabled('first_registration_date')"
+              :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission"
             />
           </x-field>
 
@@ -641,7 +645,7 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
               :rules="getFieldRules('policy_effective_date')"
               placeholder="Policy Effective Date"
-              :disabled="isFieldDisabled('policy_effective_date')"
+              :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission"
               :readonly="fieldConfig.policy_effective_date?.readonly"
             />
           </x-field>
@@ -655,7 +659,7 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
               :rules="getFieldRules('policy_expiry_date')"
               placeholder="Policy Expiry Date"
-              :disabled="isFieldDisabled('policy_expiry_date')"
+              :disabled="isFieldDisabled('policy_expiry_date') || hasNotEditPermission"
               :readonly="fieldConfig.policy_expiry_date?.readonly"
             />
           </x-field>
@@ -669,7 +673,7 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
               :rules="getFieldRules('certificate_start_date')"
               placeholder="Certificate Start Date"
-              :disabled="isFieldDisabled('certificate_start_date')"
+              :disabled="isFieldDisabled('certificate_start_date') || hasNotEditPermission"
               :readonly="fieldConfig.certificate_start_date?.readonly"
             />
           </x-field>
@@ -683,7 +687,7 @@ onMounted(() => {
               v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
               :rules="getFieldRules('certificate_end_date')"
               placeholder="Certificate End Date"
-              :disabled="isFieldDisabled('certificate_end_date')"
+              :disabled="isFieldDisabled('certificate_end_date') || hasNotEditPermission"
               :readonly="fieldConfig.certificate_end_date?.readonly"
             />
           </x-field>
@@ -699,7 +703,7 @@ onMounted(() => {
               :rules="getFieldRules('annual_mileage_estimate')"
               placeholder="Select Annual Mileage Estimate"
               type="text"
-              :disabled="isFieldDisabled('annual_mileage_estimate')"
+              :disabled="isFieldDisabled('annual_mileage_estimate') || hasNotEditPermission"
             />
             <x-select
               v-else
@@ -707,7 +711,7 @@ onMounted(() => {
               :rules="getFieldRules('annual_mileage_estimate')"
               :options="annualMileageEstimateOptions"
               placeholder="Select Annual Mileage Estimate"
-              :disabled="isFieldDisabled('annual_mileage_estimate')"
+              :disabled="isFieldDisabled('annual_mileage_estimate') || hasNotEditPermission"
             />
           </x-field>
         </dl>

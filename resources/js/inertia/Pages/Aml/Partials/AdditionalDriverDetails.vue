@@ -62,11 +62,15 @@ const additionalDriverDetailsForm = useForm({
   home_country_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.home_country_driving_experience?.toString() ?? '',
 });
 
+const hasNotEditPermission = computed(() => {
+  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS);
+});
+
 const submitAdditionalDriverDetailsForm = async (isValid) => {
   if (isValid) {
     // Clear any previous errors
     additionalDriverDetailsForm.clearErrors();
-    
+
     additionalDriverDetailsForm.processing = true;
     try {
       const response = await axios.post('/kyc/update-additional-vehicle-driver-details', additionalDriverDetailsForm);
@@ -192,12 +196,13 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
               { value: '0', label: 'No' }
             ]"
             placeholder="Select Is Insured and Driver Same"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
         <!-- Driver Name - disabled when insured and driver are the same -->
-        <x-field 
-          label="Driver First Name" 
+        <x-field
+          label="Driver First Name"
           :required="isDriverNameFieldsRequired"
         >
           <x-input
@@ -205,12 +210,12 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             :rules="isDriverNameFieldsRequired ? [isRequired] : []"
             placeholder="Driver First Name"
             type="text"
-            :disabled="isDriverNameFieldsDisabled"
+            :disabled="isDriverNameFieldsDisabled || hasNotEditPermission"
           />
         </x-field>
 
-        <x-field 
-          label="Driver Last Name" 
+        <x-field
+          label="Driver Last Name"
           :required="isDriverNameFieldsRequired"
         >
           <x-input
@@ -218,7 +223,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             :rules="isDriverNameFieldsRequired ? [isRequired] : []"
             placeholder="Driver Last Name"
             type="text"
-            :disabled="isDriverNameFieldsDisabled"
+            :disabled="isDriverNameFieldsDisabled || hasNotEditPermission"
           />
         </x-field>
 
@@ -227,6 +232,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             v-model="additionalDriverDetailsForm.driver_dob"
             :rules="isSUKOON ? [isRequired] : []"
             placeholder="Driver DOB"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -236,6 +242,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             :rules="(! isSUKOON) ? [isRequired] : []"
             :options="driverGenderOptions"
             placeholder="Select Driver Gender"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -245,6 +252,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             :rules="[isRequired]"
             placeholder="Driver License Number"
             type="text"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -254,6 +262,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             :rules="isSUKOON ? [isRequired] : []"
             :options="licenseIssuePlaceOptions"
             placeholder="Select License Issue Place"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -262,6 +271,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             v-model="additionalDriverDetailsForm.license_issue_date"
             :rules="isSUKOON ? [isRequired] : []"
             placeholder="License Issue Date"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -270,6 +280,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             v-model="additionalDriverDetailsForm.license_expiry_date"
             placeholder="License Expiry Date"
             :rules="(! isLIVA) ? [isRequired] : []"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -280,6 +291,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
             placeholder="Select UAE License Years"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -291,6 +303,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             placeholder="Select License Home Country"
             :options="nationalitiesOptions"
             class="w-full"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
 
@@ -300,6 +313,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
             placeholder="Select Driver Years Home Country"
+            :disabled="hasNotEditPermission"
           />
         </x-field>
       </dl>
