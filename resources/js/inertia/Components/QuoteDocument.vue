@@ -38,6 +38,7 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -258,7 +259,8 @@ onUnmounted(() => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
-          <x-tag :color="documentVerificationStatus ? 'success' : 'amber'">
+          <x-tag v-if="quoteType == quoteTypeCodeEnum.Car"
+           :color="documentVerificationStatus ? 'success' : 'amber'">
             {{ documentVerificationStatus ? 'Verified' : 'Verification Pending' }}
           </x-tag>
           <DownloadDocuments
