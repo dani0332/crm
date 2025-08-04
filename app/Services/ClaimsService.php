@@ -95,12 +95,18 @@ class ClaimsService extends BaseService
 
             // Separate claim request data from detail data
             $claimRequestData = collect($data)->only([
-                'uuid', 'code', 'incident', 'first_name', 'last_name', 'email', 'mobile_no',
+                'uuid', 'code', 'incident', 'incident_story', 'first_name', 'last_name', 'email', 'mobile_no',
                 'customer_id', 'source', 'manager_id', 'manager_assigned_date', 'quote_uuid',
                 'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
                 'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
-                'whatsapp_consent'
-            ])->toArray();
+                'whatsapp_consent', 'selected_policy_id', 'policy_not_listed', 'insurer_claim_number'
+            ])->filter()->toArray();
+
+            // Store incident_story as incident field
+            if (isset($claimRequestData['incident_story'])) {
+                $claimRequestData['incident'] = $claimRequestData['incident_story'];
+                unset($claimRequestData['incident_story']);
+            }
 
             $claimRequest = ClaimRequest::create($claimRequestData);
 
@@ -144,12 +150,18 @@ class ClaimsService extends BaseService
 
             // Separate claim request data from detail data
             $claimRequestData = collect($data)->only([
-                'uuid', 'code', 'incident', 'first_name', 'last_name', 'email', 'mobile_no',
+                'uuid', 'code', 'incident', 'incident_story', 'first_name', 'last_name', 'email', 'mobile_no',
                 'customer_id', 'source', 'manager_id', 'manager_assigned_date', 'quote_uuid',
                 'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
                 'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
-                'whatsapp_consent'
+                'whatsapp_consent', 'selected_policy_id', 'policy_not_listed', 'insurer_claim_number'
             ])->filter()->toArray();
+
+            // Store incident_story as incident field
+            if (isset($claimRequestData['incident_story'])) {
+                $claimRequestData['incident'] = $claimRequestData['incident_story'];
+                unset($claimRequestData['incident_story']);
+            }
 
             $claimRequest->update($claimRequestData);
 
@@ -454,9 +466,86 @@ class ClaimsService extends BaseService
      */
     public function searchActivePolicies(?string $email = null, ?string $policyNumber = null): array
     {
-        // This would typically search in your policy/quotes tables
-        // For now, returning empty array as placeholder
-        return [];
+        $policies = [];
+
+        try {
+            // Search in PersonalQuote (Car, Health, etc.)
+            $personalQuotes = \App\Models\PersonalQuote::query()
+                ->when($email, function ($query, $email) {
+                    $query->where('email', $email);
+                })
+                ->when($policyNumber, function ($query, $policyNumber) {
+                    $query->where('policy_number', 'LIKE', "%{$policyNumber}%");
+                })
+                ->whereNotNull('policy_number')
+                ->where('policy_number', '!=', '')
+                ->whereIn('quote_status_id', [3, 4, 5, 6]) // Active policy statuses
+                ->with(['quoteType', 'insuranceProvider'])
+                ->limit(10)
+                ->get();
+
+            foreach ($personalQuotes as $quote) {
+                $policies[] = [
+                    'ref_id' => $quote->code,
+                    'policy_number' => $quote->policy_number,
+                    'customer_name' => $quote->first_name . ' ' . $quote->last_name,
+                    'currently_insured_with' => $quote->insuranceProvider->name ?? 'N/A',
+                    'product' => $quote->quoteType->text ?? 'Personal Insurance',
+                    'policy_expiry_date' => $quote->policy_expiry_date ? date('d-m-Y', strtotime($quote->policy_expiry_date)) : 'N/A',
+                    'email' => $quote->email,
+                    'mobile_no' => $quote->mobile_no,
+                    'quote_type' => 'personal',
+                    'quote_id' => $quote->id,
+                ];
+            }
+
+            // Search in BusinessQuote
+            $businessQuotes = \App\Models\BusinessQuote::query()
+                ->when($email, function ($query, $email) {
+                    $query->where('email', $email);
+                })
+                ->when($policyNumber, function ($query, $policyNumber) {
+                    $query->where('policy_number', 'LIKE', "%{$policyNumber}%");
+                })
+                ->whereNotNull('policy_number')
+                ->where('policy_number', '!=', '')
+                ->whereIn('quote_status_id', [3, 4, 5, 6]) // Active policy statuses
+                ->with(['insuranceProvider'])
+                ->limit(10)
+                ->get();
+
+            foreach ($businessQuotes as $quote) {
+                $policies[] = [
+                    'ref_id' => $quote->code,
+                    'policy_number' => $quote->policy_number,
+                    'customer_name' => $quote->first_name . ' ' . $quote->last_name,
+                    'currently_insured_with' => $quote->insuranceProvider->name ?? 'N/A',
+                    'product' => 'Business Insurance',
+                    'policy_expiry_date' => $quote->policy_expiry_date ? date('d-m-Y', strtotime($quote->policy_expiry_date)) : 'N/A',
+                    'email' => $quote->email,
+                    'mobile_no' => $quote->mobile_no,
+                    'quote_type' => 'business',
+                    'quote_id' => $quote->id,
+                ];
+            }
+
+            // Log the search
+            LoggerService::info('Policy search performed', [
+                'email' => $email,
+                'policy_number' => $policyNumber,
+                'results_count' => count($policies),
+                'user_id' => Auth::id(),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error searching active policies', [
+                'error' => $e->getMessage(),
+                'email' => $email,
+                'policy_number' => $policyNumber,
+            ]);
+        }
+
+        return $policies;
     }
 
     public function applyFilters($query, $filters)

@@ -19,21 +19,31 @@ const claimForm = useForm({
 
   // Additional Fields
   claim_type_id: props.claim?.claim_type_id || '',
-  incident: props.claim?.incident || props.claim?.incident_date || '',
+  incident_date: props.claim?.incident_date || '',
+  incident_story: props.claim?.incident_story || props.claim?.incident || '',
   policy_number: props.claim?.policy_number || '',
-  claim_status_id: props.claim?.claim_status_id || '',
-  claim_sub_status_id: props.claim?.claim_sub_status_id || '',
-  claim_request_type_id: props.claim?.claim_request_type_id || '',
-  insurance_provider_id: props.claim?.insurance_provider_id || '',
-  whatsapp_consent: props.claim?.whatsapp_consent || false,
-
-  // Vehicle Details (for ClaimRequestDetail)
-  car_make: props.claim?.claimRequestDetails?.[0]?.car_make || '',
-  car_model: props.claim?.claimRequestDetails?.[0]?.car_model || '',
-  service_type_id: props.claim?.claimRequestDetails?.[0]?.service_type_id || '',
+  insurer_claim_number: props.claim?.insurer_claim_number || '',
+  
+  // Policy Selection
+  selected_policy_id: null,
+  policy_not_listed: false,
 
   // System Fields
   source: props.claim?.source || 'IMCRM',
+});
+
+// Policy search state
+const policySearch = reactive({
+  loading: false,
+  searched: false,
+  policies: [],
+  error: null,
+});
+
+// Form state
+const formState = reactive({
+  canSave: false,
+  showPolicies: false,
 });
 
 const lineOfBusinessOptions = computed(() => {
@@ -54,15 +64,87 @@ const claimTypeOptions = computed(() => {
   );
 });
 
+// Watch for policy selection changes
+watch([() => claimForm.selected_policy_id, () => claimForm.policy_not_listed], () => {
+  formState.canSave = !!(claimForm.selected_policy_id || claimForm.policy_not_listed);
+});
+
+// Policy search function
+async function searchPolicies() {
+  if (!claimForm.email && !claimForm.policy_number) {
+    notification.error({
+      title: 'Please enter either email address or policy number to search',
+      position: 'top',
+    });
+    return;
+  }
+
+  policySearch.loading = true;
+  policySearch.error = null;
+  policySearch.policies = [];
+
+  try {
+    const response = await axios.post('/claims/search-policies', {
+      email: claimForm.email,
+      policy_number: claimForm.policy_number,
+    });
+
+    policySearch.policies = response.data.policies || [];
+    policySearch.searched = true;
+    formState.showPolicies = true;
+
+    // Don't set error for empty results, just show the table with "-- NO AVAILABLE DATA --"
+  } catch (error) {
+    policySearch.error = 'Error searching policies. Please try again.';
+    console.error('Policy search error:', error);
+  } finally {
+    policySearch.loading = false;
+  }
+}
+
+// Select policy function
+function selectPolicy(policy) {
+  claimForm.selected_policy_id = policy.ref_id;
+  claimForm.policy_number = policy.policy_number;
+  // Auto-fill additional fields from selected policy
+  if (policy.customer_name) {
+    const nameParts = policy.customer_name.split(' ');
+    claimForm.first_name = nameParts[0] || '';
+    claimForm.last_name = nameParts.slice(1).join(' ') || '';
+  }
+}
+
+// Policy not listed function
+function policyNotListed() {
+  claimForm.policy_not_listed = true;
+  claimForm.selected_policy_id = null;
+}
+
+// Reset policy selection
+function resetPolicySelection() {
+  claimForm.selected_policy_id = null;
+  claimForm.policy_not_listed = false;
+  formState.canSave = false;
+}
+
 function onSubmit(isValid) {
   if (isValid) {
+    // Check if policy selection is required
+    if (policySearch.searched && !formState.canSave) {
+      notification.error({
+        title: 'Please select a policy or click "Policy is not listed" to continue',
+        position: 'top',
+      });
+      return;
+    }
+
     let method = 'post';
     let url = `/claims`;
     let title = 'Claim created successfully';
 
     if (props.isEdit && props.claim) {
       method = 'put';
-      url = `/claims/${props.claim.ref_id}`;
+      url = `/claims/${props.claim.code}`;
       title = 'Claim updated successfully';
     }
 
@@ -89,8 +171,6 @@ function onSubmit(isValid) {
     });
   }
 }
-
-// Simple form - no conditional field clearing needed
 </script>
 
 <template>
@@ -130,7 +210,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             type="text"
-            label="First Name *"
+            label="First Name"
             placeholder="Enter First Name"
             required
             :error="claimForm.errors.first_name"
@@ -140,41 +220,41 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             type="text"
-            label="Last Name *"
+            label="Last Name"
             placeholder="Enter Last Name"
             required
             :error="claimForm.errors.last_name"
           />
           <x-input
-            v-model="claimForm.phone_number"
+            v-model="claimForm.mobile_no"
             :rules="[isRequired]"
             class="w-full"
             type="tel"
-            label="Phone Number *"
+            label="Phone Number"
             placeholder="Enter Phone Number"
             required
-            :error="claimForm.errors.phone_number"
+            :error="claimForm.errors.mobile_no"
           />
           <x-input
             v-model="claimForm.email"
             :rules="[isRequired, isEmail]"
             class="w-full"
             type="email"
-            label="Email Address *"
+            label="Email Address"
             placeholder="Enter Email Address"
             required
             :error="claimForm.errors.email"
           />
           <x-select
-            v-model="claimForm.line_of_business_id"
+            v-model="claimForm.quote_type_id"
             :rules="[isRequired]"
-            label="Line of Business *"
+            label="Line of Business"
             placeholder="Select Line of Business"
             :options="lineOfBusinessOptions"
             filterable
             filterPlaceholder="Filter Line of Business...."
             required
-            :error="claimForm.errors.line_of_business_id"
+            :error="claimForm.errors.quote_type_id"
           />
           <x-input
             v-model="claimForm.insurer_claim_number"
@@ -207,12 +287,123 @@ function onSubmit(isValid) {
             placeholder="Enter Policy Number"
             class="w-full"
             :error="claimForm.errors.policy_number"
+            @input="resetPolicySelection"
           />
+        </div>
+        
+        <!-- Incident Story -->
+        <div class="mt-4">
+          <x-textarea
+            v-model="claimForm.incident_story"
+            label="Incident Story"
+            placeholder="Please describe what happened..."
+            rows="4"
+            class="w-full"
+            :error="claimForm.errors.incident_story"
+          />
+        </div>
+
+        
+      </div>
+
+      <!-- Policy Search Results -->
+      <div v-if="formState.showPolicies" class="bg-white p-6 rounded shadow mb-6">
+        <!-- Error Message (only for actual errors, not empty results) -->
+        <div v-if="policySearch.error" class="mb-4 text-center">
+          <span class="text-red-600 text-lg">{{ policySearch.error }}</span>
+        </div>
+
+        <!-- Policies Table -->
+        <div v-if="policySearch.policies.length > 0" class="overflow-x-auto mb-4">
+          <table class="min-w-full bg-white border border-gray-200">
+            <thead class="bg-blue-600 text-white">
+              <tr>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">REF ID</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">POLICY NUMBER</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">CUSTOMER NAME</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">CURRENTLY INSURED WITH</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">PRODUCT</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">POLICY EXPIRY DATE</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">ACTION</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr 
+                v-for="policy in policySearch.policies" 
+                :key="policy.ref_id"
+                :class="{
+                  'bg-blue-50 ring-2 ring-blue-500': claimForm.selected_policy_id === policy.ref_id
+                }"
+              >
+                <td class="px-4 py-3 text-sm">{{ policy.ref_id }}</td>
+                <td class="px-4 py-3 text-sm">{{ policy.policy_number }}</td>
+                <td class="px-4 py-3 text-sm">{{ policy.customer_name }}</td>
+                <td class="px-4 py-3 text-sm">{{ policy.currently_insured_with }}</td>
+                <td class="px-4 py-3 text-sm">{{ policy.product }}</td>
+                <td class="px-4 py-3 text-sm">{{ policy.policy_expiry_date }}</td>
+                <td class="px-4 py-3 text-sm">
+                  <x-button
+                    size="sm"
+                    :color="claimForm.selected_policy_id === policy.ref_id ? 'success' : 'primary'"
+                    @click="selectPolicy(policy)"
+                  >
+                    {{ claimForm.selected_policy_id === policy.ref_id ? 'Selected' : 'Select' }}
+                  </x-button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Show "-- NO AVAILABLE DATA --" when no policies found -->
+        <div v-if="policySearch.policies.length === 0 && policySearch.searched" class="overflow-x-auto mb-4">
+          <table class="min-w-full bg-white border border-gray-200">
+            <thead class="bg-blue-600 text-white">
+              <tr>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">REF ID</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">POLICY NUMBER</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">CUSTOMER NAME</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">CURRENTLY INSURED WITH</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">PRODUCT</th>
+                <th class="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">POLICY EXPIRY DATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                  -- NO AVAILABLE DATA --
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Policy Not Listed Button -->
+        <div v-if="policySearch.searched" class="flex justify-center gap-3 mt-4">
+          <x-button
+            type="button"
+            size="md"
+            color="gray"
+            @click="policyNotListed"
+            :class="{ 'bg-gray-500 text-white': claimForm.policy_not_listed }"
+          >
+            {{ claimForm.policy_not_listed ? 'Policy Not Listed (Selected)' : 'Policy is not listed' }}
+          </x-button>
         </div>
       </div>
 
       <!-- Form Actions -->
       <div class="flex justify-end gap-3 mb-4">
+        <!-- Search Button -->
+        <x-button
+            type="button"
+            size="md"
+            color="primary"
+            @click="searchPolicies"
+            :loading="policySearch.loading"
+          >
+            Search
+          </x-button>
         <Link href="/claims">
           <x-button size="md" color="gray" type="button"> Cancel </x-button>
         </Link>
@@ -221,9 +412,18 @@ function onSubmit(isValid) {
           color="emerald"
           type="submit"
           :loading="claimForm.processing"
+          :disabled="policySearch.searched && !formState.canSave"
+          :title="policySearch.searched && !formState.canSave ? 'Please select a policy or click Policy is not listed' : ''"
         >
-          {{ isEdit ? 'Update Claim' : 'Create Claim Lead' }}
+          {{ isEdit ? 'Update Claim' : 'Save' }}
         </x-button>
+      </div>
+      
+      <!-- Policy Selection Warning -->
+      <div v-if="policySearch.searched && !formState.canSave" class="mb-4">
+        <x-alert color="info">
+          Please select a policy from the search results or click "Policy is not listed" to continue.
+        </x-alert>
       </div>
     </x-form>
   </div>
