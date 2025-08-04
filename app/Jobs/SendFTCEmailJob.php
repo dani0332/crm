@@ -45,7 +45,7 @@ class SendFTCEmailJob implements ShouldQueue
         LoggerService::startQuoteLogging($this->quoteType->refId($this->quoteUUID), LoggerFeatureEnum::FTC_EMAIL);
 
         // Define eligible SIC types
-        $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id(), QuoteTypes::HEALTH->id(), QuoteTypes::PET->id(), QuoteTypes::YACHT->id(), QuoteTypes::LIFE->id(), QuoteTypes::YACHT->id(), QuoteTypes::BUSINESS->id(), QuoteTypes::CYCLE->id()];
+        $nonEligibleSICTypes = [QuoteTypes::TRAVEL->id(), QuoteTypes::BIKE->id(), QuoteTypes::HOME->id(), QuoteTypes::HEALTH->id(), QuoteTypes::PET->id(), QuoteTypes::YACHT->id(), QuoteTypes::LIFE->id(), QuoteTypes::YACHT->id(), QuoteTypes::BUSINESS->id(), QuoteTypes::CYCLE->id()];
 
         try {
             LoggerService::info('Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned');
