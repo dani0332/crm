@@ -54,11 +54,6 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 $validator->errors()->add('error', 'Please select advisor');
             }
 
-            $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($this->sendUpdate);
-            if ($isEndorsementActionDisabled) {
-                $validator->errors()->add('error', 'Abu Dhabi policy financials will be recorded manually and not entered in Sage');
-            }
-
             // The str_contains condition is added only for the production environment and will be removed once the issue with comma-separated emails is resolved.
             if (! $personalQuote?->email || str_contains($personalQuote?->email, ',')) {
                 $validator->errors()->add('error', 'Customer email is required');
