@@ -347,6 +347,7 @@ class CarCQFRenewalService
             'previous_policy_start_date' => $quote->policy_start_date,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->premium,
+            'previous_advisor_id' => $quote->advisor_id,
             'previous_quote_id' => $quote->id,
             'car_make_id' => $quote->car_make_id,
             'car_model_id' => $quote->car_model_id,
