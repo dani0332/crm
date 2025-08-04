@@ -1615,6 +1615,10 @@ class CentralService extends BaseService
         $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
         LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
 
+        if(is_string($response)) {
+            return ['message' => $response, 'autoCaptureStatus' => GenericRequestEnum::SUCCESS, 'autoCaptureMessage' => 'Auto capture payment process started'];
+        }
+
         $response['autoCaptureStatus'] = GenericRequestEnum::SUCCESS;
         $response['autoCaptureMessage'] = 'Auto capture payment process started';
 
