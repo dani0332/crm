@@ -302,19 +302,11 @@ function deleteClaim() {
             <x-button size="sm" color="primary" tag="div">Claims List</x-button>
           </Link>
           <Link
-            v-if="can(permissionsEnum.CLAIM_UPDATE)"
+            v-if="can(permissionsEnum.CLAIM_EDIT)"
             :href="`/claims/${claim.ref_id}/edit`"
           >
             <x-button size="sm" color="emerald" tag="div">Edit</x-button>
           </Link>
-          <x-button
-            v-if="can(permissionsEnum.CLAIM_DELETE)"
-            size="sm"
-            color="error"
-            @click="deleteClaim"
-          >
-            Delete
-          </x-button>
         </div>
       </div>
     </StickyHeader>

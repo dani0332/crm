@@ -59,8 +59,7 @@ const tableHeader = [
   { text: 'VEHICLE YEAR', value: 'vehicle_year' },
   { text: 'STATUS', value: 'claims_status' },
   { text: 'ASSIGNED TO', value: 'assigned_to' },
-  { text: 'CREATED AT', value: 'created_at' },
-  { text: 'ACTIONS', value: 'actions' },
+  { text: 'CREATED AT', value: 'created_at' }, 
 ];
 
 const statusOptions = computed(() => {
@@ -575,25 +574,7 @@ watch(
       <template #item-created_at="{ created_at }">
         {{ created_at }}
       </template>
-
-      <template #item-actions="{ id }">
-        <div class="flex gap-2">
-          <Link
-            v-if="can(permissionsEnum.CLAIM_VIEW)"
-            :href="`/claims/${id}`"
-            class="text-blue-600 hover:underline"
-          >
-            View
-          </Link>
-          <Link
-            v-if="can(permissionsEnum.CLAIM_UPDATE)"
-            :href="`/claims/${id}/edit`"
-            class="text-green-600 hover:underline"
-          >
-            Edit
-          </Link>
-        </div>
-      </template>
+       
     </DataTable>
 
      <!-- Pagination -->
