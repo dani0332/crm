@@ -1609,6 +1609,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             class="w-full"
             withTime
             :min-date="new Date()"
+            :min-time="{
+              hours: new Date().getHours(),
+              minutes: new Date().getMinutes(),
+            }"
             required
           />
         </div>
