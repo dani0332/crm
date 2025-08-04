@@ -1342,17 +1342,19 @@ class CentralService extends BaseService
             return 'CAR_FLEET';
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
             return 'TRADE';
-        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::proIndemnity)) {
-            return 'PROFESSIONAL';
-        } else {
-            return 'BUSINESS';
         }
+
+        return 'OTHER_BUSINESS';
     }
 
     public function prepareBirdData($quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null)
     {
         if ($quoteTypeId == QuoteTypeId::Business) {
-            $quoteType = $this->checkBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
+            if ($quote->business_type_of_insurance_id) {
+                $quoteType = $this->checkBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
+            } else {
+                $quoteType = 'BUSINESS';
+            }
         } else {
             $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
             if ($quoteTypeId == QuoteTypeId::Car && app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
