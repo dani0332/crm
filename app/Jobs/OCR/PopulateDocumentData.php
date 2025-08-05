@@ -77,15 +77,10 @@ class PopulateDocumentData implements ShouldQueue
             if ($isSuccess) {
                 LoggerService::info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
             } else {
-                LoggerService::info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
-                if ($this->attempts() >= $this->tries) {
-                    $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}";
-                    LoggerService::info(self::class." - {$errorMessage}");
-                    $this->fail(new Exception($errorMessage));
-                } else {
-                    // Retry the job
-                    $this->release(now()->addMinutes(2 * $this->attempts()));
-                }
+                LoggerService::warning(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
+                $errorMessage = "OCR processing failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}";
+                LoggerService::error(self::class." - {$errorMessage}");
+                $this->fail(new Exception($errorMessage));
             }
         } catch (\Exception $e) {
             throw $e;

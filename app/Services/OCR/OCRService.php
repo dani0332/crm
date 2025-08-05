@@ -74,23 +74,72 @@ class OCRService
             'provider_code' => $providerCode,
         ]);
 
-        $response = $this->sendRequest('/process-document', [
+        $requestData = [
             'ref_id' => $quote->code,
             'uuid' => $quote->uuid,
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
             'doc_type' => $docType->value,
             'provider_code' => $providerCode,
-
-            // for now image would be false on the basis of Hamas Request
             'image' => false,
+        ];
+
+        LoggerService::info('OCR API Request - Quote UUID: '.$quote->uuid, extra: [
+            'request_data' => $requestData,
+            'endpoint' => '/process-document',
         ]);
 
+        $response = $this->sendRequest('/process-document', $requestData);
+
         if ($response['ok']) {
+            LoggerService::info('OCR API Response Success - Quote UUID: '.$quote->uuid, extra: [
+                'response_data' => $response['object'],
+            ]);
             return $response['object'];
         }
 
+        LoggerService::error('OCR API Response Failed - Quote UUID: '.$quote->uuid, extra: [
+            'response_message' => $response['message'],
+            'response_object' => $response['object'],
+            'request_data' => $requestData,
+        ]);
+
         return null;
+    }
+
+    public function isOCRServiceAvailable(): bool
+    {
+        try {
+            $response = Http::baseUrl(config('constants.OCR_API_ENDPOINT'))
+                ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
+                ->withHeader('x-api-key', config('constants.OCR_API_KEY'))
+                ->timeout(3)
+                ->post('/process-document', [
+                    'ref_id' => 'health-check',
+                    'uuid' => 'health-check',
+                    'quote_type_id' => 1,
+                    'doc_url' => 'https://example.com/health.pdf',
+                    'doc_type' => 'DL',
+                    'provider_code' => null,
+                    'image' => false,
+                ]);
+
+            // If we get any response (even an error), the service is available
+            // We don't care about the actual response for health check
+            return true;
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            LoggerService::error('OCR Service Connection Failed', extra: [
+                'error_message' => $e->getMessage(),
+                'error_type' => 'ConnectionException',
+            ]);
+            return false;
+        } catch (Exception $e) {
+            LoggerService::error('OCR Service Health Check Failed', extra: [
+                'error_message' => $e->getMessage(),
+                'error_type' => get_class($e),
+            ]);
+            return false;
+        }
     }
 
     public function process(
@@ -116,6 +165,15 @@ class OCRService
             'start_time' => date('Y-m-d H:i:s', (int) $startTime),
             'document_category' => $documentCategory,
         ]);
+
+        // Check if OCR service is available
+        if (!$this->isOCRServiceAvailable()) {
+            LoggerService::error('OCR Service Unavailable - Quote UUID: '.$quote->uuid, extra: [
+                'quote_type' => $quoteType->value,
+                'document_type' => $documentType->code,
+            ]);
+            return false;
+        }
 
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
