@@ -7,6 +7,7 @@ use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\LifeQuote;
+use App\Models\OcrLog;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
@@ -14,6 +15,9 @@ use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Response;
+use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\Log;
 
 class AuditableController extends Controller
 {
@@ -155,6 +159,62 @@ class AuditableController extends Controller
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
+        }
+    }
+
+    public function loadOcrLogs(Request $request)
+    {
+        try {
+            $request->validate([
+                'type' => 'required|string',
+                'id' => 'required|integer',
+            ]);
+
+            $auditableType = $request->input('type');
+            $auditableId = $request->input('id');
+
+            LoggerService::info('Loading OCR logs', [
+                'auditable_type' => $auditableType,
+                'auditable_id' => $auditableId,
+            ]);
+
+            $logs = OcrLog::where('ocr_loggable_type', $auditableType)
+                ->where('ocr_loggable_id', $auditableId)
+                ->with(['provider', 'user'])
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'ref_id' => $log->request_data['ref_id'] ?? 'N/A',
+                        'document_type_name' => $log->document_type_name,
+                        'status' => $log->status,
+                        'formatted_execution_time' => $log->formatted_execution_time,
+                        'provider_name' => $log->provider?->name ?? 'N/A',
+                        'uploaded_through' => $log->uploaded_through,
+                        'user_name' => $log->user?->name ?? null,
+                        'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                        'request_data' => $log->request_data,
+                        'response_data' => $log->response_data,
+                        'error_message' => $log->error_message,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load OCR logs', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load OCR logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

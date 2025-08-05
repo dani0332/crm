@@ -2,6 +2,7 @@
 
 namespace App\Services\OCR;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Client\Response;
 
 trait Ocrable
@@ -11,7 +12,7 @@ trait Ocrable
         $responseBody = $response->object();
         $status = $response->status();
 
-        info(self::class.'::handleResponse', [
+        LoggerService::info(self::class.'::handleResponse', [
             'endpoint' => $endpoint,
             'status' => $status,
             'response' => $response->body(),
