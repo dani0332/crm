@@ -1444,8 +1444,7 @@ class CentralService extends BaseService
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
             QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
-            $customer = $quote->customer->insured;
-            $emailData->insuredName = strtoupper($customer?->first_name.' '.$customer?->last_name);
+            $emailData->insuredName = strtoupper($quote->first_name.' '.$quote->last_name);
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
