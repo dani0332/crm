@@ -2482,8 +2482,7 @@ watch(
                   (isLackingPayment ||
                     disableMainBtn ||
                     isTapCaptureProcessStart ||
-                    isAUHEnable
-                  )
+                    isAUHEnable)
                 "
               >
                 <div>

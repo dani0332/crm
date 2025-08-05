@@ -275,8 +275,9 @@ const ageRangeValid = computed(() => {
               <template #content-footer>
                 <ui-select-actions
                   @select-all="
-                    sicConfigurableForm.emirates =
-                    emiratesOptions.map(item => item.value)
+                    sicConfigurableForm.emirates = emiratesOptions.map(
+                      item => item.value,
+                    )
                   "
                   @clear="sicConfigurableForm.emirates = []"
                 />
