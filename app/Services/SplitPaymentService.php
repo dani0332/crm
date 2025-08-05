@@ -788,6 +788,7 @@ class SplitPaymentService
         $shouldCreateReceipt = $this->shouldCreateReceipt($parentPayment, $paymentSplit);
         $shouldProcessPayment = $this->shouldProcessPayment($paymentSplit, $isFromJob, $modelType);
 
+        LoggerService::info("for split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} shouldProcessPayment: " . ($shouldProcessPayment ? 'true' : 'false'));
         // Only start transaction if we need to process the payment
         if ($shouldProcessPayment) {
             $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId, $parentPayment, $shouldCreateReceipt) {
@@ -831,6 +832,8 @@ class SplitPaymentService
                 $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
             }
 
+            LoggerService::info("Split payment code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} after approve: ");
+
             if (isset($retryResponse['status']) && $retryResponse['status'] == PaymentProcessJobEnum::FAILED) {
                 LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Failed to approve split payment");
                 if ($isFromJob) {
@@ -843,7 +846,9 @@ class SplitPaymentService
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
             } else {
+                LoggerService::info("Split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} all condition meet and isFromJob : " .( $isFromJob ? 'true' : 'False'));
                 if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policy schedule for automation
+                    LoggerService::info("Split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no}  createPolicyIssuanceAutomation started");
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
@@ -1357,15 +1362,49 @@ class SplitPaymentService
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 
-    private function shouldProcessPayment($paymentSplit, $isFromJob, $modelType)
+    /**
+     * Determine if the split payment should be processed.
+     *
+     * @param  PaymentSplits  $paymentSplit
+     * @param  bool           $isFromJob
+     * @param  string         $modelType
+     * @return bool
+     */
+    private function shouldProcessPayment($paymentSplit, $isFromJob, $modelType): bool
     {
-        $paymentNotApproved = ! $paymentSplit->payment->is_approved;
+        $paymentCode = $paymentSplit->code;
+        $payment = $paymentSplit->payment;
+        $insuranceProvider = $payment->insuranceProvider->code ?? null;
+        $paymentNotApproved = ! $payment->is_approved;
 
-        // Check if it's from a job and the model type is a travel quote with a specific insurance provider
-        $isTravelQuoteFromJob = $isFromJob && $modelType == QuoteTypes::TRAVEL->value;
-        $isAlncInsurance = $paymentSplit->payment->insuranceProvider->code == InsuranceProvidersEnum::ALNC;
+        LoggerService::info(
+            "Evaluating shouldProcessPayment for split payment Code: {$paymentCode}", [
+                'isFromJob' => $isFromJob ? 'true' : 'false',
+                'modelType' => $modelType,
+                'paymentNotApproved' => $paymentNotApproved ? 'true' : 'false',
+                'insuranceProvider' => $insuranceProvider,
+            ]
+        );
 
-        return $paymentNotApproved && (! $isFromJob || ($isTravelQuoteFromJob && $isAlncInsurance));
+        // Check if the job is triggered for Travel or Car quotes
+        $isTravelOrCarQuote = in_array($modelType, [QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value]);
+        LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: " . ($isTravelOrCarQuote ? 'true' : 'false'));
+
+        // Check if the insurance provider is ALNC or AXA
+        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA]);
+        LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: " . ($isAlncOrAxa ? 'true' : 'false'));
+
+        // Only process if payment is not approved and:
+        // - not from job, or
+        // - from job AND is Travel/Car AND provider is ALNC/AXA
+        $shouldProcess = $paymentNotApproved && (
+            ! $isFromJob ||
+            ($isTravelOrCarQuote && $isAlncOrAxa)
+        );
+
+        LoggerService::info("Split payment Code: {$paymentCode} shouldProcess: " . ($shouldProcess ? 'true' : 'false'));
+
+        return $shouldProcess;
     }
 
     private function shouldCreateReceipt($parentPayment, $paymentSplit): bool

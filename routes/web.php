@@ -92,6 +92,7 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\ProcessCCPaymentJob;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -900,4 +901,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             'status' => 'dispatched',
         ]);
     });
+});
+
+
+Route::get('/process-cc-payments', function () {
+    $processCCpayemntJob = new ProcessCCPaymentJob(3859, 'CAR-GEUVYK5G');
+    $processCCpayemntJob->handle();
+
+    return response()->json([
+        'message' => 'CC Payments Job ProcessCcPayments has been queued for background processing',
+        'status' => 'dispatched',
+    ]);
 });
