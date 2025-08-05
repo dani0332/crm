@@ -1286,7 +1286,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $response = Ken::request('/save-embedded-transaction', 'post',
             ['quoteUID' => $quote->uuid, 'quoteTypeId' => $quoteTypeId]);
-        if ($response->status == 200) {
+        if (isset($response->status) && $response->status == 200) {
             return $response->data;
         }
 

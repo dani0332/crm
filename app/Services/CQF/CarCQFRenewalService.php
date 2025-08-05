@@ -66,6 +66,7 @@ class CarCQFRenewalService
                 PaymentStatusEnum::PARTIALLY_PAID,
             ])
             ->take(50)
+            ->with(['plan', 'plan.insuranceProvider'])
             ->chunkById(50, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
@@ -371,7 +372,7 @@ class CarCQFRenewalService
             'vehicle_type_id' => $quote->vehicle_type_id,
             'cylinder' => $quote->cylinder,
             'year_of_manufacture' => $quote->year_of_manufacture,
-            'currently_insured_with' => $quote->currently_insured_with,
+            'currently_insured_with' => $quote?->plan?->insuranceProvider?->text ?? null,
             'vehicle_category' => $quote->vehicle_category,
             'car_type_insurance_id' => $quote->car_type_insurance_id,
             'seat_capacity' => $quote->seat_capacity,
