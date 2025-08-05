@@ -1367,7 +1367,7 @@ class SplitPaymentService
         $paymentCode = $paymentSplit->code;
         $payment = $paymentSplit->payment;
         $insuranceProvider = $payment->insuranceProvider->code ?? null;
-        $paymentNotApproved = ! $payment->is_approved;
+        $paymentNotApproved = ($modelType == QuoteTypes::TRAVEL->value && $insuranceProvider == InsuranceProvidersEnum::ALNC) ? !$payment->is_approved : true;
 
         LoggerService::info(
             "Evaluating shouldProcessPayment for split payment Code: {$paymentCode}", [
