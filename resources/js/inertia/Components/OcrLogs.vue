@@ -20,7 +20,6 @@ const ocrLogs = reactive({
   loading: false,
   data: null,
   table: [
-    { text: 'ID', value: 'id' },
     { text: 'Document Type', value: 'document_type_name' },
     { text: 'Status', value: 'status' },
     { text: 'Provider', value: 'provider_name' },
@@ -165,17 +164,12 @@ const onLoadOcrLogData = async () => {
     <x-modal
       v-model="modals.ocrLog"
       size="lg"
-      :title="`OCR Log Details: ${selectedLog?.id}`"
+      :title="`OCR Log Details: ${selectedLog?.ref_id || 'N/A'}`"
       show-close
       backdrop
     >
              <div v-if="selectedLog">
          <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
-           <div class="grid sm:grid-cols-2">
-             <dt class="font-medium">REF-ID:</dt>
-             <dd>{{ selectedLog.ref_id || 'N/A' }}</dd>
-           </div>
-
            <div class="grid sm:grid-cols-2">
              <dt class="font-medium">Document Type:</dt>
              <dd>{{ selectedLog.document_type_name }}</dd>
