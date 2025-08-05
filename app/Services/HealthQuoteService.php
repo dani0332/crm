@@ -253,7 +253,7 @@ class HealthQuoteService extends BaseService
     {
         $quote = HealthQuote::findOrFail($id);
 
-        return $quote->isAUHLead();
+        return $quote->isAUHLead(false);
     }
 
     public function getEntityPlain($id)
