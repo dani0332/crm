@@ -1362,14 +1362,6 @@ class SplitPaymentService
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 
-    /**
-     * Determine if the split payment should be processed.
-     *
-     * @param  PaymentSplits  $paymentSplit
-     * @param  bool           $isFromJob
-     * @param  string         $modelType
-     * @return bool
-     */
     private function shouldProcessPayment($paymentSplit, $isFromJob, $modelType): bool
     {
         $paymentCode = $paymentSplit->code;
