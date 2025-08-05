@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\EmirateEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;

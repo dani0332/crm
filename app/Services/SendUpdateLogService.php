@@ -1841,7 +1841,7 @@ class SendUpdateLogService
             if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
                 return true;
             }
-            
+
             return false;
         }
 
