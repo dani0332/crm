@@ -87,7 +87,7 @@ class MulkiyaExtractor
                 'notes' => $data['notes'] ?? $this->extractedData['notes'],
                 'insured_with' => $data['insuredWith'] ?? $this->extractedData['insured_with'],
                 'insurance_type' => $data['insuranceType'] ?? $this->extractedData['insurance_type'],
-                'model' => $data['model'] ?? $this->extractedData['model'],
+                'model' => $data['vehicalModel'] ?? $this->extractedData['model'],
                 'vehicle_class' => $data['vehicalClass'] ?? $this->extractedData['vehicle_class'],
                 'vehicle_type' => $data['vehicalType'] ?? $this->extractedData['vehicle_type'],
                 'origin' => $data['origin'] ?? $this->extractedData['origin'],
@@ -99,7 +99,7 @@ class MulkiyaExtractor
                 'provider_id' => $data['provider'] ?? $this->extractedData['provider_id'],
 
                 // Metadata
-                'ocr_model' => $data['model'] ?? $this->extractedData['ocr_model'],
+                'ocr_model' => $data['vehicalModel'] ?? $this->extractedData['ocr_model'],
                 'ocr_provider' => $data['provider'] ?? $this->extractedData['ocr_provider'],
             ]));
         }
