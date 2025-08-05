@@ -157,7 +157,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
     {
         // Get the lead source users from the first matched rule record.
-        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers ?? [];
 
         // Check if the lead source users contain a comma (,) indicating multiple users.
         if (str_contains($leadSourceUsers, ',')) {
