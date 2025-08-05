@@ -246,12 +246,15 @@ class CarCQFRenewalService
             'newPolicyExpiryDate' => $newPolicyExpiryDate,
         ]);
         
+        // Get insurance provider safely to avoid null pointer exception
+        $insuranceProvider = app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with);
+        
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
             'mobile_no' => $quote->mobile_no,
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
-            'insurer' => app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with)->text ?? null,
+            'insurer' => $insuranceProvider?->text ?? null,
             'product' => $quote->product ?? null,
             'product_type' => $quote->car_type_insurance_id()->text ?? null,
             'advisor' => $quote->advisor()->email ?? null,
@@ -278,7 +281,7 @@ class CarCQFRenewalService
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
             'policy_number' => $quote->policy_number ?? null,
             'data' => $quote ?? [],
-            'batch' => $quote->batch->name ?? null,
+            'batch' => null,
             'status' => RenewalProcessStatuses::NEW,
             'type' => RenewalsUploadType::CREATE_LEADS,
         ]);
