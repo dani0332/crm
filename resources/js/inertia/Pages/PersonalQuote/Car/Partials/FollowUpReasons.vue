@@ -144,6 +144,7 @@ onMounted(() => getPauseReaons());
     size="lg"
     :show-close="true"
     is-form
+    persistent
     @submit="onSubmit"
   >
     <!-- <div > -->

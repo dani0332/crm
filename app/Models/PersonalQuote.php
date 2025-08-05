@@ -28,17 +28,6 @@ class PersonalQuote extends Model implements AuditableContract
     use Auditable, Filterable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait;
 
     protected $guarded = [];
-    public $allowedColumns = [
-        'first_name',
-        'last_name',
-        'email',
-        'mobile_no',
-        'dob',
-        'nationality_id',
-        'gender',
-        'company_name',
-        'company_address',
-    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::EXACT,
@@ -69,6 +58,11 @@ class PersonalQuote extends Model implements AuditableContract
      */
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
+    ];
+
+    public $allowedColumns = [
+        'first_name', 'last_name', 'email', 'mobile_no', 'source', 'dob', 'company_name', 'company_address',
+        'customer_id', 'gender', 'nationality_id', 'payment_status_id', 'quote_status_id', 'device', 'reference_url', 'notes', 'created_at', 'updated_at', 'code', 'uuid', 'policy_number', 'advisor_id', 'premium', 'parent_duplicate_quote_id', 'renewal_batch', 'renewal_expiry_date', 'previous_quote_policy_number', 'renewal_import_code', 'previous_policy_expiry_date', 'previous_quote_policy_premium', 'policy_start_date', 'policy_issuance_date', 'paid_at', 'payment_status_date', 'quote_status_date', 'premium_authorized', 'premium_captured', 'premium_refunded', 'price_vat_not_applicable', 'price_without_vat', 'price_with_vat', 'vat', 'insurer_quote_number', 'policy_issuance_status_id', 'policy_issuance_status_other', 'kyc_decision',
     ];
 
     protected static function booted()
@@ -171,14 +165,26 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function lifeQuote()
+    {
+        return $this->hasOne(LifeQuote::class);
+    }
+
+    /**
      * @param  $date
      * @return string
      */
     public function getDobAttribute($value)
     {
-        $date_time_format = config('constants.DATE_FORMAT');
+        if (isset($value) && ! empty($value)) {
+            $date_time_format = config('constants.DATE_FORMAT_ONLY');
 
-        return Carbon::parse($value)->format($date_time_format);
+            return Carbon::parse($value)->format($date_time_format);
+        }
+
+        return null;
     }
 
     /**
@@ -439,7 +445,12 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function insuranceProviderPlan()
     {
-        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id']);
+        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id', 'sub_type_id']);
+    }
+
+    public function quoteCustomerPlan()
+    {
+        return $this->hasOne(QuoteCustomerPlan::class, 'quote_uuid', 'uuid');
     }
 
     public function embeddedTransactions()

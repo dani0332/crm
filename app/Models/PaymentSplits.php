@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\SageEnum;
 use Config;
@@ -23,6 +24,7 @@ class PaymentSplits extends Model implements Auditable
         'code', 'sr_no', 'payment_method', 'check_detail', 'payment_amount', 'due_date', 'payment_status_id', 'collection_amount', 'bank_reference_number', 'decline_reason_id', 'insurer_payment_link',
         'decline_custom_reason', 'sage_reciept_id', 'digital_wallet', 'payment_link', 'payment_link_created_at', 'payment_allocation_status',
         'captured_at', 'authorized_at', 'is_approved', 'reference',  'discount_value', 'verified_by', 'verified_at', 'price_vat_applicable', 'price_vat', 'commission_vat_applicable', 'commission_vat',
+        'insurer_receipt_number',
     ];
     protected $appends = [
         'prepayment_receipt_status',
@@ -132,6 +134,35 @@ class PaymentSplits extends Model implements Auditable
                 $prepaymentData['isPrepaymentAlreadyPosted'] = $isPrepaymentAlreadyPosted;
                 $prepaymentData['showPrepaymentPostButton'] = $batchNumber && ! $isPrepaymentAlreadyPosted && (! $sageProcess || $sageProcessFailed);
                 $prepaymentData['batchNumber'] = $batchNumber;
+
+                // Check if payment is paid but not via credit card
+                $isNonCCPaid = $this->payment_status_id == PaymentStatusEnum::PAID &&
+                              $this->payment_method !== PaymentMethodsEnum::CreditCard;
+
+                $showRetryButton = false;
+
+                // Only check retry button logic for non-credit card paid payments
+                if ($isNonCCPaid) {
+                    // Get ready-to-post prepayment data from step 3 of Sage API logs
+                    $readyToPostPrepayment = isset($sageApiLogs[3]) ? $sageApiLogs[3] : null;
+
+                    // Determine if retry button should be shown based on prepayment status
+                    if ($readyToPostPrepayment === null) {
+                        // Show retry button if no ready-to-post prepayment data exists
+                        $showRetryButton = true;
+                    } else {
+                        // Check if ready-to-post prepayment was successful
+                        $isReadyToPostSuccessful = $readyToPostPrepayment['status'] == SageEnum::STATUS_SUCCESS &&
+                                                   $readyToPostPrepayment['sage_request_type'] == SageEnum::SRT_RTP_PAY_REC_ONE_INV;
+
+                        // Show retry button if ready-to-post prepayment was not successful
+                        if (! $isReadyToPostSuccessful) {
+                            $showRetryButton = true;
+                        }
+                    }
+                }
+
+                $prepaymentData['showRetryButton'] = $showRetryButton;
 
                 return $prepaymentData;
             }

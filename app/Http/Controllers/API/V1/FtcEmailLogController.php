@@ -49,7 +49,7 @@ class FtcEmailLogController extends Controller
                 ];
                 $ftcEmailLog = $this->ftcEmailLogService->createTrackEmail($payload);
 
-                return response()->json(['message' => 'Email track created successfully.', 'data' => $ftcEmailLog], Response::HTTP_CREATED);
+                return response()->json($ftcEmailLog, Response::HTTP_OK);
             }
 
             return response()->json(['message' => 'Quote not found.'], 404);

@@ -128,6 +128,7 @@ final class PaymentTooltip extends Enum
     const PAYMENT_VIEW_COLLECTED_AMOUNT = 'The complete amount that has been successfully captured or received from the customer during the transaction.';
     const PAYMENT_VIEW_BANK_REFERENCE = 'This unique code, assigned by the banking institution, serves as a specific reference for the transaction. It\'s crucial for tracking and auditing purposes.';
     const PAYMENT_VIEW_DOCUMENTS = 'Upload the insurer\'s official receipt here. This document provides evidence of the transaction and is vital for record-keeping and any future verifications.';
+    const PAYMENT_VIEW_INSURER_RECEIPT_NUMBER = 'The receipt number provided by the insurer upon successful completion of the transaction.';
 
     // Reason dropdown list
     const DECLINED_REASON_1 = 'Incorrect payment information, proof of payment or receipt provided';
