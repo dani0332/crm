@@ -43,7 +43,8 @@ class InstantChatDetailedExport implements CsvExportableInterface
         return [
             'QUOTE TYPE',
             'REF ID',
-            'CREATED AT',
+            'LEAD CREATED DATE',
+            'DATE OF FIRST INTERACTION',
             'MESSAGE',
             'ROLE',
             'EMPLOYEE FLAG',
@@ -64,6 +65,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
         // Handle both array (from MongoDB) and object data structures
         $quoteType = is_array($chat) ? ($chat['quote_type'] ?? 'N/A') : ($chat->quote_type ?? 'N/A');
         $quoteId = is_array($chat) ? ($chat['quote_id'] ?? 'N/A') : ($chat->quote_id ?? 'N/A');
+        $leadCreatedDate = is_array($chat) ? ($chat['lead_created_at'] ?? 'N/A') : ($chat->lead_created_at ?? 'N/A');
         $createdAt = is_array($chat) ? ($chat['created_at'] ?? 'N/A') : ($chat->created_at ?? 'N/A');
         $msg = is_array($chat) ? ($chat['msg'] ?? 'N/A') : ($chat->msg ?? 'N/A');
         $role = is_array($chat) ? ($chat['role'] ?? 'N/A') : ($chat->role ?? 'N/A');
@@ -71,6 +73,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
         return [
             $quoteType,
             strtoupper(substr($quoteType, 0, 3)).'-'.$quoteId,
+            $leadCreatedDate,
             $createdAt,
             $msg,
             $role,

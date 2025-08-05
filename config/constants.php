@@ -134,6 +134,7 @@ return [
     'MA_V1_USERNAME' => env('MA_V1_USERNAME', ''),
     'MA_BREVO_KEY' => env('MA_BREVO_KEY', ''),
     'ECOM_BIKE_INSURANCE_QUOTE_URL' => env('ECOM_BIKE_INSURANCE_QUOTE_URL'),
+    'ECOM_LIFE_INSURANCE_QUOTE_URL' => env('ECOM_LIFE_INSURANCE_QUOTE_URL', 'https://insurancemarket.ae/life-insurance/quote/'),
     'SUKOON_API_URL' => env('SUKOON_API_URL', ''),
     'SUKOON_API_VERSION' => env('SUKOON_API_VERSION', ''),
     'SUKOON_USERNAME' => env('SUKOON_USERNAME', ''),
@@ -166,4 +167,6 @@ return [
     'LIVA_LOCATION' => env('LIVA_LOCATION', ''),
     'LIVA_AUTHENTICATION' => env('LIVA_AUTHENTICATION', ''),
     'LIVA_SUBSCRIPTION_KEY' => env('LIVA_SUBSCRIPTION_KEY', ''),
+
+    'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 ];

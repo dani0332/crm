@@ -66,6 +66,8 @@ const props = defineProps({
   paymentMethodsModels: Array,
   payments: Array,
   paymentStatusEnum: Object,
+  quoteType: String,
+  quoteTypeCodeEnum: Object,
 });
 
 const totalPriceFormat = computed(() => {
@@ -89,6 +91,11 @@ const discountProofDocument =
 
 const totalAmountFormat = computed(() => {
   return formatAmount(props.totalAmount);
+});
+
+// Computed property to check if frequency should be readonly/disabled for life quotes
+const isLifeQuoteFrequencyReadonly = computed(() => {
+  return props.quoteType === props.quoteTypeCodeEnum.Life;
 });
 
 const localDiscountValue = ref(props.discountValue);
@@ -213,7 +220,11 @@ const isMasterPaymentPaid = computed(() => {
     <div>
       <ToolTip
         title="FREQUENCY"
-        :tooltip="paymentTooltipEnum.FREQUENCY"
+        :tooltip="
+          isLifeQuoteFrequencyReadonly
+            ? 'To make changes, please update the payment term in the Available Plan section.'
+            : paymentTooltipEnum.FREQUENCY
+        "
         :required="!isFieldReadonly"
       />
       <x-field class="w-full">
@@ -225,7 +236,7 @@ const isMasterPaymentPaid = computed(() => {
           }}
         </span>
         <select
-          v-if="!isFieldReadonly"
+          v-if="!isFieldReadonly && !isLifeQuoteFrequencyReadonly"
           :class="{
             'custom-select-error': isPaymentFrequencyNotSelected,
           }"
@@ -240,6 +251,17 @@ const isMasterPaymentPaid = computed(() => {
             </option>
           </template>
         </select>
+        <input
+          v-if="!isFieldReadonly && isLifeQuoteFrequencyReadonly"
+          class="custom-select cursor-not-allowed bg-gray-100"
+          :value="
+            frequencyTypes.find(
+              item => item.value === paymentMethodsForm.frequency,
+            )?.label || paymentMethodsForm.frequency
+          "
+          readonly
+          :title="'To make changes, please update the payment term in the Available Plan section.'"
+        />
         <p
           v-if="isPaymentFrequencyNotSelected"
           class="text-sm text-red-500 dark:text-red-400 mt-1"

@@ -89,6 +89,7 @@ class AMLService
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
@@ -107,6 +108,7 @@ class AMLService
             QuoteTypes::JETSKI->id() => $quoteRequestId,
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id,
             QuoteTypes::YACHT->id() => $quoteRequestId,
+            QuoteTypes::LIFE->id() => $quoteRequestId,
             QuoteTypes::SAVINGS->id() => $quoteRequestId,
             QuoteTypes::HOME->id() => $quoteRequestId,
         };
@@ -125,6 +127,7 @@ class AMLService
             QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::LIFE->id() => LifeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::SAVINGS->id() => SavingsQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
         };
@@ -174,19 +177,29 @@ class AMLService
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
-            $quoteRequestDetails = LifeQuote::with([
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::LIFE->id())->with([
                 'quoteStatus',
-                'payments.paymentMethod',
-                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer.detail',
-                'purposeOfInsurance',
-                'children',
-                'maritalStatus',
-                'insuranceTenure',
-                'numberOfYears',
-                'currency',
                 'nationality',
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentMethod',
+                        'getCustomerPaymentInstrument',
+                        'paymentStatus',
+                    ]);
+                },
+                'lifeQuote' => function ($q) {
+                    $q->with([
+                        'children',
+                        'currency',
+                        'maritalStatus',
+                        'purposeOfInsurance',
+                        'insuranceTenure',
+                        'numberOfYears',
+                    ]);
+                },
+
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $quoteRequestDetails = BusinessQuote::with([
@@ -961,14 +974,14 @@ class AMLService
 
         try {
             if ($insuredKycRequest->customer_type == CustomerTypeEnum::Entity) {
-                $data['corporation_country'] = Nationality::where('id', $insuredKycRequest['country_of_corporation'])->value('country_name');
-                $data['manager_country'] = Nationality::where('id', $insuredKycRequest['manager_nationality'])->value('text');
-                $data['industry_type_text'] = LookupRepository::where('code', $insuredKycRequest['industry_type'])->where('key', LookupsEnum::COMPANY_TYPE)->value('text');
-                $data['legal_structure_text'] = LookupRepository::where('code', $insuredKycRequest['legal_structure'])->where('key', LookupsEnum::LEGAL_STRUCTURE)->value('text');
-                $data['issuance_place_text'] = LookupRepository::where('code', $insuredKycRequest['place_of_issue'])->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
-                $data['document_type_text'] = LookupRepository::where('code', $insuredKycRequest['id_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
-                $data['issuing_authority_text'] = LookupRepository::where('code', $insuredKycRequest['issuing_authority'])->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
-                $data['manager_position_text'] = LookupRepository::where('code', $insuredKycRequest['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
+                $data['corporation_country'] = Nationality::where('id', $insuredKycRequest->country_of_corporation)->value('country_name');
+                $data['manager_country'] = Nationality::where('id', $insuredKycRequest->manager_nationality)->value('text');
+                $data['industry_type_text'] = LookupRepository::where('code', $insuredKycRequest->industry_type)->where('key', LookupsEnum::COMPANY_TYPE)->value('text');
+                $data['legal_structure_text'] = LookupRepository::where('code', $insuredKycRequest->legal_structure)->where('key', LookupsEnum::LEGAL_STRUCTURE)->value('text');
+                $data['issuance_place_text'] = LookupRepository::where('code', $insuredKycRequest->place_of_issue)->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
+                $data['document_type_text'] = LookupRepository::where('code', $insuredKycRequest->id_type)->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
+                $data['issuing_authority_text'] = LookupRepository::where('code', $insuredKycRequest->issuing_authority)->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
+                $data['manager_position_text'] = LookupRepository::where('code', $insuredKycRequest->manager_position)->where('key', LookupsEnum::UBO_RELATION)->value('text');
                 $data['product_type'] = $quoteType.' Insurance';
                 $data['document_type_code'] = DocumentTypeCode::KYCDOC;
                 $data = array_merge($data, $insuredKycRequest->toArray());
@@ -980,42 +993,42 @@ class AMLService
                 $quoteTypeId = $insuredKycRequest->quote_type_id;
                 if ($document) {
                     LoggerService::info('KYC Entity Document Uploaded Successfully');
-                    Insured::find($insuredKycRequest['insured_id'])->update([
-                        'industry_type_code' => $insuredKycRequest['industry_type'] ?? null,
+                    Insured::find($insuredKycRequest->insured_id)->update([
+                        'industry_type_code' => $insuredKycRequest->industry_type ?? null,
                     ]);
 
                     InsuredKyc::updateOrCreate(
-                        ['insured_id' => $insuredKycRequest['insured_id']], // Condition to find the record
+                        ['insured_id' => $insuredKycRequest->insured_id], // Condition to find the record
                         [
-                            'first_name' => $insuredKycRequest['first_name'] ?? null,
-                            'last_name' => $insuredKycRequest['last_name'] ?? null,
-                            'insured_id' => $insuredKycRequest['insured_id'],
-                            'website' => $insuredKycRequest['website'] ?? null,
-                            'legal_structure' => $insuredKycRequest['legal_structure'] ?? null,
-                            'country_of_corporation' => $insuredKycRequest['country_of_corporation'] ?? null,
-                            'registered_address' => $insuredKycRequest['residential_address'] ?? null,
-                            'communication_address' => $insuredKycRequest['communication_address'] ?? null,
-                            'id_type' => $insuredKycRequest['id_type'] ?? null,
-                            'id_number' => $insuredKycRequest['id_number'] ?? null,
-                            'id_issuance_date' => $insuredKycRequest['id_issue_date'] ?? null,
-                            'id_expiry_date' => $insuredKycRequest['id_expiry_date'] ?? null,
-                            'issuance_place' => $insuredKycRequest['place_of_issue'] ?? null,
-                            'id_issuance_authority' => $insuredKycRequest['issuing_authority'] ?? null,
-                            'pep' => $insuredKycRequest['pep'] ?? null,
-                            'financial_sanctions' => $insuredKycRequest['financial_sanctions'] ?? null,
-                            'dual_nationality' => $insuredKycRequest['dual_nationality'] ?? null,
-                            'in_sanction_list' => $insuredKycRequest['in_sanction_list'] ?? null,
-                            'is_sanction_match' => $insuredKycRequest['is_sanction_match'] ?? null,
-                            'in_fatf' => $insuredKycRequest['in_fatf'] ?? null,
-                            'deal_sanction_list' => $insuredKycRequest['deal_sanction_list'] ?? null,
-                            'is_operation_high_risk' => $insuredKycRequest['is_operation_high_risk'] ?? null,
-                            'customer_tenure' => $insuredKycRequest['customer_tenure'] ?? null,
-                            'transaction_pattern' => $insuredKycRequest['transaction_pattern'] ?? null,
-                            'transaction_activities' => $insuredKycRequest['transaction_activities'] ?? null,
-                            'mode_of_contact' => $insuredKycRequest['mode_of_contact'] ?? null,
-                            'mode_of_delivery' => $insuredKycRequest['mode_of_delivery'] ?? null,
-                            'transaction_volume' => $insuredKycRequest['transaction_volume'] ?? null,
-                            'is_owner_high_risk' => $insuredKycRequest['is_owner_high_risk'] ?? null,
+                            'first_name' => $insuredKycRequest->first_name ?? null,
+                            'last_name' => $insuredKycRequest->last_name ?? null,
+                            'insured_id' => $insuredKycRequest->insured_id,
+                            'website' => $insuredKycRequest->website ?? null,
+                            'legal_structure' => $insuredKycRequest->legal_structure ?? null,
+                            'country_of_corporation' => $insuredKycRequest->country_of_corporation ?? null,
+                            'registered_address' => $insuredKycRequest->residential_address ?? null,
+                            'communication_address' => $insuredKycRequest->communication_address ?? null,
+                            'id_type' => $insuredKycRequest->id_type ?? null,
+                            'id_number' => $insuredKycRequest->id_number ?? null,
+                            'id_issuance_date' => $insuredKycRequest->id_issue_date ?? null,
+                            'id_expiry_date' => $insuredKycRequest->id_expiry_date ?? null,
+                            'issuance_place' => $insuredKycRequest->place_of_issue ?? null,
+                            'id_issuance_authority' => $insuredKycRequest->issuing_authority ?? null,
+                            'pep' => $insuredKycRequest->pep ?? null,
+                            'financial_sanctions' => $insuredKycRequest->financial_sanctions ?? null,
+                            'dual_nationality' => $insuredKycRequest->dual_nationality ?? null,
+                            'in_sanction_list' => $insuredKycRequest->in_sanction_list ?? null,
+                            'is_sanction_match' => $insuredKycRequest->is_sanction_match ?? null,
+                            'in_fatf' => $insuredKycRequest->in_fatf ?? null,
+                            'deal_sanction_list' => $insuredKycRequest->deal_sanction_list ?? null,
+                            'is_operation_high_risk' => $insuredKycRequest->is_operation_high_risk ?? null,
+                            'customer_tenure' => $insuredKycRequest->customer_tenure ?? null,
+                            'transaction_pattern' => $insuredKycRequest->transaction_pattern ?? null,
+                            'transaction_activities' => $insuredKycRequest->transaction_activities ?? null,
+                            'mode_of_contact' => $insuredKycRequest->mode_of_contact ?? null,
+                            'mode_of_delivery' => $insuredKycRequest->mode_of_delivery ?? null,
+                            'transaction_volume' => $insuredKycRequest->transaction_volume ?? null,
+                            'is_owner_high_risk' => $insuredKycRequest->is_owner_high_risk ?? null,
                         ]
                     );
 
@@ -1036,16 +1049,16 @@ class AMLService
                     LoggerService::info('KYC Entity Details updated Successfully');
                 }
             } else {
-                $data['nationality_text'] = Nationality::where('id', $insuredKycRequest['nationality_id'])->value('text');
-                $data['country_name'] = Nationality::where('id', $insuredKycRequest['country_of_residence'])->value('country_name');
-                $data['birth_place'] = Nationality::where('id', $insuredKycRequest['place_of_birth'])->value('country_name');
-                $data['resident_status_text'] = LookupRepository::where('code', $insuredKycRequest['resident_status'])->where('key', LookupsEnum::RESIDENT_STATUS)->value('text');
-                $data['id_type_text'] = LookupRepository::where('code', $insuredKycRequest['id_type'])->where('key', LookupsEnum::DOCUMENT_ID_TYPE)->value('text');
-                $data['mode_of_contact_text'] = LookupRepository::where('code', $insuredKycRequest['mode_of_contact'])->where('key', LookupsEnum::MODE_OF_CONTACT)->value('text');
-                $data['mode_of_delivery_text'] = LookupRepository::where('code', $insuredKycRequest['mode_of_delivery'])->where('key', LookupsEnum::MODE_OF_DELIVERY)->value('text');
-                $data['employment_sector_text'] = LookupRepository::where('code', $insuredKycRequest['employment_sector'])->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->value('text');
-                $data['company_position_text'] = LookupRepository::where('code', $insuredKycRequest['company_position'])->where('key', LookupsEnum::COMPANY_POSITION)->value('text');
-                $data['professional_title_text'] = LookupRepository::where('code', $insuredKycRequest['professional_title'])->where('key', LookupsEnum::PROFESSIONAL_TITLE)->value('text');
+                $data['nationality_text'] = Nationality::where('id', $insuredKycRequest->nationality_id)->value('text');
+                $data['country_name'] = Nationality::where('id', $insuredKycRequest->country_of_residence)->value('country_name');
+                $data['birth_place'] = Nationality::where('id', $insuredKycRequest->place_of_birth)->value('country_name');
+                $data['resident_status_text'] = LookupRepository::where('code', $insuredKycRequest->resident_status)->where('key', LookupsEnum::RESIDENT_STATUS)->value('text');
+                $data['id_type_text'] = LookupRepository::where('code', $insuredKycRequest->id_type)->where('key', LookupsEnum::DOCUMENT_ID_TYPE)->value('text');
+                $data['mode_of_contact_text'] = LookupRepository::where('code', $insuredKycRequest->mode_of_contact)->where('key', LookupsEnum::MODE_OF_CONTACT)->value('text');
+                $data['mode_of_delivery_text'] = LookupRepository::where('code', $insuredKycRequest->mode_of_delivery)->where('key', LookupsEnum::MODE_OF_DELIVERY)->value('text');
+                $data['employment_sector_text'] = LookupRepository::where('code', $insuredKycRequest->employment_sector)->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->value('text');
+                $data['company_position_text'] = LookupRepository::where('code', $insuredKycRequest->company_position)->where('key', LookupsEnum::COMPANY_POSITION)->value('text');
+                $data['professional_title_text'] = LookupRepository::where('code', $insuredKycRequest->professional_title)->where('key', LookupsEnum::PROFESSIONAL_TITLE)->value('text');
                 $data['premium'] = $quote->premium;
                 $data['payment_method'] = isset($quote->payments[0]) ? $quote->payments[0]->paymentMethod->name : '';
                 $data['product_type'] = ucfirst($quoteType).' Insurance';
@@ -1061,37 +1074,37 @@ class AMLService
                 if ($document) {
                     LoggerService::info('KYC Individual Document Uploaded Successfully');
                     InsuredKyc::updateOrCreate(
-                        ['insured_id' => $insuredKycRequest['insured_id']],
+                        ['insured_id' => $insuredKycRequest->insured_id],
                         [
-                            'first_name' => $insuredKycRequest['first_name'] ?? null,
-                            'last_name' => $insuredKycRequest['last_name'] ?? null,
-                            'insured_id' => $insuredKycRequest['insured_id'],
-                            'country_of_residence' => $insuredKycRequest['country_of_residence'],
-                            'place_of_birth' => $insuredKycRequest['place_of_birth'],
-                            'residential_status' => $insuredKycRequest['resident_status'],
-                            'residential_address' => $insuredKycRequest['residential_address'],
-                            'customer_tenure' => $insuredKycRequest['customer_tenure'],
-                            'id_type' => $insuredKycRequest['id_type'],
-                            'id_number' => $insuredKycRequest['id_number'],
-                            'id_issuance_date' => $insuredKycRequest['id_issue_date'],
-                            'id_expiry_date' => $insuredKycRequest['id_expiry_date'],
-                            'source_of_income' => $insuredKycRequest['income_source'],
-                            'employer_company_name' => $insuredKycRequest['company_name'],
-                            'job_title' => $insuredKycRequest['professional_title'] ?? null,
-                            'employment_sector' => $insuredKycRequest['employment_sector'] ?? null,
-                            'trade_license_no' => $insuredKycRequest['trade_license'] ?? null,
-                            'position_in_company' => $insuredKycRequest['company_position'] ?? null,
-                            'mode_of_contact' => $insuredKycRequest['mode_of_contact'] ?? null,
-                            'mode_of_delivery' => $insuredKycRequest['mode_of_delivery'] ?? null,
-                            'pep' => $insuredKycRequest['pep'] ?? null,
-                            'financial_sanctions' => $insuredKycRequest['financial_sanctions'] ?? null,
-                            'dual_nationality' => $insuredKycRequest['dual_nationality'] ?? null,
-                            'transaction_pattern' => $insuredKycRequest['transaction_pattern'] ?? null,
-                            'premium_tenure' => $insuredKycRequest['premium_tenure'] ?? null,
-                            'in_sanction_list' => $insuredKycRequest['in_sanction_list'] ?? null,
-                            'deal_sanction_list' => $insuredKycRequest['deal_sanction_list'] ?? null,
-                            'is_operation_high_risk' => $insuredKycRequest['is_operation_high_risk'] ?? null,
-                            'is_partner' => $insuredKycRequest['is_partner'] ?? null,
+                            'first_name' => $insuredKycRequest->first_name ?? null,
+                            'last_name' => $insuredKycRequest->last_name ?? null,
+                            'insured_id' => $insuredKycRequest->insured_id,
+                            'country_of_residence' => $insuredKycRequest->country_of_residence,
+                            'place_of_birth' => $insuredKycRequest->place_of_birth,
+                            'residential_status' => $insuredKycRequest->resident_status,
+                            'residential_address' => $insuredKycRequest->residential_address,
+                            'customer_tenure' => $insuredKycRequest->customer_tenure,
+                            'id_type' => $insuredKycRequest->id_type,
+                            'id_number' => $insuredKycRequest->id_number,
+                            'id_issuance_date' => $insuredKycRequest->id_issue_date,
+                            'id_expiry_date' => $insuredKycRequest->id_expiry_date,
+                            'source_of_income' => $insuredKycRequest->income_source,
+                            'employer_company_name' => $insuredKycRequest->company_name,
+                            'job_title' => $insuredKycRequest->professional_title ?? null,
+                            'employment_sector' => $insuredKycRequest->employment_sector ?? null,
+                            'trade_license_no' => $insuredKycRequest->trade_license ?? null,
+                            'position_in_company' => $insuredKycRequest->company_position ?? null,
+                            'mode_of_contact' => $insuredKycRequest->mode_of_contact ?? null,
+                            'mode_of_delivery' => $insuredKycRequest->mode_of_delivery ?? null,
+                            'pep' => $insuredKycRequest->pep ?? null,
+                            'financial_sanctions' => $insuredKycRequest->financial_sanctions ?? null,
+                            'dual_nationality' => $insuredKycRequest->dual_nationality ?? null,
+                            'transaction_pattern' => $insuredKycRequest->transaction_pattern ?? null,
+                            'premium_tenure' => $insuredKycRequest->premium_tenure ?? null,
+                            'in_sanction_list' => $insuredKycRequest->in_sanction_list ?? null,
+                            'deal_sanction_list' => $insuredKycRequest->deal_sanction_list ?? null,
+                            'is_operation_high_risk' => $insuredKycRequest->is_operation_high_risk ?? null,
+                            'is_partner' => $insuredKycRequest->is_partner ?? null,
                         ]
                     );
                     LoggerService::info('KYC Individual Details updated Successfully');

@@ -323,7 +323,7 @@ class HomeEmailService extends BaseService
      * @param  string|Carbon  $expiryDate  The policy expiry date
      * @return string Timestamp for the OCB trigger date
      */
-    private function getOCBTriggerTimestamp($expiryDate): string
+    public function getOCBTriggerTimestamp($expiryDate): string
     {
         // Ensure Carbon instance
         $expiry = Carbon::parse($expiryDate);
@@ -334,10 +334,10 @@ class HomeEmailService extends BaseService
         // Adjust for weekend rules
         switch ($ocbDate->dayOfWeek) {
             case Carbon::SATURDAY:
-                $ocbDate->subDay(); // Move to Friday
+                $ocbDate->subDay();
                 break;
             case Carbon::SUNDAY:
-                $ocbDate->addDay(); // Move to Monday
+                $ocbDate->addDay();
                 break;
             default:
                 break;

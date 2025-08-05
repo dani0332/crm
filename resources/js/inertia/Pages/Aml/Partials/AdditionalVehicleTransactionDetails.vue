@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 const { isRequired } = useRules();
 
 const page = usePage();
@@ -59,6 +59,10 @@ const additionalVehicleTransactionDetailsForm = useForm({
   annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
 });
 
+const hasNotEditPermission = computed(() => {
+  return false; // !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
+});
+
 const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
   if (isValid) {
     additionalVehicleTransactionDetailsForm.processing = true;
@@ -82,9 +86,20 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
     }).finally(() => {
       additionalVehicleTransactionDetailsForm.processing = false;
     });
-  } 
+  }
 }
 
+const isGIG = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
+});
+
+const isLIVA = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+});
+
+const isSUKOON = computed(() => {
+  return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
+});
 </script>
 
 <template>
@@ -98,86 +113,97 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
     <x-form @submit="submitAdditionalVehicleTransactionDetailsForm" :auto-focus="false">
       <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
           <x-field label="RTA Transaction Type" required>
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type" 
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type"
               :rules="[isRequired]"
               :options="rtaTransactionTypeOptions"
               placeholder="Select RTA Transaction Type"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
-          <x-field label="Plate Code" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+
+          <x-field label="Plate Code" :required="! isGIG">
             <ComboBox
               :single="true"
               v-model="additionalVehicleTransactionDetailsForm.plate_code"
+              :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Select Plate Code"
               :options="plateCodeOptions"
               class="w-full"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
-          <x-field label="Plate Number" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.plate_number" 
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+
+          <x-field label="Plate Number" :required="! isGIG">
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.plate_number"
+              :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Plate Number"
               type="text"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
+
           <x-field label="Traffic Code Number" required>
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.traffic_code_number" 
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.traffic_code_number"
               :rules="[isRequired]"
               placeholder="Traffic Code Number"
               type="text"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
+
           <x-field label="Chassis Number" required>
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.chassis_number" 
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.chassis_number"
               :rules="[isRequired]"
               placeholder="Chassis Number"
               type="text"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
-          <x-field label="Engine Number" required>
-            <x-input 
-              v-model="additionalVehicleTransactionDetailsForm.engine_number" 
-              :rules="[isRequired]"
+
+          <x-field label="Engine Number" :required="! isSUKOON">
+            <x-input
+              v-model="additionalVehicleTransactionDetailsForm.engine_number"
+              :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="Engine Number"
               type="text"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-        
-          <x-field label="RTA Plate Category">
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.rta_plate_category" 
+
+          <x-field label="RTA Plate Category" :required="isGIG">
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.rta_plate_category"
+              :rules="isGIG ? [isRequired] : []"
               :options="rtaPlateCategoryOptions"
               placeholder="Select RTA Plate Category"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
+
           <x-field label="Vehicle Color" required>
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.vehicle_color" 
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
               :options="vehicleColorOptions"
               :rules="[isRequired]"
               placeholder="Select Vehicle Color"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
-          <x-field label="Plate Color" :required="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA">
-            <x-select 
-              v-model="additionalVehicleTransactionDetailsForm.plate_color" 
+
+          <x-field label="Plate Color" :required="isGIG">
+            <x-select
+              v-model="additionalVehicleTransactionDetailsForm.plate_color"
               :options="plateColorOptions"
-              :rules="page.props.insuranceProviderCodeEnum.AXA == page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              :rules="isGIG ? [isRequired] : []"
               placeholder="Select Plate Color"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
+
           <x-field label="Bank Loan?" required>
             <x-select
               v-model="additionalVehicleTransactionDetailsForm.bank_loan"
@@ -187,79 +213,91 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
                 { value: 0, label: 'No' }
               ]"
               placeholder="Select Bank Loan"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
-          <x-field label="Bank Name" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
+
+          <x-field label="Bank Name" :required="! isGIG">
             <ComboBox
               :single="true"
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
-              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1"
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1 || hasNotEditPermission"
+              :rules="(! isGIG) ? [isRequired] : []"
               class="w-full"
             />
           </x-field>
-        
-          <x-field label="First Registration Date" required>
+
+          <x-field label="First Registration Date" :required="! isSUKOON">
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
-              :rules="[isRequired]"
+              :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="First Registration Date"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
-          
+
           <x-field label="Policy Effective Date" required>
             <DatePicker
               v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
               :rules="[isRequired]"
               placeholder="Policy Effective Date"
-            />
-          </x-field>
-          
-          <x-field label="Policy Expiry Date" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
-              placeholder="Policy Expiry Date"
-            />
-          </x-field>
-          
-          <x-field label="Certificate Start Date" required>
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
-              :rules="[isRequired]"
-              placeholder="Certificate Start Date"
-            />
-          </x-field>
-          
-          <x-field label="Certificate End Date" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
-              placeholder="Certificate End Date"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
 
-          <x-field label="Annual Mileage Estimate" :required="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA">
-            <x-input 
-              v-if="page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA"
-              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate" 
-              :rules="page.props.insuranceProviderCodeEnum.AXA !== page.props.insuranceProviderCodeEnum.AXA ? [isRequired] : []"
+          <x-field label="Policy Expiry Date" :required="isLIVA">
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
+              :rules="isLIVA ? [isRequired] : []"
+              placeholder="Policy Expiry Date"
+              :disabled="hasNotEditPermission"
+            />
+          </x-field>
+
+          <x-field label="Certificate Start Date" :required="! isSUKOON">
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
+              :rules="(! isSUKOON) ? [isRequired] : []"
+              placeholder="Certificate Start Date"
+              :disabled="hasNotEditPermission"
+            />
+          </x-field>
+
+          <x-field label="Certificate End Date" :required="isLIVA">
+            <DatePicker
+              v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
+              :rules="isLIVA ? [isRequired] : []"
+              placeholder="Certificate End Date"
+              :disabled="hasNotEditPermission"
+            />
+          </x-field>
+
+          <x-field label="Annual Mileage Estimate" :required="isLIVA">
+            <x-input
+              v-if="isGIG"
+              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
+              :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Select Annual Mileage Estimate"
               type="text"
+              :disabled="hasNotEditPermission"
             />
-            <x-select 
+            <x-select
               v-else
-              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate" 
-              :rules="[isRequired]"
+              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
+              :rules="isLIVA ? [isRequired] : []"
               :options="annualMileageEstimateOptions"
               placeholder="Select Annual Mileage Estimate"
+              :disabled="hasNotEditPermission"
             />
           </x-field>
         </dl>
-        <div class="flex justify-end my-5 gap-x-2">
+        <!-- v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)" -->
+        <div
+          class="flex justify-end my-5 gap-x-2"
+          v-if="true"
+        >
           <x-button
             size="sm"
             color="orange"
@@ -269,6 +307,25 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
           >
             Save
           </x-button>
+        </div>
+        <div
+          class="flex justify-end my-5 gap-x-2"
+          v-else
+        >
+          <x-tooltip>
+            <x-button
+              size="sm"
+              color="orange"
+              type="submit"
+              class="px-6"
+              disabled
+            >
+              Save
+            </x-button>
+            <template #tooltip>
+              You don't have permission to edit this section.
+            </template>
+          </x-tooltip>
         </div>
       </x-form>
     </div>

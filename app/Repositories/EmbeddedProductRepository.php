@@ -51,7 +51,6 @@ use Carbon\Carbon;
 use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
 
@@ -244,7 +243,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                 $isSukoonEpReadyForSage = $transaction[0]->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
                 $canSendDocuments = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction)
-                    || $this->canSendSukoonMedexDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+                    || $this->canSendSukoonMedexDocumentsWithPolicyIssued($item->product_category, $quoteObject->quote_status_id, $transaction);
                 $item->sync_document_button = (! $isSukoonEpReadyForSage) && $canSendDocuments;
             }
 
@@ -334,6 +333,26 @@ class EmbeddedProductRepository extends BaseRepository
             if ($productCategory == EpCategoryEnum::BOLT_ON &&
                 $quoteStatusId == QuoteStatusEnum::PolicyIssued &&
                 in_array($transaction->first()->policy_status, [EmbeddedTransactionEnum::STATUS_BOOKED, EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * canSendSukoonMedexDocuments - this is only used for Policy Issued status
+     *
+     * @param  mixed  $productCategory
+     * @param  mixed  $quoteStatusId
+     * @param  mixed  $transaction
+     * @return void
+     */
+    private function canSendSukoonMedexDocumentsWithPolicyIssued($productCategory, $quoteStatusId, $transaction)
+    {
+        if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            if ($productCategory == EpCategoryEnum::BOLT_ON &&
+                $quoteStatusId == QuoteStatusEnum::PolicyIssued) {
                 return true;
             }
         }
@@ -1134,7 +1153,9 @@ class EmbeddedProductRepository extends BaseRepository
             LoggerService::info('Embedded product payment capture in process', extra: ['payload' => $payload]);
             Marshall::request("/payment/{$paymentGatewayEndpoint}/capture", 'post', $payload);
         } catch (Exception $e) {
-            Log::error('Capture Payment Error: '.$e->getMessage());
+            LoggerService::warning('Capture Payment Error: '.$e->getMessage(), extra: [
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 

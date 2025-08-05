@@ -46,4 +46,6 @@ final class ProductionProcessTooltipEnum extends Enum
     const PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED = 'This payment is thoroughly associated with insurer tax invoices, ensuring that there are no outstanding amounts or pending links.';
     const COMMISSION_VAT_APPLICABLE_FILLED = 'This option is disabled because Commission (VAT applicable) has already been entered';
     const COMMISSION_VAT_NOT_APPLICABLE_FILLED = 'This option is disabled because Commission (VAT not applicable) has already been entered.';
+    const POLICY_SUM_ASSURED = 'Sum assured as per the issued policy schedule & documents.';
+    const SUM_ASSURED_CURRENCY = 'Currency of sum assured as per the issued policy schedule & documents.';
 }

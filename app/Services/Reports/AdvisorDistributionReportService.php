@@ -22,6 +22,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -53,6 +54,8 @@ class AdvisorDistributionReportService extends BaseService
             $request->assignmentType && strtolower($request->assignmentType) !== 'all',
             fn ($q) => $q->where('assignment_type', $request->assignmentType)
         );
+
+        LoggerService::sql(self::class.' - Advisor Distribution Report Query', $query);
 
         return $query->paginate(15)->withQueryString();
     }
