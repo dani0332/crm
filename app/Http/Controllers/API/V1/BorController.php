@@ -41,6 +41,25 @@ class BorController extends Controller
         $this->borService = $borService;
     }
 
+    public function getBorLog(Request $request){
+        try {
+            $borLog = BorLog::where('bor_reference', $request->input('bor_ref_id'))->first();
+            if(!$borLog){
+                return response()->json(['error' => 'BOR log not found'], 404);
+            }
+            $borLog->load('insuranceProvider', 'personalQuote');
+            $enrichedBorLog = $this->borService->enrichBorLogWithDocuments($borLog);
+            return response()->json(['data' => $enrichedBorLog]);
+        } catch (Exception $th) {
+            LoggerService::error('Failed to get BOR log', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+    }
+
     public function generatePdf(Request $request)
     {
         try {
