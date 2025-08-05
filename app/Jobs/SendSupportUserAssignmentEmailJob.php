@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
@@ -136,18 +137,24 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
         $model = $this->quoteType->model();
 
         return $model::whereIn('id', $this->leadIds)
-            ->with(['customer', 'supportUser'])
             ->get()
             ->map(function ($lead) {
-                return [
+                $parsedLead = collect([
                     'id' => $lead->id,
                     'uuid' => $lead->uuid,
                     'code' => $lead->code ?? $lead->id,
-                    'customer_name' => $lead->customer->name ?? 'N/A',
-                    'customer_email' => $lead->customer->email ?? 'N/A',
                     'created_at' => Carbon::parse($lead->created_at)->format('d M Y H:i'),
                     'lead_url' => $this->quoteType->url($lead->uuid),
-                ];
+                ]);
+
+                if (isset($lead->business_type_of_insurance_id)) {
+                    $parsedLead->quote_type =
+                        ($lead->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) ? QuoteTypes::GROUP_MEDICAL : null;
+                } elseif (isset($lead->quote_type_id)) {
+                    $parsedLead->quote_type = $this->quoteType->getName($lead->quote_type_id);
+                }
+
+                return $parsedLead;
             });
     }
 
@@ -156,34 +163,32 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
      */
     private function sendAssignmentEmail($assignerUser,$supportUser, $leads): void
     {
-        // For now, we'll use a simple email template
-        // In production, you should create a proper email template ID
-        $emailTemplateId = config('mail.templates.support_user_assignment', 123); // Replace with actual template ID
-
         $emailService = app(SendEmailCustomerService::class);
 
-        $emailData = [
-            'to' => [[
+        $quoteTypeName = '';
+        if ($leads->pluck('quote_type.value')->unique()->count() == 1) {
+            $quoteTypeName = $leads[0]->quote_type->value;
+        } else {
+            $quoteTypeName = $this->quoteType->value;
+        }
+
+        $emailData = collect([
+            'to' => [
                 'email' => $supportUser->email,
                 'name' => $supportUser->name,
-            ]],
-            'templateId' => (int) $emailTemplateId,
+            ],
             'params' => [
+                'quoteTypeName' => $quoteTypeName,
                 'supportUserName' => $supportUser->name,
-                'quoteTypeName' => $this->quoteType->value,
-//                'totalLeads' => $emailData->totalLeads,
+                'assignerName' => $assignerUser->name,
+                'assignerEmail' => $assignerUser->email,
                 'leads' => $leads,
-//                'assignedAt' => $emailData->assignedAt,
             ],
             'tags' => [
                 'support-user-assignment',
-                $this->quoteType->value . '-assignment',
             ],
-        ];
+        ]);
 
-        logger()->debug("sendAssignmentEmail: ".print_r([
-                '$emailData' => $emailData,
-            ],1));
 
         // Send the email (you may need to adjust this based on your email service implementation)
         LoggerService::info('Sending email with data', $emailData);

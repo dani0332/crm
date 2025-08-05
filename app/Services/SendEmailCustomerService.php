@@ -1695,25 +1695,40 @@ class SendEmailCustomerService extends BaseService
         }
     }
 
-    public function sendSupportUserAssignmentEmail($emailData){
-        $birdEmailData = [
-            'SendNewProcessRenewalEmail' => true,
-            'customerEmail' => $emailData->customerEmail,
-            'phone' => formatMobileNoWithoutPlus($mobile),
-            'customerName' => $emailData->customerName,
-            'quotePlanLink' => $emailData->quoteLink,
-            'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
-            'refID' => $emailData->carQuoteId,
-            'requestForAdvisor' => $emailData->requestAdvisorLink,
-            'quoteUUID' => $uuid,
-            'tag' => ThirdPartyTagEnum::BIRD_SIC_MOTOR_RENEWAL_TAG,
+    public function sendSupportUserAssignmentEmail($emailData)
+    {
+
+        // Convert leads array to HTML list
+        $leads = collect($emailData->get('params')['leads']) ?? [];
+        $quotesHtml = '';
+
+        if ($leads->isNotEmpty()) {
+            $quotesHtml = $leads->map(function ($lead) {
+                $url = $lead['lead_url'] ?? '#';
+                $refId = $lead['code'] ?? 'Lead';
+
+                return "<li><a href='{$url}' target='_blank'>{$refId}</a></li>";
+            })->pipe(function ($items) {
+                return "<ul>" . $items->implode('') . "</ul>";
+            });
+        } else {
+            $quotesHtml = '';
+        }
+
+        $birdEmailData = (object)[
+            'supportUserEmail' => $emailData->get('to')['email'] ?? '',
+            'supportUserName' => $emailData->get('to')['name'] ?? '',
+            'assignerName' => $emailData->get('params')['assignerName'] ?? '',
+            'assignerEmail' => $emailData->get('params')['assignerEmail'] ?? '',
+            'quoteTypeName' => $emailData->get('params')['quoteTypeName'] ?? '',
+            'quotes' => $quotesHtml
         ];
 
-        $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
-        info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$sicEvent->value);
+        $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
+        info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: ' . $oeAssignmentEvent->value);
 
-        if ($sicEvent) {
-            // app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $birdEmailData);
+        if ($oeAssignmentEvent) {
+            $response = app(BirdService::class)->triggerWebHookRequest($oeAssignmentEvent->value, $birdEmailData);
         }
     }
 }
