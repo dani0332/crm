@@ -243,10 +243,10 @@ class CarCQFRenewalService
             'policyStartDate' => $policyStartDate,
             'newPolicyExpiryDate' => $newPolicyExpiryDate,
         ]);
-        
+
         // Get insurance provider safely to avoid null pointer exception
         $insuranceProvider = app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with);
-        
+
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
