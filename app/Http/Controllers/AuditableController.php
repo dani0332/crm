@@ -12,12 +12,11 @@ use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Response;
-use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AuditableController extends Controller
 {

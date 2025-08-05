@@ -11,7 +11,6 @@ class OcrLog extends Model
 
     protected $table = 'ocr_logs';
     protected $guarded = [];
-
     protected $casts = [
         'request_data' => 'array',
         'response_data' => 'array',
@@ -47,10 +46,11 @@ class OcrLog extends Model
 
     public function getFormattedExecutionTimeAttribute()
     {
-        if (!$this->execution_time_ms) {
+        if (! $this->execution_time_ms) {
             return 'N/A';
         }
-        return number_format($this->execution_time_ms, 2) . ' ms';
+
+        return number_format($this->execution_time_ms, 2).' ms';
     }
 
     public function getStatusColorAttribute()
@@ -68,4 +68,4 @@ class OcrLog extends Model
     {
         return $this->user_id ? 'IMCRM' : 'Other than IMCRM';
     }
-} 
+}

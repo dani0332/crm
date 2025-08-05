@@ -12,14 +12,13 @@ use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\OCR\OcrLogService;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 class OCRService
@@ -101,6 +100,7 @@ class OCRService
             LoggerService::info('OCR API Response Success - Quote UUID: '.$quote->uuid, extra: [
                 'response_data' => $response['object'],
             ]);
+
             return $response['object'];
         }
 
@@ -128,12 +128,14 @@ class OCRService
                 'error_message' => $e->getMessage(),
                 'error_type' => 'ConnectionException',
             ]);
+
             return false;
         } catch (Exception $e) {
             LoggerService::error('OCR Service Health Check Failed', extra: [
                 'error_message' => $e->getMessage(),
                 'error_type' => get_class($e),
             ]);
+
             return false;
         }
     }
@@ -163,24 +165,24 @@ class OCRService
         ]);
 
         // Check if OCR service is available
-        if (!$this->isOCRServiceAvailable()) {
+        if (! $this->isOCRServiceAvailable()) {
             LoggerService::error('OCR Service Unavailable - Quote UUID: '.$quote->uuid, extra: [
                 'quote_type' => $quoteType->value,
                 'document_type' => $documentType->code,
             ]);
-            
+
             // Log OCR activity for service unavailable
-                    $this->ocrLogService->logActivity(
-            $quote,
-            $documentType,
-            'failed',
-            null,
-            null,
-            null,
-            'OCR service unavailable',
-            $userId
-        );
-            
+            $this->ocrLogService->logActivity(
+                $quote,
+                $documentType,
+                'failed',
+                null,
+                null,
+                null,
+                'OCR service unavailable',
+                $userId
+            );
+
             return false;
         }
 
@@ -190,16 +192,16 @@ class OCRService
             LoggerService::info(self::class."::process - OCR is not enabled for this document type {$documentType->code} - Quote UUID: ".$quote->uuid);
 
             // Log OCR activity for disabled document type
-                    $this->ocrLogService->logActivity(
-            $quote,
-            $documentType,
-            'skipped',
-            null,
-            null,
-            null,
-            'OCR not enabled for this document type',
-            $userId
-        );
+            $this->ocrLogService->logActivity(
+                $quote,
+                $documentType,
+                'skipped',
+                null,
+                null,
+                null,
+                'OCR not enabled for this document type',
+                $userId
+            );
 
             return null;
         }
@@ -415,7 +417,7 @@ class OCRService
                 ],
                 null,
                 $executionTime,
-                'OCR processing failed with exception: ' . $e->getMessage(),
+                'OCR processing failed with exception: '.$e->getMessage(),
                 $userId
             );
 

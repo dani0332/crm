@@ -39,4 +39,4 @@ class DocumentNotificationEvent implements ShouldBroadcastNow
             'status' => $this->status,
         ];
     }
-} 
+}

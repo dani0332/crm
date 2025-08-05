@@ -452,7 +452,7 @@ class ApiController extends Controller
         $request->validate(
             ['quoteUID' => 'required|string']
         );
-        
+
         return $this->apiService->documentNotification($request);
     }
 }

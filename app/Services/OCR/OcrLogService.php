@@ -24,7 +24,7 @@ class OcrLogService
         try {
             $providerId = $this->extractProviderId($quote);
             $uploadedThrough = $this->determineUploadSource($userId);
-            
+
             $documentTypeCode = $documentType->code ?? 'UNKNOWN';
             $documentTypeName = $documentType->text ?? 'Unknown Document Type';
 
@@ -57,7 +57,7 @@ class OcrLogService
                 return $latestPayment->insuranceProvider->id;
             }
         }
-        
+
         return null;
     }
 
@@ -67,13 +67,13 @@ class OcrLogService
     }
 
     private function logToSystemLog(
-        Model $quote, 
-        DocumentType $documentType, 
-        string $status, 
-        int $userId, 
+        Model $quote,
+        DocumentType $documentType,
+        string $status,
+        int $userId,
         string $uploadedThrough
     ): void {
-        Log::info('OCR activity logged - Quote UUID: ' . $quote->uuid, [
+        Log::info('OCR activity logged - Quote UUID: '.$quote->uuid, [
             'quote_id' => $quote->id,
             'document_type' => $documentType->code,
             'status' => $status,
@@ -84,7 +84,7 @@ class OcrLogService
 
     private function logError(Model $quote, \Exception $e): void
     {
-        Log::error('Failed to log OCR activity - Quote UUID: ' . $quote->uuid, [
+        Log::error('Failed to log OCR activity - Quote UUID: '.$quote->uuid, [
             'quote_id' => $quote->id,
             'error' => $e->getMessage(),
         ]);
