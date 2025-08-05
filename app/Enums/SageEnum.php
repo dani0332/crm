@@ -229,6 +229,7 @@ final class SageEnum extends Enum
     const SAGE_PROCESSING_CONFLICT_MESSAGE = 'Please wait for 1 minute before booking again.';
     const SAGE_TIMEOUT_REQUEST_MESSAGE = 'cURL error 28';
     const SAGE_EMPTY_RESPONSE_MESSAGE = 'empty reply from server';
+    const SAGE_ERROR_OCCURRED_MESSAGE = 'error has occurred';
 
     // Sage Payload
     const BANK_CODE_INS = 'INSBANK';

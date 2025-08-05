@@ -1817,6 +1817,9 @@ class SageApiEmbeddedProductService
             }
         }
 
+        // delay is added because we are experiencing an error while posting AP Mapping
+        sleep(3);
+
         // Step 15
         $currentStep = 15;
         $isLiveApiCallStep15 = true;
@@ -1854,9 +1857,11 @@ class SageApiEmbeddedProductService
             }
         }
 
-        if (isset($postedResponse['error'])) {
-            $errorMessage = ' EP code: '.$sukoonMedXEPTransaction->code.'  : Error while making Apply AP payment Posted to sage';
-            $message = ' EP code: '.$sukoonMedXEPTransaction->code.'  :aPPostReceipts failed';
+        $sageErrorMessageOnSuccess = $postedResponse['Message'] ?? null;
+        $isErrorOccurred = $sageErrorMessageOnSuccess && str_contains($sageErrorMessageOnSuccess, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE);
+        if (isset($postedResponse['error']) || $isErrorOccurred) {
+            $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' EP code: '.$sukoonMedXEPTransaction->code.'  : Error while making Apply AP payment Posted to sage';
+            $message = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' EP code: '.$sukoonMedXEPTransaction->code.'  :aPPostReceipts failed';
 
             return $this->sageApiService->logErrorAndReturn([$sukoonMedXEPTransaction, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
         }

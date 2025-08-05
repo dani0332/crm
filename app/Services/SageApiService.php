@@ -2458,9 +2458,11 @@ class SageApiService
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $message");
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $errorMessage");
 
+        $sageErrorMessageOnSuccess = $response['Message'] ?? null;
+
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
-        $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
+        $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? $sageErrorMessageOnSuccess ?? null;
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
         if ($this->sageHasProcessingConflict($sageErrorMessage)) {
@@ -2617,7 +2619,7 @@ class SageApiService
     {
         $sageErrorMessage = strtolower($sageErrorMessage);
 
-        return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress') || str_contains($sageErrorMessage, 'record already exists');
+        return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress') || str_contains($sageErrorMessage, 'record already exists') /*|| str_contains($sageErrorMessage, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE)*/;
     }
 
     public function scheduleSageProcesses($insurerId = null): void
@@ -3313,6 +3315,9 @@ class SageApiService
             }
         }
 
+        // delay is added because we are experiencing an error while posting AP Mapping
+        sleep(3);
+
         // 15
         $currentStep = 18;
         $isLiveApiCallStep18 = true;
@@ -3350,9 +3355,12 @@ class SageApiService
             }
         }
 
-        if (isset($postedResponse['error'])) {
-            $errorMessage = 'Error while making Apply payment Posted to sage';
-            $message = 'postUpfrontApplyPaymentAPInvoice failed';
+        $sageErrorMessageOnSuccess = $postedResponse['Message'] ?? null;
+        $isErrorOccurred = $sageErrorMessageOnSuccess && str_contains($sageErrorMessageOnSuccess, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE);
+
+        if (isset($postedResponse['error']) || $isErrorOccurred) {
+            $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess  : 'Error while making Apply payment Posted to sage';
+            $message = $isErrorOccurred ? $sageErrorMessageOnSuccess  : 'postUpfrontApplyPaymentAPInvoice failed';
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
@@ -3428,6 +3436,8 @@ class SageApiService
             }
         }
 
+        // delay is added because we are experiencing an error while posting AP Mapping
+        sleep(3);
         // 15
         $currentStep = 18;
         $isLiveApiCallStep18 = true;
@@ -3466,9 +3476,12 @@ class SageApiService
             }
         }
 
-        if (isset($postedResponse['error'])) {
-            $errorMessage = 'Error while making Apply payment Posted to sage';
-            $message = ' postSplitApplyPaymentAPInvoice failed';
+        $sageErrorMessageOnSuccess = $postedResponse['Message'] ?? null;
+        $isErrorOccurred = $sageErrorMessageOnSuccess && str_contains($sageErrorMessageOnSuccess, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE);
+
+        if (isset($postedResponse['error']) || $isErrorOccurred) {
+            $errorMessage =  $isErrorOccurred ? $sageErrorMessageOnSuccess : 'Error while making Apply payment Posted to sage';
+            $message = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' postSplitApplyPaymentAPInvoice failed';
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
@@ -3544,7 +3557,9 @@ class SageApiService
             }
         }
 
-        // 17
+        // delay is added because we are experiencing an error while posting AP Mapping
+        sleep(3);
+
         $currentStep = 21;
         $isLiveApiCallStep21 = true;
         $aPPostReceipts = SagePayloadFactory::postSplitApplyPaymentAPInvoicePayload($batchNumber);
@@ -3582,9 +3597,12 @@ class SageApiService
 
         }
 
-        if (isset($postedResponse['error'])) {
-            $errorMessage = 'Error while making Apply payment Posted to sage';
-            $message = 'aPPostReceiptsPayment - BatchNumber '.$batchNumber.' failed';
+        $sageErrorMessageOnSuccess = $postedResponse['Message'] ?? null;
+        $isErrorOccurred = $sageErrorMessageOnSuccess && str_contains($sageErrorMessageOnSuccess, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE);
+
+        if (isset($postedResponse['error']) || $isErrorOccurred) {
+            $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess : 'Error while making Apply payment Posted to sage';
+            $message = $isErrorOccurred ? $sageErrorMessageOnSuccess : 'aPPostReceiptsPayment - BatchNumber '.$batchNumber.' failed';
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
