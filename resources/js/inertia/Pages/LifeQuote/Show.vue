@@ -5,17 +5,17 @@ import {
   preventInvalidInputs,
   useIsQuoteCreatedAfterCutoff,
 } from '@/inertia/Composables/utilities.js';
+import { watch } from 'vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
-import { watch } from 'vue';
 
 const page = usePage();
 const props = defineProps({
@@ -604,11 +604,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
   activityForm.quote_id = page.props.quote.id;
