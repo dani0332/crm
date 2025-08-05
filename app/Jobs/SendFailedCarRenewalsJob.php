@@ -2,16 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
+use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use App\Services\Logger\LoggerService;
-use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
-use App\Services\EmailServices\CarEmailService;
 
 class SendFailedCarRenewalsJob implements ShouldQueue
 {
     use Queueable;
+
     public $failedQuotes;
     /**
      * Create a new job instance.
@@ -28,14 +29,14 @@ class SendFailedCarRenewalsJob implements ShouldQueue
     {
 
         $workflowSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
-    
+
         if ($workflowSwitch) {
             app(CarEmailService::class)->sendFailedCarRenewals($this->failedQuotes);
-            
-                LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.implode(', ', $this->failedQuotes));
+
+            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.implode(', ', $this->failedQuotes));
         } else {
             LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.$this->failedQuotes);
         }
-      
+
     }
 }

@@ -911,7 +911,7 @@ class CRUDController extends Controller
                 'paymentGatewayEnum',
                 'isFuncsEnabled',
                 'businessActivities',
-                'previousQuote'
+                'previousQuote',
             ]));
         }
 

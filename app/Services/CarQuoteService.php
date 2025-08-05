@@ -2124,7 +2124,7 @@ class CarQuoteService extends BaseService
 
     public function getPreviousQuote($id)
     {
-        return CarQuote::where('id', $id)->select('id','uuid','code')->first();
+        return CarQuote::where('id', $id)->select('id', 'uuid', 'code')->first();
     }
 
 }

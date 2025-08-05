@@ -307,9 +307,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-
-        
-        
     }
 
     private function seedUnavailableTimeThreshold()
@@ -365,7 +362,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-        
+
     }
 
     public function seedStopDeduplicateScript()
