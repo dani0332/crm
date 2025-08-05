@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-        ApplicationStorageSeeder::class,
+            ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
             // HealthRevivalQuotesSeeder::class,
             // QuoteStatusSeeder::class,

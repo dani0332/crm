@@ -2,10 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
 use App\Services\CQF\CarCQFRenewalService;
+use Illuminate\Console\Command;
 
 class ProcessCarCQFRenewalLeads extends Command
 {
@@ -29,7 +28,7 @@ class ProcessCarCQFRenewalLeads extends Command
     public function handle()
     {
         $isCarCQFRenewals = getAppStorageValueByKey(ApplicationStorageEnums::CAR_CQF_RENEWALS_SWITCH);
-        if ($isCarCQFRenewals ) {
+        if ($isCarCQFRenewals) {
             info('Starting process to retrieve car cqf renewal leads | Time: '.now());
             app(CarCQFRenewalService::class)->processCarCQFRenewalLeads();
             info('Completed process to retrieve car cqf renewal leads | Time: '.now());

@@ -768,13 +768,13 @@ class CarEmailService extends BaseService
 
     public function sendFailedCarRenewals($failedQuotes)
     {
-        
+
         $workflow = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
-        if($workflow){
+        if ($workflow) {
             $response = app(BirdService::class)->triggerWebHookRequest($workflow->value, $this->buildFailedCarRenewalsEmailData($failedQuotes));
             LoggerService::info(self::class.' - sendFailedCarRenewals - Event triggered ');
         }
-        
+
     }
 
     public function buildFailedCarRenewalsEmailData($failedQuotes)

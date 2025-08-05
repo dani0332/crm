@@ -5,6 +5,7 @@ namespace App\Services\CQF;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
@@ -17,11 +18,13 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Jobs\SendFailedCarRenewalsJob;
 use App\Models\CarQuote;
+use App\Models\EmbeddedTransaction;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\RenewalBatch;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Services\CapiRequestService;
 use App\Services\InsuranceProviderService;
@@ -31,10 +34,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
-use App\Facades\Ken;
-use App\Repositories\EmbeddedProductRepository;
-use App\Enums\EmbeddedProductEnum;
-use App\Models\EmbeddedTransaction;
 
 class CarCQFRenewalService
 {
@@ -65,7 +64,7 @@ class CarCQFRenewalService
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
-            ])           
+            ])
             ->take(50)
             ->chunkById(50, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
@@ -77,34 +76,33 @@ class CarCQFRenewalService
                     LoggerService::info(self::class.' - No quotes in chunk');
                 }
             });
-        
-            if($this->totalQuotesProcessed > 0){
-               
-                $renewalsUploadLeads->status = ProcessStatusCode::COMPLETED;
-                $renewalsUploadLeads->total_records = $this->totalQuotesProcessed;
-                $renewalsUploadLeads->save();
-            }
-            else {
-                $renewalsUploadLeads->is_deleted = 1;
-                $renewalsUploadLeads->save();
-            }
 
-            if(count($this->epCodes) > 0){
+        if ($this->totalQuotesProcessed > 0) {
+
+            $renewalsUploadLeads->status = ProcessStatusCode::COMPLETED;
+            $renewalsUploadLeads->total_records = $this->totalQuotesProcessed;
+            $renewalsUploadLeads->save();
+        } else {
+            $renewalsUploadLeads->is_deleted = 1;
+            $renewalsUploadLeads->save();
+        }
+
+        if (count($this->epCodes) > 0) {
             // Chunk-wise update of epCodes for performance and memory efficiency
             collect($this->epCodes)
                 ->chunk(500)
                 ->each(function ($epCodeChunk) {
                     EmbeddedTransaction::whereIn('code', $epCodeChunk->toArray())
                         ->update(['is_selected' => 1]);
-                    LoggerService::info(self::class . " - Updated is_selected for EP codes chunk. Count: " . count($epCodeChunk));
+                    LoggerService::info(self::class.' - Updated is_selected for EP codes chunk. Count: '.count($epCodeChunk));
                 });
-            }
-            if($this->errorQuotes > 0){
-                SendFailedCarRenewalsJob::dispatch($this->failedQuotes);
-                LoggerService::info(self::class." - Car CQF Renewal Leads processing completed with errors: {$this->errorQuotes}");
-            }else{
-                LoggerService::info(self::class." - Car CQF Renewal Leads processing completed");
-            }
+        }
+        if ($this->errorQuotes > 0) {
+            SendFailedCarRenewalsJob::dispatch($this->failedQuotes);
+            LoggerService::info(self::class." - Car CQF Renewal Leads processing completed with errors: {$this->errorQuotes}");
+        } else {
+            LoggerService::info(self::class.' - Car CQF Renewal Leads processing completed');
+        }
     }
 
     public function createRenewalsUploadLeads()
@@ -245,7 +243,7 @@ class CarCQFRenewalService
             'policyStartDate' => $policyStartDate,
             'newPolicyExpiryDate' => $newPolicyExpiryDate,
         ]);
-        
+
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
@@ -258,7 +256,7 @@ class CarCQFRenewalService
             'policy_number' => $quote->policy_number,
             'start_date' => $quote->policy_start_date,
             'end_date' => $quote->policy_expiry_date,
-            'batch' =>  null,
+            'batch' => null,
             'make' => $quote->carMake()->text ?? null,
             'model' => $quote->carModel()->text ?? null,
             'year' => $quote->year_of_manufacture ?? null,
@@ -298,16 +296,15 @@ class CarCQFRenewalService
             'policyStartDate' => $policyStartDate,
             'newPolicyExpiryDate' => $newPolicyExpiryDate,
         ]);
-        
 
-        $quoteData = $this->mapCarCQFRenewalQuote($quote,  $renewalsUploadLeads);
+        $quoteData = $this->mapCarCQFRenewalQuote($quote, $renewalsUploadLeads);
         $newQuote = CarQuote::create($quoteData);
 
         if ($newQuote) {
             $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, true);
             $this->getCustomerEntity($newQuote, $quote);
-             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote,QuoteTypeId::Car);
-            $this->epCodes[] =  EmbeddedProductEnum::MDX.'-'.$newQuote->code;
+            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
+            $this->epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
 
             LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully', self::class), [
                 'previous_quote_uuid' => $quote->uuid,
@@ -440,8 +437,5 @@ class CarCQFRenewalService
             'registration_type.required' => 'Registration type is required.',
         ];
     }
-
-
-   
 
 }
