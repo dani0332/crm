@@ -388,6 +388,7 @@ const providerId = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="addPayment"
     >
       <div class="w-full grid md:grid-cols-2 gap-5">

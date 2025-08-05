@@ -112,8 +112,9 @@ class InstallmentReportService extends ManagementReport
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
+
             return $data;
-            //return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
+            // return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {

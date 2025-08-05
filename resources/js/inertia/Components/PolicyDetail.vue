@@ -166,6 +166,15 @@ const policyDetailsForm = useForm({
 });
 
 watch(
+  () => page.props.quote.insurer_quote_number,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      policyDetailsForm.quote_plan_insurer_quote_number = newValue;
+    }
+  },
+);
+
+watch(
   () => page.props.quote.policy_issuance_status_id,
   (newValue, oldValue) => {
     if (newValue !== oldValue) {

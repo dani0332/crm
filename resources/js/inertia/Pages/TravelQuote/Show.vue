@@ -109,6 +109,49 @@ const dateTimeFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
 };
+
+const calculateAge = dateOfBirth => {
+  if (!dateOfBirth) return 0;
+
+  const today = new Date();
+  let birthDate;
+
+  // Handle both DD-MM-YYYY and YYYY-MM-DD formats
+  if (typeof dateOfBirth === 'string' && dateOfBirth.includes('-')) {
+    const parts = dateOfBirth.split('-');
+
+    // Check if first part is a 4-digit year (YYYY-MM-DD format)
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD format
+      const [year, month, day] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      // DD-MM-YYYY format
+      const [day, month, year] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+  } else {
+    birthDate = new Date(dateOfBirth);
+  }
+
+  // Check if the date is valid
+  if (isNaN(birthDate.getTime())) {
+    return 0;
+  }
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
+
 const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
@@ -1726,6 +1769,7 @@ const fullAddress = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2164,56 +2208,6 @@ const fullAddress = computed(() => {
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="quoteRequest.child || quoteRequest.parent"
-          >
-            <template v-if="quoteRequest.child">
-              <dt>
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                  >
-                    CHILD REF ID
-                  </label>
-                  <template #tooltip
-                    >Navigation key from parent to child in data
-                    hierarchy.</template
-                  >
-                </x-tooltip>
-              </dt>
-              <dt class="font-medium">
-                <a
-                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
-                  target="_blank"
-                  class="text-primary-600"
-                >
-                  {{ quoteRequest.child?.code }}
-                </a>
-              </dt>
-            </template>
-            <template v-if="quoteRequest.parent">
-              <dt>
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                  >
-                    PARENT REF ID
-                  </label>
-                  <template #tooltip>Parent Ref Id</template>
-                </x-tooltip>
-              </dt>
-              <dt class="font-medium">
-                <a
-                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
-                  target="_blank"
-                  class="text-primary-600"
-                >
-                  {{ quoteRequest.parent.code }}
-                </a>
-              </dt>
-            </template>
-          </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
@@ -2223,6 +2217,72 @@ const fullAddress = computed(() => {
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Age group</dt>
+                  <dd>
+                    <span v-if="quoteRequest.child || quoteRequest.parent">
+                      Both
+                    </span>
+                    <span v-else-if="calculateAge(quote.dob) < 65">
+                      0 - 64
+                    </span>
+                    <span v-else-if="calculateAge(quote.dob) >= 65">
+                      65 and above
+                    </span>
+                  </dd>
+                </div>
+
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="quoteRequest.child || quoteRequest.parent"
+                >
+                  <template v-if="quoteRequest.child">
+                    <dt>
+                      <x-tooltip placement="bottom">
+                        <label
+                          class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                        >
+                          CHILD REF ID
+                        </label>
+                        <template #tooltip
+                          >Navigation key from parent to child in data
+                          hierarchy.</template
+                        >
+                      </x-tooltip>
+                    </dt>
+                    <dt class="font-medium">
+                      <a
+                        :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                        target="_blank"
+                        class="text-primary-600"
+                      >
+                        {{ quoteRequest.child?.code }}
+                      </a>
+                    </dt>
+                  </template>
+                  <template v-if="quoteRequest.parent">
+                    <dt>
+                      <x-tooltip placement="bottom">
+                        <label
+                          class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                        >
+                          PARENT REF ID
+                        </label>
+                        <template #tooltip>Parent Ref Id</template>
+                      </x-tooltip>
+                    </dt>
+                    <dt class="font-medium">
+                      <a
+                        :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                        target="_blank"
+                        class="text-primary-600"
+                      >
+                        {{ quoteRequest.parent.code }}
+                      </a>
+                    </dt>
+                  </template>
+                </div>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -2691,6 +2751,7 @@ const fullAddress = computed(() => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="submitTraveler"
       >
         <div class="grid md:grid-cols-2 gap-4">
@@ -3675,6 +3736,7 @@ const fullAddress = computed(() => {
         show-close
         backdrop
         is-form
+        persistent
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">

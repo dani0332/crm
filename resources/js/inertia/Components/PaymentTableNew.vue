@@ -41,6 +41,7 @@ const can = permission => useCan(permission);
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 
 const { filterCCPayments } = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
@@ -139,6 +140,9 @@ const isCreditCardViewReplicated = ref(false);
 const isTransactionCaptureButtonEnabled = ref(true);
 const capturePaymentValidationErrorMessage = ref('');
 const selectedPaymentForEdit = ref(null);
+const showInsurerReceiptNumberInputField = ref(false);
+const isInsurerReceiptNumberExistsModalOpen = ref(false);
+const insurerReceiptNumberCheckInProcess = ref(false);
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -491,6 +495,44 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
+const closeInsurerReceiptNumberExistsModal = () => {
+  isInsurerReceiptNumberExistsModalOpen.value = false;
+};
+
+const checkInsurerReceiptNumber = () => {
+  if (
+    showInsurerReceiptNumberInputField.value &&
+    paymentMethodsFormReplicated.value.insurer_receipt_number
+  ) {
+    insurerReceiptNumberCheckInProcess.value = true;
+    axios
+      .post(`/payments/${props.quoteType}/check-insurer-receipt-number`, {
+        insurer_receipt_number:
+          paymentMethodsFormReplicated.value.insurer_receipt_number,
+      })
+      .then(res => {
+        if (res.data.status) {
+          createPaymentFormRef.value?.submitPaymentForm();
+        } else {
+          isInsurerReceiptNumberExistsModalOpen.value = true;
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title:
+            err?.response?.data?.message ||
+            'Insurer receipt number check failed',
+          position: 'top',
+        });
+      })
+      .finally(() => {
+        insurerReceiptNumberCheckInProcess.value = false;
+      });
+  } else {
+    createPaymentFormRef.value?.submitPaymentForm();
+  }
+};
+
 /**
  * Opens the payment modal for editing a payment
  * Loads payment data, initializes form, and sets appropriate view/edit state
@@ -508,6 +550,8 @@ const editPaymentModal = async (
   capture_approval,
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
+  showInsurerReceiptNumberInputField.value = false;
+  isInsurerReceiptNumberExistsModalOpen.value = false;
   selectedPaymentForEdit.value = payment;
 
   if (
@@ -536,6 +580,20 @@ const editPaymentModal = async (
       timeout: 10000,
     });
     return false;
+  }
+
+  // Check and enable insurer receipt number input field
+  if (split_payment_id) {
+    const splitPayment = payment?.payment_splits?.find(
+      split => split.id === split_payment_id,
+    );
+    if (
+      payment.collection_type === 'insurer' &&
+      splitPayment &&
+      splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment
+    ) {
+      showInsurerReceiptNumberInputField.value = true;
+    }
   }
 
   isTransactionCaptureButtonEnabled.value = true;
@@ -1145,6 +1203,15 @@ watch(
               isTransactionCaptureButtonEnabled
             "
             :selectedPaymentForEdit="selectedPaymentForEdit"
+            :showInsurerReceiptNumberInputField="
+              showInsurerReceiptNumberInputField
+            "
+            :insurerReceiptNumberCheckInProcess="
+              insurerReceiptNumberCheckInProcess
+            "
+            :isInsurerReceiptNumberExistsModalOpen="
+              isInsurerReceiptNumberExistsModalOpen
+            "
             @cancel-modal="createPaymentModal = !createPaymentModal"
             @aml-verification="openAmlVerificationModal"
             @update-plan-detail="updatePlanDetail"
@@ -1155,6 +1222,10 @@ watch(
             @update-create-payment-modal="value => (createPaymentModal = value)"
             @update-total-amount="value => (totalAmount = value)"
             @update-total-price="value => (totalPrice = value)"
+            @check-insurer-receipt-number="checkInsurerReceiptNumber"
+            @close-insurer-receipt-number-exists-modal="
+              closeInsurerReceiptNumberExistsModal
+            "
           />
 
           <!-- Image Gallery Modal -->
@@ -1343,5 +1414,9 @@ watch(
 .manage-payment-table-parent-div::-webkit-scrollbar {
   width: 6px;
   background-color: #c1c1c1;
+}
+.receipt-number-exists-modal-container {
+  max-height: 270px;
+  max-width: 630px;
 }
 </style>

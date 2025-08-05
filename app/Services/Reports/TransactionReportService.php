@@ -4,7 +4,6 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\TransactionReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
@@ -129,6 +128,7 @@ class TransactionReportService extends ManagementReport
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
+
             return $data;
         } else {
             $data = $query->simplePaginate(100)->withQueryString();

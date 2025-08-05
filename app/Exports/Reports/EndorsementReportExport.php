@@ -3,7 +3,6 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
-
 use App\Services\Reports\EndorsementReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -17,9 +16,8 @@ class EndorsementReportExport implements CsvExportableInterface
 
     public function __construct(
         private EndorsementReportService $endorsementReportService,
-        private array                    $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
 
         $this->columnTotals = collect();
@@ -31,14 +29,13 @@ class EndorsementReportExport implements CsvExportableInterface
         $this->columnTotals = collect($totalsRow);
     }
 
-
-
     /**
      * Get the data collection for CSV export
      */
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
+
         //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         return $this->endorsementReportService->getReportData($request);
     }
@@ -49,6 +46,7 @@ class EndorsementReportExport implements CsvExportableInterface
     public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
     {
         $request = request()->merge($requestParams);
+
         return $this->endorsementReportService->getReportQueryBuilder($request);
     }
 
@@ -104,7 +102,7 @@ class EndorsementReportExport implements CsvExportableInterface
         if (isset($quote->payment_ref_id)) {
             $paymentRefId = $quote->payment_ref_id;
             if (isset($quote->split_sr_no) && $quote->split_sr_no) {
-                $paymentRefId .= '-' . $quote->split_sr_no;
+                $paymentRefId .= '-'.$quote->split_sr_no;
             }
         } else {
             $paymentRefId = 'N/A';
@@ -154,8 +152,8 @@ class EndorsementReportExport implements CsvExportableInterface
             $quote->pcp_tag_formatted ?? 'N/A',
         ]);
         foreach ($this->columnTotals as $index => $field) {
-//                        logger()->debug("index: ".$index);
-//                        logger()->debug("field: ".$field);
+            //                        logger()->debug("index: ".$index);
+            //                        logger()->debug("field: ".$field);
             //            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($index, 0));
             //            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
 
@@ -165,11 +163,10 @@ class EndorsementReportExport implements CsvExportableInterface
             //                ], true));
 
             $sumColumns = [8, 9, 10, 11, 12, 11, 13, 14, 15, 16, 18];
-            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
-
 
         return $row->values()->toArray();
     }
@@ -191,7 +188,6 @@ class EndorsementReportExport implements CsvExportableInterface
             }
         });
 
-
         $this->postDataRows($stream);
 
         return $totalRecords;
@@ -201,7 +197,6 @@ class EndorsementReportExport implements CsvExportableInterface
     {
         $totalsRow = $this->getEmptyRow();
 
-
         foreach ($this->columnTotals as $index => $key) {
             $totalsRow[$index] = $this->resolveNumberFormat($this->columnTotals->get($index));
         }
@@ -209,10 +204,10 @@ class EndorsementReportExport implements CsvExportableInterface
         fputcsv($stream, $totalsRow);
     }
 
-//    public static function afterSheet(AfterSheet $event)
-//    {
-//        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'P', 'R']);
-//    }
+    //    public static function afterSheet(AfterSheet $event)
+    //    {
+    //        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'P', 'R']);
+    //    }
 
     private function getEmptyRow(): array
     {

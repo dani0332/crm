@@ -3,11 +3,9 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
-use App\Services\Logger\LoggerService;
 use App\Services\Reports\EndingPoliciesReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Events\AfterSheet;
 
 class EndingPoliciesReportExport implements CsvExportableInterface
 {
@@ -17,9 +15,8 @@ class EndingPoliciesReportExport implements CsvExportableInterface
 
     public function __construct(
         private EndingPoliciesReportService $endingPoliciesReportService,
-        private array                    $requestParams
-    )
-    {
+        private array $requestParams
+    ) {
         request()->merge($this->requestParams);
         //        if(request()->filled('groupBy')){
         //            $this->groupByColumn = request()->groupBy;
@@ -41,6 +38,7 @@ class EndingPoliciesReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
+
         //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
         return $this->endingPoliciesReportService->getReportData($request);
     }
@@ -105,8 +103,6 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             $quote->notes ?? 'N/A',
         ]);
 
-
-
         foreach ($this->columnTotals as $index => $field) {
             //            logger()->debug("index: ".$index);
             //            logger()->debug("field: ".$field);
@@ -122,6 +118,7 @@ class EndingPoliciesReportExport implements CsvExportableInterface
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
+
         return $row->values()->toArray();
     }
 

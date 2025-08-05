@@ -42,7 +42,7 @@ class UpdateLeadStatusRequest extends FormRequest
             'modelType' => 'required',
             'quote_uuid' => 'required',
             'leadStatus' => 'required',
-            'current_quote_status_id' => 'required',
+            'current_quote_status_id' => 'required_if:modelType,Car',
             'notes' => 'nullable',
             'lost_notes' => 'nullable|max:500',
             'approve_reason_id' => 'nullable',

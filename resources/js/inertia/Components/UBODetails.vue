@@ -339,6 +339,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] =
       show-close
       backdrop
       is-form
+      persistent
     >
       <x-form @submit="onUBOSubmit">
         <div class="grid md:grid-cols-2 gap-4">

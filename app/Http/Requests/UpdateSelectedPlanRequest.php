@@ -42,9 +42,6 @@ class UpdateSelectedPlanRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $quoteType = request()->quoteType;
-        $insuranceProviderId = request()->insurance_provider_id;
-        $planId = request()->plan_id;
         $code = request()->code;
 
         $validator->after(function ($validator) use ($code) {
