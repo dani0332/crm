@@ -103,7 +103,7 @@ const triggerPostRetryPrepayment = () => {
   retryPrepaymentForm.paymentCode = props.splitPayment.code;
   retryPrepaymentForm.srNo = props.splitPayment.sr_no;
 
-  retryPrepaymentForm.post(route('can-post-premium-prepayment-retry'), {
+  retryPrepaymentForm.post(route('retry-prepayment-button'), {
     preserveScroll: true,
     onSuccess: () => {
       router.reload({
