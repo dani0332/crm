@@ -16,10 +16,17 @@ class AiAdvisorAllocator
 
         $lead = $quoteType->model()->where('uuid', $uuid)->first();
 
+        // If human advisor is already assigned, skip AI advisor allocation
+        if ($lead->advisor_id) {
+            return null;
+        }
+
         if ($lead->isAIAdviserRequired()) {
             ! $lead->ai_advisor_id && $lead->assignToAIAdvisor();
 
             return self::makeResponse($quoteType, $lead);
+        } else {
+            $lead->unAssignAIAdvisor();
         }
 
         return null;

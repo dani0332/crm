@@ -292,4 +292,11 @@ trait QuoteAllocatable
             'ai_advisor_id' => $aiAdvisor->id,
         ]);
     }
+
+    public function unAssignAIAdvisor()
+    {
+        if ($this->ai_advisor_id && empty($this->ai_advisor_unassigned_at)) {
+            $this->touch('ai_advisor_unassigned_at');
+        }
+    }
 }
