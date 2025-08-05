@@ -493,8 +493,8 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 
-    public function isAUHLead()
+    public function isAUHLead(bool $shouldCheckSource = true)
     {
-        return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && $this->source === LeadSourceEnum::IMCRM;
+        return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
     }
 }

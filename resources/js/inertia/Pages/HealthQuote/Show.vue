@@ -3326,7 +3326,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </x-tooltip>
 
               <x-button
-                v-if="plansTable.data.length > 0"
+                v-if="plansTable.data.length > 0 && !isAUHLead"
                 size="sm"
                 color="orange"
                 @click.prevent="
