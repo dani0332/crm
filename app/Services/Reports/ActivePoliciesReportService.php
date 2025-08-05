@@ -5,6 +5,8 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -21,8 +23,11 @@ class ActivePoliciesReportService extends ManagementReport
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ACTIVE_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ACTIVE_POLICIES;
-        if ($request['createdAt'] && ! empty($request['createdAt'])) {
+
+        if (isset($request['createdAt']) && $request['createdAt'] != null && $request['createdAt'] != '' && $request['createdAt'] != 'null') {
             $this->reportDateRange = Carbon::parse($request['createdAt'])->toDateString();
+        } else {
+            $this->reportDateRange = today()->toDateString();
         }
 
         $query = PersonalQuote::query()
@@ -50,6 +55,8 @@ class ActivePoliciesReportService extends ManagementReport
     {
 
         $query = $this->getReportQueryBuilder($request);
+
+        LoggerService::sql(self::class.' - Active Policies Report Query', $query);
 
         if ($request->export == 1) {
             return $query->get();

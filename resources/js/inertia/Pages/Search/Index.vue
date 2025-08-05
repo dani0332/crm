@@ -655,6 +655,7 @@ onMounted(() => {
       title="Search Filters"
       show-close
       backdrop
+      persistent
     >
       <x-form :auto-focus="false" @keydown.enter="onSubmit">
         <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">

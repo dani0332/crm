@@ -1006,6 +1006,7 @@ class TravelQuoteService extends BaseService
         $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
         $duplicateLead->quote_status_id = $quoteStatusId;
         $duplicateLead->region_cover_for_id = $leadModal->region_cover_for_id;
+        $duplicateLead->insurer_quote_number = null;
         $duplicateLead->save();
 
         if ($duplicateLead) {

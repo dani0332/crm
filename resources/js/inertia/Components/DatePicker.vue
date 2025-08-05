@@ -58,6 +58,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  minTime: {
+    type: Object,
+    default: null,
+  },
+  maxTime: {
+    type: Object,
+    default: null,
+  },
 });
 
 const selectedData = computed({
@@ -86,6 +94,8 @@ const iconPosition = computed(() => {
     class="w-full"
     :clearable="!props.disabled"
     :range="range"
+    :min-time="props.minTime"
+    :max-time="props.maxTime"
     text-input
     :teleport-center="false"
     teleport="body"

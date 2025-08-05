@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
+use App\Models\LifeInsurerRequestResponses;
+use App\Models\LifeQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
@@ -73,16 +75,6 @@ class AuditableController extends Controller
         return $query->orderBy('created_at', 'desc')->get();
     }
 
-    /**
-     * @return mixed
-     */
-    public function getQuoteAudits(Request $request)
-    {
-        $audits = AuditRepository::getQuoteAudits();
-
-        return ($request->jsonData) ? response()->json($audits) : $audits;
-    }
-
     public function loadApiLogs(Request $request)
     {
         try {
@@ -140,10 +132,15 @@ class AuditableController extends Controller
     }
 
     /**
-     * Get the appropriate query builder based on the auditable type.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return mixed
      */
+    public function getQuoteAudits(Request $request)
+    {
+        $audits = AuditRepository::getQuoteAudits();
+
+        return ($request->jsonData) ? response()->json($audits) : $audits;
+    }
+
     protected function getQueryBuilderForAuditableType(string $auditableType)
     {
         switch ($auditableType) {
@@ -152,6 +149,9 @@ class AuditableController extends Controller
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case HomeQuote::class:
                 return HomeInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
+            case LifeQuote::class:
+                return LifeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');

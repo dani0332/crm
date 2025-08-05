@@ -46,11 +46,11 @@ class SageApi extends Controller
     }
     public function sageApiLogs(Request $request, $sectionId)
     {
-        $sageApiLogs = SageApiLog::with('user')->where(['model_type' => $request->modelClass, 'model_id' => $sectionId])->get();
-        if (! $sageApiLogs->count()) {
-            // Fall Back Option
-            $sageApiLogs = SageApiLog::with('user')->where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
-        }
+        $sageApiLogsByModel = SageApiLog::with('user')->where(['model_type' => $request->modelClass, 'model_id' => $sectionId])->get();
+        $sageApiLogsBySection = SageApiLog::with('user')->where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
+
+        // Merge the collections and remove duplicates by id, then sort by id desc
+        $sageApiLogs = $sageApiLogsByModel->merge($sageApiLogsBySection)->unique('id')->sortBy('id')->values();
 
         return response()->json(['success' => true, 'sageApiLogs' => $sageApiLogs]);
     }

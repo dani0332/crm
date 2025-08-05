@@ -93,6 +93,7 @@ class ConversionAsAtReportService extends BaseService
                 'tag' => $request->tag,
                 'registration_type' => $request->registration_type,
                 'vehicle_use' => $request->vehicle_use,
+                'segment_filter' => $request->segment_filter,
                 'page' => $request->page,
             ];
 
@@ -237,6 +238,15 @@ class ConversionAsAtReportService extends BaseService
             } else {
                 $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
             }
+        }
+        if (isset($filters->segment_filter)) {
+            $tagName = QuoteSegmentEnum::FIC->tag();
+            $query->join('quote_tags', 'quote_tags.quote_uuid', "{$alias}.uuid");
+            $query->when($filters->segment_filter == QuoteSegmentEnum::FIC->value, function ($q) use ($tagName) {
+                $q->where('quote_tags.name', $tagName);
+            })->when($filters->segment_filter == QuoteSegmentEnum::NON_FIC->value, function ($q) use ($tagName) {
+                $q->whereNotIn('quote_tags.name', [$tagName]);
+            });
         }
 
         if (isset($filters->lob) && $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {

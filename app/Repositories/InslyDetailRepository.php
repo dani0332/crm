@@ -15,6 +15,7 @@ use App\Models\CycleQuote;
 use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
+use App\Models\LifeQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\SavingsQuote;
@@ -418,8 +419,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::LIFE->value:
-                            $obj->lifeQuoteRequestDetail()->updateOrCreate(
-                                ['life_quote_request_id' => $obj->id],
+                            $obj->lifeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new LifeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;

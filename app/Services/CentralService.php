@@ -54,6 +54,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -154,12 +155,14 @@ class CentralService extends BaseService
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $lob = quoteTypeCode::Business;
                     $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
-
+                    $dataArr['companyName'] = $parentRecord->company_name ?? '';
+                    $dataArr['numberOfEmployees'] = $parentRecord->number_of_employees ?? '';
+                    $dataArr['healthPlanTypeId'] = $parentRecord->health_plan_type_id ?? '';
                     if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
                         $dataArr['businessTypeOfInsuranceId'] = QuoteTypeId::Business;
                     }
+                    $lob = quoteTypeCode::Business;
                 }
 
                 if (in_array($lob, [
@@ -276,6 +279,19 @@ class CentralService extends BaseService
                 return app(CarQuoteService::class)->getPlans($id);
             case quoteTypeCode::Travel:
                 return app(TravelQuoteService::class)->sortedPlansList($id);
+            case quoteTypeCode::Life:
+                $listQuotePlans = [];
+                $quotePlans = app(LifeQuoteService::class)->getQuotePlans($id);
+
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = [];
+                } else {
+                    if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                        $listQuotePlans[] = $quotePlans->quotes->plans;
+                    }
+                }
+
+                return $listQuotePlans;
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
 

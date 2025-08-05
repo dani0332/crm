@@ -38,6 +38,8 @@ let unassignedDate = ref([]);
 let initialAsAtDate = ref('');
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
+let quoteSegments = reactive(page.props.quoteSegments ?? []);
+let filteredQuoteSegments = ref([]);
 
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
@@ -422,6 +424,16 @@ function onLobChange(updateDisplayFilter = true) {
       value: option,
     });
   });
+
+  if (filters.lob == props.quoteTypeIdEnum.Life) {
+    filteredQuoteSegments.value = page.props.quoteSegments.filter(segment => {
+      const allowedSegments = ['all', 'fic', 'non-fic'];
+      return allowedSegments.includes(segment.value);
+    });
+  } else {
+    filteredQuoteSegments.value = [];
+    filters.segment_filter = '';
+  }
 }
 
 const minDate = computed(() => {
@@ -562,6 +574,20 @@ onMounted(() => {
           filterable
           filterPlaceholder="Filter Include Unassigned Leads...."
         />
+
+        <x-select
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) &&
+            filters.lob == props.quoteTypeIdEnum.Life
+          "
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="filteredQuoteSegments"
+          filterable
+          filterPlaceholder="Filter Segment...."
+        />
+
         <DatePicker
           v-if="filters.includeUnassignedLeads == 'yes'"
           v-model="filters.createdAtDate"

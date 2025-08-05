@@ -694,9 +694,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $sageRequest->userId = auth()->id();
             $sageRequest->quoteType = $request->modelType;
             $sageRequest->advisor_id = $quote->advisor_id;
+            $sageRequest->collection_amount = $request->collection_amount;
+            $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;
 
             /* Handle NRA case where payment is approved after policy/send update is booked */
-            $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment);
+            $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
 
             if (! $sageResponse['status']) {
                 vAbort($sageResponse['message']);
@@ -710,7 +712,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentStatusId = PaymentStatusEnum::CAPTURED;
                 if ($request->actual_amount && $request->actual_amount > $request->collection_amount) {
-                    $paymentStatusId = PaymentStatusEnum::PARTIAL_CAPTURED;
+                    $paymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
                 }
                 LoggerService::info("Split payment approval started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
