@@ -104,7 +104,7 @@ function assignManager() {
     return;
   }
 
-  assignmentForm.post(`/claims/${props.claim.id}/assign-manager`, {
+  assignmentForm.post(`/claim/${props.claim.id}/assign-manager`, {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -130,7 +130,7 @@ function updateStatus() {
     return;
   }
 
-  statusForm.post(`/claims/${props.claim.id}/update-status`, {
+  statusForm.post(`/claim/${props.claim.id}/update-status`, {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -156,7 +156,7 @@ function updateSubStatus() {
     return;
   }
 
-  subStatusForm.post(`/claims/${props.claim.id}/update-sub-status`, {
+  subStatusForm.post(`/claim/${props.claim.id}/update-sub-status`, {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -175,7 +175,7 @@ function updateSubStatus() {
 
 function updateComplaintStatus() {
   complaintStatusForm.post(
-    `/claims/${props.claim.id}/update-complaint-status`,
+    `/claim/${props.claim.id}/update-complaint-status`,
     {
       preserveScroll: true,
       onSuccess: () => {
@@ -203,7 +203,7 @@ function scheduleFollowUp() {
     return;
   }
 
-  followUpForm.post(`/claims/${props.claim.id}/schedule-follow-up`, {
+  followUpForm.post(`/claim/${props.claim.id}/schedule-follow-up`, {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -250,13 +250,13 @@ function formatCurrency(amount) {
 
 function deleteClaim() {
   if (confirm('Are you sure you want to delete this claim?')) {
-    router.delete(`/claims/${props.claim.id}`, {
+    router.delete(`/claim/${props.claim.id}`, {
       onSuccess: () => {
         notification.success({
           title: 'Claim deleted successfully',
           position: 'top',
         });
-        router.visit('/claims');
+        router.visit('/claim');
       },
       onError: errors => {
         notification.error({
@@ -292,14 +292,14 @@ function deleteClaim() {
         <div class="flex gap-2">
           <Link
             v-if="can(permissionsEnum.CLAIM_LIST)"
-            href="/claims"
+            href="/claim"
             preserve-scroll
           >
             <x-button size="sm" color="primary" tag="div">Claims List</x-button>
           </Link>
           <Link
             v-if="can(permissionsEnum.CLAIM_EDIT)"
-            :href="`/claims/${claim.ref_id}/edit`"
+            :href="`/claim/${claim.ref_id}/edit`"
           >
             <x-button size="sm" color="emerald" tag="div">Edit</x-button>
           </Link>

@@ -41,7 +41,7 @@ class ClaimsController extends Controller
             $claims = $this->claimsService->getClaimsData($request);
 
             // Get dropdown data for filters
-            $claimDropdownOptions = $this->claimsService->getDropdownData(); 
+            $claimDropdownOptions = $this->claimsService->getDropdownData();
 
             return Inertia::render('Claims/Index', [
                 'claims' => $claims,
@@ -54,8 +54,6 @@ class ClaimsController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-
-            dd($e->getMessage());
 
             return Inertia::render('Claims/Index', [
                 'claims' => collect([]),
@@ -91,16 +89,60 @@ class ClaimsController extends Controller
         }
     }
 
+      /**
+     * Search active policies (AJAX endpoint)
+     */
+    public function searchPolicies(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'policy_number' => 'nullable|string',
+            'quote_type_id' => 'required|numeric',
+        ]);
+
+        if (! $request->email && ! $request->policy_number) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please provide either email or policy number.',
+            ], 400);
+        }
+
+        try {
+            $policies = $this->claimsService->searchActivePolicies(
+                $request->email,
+                $request->policy_number,
+                $request->quote_type_id,
+            );
+
+            return response()->json([
+                'success' => true,
+                'policies' => $policies,
+                'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error searching policies', [
+                'error' => $e->getMessage(),
+                'email' => $request->email,
+                'policy_number' => $request->policy_number,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to search policies.',
+            ], 500);
+        }
+    }
+
     /**
      * Store a newly created claim
      */
-    public function store(ClaimStoreRequest $request): RedirectResponse
-    {
+    public function store(ClaimStoreRequest $request)
+    { 
         try {
             $claim = $this->claimsService->createClaim($request->validated());
 
-            return redirect()->route('claims.show', $claim->id)
-                ->with('success', "Claim {$claim->ref_id} has been created successfully.");
+            return redirect()->route('claims.show', $claim->claimUID)->with('success', "Claim {$claim->claimUID} has been created successfully.");
         } catch (Exception $e) {
             Log::error('Error creating claim', [
                 'error' => $e->getMessage(),
@@ -117,12 +159,12 @@ class ClaimsController extends Controller
     /**
      * Display the specified claim request
      */
-    public function show(ClaimRequest $claimRequest)
-    {
+    public function show($uuid)
+    { 
         try {
             // Load claim request with all relationships
-            $claimRequest = $this->claimsService->getClaimById($claimRequest->id);
-
+            $claimRequest = $this->claimsService->getClaimById($uuid);
+ 
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -136,6 +178,7 @@ class ClaimsController extends Controller
                 'claim_request_id' => $claimRequest->id,
                 'user_id' => Auth::id(),
             ]);
+            dd($e->getMessage());
 
             return redirect()->route('claims.index')
                 ->with('error', 'Failed to load claim details.');
@@ -578,48 +621,7 @@ class ClaimsController extends Controller
         }
     }
 
-    /**
-     * Search active policies (AJAX endpoint)
-     */
-    public function searchPolicies(Request $request): JsonResponse
-    {
-        $request->validate([
-            'email' => 'nullable|email',
-            'policy_number' => 'nullable|string',
-        ]);
-
-        if (! $request->email && ! $request->policy_number) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please provide either email or policy number.',
-            ], 400);
-        }
-
-        try {
-            $policies = $this->claimsService->searchActivePolicies(
-                $request->email,
-                $request->policy_number
-            );
-
-            return response()->json([
-                'success' => true,
-                'policies' => $policies,
-                'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error searching policies', [
-                'error' => $e->getMessage(),
-                'email' => $request->email,
-                'policy_number' => $request->policy_number,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to search policies.',
-            ], 500);
-        }
-    }
+  
 
     /**
      * AI optimize message (AJAX endpoint)

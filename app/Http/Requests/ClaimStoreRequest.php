@@ -13,7 +13,7 @@ class ClaimStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::user()->can(PermissionsEnum::CLAIM_CREATE);
+        return true;
     }
 
     /**
@@ -35,7 +35,7 @@ class ClaimStoreRequest extends FormRequest
                 'max:255',
                 'regex:/^[a-zA-Z\s\'-\.]+$/',
             ],
-            'phone_number' => [
+            'mobile_no' => [
                 'required',
                 'string',
                 'max:20',
@@ -46,28 +46,42 @@ class ClaimStoreRequest extends FormRequest
                 'email:rfc,dns',
                 'max:255',
             ],
-            'line_of_business_id' => [
+            'customer_id' => [
                 'required',
                 'integer',
-                'exists:quote_types,id',
+                'exists:personal_quotes,customer_id',
+            ],
+            'selected_quote_uuid' => [
+                'string',
+                'nullable', 
+            ],
+            'insurance_provider_id' => [
+                'required',
+                'integer',
+                'exists:insurance_provider,id',
+            ],
+            'quote_type_id' => [
+                'required',
+                'integer',
+                'exists:quote_type,id',
             ],
             'claim_type_id' => [
                 'required',
                 'integer',
                 'exists:lookups,id',
             ],
-
-            // Optional fields
-            'insurer_claim_number' => [
+ 
+            'incident_story' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+            'claim_number' => [
                 'nullable',
                 'string',
                 'max:100',
             ],
-            'claim_sub_status_id' => [
-                'nullable',
-                'integer',
-                'exists:lookups,id',
-            ],
+           
             'policy_number' => [
                 'nullable',
                 'string',
@@ -79,60 +93,26 @@ class ClaimStoreRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
-                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
+                /* 'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
             'vehicle_make' => [
                 'nullable',
                 'string',
                 'max:100',
-                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
+               /*  'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
             'vehicle_model' => [
                 'nullable',
                 'string',
                 'max:100',
-                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
+                /* 'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
             'vehicle_year' => [
                 'nullable',
                 'integer',
                 'min:1900',
                 'max:'.(date('Y') + 1),
-                'required_if:line_of_business_id,'.$this->getCarBikeLineOfBusinessIds(),
-            ],
-
-            // Assignment fields
-            'assigned_claims_manager_id' => [
-                'nullable',
-                'integer',
-                'exists:users,id',
-            ],
-            'claims_manager_id' => [
-                'nullable',
-                'integer',
-                'exists:users,id',
-            ],
-            'claims_manager_assigned_date' => [
-                'nullable',
-                'date',
-                'before_or_equal:today',
-            ],
-
-            // Status and follow-up fields
-            'claim_status' => [
-                'nullable',
-                'string',
-                'in:pending,in_progress,resolved,closed,cancelled',
-            ],
-            'next_follow_up_date' => [
-                'nullable',
-                'date',
-                'after:today',
-            ],
-            'complaint_status' => [
-                'nullable',
-                'string',
-                'in:none,pending,resolved,escalated',
+                /* 'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
         ];
     }
@@ -147,21 +127,18 @@ class ClaimStoreRequest extends FormRequest
             'first_name.regex' => 'First name contains invalid characters.',
             'last_name.required' => 'Last name is required.',
             'last_name.regex' => 'Last name contains invalid characters.',
-            'phone_number.required' => 'Phone number is required.',
-            'phone_number.regex' => 'Phone number format is invalid.',
+            'mobile_no.required' => 'Mobile number is required.',
+            'mobile_no.regex' => 'Mobile number format is invalid.',
             'email.required' => 'Email address is required.',
             'email.email' => 'Email address must be in a valid format.',
-            'line_of_business_id.required' => 'Line of business is required.',
-            'line_of_business_id.exists' => 'Selected line of business is invalid.',
+            'customer_id.required' => 'Customer is required.',
+            'customer_id.exists' => 'Selected customer is invalid.',
+            'insurance_provider_id.required' => 'Insurance provider is required.',
+            'insurance_provider_id.exists' => 'Selected insurance provider is invalid.',
+            'quote_type_id.required' => 'Quote type is required.',
+            'quote_type_id.exists' => 'Selected quote type is invalid.',
             'claim_type_id.required' => 'Claim type is required.',
             'claim_type_id.exists' => 'Selected claim type is invalid.',
-            'claim_sub_status_id.exists' => 'Selected claim sub-status is invalid.',
-            'assigned_claims_manager_id.exists' => 'Selected assigned claims manager is invalid.',
-            'claims_manager_id.exists' => 'Selected claims manager is invalid.',
-            'claims_manager_assigned_date.before_or_equal' => 'Claims manager assigned date cannot be in the future.',
-            'claim_status.in' => 'Selected claim status is invalid.',
-            'next_follow_up_date.after' => 'Next follow-up date must be in the future.',
-            'complaint_status.in' => 'Selected complaint status is invalid.',
             'vehicle_year.min' => 'Vehicle year must be after 1900.',
             'vehicle_year.max' => 'Vehicle year cannot be more than one year in the future.',
 
@@ -181,23 +158,19 @@ class ClaimStoreRequest extends FormRequest
         return [
             'first_name' => 'first name',
             'last_name' => 'last name',
-            'phone_number' => 'phone number',
+            'mobile_no' => 'mobile number',
             'email' => 'email address',
-            'line_of_business_id' => 'line of business',
+            'customer_id' => 'customer',
+            'insurance_provider_id' => 'insurance provider',
+            'quote_type_id' => 'quote type',
             'claim_type_id' => 'claim type',
-            'claim_sub_status_id' => 'claim sub-status',
-            'insurer_claim_number' => 'insurer claim number',
+            'incident_story' => 'incident story',
+            'claim_number' => 'claim number',
             'policy_number' => 'policy number',
             'plate_number' => 'plate number',
             'vehicle_make' => 'vehicle make',
             'vehicle_model' => 'vehicle model',
             'vehicle_year' => 'vehicle year',
-            'assigned_claims_manager_id' => 'assigned claims manager',
-            'claims_manager_id' => 'claims manager',
-            'claims_manager_assigned_date' => 'claims manager assigned date',
-            'claim_status' => 'claim status',
-            'next_follow_up_date' => 'next follow-up date',
-            'complaint_status' => 'complaint status',
         ];
     }
 
@@ -210,9 +183,10 @@ class ClaimStoreRequest extends FormRequest
         $this->merge([
             'first_name' => $this->first_name ? trim($this->first_name) : null,
             'last_name' => $this->last_name ? trim($this->last_name) : null,
+            'mobile_no' => $this->mobile_no ? trim($this->mobile_no) : null,
             'email' => $this->email ? trim(strtolower($this->email)) : null,
-            'phone_number' => $this->phone_number ? trim($this->phone_number) : null,
-            'insurer_claim_number' => $this->insurer_claim_number ? trim($this->insurer_claim_number) : null,
+            'incident_story' => $this->incident_story ? trim($this->incident_story) : null,
+            'claim_number' => $this->claim_number ? trim($this->claim_number) : null,
             'policy_number' => $this->policy_number ? trim($this->policy_number) : null,
             'plate_number' => $this->plate_number ? trim(strtoupper($this->plate_number)) : null,
             'vehicle_make' => $this->vehicle_make ? trim($this->vehicle_make) : null,
@@ -221,11 +195,11 @@ class ClaimStoreRequest extends FormRequest
     }
 
     /**
-     * Get the Car and Bike line of business IDs for conditional validation
+     * Get the Car and Bike quote type IDs for conditional validation
      */
-    protected function getCarBikeLineOfBusinessIds(): string
+    protected function getCarBikeQuoteTypeIds(): string
     {
-        // These values should match the actual IDs in your quote_types table
+        // These values should match the actual IDs in your quote_type table
         // You might want to get these dynamically from the database
         return '1,2'; // Assuming 1=Car, 2=Bike - adjust as needed
     }

@@ -57,7 +57,7 @@ const tableHeader = [
   { text: 'VEHICLE MODEL', value: 'car_model' },
   { text: 'STATUS', value: 'claim_status' },
   { text: 'ASSIGNED TO', value: 'manager' },
-  { text: 'CREATED AT', value: 'created_at' }, 
+  { text: 'CREATED AT', value: 'created_at' },
 ];
 
 const statusOptions = computed(() => {
@@ -142,7 +142,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('/claims', {
+    router.visit('/claim', {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -154,7 +154,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/claims', {
+  router.visit('/claim', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -165,7 +165,7 @@ function onReset() {
 
 function assignManager(claimId, managerId) {
   router.post(
-    `/claims/${claimId}/assign-manager`,
+    `/claim/${claimId}/assign-manager`,
     {
       manager_id: managerId,
     },
@@ -189,7 +189,7 @@ function assignManager(claimId, managerId) {
 
 function updateStatus(claimId, status) {
   router.post(
-    `/claims/${claimId}/update-status`,
+    `/claim/${claimId}/update-status`,
     {
       status: status,
     },
@@ -213,7 +213,7 @@ function updateStatus(claimId, status) {
 
 function exportClaims() {
   loader.export = true;
-  window.location.href = '/claims/export?' + new URLSearchParams(filters);
+  window.location.href = '/claim/export?' + new URLSearchParams(filters);
   setTimeout(() => {
     loader.export = false;
   }, 3000);
@@ -256,7 +256,7 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Claims Management</h2>
       <div class="flex gap-2">
-        <Link v-if="can(permissionsEnum.CLAIM_CREATE)" href="/claims/create">
+        <Link v-if="can(permissionsEnum.CLAIM_CREATE)" href="/claim/create">
           <x-button size="sm" color="primary">Add New Claim</x-button>
         </Link>
       </div>
@@ -492,7 +492,7 @@ watch(
             <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
             <x-button size="sm" color="primary" @click.prevent="onReset">  Reset  </x-button>
           </div>
-       
+
       </div>
     </x-form>
 
@@ -506,12 +506,12 @@ watch(
       hide-rows-per-page
       hide-footer
     >
-      <template #item-ref_id="{ ref_id }">
+      <template #item-code="{ code, uuid }">
         <Link
-          :href="`/claims/${ref_id}`"
+          :href="`/claim/${uuid}`"
           class="text-primary-500 hover:underline"
         >
-          {{ ref_id }}
+          {{ code }}
         </Link>
       </template>
 
@@ -534,11 +534,11 @@ watch(
       <template #item-line_of_business="{ line_of_business }">
         {{ line_of_business?.text }}
       </template>
-      
+
       <template #item-quote_type="{ quote_type }">
         {{ quote_type?.text }}
       </template>
-      
+
       <template #item-insurance_provider="{ insurance_provider }">
         {{ insurance_provider?.text }}
       </template>
@@ -586,7 +586,7 @@ watch(
       <template #item-created_at="{ created_at }">
         {{ created_at }}
       </template>
-       
+
     </DataTable>
 
      <!-- Pagination -->
@@ -599,6 +599,6 @@ watch(
         to: claims.to,
       }"
     />
- 
+
   </div>
 </template>

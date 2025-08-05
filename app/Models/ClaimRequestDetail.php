@@ -12,13 +12,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable;
+use App\Traits\QuoteModelTrait;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * Class ClaimRequestDetail
- * 
+ *
  * Represents detailed information for a claim request
- * 
+ *
  * @property int $id
  * @property int $claim_request_id
  * @property string $claim_uuid
@@ -32,7 +33,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  */
 class ClaimRequestDetail extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory/* , SoftDeletes */;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait /* , SoftDeletes */;
 
     protected $table = 'claim_request_details';
 
@@ -93,7 +94,7 @@ class ClaimRequestDetail extends Model implements AuditableContract
     private static function generateReferenceNumber(): string
     {
         $prefix = 'REF-';
-        
+
         do {
             $randomNumber = str_pad((string) mt_rand(1, 9999999999), 10, '0', STR_PAD_LEFT);
             $referenceNumber = $prefix . $randomNumber;

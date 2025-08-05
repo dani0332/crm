@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Traits\QuoteModelTrait;
 use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,9 +20,9 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * Class ClaimRequest
- * 
+ *
  * Represents a claim request in the new claim management system
- * 
+ *
  * @property int $id
  * @property string $uuid
  * @property string $code
@@ -49,7 +50,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  */
 class ClaimRequest extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory/* , SoftDeletes */;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait/* , SoftDeletes */;
 
     protected $table = 'claim_requests';
 
@@ -149,15 +150,15 @@ class ClaimRequest extends Model implements AuditableContract
     private static function generateCode(): string
     {
         $prefix = 'CR-';
-        
+
         do {
             $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $randomString = '';
-            
+
             for ($i = 0; $i < 8; $i++) {
                 $randomString .= $characters[mt_rand(0, strlen($characters) - 1)];
             }
-            
+
             $code = $prefix . $randomString;
         } while (self::where('code', $code)->exists());
 
@@ -286,11 +287,11 @@ class ClaimRequest extends Model implements AuditableContract
     public function updateStatus(int $statusId, ?int $subStatusId = null): void
     {
         $this->claim_status_id = $statusId;
-        
+
         if ($subStatusId) {
             $this->claim_sub_status_id = $subStatusId;
         }
-        
+
         $this->save();
     }
 

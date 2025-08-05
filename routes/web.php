@@ -232,13 +232,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // Claims Management Routes
         Route::get('/claims', [ClaimsController::class, 'index'])->name('claims.index');
-        Route::get('/claims/create', [ClaimsController::class, 'create'])->name('claims.create');
-        Route::post('/claims', [ClaimsController::class, 'store'])->name('claims.store');
-        Route::get('/claims/{claim:ref_id}', [ClaimsController::class, 'show'])->name('claims.show');
-        Route::get('/claims/{claim:ref_id}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
-        Route::put('/claims/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
-        Route::patch('/claims/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
-        Route::delete('/claims/{claim:ref_id}', [ClaimsController::class, 'destroy'])->name('claims.destroy');
+        Route::get('/claim/create', [ClaimsController::class, 'create'])->name('claims.create');
+        Route::post('/claim', [ClaimsController::class, 'store'])->name('claims.store');
+        Route::get('/claim/{claim:ref_id}', [ClaimsController::class, 'show'])->name('claims.show');
+        Route::get('/claim/{claim:ref_id}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
+        Route::put('/claim/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
+        Route::patch('/claim/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
+        Route::delete('/claim/{claim:ref_id}', [ClaimsController::class, 'destroy'])->name('claims.destroy');
+        Route::post('claim/search-policies', [ClaimsController::class, 'searchPolicies'])->name('claims.search-policies');
         /*
                     // Claims AJAX routes
             Route::post('claims/{claim}/assign-manager', [ClaimsController::class, 'assignManager'])->name('claims.assign-manager');
@@ -252,7 +253,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('claims/{claim}/set-next-followup', [ClaimsController::class, 'setNextFollowUp'])->name('claims.set-next-followup');
             Route::post('claims/{claim}/update-sub-status', [ClaimsController::class, 'updateSubStatus'])->name('claims.update-sub-status');
             Route::post('claims/{claim}/update-insurer-claim-number', [ClaimsController::class, 'updateInsurerClaimNumber'])->name('claims.update-insurer-claim-number');
-            Route::post('claims/search-policies', [ClaimsController::class, 'searchPolicies'])->name('claims.search-policies');
             Route::post('claims/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
             Route::post('claims/{claim}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
             Route::get('claims/dropdown-data', [ClaimsController::class, 'getDropdownData'])->name('claims.dropdown-data');*/

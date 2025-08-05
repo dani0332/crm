@@ -13,19 +13,22 @@ const claimForm = useForm({
   // IMCRM Required Fields
   first_name: props.claim?.first_name || '',
   last_name: props.claim?.last_name || '',
-  email: props.claim?.email || props.claim?.email_address || '',
-  mobile_no: props.claim?.mobile_no || props.claim?.phone_number || '',
-  quote_type_id: props.claim?.quote_type_id || props.claim?.line_of_business_id || '',
+  email: props.claim?.email  || '',
+  mobile_no: props.claim?.mobile_no || '',
+  quote_type_id: props.claim?.quote_type_id || '',
+  customer_id: props.claim?.customer_id || '',
+  insurance_provider_id: props.claim?.insurance_provider_id || '',
 
   // Additional Fields
   claim_type_id: props.claim?.claim_type_id || '',
   incident_date: props.claim?.incident_date || '',
-  incident_story: props.claim?.incident_story || props.claim?.incident || '',
+  incident_story: props.claim?.incident_story || '',
   policy_number: props.claim?.policy_number || '',
-  insurer_claim_number: props.claim?.insurer_claim_number || '',
+  claim_number: props.claim?.claim_number || '',
   
   // Policy Selection
   selected_policy_id: null,
+  selected_quote_uuid: null,
   policy_not_listed: false,
 
   // System Fields
@@ -78,15 +81,16 @@ async function searchPolicies() {
     });
     return;
   }
-
+  resetPolicySelection();
   policySearch.loading = true;
   policySearch.error = null;
   policySearch.policies = [];
 
   try {
-    const response = await axios.post('/claims/search-policies', {
+    const response = await axios.post('/claim/search-policies', {
       email: claimForm.email,
       policy_number: claimForm.policy_number,
+      quote_type_id: claimForm.quote_type_id,
     });
 
     policySearch.policies = response.data.policies || [];
@@ -104,14 +108,12 @@ async function searchPolicies() {
 
 // Select policy function
 function selectPolicy(policy) {
-  claimForm.selected_policy_id = policy.ref_id;
+  claimForm.policy_not_listed = false;
+  claimForm.selected_policy_id = policy.id;
+  claimForm.selected_quote_uuid = policy.uuid;
   claimForm.policy_number = policy.policy_number;
-  // Auto-fill additional fields from selected policy
-  if (policy.customer_name) {
-    const nameParts = policy.customer_name.split(' ');
-    claimForm.first_name = nameParts[0] || '';
-    claimForm.last_name = nameParts.slice(1).join(' ') || '';
-  }
+  claimForm.customer_id = policy.customer_id;
+  claimForm.insurance_provider_id = policy.insurance_provider_id;
 }
 
 // Policy not listed function
@@ -122,6 +124,8 @@ function policyNotListed() {
 
 // Reset policy selection
 function resetPolicySelection() {
+  formState.showPolicies = false;
+  policySearch.searched = false;
   claimForm.selected_policy_id = null;
   claimForm.policy_not_listed = false;
   formState.canSave = false;
@@ -139,12 +143,12 @@ function onSubmit(isValid) {
     }
 
     let method = 'post';
-    let url = `/claims`;
+    let url = `/claim`;
     let title = 'Claim created successfully';
 
     if (props.isEdit && props.claim) {
       method = 'put';
-      url = `/claims/${props.claim.code}`;
+      url = `/claim/${props.claim.code}`;
       title = 'Claim updated successfully';
     }
 
@@ -160,7 +164,7 @@ function onSubmit(isValid) {
         });
 
         // Redirect to claims list
-        router.visit('/claims');
+       /*  router.visit('/claim'); */
       },
     });
   } else {
@@ -186,7 +190,7 @@ function onSubmit(isValid) {
         </p>
       </div>
       <div>
-        <Link href="/claims">
+        <Link href="/claim">
           <x-button size="sm" color="#ff5e00">Claims List</x-button>
         </Link>
       </div>
@@ -257,12 +261,12 @@ function onSubmit(isValid) {
             :error="claimForm.errors.quote_type_id"
           />
           <x-input
-            v-model="claimForm.insurer_claim_number"
+            v-model="claimForm.claim_number"
             type="text"
             label="Insurer Claim Number"
             placeholder="Enter Insurer Claim Number"
             class="w-full"
-            :error="claimForm.errors.insurer_claim_number"
+            :error="claimForm.errors.claim_number"
           />
           <x-select
             v-model="claimForm.claim_type_id"
@@ -403,11 +407,9 @@ function onSubmit(isValid) {
             :loading="policySearch.loading"
           >
             Search
-          </x-button>
-        <Link href="/claims">
-          <x-button size="md" color="gray" type="button"> Cancel </x-button>
-        </Link>
+        </x-button>
         <x-button
+          v-if="policySearch.searched"
           size="md"
           color="emerald"
           type="submit"
