@@ -5,7 +5,11 @@ namespace App\Services;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Http\Controllers\V2\CentralController;
+use App\Models\PaymentSplits;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
+use Illuminate\Http\Request;
 
 class PaymentService extends BaseService
 {
@@ -76,6 +80,69 @@ class PaymentService extends BaseService
             $totalAmount = $totalPrice - $discountValue;
             info('Quote Code: '.$payment->code.' updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
+        }
+    }
+
+    /**
+     * Retry posting prepayment to Sage for a given payment split and quote.
+     */
+    public function retryCreatePrepayment(array $data): array
+    {
+        $srNo = $data['sr_no'];
+        $paymentCode = $data['payment_code'];
+        LoggerService::info("retryCreatePrepayment called for payment code : {$paymentCode} and sr no : {$srNo}");
+
+        try {
+            $paymentSplit = PaymentSplits::find($data['payment_split_id']);
+            $payment = $paymentSplit->payment;
+            $sendUpdateId = $payment->send_update_log_id;
+            $mainLeadObject = app(CentralController::class)->getQuoteObject($data['quote_type'], $data['quote_request_id']);
+            if (! empty($sendUpdateId) && $sendUpdateId > 0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+                $quoteModel->fill([
+                    'customer_id' => $mainLeadObject->customer_id,
+                    'advisor_id' => $mainLeadObject->advisor_id,
+                ]);
+            } else {
+                $quoteModel = $mainLeadObject;
+            }
+            $request = new Request;
+            $request->merge([
+                'modelType' => $data['quote_type'],
+                'quoteType' => $data['quote_type'],
+                'quote_id' => $data['quote_request_id'],
+                'customer_id' => $quoteModel->customer_id,
+                'advisor_id' => $quoteModel->advisor_id,
+            ]);
+
+            LoggerService::info("Start Retry Prepayment Posting of Payment split for payment code : {$paymentCode} and sr no : {$srNo}");
+            if ((new SageApiService)->isSageEnabled()) {
+                $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($request, $quoteModel, $payment, $paymentSplit, $paymentSplit->collection_amount);
+
+                if (! $sageResponse['status']) {
+                    LoggerService::warning("Sage response error for payment code : {$paymentCode} and sr no : {$srNo}");
+                    vAbort($sageResponse['message']);
+                }
+                LoggerService::info("Sage Receipt ID created: {$paymentSplit->sage_reciept_id} for payment code : {$paymentCode} and sr no : {$srNo}");
+
+                return [
+                    'success' => true,
+                    'message' => 'Prepayment posting to Sage successfully.',
+                    'sage_receipt_id' => $paymentSplit->sage_reciept_id,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Sage integration is not enabled.',
+            ];
+        } catch (\Exception $exception) {
+            LoggerService::warning("Exception in retryPrepaymentPostingToSage: {$exception->getMessage()} for payment code : {$paymentCode} and sr no : {$srNo}");
+
+            return [
+                'success' => false,
+                'message' => 'Prepayment posting failed, please try again later.',
+            ];
         }
     }
 }

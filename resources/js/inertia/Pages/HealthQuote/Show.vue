@@ -1199,7 +1199,7 @@ const activityForm = useForm({
   parentType: 'Health',
   quoteType: 3,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -1233,11 +1233,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -3998,6 +3994,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Title"
           :rules="[isRequired]"
           class="w-full"
+          required
         />
 
         <x-textarea
@@ -4005,6 +4002,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Description"
           :adjust-to-text="false"
           class="w-full"
+          :rules="[isRequired]"
+          required
         />
 
         <x-select
@@ -4014,6 +4013,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :rules="[isRequired]"
           placeholder="Select Assignee"
           class="w-full"
+          required
         />
 
         <date-picker
@@ -4023,6 +4023,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           class="w-full"
           withTime
           :timezone="'UTC'"
+          required
         />
       </div>
 
