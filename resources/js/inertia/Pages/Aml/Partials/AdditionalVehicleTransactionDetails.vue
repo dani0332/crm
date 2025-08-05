@@ -5,6 +5,8 @@ const { isRequired } = useRules();
 const page = usePage();
 const notification = useToast();
 const lookups = page.props.lookups;
+const hasPermission = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 // Computed options for dropdowns
 const rtaTransactionTypeOptions = computed(() => {
@@ -35,32 +37,36 @@ const plateCodeOptions = computed(() => {
   return useGenerateOptions(lookups?.plate_code ?? [], 'code', 'text');
 });
 
+const carQuoteRequestDetail = computed(() => {
+  return page.props.quoteRequest?.car_quote_request_detail;
+});
+
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   additional_vehicle_transaction_details: true,
-  rta_transaction_type: page.props.quoteRequest?.car_quote_request_detail?.rta_transaction_type?.toString() ?? '',
-  plate_code: page.props.quoteRequest?.car_quote_request_detail?.plate_code ?? '',
-  plate_number: page.props.quoteRequest?.car_quote_request_detail?.plate_number ?? '',
-  traffic_code_number: page.props.quoteRequest?.car_quote_request_detail?.traffic_code_number ?? '',
-  chassis_number: page.props.quoteRequest?.car_quote_request_detail?.chassis_number ?? '',
-  engine_number: page.props.quoteRequest?.car_quote_request_detail?.engine_number ?? '',
-  rta_plate_category: page.props.quoteRequest?.car_quote_request_detail?.rta_plate_category ?? '',
-  vehicle_color: page.props.quoteRequest?.car_quote_request_detail?.vehicle_color ?? '',
-  plate_color: page.props.quoteRequest?.car_quote_request_detail?.plate_color ?? '',
-  bank_loan: page.props.quoteRequest?.car_quote_request_detail?.bank_loan ?? '',
-  bank_name: page.props.quoteRequest?.car_quote_request_detail?.bank_name ?? '',
-  first_registration_date: page.props.quoteRequest?.car_quote_request_detail?.first_registration_date ?? '',
-  policy_effective_date: page.props.quoteRequest?.car_quote_request_detail?.policy_effective_date ?? '',
-  policy_expiry_date: page.props.quoteRequest?.car_quote_request_detail?.policy_expiry_date ?? '',
-  certificate_start_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_start_date ?? '',
-  certificate_end_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_end_date ?? '',
-  annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
+  rta_transaction_type: carQuoteRequestDetail.value?.rta_transaction_type?.toString() ?? '',
+  plate_code: carQuoteRequestDetail.value?.plate_code ?? '',
+  plate_number: carQuoteRequestDetail.value?.plate_number ?? '',
+  traffic_code_number: carQuoteRequestDetail.value?.traffic_code_number ?? '',
+  chassis_number: carQuoteRequestDetail.value?.chassis_number ?? '',
+  engine_number: carQuoteRequestDetail.value?.engine_number ?? '',
+  rta_plate_category: carQuoteRequestDetail.value?.rta_plate_category ?? '',
+  vehicle_color: carQuoteRequestDetail.value?.vehicle_color ?? '',
+  plate_color: carQuoteRequestDetail.value?.plate_color ?? '',
+  bank_loan: carQuoteRequestDetail.value?.bank_loan ?? '',
+  bank_name: carQuoteRequestDetail.value?.bank_name ?? '',
+  first_registration_date: carQuoteRequestDetail.value?.first_registration_date ?? '',
+  policy_effective_date: carQuoteRequestDetail.value?.policy_effective_date ?? '',
+  policy_expiry_date: carQuoteRequestDetail.value?.policy_expiry_date ?? '',
+  certificate_start_date: carQuoteRequestDetail.value?.certificate_start_date ?? '',
+  certificate_end_date: carQuoteRequestDetail.value?.certificate_end_date ?? '',
+  annual_mileage_estimate: carQuoteRequestDetail.value?.annual_mileage_estimate?.toString() ?? '',
 });
 
 const hasNotEditPermission = computed(() => {
-  return false; // !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
+  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
 });
 
 const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
@@ -114,6 +120,7 @@ const isSUKOON = computed(() => {
       <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
           <x-field label="RTA Transaction Type" required>
             <x-select
+              filterable
               v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type"
               :rules="[isRequired]"
               :options="rtaTransactionTypeOptions"
@@ -123,8 +130,8 @@ const isSUKOON = computed(() => {
           </x-field>
 
           <x-field label="Plate Code" :required="! isGIG">
-            <ComboBox
-              :single="true"
+            <x-select
+              filterable
               v-model="additionalVehicleTransactionDetailsForm.plate_code"
               :rules="(! isGIG) ? [isRequired] : []"
               placeholder="Select Plate Code"
@@ -176,6 +183,7 @@ const isSUKOON = computed(() => {
 
           <x-field label="RTA Plate Category" :required="isGIG">
             <x-select
+              filterable
               v-model="additionalVehicleTransactionDetailsForm.rta_plate_category"
               :rules="isGIG ? [isRequired] : []"
               :options="rtaPlateCategoryOptions"
@@ -186,6 +194,7 @@ const isSUKOON = computed(() => {
 
           <x-field label="Vehicle Color" required>
             <x-select
+              filterable
               v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
               :options="vehicleColorOptions"
               :rules="[isRequired]"
@@ -196,6 +205,7 @@ const isSUKOON = computed(() => {
 
           <x-field label="Plate Color" :required="isGIG">
             <x-select
+              filterable
               v-model="additionalVehicleTransactionDetailsForm.plate_color"
               :options="plateColorOptions"
               :rules="isGIG ? [isRequired] : []"
@@ -218,8 +228,8 @@ const isSUKOON = computed(() => {
           </x-field>
 
           <x-field label="Bank Name" :required="! isGIG">
-            <ComboBox
-              :single="true"
+            <x-select
+              filterable
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
@@ -285,6 +295,7 @@ const isSUKOON = computed(() => {
             />
             <x-select
               v-else
+              filterable
               v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
               :rules="isLIVA ? [isRequired] : []"
               :options="annualMileageEstimateOptions"
@@ -293,10 +304,9 @@ const isSUKOON = computed(() => {
             />
           </x-field>
         </dl>
-        <!-- v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)" -->
         <div
           class="flex justify-end my-5 gap-x-2"
-          v-if="true"
+          v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
         >
           <x-button
             size="sm"

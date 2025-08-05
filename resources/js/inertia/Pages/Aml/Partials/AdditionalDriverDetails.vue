@@ -4,8 +4,9 @@ const { isRequired } = useRules();
 
 const page = usePage();
 const notification = useToast();
-
 const lookups = page.props.lookups;
+const hasPermission = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -34,26 +35,30 @@ const drivingExperienceOptions = computed(() => {
   return options
 });
 
+const carDetail = computed(() => {
+  return page.props.quoteRequest?.car_quote_request_detail;
+});
+
 const additionalDriverDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
-  is_insured_and_driver_same: page.props.quoteRequest?.car_quote_request_detail?.is_insured_and_driver_same ?? '',
-  driver_first_name: page.props.quoteRequest?.car_quote_request_detail?.driver_first_name ?? '',
-  driver_last_name: page.props.quoteRequest?.car_quote_request_detail?.driver_last_name ?? '',
-  driver_dob: page.props.quoteRequest?.car_quote_request_detail?.driver_dob ?? '',
-  driver_gender: page.props.quoteRequest?.car_quote_request_detail?.driver_gender ?? '',
-  driver_license_number: page.props.quoteRequest?.car_quote_request_detail?.driver_license_number ?? '',
-  license_issue_place: page.props.quoteRequest?.car_quote_request_detail?.license_issue_place ?? '',
-  license_issue_date: page.props.quoteRequest?.car_quote_request_detail?.license_issue_date ?? '',
-  license_expiry_date: page.props.quoteRequest?.car_quote_request_detail?.driver_license_expiry_date ?? '',
-  uae_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.driver_uae_driving_experience.toString() ?? '',
-  home_country_license_issuance: page.props.quoteRequest?.car_quote_request_detail?.home_country_license_issuance ?? '',
-  home_country_driving_experience: page.props.quoteRequest?.car_quote_request_detail?.home_country_driving_experience.toString() ?? '',
+  is_insured_and_driver_same: carDetail.value?.is_insured_and_driver_same ?? '',
+  driver_first_name: carDetail.value?.driver_first_name ?? '',
+  driver_last_name: carDetail.value?.driver_last_name ?? '',
+  driver_dob: carDetail.value?.driver_dob ?? '',
+  driver_gender: carDetail.value?.driver_gender ?? '',
+  driver_license_number: carDetail.value?.driver_license_number ?? '',
+  license_issue_place: carDetail.value?.license_issue_place ?? '',
+  license_issue_date: carDetail.value?.license_issue_date ?? '',
+  license_expiry_date: carDetail.value?.driver_license_expiry_date ?? '',
+  uae_driving_experience: carDetail.value?.driver_uae_driving_experience?.toString() ?? '',
+  home_country_license_issuance: carDetail.value?.home_country_license_issuance ?? '',
+  home_country_driving_experience: carDetail.value?.home_country_driving_experience?.toString() ?? '',
 });
 
 const hasNotEditPermission = computed(() => {
-  return false; // !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
+  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
 });
 
 const submitAdditionalDriverDetailsForm = (isValid) => {
@@ -205,6 +210,7 @@ const isSUKOON = computed(() => {
         <!-- TODO: Required only if 'Driver same as Client?' is NO -->
         <x-field label="UAE Driving Experience" :required="isLIVA">
           <x-select
+            filterable
             v-model="additionalDriverDetailsForm.uae_driving_experience"
             :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
@@ -214,8 +220,8 @@ const isSUKOON = computed(() => {
         </x-field>
 
         <x-field label="Home Country License Issuance" :required="! isGIG">
-          <ComboBox
-            :single="true"
+          <x-select
+            filterable
             v-model="additionalDriverDetailsForm.home_country_license_issuance"
             :rules="(! isGIG) ? [isRequired] : []"
             placeholder="Select License Home Country"
@@ -227,6 +233,7 @@ const isSUKOON = computed(() => {
 
         <x-field label="Home Country Driving Experience" :required="isLIVA">
           <x-select
+            filterable
             v-model="additionalDriverDetailsForm.home_country_driving_experience"
             :rules="isLIVA ? [isRequired] : []"
             :options="drivingExperienceOptions"
@@ -235,10 +242,9 @@ const isSUKOON = computed(() => {
           />
         </x-field>
       </dl>
-      <!-- v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)" -->
       <div
         class="flex justify-end my-5 gap-x-2"
-        v-if="true"
+        v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"
       >
         <x-button
           size="sm"
