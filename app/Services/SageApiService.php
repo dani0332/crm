@@ -2619,7 +2619,7 @@ class SageApiService
     {
         $sageErrorMessage = strtolower($sageErrorMessage);
 
-        return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress') || str_contains($sageErrorMessage, 'record already exists') /*|| str_contains($sageErrorMessage, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE)*/;
+        return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress') || str_contains($sageErrorMessage, 'record already exists');
     }
 
     public function scheduleSageProcesses($insurerId = null): void

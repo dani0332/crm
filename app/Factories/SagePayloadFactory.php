@@ -1644,7 +1644,7 @@ class SagePayloadFactory
         }
 
         return [
-            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.$val,
+            'endPoint' => 'AP/APPostPaymentsAndAdjustments'.$val,
             'payload' => $payLoad,
             'sage_request_type' => $sageRequestType,
             'entry_type' => $entryType,
@@ -1719,7 +1719,7 @@ class SagePayloadFactory
         }
 
         return [
-            'endPoint' => 'AP/APPaymentAndAdjustmentBatches'.$val,
+            'endPoint' => 'AP/APPostPaymentsAndAdjustments'.$val,
             'payload' => $payLoad,
             'sage_request_type' => $sageRequestType,
             'entry_type' => $entryType,
