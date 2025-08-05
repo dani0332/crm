@@ -28,6 +28,7 @@ class DrivingLicenseExtractor
             'driver_last_name' => null,
             'driver_dob' => null,
             'driver_gender' => null,
+            'driver_nationality_string' => null,
 
             // Metadata
             'ocr_processed_at' => now()->toDateTimeString(),
@@ -63,6 +64,7 @@ class DrivingLicenseExtractor
                 'driver_last_name' => $this->extractLastName($personalInfo['fullName'] ?? null) ?: $this->extractedData['driver_last_name'],
                 'driver_dob' => $this->formatDate($personalInfo['dateOfBirth'] ?? null) ?: $this->extractedData['driver_dob'],
                 'driver_gender' => $personalInfo['sex'] ?? $this->extractedData['driver_gender'],
+                'driver_nationality_string' => $personalInfo['nationality'] ?? $this->extractedData['driver_nationality_string'],
 
                 // Metadata
                 'ocr_model' => $data['model'] ?? $this->extractedData['ocr_model'],
@@ -90,6 +92,7 @@ class DrivingLicenseExtractor
             'driver_last_name' => $this->extractedData['driver_last_name'] ?? null,
             'driver_dob' => $this->extractedData['driver_dob'] ?? null,
             'driver_gender' => $this->extractedData['driver_gender'] ?? null,
+            'driver_nationality_string' => $this->extractedData['driver_nationality_string'] ?? null,
         ]);
     }
 

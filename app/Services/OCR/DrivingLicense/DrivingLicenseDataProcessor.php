@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\OCR\DrivingLicense;
 
 use App\Models\CarQuote;
+use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
@@ -65,6 +66,22 @@ class DrivingLicenseDataProcessor
     private function updateCarQuoteRequestDetail(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
+            // Convert nationality string to nationality_id if nationality is provided
+            if (! empty($fieldsToUpdate['driver_nationality_string'])) {
+                $nationalityId = $this->getNationalityId($fieldsToUpdate['driver_nationality_string']);
+                if ($nationalityId) {
+                    $fieldsToUpdate['driver_nationality_id'] = $nationalityId;
+                    // Remove the nationality string since we only want to store the ID
+                    unset($fieldsToUpdate['driver_nationality_string']);
+                } else {
+                    LoggerService::warning('Driver nationality could not be matched - Quote UUID: '.$quote->uuid, extra: [
+                        'nationality_string' => $fieldsToUpdate['driver_nationality_string'],
+                    ]);
+                    // Remove the nationality field since we can't match it
+                    unset($fieldsToUpdate['driver_nationality_string']);
+                }
+            }
+
             $carQuoteDetail = $quote->carQuoteRequestDetail;
 
             if (! $carQuoteDetail) {
@@ -98,6 +115,17 @@ class DrivingLicenseDataProcessor
         }
     }
 
+    private function getNationalityId(?string $nationality): ?int
+    {
+        if (empty($nationality)) {
+            return null;
+        }
+
+        return Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+            ->orWhere('code', $nationality)
+            ->value('id');
+    }
+
     public function getProcessingSummary(): array
     {
         $carQuoteDetail = $this->quote->carQuoteRequestDetail;
@@ -116,6 +144,8 @@ class DrivingLicenseDataProcessor
                 'driver_last_name' => $carQuoteDetail->driver_last_name,
                 'driver_dob' => $carQuoteDetail->driver_dob,
                 'driver_gender' => $carQuoteDetail->driver_gender,
+                'driver_nationality_id' => $carQuoteDetail->driver_nationality_id,
+                'driver_nationality' => $carQuoteDetail->driverNationality?->text, // Get nationality name via relationship
             ] : null,
         ];
     }

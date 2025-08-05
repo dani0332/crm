@@ -167,18 +167,18 @@ class MulkiyaDataProcessor
     {
         try {
             // Convert nationality string to nationality_id if nationality is provided
-            if (! empty($fieldsToUpdate['nationality'])) {
-                $nationalityId = $this->getNationalityId($fieldsToUpdate['nationality']);
+            if (! empty($fieldsToUpdate['nationality_string'])) {
+                $nationalityId = $this->getNationalityId($fieldsToUpdate['nationality_string']);
                 if ($nationalityId) {
                     $fieldsToUpdate['nationality_id'] = $nationalityId;
                     // Remove the nationality string since we only want to store the ID
-                    unset($fieldsToUpdate['nationality']);
+                    unset($fieldsToUpdate['nationality_string']);
                 } else {
                     LoggerService::warning('Nationality could not be matched - Quote UUID: '.$quote->uuid, extra: [
-                        'nationality_string' => $fieldsToUpdate['nationality'],
+                        'nationality_string' => $fieldsToUpdate['nationality_string'],
                     ]);
                     // Remove the nationality field since we can't match it
-                    unset($fieldsToUpdate['nationality']);
+                    unset($fieldsToUpdate['nationality_string']);
                 }
             }
 
