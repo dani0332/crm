@@ -94,6 +94,16 @@ class BorService
                     DocumentTypeCode::BAL_LIFE,
                 ];
                 return in_array($code, $allowedCodes) && $doc->document_category == $borRefId;
+            })->map(function ($doc) use ($borRefId) {
+                return [
+                    'doc_name' => $doc->doc_name,
+                    'doc_url' => $doc->doc_url,
+                    'doc_uuid' => $doc->doc_uuid,
+                    'document_type_text' => $doc->document_type_text,
+                    'doc_mime_type' => $doc->doc_mime_type,
+                    'created_at' => $doc->created_at,
+                    'updated_at' => $doc->updated_at,
+                ];
             });
 
             // Filter signed PDF documents

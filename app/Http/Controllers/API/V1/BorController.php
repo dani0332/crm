@@ -49,14 +49,13 @@ class BorController extends Controller
             }
             $borLog->load('insuranceProvider', 'personalQuote');
             $enrichedBorLog = $this->borService->enrichBorLogWithDocuments($borLog);
-            unset($enrichedBorLog['personalQuote']);
-            unset($enrichedBorLog['insuranceProvider']);
-            return response()->json(['data' => $enrichedBorLog]);
+            
+            return response()->json(['data' => $enrichedBorLog['uploaded_documents']]);
         } catch (Exception $th) {
             LoggerService::error('Failed to get BOR log', [
                 'error' => $th->getMessage(),
                 'trace' => $th->getTraceAsString(),
-                'request' => $request->all(),
+                'request' => request()->all(),
             ]);
             return response()->json(['error' => $th->getMessage()], 500);
         }
