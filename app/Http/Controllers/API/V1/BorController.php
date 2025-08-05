@@ -41,14 +41,16 @@ class BorController extends Controller
         $this->borService = $borService;
     }
 
-    public function getBorLog(Request $request){
+    public function getBorLog($borRefId){
         try {
-            $borLog = BorLog::where('bor_reference', $request->input('bor_ref_id'))->first();
+            $borLog = BorLog::where('bor_reference', $borRefId)->first();
             if(!$borLog){
                 return response()->json(['error' => 'BOR log not found'], 404);
             }
             $borLog->load('insuranceProvider', 'personalQuote');
             $enrichedBorLog = $this->borService->enrichBorLogWithDocuments($borLog);
+            unset($enrichedBorLog['personalQuote']);
+            unset($enrichedBorLog['insuranceProvider']);
             return response()->json(['data' => $enrichedBorLog]);
         } catch (Exception $th) {
             LoggerService::error('Failed to get BOR log', [
