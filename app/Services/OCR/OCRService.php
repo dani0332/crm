@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Response;
 
 class OCRService
 {
@@ -114,19 +115,9 @@ class OCRService
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
                 ->withHeader('x-api-key', config('constants.OCR_API_KEY'))
                 ->timeout(3)
-                ->post('/process-document', [
-                    'ref_id' => 'health-check',
-                    'uuid' => 'health-check',
-                    'quote_type_id' => 1,
-                    'doc_url' => 'https://example.com/health.pdf',
-                    'doc_type' => 'DL',
-                    'provider_code' => null,
-                    'image' => false,
-                ]);
+                ->get('/health');
 
-            // If we get any response (even an error), the service is available
-            // We don't care about the actual response for health check
-            return true;
+            return $response->successful() && $response->status() === Response::HTTP_OK;
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             LoggerService::error('OCR Service Connection Failed', extra: [
                 'error_message' => $e->getMessage(),
