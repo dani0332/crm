@@ -69,6 +69,7 @@ const props = defineProps({
   noteDocumentType: Array,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  isAUHLead: Boolean,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -3301,7 +3302,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
-              <x-tooltip placement="top" align="left">
+              <x-tooltip placement="top" align="left" v-if="!isAUHLead">
                 <x-button
                   @click.prevent="validateEmailSending"
                   size="sm"
@@ -3321,7 +3322,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </x-tooltip>
 
               <x-button
-                v-if="plansTable.data.length > 0"
+                v-if="plansTable.data.length > 0 && !isAUHLead"
                 size="sm"
                 color="orange"
                 @click.prevent="
@@ -3483,6 +3484,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   actualPremium,
                   policyFee,
                   basmah,
+                  icpFee,
                   vat,
                   loadingPrice,
                   adjustedPrice,
@@ -3493,6 +3495,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     actualPremium +
                       (policyFee || 0) +
                       (basmah || 0) +
+                      (icpFee || 0) +
                       vat +
                       (loadingPrice || 0) +
                       (adjustedPrice || 0),

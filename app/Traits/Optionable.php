@@ -4,9 +4,9 @@ namespace App\Traits;
 
 trait Optionable
 {
-    public static function getOptions(string $valueColumn = 'id', string $labelColumn = 'text', bool $withActive = true, bool $active = false)
+    public static function getOptions(string $valueColumn = 'id', string $labelColumn = 'text', bool $withActive = true, bool $active = false, bool $withAll = false)
     {
-        return self::select("{$valueColumn} as value", "{$labelColumn} as label")
+        $records = self::select("{$valueColumn} as value", "{$labelColumn} as label")
             ->when($withActive, function ($query) {
                 $query->withActive();
             })
@@ -14,5 +14,11 @@ trait Optionable
                 $query->active();
             })
             ->get();
+
+        if ($withAll) {
+            $records->prepend(['value' => 'all', 'label' => 'All']);
+        }
+
+        return $records;
     }
 }
