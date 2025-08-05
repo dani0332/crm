@@ -382,7 +382,7 @@ const activityForm = useForm({
   parentType: 'Business',
   quoteType: 5,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -392,7 +392,7 @@ const activityForm = useForm({
 
 const addActivity = () => {
   activityForm.title = null;
-  activityForm.description = null;
+  activityForm.description = '';
   activityForm.due_date = null;
   activityForm.assignee_id = null;
   activityForm.status = null;
@@ -433,11 +433,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -445,12 +441,6 @@ const activityEdit = data => {
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
     activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
@@ -464,12 +454,6 @@ const onActivitySubmit = isValid => {
       },
     });
   } else {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
     activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onFinish: () => {
@@ -1596,6 +1580,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             label="Title"
             :rules="[isRequired]"
             class="w-full"
+            required
           />
 
           <x-textarea
@@ -1603,6 +1588,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             label="Description"
             :adjust-to-text="false"
             class="w-full"
+            :rules="[isRequired]"
+            required
           />
 
           <x-select
@@ -1612,16 +1599,21 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :rules="[isRequired]"
             placeholder="Select Assignee"
             class="w-full"
+            required
           />
 
           <DatePicker
-            :format="format"
             v-model="activityForm.due_date"
             label="Due Date"
             :rules="[isRequired]"
             class="w-full"
             withTime
             :min-date="new Date()"
+            :min-time="{
+              hours: new Date().getHours(),
+              minutes: new Date().getMinutes(),
+            }"
+            required
           />
         </div>
 
