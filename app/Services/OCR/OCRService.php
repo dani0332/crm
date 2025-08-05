@@ -9,10 +9,10 @@ use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Jobs\OCR\PopulateDocumentData;
 use App\Models\DocumentType;
-use App\Models\OcrLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OcrLogService;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +28,10 @@ class OCRService
 
     public const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
-    public function __construct(protected QuoteDocumentService $quoteDocumentService) {}
+    public function __construct(
+        protected QuoteDocumentService $quoteDocumentService,
+        protected OcrLogService $ocrLogService
+    ) {}
 
     private function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
     {
@@ -167,13 +170,12 @@ class OCRService
             ]);
             
             // Log OCR activity for service unavailable
-                    $this->logOcrActivity(
+                    $this->ocrLogService->logActivity(
             $quote,
             $documentType,
             'failed',
             null,
             null,
-            'process',
             null,
             'OCR service unavailable',
             $userId
@@ -188,13 +190,12 @@ class OCRService
             LoggerService::info(self::class."::process - OCR is not enabled for this document type {$documentType->code} - Quote UUID: ".$quote->uuid);
 
             // Log OCR activity for disabled document type
-                    $this->logOcrActivity(
+                    $this->ocrLogService->logActivity(
             $quote,
             $documentType,
             'skipped',
             null,
             null,
-            'process',
             null,
             'OCR not enabled for this document type',
             $userId
@@ -209,13 +210,12 @@ class OCRService
         }
 
         // Log OCR activity for processing start
-        $this->logOcrActivity(
+        $this->ocrLogService->logActivity(
             $quote,
             $documentType,
             'processing',
             null,
             null,
-            'process',
             null,
             null,
             $userId
@@ -306,7 +306,7 @@ class OCRService
                     }
                 }
 
-                $this->logOcrActivity(
+                $this->ocrLogService->logActivity(
                     $quote,
                     $documentType,
                     'success',
@@ -319,7 +319,6 @@ class OCRService
                         'image' => $this->isMimeTypeImage($fileMimeType),
                     ],
                     is_array($data) ? $data : (is_object($data) ? (array) $data : null),
-                    'process',
                     $executionTime,
                     null,
                     $userId
@@ -352,7 +351,7 @@ class OCRService
                     }
                 }
 
-                $this->logOcrActivity(
+                $this->ocrLogService->logActivity(
                     $quote,
                     $documentType,
                     'failed',
@@ -365,7 +364,6 @@ class OCRService
                         'image' => $this->isMimeTypeImage($fileMimeType),
                     ],
                     null,
-                    'process',
                     $executionTime,
                     'OCR processing failed - no data received',
                     $userId
@@ -403,7 +401,7 @@ class OCRService
                 }
             }
 
-            $this->logOcrActivity(
+            $this->ocrLogService->logActivity(
                 $quote,
                 $documentType,
                 'failed',
@@ -416,7 +414,6 @@ class OCRService
                     'image' => $this->isMimeTypeImage($fileMimeType),
                 ],
                 null,
-                'process',
                 $executionTime,
                 'OCR processing failed with exception: ' . $e->getMessage(),
                 $userId
@@ -517,65 +514,5 @@ class OCRService
             OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
             OCRDocumentTypeEnum::DRIVING_LICENSE,
         ]);
-    }
-
-    /**
-     * Log OCR activity to the database
-     */
-    private function logOcrActivity(
-        Model $quote,
-        DocumentType $documentType,
-        string $status,
-        ?array $requestData = null,
-        ?array $responseData = null,
-        string $executionMethod = 'process',
-        ?float $executionTimeMs = null,
-        ?string $errorMessage = null,
-        int $userId = 0
-    ): void {
-        try {
-            $providerId = null;
-            if ($quote->payments && $quote->payments->isNotEmpty()) {
-                $latestPayment = $quote->payments->first();
-                if ($latestPayment && $latestPayment->insuranceProvider) {
-                    $providerId = $latestPayment->insuranceProvider->id;
-                }
-            }
-
-            $uploadedThrough = $userId ? 'imcrm' : 'other than imcrm';
-
-            // Ensure document type has required fields
-            $documentTypeCode = $documentType->code ?? 'UNKNOWN';
-            $documentTypeName = $documentType->text ?? 'Unknown Document Type';
-
-            OcrLog::create([
-                'ocr_loggable_type' => get_class($quote),
-                'ocr_loggable_id' => $quote->id,
-                'document_type_code' => $documentTypeCode,
-                'document_type_name' => $documentTypeName,
-                'status' => $status,
-                'request_data' => $requestData,
-                'response_data' => $responseData,
-    
-                'execution_time_ms' => $executionTimeMs,
-                'error_message' => $errorMessage,
-                'provider_id' => $providerId,
-                'user_id' => $userId,
-                'uploaded_through' => $uploadedThrough,
-            ]);
-
-            Log::info('OCR activity logged - Quote UUID: '.$quote->uuid, [
-                'quote_id' => $quote->id,
-                'document_type' => $documentType->code,
-                'status' => $status,
-                'user_id' => $userId,
-                'uploaded_through' => $uploadedThrough,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to log OCR activity - Quote UUID: '.$quote->uuid, [
-                'quote_id' => $quote->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 }

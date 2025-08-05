@@ -66,6 +66,6 @@ class OcrLog extends Model
 
     public function getUploadedThroughAttribute()
     {
-        return $this->user_id ? 'imcrm' : 'other than imcrm';
+        return $this->user_id ? 'IMCRM' : 'Other than IMCRM';
     }
 } 
