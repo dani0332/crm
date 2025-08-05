@@ -106,11 +106,12 @@ class ConversionAsAtReportService extends BaseService
         }
     }
 
-    public function getReportData(Request $request){
+    public function getReportData(Request $request)
+    {
 
         $query = $this->getReportQueryBuilder($request);
 
-        if(empty($query)){
+        if (empty($query)) {
             return null;
         }
 

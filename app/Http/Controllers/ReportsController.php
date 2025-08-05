@@ -500,7 +500,6 @@ class ReportsController extends Controller
         $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
         $totalNetConversion = $conversionAsAtReportService->calculateTotalNetConversion($reportData);
 
-
         // this is explicitly pdf data, if I set name to 'data' then may be some dev(s) may get confused about it
         // that what this data may refers to, so to avoid confusion I am specifying it as pdfData.
         // Thanks
@@ -538,7 +537,7 @@ class ReportsController extends Controller
 
         // Check if export type is email
         if ($request->exportType == 'email') {
-            info("Email CSV");
+            info('Email CSV');
             $request['exportTitle'] = 'Conversion As At Report';
 
             return $exportClass->emailCSV('Conversion As At Report', $request->all());

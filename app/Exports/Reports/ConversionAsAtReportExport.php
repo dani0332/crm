@@ -26,7 +26,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         // Initialize common properties
         $this->includeUnassignedLeads = ($this->requestParams['includeUnassignedLeads'] ?? 'no') === 'yes';
         $this->displayBy = $this->requestParams['displayBy'] ?? null;
-        $this->columnOffset = (!empty($this->displayBy) || $this->includeUnassignedLeads) ? 1 : 0;
+        $this->columnOffset = (! empty($this->displayBy) || $this->includeUnassignedLeads) ? 1 : 0;
 
         // Initialize dynamic headers based on displayBy parameter
         $this->initializeHeaders();
@@ -57,8 +57,8 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         ];
 
         // Show title column if EITHER displayBy is set OR includeUnassignedLeads is enabled
-        if (!empty($this->displayBy) || $this->includeUnassignedLeads) {
-            if (!empty($this->displayBy)) {
+        if (! empty($this->displayBy) || $this->includeUnassignedLeads) {
+            if (! empty($this->displayBy)) {
                 $titleHeader = str_replace('_', ' ', $this->displayBy);
                 $titleHeader = ucwords($titleHeader);
             } else {
@@ -140,7 +140,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
 
         // Add title column if needed
         if ($this->columnOffset > 0) {
-            if (!empty($this->displayBy)) {
+            if (! empty($this->displayBy)) {
                 $titleValue = $record->{$this->displayBy} ?? 'N/A';
             } else {
                 $titleValue = 'Assigned Leads';
@@ -153,7 +153,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
         foreach ($this->columnTotals as $index => $field) {
             $sumColumns = [4 + $this->columnOffset, 5 + $this->columnOffset, 6 + $this->columnOffset];
 
-            if (is_numeric($row->get($index)) && in_array($index+1, $sumColumns)) {
+            if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
             }
         }
