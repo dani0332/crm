@@ -249,22 +249,17 @@ trait OcrFillable
                 // we can remove after testing
                 $summary = (new EmiratesIdDataProcessor($quote, $data))->getProcessingSummary();
 
-                LoggerService::info(self::class.' - Emirates ID data processing completed successfully', extra: [
-                    'quote_uuid' => $quote->uuid,
+                LoggerService::info(self::class.' - Emirates ID data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
                 ]);
             } else {
-                LoggerService::warning(self::class.' - Emirates ID data processing failed', extra: [
-                    'quote_uuid' => $quote->uuid,
-                ]);
+                LoggerService::warning(self::class.' - Emirates ID data processing failed - Quote UUID: '.$quote->uuid);
             }
 
             return $success;
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during Emirates ID data filling', exception: $e, extra: [
-                'quote_uuid' => $quote->uuid,
-            ]);
+            LoggerService::error(self::class.' - Exception occurred during Emirates ID data filling - Quote UUID: '.$quote->uuid, exception: $e);
 
             return false;
         }
@@ -279,22 +274,17 @@ trait OcrFillable
                 // we can remove after testing
                 $summary = (new MulkiyaDataProcessor($quote, $data))->getProcessingSummary($quote);
 
-                LoggerService::info(self::class.' - Mulkiya data processing completed successfully', extra: [
-                    'quote_uuid' => $quote->uuid,
+                LoggerService::info(self::class.' - Mulkiya data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
                 ]);
             } else {
-                LoggerService::warning(self::class.' - Mulkiya data processing failed', extra: [
-                    'quote_uuid' => $quote->uuid,
-                ]);
+                LoggerService::warning(self::class.' - Mulkiya data processing failed - Quote UUID: '.$quote->uuid);
             }
 
             return $success;
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during Mulkiya data filling', exception: $e, extra: [
-                'quote_uuid' => $quote->uuid,
-            ]);
+            LoggerService::error(self::class.' - Exception occurred during Mulkiya data filling - Quote UUID: '.$quote->uuid, exception: $e);
 
             return false;
         }
@@ -309,22 +299,17 @@ trait OcrFillable
                 // we can remove after testing
                 $summary = (new DrivingLicenseDataProcessor($quote, $data))->getProcessingSummary();
 
-                LoggerService::info(self::class.' - Driving License data processing completed successfully', extra: [
-                    'quote_uuid' => $quote->uuid,
+                LoggerService::info(self::class.' - Driving License data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
                 ]);
             } else {
-                LoggerService::warning(self::class.' - Driving License data processing failed', extra: [
-                    'quote_uuid' => $quote->uuid,
-                ]);
+                LoggerService::warning(self::class.' - Driving License data processing failed - Quote UUID: '.$quote->uuid);
             }
 
             return $success;
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during Driving License data filling', exception: $e, extra: [
-                'quote_uuid' => $quote->uuid,
-            ]);
+            LoggerService::error(self::class.' - Exception occurred during Driving License data filling - Quote UUID: '.$quote->uuid, exception: $e);
 
             return false;
         }

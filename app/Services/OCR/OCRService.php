@@ -70,9 +70,8 @@ class OCRService
             }
         }
 
-        LoggerService::info('Provider Code', extra: [
+        LoggerService::info('Provider Code - Quote UUID: '.$quote->uuid, extra: [
             'provider_code' => $providerCode,
-            'uuid' => $quote->uuid,
         ]);
 
         $response = $this->sendRequest('/process-document', [
@@ -107,9 +106,8 @@ class OCRService
         $startTime = microtime(true);
         $documentCategory = $documentType->category;
 
-        LoggerService::info('Starting OCR processing', extra: [
+        LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid, extra: [
             'quote_type' => $quoteType->value,
-            'quote_uuid' => $quote->uuid,
             'quote_code' => $quote->code,
             'document_type' => $documentType->code,
             'file_mime_type' => $fileMimeType,
@@ -122,7 +120,7 @@ class OCRService
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
         if (! $docType?->isEnabled($quoteType)) {
-            LoggerService::info(self::class."::process - OCR is not enabled for this document type {$documentType->code}");
+            LoggerService::info(self::class."::process - OCR is not enabled for this document type {$documentType->code} - Quote UUID: ".$quote->uuid);
 
             return null;
         }
@@ -138,8 +136,7 @@ class OCRService
             // Record start time for OCR API call
             $apiCallStartTime = microtime(true);
 
-            LoggerService::info('Starting OCR API call', extra: [
-                'quote_uuid' => $quote->uuid,
+            LoggerService::info('Starting OCR API call - Quote UUID: '.$quote->uuid, extra: [
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'document_type' => $documentType->code,
@@ -154,7 +151,7 @@ class OCRService
             $apiCallEndTime = microtime(true);
             $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
 
-            LoggerService::info('OCR API call completed', extra: [
+            LoggerService::info('OCR API call completed - Quote UID '.$quote->uuid, extra: [
                 'quote_uuid' => $quote->uuid,
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
@@ -167,8 +164,7 @@ class OCRService
             ]);
 
             if ($data) {
-                LoggerService::info(self::class.'::process - Data received from getData', extra: [
-                    'quote_uuid' => $quote->uuid,
+                LoggerService::info(self::class.'::process - Data received from getData - Quote UUID: '.$quote->uuid, extra: [
                     'data' => $data,
                 ]);
                 $dataFilledResponse = $this->fill(
@@ -195,8 +191,7 @@ class OCRService
                 $executionTime = round(($endTime - $startTime) * 1000, 2);
                 $dataProcessingTime = round($executionTime - $apiCallExecutionTime, 2);
 
-                LoggerService::info('OCR processing completed successfully', extra: [
-                    'quote_uuid' => $quote->uuid,
+                LoggerService::info('OCR processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
                     'document_type' => $documentType->code,
@@ -217,8 +212,7 @@ class OCRService
                 $endTime = microtime(true);
                 $executionTime = round(($endTime - $startTime) * 1000, 2);
 
-                LoggerService::warning('OCR processing failed - no data received', extra: [
-                    'quote_uuid' => $quote->uuid,
+                LoggerService::warning('OCR processing failed - no data received - Quote UUID: '.$quote->uuid, extra: [
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
                     'document_type' => $documentType->code,
@@ -238,8 +232,7 @@ class OCRService
             $executionTime = isset($startTime) ? round(($endTime - $startTime) * 1000, 2) : 0;
             $apiCallExecutionTime = isset($apiCallStartTime) ? round(($endTime - $apiCallStartTime) * 1000, 2) : 0;
 
-            LoggerService::error('OCR processing failed with exception', extra: [
-                'quote_uuid' => $quote->uuid,
+            LoggerService::error('OCR processing failed with exception - Quote UUID: '.$quote->uuid, extra: [
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'document_type' => $documentType->code,
@@ -268,7 +261,7 @@ class OCRService
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::OCR);
 
         if ($quote instanceof SendUpdateLog) {
-            LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog', [
+            LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog - Quote UUID: '.$quote->uuid, [
                 'document_type' => $documentType->code,
             ]);
 
@@ -277,7 +270,7 @@ class OCRService
 
         $quoteType = $this->determineQuoteType($quoteTypeParam);
         if (! $quoteType) {
-            LoggerService::info('OCR Dispatch - Unable to determine quote type', [
+            LoggerService::info('OCR Dispatch - Unable to determine quote type - Quote UUID: '.$quote->uuid, [
                 'document_type' => $documentType->code,
                 'quote_type_param' => $quoteTypeParam,
             ]);
@@ -291,8 +284,7 @@ class OCRService
         $isEcom = is_null($userId);
 
         if ($quote && $filePathAzure) {
-            LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job', [
-                'quote_uuid' => $quote->uuid,
+            LoggerService::info('OCR Dispatch - Dispatching PopulateDocumentData job - Quote UUID: '.$quote->uuid, [
                 'quote_type' => $quoteType->value,
                 'document_type' => $documentType->code,
                 'file_path' => $filePathAzure,
@@ -310,7 +302,7 @@ class OCRService
                 $isEcom,
             );
         } else {
-            LoggerService::warning('OCR Dispatch - Missing required parameters', [
+            LoggerService::warning('OCR Dispatch - Missing required parameters - Quote UUID: '.$quote->uuid, [
                 'quote_uuid' => $quote->uuid,
                 'quote_exists' => ! is_null($quote),
                 'file_path_exists' => ! empty($filePathAzure),

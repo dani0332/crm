@@ -104,7 +104,7 @@ class PopulateDocumentData implements ShouldQueue
 
     public function failed(\Throwable $exception)
     {
-        LoggerService::info(self::class.'::failed - OCR processing failed', extra: [
+        LoggerService::info(self::class.'::failed - OCR processing failed - Quote UUID: '.$this->quote->uuid, extra: [
             'quote_uuid' => $this->quote->uuid,
         ]);
 

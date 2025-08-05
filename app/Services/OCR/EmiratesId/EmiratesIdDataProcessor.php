@@ -35,8 +35,7 @@ class EmiratesIdDataProcessor
 
             $this->extractedData = $this->emiratesIdExtractor->extractSingleEmiratesId()->getExtractedData();
 
-            LoggerService::info('Emirates ID data processor started', extra: [
-                'quote_uuid' => $this->quote->uuid,
+            LoggerService::info('Emirates ID data processor started - Quote UUID: '.$this->quote->uuid, extra: [
                 'quote_type' => class_basename($this->quote),
                 'extracted_fields' => array_keys(array_filter($this->extractedData, fn ($v) => ! empty($v))),
             ]);
@@ -51,8 +50,7 @@ class EmiratesIdDataProcessor
 
             DB::commit();
 
-            LoggerService::info('Emirates ID data processing completed successfully', extra: [
-                'quote_uuid' => $this->quote->uuid,
+            LoggerService::info('Emirates ID data processing completed successfully - Quote UUID: '.$this->quote->uuid, extra: [
                 'insured_id' => $insured->id,
                 'insured_updated' => $insuredUpdated,
                 'kyc_updated' => $kycUpdated,
@@ -63,8 +61,7 @@ class EmiratesIdDataProcessor
         } catch (Exception $e) {
             DB::rollBack();
 
-            LoggerService::error('Emirates ID data processing failed', exception: $e, extra: [
-                'quote_uuid' => $this->quote->uuid ?? 'unknown',
+            LoggerService::error('Emirates ID data processing failed - Quote UUID: '.$this->quote->uuid, exception: $e, extra: [
                 'quote_type' => class_basename($this->quote),
             ]);
 
@@ -94,7 +91,7 @@ class EmiratesIdDataProcessor
             return $insured;
 
         } catch (Exception $e) {
-            LoggerService::error('Failed to get or create Insured record', exception: $e);
+            LoggerService::error('Failed to get or create Insured record - Quote UUID: '.$this->quote->uuid, exception: $e);
 
             return null;
         }
@@ -156,7 +153,7 @@ class EmiratesIdDataProcessor
             if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
 
-                LoggerService::info('Insured table updated successfully', extra: [
+                LoggerService::info('Insured table updated successfully - Quote UUID: '.$this->quote->uuid, extra: [
                     'insured_id' => $insured->id,
                     'updated_fields' => array_keys($dataToUpdate),
                 ]);
@@ -164,14 +161,14 @@ class EmiratesIdDataProcessor
                 return true;
             }
 
-            LoggerService::info('Insured table - No new data to update', extra: [
+            LoggerService::info('Insured table - No new data to update - Quote UUID: '.$this->quote->uuid, extra: [
                 'insured_id' => $insured->id,
             ]);
 
             return false;
 
         } catch (Exception $e) {
-            LoggerService::error('Failed to update Insured table', exception: $e, extra: [
+            LoggerService::error('Failed to update Insured table - Quote UUID: '.$this->quote->uuid, exception: $e, extra: [
                 'insured_id' => $insured->id,
             ]);
 
@@ -217,14 +214,14 @@ class EmiratesIdDataProcessor
                 if (! empty($dataToUpdate)) {
                     $insuredKyc->update($dataToUpdate);
 
-                    LoggerService::info('InsuredKyc table updated successfully', extra: [
+                    LoggerService::info('InsuredKyc table updated successfully - Quote UUID: '.$this->quote->uuid, extra: [
                         'insured_id' => $insured->id,
                         'updated_fields' => array_keys($dataToUpdate),
                     ]);
 
                     return true;
                 } else {
-                    LoggerService::info('InsuredKyc table - No new data to update', extra: [
+                    LoggerService::info('InsuredKyc table - No new data to update - Quote UUID: '.$this->quote->uuid, extra: [
                         'insured_id' => $insured->id,
                     ]);
 
@@ -234,7 +231,7 @@ class EmiratesIdDataProcessor
                 $kycData['insured_id'] = $insured->id;
                 InsuredKyc::create($kycData);
 
-                LoggerService::info('InsuredKyc table created successfully', extra: [
+                LoggerService::info('InsuredKyc table created successfully - Quote UUID: '.$this->quote->uuid, extra: [
                     'insured_id' => $insured->id,
                     'created_fields' => array_keys($kycData),
                 ]);
@@ -243,7 +240,7 @@ class EmiratesIdDataProcessor
             }
 
         } catch (Exception $e) {
-            LoggerService::error('Failed to update InsuredKyc table', exception: $e, extra: [
+            LoggerService::error('Failed to update InsuredKyc table - Quote UUID: '.$this->quote->uuid, exception: $e, extra: [
                 'insured_id' => $insured->id,
             ]);
 
@@ -299,7 +296,7 @@ class EmiratesIdDataProcessor
     private function createCustomerInsuredLink(Insured $insured): void
     {
         if (! $this->quote->customer_id || ! $insured->id) {
-            LoggerService::warning('CustomerInsured relationship creation skipped - missing required data', extra: [
+            LoggerService::warning('CustomerInsured relationship creation skipped - missing required data - Quote UUID: '.$this->quote->uuid, extra: [
                 'customer_id' => $this->quote->customer_id ?? 'null',
                 'insured_id' => $insured->id ?? 'null',
                 'quote_id' => $this->quote->id ?? 'null',
@@ -328,14 +325,14 @@ class EmiratesIdDataProcessor
                     'updated_at' => now(),
                 ]);
 
-                LoggerService::info('CustomerInsured relationship created', extra: [
+                LoggerService::info('CustomerInsured relationship created - Quote UUID: '.$this->quote->uuid, extra: [
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $this->quote->id,
                 ]);
             } else {
-                LoggerService::info('CustomerInsured relationship already exists - skipping creation', extra: [
+                LoggerService::info('CustomerInsured relationship already exists - skipping creation - Quote UUID: '.$this->quote->uuid, extra: [
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
@@ -343,7 +340,7 @@ class EmiratesIdDataProcessor
                 ]);
             }
         } catch (Exception $e) {
-            LoggerService::error('Failed to create CustomerInsured relationship', exception: $e, extra: [
+            LoggerService::error('Failed to create CustomerInsured relationship - Quote UUID: '.$this->quote->uuid, exception: $e, extra: [
                 'customer_id' => $this->quote->customer_id ?? 'null',
                 'insured_id' => $insured->id ?? 'null',
                 'quote_id' => $this->quote->id ?? 'null',
@@ -397,7 +394,7 @@ class EmiratesIdDataProcessor
             ];
 
         } catch (Exception $e) {
-            LoggerService::error('Failed to get processing summary', exception: $e);
+            LoggerService::error('Failed to get processing summary - Quote UUID: '.$this->quote->uuid, exception: $e);
 
             return [
                 'status' => 'error',

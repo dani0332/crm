@@ -91,7 +91,7 @@ class PersonalQuoteRepository extends BaseRepository
     {
         try {
             $fileName = $file->getClientOriginalName();
-            info('fn: fetchUploadDocument called');
+            LoggerService::info(self::class.' - fn: fetchUploadDocument called - Quote UUID: '.$data['quote_uuid']);
             $quoteType = '';
             $insuranceProviderId = null;
 
@@ -181,6 +181,7 @@ class PersonalQuoteRepository extends BaseRepository
                     )->afterCommit();
                 }
 
+                LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
                 $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType);
 
                 if (! $insuranceProviderId && request()->is_send_update) {

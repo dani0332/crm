@@ -26,16 +26,13 @@ class DrivingLicenseDataProcessor
         try {
             $processedData = $this->drivingLicenseExtractor->extractSingleDrivingLicense()->getProcessedData();
 
-            LoggerService::info('Driving License data processor started', extra: [
-                'quote_uuid' => $this->quote->uuid,
+            LoggerService::info('Driving License data processor started - Quote UUID: '.$this->quote->uuid, extra: [
                 'quote_type' => class_basename($this->quote),
                 'extracted_fields' => array_keys(array_filter($processedData, fn ($v) => ! empty($v))),
             ]);
 
             if (empty($processedData['car_quote_detail_fields'])) {
-                LoggerService::warning('Driving License data processor - No valid data to process', extra: [
-                    'quote_uuid' => $this->quote->uuid,
-                ]);
+                LoggerService::warning('Driving License data processor - No valid data to process - Quote UUID: '.$this->quote->uuid);
 
                 return false;
             }
@@ -50,8 +47,7 @@ class DrivingLicenseDataProcessor
 
             DB::commit();
 
-            LoggerService::info('Driving License data processing completed successfully', extra: [
-                'quote_uuid' => $this->quote->uuid,
+            LoggerService::info('Driving License data processing completed successfully - Quote UUID: '.$this->quote->uuid, extra: [
                 'car_quote_detail_updated' => $carQuoteDetailUpdated,
             ]);
 
@@ -60,9 +56,7 @@ class DrivingLicenseDataProcessor
         } catch (Exception $e) {
             DB::rollback();
 
-            LoggerService::error('Driving License data processor - Exception occurred', exception: $e, extra: [
-                'quote_uuid' => $this->quote->uuid,
-            ]);
+            LoggerService::error('Driving License data processor - Exception occurred - Quote UUID: '.$this->quote->uuid, exception: $e);
 
             return false;
         }
@@ -74,9 +68,7 @@ class DrivingLicenseDataProcessor
             $carQuoteDetail = $quote->carQuoteRequestDetail;
 
             if (! $carQuoteDetail) {
-                LoggerService::warning('CarQuoteRequestDetail not found for quote', extra: [
-                    'quote_uuid' => $this->quote->uuid,
-                ]);
+                LoggerService::warning('CarQuoteRequestDetail not found for quote - Quote UUID: '.$this->quote->uuid);
 
                 return false;
             }
@@ -87,8 +79,7 @@ class DrivingLicenseDataProcessor
             if (! empty($dataToUpdate)) {
                 $carQuoteDetail->update($dataToUpdate);
 
-                LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data', extra: [
-                    'quote_uuid' => $this->quote->uuid,
+                LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data - Quote UUID: '.$this->quote->uuid, extra: [
                     'car_quote_detail_id' => $carQuoteDetail->id,
                     'updated_fields' => array_keys($dataToUpdate),
                 ]);
@@ -96,16 +87,12 @@ class DrivingLicenseDataProcessor
                 return true;
             }
 
-            LoggerService::info('CarQuoteRequestDetail - No new driving license data to update', extra: [
-                'quote_uuid' => $this->quote->uuid,
-            ]);
+            LoggerService::info('CarQuoteRequestDetail - No new driving license data to update - Quote UUID: '.$this->quote->uuid);
 
             return false;
 
         } catch (Exception $e) {
-            LoggerService::error('CarQuoteRequestDetail update failed for driving license', exception: $e, extra: [
-                'quote_uuid' => $this->quote->uuid,
-            ]);
+            LoggerService::error('CarQuoteRequestDetail update failed for driving license - Quote UUID: '.$this->quote->uuid, exception: $e);
 
             return false;
         }

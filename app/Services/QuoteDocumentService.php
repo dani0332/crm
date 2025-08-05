@@ -253,6 +253,7 @@ class QuoteDocumentService extends BaseService
                 )->afterCommit();
             }
 
+            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
             $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
 
             return $quoteDocument;
