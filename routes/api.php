@@ -90,7 +90,7 @@ Route::prefix('v1')->group(function () {
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
 
-        Route::get('{bor_ref_id}', [BorController::class, 'getBorLog'])->name('bor.get-bor-log');
+        Route::get('details/{bor_ref_id}', [BorController::class, 'getBorLog'])->name('bor.get-bor-log');
         Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
 
         Route::get('document-types', [BorController::class, 'getDocumentTypes'])->name('bor.get-document-types');
