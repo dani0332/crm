@@ -693,6 +693,10 @@ const plansTable = reactive({
       value: 'basmah',
     },
     {
+      text: 'ICP Fee',
+      value: 'icpFee',
+    },
+    {
       text: 'Policy Fee (if applicable)',
       value: 'policyFee',
     },
@@ -1071,6 +1075,7 @@ const onMarkPlanAsManual = (plan, loadingPrice) => {
         (element.actualPremium +
           (element.policyFee || 0) +
           (element.basmah || 0) +
+          (element.icpFee || 0) +
           (loadingPrice || 0)) *
         0.05;
       element.loadingPrice = Number(loadingPrice);
@@ -2224,6 +2229,7 @@ const updateProfileDetails = isValid => {
               actualPremium,
               policyFee,
               basmah,
+              icpFee,
               vat,
               loadingPrice,
             }"
@@ -2233,6 +2239,7 @@ const updateProfileDetails = isValid => {
                 actualPremium +
                   (policyFee || 0) +
                   (basmah || 0) +
+                  (icpFee || 0) +
                   vat +
                   (loadingPrice || 0),
               )
