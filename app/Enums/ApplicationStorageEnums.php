@@ -221,10 +221,7 @@ final class ApplicationStorageEnums extends Enum
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
 
     /* BOR (Broker on Record) Workflow Integration */
-    public const BIRD_BOR_REQUEST_WORKFLOW_URL = 'BIRD_BOR_REQUEST_WORKFLOW_URL';
-    public const BIRD_BOR_COMPLETION_WORKFLOW_URL = 'BIRD_BOR_COMPLETION_WORKFLOW_URL';
-    public const BIRD_BOR_INSURER_NOTIFICATION_WORKFLOW_URL = 'BIRD_BOR_INSURER_NOTIFICATION_WORKFLOW_URL';
-    public const BIRD_BOR_STATUS_UPDATE_WORKFLOW_URL = 'BIRD_BOR_STATUS_UPDATE_WORKFLOW_URL';
+    public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
 
     /* Advisor Emails for Allocation */
     public const YACHT_ADVISORS = 'YACHT_ADVISORS';
