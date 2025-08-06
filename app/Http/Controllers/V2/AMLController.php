@@ -48,6 +48,7 @@ use App\Models\KycLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\PolicyIssuance;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -236,6 +237,17 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
+        // $process = PolicyIssuance::where('id', 1121)->first();
+        // $getPolicyIssuanceResponse = $process->policyIssuanceLogs()->where([
+        //     'step' => 'IssuePolicy',
+        //     'status' => 'success',
+        // ])->latest()->first();
+
+        // $issuancePolicyId = json_decode($getPolicyIssuanceResponse?->response)?->data?->policyId;
+        // $issuancePolicyDocuments = json_decode($getPolicyIssuanceResponse?->response)?->data?->documents;
+
+        // dd($getPolicyIssuanceResponse->toArray(), $issuancePolicyId, $issuancePolicyDocuments);
+        
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 

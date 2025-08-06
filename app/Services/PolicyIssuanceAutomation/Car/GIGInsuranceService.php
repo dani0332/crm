@@ -414,13 +414,13 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             QuoteDocumentsEnum::CAR_REGISTRATION_CARD => [
                 'code' => QuoteDocumentsEnum::CAR_REGISTRATION_CARD,
                 'insurerDocCode' => 'DT01',
-                'insurerDocName' => 'Car Registration',
+                'insurerDocName' => 'Car Registration Document',
                 'uploaded' => false,
             ],
             QuoteDocumentsEnum::CAR_EMIRATE_ID => [
                 'code' => QuoteDocumentsEnum::CAR_EMIRATE_ID,
                 'insurerDocCode' => 'DT02',
-                'insurerDocName' => 'National Id',
+                'insurerDocName' => 'National ID',
                 'uploaded' => false,
             ],
             QuoteDocumentsEnum::DRIVING_LICENSE => [
@@ -533,8 +533,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         }
 
         $uploadedDocumentsToIMCRM = collect();
-        $policyDocuments = json_decode($getPolicyIssuanceResponse?->response)?->documents;
-        $policyId = json_decode($getPolicyIssuanceResponse?->response)?->policyId;
+        $policyDocuments = json_decode($getPolicyIssuanceResponse?->response)?->data?->documents;
+        $policyId = json_decode($getPolicyIssuanceResponse?->response)?->data?->policyId;
         $certificateOfInsuranceAvailable = false;
 
         foreach ($policyDocuments as $policyDocument) {
