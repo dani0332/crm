@@ -13,7 +13,7 @@ const claimForm = useForm({
   // IMCRM Required Fields
   first_name: props.claim?.first_name || '',
   last_name: props.claim?.last_name || '',
-  email: props.claim?.email  || '',
+  email: props.claim?.email || '',
   mobile_no: props.claim?.mobile_no || '',
   quote_type_id: props.claim?.quote_type_id || '',
   customer_id: props.claim?.customer_id || '',
@@ -25,21 +25,21 @@ const claimForm = useForm({
   incident_story: props.claim?.incident || '',
   policy_number: props.claim?.policy_number || '',
   claim_number: props.claim?.claim_number || '',
-  
+
   // Car-specific fields (visible when editing)
   plate_number: props.claim?.plate_number || '',
   car_make: props.claim?.car_make || '',
   car_model: props.claim?.car_model || '',
   car_model_year: props.claim?.car_model_year || '',
-  
+
   // Financial fields (visible when editing)
   approved_repair_amount: props.claim?.approved_repair_amount || '',
   approved_total_loss_amount: props.claim?.approved_total_loss_amount || '',
   approved_cash_loss_amount: props.claim?.approved_cash_loss_amount || '',
-  
+
   // Claim denial reason (visible when editing)
   claim_denial_reason: props.claim?.claim_denial_reason || '',
-  
+
   /* Health-specific fields */
   claim_request_type_id: props.claim?.claim_request_type_id || '',
   service_type_id: props.claim?.service_type_id || '',
@@ -63,7 +63,7 @@ const policySearch = reactive({
     current_page: 1,
     has_more_pages: false,
     next_page_url: null,
-    prev_page_url: null, 
+    prev_page_url: null,
     total: null,
     from: 1,
     to: 0,
@@ -77,22 +77,27 @@ const policySearch = reactive({
 const serverOptions = ref({
   page: 1,
 });
- 
 
 // DataTable headers for policies
 const policyTableHeaders = ref([
   { text: 'REF ID', value: 'ref_id', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'CUSTOMER NAME', value: 'customer_name', is_active: true },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with', is_active: true },
+  {
+    text: 'CURRENTLY INSURED WITH',
+    value: 'currently_insured_with',
+    is_active: true,
+  },
   { text: 'PRODUCT', value: 'product', is_active: true },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date', is_active: true },
   { text: 'ACTION', value: 'action', is_active: true },
 ]);
 
 // Function to get row class for selected policy
-const getRowClass = (item) => {
-  return claimForm.selected_policy_id === item.id ? 'bg-blue-50 ring-2 ring-blue-500' : '';
+const getRowClass = item => {
+  return claimForm.selected_policy_id === item.id
+    ? 'bg-blue-50 ring-2 ring-blue-500'
+    : '';
 };
 
 const lineOfBusinessOptions = computed(() => {
@@ -123,17 +128,22 @@ const isCarLOB = computed(() => {
 const hasValidationErrors = computed(() => {
   const errors = claimForm.errors;
   if (!errors || typeof errors !== 'object') return false;
-  
+
   const validationFields = Object.keys(errors).filter(
-    key => key !== 'error' && key !== 'message' && errors[key]
+    key => key !== 'error' && key !== 'message' && errors[key],
   );
   return validationFields.length > 0;
 });
 
 // Watch for policy selection changes
-watch([() => claimForm.selected_policy_id, () => claimForm.policy_not_listed], () => {
-  policySearch.canSave = !!(claimForm.selected_policy_id || claimForm.policy_not_listed);
-});
+watch(
+  [() => claimForm.selected_policy_id, () => claimForm.policy_not_listed],
+  () => {
+    policySearch.canSave = !!(
+      claimForm.selected_policy_id || claimForm.policy_not_listed
+    );
+  },
+);
 
 // Watch for server options changes (pagination)
 watch(
@@ -148,7 +158,7 @@ watch(
       }
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 // Policy search function
@@ -172,7 +182,7 @@ async function searchPolicies(pageNumber = 1) {
 
   policySearch.loading = true;
   policySearch.error = null;
-  
+
   try {
     const response = await axios.post('/claim/search-policies', {
       email: claimForm.email,
@@ -187,7 +197,7 @@ async function searchPolicies(pageNumber = 1) {
       current_page: policiesData.current_page || 1,
       has_more_pages: policiesData.has_more_pages || false,
       next_page_url: policiesData.next_page_url || null,
-      prev_page_url: policiesData.prev_page_url || null, 
+      prev_page_url: policiesData.prev_page_url || null,
       total: policiesData.total || null,
       from: policiesData.from || 1,
       to: policiesData.to || 0,
@@ -199,12 +209,12 @@ async function searchPolicies(pageNumber = 1) {
     // Don't set error for empty results, just show the table with "-- NO AVAILABLE DATA --"
   } catch (error) {
     console.error('Policy search error:', error);
-    
+
     // Handle specific error types with detailed messages
     if (error.response) {
       const status = error.response.status;
       const data = error.response.data;
-      
+
       if (status === 422) {
         // Validation errors
         if (data.errors) {
@@ -218,12 +228,14 @@ async function searchPolicies(pageNumber = 1) {
           });
           policySearch.error = validationErrors.join('. ');
         } else {
-          policySearch.error = data.message || 'Validation failed. Please check your input.';
+          policySearch.error =
+            data.message || 'Validation failed. Please check your input.';
         }
-      }  else {
-        policySearch.error = data.message || `Error ${status}: Unable to search policies.`;
+      } else {
+        policySearch.error =
+          data.message || `Error ${status}: Unable to search policies.`;
       }
-      
+
       // Show notification for validation errors
       if (status === 422) {
         notification.error({
@@ -232,7 +244,7 @@ async function searchPolicies(pageNumber = 1) {
           position: 'top',
         });
       }
-    } else { 
+    } else {
       policySearch.error = 'An unexpected error occurred. Please try again.';
       notification.error({
         title: 'Error',
@@ -282,7 +294,8 @@ function onSubmit(isValid) {
     // Check if policy selection is required
     if (policySearch.searched && !policySearch.canSave) {
       notification.error({
-        title: 'Please select a policy or click "Policy is not listed" to continue',
+        title:
+          'Please select a policy or click "Policy is not listed" to continue',
         position: 'top',
       });
       return;
@@ -301,12 +314,12 @@ function onSubmit(isValid) {
     claimForm.submit(method, url, {
       onError: errors => {
         console.log('Form errors:', errors);
-        
+
         // Handle different types of errors
         if (typeof errors === 'object' && errors !== null) {
           // Field-specific validation errors
           claimForm.setError(errors);
-          
+
           // Show summary notification for validation errors
           const errorMessages = [];
           Object.keys(errors).forEach(field => {
@@ -316,11 +329,13 @@ function onSubmit(isValid) {
               errorMessages.push(errors[field]);
             }
           });
-          
+
           if (errorMessages.length > 0) {
             notification.error({
               title: 'Please correct the following errors:',
-              message: errorMessages.slice(0, 3).join('. ') + (errorMessages.length > 3 ? '...' : ''),
+              message:
+                errorMessages.slice(0, 3).join('. ') +
+                (errorMessages.length > 3 ? '...' : ''),
               position: 'top',
               duration: 6000,
             });
@@ -341,7 +356,7 @@ function onSubmit(isValid) {
         });
 
         // Redirect to claims list
-       /*  router.visit('/claim'); */
+        /*  router.visit('/claim'); */
       },
       onFinish: () => {
         // Always called after success or error
@@ -380,10 +395,16 @@ function onSubmit(isValid) {
 
     <x-form @submit="onSubmit" :autofocus="false">
       <!-- General Error Alert -->
-      <div v-if="claimForm.errors.error || claimForm.errors.message" class="mb-5">
+      <div
+        v-if="claimForm.errors.error || claimForm.errors.message"
+        class="mb-5"
+      >
         <x-alert color="error">
           <div class="flex items-start">
-            <Icon name="exclamation-triangle" class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+            <Icon
+              name="exclamation-triangle"
+              class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
+            />
             <div>
               <div class="font-medium">Error</div>
               <div class="text-sm mt-1">
@@ -489,7 +510,7 @@ function onSubmit(isValid) {
             @input="resetPolicySelection"
           />
 
-          <!-- Additional fields for Car LOB when editing --> 
+          <!-- Additional fields for Car LOB when editing -->
           <x-input
             v-if="isCarLOB"
             v-model="claimForm.plate_number"
@@ -525,7 +546,7 @@ function onSubmit(isValid) {
             placeholder="Enter Car Model"
             class="w-full"
             :error="claimForm.errors.car_model"
-          /> 
+          />
 
           <x-input
             v-if="isCarLOB"
@@ -557,9 +578,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="claimForm.errors.approved_cash_loss_amount"
           />
-      </div>  
+      </div>
       <div class="grid sm:grid-cols-2 gap-4">
-        <!-- Incident Story --> 
+        <!-- Incident Story -->
           <x-textarea
             v-model="claimForm.incident_story"
             label="Incident Story"
@@ -569,7 +590,7 @@ function onSubmit(isValid) {
             :error="claimForm.errors.incident_story"
           />
 
-        <!-- Claim Denial Reason (when editing) --> 
+        <!-- Claim Denial Reason (when editing) -->
           <x-textarea
             v-model="claimForm.claim_denial_reason"
             label="Claim Denial Reason"
@@ -580,17 +601,23 @@ function onSubmit(isValid) {
           />
         </div>
 
-        
+
 
       </div>
 
       <!-- Policy Search Results -->
-      <div v-if="policySearch.showPolicies" class="bg-white p-6 rounded shadow mb-6">
+      <div
+        v-if="policySearch.showPolicies"
+        class="bg-white p-6 rounded shadow mb-6"
+      >
         <!-- Error Message (only for actual errors, not empty results) -->
         <div v-if="policySearch.error" class="mb-4">
           <x-alert color="error" class="mb-4">
             <div class="flex items-start">
-              <Icon name="exclamation-triangle" class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+              <Icon
+                name="exclamation-triangle"
+                class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
+              />
               <div>
                 <div class="font-medium">Search Error</div>
                 <div class="text-sm mt-1">{{ policySearch.error }}</div>
@@ -613,19 +640,46 @@ function onSubmit(isValid) {
             :body-row-class-name="getRowClass"
             server-side-pagination
           >
-            <template #item-action="{ ref_id, id, uuid, policy_number, customer_id, insurance_provider_id }">
+            <template
+              #item-action="{
+                ref_id,
+                id,
+                uuid,
+                policy_number,
+                customer_id,
+                insurance_provider_id,
+              }"
+            >
               <x-button
                 size="sm"
-                :color="claimForm.selected_policy_id === id ? 'success' : 'primary'"
-                @click="selectPolicy({ id, uuid, policy_number, customer_id, insurance_provider_id, ref_id })"
+                :color="
+                  claimForm.selected_policy_id === id ? 'success' : 'primary'
+                "
+                @click="
+                  selectPolicy({
+                    id,
+                    uuid,
+                    policy_number,
+                    customer_id,
+                    insurance_provider_id,
+                    ref_id,
+                  })
+                "
               >
-                {{ claimForm.selected_policy_id === id ? 'Selected' : 'Select' }}
+                {{
+                  claimForm.selected_policy_id === id ? 'Selected' : 'Select'
+                }}
               </x-button>
             </template>
           </DataTable>
 
-                    <!-- Pagination -->
-          <div v-if="policySearch.pagination.has_more_pages || policySearch.pagination.current_page > 1">
+          <!-- Pagination -->
+          <div
+            v-if="
+              policySearch.pagination.has_more_pages ||
+              policySearch.pagination.current_page > 1
+            "
+          >
             <PaginateClient
               :links="{
                 next: policySearch.pagination.next_page_url,
@@ -650,7 +704,11 @@ function onSubmit(isValid) {
             @click="policyNotListed"
             :class="{ 'bg-gray-500 text-white': claimForm.policy_not_listed }"
           >
-            {{ claimForm.policy_not_listed ? 'Policy Not Listed (Selected)' : 'Policy is not listed' }}
+            {{
+              claimForm.policy_not_listed
+                ? 'Policy Not Listed (Selected)'
+                : 'Policy is not listed'
+            }}
           </x-button>
         </div>
       </div>
@@ -659,7 +717,7 @@ function onSubmit(isValid) {
       <div class="flex justify-end gap-3 mb-4">
         <!-- Search Button  -->
         <x-button
-            v-if="!isEdit"
+          v-if="!isEdit"
             type="button"
             size="md"
             color="primary"
@@ -675,12 +733,15 @@ function onSubmit(isValid) {
           type="submit"
           :loading="claimForm.processing"
           :disabled="!policySearch.canSave"
-          :title="policySearch.searched && !policySearch.canSave ? 'Please select a policy or click Policy is not listed' : ''"
+          :title="
+            policySearch.searched && !policySearch.canSave
+              ? 'Please select a policy or click Policy is not listed'
+              : ''
+          "
         >
           {{ isEdit ? 'Update Claim' : 'Save' }}
         </x-button>
       </div>
-
     </x-form>
   </div>
 </template>
