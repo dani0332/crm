@@ -22,12 +22,25 @@ const claimForm = useForm({
   // Additional Fields
   claim_type_id: props.claim?.claim_type_id || '',
   incident_date: props.claim?.incident_date || '',
-  incident_story: props.claim?.incident_story || '',
+  incident_story: props.claim?.incident || '',
   policy_number: props.claim?.policy_number || '',
   claim_number: props.claim?.claim_number || '',
- /* Claim Request Details */
+  
+  // Car-specific fields (visible when editing)
+  plate_number: props.claim?.plate_number || '',
   car_make: props.claim?.car_make || '',
   car_model: props.claim?.car_model || '',
+  car_model_year: props.claim?.car_model_year || '',
+  
+  // Financial fields (visible when editing)
+  approved_repair_amount: props.claim?.approved_repair_amount || '',
+  approved_total_loss_amount: props.claim?.approved_total_loss_amount || '',
+  approved_cash_loss_amount: props.claim?.approved_cash_loss_amount || '',
+  
+  // Claim denial reason (visible when editing)
+  claim_denial_reason: props.claim?.claim_denial_reason || '',
+  
+  /* Health-specific fields */
   claim_request_type_id: props.claim?.claim_request_type_id || '',
   service_type_id: props.claim?.service_type_id || '',
   request_reference_number: props.claim?.request_reference_number || '',
@@ -56,7 +69,7 @@ const policySearch = reactive({
     to: 0,
   },
   error: null,
-  canSave: false,
+  canSave: props.isEdit || false,
   showPolicies: false,
 });
 
@@ -100,6 +113,12 @@ const claimTypeOptions = computed(() => {
   );
 });
 
+// Check if the selected line of business is Car
+const isCarLOB = computed(() => {
+  const page = usePage();
+  return page.props.quoteTypeIds?.Car === claimForm.quote_type_id;
+});
+
 // Check if there are validation errors (excluding general error messages)
 const hasValidationErrors = computed(() => {
   const errors = claimForm.errors;
@@ -110,25 +129,6 @@ const hasValidationErrors = computed(() => {
   );
   return validationFields.length > 0;
 });
-
-/* // Format field names for display
-const formatFieldName = (fieldName) => {
-  const fieldMap = {
-    'first_name': 'First Name',
-    'last_name': 'Last Name',
-    'mobile_no': 'Phone Number',
-    'email': 'Email Address',
-    'quote_type_id': 'Line of Business',
-    'claim_type_id': 'Claim Type',
-    'incident_date': 'Incident Date',
-    'policy_number': 'Policy Number',
-    'claim_number': 'Insurer Claim Number',
-    'incident_story': 'Incident Story',
-    'selected_policy_id': 'Policy Selection',
-  };
-  
-  return fieldMap[fieldName] || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}; */
 
 // Watch for policy selection changes
 watch([() => claimForm.selected_policy_id, () => claimForm.policy_not_listed], () => {
@@ -435,6 +435,8 @@ function onSubmit(isValid) {
             v-model="claimForm.email"
             :rules="[isRequired, isEmail]"
             class="w-full"
+            :disabled="isEdit"
+            :class="{ 'readonly': isEdit }"
             type="email"
             label="Email Address"
             placeholder="Enter Email Address"
@@ -486,10 +488,78 @@ function onSubmit(isValid) {
             :error="claimForm.errors.policy_number"
             @input="resetPolicySelection"
           />
-        </div>
 
-        <!-- Incident Story -->
-        <div class="mt-4">
+          <!-- Additional fields for Car LOB when editing --> 
+          <x-input
+            v-if="isCarLOB"
+            v-model="claimForm.plate_number"
+            type="text"
+            label="Plate Number"
+            placeholder="Enter Plate Number"
+            class="w-full"
+            :error="claimForm.errors.plate_number"
+          />
+          <x-input
+            v-if="isCarLOB"
+            v-model="claimForm.car_model_year"
+            type="number"
+            label="Car Model Year"
+            placeholder="Enter Model Year"
+            class="w-full"
+            :error="claimForm.errors.car_model_year"
+          />
+          <x-input
+            v-if="isCarLOB"
+            v-model="claimForm.car_make"
+            type="text"
+            label="Car Make"
+            placeholder="Enter Car Make"
+            class="w-full"
+            :error="claimForm.errors.car_make"
+          />
+          <x-input
+            v-if="isCarLOB"
+            v-model="claimForm.car_model"
+            type="text"
+            label="Car Model"
+            placeholder="Enter Car Model"
+            class="w-full"
+            :error="claimForm.errors.car_model"
+          /> 
+
+          <x-input
+            v-if="isCarLOB"
+            v-model="claimForm.approved_repair_amount"
+            type="number"
+            step="0.01"
+            label="Approved Repair Amount"
+            placeholder="Enter Amount"
+            class="w-full"
+            :error="claimForm.errors.approved_repair_amount"
+          />
+          <x-input
+            v-if="isCarLOB"
+            v-model="claimForm.approved_total_loss_amount"
+            type="number"
+            step="0.01"
+            label="Approved Total Loss Amount"
+            placeholder="Enter Amount"
+            class="w-full"
+            :error="claimForm.errors.approved_total_loss_amount"
+          />
+          <x-input
+            v-if="isCarLOB"
+            v-model="claimForm.approved_cash_loss_amount"
+            type="number"
+            step="0.01"
+            label="Approved Cash Loss Amount"
+            placeholder="Enter Amount"
+            class="w-full"
+            :error="claimForm.errors.approved_cash_loss_amount"
+          />
+      </div>  
+      <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Incident Story --> 
           <x-textarea
             v-model="claimForm.incident_story"
             label="Incident Story"
@@ -498,8 +568,19 @@ function onSubmit(isValid) {
             class="w-full"
             :error="claimForm.errors.incident_story"
           />
+
+        <!-- Claim Denial Reason (when editing) --> 
+          <x-textarea
+            v-model="claimForm.claim_denial_reason"
+            label="Claim Denial Reason"
+            placeholder="Note..."
+            rows="4"
+            class="w-full"
+            :error="claimForm.errors.claim_denial_reason"
+          />
         </div>
 
+        
 
       </div>
 
@@ -578,6 +659,7 @@ function onSubmit(isValid) {
       <div class="flex justify-end gap-3 mb-4">
         <!-- Search Button  -->
         <x-button
+            v-if="!isEdit"
             type="button"
             size="md"
             color="primary"

@@ -155,7 +155,7 @@ class ClaimsController extends Controller
         try {
             // Load claim request with all relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
-
+            
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -168,8 +168,7 @@ class ClaimsController extends Controller
                 'error' => $e->getMessage(),
                 'claim_request_id' => $claimRequest->id,
                 'user_id' => Auth::id(),
-            ]);
-            dd($e->getMessage());
+            ]); 
 
             return redirect()->route('claims.index')
                 ->with('error', 'Failed to load claim details.');
@@ -179,13 +178,12 @@ class ClaimsController extends Controller
     /**
      * Show the form for editing the specified claim request
      */
-    public function edit(ClaimRequest $claimRequest)
+    public function edit($uuid)
     {
-
         try {
             // Load claim request with relationships
-            $claimRequest = $this->claimsService->getClaimById($claimRequest->id);
-
+            $claimRequest = $this->claimsService->getClaimById($uuid);
+            
             // Get dropdown data for the form
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -196,12 +194,11 @@ class ClaimsController extends Controller
         } catch (Exception $e) {
             Log::error('Error loading claim request edit form', [
                 'error' => $e->getMessage(),
-                'claim_request_id' => $claimRequest->id,
-                'user_id' => Auth::id(),
-            ]);
+                'claim_request_uuid' => $uuid,
+                'user_id' => auth()->id(),
+            ]); 
 
-            return redirect()->route('claims.show', $claimRequest->id)
-                ->with('error', 'Failed to load edit form.');
+            return redirect()->route('claims.show', $uuid)->with('error', 'Failed to load edit form.');
         }
     }
 

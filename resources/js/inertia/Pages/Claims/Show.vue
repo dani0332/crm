@@ -45,6 +45,18 @@ const whatsappForm = useForm({
   whatsapp_consent: props.claim.whatsapp_consent || false,
 });
 
+// Complaint status form
+const complaintStatusForm = useForm({
+  complaint_status: props.claim.complaint_status || '',
+  notes: '',
+});
+
+// Follow-up scheduling form
+const followUpForm = useForm({
+  next_follow_up_date: props.claim.next_follow_up_date || '',
+  notes: '',
+});
+
 const managersOptions = computed(() => {
   return (
     props.dropdowns.claimsManagers?.map(manager => ({
@@ -122,7 +134,7 @@ function assignManager() {
 }
 
 function updateStatus() {
-  if (!statusForm.status) {
+  if (!statusForm.claim_status_id) {
     notification.error({
       title: 'Please select a status',
       position: 'top',
@@ -148,7 +160,7 @@ function updateStatus() {
 }
 
 function updateSubStatus() {
-  if (!subStatusForm.sub_status_id) {
+  if (!subStatusForm.claim_sub_status_id) {
     notification.error({
       title: 'Please select a sub-status',
       position: 'top',
@@ -299,7 +311,7 @@ function deleteClaim() {
           </Link>
           <Link
             v-if="can(permissionsEnum.CLAIM_EDIT)"
-            :href="`/claim/${claim.ref_id}/edit`"
+            :href="`/claim/${claim.uuid}/edit`"
           >
             <x-button size="sm" color="emerald" tag="div">Edit</x-button>
           </Link>
@@ -325,7 +337,7 @@ function deleteClaim() {
               <h4 class="font-semibold mb-3 text-gray-700">Update Status</h4>
               <div class="flex gap-2">
                 <x-select
-                  v-model="statusForm.status"
+                  v-model="statusForm.claim_status_id"
                   placeholder="Select Status"
                   :options="statusOptions"
                   class="flex-1"
@@ -348,7 +360,7 @@ function deleteClaim() {
               </h4>
               <div class="flex gap-2">
                 <x-select
-                  v-model="subStatusForm.sub_status_id"
+                  v-model="subStatusForm.claim_sub_status_id"
                   placeholder="Select Sub-Status"
                   :options="subStatusOptions"
                   filterable
