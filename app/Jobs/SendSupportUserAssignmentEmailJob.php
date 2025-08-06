@@ -67,7 +67,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
         $this->supportUserId = $supportUserId;
         $this->leadIds = is_array($leadIds) ? $leadIds : explode(',', $leadIds);
         $this->quoteType = $quoteType;
-
+        $this->onQueue('shared');
         $this->afterCommit();
     }
 
@@ -166,8 +166,18 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
         $emailService = app(SendEmailCustomerService::class);
 
         $quoteTypeName = '';
-        if ($leads->pluck('quote_type.value')->unique()->count() == 1) {
-            $quoteTypeName = $leads[0]->quote_type->value;
+
+        // Get all quote types from leads, handling both enum and string values
+        $quoteTypes = $leads->map(function ($lead) {
+            $quoteType = $lead['quote_type'];
+            if ($quoteType instanceof QuoteTypes) {
+                return $quoteType->value;
+            }
+            return $quoteType; // string or null
+        })->filter()->unique();
+
+        if ($quoteTypes->count() == 1) {
+            $quoteTypeName = $quoteTypes->first();
         } else {
             $quoteTypeName = $this->quoteType->value;
         }
