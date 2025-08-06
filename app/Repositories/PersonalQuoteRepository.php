@@ -172,7 +172,7 @@ class PersonalQuoteRepository extends BaseRepository
                     }
 
                     $quoteDocument = $quote->documents()->create($document);
-                    info('Document uploaded - Ref: '.$quote->code);
+                    LoggerService::info('Document uploaded - Ref: '.$quote->code);
                 });
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
@@ -192,12 +192,12 @@ class PersonalQuoteRepository extends BaseRepository
 
                 return ['status' => true, 'message' => 'File Uploaded'];
             } catch (\Exception $exception) {
-                info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+                LoggerService::info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
 
                 return ['status' => false, 'message' => $fileName.' :  '.($exception->getMessage() ?? 'Error uploading file')];
             }
         } catch (\Exception $exception) {
-            info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
+            LoggerService::info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
             return ['status' => true, 'message' => $fileName.' :  Document upload failed, please try again'];
         }

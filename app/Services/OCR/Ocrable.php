@@ -12,10 +12,9 @@ trait Ocrable
         $responseBody = $response->object();
         $status = $response->status();
 
-        LoggerService::info(self::class.'::handleResponse', [
+        LoggerService::info(self::class.'::handleResponse', extra: [
             'endpoint' => $endpoint,
             'status' => $status,
-            'response' => $response->body(),
             'response_size' => strlen($response->body()),
             'response_time' => $response->transferStats?->getTransferTime() ?? 'unknown',
         ]);
