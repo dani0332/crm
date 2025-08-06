@@ -10,7 +10,6 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -25,7 +24,6 @@ use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\AmlCftReportExport;
 use App\Exports\KycLogsExport;
-use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -50,7 +48,6 @@ use App\Models\KycLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
-use App\Models\PolicyIssuance;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -63,10 +60,8 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RtaTransactionTypeService;
 use App\Services\SIBService;
@@ -295,25 +290,25 @@ class AMLController extends Controller
         $rtaConfigurationData = [];
         if ($quoteType->code == quoteTypeCode::Car) {
             $rtaService = app(RtaTransactionTypeService::class);
-            
+
             // Get all RTA transaction types with their configurations
             $rtaTransactionTypes = [
                 'RTT01' => 'New Vehicle Registration',
                 'RTT03' => 'Change Vehicle Ownership',
-                'RTT04' => 'Vehicle Renewal'
+                'RTT04' => 'Vehicle Renewal',
             ];
-            
+
             $rtaConfigurationData = [
                 'rta_transaction_types' => $rtaTransactionTypes,
                 'rta_field_configurations' => [],
-                'rta_validation_summaries' => []
+                'rta_validation_summaries' => [],
             ];
-            
+
             // Pre-generate configurations for all RTA types and both GIG/Non-GIG scenarios
             foreach (array_keys($rtaTransactionTypes) as $rtaType) {
                 foreach ([false, true] as $isGigRenewal) {
-                    $configKey = $rtaType . ($isGigRenewal ? '_GIG' : '');
-                    
+                    $configKey = $rtaType.($isGigRenewal ? '_GIG' : '');
+
                     $rtaConfigurationData['rta_field_configurations'][$configKey] = $rtaService->getFrontendFieldConfig($rtaType, $isGigRenewal);
                     $rtaConfigurationData['rta_validation_summaries'][$configKey] = $rtaService->getValidationSummary($rtaType, $isGigRenewal);
                 }
@@ -347,7 +342,7 @@ class AMLController extends Controller
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType->id, $quoteRequest->id),
             'permissionsEnum' => PermissionsEnum::asArray(),
-        ], $businessPayload ?? [], $rtaConfigurationData));    
+        ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
@@ -486,6 +481,7 @@ class AMLController extends Controller
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
                 LoggerService::info('AML Screening Bridger - No Member Found for Screening, AML Screening Cleared');
+
                 return app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
             }
 
@@ -519,14 +515,14 @@ class AMLController extends Controller
                 session()->put('insurerAMLScreeningResponse');
                 InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                 $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                if (!empty($getInsurerScreeningResponse)) {
+                if (! empty($getInsurerScreeningResponse)) {
                     $insurerAMLScreeningResponse = [
                         'status' => $getInsurerScreeningResponse['status'],
                         'message' => $getInsurerScreeningResponse['message'],
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                     ];
-                    
-                    if(isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
+
+                    if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
                         $insurerAMLScreeningResponse['autoCaptureStatus'] = $getInsurerScreeningResponse['autoCaptureStatus'];
                         $insurerAMLScreeningResponse['autoCaptureMessage'] = $getInsurerScreeningResponse['autoCaptureMessage'];
                     }
@@ -900,7 +896,7 @@ class AMLController extends Controller
         if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
             $insurerAMLScreeningResponse = $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
 
-            if (!empty($insurerAMLScreeningResponse)) {
+            if (! empty($insurerAMLScreeningResponse)) {
                 $response['insurer_screening'] = [
                     'status' => $insurerAMLScreeningResponse['status'],
                     'message' => $insurerAMLScreeningResponse['message'],
@@ -910,7 +906,7 @@ class AMLController extends Controller
                 ];
             }
         }
-        
+
         if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
@@ -1092,15 +1088,15 @@ class AMLController extends Controller
         return match (ucfirst($quoteType)) {
             QuoteTypes::CAR->value => match ($insurerCode->code) {
                 InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $quoteDetails),
-                
+
                 default => response()->json([
                     'success' => false,
-                    'message' => 'Quote type not supported'
+                    'message' => 'Quote type not supported',
                 ]),
             },
             default => response()->json([
                 'success' => false,
-                'message' => 'Quote type not supported'
+                'message' => 'Quote type not supported',
             ]),
         };
     }

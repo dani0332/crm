@@ -14,10 +14,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     private const RTA_NEW_VEHICLE_REGISTRATION = 'RTT01';
     private const RTA_CHANGE_VEHICLE_OWNERSHIP = 'RTT03';
     private const RTA_VEHICLE_RENEWAL = 'RTT04';
-    
     private const POLICY_EFFECTIVE_DATE_MAX_DAYS = 30;
     private const POLICY_DURATION_MONTHS = 13;
-    
     private const GIG_PROVIDER_CODE = InsuranceProvidersEnum::AXA;
 
     public function authorize(): bool
@@ -69,11 +67,11 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             case self::RTA_NEW_VEHICLE_REGISTRATION:
                 $rules = array_merge($rules, $this->getNewVehicleRegistrationRules());
                 break;
-                
+
             case self::RTA_VEHICLE_RENEWAL:
                 $rules = array_merge($rules, $this->getVehicleRenewalRules());
                 break;
-                
+
             case self::RTA_CHANGE_VEHICLE_OWNERSHIP:
                 $rules = array_merge($rules, $this->getChangeVehicleOwnershipRules());
                 break;
@@ -86,9 +84,9 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         return [
             'policy_effective_date' => 'required|date',
-            'policy_expiry_date' => 'nullable', 
-            'certificate_start_date' => 'nullable', 
-            'certificate_end_date' => 'nullable', 
+            'policy_expiry_date' => 'nullable',
+            'certificate_start_date' => 'nullable',
+            'certificate_end_date' => 'nullable',
             'rta_plate_category' => 'nullable',
         ];
     }
@@ -96,17 +94,17 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     private function getVehicleRenewalRules(): array
     {
         $isGigRenewal = $this->isGigRenewal();
-        
+
         if ($isGigRenewal['parent_quote_id'] === null) {
             return [];
         }
-        
+
         if ($isGigRenewal['status']) {
             return [
-                'policy_effective_date' => 'nullable', 
-                'policy_expiry_date' => 'nullable', 
-                'certificate_start_date' => 'required|date', 
-                'certificate_end_date' => 'nullable', 
+                'policy_effective_date' => 'nullable',
+                'policy_expiry_date' => 'nullable',
+                'certificate_start_date' => 'required|date',
+                'certificate_end_date' => 'nullable',
                 'plate_code' => 'required',
                 'plate_number' => 'required',
                 'rta_plate_category' => 'required',
@@ -114,11 +112,11 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         } else {
             return [
                 'policy_effective_date' => 'required|date',
-                'policy_expiry_date' => 'nullable', 
-                'certificate_start_date' => 'nullable', 
-                'certificate_end_date' => 'nullable', 
+                'policy_expiry_date' => 'nullable',
+                'certificate_start_date' => 'nullable',
+                'certificate_end_date' => 'nullable',
                 'plate_code' => 'required',
-                'plate_number' => 'required', 
+                'plate_number' => 'required',
                 'rta_plate_category' => 'required',
             ];
         }
@@ -128,9 +126,9 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         return [
             'policy_effective_date' => 'required|date',
-            'policy_expiry_date' => 'nullable', 
-            'certificate_start_date' => 'nullable', 
-            'certificate_end_date' => 'nullable', 
+            'policy_expiry_date' => 'nullable',
+            'certificate_start_date' => 'nullable',
+            'certificate_end_date' => 'nullable',
             'plate_code' => 'required',
             'plate_number' => 'required',
             'rta_plate_category' => 'required',
@@ -141,22 +139,22 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         $quoteDetails = CarQuote::where([
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
-            'uuid' => $this->quote_uuid
+            'uuid' => $this->quote_uuid,
         ])->first();
 
-        if (!$quoteDetails) {
+        if (! $quoteDetails) {
             return ['status' => false, 'parent_quote_id' => null, 'isGigRenewal' => false];
         }
 
         $parentQuote = CarQuote::where([
-            'code' => $quoteDetails->parent_duplicate_quote_id
+            'code' => $quoteDetails->parent_duplicate_quote_id,
         ])->first();
-        
+
         $parentQuoteInsuranceProviderCode = $parentQuote->plan->insurance_provider->code;
 
         if ($parentQuoteInsuranceProviderCode === self::GIG_PROVIDER_CODE) {
             return ['status' => true, 'parent_quote_id' => $quoteDetails->parent_duplicate_quote_id, 'isGigRenewal' => true];
-        } 
+        }
 
         return ['status' => false, 'parent_quote_id' => $quoteDetails->parent_duplicate_quote_id, 'isGigRenewal' => false];
     }
@@ -187,23 +185,23 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             'home_country_driving_experience.numeric' => 'Home country driving experience must be a number.',
             'home_country_driving_experience.min' => 'Home country driving experience cannot be less than 0.',
             'home_country_driving_experience.max' => 'Home country driving experience cannot exceed 50 years.',
-            
+
             // RTA Transaction Type specific messages
             'policy_effective_date.required' => 'Policy effective date is required.',
             'policy_effective_date.date' => 'Please enter a valid policy effective date.',
             'rta_transaction_type.required' => 'RTA transaction type is required.',
-            
+
             // Plate information messages
             'plate_code.required' => 'Plate code is required for this transaction type.',
             'plate_number.required' => 'Plate number is required for this transaction type.',
             'rta_plate_category.required' => 'RTA plate category is required for this transaction type.',
-            
+
             // Certificate and policy dates
             'certificate_start_date.required' => 'Certificate start date is required.',
             'certificate_start_date.date' => 'Please enter a valid certificate start date.',
             'policy_expiry_date.date' => 'Please enter a valid policy expiry date.',
             'certificate_end_date.date' => 'Please enter a valid certificate end date.',
-            
+
             // Vehicle information
             'traffic_code_number.required' => 'Traffic code number is required.',
             'engine_number.required' => 'Engine number is required.',
@@ -257,7 +255,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 
     private function validateRtaTransactionTypeRules($validator): void
     {
-        if (!$this->filled('rta_transaction_type')) {
+        if (! $this->filled('rta_transaction_type')) {
             return;
         }
 
@@ -267,21 +265,21 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             case self::RTA_NEW_VEHICLE_REGISTRATION:
                 $this->validateNewVehicleRegistration($validator);
                 break;
-                
+
             case self::RTA_VEHICLE_RENEWAL:
                 $this->validateVehicleRenewal($validator);
                 break;
-                
+
             case self::RTA_CHANGE_VEHICLE_OWNERSHIP:
                 $this->validateChangeVehicleOwnership($validator);
                 break;
         }
     }
-    
+
     private function validateNewVehicleRegistration($validator): void
     {
         $this->validatePolicyEffectiveDateWithinLimit($validator);
-        
+
         if ($this->filled('plate_code') || $this->filled('plate_number')) {
             $validator->errors()->add('plate_code', 'Plate code and plate number are not required for new vehicle registration.');
         }
@@ -290,12 +288,13 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     private function validateVehicleRenewal($validator): void
     {
         $isGigRenewal = $this->isGigRenewal();
-        
+
         if ($isGigRenewal['parent_quote_id'] === null) {
             $validator->errors()->add('rta_transaction_type', 'Vehicle renewal requires parent quote id to proceed.');
+
             return;
         }
-        
+
         if ($isGigRenewal['status']) {
             $this->validateGigRenewal($validator);
         } else {
@@ -308,15 +307,15 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         if ($this->filled('policy_effective_date')) {
             $validator->errors()->add('policy_effective_date', 'Policy effective date is automatically calculated for GIG renewals.');
         }
-        
+
         if ($this->filled('certificate_start_date')) {
             $certificateStartDate = \Carbon\Carbon::parse($this->certificate_start_date);
             $currentDate = \Carbon\Carbon::now()->startOfDay();
-            
+
             if ($certificateStartDate->lt($currentDate)) {
                 $validator->errors()->add('certificate_start_date', 'Certificate start date cannot be backdated.');
             }
-            
+
             if ($this->filled('policy_effective_date')) {
                 $policyEffectiveDate = \Carbon\Carbon::parse($this->policy_effective_date);
                 if ($certificateStartDate->gt($policyEffectiveDate)) {
@@ -324,7 +323,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
                 }
             }
         }
-        
+
     }
 
     private function validateNonGigRenewal($validator): void
@@ -346,14 +345,14 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 
             if ($policyEffectiveDate->gt($maxAllowedDate)) {
                 $validator->errors()->add(
-                    'policy_effective_date', 
-                    'Policy effective date cannot be more than ' . self::POLICY_EFFECTIVE_DATE_MAX_DAYS . ' days from today. Maximum allowed date is ' . $maxAllowedDate->format('Y-m-d') . '.'
+                    'policy_effective_date',
+                    'Policy effective date cannot be more than '.self::POLICY_EFFECTIVE_DATE_MAX_DAYS.' days from today. Maximum allowed date is '.$maxAllowedDate->format('Y-m-d').'.'
                 );
             }
 
             if ($policyEffectiveDate->lt($currentDate->startOfDay())) {
                 $validator->errors()->add(
-                    'policy_effective_date', 
+                    'policy_effective_date',
                     'Policy effective date cannot be in the past.'
                 );
             }
@@ -364,18 +363,18 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     {
         if ($this->filled('is_insured_and_driver_same')) {
             $isInsuredAndDriverSame = $this->is_insured_and_driver_same;
-            
+
             if ($isInsuredAndDriverSame == 0 || $isInsuredAndDriverSame === '0') {
-                if (!$this->filled('driver_first_name')) {
+                if (! $this->filled('driver_first_name')) {
                     $validator->errors()->add('driver_first_name', 'Driver first name is required when insured and driver are not the same.');
                 }
-                
-                if (!$this->filled('driver_last_name')) {
+
+                if (! $this->filled('driver_last_name')) {
                     $validator->errors()->add('driver_last_name', 'Driver last name is required when insured and driver are not the same.');
                 }
             }
         }
-        
+
         if ($this->filled('license_issue_date') && $this->filled('license_expiry_date')) {
             $issueDate = \Carbon\Carbon::parse($this->license_issue_date);
             $expiryDate = \Carbon\Carbon::parse($this->license_expiry_date);
@@ -400,7 +399,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
         $calculatedDates = [];
         $rtaType = $this->rta_transaction_type;
 
-        if (!$rtaType) {
+        if (! $rtaType) {
             return $calculatedDates;
         }
 
@@ -414,10 +413,10 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
                     $calculatedDates['certificate_end_date'] = $calculatedDates['policy_expiry_date'];
                 }
                 break;
-                
+
             case self::RTA_VEHICLE_RENEWAL:
                 $gigRenewalData = $this->isGigRenewal();
-                if ($gigRenewalData['status']) {        
+                if ($gigRenewalData['status']) {
                     if ($this->filled('certificate_start_date')) {
                         $certificateStartDate = \Carbon\Carbon::parse($this->certificate_start_date);
                         $calculatedDates['certificate_end_date'] = $certificateStartDate->copy()->addMonths(self::POLICY_DURATION_MONTHS)->format('Y-m-d');

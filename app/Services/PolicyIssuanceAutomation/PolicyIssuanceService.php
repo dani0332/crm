@@ -4,7 +4,6 @@ namespace App\Services\PolicyIssuanceAutomation;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -34,7 +33,7 @@ class PolicyIssuanceService
             },
             QuoteTypes::CAR->value => match ($insurerCode) {
                 InsuranceProvidersEnum::AXA => new GIGInsuranceService,
-                
+
                 default => null,
             },
             default => null,
@@ -261,7 +260,7 @@ class PolicyIssuanceService
         return ['status' => true, 'message' => 'Required documents uploaded for policy issuance automation'];
     }
 
-    public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status = 'success', $policyIssuance): void
+    public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status, $policyIssuance): void
     {
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $policyIssuance->id,
@@ -285,7 +284,7 @@ class PolicyIssuanceService
         $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
 
         $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
-        $insurerApiStatus = $quote?->insurer_api_status; 
+        $insurerApiStatus = $quote?->insurer_api_status;
         $apiIssuanceStatus = $quote?->api_issuance_status;
 
         $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
@@ -309,9 +308,9 @@ class PolicyIssuanceService
         }
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code, extra: [
             'insurerApiStatus' => $insurerApiStatus, 'apiIssuanceStatus' => $apiIssuanceStatus,
-            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted, 
+            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
             'isPolicyBooked' => $isPolicyBooked,
-            'isPolicyBookingFailed' => $isPolicyBookingFailed, 
+            'isPolicyBookingFailed' => $isPolicyBookingFailed,
             'newInsurerApiStatus' => $newInsurerApiStatus,
             'newApiIssuanceStatus' => $newApiIssuanceStatus,
         ]);
@@ -341,7 +340,7 @@ class PolicyIssuanceService
     public function getInsurerAPIStatuses($quote, $quoteType)
     {
         $quoteObject = $this->getQuoteObjectBy($quoteType, $quote->id);
-        if(!$quoteObject) {
+        if (! $quoteObject) {
             return null;
         }
 
@@ -349,7 +348,7 @@ class PolicyIssuanceService
         $insurer = getInsuranceProvider($payment, $quoteType);
 
         $insurerAutomation = $this->init($quoteType, $insurer?->code);
-        if($insurerAutomation) {
+        if ($insurerAutomation) {
             $insurerApiStatuses = $insurerAutomation->getInsurerAPIStatuses();
         }
 
@@ -374,5 +373,5 @@ class PolicyIssuanceService
         $insurerAutomation = $this->init($quoteType, $insurer?->code);
 
         return $insurerAutomation->getFailedIssuanceAPIStatuses();
-    }   
+    }
 }

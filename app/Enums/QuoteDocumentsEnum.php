@@ -46,7 +46,7 @@ final class QuoteDocumentsEnum extends Enum
     // End of Savings Quote
 
     public const CAR_REGISTRATION_CARD = 'CAR_MULKIY';
-    
+
     public static function getSukoonAllDocTypes(): array
     {
         return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE, self::CAR_TAX_INVOICE_RAISE_BY_BUYER];

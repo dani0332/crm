@@ -52,7 +52,6 @@ class CarQuote extends BaseModel
         'mobile_no' => FilterTypes::EXACT,
         'quote_batch_id' => FilterTypes::IN,
     ];
-
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];

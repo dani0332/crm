@@ -778,6 +778,7 @@ class AMLService
 
         if ($quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload quote. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+
             return false;
         }
 
@@ -887,7 +888,7 @@ class AMLService
                 $insurerScreeningPayload['certificateStartDate'] = $carQuoteRequestDetails->certificate_start_date ?? null;
                 $insurerScreeningPayload['certificateEndDate'] = $carQuoteRequestDetails->certificate_end_date ?? null;
                 $insurerScreeningPayload['annualMilageEstimation'] = $carQuoteRequestDetails->annual_mileage_estimate ?? null;
-                $insurerScreeningPayload['driverName'] = trim(($carQuoteRequestDetails->driver_first_name ?? '') . ' ' . ($carQuoteRequestDetails->driver_last_name ?? '')) ?: null;
+                $insurerScreeningPayload['driverName'] = trim(($carQuoteRequestDetails->driver_first_name ?? '').' '.($carQuoteRequestDetails->driver_last_name ?? '')) ?: null;
                 $insurerScreeningPayload['driverDob'] = $carQuoteRequestDetails->driver_dob ?? null;
                 $insurerScreeningPayload['driverGender'] = strtolower($this->formatGender($carQuoteRequestDetails->driver_gender)) ?? null;
                 $insurerScreeningPayload['driverLicenseNumber'] = $carQuoteRequestDetails->driver_license_number ?? null;
@@ -956,8 +957,8 @@ class AMLService
         $quoteObject::where('id', $quoteDetails->id)->update($insurerAMLStatus);
         LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
         $quoteDetails->refresh();
-        
-        if($quoteTypeId == QuoteTypes::CAR->id() && $insurerAMLStatus['insurer_aml_status'] == AMLStatusCode::InsurerAMLScreeningCleared) {
+
+        if ($quoteTypeId == QuoteTypes::CAR->id() && $insurerAMLStatus['insurer_aml_status'] == AMLStatusCode::InsurerAMLScreeningCleared) {
             $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
             $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
 
@@ -2094,23 +2095,23 @@ class AMLService
     public function isInsurerSyncEnabled($quoteTypeId, $quoteRequestId)
     {
         $insurerScreenType = [InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA];
-        
+
         $kycLogs = KycLog::withTrashed()->where([
             'quote_request_id' => $quoteRequestId,
             'quote_type_id' => $quoteTypeId,
         ])->where('screening_type', $insurerScreenType[InsuranceProvidersEnum::AXA])->latest()->first();
 
-        if(!$kycLogs) {
+        if (! $kycLogs) {
             return false;
         }
 
         $screeningResult = json_decode($kycLogs->results);
-        
-        if (!isset($screeningResult->uwApprovalStatus, $screeningResult->quoteStatus)) {
+
+        if (! isset($screeningResult->uwApprovalStatus, $screeningResult->quoteStatus)) {
             return false;
         }
 
-        return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO 
+        return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO
             && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUOTE_STATUS;
     }
 }

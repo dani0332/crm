@@ -162,7 +162,7 @@ return [
     'OCR_API_KEY' => env('OCR_API_KEY', ''),
     'OCR_API_TIMEOUT' => env('OCR_API_TIMEOUT', 90),
 
-    // GIG Policy Issuance API Credentials 
+    // GIG Policy Issuance API Credentials
     'GIG_API_BASE_URL' => env('GIG_API_BASE_URL'),
     'GIG_API_AUTH_BASE_URL' => env('GIG_API_AUTH_BASE_URL'),
     'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),

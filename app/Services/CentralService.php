@@ -1585,7 +1585,7 @@ class CentralService extends BaseService
                 //     'Premium in GIG portal exceeds the authorized amount and differs from capture amount' => 'Capture amount in IMCRM and getQuote premium is greater than Authorized amount, but the Capture amount is less than or equal to the Authorized amount',
                 //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
                 // ];
-                
+
                 $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
 
                 return ['status' => false, 'message' => $message, 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to '.$message];
@@ -1615,7 +1615,7 @@ class CentralService extends BaseService
         $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
         LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
 
-        if(is_string($response)) {
+        if (is_string($response)) {
             return ['message' => $response, 'autoCaptureStatus' => GenericRequestEnum::SUCCESS, 'autoCaptureMessage' => 'Auto capture payment process started'];
         }
 
