@@ -9,6 +9,7 @@ const props = defineProps({
   businessInsuranceTypes: Array,
   insuranceProviders: Array,
   advisors: Array,
+  supportUsers: Array,
   departments: Array,
   sendUpdateStatuses: Array,
   sendUpdateTypes: Array,
@@ -165,6 +166,7 @@ const availableFilters = reactive({
   currently_insured_with: [],
   department: [],
   advisors: [],
+  support_users: [],
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   update_status: [],
@@ -973,6 +975,32 @@ onMounted(() => {
                   availableFilters.advisors = advisors.map(item => item.id)
                 "
                 @clear="availableFilters.advisors = []"
+              />
+            </template>
+          </x-select>
+
+          <x-select
+            v-model="availableFilters.support_users"
+            placeholder="Search by OE/AE"
+            :options="
+              supportUsers.map(item => ({
+                value: item.id,
+                label: item.name,
+              }))
+            "
+            class="w-full"
+            label="OE/AE"
+            multiple
+            truncate
+            filterable
+            filterPlaceholder="Filter OE/AE...."
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  availableFilters.support_users = supportUsers.map(item => item.id)
+                "
+                @clear="availableFilters.support_users = []"
               />
             </template>
           </x-select>

@@ -67,6 +67,8 @@ class SearchService extends BaseService
         // Select columns for normal query
         $baseQuery->select($selectColumns);
 
+        // logger()->debug("toRawSql: " . $baseQuery->toRawSql());
+
         // Use cursor for better memory usage with large result sets
         return $baseQuery->paginate(15)->withQueryString();
     }
@@ -450,6 +452,11 @@ class SearchService extends BaseService
             // Filter by advisors
             if ($request->has('advisors') && ! isset($request->code)) {
                 $query->whereIn('personal_quotes.advisor_id', $request->advisors);
+            }
+
+            // Filter by support users
+            if ($request->has('support_users') && ! isset($request->code)) {
+                $query->whereIn('personal_quotes.support_user_id', $request->support_users);
             }
 
             // Filter by tax invoice numbers

@@ -139,7 +139,7 @@ class AmtController extends Controller
 
         /* Below conditions have AND relationship between them */
         $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)?: false;
-        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(HealthTeamType::GROUP_MEDICAL) : false;
+        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS) : false;
 
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
@@ -283,9 +283,9 @@ class AmtController extends Controller
             Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
          * */
 
-        logger()->debug("toRawSql: "/*.$data->toRawSql()*/,[
-            //$supportUsers
-            'Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)' => Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)
+        logger()->debug('toRawSql: ' .$data->toRawSql() , [
+            // $supportUsers
+//            'Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)' => Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR),
         ]);
 
         $quotes = $data->simplePaginate(15)->withQueryString();
@@ -560,7 +560,7 @@ class AmtController extends Controller
     private function getSupportUsers()
     {
         $groupMedicalProduct = Team::where('type', TeamTypeEnum::PRODUCT)
-            ->where('name', HealthTeamType::GROUP_MEDICAL)
+            ->where('name', QuoteTypes::BUSINESS)
             ->where('is_active', 1)
             ->first();
 

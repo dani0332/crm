@@ -31,6 +31,7 @@ class SearchController extends Controller
         $sendUpdateTypes = $sendUpdateStatuses = [];
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList);
         $getAdvisorsList = UserRepository::advisorsList();
+        $getSupportUserList = UserRepository::supportUserList();
         $quoteStatuses = app(LookupService::class)->getLeadStatuses([QuoteStatusEnum::SentForTransactionApproval], [QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued]);
         $paymentStatuses = PaymentStatus::withActive()->whereNotIn('id', [
             PaymentStatusEnum::CAPTURED,
@@ -62,6 +63,7 @@ class SearchController extends Controller
             'sendUpdateStatuses' => $sendUpdateStatuses,
             'sendUpdateTypes' => $sendUpdateTypes,
             'advisors' => $getAdvisorsList,
+            'supportUsers' => $getSupportUserList,
             'quoteTypeIdEnum' => $quoteTypeIdEnum,
             'isUniversalSearchEnabled' => $isUniversalSearchEnabled,
         ]);

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
@@ -152,5 +153,60 @@ class UserRepository extends BaseRepository
             ->orderBy('name')
             ->get()
             ->toArray();
+    }
+
+    public function fetchSupportUserList()
+    {
+        $roles = [RolesEnum::CLIENTSUPPORT];
+
+        // Filter to existing roles only
+        $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
+
+        // getting 'product codes' from QuoteTypes
+        $productCodes = [];
+        foreach (request('line_of_business') as $lineOfBusinessItem) {
+            $quoteTypeName = QuoteTypes::getName($lineOfBusinessItem);
+            if (!empty($quoteTypeName)) {
+                $productCodes[] = $quoteTypeName;
+            }
+        }
+
+        $query = User::query()
+            ->whereHas('roles', function ($query) use ($existingRoles) {
+                $query->whereIn('name', $existingRoles);
+            })
+            ->where('is_active', 1);
+
+        // 1. Department filter (users.department_id)
+        $departmentFilter = request('department');
+        if (!empty($departmentFilter)) {
+            $query->whereIn('department_id', (array) $departmentFilter);
+        }
+
+        // 2. Line of Business filter (via user_products -> teams where type = PRODUCT)
+        if (!empty($lineOfBusinessFilter)) {
+
+            $query->whereHas('products', function ($q) use ($productCodes) {
+                $q->where('type', TeamTypeEnum::PRODUCT)
+                    ->whereIn('teams.code', (array) $productCodes);
+            });
+        }
+
+        // 3. Business Insurance Type filter (via business_type_of_insurance_user pivot table)
+        $businessInsuranceTypeFilter = request('business_insurance_type');
+        if (!empty($businessInsuranceTypeFilter)) {
+            $query->whereHas('businessTypes', function ($q) use ($businessInsuranceTypeFilter) {
+                $q->whereIn('business_type_of_insurance.id', (array) $businessInsuranceTypeFilter);
+            });
+        }
+
+        $supportUsers = $query->select('name', 'id')
+            ->orderBy('name')
+            ->get()
+            ->toArray();
+
+        // logger()->debug("fetchSupportUserList toRawSql: " . $query->toRawSql());
+
+        return $supportUsers;
     }
 }
