@@ -37,8 +37,8 @@ enum QuoteFlowType: int
     case CAR_FLEET_NEW_POLICY = 31;
     case SU_TRADE_UPDATE = 32;
     case TRADE_NEW_POLICY = 33;
-    case SU_PROFESSIONAL_UPDATE = 34;
-    case PROFESSIONAL_NEW_POLICY = 35;
+    case SU_OTHER_BUSINESS_UPDATE = 34;
+    case OTHER_BUSINESS_NEW_POLICY = 35;
     case HOME_AUTOMATED_FOLLOWUPS = 8;
     case MOTOR_PCP_FOLLOWUPS = 9;
     case LIFE_AUTOMATED_FOLLOWUPS = 12;
@@ -82,8 +82,8 @@ enum QuoteFlowType: int
             QuoteFlowType::CAR_FLEET_NEW_POLICY => 'car_fleet_new_policy',
             QuoteFlowType::SU_TRADE_UPDATE => 'su_trade_update',
             QuoteFlowType::TRADE_NEW_POLICY => 'trade_new_policy',
-            QuoteFlowType::SU_PROFESSIONAL_UPDATE => 'su_professional_update',
-            QuoteFlowType::PROFESSIONAL_NEW_POLICY => 'professional_new_policy',
+            QuoteFlowType::SU_OTHER_BUSINESS_UPDATE => 'su_other_business_update',
+            QuoteFlowType::OTHER_BUSINESS_NEW_POLICY => 'other_business_new_policy',
             QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
             QuoteFlowType::MOTOR_PCP_FOLLOWUPS => 'motor_pcp_followups',
             QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA => 'sic_health_followups_wa',
@@ -125,8 +125,8 @@ enum QuoteFlowType: int
             31 => QuoteFlowType::CAR_FLEET_NEW_POLICY,
             32 => QuoteFlowType::SU_TRADE_UPDATE,
             33 => QuoteFlowType::TRADE_NEW_POLICY,
-            34 => QuoteFlowType::SU_PROFESSIONAL_UPDATE,
-            35 => QuoteFlowType::PROFESSIONAL_NEW_POLICY,
+            34 => QuoteFlowType::SU_OTHER_BUSINESS_UPDATE,
+            35 => QuoteFlowType::OTHER_BUSINESS_NEW_POLICY,
             36 => QuoteFlowType::SU_CAR_UPDATE,
             8 => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
             9 => QuoteFlowType::MOTOR_PCP_FOLLOWUPS,
