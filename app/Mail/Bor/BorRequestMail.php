@@ -61,13 +61,14 @@ class BorRequestMail extends Mailable
             }
 
             $birdService = app(BirdService::class);
+            LoggerService::info('BOR Request Email: Bird data', $birdData);
             $response = $birdService->triggerWebHookRequest($workflowUrl, $birdData);
 
             LoggerService::info('BOR Request Email sent via Bird', [
                 'bor_log_id' => $this->borLog->id,
                 'lead_id' => $this->borLog->lead_id,
-                'customer_email' => $this->customerData['email'],
-                'advisor_email' => $this->advisorData['email'],
+                'customer_email' => $this->customerData['email'] ?? '',
+                'advisor_email' => $this->advisorData['email'] ?? '',
                 'response_status' => $response->status_code
             ]);
 
@@ -96,35 +97,34 @@ class BorRequestMail extends Mailable
         $quoteUuid = $personalQuote->uuid;
         $portalLink = $this->portalUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor';
         return [
-            'uuid' => $personalQuote->uuid,
-            'ref_id' => $personalQuote->code,
-            'quote_type' => $quoteType,
-            'workflow_type' => WorkflowTypeEnum::BOR_REQUEST,
+            'uuid' => $personalQuote->uuid ?? '',
+            'ref_id' => $personalQuote->code ?? '',
+            'quote_type' => $quoteType ?? '',
+            'workflow_type' => WorkflowTypeEnum::BOR_REQUEST ?? '',
+            'portal_url' => $portalLink ?? '',
+            'customer_name' => $this->getCustomerName() ?? '',
+            'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
+            'insurance' => [
+                'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
+                'insurance_representative' => 'insurance_representative@email.com',
+            ],
             'customer' => [
-                'email' => $this->customerData['email'],
+                'email' => $this->customerData['email'] ?? '',
                 'first_name' => $this->customerData['first_name'] ?? '',
                 'last_name' => $this->customerData['last_name'] ?? '',
                 'company_name' => $this->customerData['company_name'] ?? '',
                 'mobile' => $this->customerData['mobile'] ?? '',
             ],
-            'subject_line' => $this->getSubjectLine($personalQuote, $quoteType),
             'bor_data' => [
-                'policy_number' => $this->borLog->policy_number,
-                'insurer_name' => $this->borLog->insurer_name,
-                'customer_type' => $this->borLog->customer_type,
-                'portal_link' => $portalLink,
-                'bor_ref_id' => $this->borLog->bor_reference_id,
-                'document_id' => $this->borLog->document_id,
-                'date_created' => $this->borLog->date_created,
+                'policy_number' => $this->borLog->policy_number ?? '',
+                'insurer_name' => $this->borLog->insurer_name ?? '',
+                'customer_type' => $this->borLog->customer_type == "Entity" ? "company" : "individual",
+                'portal_link' => $portalLink ?? '',
+                'bor_ref_id' => $this->borLog->bor_reference ?? '',
+                'document_id' => $this->borLog->document_id ?? '',
+                'date_created' => $this->borLog->date_created ?? '',
             ],
             'advisor' => $this->advisorData,
-            'template_variables' => [
-                'customer_name' => $this->getCustomerName(),
-                'policy_number' => $this->borLog->policy_number,
-                'insurer_name' => $this->borLog->insuranceProvider->text,
-                'portal_url' => $portalLink,
-                'company_name' => config('app.name', 'InsuranceMarket.ae'),
-            ]
         ];
     }
 
@@ -146,7 +146,7 @@ class BorRequestMail extends Mailable
     private function getCustomerName()
     {
         if ($this->borLog->customer_type === 'Entity') {
-            return $this->customerData['company_name'] ?? 'Valued Customer';
+            return $this->customerData['company_name'] ?? 'Valued Company';
         }
         
         $firstName = $this->customerData['first_name'] ?? '';
