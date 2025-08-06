@@ -336,7 +336,7 @@ const onDataExport = async (exportType = 'download') => {
     try {
       // Add exportType to payload
       const data = { ...payload, exportType };
-      console.log("data",data);
+      console.log('data', data);
       const url = route('conversion-as-at-export');
 
       // Add exportType to URL parameters
@@ -354,7 +354,8 @@ const onDataExport = async (exportType = 'download') => {
                 position: 'top',
               });
             }
-          }).catch(err => {
+          })
+          .catch(err => {
             notification.error({
               title: err.response.data.message
                 ? err.response.data.message
@@ -385,7 +386,7 @@ const onDataExport = async (exportType = 'download') => {
 };
 
 const cleanFilters = filters => {
-  console.log("filters",filters);
+  console.log('filters', filters);
   Object.keys(filters).forEach(
     key =>
       (filters[key] === '' ||
