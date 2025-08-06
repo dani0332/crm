@@ -7,6 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
@@ -68,6 +69,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($this->data->model_type));
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+
+        $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
 
         info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Type: '.$this->data->model_type.', Type Id: '.$quoteTypeId);
 
@@ -177,6 +180,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->quoteTypeId = $quoteTypeId;
             $emailData->quoteId = $quote->id;
             $emailData->policyWordingHandbook = $policyWordingDoc;
+            $emailData->isHealthAUH = $isAUHHealthLead;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet])) {
                 $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);

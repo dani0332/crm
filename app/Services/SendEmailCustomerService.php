@@ -895,6 +895,7 @@ class SendEmailCustomerService extends BaseService
                     'insuranceType' => $emailData->insuranceType,
                     'planName' => $emailData->planName,
                     'refID' => $emailData->code,
+                    'isHealthAUH' => $emailData->isHealthAUH,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
