@@ -8,6 +8,7 @@ use App\Mail\Bor\BorInsurerNotificationMail;
 use App\Mail\Bor\BorStatusUpdateMail;
 use App\Models\BorLog;
 use App\Models\PersonalQuote;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
 
 class BorEmailService
@@ -19,6 +20,7 @@ class BorEmailService
     {
         try {
             $customerData = $this->getCustomerData($borLog);
+            $advisorData = $this->getAdvisorData($borLog);
             
             if (!$customerData || !$customerData['email']) {
                 LoggerService::error('BOR Request Email: Customer email not found', [
@@ -28,7 +30,7 @@ class BorEmailService
                 return false;
             }
 
-            $mail = new BorRequestMail($borLog, $customerData, $portalUrl);
+            $mail = new BorRequestMail($borLog, $customerData, $portalUrl, $advisorData);
             $success = $mail->sendViaBird();
 
             if ($success) {
@@ -185,6 +187,22 @@ class BorEmailService
             ]);
             return null;
         }
+    }
+
+    private function getAdvisorData(BorLog $borLog): ?array
+    {
+        $borLog->load('personalQuote.advisor');
+        $advisor = User::find($borLog->personalQuote->advisor_id);
+        return [
+            'advisorEmail' => $advisor->email,
+            'advisorId' => $advisor->id,
+            'advisorName' => $advisor->name,
+            'advisorMobile' => $advisor->mobile_no,
+            'advisorLandline' => $advisor->landline_no,
+            'advisorWhatsApp' => $advisor->mobile_no,
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'advisorProfilePath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
+        ];
     }
 
     /**
