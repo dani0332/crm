@@ -106,6 +106,39 @@ const isLIVA = computed(() => {
 const isSUKOON = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
 });
+
+// for new business only.
+watch(
+  () => additionalVehicleTransactionDetailsForm.policy_effective_date,
+  (newVal) => {
+  if (isLIVA.value && newVal) {
+    // Add 13 months to policy_effective_date for policy_expiry_date
+    const effectiveDate = new Date(newVal);
+    const expiryDate = new Date(effectiveDate);
+    expiryDate.setMonth(expiryDate.getMonth() + 13);
+
+    // Format date as YYYY-MM-DD for the form
+    const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
+    additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
+    additionalVehicleTransactionDetailsForm.certificate_end_date = formattedExpiryDate;
+    additionalVehicleTransactionDetailsForm.certificate_start_date = newVal;
+  }
+});
+
+const registrationNoValidation = ref(false);
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.rta_transaction_type,
+  (newVal) => {
+    if (isLIVA.value && newVal) {
+      if (newVal == '10') {
+        registrationNoValidation.value = false
+      } else {
+        registrationNoValidation.value = true;
+      }
+    }
+  }
+);
 </script>
 
 <template>
@@ -129,11 +162,11 @@ const isSUKOON = computed(() => {
             />
           </x-field>
 
-          <x-field label="Plate Code" :required="! isGIG">
+          <x-field label="Plate Code" :required="! isGIG && registrationNoValidation">
             <x-select
               filterable
               v-model="additionalVehicleTransactionDetailsForm.plate_code"
-              :rules="(! isGIG) ? [isRequired] : []"
+              :rules="(! isGIG && registrationNoValidation) ? [isRequired] : []"
               placeholder="Select Plate Code"
               :options="plateCodeOptions"
               class="w-full"
@@ -141,10 +174,10 @@ const isSUKOON = computed(() => {
             />
           </x-field>
 
-          <x-field label="Plate Number" :required="! isGIG">
+          <x-field label="Plate Number" :required="! isGIG && registrationNoValidation">
             <x-input
               v-model="additionalVehicleTransactionDetailsForm.plate_number"
-              :rules="(! isGIG) ? [isRequired] : []"
+              :rules="(! isGIG && registrationNoValidation) ? [isRequired] : []"
               placeholder="Plate Number"
               type="text"
               :disabled="hasNotEditPermission"
@@ -262,7 +295,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
               :rules="isLIVA ? [isRequired] : []"
               placeholder="Policy Expiry Date"
-              :disabled="hasNotEditPermission"
+              :disabled="hasNotEditPermission || isLIVA"
             />
           </x-field>
 
@@ -271,7 +304,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
               :rules="(! isSUKOON) ? [isRequired] : []"
               placeholder="Certificate Start Date"
-              :disabled="hasNotEditPermission"
+              :disabled="hasNotEditPermission || isLIVA"
             />
           </x-field>
 
@@ -280,7 +313,7 @@ const isSUKOON = computed(() => {
               v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
               :rules="isLIVA ? [isRequired] : []"
               placeholder="Certificate End Date"
-              :disabled="hasNotEditPermission"
+              :disabled="hasNotEditPermission || isLIVA"
             />
           </x-field>
 

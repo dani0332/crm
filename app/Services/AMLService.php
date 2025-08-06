@@ -1941,11 +1941,16 @@ class AMLService
                     'bank_name' => $request->bank_name,
                     'first_registration_date' => $request->first_registration_date,
                     'policy_effective_date' => $request->policy_effective_date,
-                    // 'policy_expiry_date' => $request->policy_expiry_date, // TODO:: Need to check with Mirza, why it's commented
+                    'policy_expiry_date' => $request->policy_expiry_date,
                     'certificate_start_date' => $request->certificate_start_date,
                     'certificate_end_date' => $request->certificate_end_date,
                     'annual_mileage_estimate' => $request->annual_mileage_estimate,
                 ];
+                if ($quote?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+                    $updateCarQuoteRequestDetail = array_merge($updateCarQuoteRequestDetail, [
+                        'registration_type' => $this->registrationType($request->rta_transaction_type),
+                    ]);
+                }
                 $message = 'Additional Vehicle Transaction Details saved successfully';
             } else {
                 $updateCarQuoteRequestDetail = [
@@ -1975,6 +1980,17 @@ class AMLService
         }
 
         return $response;
+    }
+
+    private function registrationType($rtaTransactionType)
+    {
+        return match ($rtaTransactionType) {
+            '10' => '3',
+            '20' => '2',
+            '30' => '2',
+            '40' => '1',
+            '50' => '1',
+        };
     }
 
     public function autoCaptureValidationCheck($quote)
