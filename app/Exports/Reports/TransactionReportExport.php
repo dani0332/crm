@@ -32,7 +32,7 @@ class TransactionReportExport extends BaseReportsExport
             'Line Of Business',
             'Sub-Type',
             'Customer Name',
-            'Support User',
+            'OE/AE',
             'Advisor',
             'Policy Issuer',
             'Invoice Description',
