@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Traits\QuoteModelTrait;
 use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -53,7 +52,6 @@ class ClaimRequest extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait/* , SoftDeletes */;
 
     protected $table = 'claim_requests';
-
     protected $fillable = [
         'uuid',
         'code',
@@ -77,7 +75,6 @@ class ClaimRequest extends Model implements AuditableContract
         'claim_request_type_id',
         'whatsapp_consent',
     ];
-
     protected $casts = [
         'manager_assigned_date' => 'datetime',
         'whatsapp_consent' => 'boolean',
@@ -159,7 +156,7 @@ class ClaimRequest extends Model implements AuditableContract
                 $randomString .= $characters[mt_rand(0, strlen($characters) - 1)];
             }
 
-            $code = $prefix . $randomString;
+            $code = $prefix.$randomString;
         } while (self::where('code', $code)->exists());
 
         return $code;
@@ -266,12 +263,12 @@ class ClaimRequest extends Model implements AuditableContract
      */
     public function getFullNameAttribute(): string
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function getIsAssignedAttribute(): bool
     {
-        return !is_null($this->manager_id);
+        return ! is_null($this->manager_id);
     }
 
     /**

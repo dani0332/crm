@@ -4,16 +4,16 @@ namespace App\Services;
 
 use App\Enums\ClaimsEnum;
 use App\Enums\LookupsEnum;
-use App\Models\PersonalQuote;
+use App\Facades\Capi;
 use App\Models\Claim;
 use App\Models\ClaimRequest;
 use App\Models\ClaimRequestDetail;
 use App\Models\Lookup;
+use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
-use App\Facades\Capi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -87,17 +87,17 @@ class ClaimsService extends BaseService
         return $this->query->where('uuid', $uuid)->first();
     }
 
-     /**
+    /**
      * Search active policies by email or policy number
      */
-    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null,?int $quoteTypeId = null): array
+    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null): array
     {
         try {
             // Search in PersonalQuote (Car, Health, Life, Travel, etc.)
             $personalQuotes = PersonalQuote::query()
                 ->whereNotNull('policy_number')
                 ->where('quote_type_id', $quoteTypeId)
-                ->whereIn('quote_status_id', [71]) // Active policy statuses  
+                ->whereIn('quote_status_id', [71]) // Active policy statuses
                 ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
                     $query->where(function ($subQuery) use ($email, $policyNumber) {
                         if ($email) {
@@ -112,7 +112,7 @@ class ClaimsService extends BaseService
                         }
                     });
                 })
-                ->with(['quoteType', 'insuranceProvider', 'quoteStatus']) 
+                ->with(['quoteType', 'insuranceProvider', 'quoteStatus'])
                 ->orderBy('policy_expiry_date', 'desc')
                 ->get();
 
@@ -122,13 +122,13 @@ class ClaimsService extends BaseService
                     'uuid' => $quote->uuid,
                     'ref_id' => $quote->code,
                     'policy_number' => $quote->policy_number,
-                    'customer_name' => trim($quote->first_name . ' ' . $quote->last_name),
-                    'currently_insured_with' => $quote->insuranceProvider->text  ?? 'N/A',
+                    'customer_name' => trim($quote->first_name.' '.$quote->last_name),
+                    'currently_insured_with' => $quote->insuranceProvider->text ?? 'N/A',
                     'product' => $quote->quoteType->text ?? 'Personal Insurance',
-                    'policy_expiry_date' => $quote->policy_expiry_date ,
-                    'policy_start_date' => $quote->policy_start_date ,
+                    'policy_expiry_date' => $quote->policy_expiry_date,
+                    'policy_start_date' => $quote->policy_start_date,
                     'email' => $quote->email,
-                    'mobile_no' => $quote->mobile_no, 
+                    'mobile_no' => $quote->mobile_no,
                     'quote_type_id' => $quote->quote_type_id,
                     'quote_id' => $quote->id,
                     'uuid' => $quote->uuid,
@@ -155,7 +155,7 @@ class ClaimsService extends BaseService
                 'email' => $email,
                 'policy_number' => $policyNumber,
             ]);
-            
+
             return [];
         }
     }
@@ -172,42 +172,41 @@ class ClaimsService extends BaseService
                 'lastName' => $data['last_name'] ?? '',
                 'email' => $data['email'] ?? '',
                 'mobileNo' => $data['mobile_no'] ?? '',
-                'incident' =>  $data['incident_story'] ?? '',
+                'incident' => $data['incident_story'] ?? '',
                 'customerId' => $data['customer_id'] ?? null,
                 'policyNumber' => $data['policy_number'] ?? '',
                 'insuranceProviderId' => $data['insurance_provider_id'] ?? null,
                 'quoteTypeId' => $data['quote_type_id'] ?? null,
-                'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'system'), 
+                'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'system'),
                 'quoteUID' => $data['selected_quote_uuid'] ?? '',
                 'claimTypeId' => $data['claim_type_id'] ?? null,
             ];
 
             // Add vehicle information if available
-            if (!empty($data['car_make'])) {
+            if (! empty($data['car_make'])) {
                 $apiData['carMake'] = $data['car_make'];
             }
-            if (!empty($data['car_model'])) {
+            if (! empty($data['car_model'])) {
                 $apiData['carModel'] = $data['car_model'];
             }
 
             // Add Health information if available
-            if (!empty($data['claim_request_type_id'])) {
+            if (! empty($data['claim_request_type_id'])) {
                 $apiData['claimRequestTypeId'] = $data['claim_request_type_id'];
             }
-            if (!empty($data['service_type_id'])) {
+            if (! empty($data['service_type_id'])) {
                 $apiData['serviceTypeId'] = $data['service_type_id'];
             }
-            if (!empty($data['request_reference_number'])) {
+            if (! empty($data['request_reference_number'])) {
                 $apiData['requestReferrenceNumber'] = $data['request_reference_number'];
             }
- 
 
             // Make API call to create claim
             $response = Capi::request('/api/v2-save-claim', 'post', $apiData);
- 
+
             return $response;
 
-        } catch (\Exception $e) { 
+        } catch (\Exception $e) {
             Log::error('Error creating claim request', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -232,7 +231,7 @@ class ClaimsService extends BaseService
                 'customer_id', 'source', 'manager_id', 'manager_assigned_date', 'quote_uuid',
                 'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
                 'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
-                'whatsapp_consent', 'selected_policy_id', 'policy_not_listed', 'insurer_claim_number'
+                'whatsapp_consent', 'selected_policy_id', 'policy_not_listed', 'insurer_claim_number',
             ])->filter()->toArray();
 
             // Store incident_story as incident field
@@ -245,10 +244,10 @@ class ClaimsService extends BaseService
 
             // Handle claim request detail updates
             $detailData = collect($data)->only([
-                'car_make', 'car_model', 'service_type_id', 'request_referrence_number', 'user_ip'
+                'car_make', 'car_model', 'service_type_id', 'request_referrence_number', 'user_ip',
             ])->filter()->toArray();
 
-            if (!empty($detailData)) {
+            if (! empty($detailData)) {
                 $detail = $claimRequest->claimRequestDetails()->first();
                 if ($detail) {
                     $detail->update($detailData);
@@ -414,8 +413,6 @@ class ClaimsService extends BaseService
         ];
     }
 
-
-
     /**
      * Get claims statistics
      */
@@ -538,8 +535,6 @@ class ClaimsService extends BaseService
             throw $e;
         }
     }
-
-
 
     public function applyFilters($query, $filters)
     {

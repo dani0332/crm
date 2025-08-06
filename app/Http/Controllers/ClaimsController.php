@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Models\Claim;
@@ -15,7 +16,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Enums\PermissionsEnum;
 
 class ClaimsController extends Controller
 {
@@ -89,7 +89,7 @@ class ClaimsController extends Controller
         }
     }
 
-      /**
+    /**
      * Search active policies (AJAX endpoint)
      */
     public function searchPolicies(Request $request): JsonResponse
@@ -138,7 +138,7 @@ class ClaimsController extends Controller
      * Store a newly created claim
      */
     public function store(ClaimStoreRequest $request)
-    { 
+    {
         try {
             $claim = $this->claimsService->createClaim($request->validated());
 
@@ -160,11 +160,11 @@ class ClaimsController extends Controller
      * Display the specified claim request
      */
     public function show($uuid)
-    { 
+    {
         try {
             // Load claim request with all relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
- 
+
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -620,8 +620,6 @@ class ClaimsController extends Controller
             ], 500);
         }
     }
-
-  
 
     /**
      * AI optimize message (AJAX endpoint)

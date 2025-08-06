@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PermissionsEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -53,7 +52,7 @@ class ClaimStoreRequest extends FormRequest
             ],
             'selected_quote_uuid' => [
                 'string',
-                'nullable', 
+                'nullable',
             ],
             'insurance_provider_id' => [
                 'required',
@@ -70,7 +69,7 @@ class ClaimStoreRequest extends FormRequest
                 'integer',
                 'exists:lookups,id',
             ],
- 
+
             'incident_story' => [
                 'nullable',
                 'string',
@@ -81,7 +80,7 @@ class ClaimStoreRequest extends FormRequest
                 'string',
                 'max:100',
             ],
-           
+
             'policy_number' => [
                 'nullable',
                 'string',
@@ -99,7 +98,7 @@ class ClaimStoreRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:100',
-               /*  'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
+                /*  'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
             'vehicle_model' => [
                 'nullable',

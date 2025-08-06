@@ -6,13 +6,13 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable;
-use App\Traits\QuoteModelTrait;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
@@ -36,7 +36,6 @@ class ClaimRequestDetail extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait /* , SoftDeletes */;
 
     protected $table = 'claim_request_details';
-
     protected $fillable = [
         'claim_request_id',
         'claim_uuid',
@@ -46,7 +45,6 @@ class ClaimRequestDetail extends Model implements AuditableContract
         'request_referrence_number',
         'user_ip',
     ];
-
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -97,7 +95,7 @@ class ClaimRequestDetail extends Model implements AuditableContract
 
         do {
             $randomNumber = str_pad((string) mt_rand(1, 9999999999), 10, '0', STR_PAD_LEFT);
-            $referenceNumber = $prefix . $randomNumber;
+            $referenceNumber = $prefix.$randomNumber;
         } while (self::where('request_referrence_number', $referenceNumber)->exists());
 
         return $referenceNumber;
@@ -145,12 +143,13 @@ class ClaimRequestDetail extends Model implements AuditableContract
     public function getVehicleInfoAttribute(): string
     {
         $parts = array_filter([$this->car_make, $this->car_model]);
+
         return implode(' ', $parts);
     }
 
     public function getHasVehicleInfoAttribute(): bool
     {
-        return !empty($this->car_make) || !empty($this->car_model);
+        return ! empty($this->car_make) || ! empty($this->car_model);
     }
 
     /**
