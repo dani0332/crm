@@ -46,6 +46,7 @@ use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
@@ -81,6 +82,7 @@ use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
+use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -351,6 +353,12 @@ class CentralController extends Controller
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
+
+            $isAUHHealthLead = strtolower($request->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
+            if ($isAUHHealthLead) {
+                return response()->json(['message' => 'This is an Abu Dhabi health quote lead. Please book the policy manually.'], 200);
+            }
+
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
@@ -369,19 +377,33 @@ class CentralController extends Controller
                     ['payment_status_id', PaymentStatusEnum::AUTHORISED],
                 ])
                     ->whereHas('product.embeddedProduct', function ($query) {
-                        $query->where('product_category', EpCategoryEnum::BOLT_ON)
-                            ->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes() ?? []);
-                    })->select('code', 'payment_status_id', 'policy_status')->get();
+                        $query->where('product_category', EpCategoryEnum::BOLT_ON);
+                    })
+                    ->with(['product.embeddedProduct:id,short_code'])
+                    ->select('code', 'payment_status_id', 'policy_status', 'product_id')
+                    ->get();
 
                 if ($captureableEmbeddedTransactions->isNotEmpty()) {
                     try {
                         EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
 
-                        LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
-                            extra: $captureableEmbeddedTransactions->toArray()
-                        );
+                        $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
+                        $hasSukoonMedexProducts = $captureableEmbeddedTransactions
+                            ->filter(function ($transaction) use ($sukoonMedexCodes) {
+                                $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
 
-                        return response()->json(['message' => 'The embedded product payment is being captured, once done, the booking process will begin.'], 200);
+                                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
+                            })
+                            ->isNotEmpty();
+
+                        // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
+                        if ($hasSukoonMedexProducts) {
+                            LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
+                                extra: $captureableEmbeddedTransactions->toArray()
+                            );
+
+                            return response()->json(['message' => 'The embedded product payment is being captured, once done, booking process will begin.'], 200);
+                        }
 
                     } catch (Exception $e) {
                         LoggerService::error('Embedded Product payment capture failed', [
@@ -838,8 +860,9 @@ class CentralController extends Controller
 
     public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
     {
+        $request = $postPrepaymentToSageRequest->safe();
+
         try {
-            $request = $postPrepaymentToSageRequest->safe();
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
             $sendUpdateLog = null;
@@ -911,6 +934,32 @@ class CentralController extends Controller
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function retryPrepaymentCreation(RetryPrepaymentRequest $request)
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_PREPAYMENT_POSTING);
+        $request = $request->safe();
+        $paymentCode = $request->paymentCode;
+        $srNo = $request->srNo;
+        LoggerService::info("retryPrepaymentCreation called for payment code : {$paymentCode} and sr no : {$srNo}");
+        $data = [
+            'quote_type' => $request->quoteType,
+            'quote_request_id' => $request->quoteRequestId,
+            'payment_split_id' => $request->paymentSplitId,
+            'payment_code' => $paymentCode,
+            'sr_no' => $srNo,
+        ];
+        $result = app(PaymentService::class)->retryCreatePrepayment($data);
+        if ($result['success']) {
+            return redirect()->back()->with([
+                'success' => $result['message'],
+            ]);
+        }
+
+        return redirect()->back()->with([
+            'error' => $result['message'],
+        ]);
     }
 
     public function updateCommissionForLeads()

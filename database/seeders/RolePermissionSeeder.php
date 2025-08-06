@@ -19,6 +19,7 @@ class RolePermissionSeeder extends Seeder
         // $this->searchModulePermissions();
         // $this->createBusinessIntelligenceUnitRole();
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
+        $this->addRetryPrePaymentPermission();
         $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
         // $this->addBridgerSkipPermission();
@@ -252,6 +253,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addRetryPrePaymentPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RETRY_PREPAYMENT_BUTTON,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
