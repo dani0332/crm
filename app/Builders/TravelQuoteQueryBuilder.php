@@ -68,7 +68,9 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insurer_api_status_id',
             'start_date',
             'end_date',
+            'days_cover_for',
             'lead_assignment_trigger',
+            'parent_id',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -85,6 +87,9 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan:id,text',
             'currentlyLocatedIn:id,text',
             'renewalBatch:id,name',
+            'quoteTags:quote_uuid,name',
+            'parent:id,code',
+            'child:id,code,parent_id',
         ]);
     }
 
@@ -134,6 +139,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when($this->hasFilterValue('previous_quote_policy_number', $requestParams), function ($query) use ($requestParams) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', requestParams: $requestParams)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', requestParams: $requestParams));
             })
+            ->filterByDate('travel_end_date', 'end_date', false)
+            ->filterBy('assignment_type', ignoreAll: true)
             ->when($this->hasFilterValue('is_renewal', $requestParams) && $this->getFilterValue('is_renewal', $requestParams) == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
             })
@@ -201,7 +208,49 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $this->hasFilterValue('sortBy', $requestParams),
                 fn ($q) => $q->orderBy($this->getOrderByColumn(), $this->getFilterValue('sortType', $requestParams)),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
-            );
+            )
+            ->when($this->hasFilterValue('age_group', $requestParams), function ($q) use ($requestParams) {
+                $ageGroups = (array) $this->getFilterValue('age_group', $requestParams);
+
+                // If 'all' is selected, no filtering is needed
+                if (in_array('all', $ageGroups)) {
+                    return;
+                }
+
+                if (in_array('both', $ageGroups)) {
+                    // Show only records with parent-child relationships
+                    // This includes both parents (records that have children) and children (records with parent_id)
+                    $q->where(function ($subQuery) {
+                        $subQuery->whereNotNull('parent_id') // Child records
+                            ->orWhereExists(function ($query) {
+                                $query->select(DB::raw(1))
+                                    ->from('travel_quote_request as child')
+                                    ->whereColumn('child.parent_id', 'travel_quote_request.id');
+                            }); // Parent records that have children
+                    });
+                } else {
+                    // Exclude records with parent-child relationships
+                    $q->whereNull('parent_id') // Not a child
+                        ->whereNotExists(function ($query) {
+                            $query->select(DB::raw(1))
+                                ->from('travel_quote_request as child')
+                                ->whereColumn('child.parent_id', 'travel_quote_request.id');
+                        }); // Not a parent
+
+                    // Handle age group filtering with OR logic for multiple selections
+                    $ageConditions = [];
+                    if (in_array('0_64', $ageGroups)) {
+                        $ageConditions[] = 'TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 65';
+                    }
+                    if (in_array('65_plus', $ageGroups)) {
+                        $ageConditions[] = 'TIMESTAMPDIFF(YEAR, dob, CURDATE()) >= 65';
+                    }
+
+                    if (! empty($ageConditions)) {
+                        $q->whereRaw('('.implode(' OR ', $ageConditions).')');
+                    }
+                }
+            });
     }
 
     /**

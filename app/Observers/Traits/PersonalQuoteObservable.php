@@ -3,6 +3,7 @@
 namespace App\Observers\Traits;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -10,17 +11,23 @@ use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendAutomatedLifeFollowup;
+use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
+use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
 trait PersonalQuoteObservable
 {
+    use QuoteAllocatable;
     protected function handleQuoteStatusChange(PersonalQuote $personalQuote): void
     {
         if (checkPersonalQuotes($personalQuote->quoteType?->code)) {
@@ -38,6 +45,20 @@ trait PersonalQuoteObservable
             ($personalQuote->isBike() || $personalQuote->isHome())) {
                 $this->handleBikePolicyCancelled($personalQuote);
             }
+        }
+
+        if ($personalQuote->quote_status_id == QuoteStatusEnum::Quoted && $personalQuote->isLife()) {
+            $isFollowupExecuted = app(BirdService::class)
+                ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value);
+
+            if ($isFollowupExecuted) {
+                LoggerService::info(self::class." - LIFE_AUTOMATED_FOLLOWUPS - Followup already executed {$personalQuote->uuid}");
+
+                return;
+            }
+            SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+        } else {
+            LoggerService::info(self::class." - Quote status is {$personalQuote->quote_status_id} for quote: {$personalQuote->uuid}");
         }
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
@@ -58,6 +79,11 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle() || $personalQuote->isSavings()) {
             $this->IntroAndReassignEmail($personalQuote, $oldAdvisorId);
+        }
+        if ($personalQuote->isLife()) {
+            if ($personalQuote->isFIC(quoteType: QuoteTypes::LIFE)) {
+                SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            }
         }
 
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
@@ -116,7 +142,7 @@ trait PersonalQuoteObservable
             'lead-status-update-myalfred-we'
         );
 
-        if ($personalQuote->isBike() || $personalQuote->isHome()) {
+        if ($personalQuote->isHome() || ($personalQuote->isBike() && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
             try {
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             } catch (Exception $e) {
@@ -173,4 +199,5 @@ trait PersonalQuoteObservable
             info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
         }
     }
+
 }

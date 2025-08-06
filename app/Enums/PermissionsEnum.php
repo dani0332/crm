@@ -407,6 +407,7 @@ final class PermissionsEnum extends Enum
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const PAYMENT_VERIFICATION_LOWER_AMOUNT = 'payment-verification-lower-amount';
     public const PERMISSION_LIST = 'permission-list';
     public const INSURER_PAYMENT_LINK = 'insurer-payment-link';
     public const CANCEL_SEND_UPDATE = 'cancel-send-update';
@@ -422,6 +423,9 @@ final class PermissionsEnum extends Enum
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
+    public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
+    public const PLAN_DETAILS_EDIT = 'plan-details-edit';
+    public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
 
     // Savings Permissions
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';

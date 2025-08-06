@@ -39,6 +39,9 @@ class TravelQuote extends Model implements AuditableContract
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'start_date' => FilterTypes::DATE,
+        'end_date' => FilterTypes::DATE,
+        'assignment_type' => FilterTypes::EXACT,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -51,6 +54,7 @@ class TravelQuote extends Model implements AuditableContract
         'previous_policy_expiry_date_formatted',
         'dob_formatted',
         'pc_qualified_formatted',
+        'assignment_type_text',
     ];
 
     protected static function booted()
@@ -380,5 +384,14 @@ class TravelQuote extends Model implements AuditableContract
     public function embeddedTransactions()
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
+
+    /**
+     * Get quote tags for this car quote
+     */
+    public function quoteTags()
+    {
+        return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Travel);
     }
 }

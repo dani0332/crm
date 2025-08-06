@@ -1033,7 +1033,7 @@ class HomeQuoteService extends BaseService
     {
         $logPrefix = self::class.' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
-        LoggerService::startQuoteLogging($quote);
+        LoggerService::startQuoteLogging(QuoteTypes::HOME->refId($quote->uuid));
 
         $isAllowed = false;
 
@@ -1047,17 +1047,17 @@ class HomeQuoteService extends BaseService
                 $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
 
                 if (Auth::user()->hasRole(RolesEnum::HomeAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor and captured days diff is '.$paymentCapturedAt);
+                    LoggerService::info($logPrefix.' plan modify allowed to advisor and captured days diff is '.$paymentCapturedAt);
                     $isAllowed = true;
                 } elseif (Auth::user()->hasRole(RolesEnum::HomeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to home manager and captured days diff is '.$paymentCapturedAt);
+                    LoggerService::info($logPrefix.' plan modify allowed to home manager and captured days diff is '.$paymentCapturedAt);
                     $isAllowed = true;
                 }
             }
         }
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager])) {
-            info($logPrefix.' plan modify allowed to advisor');
+            LoggerService::info($logPrefix.' plan modify allowed to advisor');
             $isAllowed = true;
         }
 
@@ -1066,12 +1066,12 @@ class HomeQuoteService extends BaseService
             (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT]) &&
                 Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager]))
         ) {
-            info($logPrefix.' plan modify allowed');
+            LoggerService::info($logPrefix.' plan modify allowed');
             $isAllowed = true;
         }
 
         if (! $isAllowed) {
-            info($logPrefix.' plan modification is not allowed');
+            LoggerService::info($logPrefix.' plan modification is not allowed');
 
             return 'Plan Modification is not allowed';
         }
@@ -1127,6 +1127,7 @@ class HomeQuoteService extends BaseService
 
     public function syncSAL($request)
     {
+        LoggerService::startQuoteLogging(QuoteTypes::HOME->refId($request->quoteUID));
         try {
             $quote = $this->getQuoteObject(QuoteTypes::HOME->value, $request->quoteUID);
             if (! $quote) {
@@ -1148,9 +1149,13 @@ class HomeQuoteService extends BaseService
 
             $items = $this->getSALItems($quote->uuid);
             if ($items->isEmpty()) {
-                throw new \Exception('No items found for SAL for quote: '.$quote->uuid);
+                LoggerService::info('No SAL items found for quote. Generating SAL document with empty items list.');
+                $data['items'] = collect();
+                $data['has_items'] = false;
+            } else {
+                $data['items'] = $items;
+                $data['has_items'] = true;
             }
-            $data['items'] = $items;
 
             $pdfFile = $this->generateHomeSALPdf($data);
 
@@ -1169,10 +1174,7 @@ class HomeQuoteService extends BaseService
 
             return $document;
         } catch (\Exception $e) {
-            Log::error('Error in syncSAL: '.$e->getMessage(), [
-                'quoteUID' => $request->quoteUID ?? 'N/A',
-                'exception' => $e,
-            ]);
+            LoggerService::error('Error in syncSAL', exception: $e);
 
             return ['error' => $e->getMessage()];
         }
@@ -1262,7 +1264,7 @@ class HomeQuoteService extends BaseService
                 ->where('quote_uuid', $uuid)
                 ->get();
         } catch (\Exception $e) {
-            Log::error('Error fetching SAL items: '.$e->getMessage().' for quote '.$uuid);
+            LoggerService::error('Error fetching SAL items', exception: $e);
 
             return collect();
         }
@@ -1302,6 +1304,11 @@ class HomeQuoteService extends BaseService
 
         // Get quote details with relations
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+        if (! $quote) {
+            throw ValidationException::withMessages(['error' => 'Quote not found with the provided UUID.']);
+        }
+
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer', 'homeQuote']);
@@ -1328,18 +1335,22 @@ class HomeQuoteService extends BaseService
         $pdfName = $this->generatePdfFilename($quote);
 
         // Log PDF generation
-        info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
+        LoggerService::info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
     public function createRenewalPlan(string $quoteUID, array $data)
     {
-        $planId = InsuranceProviderPlan::where([
-            'text' => $data['plan_name'],
-            'quote_type_id' => QuoteTypeId::Home,
-        ])->value('id');
+        $planId = InsuranceProviderPlan::whereRaw('LOWER(text) = ?', [strtolower(trim($data['plan_name']))])
+            ->where('quote_type_id', QuoteTypeId::Home)
+            ->value('id');
 
+        if (! $planId) {
+            LoggerService::error('No plan found for plan name: '.$data['plan_name']);
+
+            return false;
+        }
         $request = [[
             'planId' => $planId,
             'actualPremium' => $data['premium'],

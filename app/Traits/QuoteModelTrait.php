@@ -7,6 +7,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
@@ -28,7 +29,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, Logable, QuoteAllocatable;
+    use Filterable, Logable, Optionable, QuoteAllocatable;
 
     /**
      * @return mixed|void
@@ -128,7 +129,25 @@ trait QuoteModelTrait
                         ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
                 });
-            });
+            })->when($segmentFilter === QuoteSegmentEnum::FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
+            })
+                ->when($segmentFilter === QuoteSegmentEnum::NON_FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                    $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                        $query->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                            ->where('quote_tags.quote_type_id', $quoteTypeId);
+                    });
+                });
         }
     }
 
@@ -329,7 +348,7 @@ trait QuoteModelTrait
     public static function formattedPcQualifiedCase(): string
     {
         return "
-            CASE 
+            CASE
                 WHEN pc_qualified = 1 THEN 'Yes'
                 ELSE 'No'
             END
@@ -356,12 +375,9 @@ trait QuoteModelTrait
             return $segment->label();
         }
 
-        // Fetch all relevant tags in one query
-        $tagNames = QuoteTag::where('quote_uuid', $lead->uuid)
-            ->where('quote_type_id', $quoteTypeId)
-            ->pluck('name')
-            ->map(fn ($name) => strtolower($name))
-            ->toArray();
+        // Strategy 1: Use preloaded relationship if available
+        // Strategy 2: Fallback to original database query
+        $tagNames = $this->getTagNames($lead, $quoteTypeId);
 
         $leadSource = $lead->source;
 
@@ -408,5 +424,32 @@ trait QuoteModelTrait
         }
 
         return implode(', ', $matchedSegments);
+    }
+
+    /**
+     * Get tag names using optimized relationship or fallback to database query
+     */
+    private function getTagNames($lead, $quoteTypeId): array
+    {
+        // Strategy 1: Use preloaded relationship if available (optimized)
+        if (method_exists($lead, 'quoteTags') && $lead->relationLoaded('quoteTags')) {
+            return collect($lead->quoteTags ?? [])
+                ->pluck('name')
+                ->map(fn ($name) => strtolower($name))
+                ->toArray();
+
+        }
+
+        // Strategy 2: Fallback to original database query (backward compatible)
+        return QuoteTag::where('quote_uuid', $lead->uuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->pluck('name')
+            ->map(fn ($name) => strtolower($name))
+            ->toArray();
+    }
+
+    public function isPaymentAuthorizedOnly(): bool
+    {
+        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
     }
 }

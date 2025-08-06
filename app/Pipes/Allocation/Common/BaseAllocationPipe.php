@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
+use App\Services\NationalityAllocationService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
@@ -376,5 +377,34 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->throw('Eligible Advisor is already assigned to this lead', self::OK);
         }
 
+    }
+
+    public function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->allocationRequest->getQuoteType());
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
+    }
+
+    protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
+    {
+        // Get the lead source users from the first matched rule record.
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
+
+        // Check if the lead source users contain a comma (,) indicating multiple users.
+        if (str_contains($leadSourceUsers, ',')) {
+            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
+            $userIds = array_map('intval', explode(',', $leadSourceUsers));
+        } else {
+            // If there's only one user, cast it to an integer and store it in a single-element array.
+            $userIds = [(int) $leadSourceUsers];
+        }
+
+        // Return the array of user IDs.
+        return $userIds;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DragAndDropUpdateLeadStatusRequest extends FormRequest
@@ -50,6 +51,20 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
             // if(request()->get('data.to.quote_status_id') == request()->get('data.form.quote_status_id')) {
             //     $validator->errors()->add('value', 'Quote status is same as previous status.');
             // }
+
+            if (
+                request()->get('data')['form']['quoteTypeId'] == QuoteTypes::LIFE->id() &&
+                in_array(
+                    request()->get('data')['form']['quote_status_id'],
+                    [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::InNegotiation]
+                ) &&
+                in_array(
+                    request()->get('data')['to']['quote_status_id'],
+                    [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::InNegotiation]
+                )
+            ) {
+                $validator->errors()->add('value', 'Not allowed to change status.');
+            }
 
         });
     }

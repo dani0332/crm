@@ -75,6 +75,7 @@ watch(
 );
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
+
 const tabs = ref([
   { index: 0, label: 'General Info' },
   { index: 1, label: 'Addons' },

@@ -13,12 +13,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Events\AfterSheet;
 
-class AmlCftReportExport implements CsvExportableInterface, FromCollection, WithEvents, WithHeadings, WithMapping
+class AmlCftReportExport implements CsvExportableInterface, FromCollection, WithHeadings, WithMapping
 {
     use Exportable, ModernCsvExportable {
         Exportable::download insteadof ModernCsvExportable;
@@ -40,13 +38,11 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
     public function collection(array $requestParams = []): Collection
     {
         // For Excel export, return only the actual data
-        // Headers, summary, and styling will be handled by registerEvents()
         return $this->data;
     }
 
     public function headings(): array
     {
-        // Return simple headings - complex formatting handled by registerEvents()
         return [
             'Customer Full Name',
             'Ref-ID',
@@ -96,86 +92,12 @@ class AmlCftReportExport implements CsvExportableInterface, FromCollection, With
         ];
     }
 
-    public function registerEvents(): array
-    {
-        return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet;
-                $year = Carbon::now()->year;
-
-                // Insert 4 rows at the top for headers
-                $sheet->insertNewRowBefore(1, 4);
-
-                // Add title rows
-                $sheet->setCellValue('A1', 'AFIA Insurance Brokerage Services LLC');
-                $sheet->setCellValue('A2', "AML/CFT Monitoring purpose Customer Risk Profile Report {$year}");
-                $sheet->setCellValue('A3', 'Requested By Compliance Dept.');
-                // Row 4 is intentionally left empty
-
-                // Merge title rows across all columns
-                $sheet->mergeCells('A1:R1');
-                $sheet->mergeCells('A2:R2');
-                $sheet->mergeCells('A3:R3');
-
-                // Style title rows
-                $sheet->getStyle('A1')->getFont()->setBold(true);
-
-                // Center align title rows
-                $sheet->getStyle('A1:A3')->getAlignment()->setHorizontal('left');
-
-                // Style header row (now row 5)
-                $sheet->getStyle('A5:R5')->getFont()->setBold(true);
-                $sheet->getStyle('A5:R5')->getFill()->setFillType('solid')->getStartColor()->setARGB('FFD9E1F2');
-                $sheet->getStyle('A5:R5')->getBorders()->getAllBorders()->setBorderStyle('thin');
-
-                // Style data rows with borders
-                $lastRow = $sheet->getHighestRow() + 3;
-                $sheet->setCellValue("B{$lastRow}", 'Total Number of Customers');
-                $sheet->setCellValue("D{$lastRow}", $this->summary['total_customers'] ?? '');
-                $sheet->getStyle("B{$lastRow}:D{$lastRow}")->getFont()->setBold(true);
-                $sheet->getStyle("B{$lastRow}:D{$lastRow}")->getFill()->setFillType('solid')->getStartColor()->setARGB('FFFFFF00');
-
-                $sheet->setCellValue('B'.($lastRow + 1), 'High Risk Customers');
-                $sheet->setCellValue('D'.($lastRow + 1), $this->summary['high_risk'] ?? '');
-                $sheet->setCellValue('B'.($lastRow + 2), 'Medium Risk Customers');
-                $sheet->setCellValue('D'.($lastRow + 2), $this->summary['medium_risk'] ?? '');
-                $sheet->setCellValue('B'.($lastRow + 3), 'Low Risk Customers');
-                $sheet->setCellValue('D'.($lastRow + 3), $this->summary['low_risk'] ?? '');
-
-                // Add note section
-                $noteRow = $lastRow + 8;
-                $sheet->setCellValue("A{$noteRow}", 'Note:');
-                $sheet->setCellValue("B{$noteRow}", '"This report contains sensitive personal data. Do not share externally. For compliance use only."');
-                $sheet->getStyle("A{$noteRow}:B{$noteRow}")->getFont()->setBold(true);
-
-            },
-        ];
-    }
-
     /**
      * Override sendEmailWithCSVAttachment to support custom formatting
      */
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
     {
         $this->sendCustomFormattedCsvEmail($recipientEmail, $emailSubject, $requestParams, $ccRecipients);
-        // // Use the modern email export service
-        // $emailExportService = app(\App\Services\EmailExportService::class);
-
-        // // Check if custom formatting is requested
-        // $includeCustomFormatting = $requestParams['includeCustomFormatting'] ?? false;
-
-        // if ($includeCustomFormatting) {
-        //     // Create CSV with custom headers and summary
-        // } else {
-        //     // Use default CSV format
-        //     $emailExportService->sendCsvByEmail(
-        //         $this,
-        //         $recipientEmail,
-        //         $emailSubject,
-        //         $requestParams,
-        //         $ccRecipients
-        //     );
-        // }
     }
 
     /**

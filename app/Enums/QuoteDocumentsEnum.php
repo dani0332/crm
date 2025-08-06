@@ -43,4 +43,14 @@ final class QuoteDocumentsEnum extends Enum
     public const SAVINGS_RECEIPT = 'SPDR';
     public const SAVINGS_ADDITIONAL_EMAIL_ATTACHMENTS = 'TAEA';
     // End of Savings Quote
+
+    public static function getSukoonAllDocTypes(): array
+    {
+        return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE, self::CAR_TAX_INVOICE_RAISE_BY_BUYER];
+    }
+
+    public static function getSukoonInitialDocTypes(): array
+    {
+        return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE];
+    }
 }

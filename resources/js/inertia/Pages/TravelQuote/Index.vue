@@ -12,6 +12,7 @@ defineProps({
   insuranceProviders: Array,
   travelPlans: Array,
   insurerAMLStatus: Object,
+  assignmentTypes: Object,
 });
 
 let params = useUrlSearchParams('history');
@@ -83,7 +84,10 @@ const filters = reactive({
   insurance_provider_ids: [],
   plan_name: [],
   travel_start_date: '',
+  travel_end_date: '',
+  assignment_type: '',
   private_client: 'all',
+  age_group: 'all',
 });
 
 const loader = reactive({
@@ -150,6 +154,7 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name' },
+  { text: 'Age Group', value: 'age_group' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
 ];
 
@@ -342,7 +347,7 @@ function onAssignLead(isValid) {
   }
 }
 
-function setQueryStringFilters() {
+function setQueryFilters() {
   for (const [key, value] of Object.entries(params)) {
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = value;
@@ -596,6 +601,48 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+const calculateAge = dateOfBirth => {
+  if (!dateOfBirth) return 0;
+
+  const today = new Date();
+  let birthDate;
+
+  // Handle both DD-MM-YYYY and YYYY-MM-DD formats
+  if (typeof dateOfBirth === 'string' && dateOfBirth.includes('-')) {
+    const parts = dateOfBirth.split('-');
+
+    // Check if first part is a 4-digit year (YYYY-MM-DD format)
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD format
+      const [year, month, day] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      // DD-MM-YYYY format
+      const [day, month, year] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+  } else {
+    birthDate = new Date(dateOfBirth);
+  }
+
+  // Check if the date is valid
+  if (isNaN(birthDate.getTime())) {
+    return 0;
+  }
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
 </script>
 
 <template>
@@ -1055,6 +1102,34 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           :single="true"
         />
+        <DatePicker
+          v-model="filters.travel_end_date"
+          label="Travel End Date"
+          format="dd-MM-yyyy"
+        />
+
+        <x-select
+          v-model="filters.assignment_type"
+          name="assignment_type"
+          class="w-full"
+          placeholder="Search by Assignment Type"
+          :options="assignmentTypes"
+          label="Assignment Type"
+          filterable
+        />
+        <ComboBox
+          v-model="filters.age_group"
+          label="Age group"
+          placeholder="Search by age group"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: '0_64', label: '0 - 64' },
+            { value: '65_plus', label: '65 and above' },
+            { value: 'both', label: 'Both' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -1248,6 +1323,11 @@ const insurerAMLStatusOption = computed(() => {
       </template>
       <template #item-aml_status="{ aml_status }">
         <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
+      </template>
+      <template #item-age_group="item">
+        <span v-if="item.child || item.parent"> Both </span>
+        <span v-else-if="calculateAge(item.dob) < 65"> 0 - 64 </span>
+        <span v-else-if="calculateAge(item.dob) >= 65"> 65 and above </span>
       </template>
     </DataTable>
 

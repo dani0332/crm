@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -14,6 +15,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -128,6 +130,8 @@ class TravelController extends Controller
             'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
             'travelPlans' => TravelPlan::all(),
             'insurerAMLStatus' => $insurerAMLStatus,
+            'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Travel),
+            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
         ]);
     }
 

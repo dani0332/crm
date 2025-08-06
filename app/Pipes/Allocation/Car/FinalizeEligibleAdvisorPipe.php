@@ -26,7 +26,7 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
         if (! $request->hasNationalityConfig()) {
             $lead = $request->getLead();
             $teamId = $request->getTeamId();
-            $rules = $request->get('rules');
+            $rules = $request->get('rules', []);
             $availableUserIds = $this->determineFinalAdvisorIdsBasedOnRules($lead, $availableUserIds, $rules, $teamId);
         }
 
@@ -122,24 +122,6 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
         }
 
         return $finalEligibleUserIds;
-    }
-
-    private function getUserIdsFromRuleRecords($matchedRuleRecords): array
-    {
-        // Get the lead source users from the first matched rule record.
-        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
-
-        // Check if the lead source users contain a comma (,) indicating multiple users.
-        if (str_contains($leadSourceUsers, ',')) {
-            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
-            $userIds = array_map('intval', explode(',', $leadSourceUsers));
-        } else {
-            // If there's only one user, cast it to an integer and store it in a single-element array.
-            $userIds = [(int) $leadSourceUsers];
-        }
-
-        // Return the array of user IDs.
-        return $userIds;
     }
 
     private function getEligibleUserForSAPLead($ruleUserIds): array

@@ -8,7 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\CarQuote;
-use App\Models\TravelQuote;
+use App\Models\HealthQuote;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -39,9 +39,14 @@ class PolicyBulkSendDocuments extends Command
         LoggerService::info('PolicyBulkSendDocuments Started');
 
         $codes = [
-            'TRA-WAL8YDD4',
-            'TRA-VTSDBMEQ',
-            'CAR-VXCWTTXH',
+            'HEA-3PJLNKL6',
+            'CAR-QK7EHTE5',
+            'CAR-UTJB3A2V',
+            'CAR-SUQGE9NJ',
+            'CAR-6XT6SVA9',
+            'CAR-XQBJCYZX',
+            'CAR-92HB2DPQ',
+            'CAR-QPZRVRTU',
         ];
 
         if (empty($codes)) {
@@ -60,12 +65,12 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            if ($code == 'CAR-VXCWTTXH') {
+            if ($code == 'HEA-3PJLNKL6') {
+                $quoteObject = HealthQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+                $modelType = quoteTypeCode::Health;
+            } else {
                 $quoteObject = CarQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
                 $modelType = quoteTypeCode::Car;
-            } else {
-                $quoteObject = TravelQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
-                $modelType = quoteTypeCode::Travel;
             }
 
             if (! $quoteObject) {

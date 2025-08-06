@@ -92,6 +92,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'advisor:id,name',
             'carTypeInsurance:id,text',
             'customer:id,pcp_tag',
+            'quoteTags:quote_uuid,name',
         ]);
     }
 

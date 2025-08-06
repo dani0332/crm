@@ -113,13 +113,15 @@ class CarQuoteObserver
                 'lead-status-update-myalfred-we'
             );
 
-            try {
-                EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
-            } catch (Exception $e) {
-                Log::error('CarQuoteObserver - capture embedded products failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $lead->uuid,
-                ]);
+            if ($lead->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
+                try {
+                    EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
+                } catch (Exception $e) {
+                    Log::error('CarQuoteObserver - capture embedded products failed', [
+                        'error' => $e->getMessage(),
+                        'uuid' => $lead->uuid,
+                    ]);
+                }
             }
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }

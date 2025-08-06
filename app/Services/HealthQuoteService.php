@@ -131,6 +131,9 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
             DB::raw('DATE_FORMAT(hqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
             'hqr.previous_quote_policy_premium',
+            'hqr.renewal_upload_plan_code',
+            'hqr.renewal_upload_copay_code',
+            'hqr.renewal_upload_payment_link',
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
@@ -244,6 +247,13 @@ class HealthQuoteService extends BaseService
     public function getEntity($id)
     {
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
+    }
+
+    public function isAUHLead($id): bool
+    {
+        $quote = HealthQuote::findOrFail($id);
+
+        return $quote->isAUHLead(false);
     }
 
     public function getEntityPlain($id)
@@ -1122,7 +1132,7 @@ class HealthQuoteService extends BaseService
                                 }
                             }
                         }
-                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((isset($plan['basmah']) ? (float) $plan['basmah'] : 0)) + ((isset($plan['policyFee']) ? (float) $plan['policyFee'] : 0));
+                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((isset($plan['basmah']) ? (float) $plan['basmah'] : 0)) + ((isset($plan['policyFee']) ? (float) $plan['policyFee'] : 0)) + ((isset($plan['icpFee']) ? (float) $plan['icpFee'] : 0));
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
@@ -1407,8 +1417,10 @@ class HealthQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
 
+        $isAUH = $quote->isAUHLead(false);
+
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-            ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+            ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'isAUH'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Health Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
