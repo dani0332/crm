@@ -279,7 +279,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
-       
+
 
         .no-border {
             border: none;
@@ -427,8 +427,13 @@
 
             // Add Basma Price
             if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
-                $quotePlan->discountPremium += $quotePlan->basmah;
-                $quotePlan->total += $quotePlan->basmah;
+                $quotePlan->discountPremium += ($quotePlan->basmah ?? 0);
+                $quotePlan->total += ($quotePlan->basmah ?? 0);
+            }
+
+            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::ABU_DHABI) {
+                $quotePlan->discountPremium += ($quotePlan->icpFee ?? 0);
+                $quotePlan->total += ($quotePlan->icpFee ?? 0);
             }
 
             // Add Policy Price
@@ -581,7 +586,7 @@
                         foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
                             if ($coPayVal->healthPlanCoPaymentId == $coPayId) {
                                 $discountPremiumValue =
-                                    $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                                    $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0);
                                 $vatValue += $coPayVal->vat;
                                 $totalValue += $discountPremiumValue;
                             }
@@ -596,7 +601,7 @@
                     ) {
                         foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
                             $discountPremium[] =
-                                $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                                $coPayVal->premium + ($coPayVal->basmah ?? 0) + ($coPayVal->icpFee ?? 0) + ($coPayVal->loadingPrice ?? 0);
                             $vat[] = $coPayVal->vat;
                         }
                         $discountPremiumValue = collect($discountPremium)->min();
@@ -643,7 +648,10 @@
             }
             // Add Basma Price
             if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
-                $quotePlan->discountPremium += $quotePlan->basmah;
+                $quotePlan->discountPremium += ($quotePlan->basmah ?? 0);
+            }
+            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::ABU_DHABI) {
+                $quotePlan->discountPremium += ($quotePlan->icpFee ?? 0);
             }
             // Add Policy Price
             $policyFee = isset($providers[$quotePlan->providerId]['health_policy_fee'])
@@ -783,25 +791,27 @@
                     @endforeach
                 </tr>
                 {{-- buy now row --}}
-                <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name }}
-                                {{ $quote->last_name }}</b></p>
-                    </th>
-                    @foreach ($planIds as $planId)
-                        <th>
-                            <p class="text-center">
-                                @if ($plans[$planId]->discountPremium)
-                                    <a target="_blank" class="btn-buy"
-                                        href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">APPLY
-                                        Now</a>
-                                @else
-                                    N/A
-                                @endif
-                            </p>
+                @if(!$isAUH)
+                    <tr>
+                        <th class="bg-light-blue">
+                            <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name }}
+                                    {{ $quote->last_name }}</b></p>
                         </th>
-                    @endforeach
-                </tr>
+                        @foreach ($planIds as $planId)
+                            <th>
+                                <p class="text-center">
+                                    @if ($plans[$planId]->discountPremium)
+                                        <a target="_blank" class="btn-buy"
+                                            href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">APPLY
+                                            Now</a>
+                                    @else
+                                        N/A
+                                    @endif
+                                </p>
+                            </th>
+                            @endforeach
+                    </tr>
+                @endif
             </thead>
             <tbody>
                 @foreach ($features as $feature)
@@ -865,10 +875,12 @@
                                         </div>
                                     @endif
 
-                                    <p class="text-left" style="text-decoration: underline; font-style: italic;"><a
-                                            target="_blank"
-                                            href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">See
-                                            full list</a></p>
+                                    @if(!$isAUH)
+                                        <p class="text-left" style="text-decoration: underline; font-style: italic;"><a
+                                                target="_blank"
+                                                href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">See
+                                                full list</a></p>
+                                    @endif
                                 </td>
                             @endforeach
 
@@ -889,12 +901,14 @@
                                     @elseif($feature['type'] == 'prop')
                                         {!! $plans[$planId]->{$feature['code']} !!}
                                     @elseif($feature['type'] == 'buy')
-                                        @if ($plans[$planId]->discountPremium)
-                                            <a target="_blank" class="btn-buy"
-                                                href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">APPLY
-                                                Now</a>
-                                        @else
-                                            N/A
+                                        @if(!$isAUH)
+                                            @if ($plans[$planId]->discountPremium)
+                                                <a target="_blank" class="btn-buy"
+                                                    href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">APPLY
+                                                    Now</a>
+                                            @else
+                                                N/A
+                                            @endif
                                         @endif
                                     @elseif(is_array($feature['type']))
                                         @php $value = "Excluded"; @endphp
@@ -919,13 +933,15 @@
                         @endforeach
                     </tr>
                 @endforeach
-                <tr>
-                    <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
-                        <a target="_blank" class="btn-all-quotes"
-                            href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid }}">See all your
-                            quotes</a>
-                    </td>
-                </tr>
+                @if(!$isAUH)
+                    <tr>
+                        <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
+                            <a target="_blank" class="btn-all-quotes"
+                                href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid }}">See all your
+                                quotes</a>
+                        </td>
+                    </tr>
+                @endif
             </tbody>
         </table>
 

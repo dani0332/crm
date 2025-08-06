@@ -330,7 +330,7 @@ export function getQuoteType(id, returnType = 'code') {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
     2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
-    4: { code: 'LIF', id: 'life', link: '/quotes' },
+    4: { code: 'LIF', id: 'life', link: '/personal-quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
     6: { code: 'BIK', id: 'bike', link: '/personal-quotes' },
     7: { code: 'YAC', id: 'yacht', link: '/personal-quotes' },
