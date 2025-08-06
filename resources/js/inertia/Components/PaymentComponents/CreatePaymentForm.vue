@@ -2144,12 +2144,14 @@ const isAllowedToApproveLowerAmount = () => {
     props.sendUpdate &&
     props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
 
-  const isPolicyBooked = !props.sendUpdate && [
-    page.props.quoteStatusEnum?.PolicyBooked,
-    page.props.quoteStatusEnum?.CancellationPending,
-    page.props.quoteStatusEnum?.PolicyCancelledReissued,
-    page.props.quoteStatusEnum?.PolicyCancelled,
-  ].includes(props.quoteRequest?.quote_status_id);
+  const isPolicyBooked =
+    !props.sendUpdate &&
+    [
+      page.props.quoteStatusEnum?.PolicyBooked,
+      page.props.quoteStatusEnum?.CancellationPending,
+      page.props.quoteStatusEnum?.PolicyCancelledReissued,
+      page.props.quoteStatusEnum?.PolicyCancelled,
+    ].includes(props.quoteRequest?.quote_status_id);
 
   return isUpdateBooked || isPolicyBooked;
 };
