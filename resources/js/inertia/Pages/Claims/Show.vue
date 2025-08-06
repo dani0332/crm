@@ -174,24 +174,21 @@ function updateSubStatus() {
 }
 
 function updateComplaintStatus() {
-  complaintStatusForm.post(
-    `/claim/${props.claim.id}/update-complaint-status`,
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Complaint status updated successfully',
-          position: 'top',
-        });
-      },
-      onError: errors => {
-        notification.error({
-          title: 'Error updating complaint status',
-          position: 'top',
-        });
-      },
+  complaintStatusForm.post(`/claim/${props.claim.id}/update-complaint-status`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Complaint status updated successfully',
+        position: 'top',
+      });
     },
-  );
+    onError: errors => {
+      notification.error({
+        title: 'Error updating complaint status',
+        position: 'top',
+      });
+    },
+  });
 }
 
 function scheduleFollowUp() {
