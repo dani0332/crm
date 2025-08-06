@@ -86,6 +86,7 @@ class BorController extends Controller
             $borLog = BorLog::where('bor_reference', $request->input('bor_ref_id'))->first();
             $quote = $borLog->personalQuote;
             $request->merge(['quote_uuid' => $quote->code]);
+            $request->merge(['document_category' => $request->input('bor_ref_id')]);
             $previousDoc = $borLog->document;
 
             if($previousDoc && $previousDoc->doc_url) {

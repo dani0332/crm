@@ -43,6 +43,7 @@ class QuoteDocumentRequest extends FormRequest
             'quote_uuid' => 'required',
             'member_detail_id' => 'nullable',
             'is_base_64' => 'nullable',
+            'document_category' => 'nullable',
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
