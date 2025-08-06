@@ -161,10 +161,10 @@ class UserRepository extends BaseRepository
 
         // Filter to existing roles only
         $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
-
+        $lineOfBusinessFilter = is_array(request('line_of_business')) ? request('line_of_business') : [request('line_of_business')];
         // getting 'product codes' from QuoteTypes
         $productCodes = [];
-        foreach (request('line_of_business') as $lineOfBusinessItem) {
+        foreach ($lineOfBusinessFilter as $lineOfBusinessItem) {
             $quoteTypeName = QuoteTypes::getName($lineOfBusinessItem);
             if (!empty($quoteTypeName)) {
                 $productCodes[] = $quoteTypeName;

@@ -139,22 +139,22 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
         return $model::whereIn('id', $this->leadIds)
             ->get()
             ->map(function ($lead) {
-                $parsedLead = collect([
+                // Determine quote_type first
+                $quoteType = null;
+                if (isset($lead->business_type_of_insurance_id)) {
+                    $quoteType = ($lead->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) ? QuoteTypes::GROUP_MEDICAL : null;
+                } elseif (isset($lead->quote_type_id)) {
+                    $quoteType = $this->quoteType->getName($lead->quote_type_id);
+                }
+
+                return collect([
                     'id' => $lead->id,
                     'uuid' => $lead->uuid,
                     'code' => $lead->code ?? $lead->id,
                     'created_at' => Carbon::parse($lead->created_at)->format('d M Y H:i'),
                     'lead_url' => $this->quoteType->url($lead->uuid),
+                    'quote_type' => $quoteType,
                 ]);
-
-                if (isset($lead->business_type_of_insurance_id)) {
-                    $parsedLead->quote_type =
-                        ($lead->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) ? QuoteTypes::GROUP_MEDICAL : null;
-                } elseif (isset($lead->quote_type_id)) {
-                    $parsedLead->quote_type = $this->quoteType->getName($lead->quote_type_id);
-                }
-
-                return $parsedLead;
             });
     }
 

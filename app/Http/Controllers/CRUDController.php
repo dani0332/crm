@@ -1767,7 +1767,6 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
-        info("CrudController @manualLeadAssign");
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
