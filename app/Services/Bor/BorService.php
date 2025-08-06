@@ -100,6 +100,7 @@ class BorService
                     'doc_url' => $doc->doc_url,
                     'doc_uuid' => $doc->doc_uuid,
                     'document_type_text' => $doc->document_type_text,
+                    'document_type_code' => $doc->document_type_code,
                     'doc_mime_type' => $doc->doc_mime_type,
                     'created_at' => $doc->created_at,
                     'updated_at' => $doc->updated_at,
