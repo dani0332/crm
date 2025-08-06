@@ -21,9 +21,11 @@ use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
+use App\Services\ManualCommissionUpdateService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
@@ -694,6 +696,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private function dispatchPopulateDocumentDataBatch($quote, $uploadedDocuments, $process): void
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Starting batch OCR processing for '.count($uploadedDocuments).' documents');
+        $happinessUser = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
 
         $documentOCRJobs = [];
         foreach ($uploadedDocuments as $document) {
@@ -703,7 +706,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
             $documentType = DocumentType::where(['quote_type_id' => self::TYPE_ID, 'code' => $document->document_type_code, 'is_active' => true])->first();
             if ($documentType) {
-                $documentOCRJobs[] = new PopulateDocumentData(QuoteTypes::CAR, $quote, $documentType, $document->doc_url, $document->doc_mime_type, auth()->id());
+                $documentOCRJobs[] = new PopulateDocumentData(QuoteTypes::CAR, $quote, $documentType, $document->doc_url, $document->doc_mime_type, $happinessUser->id);
             }
         }
 
@@ -716,26 +719,26 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         try {
             Bus::batch($documentOCRJobs)
                 ->then(function (Batch $batch) use ($quote, $process) {
-                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - All OCR jobs completed successfully');
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - All OCR jobs completed successfully (perfect success)');
+                    
                     $process->update([
                         'completed_step' => self::EXECUTE_OCR_PROCESSING,
                         'updated_at' => now(),
                     ]);
 
-                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process step updated after successful OCR batch completion');
-
-                    // if OCR processing is completed and completed step is upload policy documents to imcrm then execite book policy
                     $this->executeStepSequence($quote, $process, self::BOOK_POLICY);
                 })
                 ->catch(function (Batch $batch, Throwable $e) use ($quote) {
-                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR batch processing failed: '.$e->getMessage());
-
-                    app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::OCR_PROCESSING_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
-
-                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process marked as failed due to OCR batch failure');
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR batch processing failed completely: '.$e->getMessage());
                 })
-                ->finally(function (Batch $batch) use ($quote) {
-                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR batch processing completed (success or failure)');
+                ->finally(function (Batch $batch) use ($quote, $process) {
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - OCR batch processing completed');
+                    
+                    if ($batch->hasFailures()) {
+                        $successfulJobs = $batch->totalJobs - $batch->failedJobs;
+                        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Partial failure detected. Stats: Total: '.$batch->totalJobs.', Failed: '.$batch->failedJobs.', Successful: '.$successfulJobs);
+                        app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::OCR_PROCESSING_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+                    }
                 })
                 ->allowFailures()
                 ->onQueue('shared')
@@ -897,6 +900,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Pre-checking for update booking details');
         $response = ['status' => true, 'error' => null, 'message' => null];
+
+        // TODO:: this should be move in the service class
+        $updateCommission = app(ManualCommissionUpdateService::class)->updateCommissionForLeads([$quote->code]);
+        if (! $updateCommission['status']) {
+            $response['status'] = false;
+            $response['error'] = $updateCommission['error'];
+            $response['message'] = $updateCommission['message'];
+        }
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CAR->value, $quote->payments, $quote->quoteDocuments);
