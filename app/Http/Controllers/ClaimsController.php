@@ -155,7 +155,7 @@ class ClaimsController extends Controller
         try {
             // Load claim request with all relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
-            
+
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -168,7 +168,7 @@ class ClaimsController extends Controller
                 'error' => $e->getMessage(),
                 'claim_request_id' => $claimRequest->id,
                 'user_id' => Auth::id(),
-            ]); 
+            ]);
 
             return redirect()->route('claims.index')
                 ->with('error', 'Failed to load claim details.');
@@ -183,7 +183,7 @@ class ClaimsController extends Controller
         try {
             // Load claim request with relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
-            
+
             // Get dropdown data for the form
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -196,7 +196,7 @@ class ClaimsController extends Controller
                 'error' => $e->getMessage(),
                 'claim_request_uuid' => $uuid,
                 'user_id' => auth()->id(),
-            ]); 
+            ]);
 
             return redirect()->route('claims.show', $uuid)->with('error', 'Failed to load edit form.');
         }
