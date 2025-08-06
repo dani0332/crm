@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Contracts\Validation\Validator;
 
 class SearchPoliciesRequest extends FormRequest
 {
@@ -67,7 +67,7 @@ class SearchPoliciesRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             // Check if at least one search criteria is provided
-            if (!$this->filled('email') && !$this->filled('policy_number')) {
+            if (! $this->filled('email') && ! $this->filled('policy_number')) {
                 $validator->errors()->add('search_criteria', 'At least one search criteria (email or policy number) is required.');
             }
         });
