@@ -25,6 +25,12 @@ const claimForm = useForm({
   incident_story: props.claim?.incident_story || '',
   policy_number: props.claim?.policy_number || '',
   claim_number: props.claim?.claim_number || '',
+ /* Claim Request Details */
+  car_make: props.claim?.car_make || '',
+  car_model: props.claim?.car_model || '',
+  claim_request_type_id: props.claim?.claim_request_type_id || '',
+  service_type_id: props.claim?.service_type_id || '',
+  request_reference_number: props.claim?.request_reference_number || '',
 
   // Policy Selection
   selected_policy_id: null,

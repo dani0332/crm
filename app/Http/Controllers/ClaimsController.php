@@ -106,7 +106,7 @@ class ClaimsController extends Controller
             return response()->json([
                 'success' => true,
                 'policies' => $policies,
-                'message' => empty($policies['data']) ? 'No available data' : 'Policies found successfully.',
+                'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
             ]);
         } catch (Exception $e) {
             Log::error('Error searching policies', [
@@ -115,7 +115,7 @@ class ClaimsController extends Controller
                 'policy_number' => $request->getPolicyNumber(),
                 'quote_type_id' => $request->getQuoteTypeId(),
                 'page' => $request->getPage(),
-                'user_id' => Auth::id(),
+                'user_id' => auth()->id(),
             ]);
 
             return response()->json([

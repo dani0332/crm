@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\ClaimsEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\Claim;
 use App\Models\ClaimRequest;
@@ -91,55 +93,53 @@ class ClaimsService extends BaseService
     /**
      * Search active policies by email or policy number
      */
-    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null, int $page = 1): array
+    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null, int $page = 1)
     {
         try {
-            $personalQuotes = PersonalQuote::query()
-                ->whereNotNull('policy_number')
+            $isCarQuote = $quoteTypeId == QuoteTypeId::Car;
+            $isHealthQuote = $quoteTypeId == QuoteTypeId::Health;
+            $policies = PersonalQuote::query()
+                ->select([
+                    'personal_quotes.id',
+                    'personal_quotes.uuid',
+                    'personal_quotes.code as ref_id',
+                    'personal_quotes.policy_number',
+                    DB::raw("TRIM(CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name)) as customer_name"),
+                    'personal_quotes.policy_expiry_date',
+                    'personal_quotes.policy_start_date',
+                    'personal_quotes.email',
+                    'personal_quotes.mobile_no',
+                    'personal_quotes.quote_type_id',
+                    'personal_quotes.id as quote_id',
+                    'personal_quotes.customer_id',
+                    'personal_quotes.insurance_provider_id',
+                    'personal_quotes.quote_status_id',
+                    'insurance_provider.text as currently_insured_with',
+                    'quote_type.text as product',
+                ])
+                ->leftJoin('insurance_provider', 'personal_quotes.insurance_provider_id', '=', 'insurance_provider.id')
+                ->leftJoin('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+                ->whereNotNull('personal_quotes.policy_number')
                 ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
-                    $query->where('quote_type_id', $quoteTypeId);
+                    $query->where('personal_quotes.quote_type_id', $quoteTypeId);
                 })
-                ->whereIn('quote_status_id', [71]) // Active policy statuses
+                ->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked]) // Active policy statuses
                 ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
                     $query->where(function ($subQuery) use ($email, $policyNumber) {
                         if ($email) {
-                            $subQuery->where('email', $email);
+                            $subQuery->where('personal_quotes.email', $email);
                         }
                         if ($policyNumber) {
                             if ($email) {
-                                $subQuery->orWhere('policy_number', 'LIKE', "%{$policyNumber}%");
+                                $subQuery->orWhere('personal_quotes.policy_number', $policyNumber);
                             } else {
-                                $subQuery->where('policy_number', 'LIKE', "%{$policyNumber}%");
+                                $subQuery->where('personal_quotes.policy_number', $policyNumber);
                             }
                         }
                     });
                 })
-                ->with(['quoteType', 'insuranceProvider', 'quoteStatus'])
-                ->orderBy('policy_expiry_date', 'desc')
+                ->orderBy('personal_quotes.policy_expiry_date', 'desc')
                 ->simplePaginate($this->perPage);
-
-            $policies = $personalQuotes->map(function ($quote) {
-                return [
-                    'id' => $quote->id,
-                    'uuid' => $quote->uuid,
-                    'ref_id' => $quote->code,
-                    'policy_number' => $quote->policy_number,
-                    'customer_name' => trim($quote->first_name.' '.$quote->last_name),
-                    'currently_insured_with' => $quote->insuranceProvider->text ?? 'N/A',
-                    'product' => $quote->quoteType->text ?? 'Personal Insurance',
-                    'policy_expiry_date' => $quote->policy_expiry_date,
-                    'policy_start_date' => $quote->policy_start_date,
-                    'email' => $quote->email,
-                    'mobile_no' => $quote->mobile_no,
-                    'quote_type_id' => $quote->quote_type_id,
-                    'quote_id' => $quote->id,
-                    'uuid' => $quote->uuid,
-                    'customer_id' => $quote->customer_id,
-                    'insurance_provider_id' => $quote->insurance_provider_id,
-                    'quote_status_id' => $quote->quote_status_id,
-                    'quote_status' => $quote->quoteStatus->text ?? 'N/A',
-                ];
-            });
 
             // Log the search
             LoggerService::info('Policy search performed', [
@@ -150,19 +150,10 @@ class ClaimsService extends BaseService
             ]);
 
             // Return pagination data structure
-            return [
-                'data' => $policies->toArray(),
-                'current_page' => $personalQuotes->currentPage(),
-                'has_more_pages' => $personalQuotes->hasMorePages(),
-                'next_page_url' => $personalQuotes->nextPageUrl(),
-                'prev_page_url' => $personalQuotes->previousPageUrl(),
-                'per_page' => $personalQuotes->perPage(),
-                'total' => null, // simplePaginate doesn't provide total count
-                'from' => (($personalQuotes->currentPage() - 1) * $personalQuotes->perPage()) + 1,
-                'to' => ($personalQuotes->currentPage() - 1) * $personalQuotes->perPage() + count($policies),
-            ];
+            return $policies;
 
         } catch (\Exception $e) {
+            dd($e->getMessage());
             Log::error('Error searching active policies', [
                 'error' => $e->getMessage(),
                 'email' => $email,
