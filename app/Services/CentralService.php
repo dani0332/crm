@@ -1342,6 +1342,8 @@ class CentralService extends BaseService
             return 'CAR_FLEET';
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
             return 'TRADE';
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several)) {
+            return 'BUSINESS'; // in only several business type, we are sending business similar email template.
         }
 
         return 'OTHER_BUSINESS';
@@ -1475,7 +1477,7 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Life) {
-            $emailData->planType = $quote->insuranceTenure->text;
+            $emailData->planType = $quote?->insuranceTenure?->text ?? 'Life Insurance';
             $emailData->policyTerm = $quote->numberOfYears->text;
             if ($sendUpdateLog) {
                 $emailData->lifeDetails = 'NA';
