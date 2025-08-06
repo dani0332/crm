@@ -139,7 +139,7 @@ class AmtController extends Controller
 
         /* Below conditions have AND relationship between them */
         $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)?: false;
-        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS) : false;
+        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS->value) : false;
 
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
