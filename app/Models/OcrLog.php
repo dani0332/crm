@@ -58,7 +58,6 @@ class OcrLog extends Model
         return match ($this->status) {
             'success' => 'success',
             'failed' => 'error',
-            'processing' => 'warning',
             'skipped' => 'info',
             default => 'default',
         };

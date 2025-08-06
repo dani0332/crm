@@ -134,7 +134,7 @@ const onLoadOcrLogData = async () => {
               <x-tag
                 v-if="status"
                 size="xs"
-                :color="status === 'success' ? 'success' : status === 'failed' ? 'red' : status === 'processing' ? 'warning' : 'secondary'"
+                :color="status === 'success' ? 'success' : status === 'failed' ? 'red' : status === 'skipped' ? 'secondary' : 'secondary'"
                 class="mt-0.5 text-[10px]"
               >
                 <p>
@@ -181,7 +181,7 @@ const onLoadOcrLogData = async () => {
               <x-tag
                 v-if="selectedLog.status"
                 size="xs"
-                :color="selectedLog.status === 'success' ? 'success' : selectedLog.status === 'failed' ? 'red' : selectedLog.status === 'processing' ? 'warning' : 'secondary'"
+                :color="selectedLog.status === 'success' ? 'success' : selectedLog.status === 'failed' ? 'red' : selectedLog.status === 'skipped' ? 'secondary' : 'secondary'"
                 class="mt-0.5 text-[10px]"
               >
                 {{ selectedLog.status.toUpperCase() }}

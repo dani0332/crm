@@ -211,18 +211,6 @@ class OCRService
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
         }
 
-        // Log OCR activity for processing start
-        $this->ocrLogService->logActivity(
-            $quote,
-            $documentType,
-            'processing',
-            null,
-            null,
-            null,
-            null,
-            $userId
-        );
-
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
         try {
