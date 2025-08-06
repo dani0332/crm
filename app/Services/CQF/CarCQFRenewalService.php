@@ -51,6 +51,8 @@ class CarCQFRenewalService
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::PARTIAL_CAPTURED
             ])
             ->first();
 
@@ -64,10 +66,11 @@ class CarCQFRenewalService
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::PARTIAL_CAPTURED
             ])
-            ->take(50)
             ->with(['plan', 'plan.insuranceProvider'])
-            ->chunkById(50, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
+            ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
                 if ($quoteCount > 0) {
