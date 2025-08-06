@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
+use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\Claim;
 use App\Models\ClaimRequest;
 use App\Services\ClaimsService;
@@ -92,38 +93,28 @@ class ClaimsController extends Controller
     /**
      * Search active policies (AJAX endpoint)
      */
-    public function searchPolicies(Request $request): JsonResponse
+    public function searchPolicies(SearchPoliciesRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'policy_number' => 'nullable|string',
-            'quote_type_id' => 'required|numeric',
-        ]);
-
-        if (! $request->email && ! $request->policy_number) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please provide either email or policy number.',
-            ], 400);
-        }
-
         try {
             $policies = $this->claimsService->searchActivePolicies(
-                $request->email,
-                $request->policy_number,
-                $request->quote_type_id,
+                $request->getEmail(),
+                $request->getPolicyNumber(),
+                $request->getQuoteTypeId(),
+                $request->getPage()
             );
 
             return response()->json([
                 'success' => true,
                 'policies' => $policies,
-                'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
+                'message' => empty($policies['data']) ? 'No available data' : 'Policies found successfully.',
             ]);
         } catch (Exception $e) {
             Log::error('Error searching policies', [
                 'error' => $e->getMessage(),
-                'email' => $request->email,
-                'policy_number' => $request->policy_number,
+                'email' => $request->getEmail(),
+                'policy_number' => $request->getPolicyNumber(),
+                'quote_type_id' => $request->getQuoteTypeId(),
+                'page' => $request->getPage(),
                 'user_id' => Auth::id(),
             ]);
 

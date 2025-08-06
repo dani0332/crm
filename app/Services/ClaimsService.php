@@ -25,6 +25,7 @@ class ClaimsService extends BaseService
 
     protected $searchPrefix = 'claims.';
     protected $query;
+    protected $perPage = 15;
 
     public function __construct()
     {
@@ -76,7 +77,7 @@ class ClaimsService extends BaseService
         $filters = $this->getFilters($request);
         $query = $this->applyFilters($this->query, $filters);
 
-        return $query->simplePaginate(25)->withQueryString();
+        return $query->simplePaginate($this->perPage)->withQueryString();
     }
 
     /**
@@ -90,13 +91,14 @@ class ClaimsService extends BaseService
     /**
      * Search active policies by email or policy number
      */
-    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null): array
+    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null, int $page = 1): array
     {
         try {
-            // Search in PersonalQuote (Car, Health, Life, Travel, etc.)
             $personalQuotes = PersonalQuote::query()
                 ->whereNotNull('policy_number')
-                ->where('quote_type_id', $quoteTypeId)
+                ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
+                    $query->where('quote_type_id', $quoteTypeId);
+                })
                 ->whereIn('quote_status_id', [71]) // Active policy statuses
                 ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
                     $query->where(function ($subQuery) use ($email, $policyNumber) {
@@ -114,7 +116,7 @@ class ClaimsService extends BaseService
                 })
                 ->with(['quoteType', 'insuranceProvider', 'quoteStatus'])
                 ->orderBy('policy_expiry_date', 'desc')
-                ->get();
+                ->simplePaginate($this->perPage);
 
             $policies = $personalQuotes->map(function ($quote) {
                 return [
@@ -137,7 +139,7 @@ class ClaimsService extends BaseService
                     'quote_status_id' => $quote->quote_status_id,
                     'quote_status' => $quote->quoteStatus->text ?? 'N/A',
                 ];
-            })->toArray();
+            });
 
             // Log the search
             LoggerService::info('Policy search performed', [
@@ -147,7 +149,18 @@ class ClaimsService extends BaseService
                 'user_id' => Auth::id(),
             ]);
 
-            return $policies;
+            // Return pagination data structure
+            return [
+                'data' => $policies->toArray(),
+                'current_page' => $personalQuotes->currentPage(),
+                'has_more_pages' => $personalQuotes->hasMorePages(),
+                'next_page_url' => $personalQuotes->nextPageUrl(),
+                'prev_page_url' => $personalQuotes->previousPageUrl(),
+                'per_page' => $personalQuotes->perPage(),
+                'total' => null, // simplePaginate doesn't provide total count
+                'from' => (($personalQuotes->currentPage() - 1) * $personalQuotes->perPage()) + 1,
+                'to' => ($personalQuotes->currentPage() - 1) * $personalQuotes->perPage() + count($policies),
+            ];
 
         } catch (\Exception $e) {
             Log::error('Error searching active policies', [
