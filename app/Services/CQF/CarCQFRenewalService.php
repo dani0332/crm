@@ -55,7 +55,7 @@ class CarCQFRenewalService
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
                 PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PARTIAL_CAPTURED
+                PaymentStatusEnum::PARTIAL_CAPTURED,
             ])
             ->first();
 
@@ -70,7 +70,7 @@ class CarCQFRenewalService
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
                 PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PARTIAL_CAPTURED
+                PaymentStatusEnum::PARTIAL_CAPTURED,
             ])
             ->with(['plan', 'plan.insuranceProvider'])
             ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
