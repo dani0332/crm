@@ -150,7 +150,7 @@ class RateCoverageUploadService
                         'description' => $data['description'] ?? '',
                         'value' => $data['value'] ?? '',
                         'type' => $data['type'] ?? '',
-                        'is_northern' => $data['is_northern'] ?? null,
+                        'emirate_type' => $data['emirate_type'] ?? null,
                         'plan_id' => DB::table('health_plan')->where('code', $data['plan_code'])->value('id'),
                         'is_active' => 1,
                         'created_at' => now(),
@@ -295,7 +295,7 @@ class RateCoverageUploadService
                     }
 
                     $insertData[] = [
-                        'is_northern' => $data['is_northern'] ?? null,
+                        'emirate_type' => $data['emirate_type'] ?? null,
                         'min_age' => $data['min_age'] ?? '',
                         'max_age' => $data['max_age'] ?? '',
                         'gender' => $data['gender'] ?? '',

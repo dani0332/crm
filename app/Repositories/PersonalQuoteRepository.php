@@ -129,7 +129,12 @@ class PersonalQuoteRepository extends BaseRepository
             while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
                 $docUuid = uniqid().rand(1, 100);
             }
+            $documentTypeText = $documentType->text;
 
+            if ($data['document_type_code'] == DocumentTypeCode::Illustration_Document && $quote->quote_type_id == QuoteTypeId::Life) {
+                $documentTypeText = $quote->insuranceProvider ? $quote->insuranceProvider->text.' - '.$documentType->text : $documentType->text;
+                $originalName = $quote->insuranceProvider ? $quote->insuranceProvider->text.' Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.'.$file->getClientOriginalExtension() : 'Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.'.$file->getClientOriginalExtension();
+            }
             // This data will store in quote documents table
             $document = [
                 'doc_name' => 'original_'.$docName,
@@ -137,7 +142,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'doc_url' => $filePathAzure,
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
-                'document_type_text' => $documentType->text,
+                'document_type_text' => $documentTypeText,
                 'doc_uuid' => $docUuid,
                 'created_by_id' => auth()->id(),
             ];
@@ -321,5 +326,10 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchGetById($quoteId)
     {
         return $this->where('id', $quoteId)->first();
+    }
+
+    public function fetchGetBy($column, $value)
+    {
+        return $this->where($column, $value)->with(['payments'])->first();
     }
 }

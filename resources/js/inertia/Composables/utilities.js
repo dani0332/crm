@@ -330,7 +330,7 @@ export function getQuoteType(id, returnType = 'code') {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
     2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
-    4: { code: 'LIF', id: 'life', link: '/quotes' },
+    4: { code: 'LIF', id: 'life', link: '/personal-quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
     6: { code: 'BIK', id: 'bike', link: '/personal-quotes' },
     7: { code: 'YAC', id: 'yacht', link: '/personal-quotes' },
@@ -433,6 +433,36 @@ export const getIp = async () => {
   }
 };
 
+// Function to calculate age
+export const calculateAge = birthDateString => {
+  const birthDate = new Date(birthDateString);
+
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  const dayDifference = today.getDate() - birthDate.getDate();
+
+  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+    age--;
+  }
+
+  return age;
+};
+
+// Function to calculate BMI
+export const calculateBMI = (heightInCm, weightInKg) => {
+  if (!heightInCm || !weightInKg) {
+    return 0;
+  }
+
+  const heightInMeters = heightInCm / 100;
+  const bmi = weightInKg / heightInMeters ** 2;
+
+  return parseFloat(bmi.toFixed(2));
+};
+
 export const resolveUserStatusText = statusId => {
   switch (parseInt(statusId)) {
     case 1:
@@ -505,4 +535,157 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
     value: item[valueKey],
     label: item[labelKey],
   }));
+};
+
+export const useformatDateTimeForPicker = dateTimeString => {
+  if (!dateTimeString) return null;
+
+  // Handle format: DD-MM-YYYY HH:mm:ss from server
+  const [datePart, timePart] = dateTimeString.split(' ');
+  if (!datePart || !timePart) return null;
+
+  const [day, month, year] = datePart.split('-');
+  const [hours, minutes, seconds] = timePart.split(':');
+
+  // Create a date object but compensate for timezone to preserve exact time display
+  // The server sends local time, but DatePicker with utc="preserve" still converts
+  const date = new Date(
+    parseInt(year),
+    parseInt(month) - 1, // Month is 0-indexed
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    parseInt(seconds) || 0,
+  );
+
+  // Get timezone offset and compensate by subtracting it
+  // This ensures the DatePicker displays the exact time from server
+  const timezoneOffsetMinutes = date.getTimezoneOffset();
+  const compensatedDate = new Date(
+    date.getTime() - timezoneOffsetMinutes * 60000,
+  );
+
+  return compensatedDate;
+};
+// prevent charaters, accepts only numbers, comma, and decimal point
+export const preventInvalidInputs = (
+  event,
+  allowComma = false,
+  allowDecimal = false,
+) => {
+  const key = event.key;
+
+  const controlKeys = [
+    'Backspace',
+    'Delete',
+    'ArrowLeft',
+    'ArrowRight',
+    'Tab',
+    'Enter',
+    'Home',
+    'End',
+  ];
+  if (controlKeys.includes(key)) return;
+
+  // Allow comma if specified
+  if (allowComma && key === ',') return;
+
+  // Allow dot (.)
+  if (allowDecimal && key === '.') return;
+
+  // Allow digits 0-9
+  if (/^[0-9]$/.test(key)) return;
+
+  // Block everything else
+  event.preventDefault();
+};
+
+export const numberFormat = (price, decimals = 2) => {
+  price = parseFloat(price);
+  return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+// life lob specific function
+export const useFormattedNumberField = (source, fieldName) => {
+  return computed({
+    get() {
+      const val = source[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+// Helper function to create formatted fields for rider arrays
+export const useFormattedRiderField = (ridersArray, index, fieldName) => {
+  return computed({
+    get() {
+      const rider = ridersArray.value[index];
+      if (!rider) return '';
+      const val = rider[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const rider = ridersArray.value[index];
+      if (!rider) return;
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      rider[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+export const cleanFormattedValueToFloat = value => {
+  if (typeof value !== 'string') return 0;
+
+  // Remove commas
+  const cleaned = value.replace(/,/g, '');
+
+  // Parse to float
+  const num = parseFloat(cleaned);
+
+  // If NaN or empty, return 0
+  return isNaN(num) ? 0 : num;
+};
+
+export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
+  if (!createdAtString || !cutoffDate) return false;
+
+  const match = createdAtString.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
+  if (!match) return false;
+
+  const [_, day, monthStr, year, hour, min, ampm] = match;
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  let h = parseInt(hour, 10);
+  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
+
+  return createdDate >= cutoffDate;
 };

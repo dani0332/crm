@@ -70,11 +70,11 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
             $eligibleUsers = $this->{$findAdvisorFn}($status, $tier, $tierUserIds);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                LoggerService::info(self::class.'::fetchAdvisors - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+                LoggerService::info(self::class."::{$findAdvisorFn} - Eligble Users found with the availability status of: ".UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
             }
-            LoggerService::info(self::class.'::fetchAdvisors - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+            LoggerService::info(self::class."::{$findAdvisorFn} - No Users were found with the availability status of: ".UserStatusEnum::getUserStatusText($status));
         }
 
         return [];

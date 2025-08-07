@@ -12,6 +12,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\EmailServices\TravelEmailService;
 use App\Services\HttpRequestService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
 use App\Services\UserService;
@@ -38,12 +39,14 @@ class HandleTravelAdvisorUpdated
      */
     public function handle(TravelQuoteAdvisorUpdated $event): void
     {
+
         info(self::class.' - inside handle travel update advisor');
 
         $lead = $event->lead;
 
         if ($lead) {
             SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addSeconds(5));
+            LoggerService::info(self::class." - FTCEmailJob dispatched for lead uuid : {$lead->uuid}");
         }
         $skippableSources = [LeadSourceEnum::INSLY, LeadSourceEnum::RENEWAL_UPLOAD];
         if (in_array($lead->source, $skippableSources)) {

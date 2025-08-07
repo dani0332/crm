@@ -1,4 +1,5 @@
 <script setup>
+import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
 const can = permission => useCan(permission);
 
 const { isRequired } = useRules();
@@ -58,6 +59,7 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
+  isEndorsementBookingActionDisabled: Boolean,
 });
 
 const state = reactive({
@@ -73,6 +75,8 @@ const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const commissionPercentageExceedsLimit = ref(false);
+const showCommissionPercentageExceedsLimitAlert = ref(false);
 
 const dateToYMD = date => {
   if (date) {
@@ -355,6 +359,7 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
+  commissionPercentageExceedsLimit.value = false;
   if (
     [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
       props.sendUpdateLog?.option?.code,
@@ -420,10 +425,15 @@ const calculateCommission = () => {
         if (page.props.isTapEnabled) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
           const brokerCommMinPer = brokerCommission
-            ? roundValue(brokerCommission.commission_percentage_min)
+            ? Math.max(
+                (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
+                0,
+              )
             : null;
           const brokerCommMaxPer = brokerCommission
-            ? roundValue(brokerCommission.commission_percentage_max)
+            ? brokerCommission?.fixed_commission
+              ? Number(brokerCommission?.fixed_commission) + 2.5
+              : 0
             : null;
           if (
             commissionPercentage > 0 &&
@@ -437,16 +447,28 @@ const calculateCommission = () => {
               !(
                 Number(commissionPercentage) >= Number(brokerCommMinPer) &&
                 Number(commissionPercentage) <= Number(brokerCommMaxPer)
-              )
+              ) &&
+              can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
+            ) {
+              commissionPercentageExceedsLimit.value = true;
+            }
+            if (
+              brokerCommMinPer != null &&
+              brokerCommMaxPer != null &&
+              !(
+                Number(commissionPercentage) >= Number(brokerCommMinPer) &&
+                Number(commissionPercentage) <= Number(brokerCommMaxPer)
+              ) &&
+              !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
             ) {
               notification.error({
                 title:
-                  'The commission amount you entered is outside the permitted range.',
+                  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.',
                 position: 'top',
               });
               bookingDetailsForm.setError({
                 commission_vat_applicable:
-                  'The commission amount you entered is outside the permitted range.',
+                  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.',
               });
               bookingDetailsForm.commission_vat_applicable =
                 commissionPercentage = null;
@@ -516,6 +538,16 @@ function thousandSeparator(value) {
 
 const saveBookingDetail = isValid => {
   if (!isValid) return;
+  if (
+    commissionPercentageExceedsLimit.value &&
+    can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT) &&
+    !showCommissionPercentageExceedsLimitAlert.value
+  ) {
+    showCommissionPercentageExceedsLimitAlert.value = true;
+    return;
+  } else {
+    showCommissionPercentageExceedsLimitAlert.value = false;
+  }
   // it will check payment related condition.
   let childOptions = [
     sendUpdateStatusEnum.MPC,
@@ -749,6 +781,19 @@ const modals = reactive({
 
 const confirmationCheck = ref(false);
 const isStating = ref(false);
+
+const isAUHEnable = computed(() => {
+  if (
+    props.isEndorsementBookingActionDisabled &&
+    [sendUpdateStatusEnum.SNBU, sendUpdateStatusEnum.SU].includes(
+      props.updateBtn,
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+});
 
 const sendUpdatePermissionCheck = computed(() => {
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
@@ -2436,7 +2481,8 @@ watch(
                   props.updateBtn &&
                   (isLackingPayment ||
                     disableMainBtn ||
-                    isTapCaptureProcessStart)
+                    isTapCaptureProcessStart ||
+                    isAUHEnable)
                 "
               >
                 <div>
@@ -2450,7 +2496,8 @@ watch(
                       :disabled="
                         isLackingPayment ||
                         disableMainBtn ||
-                        isTapCaptureProcessStart
+                        isTapCaptureProcessStart ||
+                        isAUHEnable
                       "
                     >
                       {{ props.updateBtn }}
@@ -2462,7 +2509,9 @@ watch(
                             ? disableMainBtn
                             : isTapCaptureProcessStart
                               ? 'Update booking already in queued.'
-                              : 'Action Needed: Please revise payment details to reflect plan changes.'
+                              : isAUHEnable
+                                ? 'Abu Dhabi policy financials will be recorded manually and not entered in Sage'
+                                : 'Action Needed: Please revise payment details to reflect plan changes.'
                         }}
                       </span>
                     </template>
@@ -2505,6 +2554,13 @@ watch(
               </x-button>
             </template>
           </div>
+          <BookPolicyOverrideCommissionLimitModal
+            :showCommissionPercentageExceedsLimitAlert="
+              showCommissionPercentageExceedsLimitAlert
+            "
+            :bpForm="bookingDetailsForm"
+            @modalClosed="showCommissionPercentageExceedsLimitAlert = false"
+          />
         </x-form>
       </template>
     </Collapsible>
