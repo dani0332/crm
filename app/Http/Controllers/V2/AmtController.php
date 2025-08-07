@@ -276,17 +276,6 @@ class AmtController extends Controller
 
         $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
 
-        /*
-         *         $isManualAllocationAllowed = auth()->user()->isAdmin() ||
-            $isManagerORDeputy ||
-            Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
-         * */
-
-        logger()->debug('toRawSql: '.$data->toRawSql(), [
-            // $supportUsers
-            //            'Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)' => Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR),
-        ]);
-
         $quotes = $data->simplePaginate(15)->withQueryString();
 
         return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
