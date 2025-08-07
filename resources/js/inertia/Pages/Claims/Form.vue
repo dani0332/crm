@@ -457,7 +457,7 @@ function onSubmit(isValid) {
             :rules="[isRequired, isEmail]"
             class="w-full"
             :disabled="isEdit"
-            :class="{ 'readonly': isEdit }"
+            :class="{ readonly: isEdit }"
             type="email"
             label="Email Address"
             placeholder="Enter Email Address"
@@ -578,9 +578,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="claimForm.errors.approved_cash_loss_amount"
           />
-      </div>
-      <div class="grid sm:grid-cols-2 gap-4">
-        <!-- Incident Story -->
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <!-- Incident Story -->
           <x-textarea
             v-model="claimForm.incident_story"
             label="Incident Story"
@@ -590,7 +590,7 @@ function onSubmit(isValid) {
             :error="claimForm.errors.incident_story"
           />
 
-        <!-- Claim Denial Reason (when editing) -->
+          <!-- Claim Denial Reason (when editing) -->
           <x-textarea
             v-model="claimForm.claim_denial_reason"
             label="Claim Denial Reason"
@@ -600,9 +600,6 @@ function onSubmit(isValid) {
             :error="claimForm.errors.claim_denial_reason"
           />
         </div>
-
-
-
       </div>
 
       <!-- Policy Search Results -->
@@ -718,14 +715,14 @@ function onSubmit(isValid) {
         <!-- Search Button  -->
         <x-button
           v-if="!isEdit"
-            type="button"
-            size="md"
-            color="primary"
-            @click="searchPolicies"
-            :disabled="!claimForm.email && !claimForm.policy_number"
-            :loading="policySearch.loading"
-          >
-            Search
+          type="button"
+          size="md"
+          color="primary"
+          @click="searchPolicies"
+          :disabled="!claimForm.email && !claimForm.policy_number"
+          :loading="policySearch.loading"
+        >
+          Search
         </x-button>
         <x-button
           size="md"
