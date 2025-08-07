@@ -11,16 +11,16 @@ const props = defineProps({
     default: true,
   },
   readOnlyMode: {
-    type: Boolean,
+    type: Object,
     required: false,
-    default: false,
+    default: () => ({ isDisable: false }),
   },
 });
 
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
-const compareDueDate = useCompareDueDate;
+const compareDueDate = useCompareDueDate();
 
 const activityActionEdit = ref(false);
 
@@ -113,7 +113,7 @@ const activityDeleteConfirmed = () => {
     `/activities/${confirmDeleteData.activity}/delete`,
     {
       isInertia: true,
-      quote_uuid: page.props.quote.uuid,
+      quote_uuid: props.quote.uuid,
     },
     {
       preserveScroll: true,
