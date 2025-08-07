@@ -200,7 +200,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $triggerBookPolicyResponse]);
             app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::BOOK_POLICY_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
-            
+
             return $triggerBookPolicyResponse;
         }
 
@@ -208,7 +208,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process = $process->refresh();
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$triggerBookPolicyResponse['completed_step']);
-        
+
         return $triggerBookPolicyResponse;
     }
 
@@ -261,7 +261,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process = $process->refresh();
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$uploadPolicyDocumentsToIMCRMResponse['completed_step']);
-        
+
         return $uploadPolicyDocumentsToIMCRMResponse;
     }
 
@@ -422,7 +422,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process = $process->refresh();
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$policyIssuanceResponse['completed_step']);
-        
+
         return $policyIssuanceResponse;
     }
 
@@ -527,7 +527,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process->update(['completed_step' => $uploadDocumentsResponse['completed_step']]);
         $process = $process->refresh();
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Policy Issuance ID : '.$process->id.' - Completed Step Updated to : '.$uploadDocumentsResponse['completed_step']);
-        
+
         return $uploadDocumentsResponse;
     }
 
