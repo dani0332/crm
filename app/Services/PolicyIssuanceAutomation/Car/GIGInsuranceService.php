@@ -329,19 +329,20 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             foreach ($documentsForThisType as $quoteDocument) {
                 $documentFile = Storage::disk('azureIM')->get($quoteDocument->doc_url);
                 $docFileBase64 = base64_encode($documentFile);
-                $payload = [
-                    'referenceType' => 'quotation',
-                    'referenceValue' => $quote->insurer_quote_number,
-                    'documentType' => [
-                        'code' => $documentToUpload['insurerDocCode'],
-                        'value' => $documentToUpload['insurerDocName'],
-                    ],
-                    'documentContent' => $docFileBase64,
-                    'documentName' => $quoteDocument->doc_name,
-                    'mimeType' => $quoteDocument->doc_mime_type,
+                // Create payload with guaranteed field order for GIG API
+                $payload = [];
+                $payload['referenceType'] = 'quotation';
+                $payload['referenceValue'] = $quote->insurer_quote_number;
+                $payload['documentType'] = [
+                    'code' => $documentToUpload['insurerDocCode'],
+                    'value' => $documentToUpload['insurerDocName'],
                 ];
+                $payload['documentContent'] = $docFileBase64;
+                $payload['documentName'] = $documentToUpload['insurerDocCode'].'_'.$quoteDocument->doc_name;
+                $payload['mimeType'] = $quoteDocument->doc_mime_type;
 
-                $uploadDocResponse = $this->httpCall($endPoint, $payload, [], self::REQUEST_POST);
+                $headers = ['Content-Type' => 'application/json'];
+                $uploadDocResponse = $this->httpCall($endPoint, $payload, $headers, self::REQUEST_POST);
                 app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadDocResponse, $this->baseUrl.$endPoint, self::UPLOAD_DOCUMENTS, $uploadDocResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
 
                 if ($uploadDocResponse['status']) {
@@ -419,16 +420,16 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'insurerDocName' => 'Car Registration Document',
                 'uploaded' => false,
             ],
-            QuoteDocumentsEnum::CAR_EMIRATE_ID => [
-                'code' => QuoteDocumentsEnum::CAR_EMIRATE_ID,
-                'insurerDocCode' => 'DT02',
-                'insurerDocName' => 'National ID',
-                'uploaded' => false,
-            ],
             QuoteDocumentsEnum::DRIVING_LICENSE => [
                 'code' => QuoteDocumentsEnum::DRIVING_LICENSE,
-                'insurerDocCode' => 'DT03',
+                'insurerDocCode' => 'DT02',
                 'insurerDocName' => 'Driving License',
+                'uploaded' => false,
+            ],
+            QuoteDocumentsEnum::CAR_EMIRATE_ID => [
+                'code' => QuoteDocumentsEnum::CAR_EMIRATE_ID,
+                'insurerDocCode' => 'DT03',
+                'insurerDocName' => 'National ID',
                 'uploaded' => false,
             ],
         ]);
@@ -540,6 +541,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $certificateOfInsuranceAvailable = false;
 
         foreach ($policyDocuments as $policyDocument) {
+            // TODO:: this is a temporary fix to skip certificate of insurance document, this will be removed when the certificate of insurance document is uploaded to IMCRM on PROD
+            if(str_contains($policyDocument->name, 'Certificate of Insurance')) {
+                continue;
+            }
+            
             $quoteDocument = null;
             $docName = $policyDocument->name ?? 'Unknown Document'; // Initialize with fallback name
             $docMapping = null;
@@ -1065,7 +1071,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 self::REQUEST_POST => Http::retry(
                     1,
                     10000
-                )->timeout(30)->withHeaders($header)->post($endPoint, $payload),
+                )->timeout(30)->withHeaders($header)->asJson()->post($endPoint, $payload),
                 self::REQUEST_AUTH => Http::retry(
                     $this->maxRetries,
                     $this->retryDelay
