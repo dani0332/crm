@@ -1048,4 +1048,26 @@ class AMLController extends Controller
 
         return response()->json(['success' => $response['status'], 'message' => $response['message']]);
     }
+
+    public function getQuoteDetailsFromInsurer(Request $request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId)->value;
+        $quoteDetails = $this->getQuoteObjectBy($quoteType, $request->quoteUID, 'uuid');
+        $insurerCode = getInsuranceProvider($quoteDetails->payments()->mainLeadPayment()->first(), $quoteType);
+
+        return match (ucfirst($quoteType)) {
+            QuoteTypes::CAR->value => match ($insurerCode->code) {
+                InsuranceProvidersEnum::RSA => app(LivaInsuranceService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $quoteDetails),
+
+                default => response()->json([
+                    'success' => false,
+                    'message' => 'Quote type not supported'
+                ]),
+            },
+            default => response()->json([
+                'success' => false,
+                'message' => 'Quote type not supported'
+            ]),
+        };
+    }
 }

@@ -18,6 +18,11 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const complianceDisable = ref(true);
 const patternFieldDisable = ref(true);
+const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
+const syncProcessLoading = ref(false);
+
+const emit = defineEmits(['update:insurerPortalSyncData']); 
+
 const insuredDetails = page.props.insuredDetails;
 const lookups = page.props.lookups;
 const isScreeningIndividual =
@@ -262,6 +267,42 @@ function insuredKycFormValidate() {
   let isValid = true;
   return isValid;
 }
+
+const syncInsurerPortalUpdates = () => {
+  syncProcessLoading.value = true;
+  axios
+    .post('/get-quote-details-from-insurer', {
+      quoteTypeId: page.props.quoteType.id,
+      quoteUID: page.props.quoteRequest.uuid
+    })
+    .then(response => {
+      if (response.data.success) {
+        notification.success({
+          title: 'Quote details synced successfully from insurer portal',
+          position: 'top',
+        });
+
+        if (response.data.data) {
+          emit('update:insurerPortalSyncData', response.data.data);
+        }
+      } else {
+        notification.error({
+          title: response.data.message || 'Failed to sync quote details from insurer portal',
+          position: 'top',
+        });
+      }
+      syncProcessLoading.value = false;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error syncing quote details from insurer portal',
+        position: 'top',
+      });
+      console.error('Sync error:', error);
+      syncProcessLoading.value = false;
+    });
+};
+
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
@@ -1077,6 +1118,17 @@ watch(
       </x-field>
     </dl>
     <div class="flex justify-end my-5 gap-x-2">
+      <x-button
+        size="sm"
+        color="primary"
+        type="button"
+        class="px-6"
+        @click="syncInsurerPortalUpdates"
+        :disabled="!isSyncEnabled"
+        :loading="syncProcessLoading"
+      >
+        Sync
+      </x-button>
       <x-button
         v-if="kycFormDetails.insured_id"
         size="sm"

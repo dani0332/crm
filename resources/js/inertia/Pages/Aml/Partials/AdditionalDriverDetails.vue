@@ -2,6 +2,13 @@
 import { ref, computed } from 'vue'
 const { isRequired } = useRules();
 
+const props = defineProps({
+  insurerPortalSyncData: {
+    type: Object,
+    default: null
+  },
+});
+
 const page = usePage();
 const notification = useToast();
 const lookups = page.props.lookups;
@@ -103,6 +110,33 @@ const isLIVA = computed(() => {
 const isSUKOON = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
 });
+
+watch(() => props.insurerPortalSyncData, (driverDetails) => {
+  if (driverDetails) {
+    const fieldMappings = {
+      driverDetails: {
+        is_insured_and_driver_same: 'is_insured_and_driver_same',
+        driver_first_name: 'driver_first_name',
+        driver_last_name: 'driver_last_name',
+        driver_dob: 'driver_dob',
+        driver_gender: 'driver_gender',
+        driver_license_number: 'driver_license_number',
+        license_issue_place: 'license_issue_place',
+        license_issue_date: 'license_issue_date',
+        license_expiry_date: 'license_expiry_date',
+        uae_driving_experience: 'uae_driving_experience',
+        home_country_license_issuance: 'home_country_license_issuance',
+        home_country_driving_experience: 'home_country_driving_experience',
+      },
+    };
+
+    Object.entries(fieldMappings.driverDetails).forEach(([sourceKey, targetKey]) => {
+      if (driverDetails?.[sourceKey]) {
+        additionalDriverDetailsForm[targetKey] = driverDetails[sourceKey];
+      }
+    });
+  }
+}, { deep: true });
 </script>
 
 <template>

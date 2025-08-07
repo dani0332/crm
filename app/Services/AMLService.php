@@ -1973,7 +1973,6 @@ class AMLService
             CarQuoteRequestDetail::where('car_quote_request_id', $quote->id)->update($updateCarQuoteRequestDetail);
             $response = ['status' => true, 'message' => $message];
             LoggerService::info(__FUNCTION__.' - '.$message);
-
         } catch (\Exception $ex) {
             LoggerService::info(__FUNCTION__.' - Error saving additional vehicle and driver details', $ex->getMessage());
             $response = ['status' => false, 'message' => 'Failed to save additional vehicle and driver details'];

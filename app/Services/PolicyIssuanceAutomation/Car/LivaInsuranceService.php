@@ -11,11 +11,13 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
+use App\Facades\Ken;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\InsurerRequestResponse;
 use App\Models\Payment;
+use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -720,6 +722,71 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
             self::BOOK_POLICY_API_FAILED_STATUS_ID,
         ];
+    }
+
+    public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quoteDetails->code.' started');
+
+        try {
+            $payload = ['quoteTypeId' => $quoteTypeId, 'quoteUID' => $quoteDetails->uuid];
+            $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
+            $responseData = $response['data'];
+
+            $getQuoteResponseMapping = [
+                'rta_transaction_type' => $responseData->authorityTransactionDetails->code,
+                'plate_code' => $responseData->plateNumber, // optional
+                'plate_number' => $responseData->plateNumber, // optional
+                'traffic_code_number' => $responseData->motorInformation->trafficFileNumber,
+                'chassis_number' => $responseData->motorInformation->chassisNumber,
+                'engine_number' => $responseData->motorInformation->engineNumber,
+                'rta_plate_category' => '',
+                'vehicle_color' => $responseData->motorInformation->vehicleColor->code,
+                'plate_color' => $responseData->motorInformation->plateColor->code,
+                'bank_loan' => $responseData->motorInformation->isVehicleMortgaged,
+                'bank_name' => ($responseData->motorInformation->isVehicleMortgaged) ? $responseData->motorInformation->bankName : '', // optional
+                'first_registration_date' => $responseData->policySchedule->creationDate,
+                'policy_effective_date' => $responseData->policySchedule->effectiveDate,
+                'policy_expiry_date' => $responseData->policySchedule->expirationDate, // optional
+                'certificate_start_date' => $responseData->certificateInceptionDate,
+                'certificate_end_date' => $responseData->certificateEndDate, // optional
+                'annual_mileage_estimate' => '', // optional
+                'is_insured_and_driver_same' => $responseData->policyHolder->isPolicyHolderDriver,
+                'driver_first_name' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->givenName : $responseData->driver->firstName, // optional
+                'driver_last_name' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->surName : $responseData->driver->lastName, // optional
+                'driver_dob' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->birthDate : $responseData->driver->dateOfBirth, // optional
+                'driver_gender' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->gender->value : $responseData->driver->gender,
+                'driver_license_number' => '',
+                'driver_license_issue_place' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->firstDrivingLicenseIssueCountry->code : $responseData->driver->nationality->value, // optional
+                'driver_license_issue_date' => '', // optional
+                'driver_license_expiry_date' => '',
+                'driver_uae_driving_experience' => '', // optional
+                'home_country_license_issuance' => '', // optional
+                'home_country_driving_experience' => '', // optional
+            ];
+
+            if (isset($response['status']) && $response['status'] === true) {
+                app(AMLService::class)->saveAdditionalVehicleAndDriverDetails((object) $getQuoteResponseMapping, $quoteDetails);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Quote details retrieved successfully from insurer portal',
+                    'data' => $getQuoteResponseMapping ?? null
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'
+                ]);
+            }
+        } catch (\Exception $e) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Error: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving quote details from insurer portal'
+            ]);
+        }
     }
 
     /* public function updateQuoteRequest($quote)

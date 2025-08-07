@@ -2,6 +2,13 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 const { isRequired } = useRules();
 
+const props = defineProps({
+  insurerPortalSyncData: {
+    type: Object,
+    default: null
+  },
+});
+
 const page = usePage();
 const notification = useToast();
 const lookups = page.props.lookups;
@@ -94,6 +101,38 @@ const submitAdditionalVehicleTransactionDetailsForm = (isValid) => {
     });
   }
 }
+
+watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
+  if (vehicleTransactionDetails) {
+    const fieldMappings = {
+      vehicleTransactionDetails: {
+        rta_transaction_type: 'rta_transaction_type',
+        plate_code: 'plate_code',
+        plate_number: 'plate_number',
+        traffic_code_number: 'traffic_code_number',
+        chassis_number: 'chassis_number',
+        engine_number: 'engine_number',
+        rta_plate_category: 'rta_plate_category',
+        vehicle_color: 'vehicle_color',
+        plate_color: 'plate_color',
+        bank_loan: 'bank_loan',
+        bank_name: 'bank_name',
+        first_registration_date: 'first_registration_date',
+        policy_effective_date: 'policy_effective_date',
+        policy_expiry_date: 'policy_expiry_date',
+        certificate_start_date: 'certificate_start_date',
+        certificate_end_date: 'certificate_end_date',
+        annual_mileage_estimate: 'annual_mileage_estimate',
+      },
+    };
+
+    Object.entries(fieldMappings.vehicleTransactionDetails).forEach(([sourceKey, targetKey]) => {
+      if (vehicleTransactionDetails?.[sourceKey]) {
+        additionalVehicleTransactionDetailsForm[targetKey] = vehicleTransactionDetails[sourceKey];
+      }
+    });
+  }
+}, { deep: true });
 
 const isGIG = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
