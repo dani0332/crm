@@ -20,7 +20,6 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
-const compareDueDate = useCompareDueDate();
 
 const activityActionEdit = ref(false);
 
