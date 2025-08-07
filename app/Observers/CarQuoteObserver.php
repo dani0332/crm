@@ -2,23 +2,23 @@
 
 namespace App\Observers;
 
-use Exception;
-use App\Models\CarQuote;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeId;
-use App\Jobs\MAWelcomeJob;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteStatusEnum;
-use App\Jobs\CourtesyEmailJob;
-use App\Events\LeadStatusUpdated;
-use App\Jobs\Audit\LogAllocation;
-use Illuminate\Support\Facades\Log;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Traits\PersonalQuoteSyncTrait;
-use App\Repositories\PaymentRepository;
+use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
-use App\Services\SendEmailCustomerService;
+use App\Jobs\Audit\LogAllocation;
+use App\Jobs\CourtesyEmailJob;
+use App\Jobs\MAWelcomeJob;
+use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\PaymentRepository;
+use App\Services\SendEmailCustomerService;
+use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class CarQuoteObserver
 {
@@ -64,7 +64,7 @@ class CarQuoteObserver
             }
         }
 
-        if (isset($dirty['ai_advisor_id']) && !empty($lead->ai_advisor_id)) {
+        if (isset($dirty['ai_advisor_id']) && ! empty($lead->ai_advisor_id)) {
             app(SendEmailCustomerService::class)->sendCarIntroEmailWithAIAdvisor($lead);
         }
 
