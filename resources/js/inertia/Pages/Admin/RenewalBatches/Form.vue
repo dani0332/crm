@@ -106,10 +106,29 @@ const setBatchYear = () => {
   return batchForm.batchMonth.year;
 };
 
+const validateSegment = () => {
+  let isValid = true;
+  if (batchForm.segment_volume.length === 0) {
+    notification.error({
+      title: 'Segment Volume is required',
+      position: 'top',
+    });
+    isValid = false;
+  }
+  if (batchForm.segment_value.length === 0) {
+    notification.error({
+      title: 'Segment Value is required',
+      position: 'top',
+    });
+    isValid = false;
+  }
+  return isValid;
+};
 function onSubmit(isValid) {
   let valid = validateSlabs();
+  let segmentValid = validateSegment();
 
-  if (!isValid || !valid) return;
+  if (!isValid || !valid || !segmentValid) return;
 
   batchForm.clearErrors();
   batchForm.month = setBatchMonth();
@@ -496,9 +515,9 @@ onMounted(() => {
         :rules="[isRequired]"
       />
     </div>
-    <div class="flex justify-end gap-3 mt-3 w-full">
+    <div class="flex justify-end gap-3 mt-3">
       <x-button
-        class="w-full"
+        class="w-[100px]"
         size="md"
         color="primary"
         @click="isModalOpen = false"
