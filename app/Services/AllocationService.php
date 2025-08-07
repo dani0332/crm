@@ -336,11 +336,12 @@ class AllocationService extends BaseService
 
             $data = [
                 'advisorId' => $request->getAdvisor()?->id ?? $lead?->advisor_id,
+                'isAIAdvisor' => $request->get('isAIAdvisor', false),
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
 
-            $tier = $request->getTier();
+            $tier = $request->getTier() ?? $lead->tier;
 
             if ($tier) {
                 $data['tierId'] = $tier->id;
