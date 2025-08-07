@@ -42,7 +42,19 @@ class UpdateLeadStatusRequest extends FormRequest
             'modelType' => 'required',
             'quote_uuid' => 'required',
             'leadStatus' => 'required',
-            'current_quote_status_id' => 'required_if:modelType,Car',
+            'current_quote_status_id' => [
+                'nullable',
+                function ($attribute, $value, $fail) {
+                    // Required when leadStatus is PolicyIssued, PolicyCancelled, or PolicyCancelledReissued and model type is Car
+                    if (strtolower(request()->modelType) == quoteTypeCode::Car) {
+                        if (in_array(request()->current_quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
+                            if (empty($value)) {
+                                $fail('The current quote status id field is required when the lead status is Policy Issued, Policy Cancelled, or Policy Cancelled Reissued for Car quotes.');
+                            }
+                        }
+                    }
+                },
+            ],
             'notes' => 'nullable',
             'lost_notes' => 'nullable|max:500',
             'approve_reason_id' => 'nullable',
