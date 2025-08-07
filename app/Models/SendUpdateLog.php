@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Enums\SendUpdateLogStatusEnum;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
@@ -76,5 +77,19 @@ class SendUpdateLog extends Model implements AuditableContract
         return [
             'auditable_type' => self::class,
         ];
+    }
+    public function isUpdateBooked(): bool
+    {
+        return $this->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+    }
+
+    public function isEndorsementFinancial()
+    {
+        return $this->category->code == SendUpdateLogStatusEnum::EF;
+    }
+
+    public function isPolicyPeriodExtension()
+    {
+        return $this->option->code == SendUpdateLogStatusEnum::PPE;
     }
 }

@@ -144,6 +144,7 @@ class CarCQFRenewalService
 
                     continue;
                 }
+              
                 // Check if the quote is a duplicate
                 if ($this->isDuplicateQuote($quote)) {
                     LoggerService::info(self::class.' - Duplicate quote detected. Skipping processing');
@@ -153,6 +154,8 @@ class CarCQFRenewalService
 
                     continue; // Skip processing this quote
                 }
+
+                // Check if the quote is an Insly renewal and if the renewal criteria is met
                 if($quote->source == LeadSourceEnum::INSLY){
                     $isInslyRenewal = $this->checkInslyRenewal($quote);
                     if(!$isInslyRenewal){
@@ -162,6 +165,7 @@ class CarCQFRenewalService
                             continue;
                         }
                 } 
+                
                 Sleep::for(3)->seconds();
                 LoggerService::info(self::class.' - Processing quote');
                 $this->storeCarCQFRenewalQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold);
@@ -190,25 +194,32 @@ class CarCQFRenewalService
             // If the lead source is 'Insly', check for send update type 'Endorsement financial' and subtype 'Policy period extension'
             $endorsementFinancial=  false;
             $policyPeriodExtension = false;
+            $isUpdateBooked = false;
+           
             if ($quote->source === LeadSourceEnum::INSLY && !empty($sendUpdateLogs)) {
                 foreach ($sendUpdateLogs as $log) {
                   
-                    if(isset($log['category']->code) && $log['category']->code == SendUpdateLogStatusEnum::EF ){
+                    if($log->isEndorsementFinancial()){
                         $endorsementFinancial = true;
                         LoggerService::info(self::class.' - Endorsement financial found  ',['policy_number'=>$quote->policy_number]);
                     }
-                    if(isset($log['option']->code) && $log['option']->code == SendUpdateLogStatusEnum::PPE){
+
+                    if($log->isPolicyPeriodExtension()){
                         LoggerService::info(self::class.' - Policy period extension found ',['policy_number'=>$quote->policy_number]);
                         $policyPeriodExtension = true;
-                        dd($log['option']->code,$quote->uuid);
+                       
                     }
+                   if($log->isUpdateBooked()){
+                       LoggerService::info(self::class.' - Update booked found ',['policy_number'=>$quote->policy_number]);
+                        $isUpdateBooked = true;
+                   }
                 }
             }
 
           
         }
         
-        return $endorsementFinancial && $policyPeriodExtension;
+        return $endorsementFinancial && $policyPeriodExtension && $isUpdateBooked;
     }
     public function validateQuote($quote)
     {
