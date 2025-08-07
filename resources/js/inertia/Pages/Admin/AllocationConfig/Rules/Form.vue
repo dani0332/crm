@@ -67,7 +67,6 @@ const selectedQuoteType = computed(() => {
   return props.rule && props.rule.quote_type ? props.rule.quote_type.id : null;
 });
 
-
 function onSubmit(isValid) {
   if (isValid) {
     let method = isEdit.value ? 'put' : 'post';
