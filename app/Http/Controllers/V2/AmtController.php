@@ -396,10 +396,10 @@ class AmtController extends Controller
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'quote_request_id' => $record->id,
         ])
-        ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
+            ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
-        $advisors = User::role(RolesEnum::GMAdvisor) 
-            ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '" . RolesEnum::GMAdvisor . "') AS name"))
+        $advisors = User::role(RolesEnum::GMAdvisor)
+            ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
             ->get();
 
         return inertia('GroupMedicalQuote/Show', [
