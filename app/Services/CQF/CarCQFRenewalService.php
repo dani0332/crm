@@ -16,6 +16,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\SendFailedCarRenewalsJob;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
@@ -26,7 +27,9 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\CapiRequestService;
+use App\Services\CRUDService;
 use App\Services\InsuranceProviderService;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
@@ -34,9 +37,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Repositories\SendUpdateLogRepository;
-use App\Services\CRUDService;
 
 class CarCQFRenewalService
 {
@@ -158,7 +158,7 @@ class CarCQFRenewalService
                 // Check if the quote is an Insly renewal and if the renewal criteria is met
                 if($quote->source == LeadSourceEnum::INSLY){
                     $isInslyRenewal = $this->checkInslyRenewal($quote);
-                    if(!$isInslyRenewal){
+                    if (! $isInslyRenewal) {
                         LoggerService::info(self::class.' - Insly renewal criteria not met for policy number', ['policy_number' => $quote->policy_number]);
                         $validationErrors = ['policy_number' => "Insly renewal criteria not met for policy number: $quote->policy_number"];
                         $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, false, $validationErrors);
@@ -180,19 +180,17 @@ class CarCQFRenewalService
     }
     public function checkInslyRenewal(CarQuote $quote): ?bool
     {
-      
+
         // Check if the quote has at least one status of policy issued
         $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
-    
 
         if ($hasPolicyIssuedStatus) {
-           
+
             // Retrieve send update options and logs
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
-          
 
             // If the lead source is 'Insly', check for send update type 'Endorsement financial' and subtype 'Policy period extension'
-            $endorsementFinancial=  false;
+            $endorsementFinancial = false;
             $policyPeriodExtension = false;
             $isUpdateBooked = false;
            
@@ -201,7 +199,7 @@ class CarCQFRenewalService
                   
                     if($log->isEndorsementFinancial()){
                         $endorsementFinancial = true;
-                        LoggerService::info(self::class.' - Endorsement financial found  ',['policy_number'=>$quote->policy_number]);
+                        LoggerService::info(self::class.' - Endorsement financial found  ', ['policy_number' => $quote->policy_number]);
                     }
 
                     if($log->isPolicyPeriodExtension()){
@@ -216,7 +214,6 @@ class CarCQFRenewalService
                 }
             }
 
-          
         }
         
         return $endorsementFinancial && $policyPeriodExtension && $isUpdateBooked;
