@@ -14,7 +14,6 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
 trait QuoteAllocatable
@@ -272,11 +271,6 @@ trait QuoteAllocatable
         return (bool) $this->ai_advisor_required;
     }
 
-    public function aiAdvisor(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'ai_advisor_id');
-    }
-
     public function assignToAIAdvisor()
     {
         $aiAdvisor = User::getAiAdvisor();
@@ -289,14 +283,19 @@ trait QuoteAllocatable
 
         $this->update([
             'ai_advisor_assigned_at' => now(),
-            'ai_advisor_id' => $aiAdvisor->id,
+            'advisor_id' => $aiAdvisor->id,
         ]);
     }
 
     public function unAssignAIAdvisor()
     {
-        if ($this->ai_advisor_id && empty($this->ai_advisor_unassigned_at)) {
+        if ($this->isAIAdvisorAssigned()) {
             $this->touch('ai_advisor_unassigned_at');
         }
+    }
+
+    public function isAIAdvisorAssigned()
+    {
+        return ! empty($this->advisor_id) && ! empty($this->ai_advisor_assigned_at) && empty($this->ai_advisor_unassigned_at);
     }
 }
