@@ -752,19 +752,6 @@ const onAddDocumentSubmit = event => {
               >
                 Void Payment
               </x-button>
-              <!--              <x-button
-                v-if="
-                  item.can_book_embedded_product &&
-                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
-                    ?.payments[0]?.payment_gateway_id ==
-                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
-                "
-                size="xs"
-                color="emerald"
-                @click.prevent="rescheduleEPBooking(item)"
-              >
-                Book Embedded Product
-              </x-button>-->
             </div>
           </template>
         </DataTable>
