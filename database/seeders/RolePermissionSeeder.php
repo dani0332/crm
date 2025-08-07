@@ -33,6 +33,7 @@ class RolePermissionSeeder extends Seeder
         $this->addNationalityAllocationConfigPermission();
         $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
+        $this->addLeadsByEmailPermission();
     }
 
     private function addReceiveNotificationsPermission()
