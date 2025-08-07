@@ -3,51 +3,40 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Response;
+use App\Pipes\Allocation\Common\FetchLeadPipe;
+use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\VerifyIfEligibleForAIAdvisorPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use Exception;
+use Illuminate\Support\Facades\Pipeline;
 
 class AiAdvisorAllocator
 {
-    public static function try(QuoteTypes $quoteType, string $uuid, bool $skipAIAdvisor = false)
-    {
+    public static function try(
+        QuoteTypes $quoteType,
+        string $uuid,
+        $assignPipe,
+        bool $skipAIAdvisor = false,
+    ) {
         if ($skipAIAdvisor) {
+            return;
+        }
+
+        $allocationRequest = new AllocationRequest(
+            quoteType: $quoteType,
+            quoteUUID: $uuid,
+            overrideAdvisorId: true
+        );
+
+        try {
+            return Pipeline::send($allocationRequest)->through([
+                FetchLeadPipe::class,
+                VerifyIfEligibleForAIAdvisorPipe::class,
+                $assignPipe,
+                MakeResponsePipe::class,
+            ])->thenReturn();
+        } catch (Exception $e) {
             return null;
         }
-
-        $lead = $quoteType->model()->where('uuid', $uuid)->first();
-
-        // If human advisor is already assigned, skip AI advisor allocation
-        if (!$lead || $lead->advisor_id) {
-            return null;
-        }
-
-        if ($lead->isAIAdviserRequired()) {
-            ! $lead->ai_advisor_id && $lead->assignToAIAdvisor();
-
-            return self::makeResponse($quoteType, $lead);
-        } else {
-            $lead->unAssignAIAdvisor();
-        }
-
-        return null;
-    }
-
-    private static function makeResponse(QuoteTypes $quoteType, Model $lead)
-    {
-        $response = [
-            'advisorId' => $lead->ai_advisor_id,
-            'isAIAdvisor' => true,
-            'message' => 'AI Advisor assigned successfully',
-            'status' => Response::HTTP_OK,
-        ];
-
-        if ($quoteType === QuoteTypes::CAR) {
-            if ($lead->tier) {
-                $response['tierId'] = $lead->tier->id;
-                $response['tierName'] = $lead->tier->name;
-            }
-        }
-
-        return $response;
     }
 }
