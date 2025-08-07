@@ -23,6 +23,8 @@ const { isRequired } = useRules();
 const isSagmentVolumeEmpty = ref(false);
 const isSagmentValueEmpty = ref(false);
 
+const isModalOpen = ref(false);
+
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
@@ -349,13 +351,19 @@ onMounted(() => {
               <th scope="col" class="border py-1 px-2">
                 Segment Value <span class="text-red-600">*</span>
               </th>
+              <th scope="col" class="border py-1 px-2">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr class="border">
               <td class="p-3 border font-medium text-center">Advisors</td>
               <td class="p-3 border text-center">
-                <x-select
+                <div v-for="value in batchForm.segment_volume">
+                  <span class="text-sm">{{
+                    carAdvisors.find(item => item.id === value).name
+                  }}</span>
+                </div>
+                <!-- <x-select
                   v-model="batchForm.segment_volume"
                   name="segment_volume"
                   placeholder="Please select Segment Volume"
@@ -382,10 +390,15 @@ onMounted(() => {
                       @clear="batchForm.segment_volume = []"
                     />
                   </template>
-                </x-select>
+                </x-select> -->
               </td>
               <td class="p-3 border text-center">
-                <x-select
+                <div v-for="value in batchForm.segment_value">
+                  <span class="text-sm">{{
+                    carAdvisors.find(item => item.id === value).name
+                  }}</span>
+                </div>
+                <!-- <x-select
                   v-model="batchForm.segment_value"
                   name="segment_value"
                   placeholder="Please select Segment Value"
@@ -412,7 +425,18 @@ onMounted(() => {
                       @clear="batchForm.segment_value = []"
                     />
                   </template>
-                </x-select>
+                </x-select> -->
+              </td>
+              <td class="p-3 border text-center">
+                <x-button
+                  size="sm"
+                  color="primary"
+                  tag="div"
+                  outlined
+                  @click="isModalOpen = true"
+                >
+                  Edit
+                </x-button>
               </td>
             </tr>
           </tbody>
@@ -434,4 +458,53 @@ onMounted(() => {
       </x-button>
     </div>
   </x-form>
+  <x-modal
+    v-model="isModalOpen"
+    showHeader
+    title="Edit Segments"
+    persistent
+    @close="isModalOpen = false"
+    show-close
+  >
+    <div class="grid grid-cols-2 gap-4">
+      <x-select
+        label="Segment Volume"
+        v-model="batchForm.segment_volume"
+        name="segment_volume"
+        placeholder="Please select Segment Volume"
+        :options="
+          carAdvisors.map(item => ({ value: item.id, label: item.name }))
+        "
+        filterable
+        multiple
+        truncate
+        required
+        :rules="[isRequired]"
+      />
+      <x-select
+        label="Segment Value"
+        v-model="batchForm.segment_value"
+        name="segment_value"
+        placeholder="Please select Segment Value"
+        :options="
+          carAdvisors.map(item => ({ value: item.id, label: item.name }))
+        "
+        filterable
+        multiple
+        truncate
+        required
+        :rules="[isRequired]"
+      />
+    </div>
+    <div class="flex justify-end gap-3 mt-3 w-full">
+      <x-button
+        class="w-full"
+        size="md"
+        color="primary"
+        @click="isModalOpen = false"
+      >
+        Add
+      </x-button>
+    </div>
+  </x-modal>
 </template>
