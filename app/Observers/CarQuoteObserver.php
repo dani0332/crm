@@ -15,7 +15,6 @@ use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
-use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -62,10 +61,6 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ]);
             }
-        }
-
-        if (isset($dirty['ai_advisor_id']) && ! empty($lead->ai_advisor_id)) {
-            app(SendEmailCustomerService::class)->sendCarIntroEmailWithAIAdvisor($lead);
         }
 
         if (isset($dirty['quote_status_id'])) {
