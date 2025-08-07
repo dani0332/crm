@@ -184,7 +184,7 @@ class UserRepository extends BaseRepository
         }
 
         // 2. Line of Business filter (via user_products -> teams where type = PRODUCT)
-        if (!empty($lineOfBusinessFilter)) {
+        if (! empty($productCodes)) {
 
             $query->whereHas('products', function ($q) use ($productCodes) {
                 $q->where('type', TeamTypeEnum::PRODUCT)
