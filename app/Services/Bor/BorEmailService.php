@@ -16,7 +16,7 @@ class BorEmailService
     /**
      * Send BOR request email to customer
      */
-    public function sendBorRequestEmail(BorLog $borLog, string $portalUrl = null): bool
+    public function sendBorRequestEmail(BorLog $borLog, ?string $portalUrl = null): bool
     {
         try {
             $customerData = $this->getCustomerData($borLog);
@@ -34,7 +34,7 @@ class BorEmailService
             $success = $mail->sendViaBird();
 
             if ($success) {
-                $borLog->update(['email_sent' => true]);
+                // $borLog->update(['email_sent' => true]);
             }
 
             return $success;
@@ -58,6 +58,7 @@ class BorEmailService
     {
         try {
             $customerData = $this->getCustomerData($borLog);
+            $advisorData = $this->getAdvisorData($borLog);
             
             if (!$customerData || !$customerData['email']) {
                 LoggerService::error('BOR Completion Email: Customer email not found', [
@@ -67,7 +68,7 @@ class BorEmailService
                 return false;
             }
 
-            $mail = new BorCompletionMail($borLog, $customerData);
+            $mail = new BorCompletionMail($borLog, $customerData, $advisorData);
             return $mail->sendViaBird();
 
         } catch (\Exception $e) {
@@ -193,6 +194,9 @@ class BorEmailService
     {
         $borLog->load('personalQuote.advisor');
         $advisor = User::find($borLog->personalQuote->advisor_id);
+        if(!$advisor) {
+            return null;
+        }
         return [
             'advisorEmail' => $advisor->email,
             'advisorId' => $advisor->id,

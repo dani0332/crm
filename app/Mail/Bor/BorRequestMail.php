@@ -26,7 +26,7 @@ class BorRequestMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(BorLog $borLog, array $customerData, string $portalUrl = null, array $advisorData)
+    public function __construct(BorLog $borLog, array $customerData, ?string $portalUrl = null, array $advisorData)
     {
         $this->borLog = $borLog;
         $this->customerData = $customerData;
@@ -95,13 +95,13 @@ class BorRequestMail extends Mailable
         $personalQuote = $this->borLog->personalQuote;
         $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value) .'-insurance';
         $quoteUuid = $personalQuote->uuid;
-        $portalLink = $this->portalUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor';
+        $quoteLink = $this->portalUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor';
         return [
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
             'quote_type' => $quoteType ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_REQUEST ?? '',
-            'portal_url' => $portalLink ?? '',
+            'quote_link' => $quoteLink ?? '',
             'customer_name' => $this->getCustomerName() ?? '',
             'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
             'insurance' => [
@@ -119,7 +119,6 @@ class BorRequestMail extends Mailable
                 'policy_number' => $this->borLog->policy_number ?? '',
                 'insurer_name' => $this->borLog->insurer_name ?? '',
                 'customer_type' => $this->borLog->customer_type == "Entity" ? "company" : "individual",
-                'portal_link' => $portalLink ?? '',
                 'bor_ref_id' => $this->borLog->bor_reference ?? '',
                 'document_id' => $this->borLog->document_id ?? '',
                 'date_created' => $this->borLog->date_created ?? '',
@@ -131,7 +130,7 @@ class BorRequestMail extends Mailable
     private function getSubjectLine($personalQuote, $quoteType)
     {
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
-        $name = $this->borLog->customer_type === 'Entity' ? $this->customerData['company_name'] : $this->customerData['first_name'];
+        $name = $this->borLog->customer_type == 'Entity' ? $this->customerData['company_name'] : $this->customerData['first_name'];
         if($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
             $subjectLine = 'BOR '. $this->borLog->chassis_number . ' - ' . $name;
             return $subjectLine;

@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Models\BorLog;
 use App\Models\DocumentType;
+use App\Services\Bor\BorEmailService;
 use App\Services\Bor\BorPdfService;
 use App\Services\Bor\BorService;
 use App\Services\Logger\LoggerService;
@@ -27,6 +28,11 @@ class BorController extends Controller
     private $borService;
 
     /**
+     * @var BorEmailService
+     */
+    private $borEmailService;
+
+    /**
      * @var QuoteDocumentService
      */
     private $quoteDocumentService;
@@ -34,11 +40,13 @@ class BorController extends Controller
     public function __construct(
         BorPdfService $borPdfService,
         QuoteDocumentService $quoteDocumentService,
-        BorService $borService
+        BorService $borService,
+        BorEmailService $borEmailService
     ) {
         $this->borPdfService = $borPdfService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->borService = $borService;
+        $this->borEmailService = $borEmailService;
     }
 
     public function getBorLog($borRefId){
@@ -130,5 +138,12 @@ class BorController extends Controller
             ->whereNull('business_type_of_insurance_id')
             ->get();
         return response()->json(['data' => $documentTypes]);
+    }
+
+    public function borCompletionEmailTrigger($borRefId)
+    {
+        $borLog = BorLog::where('bor_reference', $borRefId)->first();
+        $result = $this->borEmailService->sendBorCompletionEmail($borLog);
+        return response()->json(['message' => 'success', 'result' => $result]);
     }
 }
