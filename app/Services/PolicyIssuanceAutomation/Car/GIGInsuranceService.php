@@ -338,7 +338,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     'value' => $documentToUpload['insurerDocName'],
                 ];
                 $payload['documentContent'] = $docFileBase64;
-                $payload['documentName'] = substr(uniqid(), 0, 6).'_'.$quoteDocument->doc_name;
+                $payload['documentName'] = uniqid().'_'.$quoteDocument->doc_name;
                 $payload['mimeType'] = $quoteDocument->doc_mime_type;
 
                 $headers = ['Content-Type' => 'application/json'];
