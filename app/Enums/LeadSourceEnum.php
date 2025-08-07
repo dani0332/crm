@@ -69,5 +69,5 @@ final class LeadSourceEnum extends Enum
     const INSURANCE_MARKET_CAR_QUOTE = 'https://insurancemarket.ae/car-insurance/get-quote/';
     const INSURANCE_MARKET = 'https://insurancemarket.ae';
     const ALFRED_AE = 'alfred.ae';
-    const CPA_AUSTRALIA = 'https://im-cpa-australia.insurancemarket.ae/';
+    const CPA_AUSTRALIA = 'https://im-cpa-australia.insurancemarket.ae/car-insurance/get-quote/';
 }
