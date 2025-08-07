@@ -80,7 +80,7 @@ class ActivitesController extends Controller
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         } else {
-            return redirect()->to('/quotes/'.strtolower($quoteType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
+            return redirect()->back()->with('success', ' Activity has been Created');
         }
     }
 
