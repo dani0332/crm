@@ -33,7 +33,7 @@ class CarAllocation implements Allocation
 
     public function execute()
     {
-        if ($response = AiAdvisorAllocator::try(QuoteTypes::CAR, $this->uuid, $this->evaluateTierOnly)) {
+        if ($response = AiAdvisorAllocator::try(QuoteTypes::CAR, $this->uuid, AssignLeadPipe::class, $this->evaluateTierOnly)) {
             return $response;
         }
 
