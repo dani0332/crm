@@ -2131,13 +2131,41 @@ const validateInsurerPaymentLink = () => {
   }
 };
 
+/**
+ * Determines if the user is allowed to approve a lower payment amount.
+ * Approval is allowed if:
+ * - There is a sendUpdate and its status is UPDATE_BOOKED, or
+ * - There is no sendUpdate and the quote status is PolicyBooked, CancellationPending, PolicyCancelledReissued, or PolicyCancelled.
+ *
+ * @returns {boolean}
+ */
+const isAllowedToApproveLowerAmount = () => {
+  const isUpdateBooked =
+    props.sendUpdate &&
+    props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
+
+  const isPolicyBooked =
+    !props.sendUpdate &&
+    [
+      page.props.quoteStatusEnum?.PolicyBooked,
+      page.props.quoteStatusEnum?.CancellationPending,
+      page.props.quoteStatusEnum?.PolicyCancelledReissued,
+      page.props.quoteStatusEnum?.PolicyCancelled,
+    ].includes(props.quoteRequest?.quote_status_id);
+
+  return isUpdateBooked || isPolicyBooked;
+};
+
 const validateViewPayment = isValid => {
   let amountExceeded = false;
   if (
     parseFloat(splitAmountModels.value[splitPaymentNo.value]) >
     parseFloat(paymentMethodsForm.collection_amount)
   ) {
-    if (can(permissionEnum.PAYMENT_VERIFICATION_LOWER_AMOUNT)) {
+    if (
+      isAllowedToApproveLowerAmount() &&
+      can(permissionEnum.PAYMENT_VERIFICATION_LOWER_AMOUNT)
+    ) {
       isApproveLowerAmountConfirmed.value = false;
     } else {
       approveErrorMessage.value =
