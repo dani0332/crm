@@ -667,11 +667,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         // Get the policy documents that were uploaded in the previous step
         // These are the document types that should have been uploaded to IMCRM
         $policyDocumentTypes = [
-            DocumentTypeCode::TI,
-            DocumentTypeCode::CTIRBB,
-            DocumentTypeCode::CPD_RECEIPT,
-            DocumentTypeCode::CPS,
-            DocumentTypeCode::CPC,
+            DocumentTypeCode::TI, // Tax Invoice
+            DocumentTypeCode::CTIRBB, // Tax Invoice Raised By Buyer
+            DocumentTypeCode::CPD_RECEIPT, // Receipt
+            DocumentTypeCode::CPS, // Policy Schedule
+            DocumentTypeCode::CPC, // Policy Certificate
         ];
 
         // Get documents that were recently uploaded (after the upload step started)
@@ -713,6 +713,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $documentType = DocumentType::where(['quote_type_id' => self::TYPE_ID, 'code' => $document->document_type_code, 'is_active' => true])->first();
             if ($documentType) {
                 $documentOCRJobs[] = new PopulateDocumentData(QuoteTypes::CAR, $quote, $documentType, $document->doc_url, $document->doc_mime_type, $happinessUser->id);
+            } else {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document type not found against document code: '. $document->document_type_code);
             }
         }
 

@@ -52,7 +52,13 @@ class PopulateDocumentData implements ShouldQueue
         LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::OCR);
 
         if (! $this->validateMimeType()) {
-            info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+            $errorMessage = "Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
+            
+            LoggerService::info(self::class.' - '.$errorMessage, extra: [
+                'quote_code' => $this->quote->code ?? null,
+                'document_type_code' => $this->documentType?->code ?? null,
+                'user_id' => $this->userId,
+            ]);
 
             return;
         }
@@ -68,25 +74,56 @@ class PopulateDocumentData implements ShouldQueue
             );
 
             if ($isSuccess === null) {
-                info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                LoggerService::info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
 
                 return;
             }
 
             if ($isSuccess) {
-                info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                LoggerService::info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
             } else {
-                info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                $baseLogData = [
+                    'file_mime_type' => $this->fileMimeType,
+                    'user_id' => $this->userId,
+                    'attempts' => $this->attempts(),
+                    'max_tries' => $this->tries,
+                ];
+
+                LoggerService::info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code}", extra: $baseLogData);
+                
                 if ($this->attempts() >= $this->tries) {
                     $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
-                    info(self::class." - {$errorMessage}");
+                    
+                    LoggerService::info(self::class.' - '.$errorMessage, extra: array_merge($baseLogData, [
+                        'failure_reason' => 'max_attempts_reached',
+                        'final_attempt' => true,
+                    ]));
+                    
                     $this->fail(new Exception($errorMessage));
                 } else {
+                    $retryDelay = 2 * $this->attempts();
+                    
+                    LoggerService::warning(self::class." - Retrying OCR job for {$this->quoteType?->value} & Document Type {$this->documentType?->code}", extra: array_merge($baseLogData, [
+                        'retry_delay_minutes' => $retryDelay,
+                        'next_attempt' => $this->attempts() + 1,
+                    ]));
+                    
                     // Retry the job
-                    $this->release(now()->addMinutes(2 * $this->attempts()));
+                    $this->release(now()->addMinutes($retryDelay));
                 }
             }
         } catch (\Exception $e) {
+            LoggerService::info(self::class.' - OCR processing failed with unexpected exception', extra: [
+                'quote_type' => $this->quoteType?->value ?? null,
+                'quote_code' => $this->quote->code ?? null,
+                'document_type_code' => $this->documentType?->code ?? null,
+                'file_mime_type' => $this->fileMimeType,
+                'user_id' => $this->userId,
+                'attempts' => $this->attempts(),
+                'max_tries' => $this->tries,
+                'exception' => $e->getMessage(),
+            ]);
+            
             throw $e;
         }
 
@@ -104,10 +141,44 @@ class PopulateDocumentData implements ShouldQueue
 
     public function failed(\Throwable $exception)
     {
+        LoggerService::info(self::class.' - OCR job failed permanently', extra: [
+            'quote_type' => $this->quoteType?->value ?? null,
+            'quote_code' => $this->quote->code ?? null,
+            'document_type_code' => $this->documentType?->code ?? null,
+            'file_mime_type' => $this->fileMimeType,
+            'user_id' => $this->userId ?? null,
+            'total_attempts' => $this->attempts(),
+            'max_tries' => $this->tries,
+            'failure_reason' => 'job_failed_permanently',
+            'queue_name' => $this->queue ?? 'default',
+            'exception' => $exception->getMessage(),
+        ]);
+
         // Send OCR fail notification for supported document types
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
+        
         if (app(OCRService::class)->requiresOcrNotifications($docType)) {
-            event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', null, $docType?->value, $this->userId));
+            try {
+                event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', null, $docType?->value, $this->userId));
+                
+                LoggerService::info(self::class.' - OCR failure notification sent successfully', extra: [
+                    'quote_code' => $this->quote?->code ?? null,
+                    'document_type' => $docType?->value,
+                    'user_id' => $this->userId,
+                ]);
+            } catch (\Exception $notificationException) {
+                LoggerService::info(self::class.' - Failed to send OCR failure notification', extra: [
+                    'quote_code' => $this->quote?->code ?? null,
+                    'document_type' => $docType?->value ?? null,
+                    'user_id' => $this->userId,
+                    'exception' => $notificationException->getMessage(),
+                ]);
+            }
+        } else {
+            LoggerService::info(self::class.' - OCR failure notification not required for this document type', extra: [
+                'quote_code' => $this->quote?->code ?? null,
+                'document_type' => $docType?->value,
+            ]);
         }
     }
 }
