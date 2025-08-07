@@ -20,6 +20,7 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
+const compareDueDate = useCompareDueDate;
 
 const activityActionEdit = ref(false);
 
@@ -41,6 +42,10 @@ const activityForm = useForm({
 const modals = reactive({
   activity: false,
   activityConfirm: false,
+});
+
+const confirmDeleteData = reactive({
+  activity: null,
 });
 
 const activityTable = [
@@ -121,6 +126,31 @@ const activityDeleteConfirmed = () => {
       },
     },
   );
+};
+
+const onActivityStatusUpdate = id => {
+  activityForm.activity_id = id;
+  activityForm.post(route('activities.updateStatus'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Lead Activity Done',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const activityEdit = data => {
+  activityActionEdit.value = true;
+  modals.activity = true;
+  activityForm.activity_id = data.id;
+  activityForm.uuid = data.uuid;
+  activityForm.title = data.title;
+  activityForm.description = data.description;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
+  activityForm.assignee_id = data.assignee_id;
+  activityForm.status = data.status;
 };
 </script>
 
