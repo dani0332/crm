@@ -10,71 +10,108 @@ namespace App\Enums;
  */
 enum ClaimsEnum: string
 {
-    // Reference ID Configuration
-    case REF_ID_PREFIX = 'CLM-';
+    use Enumable;
+    // Claim Types Codes
+    case CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE = 'own-damage-claim';
+    case CLAIM_TYPE_RECOVERABLE_CLAIM_CODE = 'recoverable-claim';
+    case CLAIM_TYPE_UNKNOWN_DAMAGE_CLAIM_CODE = 'unknown-damage-claim';
+    case CLAIM_TYPE_WATER_DAMAGE_CODE = 'water-damage';
+    case CLAIM_TYPE_THEFT_CODE = 'theft';
+    case CLAIM_TYPE_FIRE_ARSON_CODE = 'fire-arson';
+    case CLAIM_TYPE_WINDSCREEN_ONLY_CODE = 'windscreen-only';
 
-    // Claim Status Enums
-    case STATUS_NEW = 'New';
-    case STATUS_SEND_FOR_REGISTRATION = 'Send for Registration';
-    case STATUS_AWAITING_APPROVAL = 'Awaiting Approval';
-    case STATUS_APPROVED = 'Approved';
-    case STATUS_REJECTED_BY_INSURER = 'Rejected by Insurer';
-    case STATUS_IN_PROGRESS = 'In Progress';
-    case STATUS_SETTLED = 'Settled';
+    // Claim Request Type Codes
+    case CLAIM_REQUEST_TYPE_REIMBURSEMENT_CODE = 'reimbursement';
+    case CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE = 'pending-approvals';
+    case CLAIM_REQUEST_TYPE_ASK_A_QUESTION_CODE = 'ask-a-question';
 
-    public function id(): string
-    {
-        return self::getId($this) ?? '';
-    }
+    // Claim Service Type Codes
+    case CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE = 'in-patient-request';
+    case CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE = 'out-patient-request';
 
-    public static function getId(self $value): ?int
-    {
-        return match ($value) {
-            self::STATUS_NEW => 1,
-            self::STATUS_SEND_FOR_REGISTRATION => 2,
-            self::STATUS_AWAITING_APPROVAL => 3,
-            self::STATUS_APPROVED => 4,
-            self::STATUS_REJECTED_BY_INSURER => 5,
-            self::STATUS_IN_PROGRESS => 6,
-            self::STATUS_SETTLED => 7,
-            default => null,
-        };
-    }
+    // Claim Request Access Type Codes
+    case CLAIM_REQUEST_ACCESS_TYPE_SYSTEM_GENERATED_CODE = 'system-generated';
+    case CLAIM_REQUEST_ACCESS_TYPE_MANUAL_CODE = 'manual';
 
-    public static function getName($value)
-    {
-        $statuses = self::getStatuses();
-
-        return isset($statuses[$value]) ? $statuses[$value] : null;
-    }
-
-    public static function getIdFromValue(string $value): ?int
-    {
-        $claimStatusEnum = match (ucfirst($value)) {
-            'New' => self::STATUS_NEW,
-            'Send for Registration' => self::STATUS_SEND_FOR_REGISTRATION,
-            'Awaiting Approval' => self::STATUS_AWAITING_APPROVAL,
-            'Approved' => self::STATUS_APPROVED,
-            'Rejected by Insurer' => self::STATUS_REJECTED_BY_INSURER,
-            'In Progress' => self::STATUS_IN_PROGRESS,
-            'Settled' => self::STATUS_SETTLED,
-            default => null,
-        };
-
-        return $claimStatusEnum ? self::getId($claimStatusEnum) : null;
-    }
-
-    public static function getStatuses()
+    /**
+     * Get all claim type codes
+     */
+    public static function getClaimTypeCodes(): array
     {
         return [
-            1 => self::STATUS_NEW->value,
-            2 => self::STATUS_SEND_FOR_REGISTRATION->value,
-            3 => self::STATUS_AWAITING_APPROVAL->value,
-            4 => self::STATUS_APPROVED->value,
-            5 => self::STATUS_REJECTED_BY_INSURER->value,
-            6 => self::STATUS_IN_PROGRESS->value,
-            7 => self::STATUS_SETTLED->value,
+            self::CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE,
+            self::CLAIM_TYPE_RECOVERABLE_CLAIM_CODE,
+            self::CLAIM_TYPE_UNKNOWN_DAMAGE_CLAIM_CODE,
+            self::CLAIM_TYPE_WATER_DAMAGE_CODE,
+            self::CLAIM_TYPE_THEFT_CODE,
+            self::CLAIM_TYPE_FIRE_ARSON_CODE,
+            self::CLAIM_TYPE_WINDSCREEN_ONLY_CODE,
         ];
+    }
 
+    /**
+     * Get all claim request type codes
+     */
+    public static function getClaimRequestTypeCodes(): array
+    {
+        return [
+            self::CLAIM_REQUEST_TYPE_REIMBURSEMENT_CODE,
+            self::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE,
+            self::CLAIM_REQUEST_TYPE_ASK_A_QUESTION_CODE,
+        ];
+    }
+
+    /**
+     * Get all claim service type codes
+     */
+    public static function getClaimServiceTypeCodes(): array
+    {
+        return [
+            self::CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE,
+            self::CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE,
+        ];
+    }
+
+    /**
+     * Get all claim request access type codes
+     */
+    public static function getClaimRequestAccessTypeCodes(): array
+    {
+        return [
+            self::CLAIM_REQUEST_ACCESS_TYPE_SYSTEM_GENERATED_CODE,
+            self::CLAIM_REQUEST_ACCESS_TYPE_MANUAL_CODE,
+        ];
+    }
+
+    /**
+     * Check if the given value is a valid claim type code
+     */
+    public static function isValidClaimTypeCode(string $code): bool
+    {
+        return in_array($code, array_column(self::getClaimTypeCodes(), 'value'));
+    }
+
+    /**
+     * Check if the given value is a valid claim request type code
+     */
+    public static function isValidClaimRequestTypeCode(string $code): bool
+    {
+        return in_array($code, array_column(self::getClaimRequestTypeCodes(), 'value'));
+    }
+
+    /**
+     * Check if the given value is a valid claim service type code
+     */
+    public static function isValidClaimServiceTypeCode(string $code): bool
+    {
+        return in_array($code, array_column(self::getClaimServiceTypeCodes(), 'value'));
+    }
+
+    /**
+     * Check if the given value is a valid claim request access type code
+     */
+    public static function isValidClaimRequestAccessTypeCode(string $code): bool
+    {
+        return in_array($code, array_column(self::getClaimRequestAccessTypeCodes(), 'value'));
     }
 }

@@ -25,6 +25,7 @@ class LookupSeeder extends Seeder
         $this->createClaimTypes();
         $this->createClaimRequestTypes();
         $this->createClaimServiceTypes();
+        $this->createClaimRequestAccessTypes();
     }
 
     private function sendUpdateCancelOptions(): void
@@ -443,6 +444,38 @@ class LookupSeeder extends Seeder
             Lookup::firstOrCreate([
                 'quote_type_id' => $type['quote_type_id'],
                 'key' => 'claim-service-types',
+                'code' => $type['code'],
+                'text' => $type['text'],
+            ], [
+                'is_active' => 1,
+                'sort_order' => $type['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+    private function createClaimRequestAccessTypes(): void
+    {
+        $claimRequestType = [
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'system-generated',
+                'text' => 'System Generated',
+                'sort_order' => 1,
+            ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'manual',
+                'text' => 'Manual',
+                'sort_order' => 2,
+            ],
+
+        ];
+
+        foreach ($claimRequestType as $type) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => $type['quote_type_id'],
+                'key' => 'claim-status-access-types',
                 'code' => $type['code'],
                 'text' => $type['text'],
             ], [
