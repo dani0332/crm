@@ -262,6 +262,10 @@ class EmbeddedProductRepository extends BaseRepository
             $payment = $transaction->payments->first();
             if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
+                if (auth()->user()->hasRole(RolesEnum::Engineering)) {
+                    return true;
+                }
+
                 if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
                     $address = CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->first();
 

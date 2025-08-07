@@ -473,7 +473,7 @@ const onVoidSubmit = isValid => {
       voidPaymentForm.processing = false;
     });
 };
-const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
@@ -726,7 +726,10 @@ const onAddDocumentSubmit = event => {
                         embeddedProductTypeEnum.NON_INSURANCE &&
                       getFirstPriceWithTransaction(item.prices)?.transactions[0]
                         ?.payments[0]?.payment_gateway_id ==
-                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
+                      (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                        hasRole(rolesEnum.Engineering)))
                 "
                 size="xs"
                 color="#ff5e00"
