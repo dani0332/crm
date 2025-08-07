@@ -22,6 +22,7 @@ const notification = useToast();
 const { isRequired } = useRules();
 
 const activityActionEdit = ref(false);
+const compareDueDate = useCompareDueDate;
 
 const activityForm = useForm({
   entityUId: props.quote.uuid,

@@ -27,6 +27,7 @@ use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\KycLog;
 use App\Models\Nationality;
+use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -394,13 +395,12 @@ class AmtController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'quote_request_id' => $record->id,
-        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
+        ])
+        ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
-        $advisors = DB::table('users as u')
-            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
-            ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['GM_ADVISOR'])
-            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
+        $advisors = User::role('GM_ADVISOR') 
+            ->select('users.id', DB::raw("CONCAT(users.name, ' - GM_ADVISOR') AS name"))
+            ->get();
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
