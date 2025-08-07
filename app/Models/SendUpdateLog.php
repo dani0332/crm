@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\SendUpdateLogStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Enums\SendUpdateLogStatusEnum;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
