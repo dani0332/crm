@@ -10,7 +10,6 @@ use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\ThirdPartyTagEnum;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
@@ -1709,23 +1708,23 @@ class SendEmailCustomerService extends BaseService
 
                 return "<li><a href='{$url}' target='_blank'>{$refId}</a></li>";
             })->pipe(function ($items) {
-                return "<ul>" . $items->implode('') . "</ul>";
+                return '<ul>'.$items->implode('').'</ul>';
             });
         } else {
             $quotesHtml = '';
         }
 
-        $birdEmailData = (object)[
+        $birdEmailData = (object) [
             'supportUserEmail' => $emailData->get('to')['email'] ?? '',
             'supportUserName' => $emailData->get('to')['name'] ?? '',
             'assignerName' => $emailData->get('params')['assignerName'] ?? '',
             'assignerEmail' => $emailData->get('params')['assignerEmail'] ?? '',
             'quoteTypeName' => $emailData->get('params')['quoteTypeName'] ?? '',
-            'quotes' => $quotesHtml
+            'quotes' => $quotesHtml,
         ];
 
         $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
-        info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: ' . $oeAssignmentEvent->value);
+        info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$oeAssignmentEvent->value);
 
         if ($oeAssignmentEvent) {
             $response = app(BirdService::class)->triggerWebHookRequest($oeAssignmentEvent->value, $birdEmailData);

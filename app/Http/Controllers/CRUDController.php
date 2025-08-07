@@ -2406,7 +2406,7 @@ class CRUDController extends Controller
         }
 
         // Send a single email for all assigned leads
-        if (!empty($updatedLeadIds) && $supportUserId) {
+        if (! empty($updatedLeadIds) && $supportUserId) {
             try {
                 $quoteType = QuoteTypes::from(ucfirst($modelType));
                 \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(

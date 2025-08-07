@@ -6,7 +6,6 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\HealthTeamType;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
@@ -30,6 +29,7 @@ use App\Models\GroupMedicalType;
 use App\Models\KycLog;
 use App\Models\Nationality;
 use App\Models\Team;
+use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -56,7 +56,6 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
-use App\Models\User;
 
 class AmtController extends Controller
 {
@@ -138,7 +137,7 @@ class AmtController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
 
         /* Below conditions have AND relationship between them */
-        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)?: false;
+        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT) ?: false;
         $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS->value) : false;
 
         $model = 'Business';
@@ -283,14 +282,14 @@ class AmtController extends Controller
             Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
          * */
 
-        logger()->debug('toRawSql: ' .$data->toRawSql() , [
+        logger()->debug('toRawSql: '.$data->toRawSql(), [
             // $supportUsers
-//            'Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)' => Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR),
+            //            'Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR)' => Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR),
         ]);
 
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers','canAssignClientSupport','canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
     }
 
     /**
@@ -564,14 +563,14 @@ class AmtController extends Controller
             ->where('is_active', 1)
             ->first();
 
-        if (!$groupMedicalProduct) {
+        if (! $groupMedicalProduct) {
             return collect([]);
         }
 
         $loggedInUserRoles = Auth::user()->roles->pluck('name')->toArray();
 
-        if ((!in_array(RolesEnum::CLIENTSUPPORTLEAD, $loggedInUserRoles) &&
-            !in_array(RolesEnum::CLIENTSUPPORT, $loggedInUserRoles))) {
+        if ((! in_array(RolesEnum::CLIENTSUPPORTLEAD, $loggedInUserRoles) &&
+            ! in_array(RolesEnum::CLIENTSUPPORT, $loggedInUserRoles))) {
             return collect([]);
         }
 

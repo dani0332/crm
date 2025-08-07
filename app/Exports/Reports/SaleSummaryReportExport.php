@@ -18,7 +18,7 @@ class SaleSummaryReportExport extends BaseReportsExport
             ucwords(str_replace('_', ' ', $this->groupByColumn)),
         ];
 
-        if (in_array($this->groupByColumn, ['advisor','support_user'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $headings[] = 'Department';
         }
 
@@ -53,7 +53,7 @@ class SaleSummaryReportExport extends BaseReportsExport
             $quote->{$groupBy} ?? 'N/A',
         ];
 
-        if (in_array($this->groupByColumn, ['advisor','support_user'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $values[] = $quote->department ?? 'N/A';
         }
 

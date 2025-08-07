@@ -3,13 +3,9 @@
 namespace App\Jobs;
 
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\ThirdPartyTagEnum;
-use App\Models\ApplicationStorage;
 use App\Models\User;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
@@ -48,7 +44,6 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 60;
     public $backoff = 300;
-
     private $assignerUserId;
     private $supportUserId;
     private $leadIds;
@@ -57,9 +52,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param int $supportUserId
-     * @param array|string $leadIds - Array of lead IDs or comma-separated string
-     * @param QuoteTypes $quoteType
+     * @param  array|string  $leadIds  - Array of lead IDs or comma-separated string
      */
     public function __construct(int $userId, int $supportUserId, $leadIds, QuoteTypes $quoteType)
     {
@@ -88,13 +81,15 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
             $supportUser = User::find($this->supportUserId);
             $assignerUser = User::find($this->assignerUserId);
 
-            if (!$supportUser) {
+            if (! $supportUser) {
                 LoggerService::error('Support user not found', ['support_user_id' => $this->supportUserId]);
+
                 return;
             }
 
-            if (!$assignerUser) {
+            if (! $assignerUser) {
                 LoggerService::error('Assigner user not found', ['support_user_id' => $this->assignerUserId]);
+
                 return;
             }
 
@@ -102,11 +97,12 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
             $leads = $this->getLeadsWithDetails();
             if ($leads->isEmpty()) {
                 LoggerService::warning('No leads found for assignment email');
+
                 return;
             }
 
             // Send email
-            $this->sendAssignmentEmail($assignerUser,$supportUser, $leads);
+            $this->sendAssignmentEmail($assignerUser, $supportUser, $leads);
 
             LoggerService::info('Support user assignment email sent successfully');
 
@@ -161,7 +157,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
     /**
      * Send assignment email to support user
      */
-    private function sendAssignmentEmail($assignerUser,$supportUser, $leads): void
+    private function sendAssignmentEmail($assignerUser, $supportUser, $leads): void
     {
         $emailService = app(SendEmailCustomerService::class);
 
@@ -173,6 +169,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
             if ($quoteType instanceof QuoteTypes) {
                 return $quoteType->value;
             }
+
             return $quoteType; // string or null
         })->filter()->unique();
 
@@ -199,13 +196,11 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
             ],
         ]);
 
-
         // Send the email (you may need to adjust this based on your email service implementation)
         LoggerService::info('Sending email with data', $emailData);
 
         $emailService->sendSupportUserAssignmentEmail($emailData);
     }
-
 
     /**
      * Prepare email data for the template

@@ -426,7 +426,6 @@ final class PermissionsEnum extends Enum
     public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
-
     public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
     public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 

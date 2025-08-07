@@ -166,7 +166,7 @@ class UserRepository extends BaseRepository
         $productCodes = [];
         foreach ($lineOfBusinessFilter as $lineOfBusinessItem) {
             $quoteTypeName = QuoteTypes::getName($lineOfBusinessItem);
-            if (!empty($quoteTypeName)) {
+            if (! empty($quoteTypeName)) {
                 $productCodes[] = $quoteTypeName;
             }
         }
@@ -179,7 +179,7 @@ class UserRepository extends BaseRepository
 
         // 1. Department filter (users.department_id)
         $departmentFilter = request('department');
-        if (!empty($departmentFilter)) {
+        if (! empty($departmentFilter)) {
             $query->whereIn('department_id', (array) $departmentFilter);
         }
 
@@ -194,7 +194,7 @@ class UserRepository extends BaseRepository
 
         // 3. Business Insurance Type filter (via business_type_of_insurance_user pivot table)
         $businessInsuranceTypeFilter = request('business_insurance_type');
-        if (!empty($businessInsuranceTypeFilter)) {
+        if (! empty($businessInsuranceTypeFilter)) {
             $query->whereHas('businessTypes', function ($q) use ($businessInsuranceTypeFilter) {
                 $q->whereIn('business_type_of_insurance.id', (array) $businessInsuranceTypeFilter);
             });
