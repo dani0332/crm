@@ -243,4 +243,15 @@ class RolePermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
     }
+
+    private function addLeadsByEmailPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::LEADS_BY_EMAIL,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 }
