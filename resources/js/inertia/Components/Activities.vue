@@ -54,6 +54,8 @@ const activityTable = [
   { text: 'Title', value: 'title' },
   { text: 'Followup Date', value: 'due_date' },
   { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const advisorOptions = computed(() => {
@@ -215,6 +217,10 @@ const activityEdit = data => {
             />
           </template>
 
+          <template #item-assignee="{ assignee }">
+            <span>{{ assignee.name }}</span>
+          </template>
+
           <template #item-action="item">
             <div class="space-x-4">
               <x-button
@@ -228,9 +234,9 @@ const activityEdit = data => {
                 Edit
               </x-button>
               <x-button
+                :disabled="item.status === 1"
                 size="xs"
                 color="error"
-                :disabled="item.status === 1"
                 outlined
                 @click.prevent="activityDelete(item.id)"
                 :key="item.user_id"
