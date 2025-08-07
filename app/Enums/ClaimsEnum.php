@@ -11,6 +11,12 @@ namespace App\Enums;
 enum ClaimsEnum: string
 {
     use Enumable;
+
+    case CLAIM_TYPES_KEY = 'claim-types';
+    case CLAIM_REQUEST_TYPES_KEY = 'claim-request-types';
+    case CLAIM_SERVICE_TYPES_KEY = 'claim-service-types';
+    case CLAIM_STATUS_ACCESS_TYPES_KEY = 'claim-status-access-types'; 
+
     // Claim Types Codes
     case CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE = 'own-damage-claim';
     case CLAIM_TYPE_RECOVERABLE_CLAIM_CODE = 'recoverable-claim';

@@ -117,11 +117,32 @@ const claimTypeOptions = computed(() => {
     })) || []
   );
 });
+const claimServiceTypeOptions = computed(() => {
+  return (
+    props.dropdowns?.claimServiceTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
+});
+const claimRequestTypeOptions = computed(() => {
+  return (
+    props.dropdowns?.claimRequestTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
+});
 
 // Check if the selected line of business is Car
 const isCarLOB = computed(() => {
   const page = usePage();
   return page.props.quoteTypeIds?.Car === claimForm.quote_type_id;
+});
+// Check if the selected line of business is Health
+const isHealthLOB = computed(() => {
+  const page = usePage();
+  return page.props.quoteTypeIds?.Health === claimForm.quote_type_id;
 });
 
 // Check if there are validation errors (excluding general error messages)
@@ -483,6 +504,7 @@ function onSubmit(isValid) {
             class="w-full"
             :error="claimForm.errors.claim_number"
           />
+         
           <x-select
             v-model="claimForm.claim_type_id"
             label="Claim Type"
@@ -493,6 +515,37 @@ function onSubmit(isValid) {
             filterPlaceholder="Filter Claim Type...."
             :error="claimForm.errors.claim_type_id"
           />
+          <template  v-if="isHealthLOB && isEdit">
+            <x-input
+              v-model="claimForm.request_reference_number"
+              type="text"
+              label="Request Reference Number"
+              placeholder="Enter Request Reference Number"
+              class="w-full"
+              :error="claimForm.errors.request_reference_number"
+            />
+            <x-select 
+              v-model="claimForm.claim_request_type_id"
+              label="Claim Request Type"
+              placeholder="Select Claim Request Type"
+              :options="claimRequestTypeOptions"
+              :rules="[isRequired]"
+              filterable
+              filterPlaceholder="Filter Claim Request Type...."
+              :error="claimForm.errors.claim_request_type_id"
+            />
+            <x-select 
+              v-model="claimForm.service_type_id"
+              label="Claim Service Type"
+              placeholder="Select Claim Service Type"
+              :options="claimServiceTypeOptions"
+              :rules="[isRequired]"
+              filterable
+              filterPlaceholder="Filter Claim Service Type...."
+              :error="claimForm.errors.service_type_id"
+            />
+          </template>
+          
           <DatePicker
             v-model="claimForm.incident_date"
             name="incident_date"

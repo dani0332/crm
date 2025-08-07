@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\Claim;
@@ -300,7 +301,7 @@ class ClaimsService extends BaseService
                 $apiData['serviceTypeId'] = $data['service_type_id'];
             }
             if (! empty($data['request_reference_number'])) {
-                $apiData['requestReferrenceNumber'] = $data['request_reference_number'];
+                $apiData['requestReferenceNumber'] = $data['request_reference_number'];
             }
 
             // Make API call to create claim
@@ -346,7 +347,7 @@ class ClaimsService extends BaseService
 
             // Handle claim request detail updates
             $detailData = collect($data)->only([
-                'car_make', 'car_model', 'service_type_id', 'request_referrence_number', 'user_ip',
+                'car_make', 'car_model', 'service_type_id', 'request_reference_number', 'user_ip',
             ])->filter()->toArray();
 
             if (! empty($detailData)) {
@@ -390,7 +391,8 @@ class ClaimsService extends BaseService
             'claimTypes' => $this->getClaimTypes(),
             'claimSubStatuses' => $this->getClaimSubStatuses(),
             'claimsManagers' => $this->getClaimsManagers(),
-            'complaintStatuses' => $this->getComplaintStatuses(),
+            'claimRequestTypes' => $this->getClaimRequestTypes(),
+            'claimServiceTypes' => $this->getClaimServiceTypes(),
         ];
     }
 
@@ -458,6 +460,30 @@ class ClaimsService extends BaseService
             ['value' => 'resolved', 'text' => 'Complaint Resolved'],
             ['value' => 'escalated', 'text' => 'Complaint Escalated'],
         ];
+    }
+    /**
+     * Get claim request types
+     */
+    public function getClaimRequestTypes(): array
+    {
+        return Lookup::where('key', ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)
+            ->where('is_active', 1)
+            ->select('id', 'text', 'code')
+            ->orderBy('sort_order')
+            ->get()
+            ->toArray();
+    }
+    /**
+     * Get claim request types
+     */
+    public function getClaimServiceTypes(): array
+    {
+        return Lookup::where('key', ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)
+            ->where('is_active', 1)
+            ->select('id', 'text', 'code')
+            ->orderBy('sort_order')
+            ->get()
+            ->toArray();
     }
 
     /**

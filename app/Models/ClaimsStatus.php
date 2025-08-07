@@ -13,7 +13,7 @@ class ClaimsStatus extends Model implements AuditableContract
 {
     use Auditable, HasFactory, SoftDeletes;
 
-    protected $table = 'claims_statuses';
+    protected $table = 'claim_statuses';
     protected $fillable = ['text', 'description', 'is_active',  'sort_order', 'claim_request_type_id', 'quote_type_id', 'access_type_id', 'parent'];
 
     public function getCreatedAtAttribute($table)

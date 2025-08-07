@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\ClaimsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use Illuminate\Database\Seeder;
@@ -306,7 +307,7 @@ class LookupSeeder extends Seeder
     private function createClaimTypes(): void
     {
         Lookup::firstOrCreate([
-            'key' => 'claim-types',
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
             'code' => 'own-damage-claim',
             'text' => 'Own Damage Claim',
         ], [
@@ -317,7 +318,7 @@ class LookupSeeder extends Seeder
         ]);
 
         Lookup::firstOrCreate([
-            'key' => 'claim-types',
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
             'code' => 'recoverable-claim',
             'text' => 'Recoverable Claim',
         ], [
@@ -328,7 +329,7 @@ class LookupSeeder extends Seeder
         ]);
 
         Lookup::firstOrCreate([
-            'key' => 'claim-types',
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
             'code' => 'unknown-damage-claim',
             'text' => 'Unknown Damage Claim',
         ], [
@@ -339,7 +340,7 @@ class LookupSeeder extends Seeder
         ]);
 
         Lookup::firstOrCreate([
-            'key' => 'claim-types',
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
             'code' => 'water-damage',
             'text' => 'Water Damage',
         ], [
@@ -350,7 +351,7 @@ class LookupSeeder extends Seeder
         ]);
 
         Lookup::firstOrCreate([
-            'key' => 'claim-types',
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
             'code' => 'theft',
             'text' => 'Theft',
         ], [
@@ -361,7 +362,7 @@ class LookupSeeder extends Seeder
         ]);
 
         Lookup::firstOrCreate([
-            'key' => 'claim-types',
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
             'code' => 'fire-arson',
             'text' => 'Fire/Arson',
         ], [
@@ -372,7 +373,7 @@ class LookupSeeder extends Seeder
         ]);
 
         Lookup::firstOrCreate([
-            'key' => 'claim-types',
+            'key' => ClaimsEnum::CLAIM_TYPES_KEY->value,
             'code' => 'windscreen-only',
             'text' => 'Windscreen Only',
         ], [
@@ -410,7 +411,7 @@ class LookupSeeder extends Seeder
         foreach ($claimRequestType as $type) {
             Lookup::firstOrCreate([
                 'quote_type_id' => $type['quote_type_id'],
-                'key' => 'claim-request-types',
+                'key' => ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value,
                 'code' => $type['code'],
                 'text' => $type['text'],
             ], [
@@ -443,7 +444,7 @@ class LookupSeeder extends Seeder
         foreach ($claimRequestType as $type) {
             Lookup::firstOrCreate([
                 'quote_type_id' => $type['quote_type_id'],
-                'key' => 'claim-service-types',
+                'key' => ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value,
                 'code' => $type['code'],
                 'text' => $type['text'],
             ], [
@@ -475,7 +476,7 @@ class LookupSeeder extends Seeder
         foreach ($claimRequestType as $type) {
             Lookup::firstOrCreate([
                 'quote_type_id' => $type['quote_type_id'],
-                'key' => 'claim-status-access-types',
+                'key' => ClaimsEnum::CLAIM_STATUS_ACCESS_TYPES_KEY->value,
                 'code' => $type['code'],
                 'text' => $type['text'],
             ], [
