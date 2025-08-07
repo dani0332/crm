@@ -6,7 +6,6 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\SageApiService;
@@ -42,7 +41,6 @@ class SendUpdateValidationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
-            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->select('emirate_of_registration_id')->first();
 
             $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
             if ($isEndorsementActionDisabled) {
