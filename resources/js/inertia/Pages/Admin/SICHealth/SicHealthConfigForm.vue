@@ -5,6 +5,7 @@ const props = defineProps({
   nationalities: Object,
   memberCategories: Object,
   healthTypes: Object,
+  emirates: Object,
 });
 
 const page = usePage();
@@ -26,6 +27,7 @@ const sicConfigurableForm = useForm({
   is_age: props.sicConfigurable?.is_age ?? false,
   is_price_starting_from:
     props.sicConfigurable?.is_price_starting_from ?? false,
+  is_emirate_of_visa: props.sicConfigurable?.is_emirate_of_visa ?? false,
 });
 
 onMounted(() => {
@@ -40,6 +42,10 @@ onMounted(() => {
   if (props.relations?.member_categories?.length > 0) {
     sicConfigurableForm.member_categories =
       props.relations?.member_categories.map(item => item.id) ?? [];
+  }
+  if (props.relations?.emirates?.length > 0) {
+    sicConfigurableForm.emirates =
+      props.relations?.emirates.map(item => item.id) ?? [];
   }
 });
 function onSubmit(isValid) {
@@ -58,6 +64,13 @@ function onSubmit(isValid) {
     console.log('error');
   }
 }
+
+const emiratesOptions = computed(() => {
+  return page.props.emirates.map(nat => ({
+    value: nat.id,
+    label: nat.text,
+  }));
+});
 
 const nationalitiesOptions = computed(() => {
   return page.props.nationalities.map(nat => ({
@@ -232,6 +245,41 @@ const ageRangeValid = computed(() => {
                       memberCategoriesOptions.map(item => item.value)
                   "
                   @clear="sicConfigurableForm.member_categories = []"
+                />
+              </template>
+            </x-select>
+          </div>
+        </div>
+        <div class="col-span-1 sm:col-span-1">
+          <x-checkbox
+            v-model="sicConfigurableForm.is_emirate_of_visa"
+            label="Emirate of Visa"
+          />
+          <div
+            class="grid sm:grid-cols-1 gap-4"
+            v-if="sicConfigurableForm.is_emirate_of_visa"
+          >
+            <x-select
+              v-model="sicConfigurableForm.emirates"
+              label="Emirates of Visa"
+              :options="emiratesOptions"
+              placeholder="Select Emirates of Visa"
+              multiple
+              filterable
+              filterPlaceholder="Filter Emirates of Visa...."
+              required
+              :rules="[isRequired]"
+              truncate
+              :error="sicConfigurableForm?.errors.emirates"
+            >
+              <template #content-footer>
+                <ui-select-actions
+                  @select-all="
+                    sicConfigurableForm.emirates = emiratesOptions.map(
+                      item => item.value,
+                    )
+                  "
+                  @clear="sicConfigurableForm.emirates = []"
                 />
               </template>
             </x-select>

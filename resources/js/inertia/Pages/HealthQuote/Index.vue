@@ -20,6 +20,7 @@ defineProps({
   authorizedDays: Number,
   assignmentTypes: Object,
   insurerAMLStatus: Array,
+  emirates: Array,
 });
 
 const page = usePage();
@@ -65,6 +66,7 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
@@ -200,6 +202,7 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   private_client: 'all',
+  emirate_of_your_visa_id: [],
 });
 
 const canExport = ref(false);
@@ -374,8 +377,16 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
+  const arrayParams = {};
+
   for (const [key, value] of Object.entries(params)) {
-    if (key.includes('[]')) {
+    if (key.match(/^(.+)\[\d+\]$/)) {
+      const baseKey = key.match(/^(.+)\[\d+\]$/)[1];
+      if (!arrayParams[baseKey]) {
+        arrayParams[baseKey] = [];
+      }
+      arrayParams[baseKey].push(+value);
+    } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = value;
     } else {
       // Handle different data types appropriately
@@ -393,6 +404,10 @@ function setQueryStringFilters() {
         filters[key] = value;
       }
     }
+  }
+
+  for (const [key, values] of Object.entries(arrayParams)) {
+    filters[key] = values;
   }
 }
 
@@ -1075,6 +1090,14 @@ const insurerAMLStatusOption = computed(() => {
           ]"
           class="w-full"
           :single="true"
+        />
+        <ComboBox
+          v-model="filters.emirate_of_your_visa_id"
+          label="Emirate of Visa"
+          placeholder="Search by Emirate of Visa"
+          :options="emirates"
+          class="w-full"
+          :single="false"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
