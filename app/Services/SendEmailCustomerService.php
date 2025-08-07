@@ -1693,4 +1693,49 @@ class SendEmailCustomerService extends BaseService
         }
 
     }
+
+    public function buildEmailDataForBirdFlow($lead, $advisor, $workflowType)
+    {
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+
+        return (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'refID' => $lead->code,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'companyName' => $lead->company_name ?? '',
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorDetails' => $advisor ?? null,
+            'documentUrl' => $documentUrl ?? null,
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => $workflowType,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'createdAt' => $lead->created_at,
+        ];
+    }
+
+    public function sendCarIntroEmailWithAIAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $aiAdvisor = $quote->aiAdvisor;
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $aiAdvisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info("sendCarIntroEmailWithAIAdvisor - Webhook request sent to: {$carIntroEmailWorkflowUrl} with Ref-ID: {$quote->uuid}");
+        } else {
+            LoggerService::info("sendCarIntroEmailWithAIAdvisor - Webhook URL not found in storage with Ref-ID: {$quote->uuid}");
+        }
+
+        return true;
+    }
 }
