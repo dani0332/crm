@@ -46,7 +46,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 'nullable',
                 function ($attribute, $value, $fail) {
                     // Required when current_quote_status_id is PolicyIssued, PolicyCancelled, or PolicyCancelledReissued and model type is Car
-                    if (strtolower(request()->modelType) == quoteTypeCode::Car) {
+                    if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
                         if (in_array(request()->current_quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
                             if (empty($value)) {
                                 $fail('The current quote status id field is required when the lead status is Policy Issued, Policy Cancelled, or Policy Cancelled Reissued for Car quotes.');
