@@ -23,7 +23,8 @@ class LookupSeeder extends Seeder
         $this->createCIRSavings();
         $this->createCISavings();
         $this->createClaimTypes();
-        $this->createClaimSubStatuses(); // Add this line
+        $this->createClaimRequestTypes();
+        $this->createClaimServiceTypes();
     }
 
     private function sendUpdateCancelOptions(): void
@@ -381,196 +382,72 @@ class LookupSeeder extends Seeder
         ]);
     }
 
-    private function createClaimSubStatuses(): void
+    private function createClaimRequestTypes(): void
     {
-        $claimSubStatuses = [
+        $claimRequestType = [
             [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'new-claim',
-                'text' => 'New claim',
-                'description' => 'A new claim has been created and is ready for processing.',
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'reimbursement',
+                'text' => 'Reimbursement',
                 'sort_order' => 1,
             ],
             [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'claim-initiated',
-                'text' => 'Claim initiated',
-                'description' => 'The claim process has been initiated and is under review.',
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'pending-approvals',
+                'text' => 'Pending Approvals',
                 'sort_order' => 2,
             ],
             [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'claim-registered-awaiting-inspection',
-                'text' => 'Claim registered and awaiting inspection',
-                'description' => 'Claim has been registered and is waiting for vehicle inspection.',
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'ask-a-question',
+                'text' => 'Ask a Question',
                 'sort_order' => 3,
             ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'estimate-under-review',
-                'text' => 'Estimate under review',
-                'description' => 'The repair estimate is currently being reviewed by the insurance provider.',
-                'sort_order' => 4,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'repair-approved-work-progress',
-                'text' => 'Repair approved & work in progress',
-                'description' => 'Repair has been approved and work is currently in progress.',
-                'sort_order' => 5,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'parts-ordered',
-                'text' => 'Parts ordered',
-                'description' => 'Required parts have been ordered for the repair.',
-                'sort_order' => 6,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'parts-backorder',
-                'text' => 'Parts on backorder',
-                'description' => 'Required parts are currently on backorder and awaiting availability.',
-                'sort_order' => 7,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'parts-delayed',
-                'text' => 'Parts delayed',
-                'description' => 'There is a delay in receiving the required parts for repair.',
-                'sort_order' => 8,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'parts-arrived-work-progress',
-                'text' => 'Parts arrived & work in progress',
-                'description' => 'Required parts have arrived and repair work is in progress.',
-                'sort_order' => 9,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'hire-car-requested',
-                'text' => 'Hire car requested',
-                'description' => 'A hire car has been requested for the policyholder.',
-                'sort_order' => 10,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'hire-car-approved',
-                'text' => 'Hire car approved',
-                'description' => 'Hire car request has been approved and is being arranged.',
-                'sort_order' => 11,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'hire-car-refund-progress',
-                'text' => 'Hire car refund in progress',
-                'description' => 'Hire car refund process is currently in progress.',
-                'sort_order' => 12,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'car-ready-collection',
-                'text' => 'Car ready for collection',
-                'description' => 'Vehicle repair is complete and ready for collection by the policyholder.',
-                'sort_order' => 13,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'repair-completed-settled',
-                'text' => 'Repair completed and claim settled',
-                'description' => 'Vehicle repair has been completed and the claim has been fully settled with the policyholder.',
-                'sort_order' => 14,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'total-loss-approved',
-                'text' => 'Total loss approved',
-                'description' => 'Vehicle has been declared a total loss and the decision has been approved.',
-                'sort_order' => 15,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'total-loss-offer-letter-shared',
-                'text' => 'Total Loss Offer Letter shared',
-                'description' => 'Total loss offer letter has been shared with the policyholder.',
-                'sort_order' => 16,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'total-loss-payment-progress',
-                'text' => 'Total loss payment in progress',
-                'description' => 'Total loss payment process is currently in progress.',
-                'sort_order' => 17,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'total-loss-paid-settled',
-                'text' => 'Total loss paid and claim settled',
-                'description' => 'Vehicle has been declared a total loss and the claim amount has been paid and settled.',
-                'sort_order' => 18,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'cash-loss-approved',
-                'text' => 'Cash loss approved',
-                'description' => 'Cash loss claim has been approved for processing.',
-                'sort_order' => 19,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'cash-loss-payment-progress',
-                'text' => 'Cash loss payment inprogress',
-                'description' => 'Cash loss payment process is currently in progress.',
-                'sort_order' => 20,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'cash-loss-paid-settled',
-                'text' => 'Cash loss paid and claim settled',
-                'description' => 'Cash loss claim has been processed and payment has been made to settle the claim.',
-                'sort_order' => 21,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'claim-withdrawn',
-                'text' => 'Claim withdrawn',
-                'description' => 'The policyholder has withdrawn their claim request.',
-                'sort_order' => 22,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'claim-denied',
-                'text' => 'Claim denied',
-                'description' => 'The claim has been reviewed and denied by the insurance provider.',
-                'sort_order' => 23,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'additional-documents-awaited',
-                'text' => 'Additional documents awaited',
-                'description' => 'Additional documents are required and are being awaited from the policyholder.',
-                'sort_order' => 24,
-            ],
-            [
-                'quote_type_id' => QuoteTypeId::Car,
-                'code' => 'documents-uploaded',
-                'text' => 'Documents uploaded',
-                'description' => 'Required documents have been uploaded and are under review.',
-                'sort_order' => 25,
-            ],
+
         ];
 
-        foreach ($claimSubStatuses as $status) {
+        foreach ($claimRequestType as $type) {
             Lookup::firstOrCreate([
-                'quote_type_id' => $status['quote_type_id'],
-                'key' => 'claim-sub-statuses',
-                'code' => $status['code'],
-                'text' => $status['text'],
+                'quote_type_id' => $type['quote_type_id'],
+                'key' => 'claim-request-types',
+                'code' => $type['code'],
+                'text' => $type['text'],
             ], [
-                'description' => $status['description'],
                 'is_active' => 1,
-                'sort_order' => $status['sort_order'],
+                'sort_order' => $type['sort_order'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function createClaimServiceTypes(): void
+    {
+        $claimRequestType = [
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'in-patient-request',
+                'text' => 'In-patient request (Hospitalization, Major Surgeries, Life Threatening emergency)',
+                'sort_order' => 1,
+            ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'out-patient-request',
+                'text' => 'Out-patient request (Consultation, Diagnostics/Imaging, Pharmacy)',
+                'sort_order' => 2,
+            ],
+
+        ];
+
+        foreach ($claimRequestType as $type) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => $type['quote_type_id'],
+                'key' => 'claim-service-types',
+                'code' => $type['code'],
+                'text' => $type['text'],
+            ], [
+                'is_active' => 1,
+                'sort_order' => $type['sort_order'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
