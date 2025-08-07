@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,7 +34,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  */
 class ClaimRequestDetail extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait /* , SoftDeletes */;
+    use Auditable, FilterCriteria, HasFactory /* , SoftDeletes */;
 
     protected $table = 'claim_request_details';
     protected $fillable = [
@@ -166,5 +167,19 @@ class ClaimRequestDetail extends Model implements AuditableContract
     {
         $this->service_type_id = $serviceTypeId;
         $this->save();
+    }
+
+    public function getCreatedAtAttribute($table)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+
+    public function getUpdatedAtAttribute($table)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 }

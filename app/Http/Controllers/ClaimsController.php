@@ -227,53 +227,10 @@ class ClaimsController extends Controller
     }
 
     /**
-     * Assign claim request to a manager (AJAX endpoint)
-     */
-    public function assign(Request $request, ClaimRequest $claimRequest): JsonResponse
-    {
-        // Check permission
-        $this->authorize('update', $claimRequest);
-
-        $request->validate([
-            'manager_id' => 'required|integer|exists:users,id',
-            'manager_type' => 'required|string|in:assigned_claims_manager,claims_manager',
-        ]);
-
-        try {
-            $updatedClaimRequest = $this->claimsService->assignClaim(
-                $claimRequest,
-                $request->manager_id,
-                $request->manager_type
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Claim request has been assigned successfully.',
-                'claim' => $updatedClaimRequest,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error assigning claim request', [
-                'error' => $e->getMessage(),
-                'claim_request_id' => $claimRequest->id,
-                'manager_id' => $request->manager_id,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to assign claim.',
-            ], 500);
-        }
-    }
-
-    /**
      * Update claim status (AJAX endpoint)
      */
     public function updateStatus(Request $request, Claim $claim): JsonResponse
     {
-        // Check permission
-        $this->authorize('update', $claim);
-
         $request->validate([
             'status' => 'required|string|in:pending,in_progress,resolved,closed,cancelled',
         ]);
@@ -301,55 +258,6 @@ class ClaimsController extends Controller
         }
     }
 
-    /**
-     * Get claims statistics (AJAX endpoint)
-     */
-    public function statistics(): JsonResponse
-    {
-        try {
-            $statistics = $this->claimsService->getClaimsStatistics();
-
-            return response()->json([
-                'success' => true,
-                'statistics' => $statistics,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error getting claims statistics', [
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get statistics.',
-            ], 500);
-        }
-    }
-
-    /**
-     * Get claims for follow-up (AJAX endpoint)
-     */
-    public function followUp(): JsonResponse
-    {
-        try {
-            $claims = $this->claimsService->getFollowUpClaims()->get();
-
-            return response()->json([
-                'success' => true,
-                'claims' => $claims,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error getting follow-up claims', [
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get follow-up claims.',
-            ], 500);
-        }
-    }
 
     /**
      * Export claims data
@@ -439,97 +347,13 @@ class ClaimsController extends Controller
         }
     }
 
-    /**
-     * FRD-specific endpoints
-     */
 
-    /**
-     * Update complaint status (AJAX endpoint)
-     */
-    public function updateComplaintStatus(Request $request, Claim $claim): JsonResponse
-    {
-        // Check permission
-        $this->authorize('update', $claim);
-
-        $request->validate([
-            'status' => 'required|string|in:N/A,Complaint Open,Complaint Closed',
-            'notes' => 'nullable|string',
-        ]);
-
-        try {
-            $updatedClaim = $this->claimsService->updateComplaintStatus(
-                $claim,
-                $request->status,
-                $request->notes
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Complaint status has been updated successfully.',
-                'claim' => $updatedClaim,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error updating complaint status', [
-                'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'status' => $request->status,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update complaint status.',
-            ], 500);
-        }
-    }
-
-    /**
-     * Set next follow-up date (AJAX endpoint)
-     */
-    public function setNextFollowUp(Request $request, Claim $claim): JsonResponse
-    {
-        // Check permission
-        $this->authorize('update', $claim);
-
-        $request->validate([
-            'date' => 'required|date|after:today|before:'.now()->addDays(15)->toDateString(),
-            'notes' => 'nullable|string',
-        ]);
-
-        try {
-            $updatedClaim = $this->claimsService->setNextFollowUp(
-                $claim,
-                $request->date,
-                $request->notes
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Next follow-up date has been set successfully.',
-                'claim' => $updatedClaim,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error setting next follow-up', [
-                'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'date' => $request->date,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to set next follow-up date.',
-            ], 500);
-        }
-    }
 
     /**
      * Update claim sub-status with auto-updates (AJAX endpoint)
      */
     public function updateSubStatus(Request $request, Claim $claim): JsonResponse
     {
-        // Check permission
-        $this->authorize('update', $claim);
 
         $request->validate([
             'sub_status_id' => 'required|integer|exists:lookups,id',
@@ -677,34 +501,6 @@ class ClaimsController extends Controller
         }
     }
 
-    /**
-     * Get dropdown data for FRD fields (AJAX endpoint)
-     */
-    public function getDropdownData(): JsonResponse
-    {
-        try {
-            $data = [
-                'healthClaimServiceTypes' => $this->claimsService->getHealthClaimServiceTypes(),
-                'healthServiceTypes' => $this->claimsService->getHealthServiceTypes(),
-                'leadSourceOptions' => $this->claimsService->getLeadSourceOptions(),
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $data,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error getting dropdown data', [
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get dropdown data.',
-            ], 500);
-        }
-    }
 
     /**
      * Placeholder for AI message optimization
