@@ -398,8 +398,8 @@ class AmtController extends Controller
         ])
         ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
-        $advisors = User::role('GM_ADVISOR') 
-            ->select('users.id', DB::raw("CONCAT(users.name, ' - GM_ADVISOR') AS name"))
+        $advisors = User::role(RolesEnum::GMAdvisor) 
+            ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '" . RolesEnum::GMAdvisor . "') AS name"))
             ->get();
 
         return inertia('GroupMedicalQuote/Show', [
