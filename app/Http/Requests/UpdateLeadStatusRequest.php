@@ -54,10 +54,10 @@ class UpdateLeadStatusRequest extends FormRequest
                     $requiredStatuses = [
                         QuoteStatusEnum::PolicyIssued,          // 33
                         QuoteStatusEnum::PolicyCancelled,       // 58
-                        QuoteStatusEnum::PolicyCancelledReissued // 74
+                        QuoteStatusEnum::PolicyCancelledReissued, // 74
                     ];
 
-                    $leadStatus = (int)$this->input('leadStatus');
+                    $leadStatus = (int) $this->input('leadStatus');
                     $isRequiredStatus = in_array($leadStatus, $requiredStatuses);
                     $isEmpty = empty($value);
 
@@ -65,7 +65,7 @@ class UpdateLeadStatusRequest extends FormRequest
                     if ($isRequiredStatus && $isEmpty) {
                         $fail('The current quote status id field is required when the lead status is Policy Issued, Policy Cancelled, or Policy Cancelled Reissued for Car quotes.');
                     }
-                }
+                },
             ],
             'notes' => 'nullable',
             'lost_notes' => 'nullable|max:500',
@@ -105,7 +105,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 auth()->user()->hasAnyRole([RolesEnum::CarAdvisor]) &&
                 isset($batch->deadline)
             ) {
-                if (now()->gt(($batch->deadline->deadline_date . ' 23:59:59'))) {
+                if (now()->gt(($batch->deadline->deadline_date.' 23:59:59'))) {
                     vAbort('Not possible to select the lead status after the deadline has passed.');
                 }
             }
@@ -116,7 +116,7 @@ class UpdateLeadStatusRequest extends FormRequest
 
             // todo: lost_approval_status should be required, and can be approved or rejected also reason_id should be required
             if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
-                $rules['lost_approval_status'] = 'required|in:' . GenericRequestEnum::APPROVED . ',' . GenericRequestEnum::REJECTED;
+                $rules['lost_approval_status'] = 'required|in:'.GenericRequestEnum::APPROVED.','.GenericRequestEnum::REJECTED;
                 $rules['approve_reason_id'] = 'required_without:reject_reason_id';
                 $rules['reject_reason_id'] = 'required_without:approve_reason_id';
             }
@@ -128,7 +128,7 @@ class UpdateLeadStatusRequest extends FormRequest
 
         if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
             if (in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
-                $rules['next_followup_date'] = 'required|date_format:' . config('constants.DATETIME_DISPLAY_FORMAT') . '|after_or_equal:' . date(config('constants.DATETIME_DISPLAY_FORMAT'));
+                $rules['next_followup_date'] = 'required|date_format:'.config('constants.DATETIME_DISPLAY_FORMAT').'|after_or_equal:'.date(config('constants.DATETIME_DISPLAY_FORMAT'));
                 $rules['notes'] = 'required';
             }
 
@@ -156,7 +156,7 @@ class UpdateLeadStatusRequest extends FormRequest
             }
 
             if (! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE) && $quoteObject->quote_status_id == QuoteStatusEnum::Lost) {
-                $validator->errors()->add('value', 'The lead is marked as ' . quoteStatusCode::LOST . ' and cannot be changed.');
+                $validator->errors()->add('value', 'The lead is marked as '.quoteStatusCode::LOST.' and cannot be changed.');
             }
 
             $isTravelLeadTransactionApproved = false;
@@ -184,7 +184,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 ];
 
                 if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
-                    $validator->errors()->add('value', 'Please update customer profile information before moving to ' . quoteStatusCode::TRANSACTIONAPPROVED . ' status');
+                    $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
                 }
             }
 
@@ -196,7 +196,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 if (($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
                     request()->leadStatus == QuoteStatusEnum::Qualified
                 ) {
-                    $validator->errors()->add('value', 'Please select team type before moving to ' . quoteStatusCode::QUALIFIED . ' status');
+                    $validator->errors()->add('value', 'Please select team type before moving to '.quoteStatusCode::QUALIFIED.' status');
                 }
             }
         });
