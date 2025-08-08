@@ -7,7 +7,10 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Jobs\PolicyIssuanceJob;
+use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
@@ -235,7 +238,7 @@ class PolicyIssuanceService
         if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
             $this->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         } else {
-            // TODO:: This should be updated to use the new function
+            // TODO:: This should be updated with the new function in PolicyIssuanceService
             $insurerPolicyAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
 
@@ -311,6 +314,7 @@ class PolicyIssuanceService
                 $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
             }
         }
+
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code, extra: [
             'insurerApiStatus' => $insurerApiStatus, 'apiIssuanceStatus' => $apiIssuanceStatus,
             'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
@@ -322,6 +326,7 @@ class PolicyIssuanceService
 
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
         $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+        // $this->allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
@@ -339,6 +344,66 @@ class PolicyIssuanceService
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$newApiIssuanceStatus);
         if ($newApiIssuanceStatus) {
             $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
+        }
+    }
+
+    public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed)
+    {
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' allocation of failed lead executed');
+        $uuid = $quote->uuid;
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Going to allocate failed lead');
+
+        $advisorId = $quote?->advisor_id;
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned ', extra: [
+            'advisorId' => $advisorId,
+        ]);
+
+        $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        if (! $advisorId) {
+            $response = QuoteTypes::getName($quoteType)->allocate($uuid, $unassistedTeamId);
+            if ($response && $response['advisorId']) {
+                $advisorId = $response['advisorId'];
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                    'advisorId' => $advisorId,
+                ]);
+            }
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
+            'advisorId' => $advisorId,
+        ]);
+
+        if ($advisorId) {
+            $quoteType = QuoteTypes::getName($quoteType)->value;
+            if ($quoteType === QuoteTypes::TRAVEL->value) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
+                SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+            } else {
+                // For other quote types, we need to dispatch respective failure email job
+            }
+
+            /* Send Failed notification only when Insurer API status is not failed already to prevent multiple email triggers and Insurer API Status is not null */
+            if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
+                if ($quoteType === QuoteTypes::TRAVEL->value) {
+                    SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+                } else {
+                    // For other quote types, we need to dispatch respective failure email job
+                }
+            }
+
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Quote Document Customer Email Checks', extra: [
+                'advisorId' => $advisorId,
+                'quote status id' => QuoteStatusEnum::PolicyBooked,
+            ]);
+
+            if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+                // Here we need to dispatch document email
+                $data = new \stdClass;
+                $data->model_type = QuoteTypes::getName($quoteType)->value;
+                $data->quote_id = $quote->id;
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob advisor id '.$quote->advisor_id);
+                SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+            }
         }
     }
 

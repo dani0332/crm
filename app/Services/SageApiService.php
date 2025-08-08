@@ -2524,7 +2524,12 @@ class SageApiService
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
                 LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
-                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+                    app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
+                } else {
+                    // TODO:: This should be updated with the new function in PolicyIssuanceService
+                    $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+                }
             } else {
                 LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' Insurer : '.$insuranceProvider?->code.'automation class not found');
             }

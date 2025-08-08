@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -283,7 +284,14 @@ class ApiController extends Controller
         if ($insuranceProvider) {
             info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Update statuses and lead allocate');
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            
+            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            } else {
+                // TODO:: This should be updated with the new function in PolicyIssuanceService
+                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            }
+
             info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Statuses updated and allocation triggered');
 
             return response()->json(['status' => true, 'message' => 'Insurer and API Issuance statuses updated and Lead allocation is triggered successfully']);
