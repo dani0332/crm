@@ -234,11 +234,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/claims', [ClaimsController::class, 'index'])->name('claims.index');
         Route::get('/claim/create', [ClaimsController::class, 'create'])->name('claims.create');
         Route::post('/claim', [ClaimsController::class, 'store'])->name('claims.store');
-        Route::get('/claim/{claim:ref_id}', [ClaimsController::class, 'show'])->name('claims.show');
-        Route::get('/claim/{claim:ref_id}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
-        Route::put('/claim/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
-        Route::patch('/claim/{claim:ref_id}', [ClaimsController::class, 'update'])->name('claims.update');
-        Route::delete('/claim/{claim:ref_id}', [ClaimsController::class, 'destroy'])->name('claims.destroy');
+        Route::get('/claim/{uuid}', [ClaimsController::class, 'show'])->name('claims.show');
+        Route::get('/claim/{uuid}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
+        Route::put('/claim/{uuid}', [ClaimsController::class, 'update'])->name('claims.update'); 
         Route::post('claim/search-policies', [ClaimsController::class, 'searchPolicies'])->name('claims.search-policies');
         /*
                     // Claims AJAX routes

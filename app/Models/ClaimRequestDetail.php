@@ -27,7 +27,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property string|null $car_make
  * @property string|null $car_model
  * @property int|null $service_type_id
- * @property string|null $request_referrence_number
+ * @property string|null $request_reference_number
  * @property string|null $user_ip
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
@@ -43,7 +43,7 @@ class ClaimRequestDetail extends Model implements AuditableContract
         'car_make',
         'car_model',
         'service_type_id',
-        'request_referrence_number',
+        'request_reference_number',
         'user_ip',
     ];
     protected $casts = [
@@ -59,7 +59,7 @@ class ClaimRequestDetail extends Model implements AuditableContract
         'car_make' => FilterTypes::EXACT,
         'car_model' => FilterTypes::EXACT,
         'service_type_id' => FilterTypes::IN,
-        'request_referrence_number' => FilterTypes::EXACT,
+        'request_reference_number' => FilterTypes::EXACT,
         'user_ip' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
     ];
@@ -69,16 +69,6 @@ class ClaimRequestDetail extends Model implements AuditableContract
         parent::boot();
 
         static::creating(function ($claimRequestDetail) {
-            // Generate claim UUID if not provided
-            if (empty($claimRequestDetail->claim_uuid)) {
-                $claimRequestDetail->claim_uuid = (string) Str::uuid();
-            }
-
-            // Generate reference number if not provided
-            if (empty($claimRequestDetail->request_referrence_number)) {
-                $claimRequestDetail->request_referrence_number = self::generateReferenceNumber();
-            }
-
             // Set user IP if available
             if (empty($claimRequestDetail->user_ip) && request()) {
                 $claimRequestDetail->user_ip = request()->ip();
@@ -86,21 +76,6 @@ class ClaimRequestDetail extends Model implements AuditableContract
         });
     }
 
-    /**
-     * Generate a unique reference number for the claim request detail
-     * Format: REF-<10 digit unique number>
-     */
-    private static function generateReferenceNumber(): string
-    {
-        $prefix = 'REF-';
-
-        do {
-            $randomNumber = str_pad((string) mt_rand(1, 9999999999), 10, '0', STR_PAD_LEFT);
-            $referenceNumber = $prefix.$randomNumber;
-        } while (self::where('request_referrence_number', $referenceNumber)->exists());
-
-        return $referenceNumber;
-    }
 
     /**
      * Relationships

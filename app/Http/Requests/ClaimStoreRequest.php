@@ -45,20 +45,6 @@ class ClaimStoreRequest extends FormRequest
                 'email:rfc,dns',
                 'max:255',
             ],
-            'customer_id' => [
-                'required',
-                'integer',
-                'exists:personal_quotes,customer_id',
-            ],
-            'selected_quote_uuid' => [
-                'string',
-                'nullable',
-            ],
-            'insurance_provider_id' => [
-                'required',
-                'integer',
-                'exists:insurance_provider,id',
-            ],
             'quote_type_id' => [
                 'required',
                 'integer',
@@ -70,48 +56,116 @@ class ClaimStoreRequest extends FormRequest
                 'exists:lookups,id',
             ],
 
-            'incident_story' => [
+            // Optional fields
+            'customer_id' => [
                 'nullable',
-                'string',
-                'max:1000',
+                'integer',
+            ],
+            'insurance_provider_id' => [
+                'nullable',
+                'integer',
+                'exists:insurance_provider,id',
             ],
             'claim_number' => [
                 'nullable',
                 'string',
                 'max:100',
             ],
-
             'policy_number' => [
                 'nullable',
                 'string',
                 'max:100',
             ],
+            'incident_date' => [
+                'nullable',
+                'date',
+            ],
+            'incident_story' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+            'source' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
 
-            // Vehicle fields (for Car/Bike LOB)
+            // Policy selection fields
+            'selected_policy_id' => [
+                'nullable',
+                'integer',
+            ],
+            'selected_quote_uuid' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'policy_not_listed' => [
+                'nullable',
+                'boolean',
+            ],
+
+            // Car-specific fields
             'plate_number' => [
                 'nullable',
                 'string',
                 'max:20',
-                /* 'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
-            'vehicle_make' => [
+            'car_make' => [
                 'nullable',
                 'string',
                 'max:100',
-                /*  'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
-            'vehicle_model' => [
+            'car_model' => [
                 'nullable',
                 'string',
                 'max:100',
-                /* 'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
             ],
-            'vehicle_year' => [
+            'car_model_year' => [
                 'nullable',
                 'integer',
                 'min:1900',
                 'max:'.(date('Y') + 1),
-                /* 'required_if:quote_type_id,'.$this->getCarBikeQuoteTypeIds(), */
+            ],
+
+            // Financial fields
+            'approved_repair_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+            'approved_total_loss_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+            'approved_cash_loss_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+            'claim_denial_reason' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+
+            // Health-specific fields
+            'claim_request_type_id' => [
+                'nullable',
+                'integer',
+                'exists:lookups,id',
+            ],
+            'service_type_id' => [
+                'nullable',
+                'integer',
+                'exists:lookups,id',
+            ],
+            'request_reference_number' => [
+                'nullable',
+                'string',
+                'max:100',
             ],
         ];
     }
@@ -126,26 +180,26 @@ class ClaimStoreRequest extends FormRequest
             'first_name.regex' => 'First name contains invalid characters.',
             'last_name.required' => 'Last name is required.',
             'last_name.regex' => 'Last name contains invalid characters.',
-            'mobile_no.required' => 'Mobile number is required.',
-            'mobile_no.regex' => 'Mobile number format is invalid.',
+            'mobile_no.required' => 'Phone number is required.',
+            'mobile_no.regex' => 'Phone number format is invalid.',
             'email.required' => 'Email address is required.',
             'email.email' => 'Email address must be in a valid format.',
-            'customer_id.required' => 'Customer is required.',
-            'customer_id.exists' => 'Selected customer is invalid.',
-            'insurance_provider_id.required' => 'Insurance provider is required.',
-            'insurance_provider_id.exists' => 'Selected insurance provider is invalid.',
-            'quote_type_id.required' => 'Quote type is required.',
-            'quote_type_id.exists' => 'Selected quote type is invalid.',
+            'quote_type_id.required' => 'Line of business is required.',
+            'quote_type_id.exists' => 'Selected line of business is invalid.',
             'claim_type_id.required' => 'Claim type is required.',
             'claim_type_id.exists' => 'Selected claim type is invalid.',
-            'vehicle_year.min' => 'Vehicle year must be after 1900.',
-            'vehicle_year.max' => 'Vehicle year cannot be more than one year in the future.',
-
-            // Required if conditions
-            'plate_number.required_if' => 'Plate number is required for Car/Bike claims.',
-            'vehicle_make.required_if' => 'Vehicle make is required for Car/Bike claims.',
-            'vehicle_model.required_if' => 'Vehicle model is required for Car/Bike claims.',
-            'vehicle_year.required_if' => 'Vehicle year is required for Car/Bike claims.',
+            'car_model_year.min' => 'Vehicle year must be after 1900.',
+            'car_model_year.max' => 'Vehicle year cannot be more than one year in the future.',
+            'approved_repair_amount.numeric' => 'Approved repair amount must be a number.',
+            'approved_repair_amount.min' => 'Approved repair amount must be greater than or equal to 0.',
+            'approved_total_loss_amount.numeric' => 'Approved total loss amount must be a number.',
+            'approved_total_loss_amount.min' => 'Approved total loss amount must be greater than or equal to 0.',
+            'approved_cash_loss_amount.numeric' => 'Approved cash loss amount must be a number.',
+            'approved_cash_loss_amount.min' => 'Approved cash loss amount must be greater than or equal to 0.',
+            'customer_id.integer' => 'Customer ID must be a number.',
+            'insurance_provider_id.exists' => 'Selected insurance provider is invalid.',
+            'claim_request_type_id.exists' => 'Selected claim request type is invalid.',
+            'service_type_id.exists' => 'Selected service type is invalid.',
         ];
     }
 
@@ -157,19 +211,31 @@ class ClaimStoreRequest extends FormRequest
         return [
             'first_name' => 'first name',
             'last_name' => 'last name',
-            'mobile_no' => 'mobile number',
+            'mobile_no' => 'phone number',
             'email' => 'email address',
-            'customer_id' => 'customer',
-            'insurance_provider_id' => 'insurance provider',
-            'quote_type_id' => 'quote type',
+            'quote_type_id' => 'line of business',
             'claim_type_id' => 'claim type',
-            'incident_story' => 'incident story',
-            'claim_number' => 'claim number',
             'policy_number' => 'policy number',
             'plate_number' => 'plate number',
-            'vehicle_make' => 'vehicle make',
-            'vehicle_model' => 'vehicle model',
-            'vehicle_year' => 'vehicle year',
+            'car_make' => 'vehicle make',
+            'car_model' => 'vehicle model',
+            'car_model_year' => 'vehicle year',
+            'customer_id' => 'customer ID',
+            'insurance_provider_id' => 'insurance provider',
+            'claim_number' => 'claim number',
+            'incident_date' => 'incident date',
+            'incident_story' => 'incident story',
+            'approved_repair_amount' => 'approved repair amount',
+            'approved_total_loss_amount' => 'approved total loss amount',
+            'approved_cash_loss_amount' => 'approved cash loss amount',
+            'claim_denial_reason' => 'claim denial reason',
+            'claim_request_type_id' => 'claim request type',
+            'service_type_id' => 'service type',
+            'request_reference_number' => 'request reference number',
+            'selected_policy_id' => 'selected policy',
+            'selected_quote_uuid' => 'selected quote',
+            'policy_not_listed' => 'policy not listed',
+            'source' => 'source',
         ];
     }
 
@@ -182,25 +248,17 @@ class ClaimStoreRequest extends FormRequest
         $this->merge([
             'first_name' => $this->first_name ? trim($this->first_name) : null,
             'last_name' => $this->last_name ? trim($this->last_name) : null,
-            'mobile_no' => $this->mobile_no ? trim($this->mobile_no) : null,
             'email' => $this->email ? trim(strtolower($this->email)) : null,
-            'incident_story' => $this->incident_story ? trim($this->incident_story) : null,
+            'mobile_no' => $this->mobile_no ? trim($this->mobile_no) : null,
             'claim_number' => $this->claim_number ? trim($this->claim_number) : null,
             'policy_number' => $this->policy_number ? trim($this->policy_number) : null,
             'plate_number' => $this->plate_number ? trim(strtoupper($this->plate_number)) : null,
-            'vehicle_make' => $this->vehicle_make ? trim($this->vehicle_make) : null,
-            'vehicle_model' => $this->vehicle_model ? trim($this->vehicle_model) : null,
+            'car_make' => $this->car_make ? trim($this->car_make) : null,
+            'car_model' => $this->car_model ? trim($this->car_model) : null,
+            'incident_story' => $this->incident_story ? trim($this->incident_story) : null,
+            'claim_denial_reason' => $this->claim_denial_reason ? trim($this->claim_denial_reason) : null,
+            'request_reference_number' => $this->request_reference_number ? trim($this->request_reference_number) : null,
         ]);
-    }
-
-    /**
-     * Get the Car and Bike quote type IDs for conditional validation
-     */
-    protected function getCarBikeQuoteTypeIds(): string
-    {
-        // These values should match the actual IDs in your quote_type table
-        // You might want to get these dynamically from the database
-        return '1,2'; // Assuming 1=Car, 2=Bike - adjust as needed
     }
 
     /**
@@ -211,7 +269,7 @@ class ClaimStoreRequest extends FormRequest
         $errors = $validator->errors();
 
         // Log validation failures for debugging
-        \Log::info('Claim validation failed', [
+        \App\Services\Logger\LoggerService::info('Claim store validation failed', extra: [
             'errors' => $errors->toArray(),
             'input' => $this->except(['password', 'password_confirmation']),
             'user_id' => Auth::id(),

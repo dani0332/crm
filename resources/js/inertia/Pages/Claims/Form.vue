@@ -299,6 +299,10 @@ function selectPolicy(policy) {
 function policyNotListed() {
   claimForm.policy_not_listed = true;
   claimForm.selected_policy_id = null;
+  claimForm.selected_quote_uuid = null;
+  claimForm.policy_number = null;
+  claimForm.customer_id = null;
+  claimForm.insurance_provider_id = null;
 }
 
 // Reset policy selection
@@ -323,13 +327,11 @@ function onSubmit(isValid) {
     }
 
     let method = 'post';
-    let url = `/claim`;
-    let title = 'Claim created successfully';
+    let url = `/claim`; 
 
     if (props.isEdit && props.claim) {
       method = 'put';
-      url = `/claim/${props.claim.code}`;
-      title = 'Claim updated successfully';
+      url = `/claim/${props.claim.uuid}`; 
     }
 
     claimForm.submit(method, url, {
@@ -361,23 +363,11 @@ function onSubmit(isValid) {
               duration: 6000,
             });
           }
-        } else if (typeof errors === 'string') {
-          // Single error message
-          notification.error({
-            title: 'Error',
-            message: errors,
-            position: 'top',
-          });
         }
       },
-      onSuccess: () => {
-        notification.success({
-          title: title,
-          position: 'top',
-        });
-
+      onSuccess: () => { 
         // Redirect to claims list
-        /*  router.visit('/claim'); */
+         router.visit('/claims');
       },
       onFinish: () => {
         // Always called after success or error
@@ -504,7 +494,7 @@ function onSubmit(isValid) {
             class="w-full"
             :error="claimForm.errors.claim_number"
           />
-         
+
           <x-select
             v-model="claimForm.claim_type_id"
             label="Claim Type"
@@ -524,7 +514,7 @@ function onSubmit(isValid) {
               class="w-full"
               :error="claimForm.errors.request_reference_number"
             />
-            <x-select 
+            <x-select
               v-model="claimForm.claim_request_type_id"
               label="Claim Request Type"
               placeholder="Select Claim Request Type"
@@ -534,7 +524,7 @@ function onSubmit(isValid) {
               filterPlaceholder="Filter Claim Request Type...."
               :error="claimForm.errors.claim_request_type_id"
             />
-            <x-select 
+            <x-select
               v-model="claimForm.service_type_id"
               label="Claim Service Type"
               placeholder="Select Claim Service Type"
@@ -545,7 +535,7 @@ function onSubmit(isValid) {
               :error="claimForm.errors.service_type_id"
             />
           </template>
-          
+
           <DatePicker
             v-model="claimForm.incident_date"
             name="incident_date"
@@ -563,74 +553,76 @@ function onSubmit(isValid) {
             @input="resetPolicySelection"
           />
 
-          <!-- Additional fields for Car LOB when editing -->
-          <x-input
-            v-if="isCarLOB"
-            v-model="claimForm.plate_number"
-            type="text"
-            label="Plate Number"
-            placeholder="Enter Plate Number"
-            class="w-full"
-            :error="claimForm.errors.plate_number"
-          />
-          <x-input
-            v-if="isCarLOB"
-            v-model="claimForm.car_model_year"
-            type="number"
-            label="Car Model Year"
-            placeholder="Enter Model Year"
-            class="w-full"
-            :error="claimForm.errors.car_model_year"
-          />
-          <x-input
-            v-if="isCarLOB"
-            v-model="claimForm.car_make"
-            type="text"
-            label="Car Make"
-            placeholder="Enter Car Make"
-            class="w-full"
-            :error="claimForm.errors.car_make"
-          />
-          <x-input
-            v-if="isCarLOB"
-            v-model="claimForm.car_model"
-            type="text"
-            label="Car Model"
-            placeholder="Enter Car Model"
-            class="w-full"
-            :error="claimForm.errors.car_model"
-          />
 
-          <x-input
-            v-if="isCarLOB"
-            v-model="claimForm.approved_repair_amount"
-            type="number"
-            step="0.01"
-            label="Approved Repair Amount"
-            placeholder="Enter Amount"
-            class="w-full"
-            :error="claimForm.errors.approved_repair_amount"
-          />
-          <x-input
-            v-if="isCarLOB"
-            v-model="claimForm.approved_total_loss_amount"
-            type="number"
-            step="0.01"
-            label="Approved Total Loss Amount"
-            placeholder="Enter Amount"
-            class="w-full"
-            :error="claimForm.errors.approved_total_loss_amount"
-          />
-          <x-input
-            v-if="isCarLOB"
-            v-model="claimForm.approved_cash_loss_amount"
-            type="number"
-            step="0.01"
-            label="Approved Cash Loss Amount"
-            placeholder="Enter Amount"
-            class="w-full"
-            :error="claimForm.errors.approved_cash_loss_amount"
-          />
+          <template v-if="isCarLOB && isEdit">
+            <!-- Additional fields for Car LOB when editing -->
+            <x-input
+              v-if="isCarLOB"
+              v-model="claimForm.plate_number"
+              type="text"
+              label="Plate Number"
+              placeholder="Enter Plate Number"
+              class="w-full"
+              :error="claimForm.errors.plate_number"
+            />
+            <x-input
+              v-if="isCarLOB"
+              v-model="claimForm.car_model_year"
+              type="number"
+              label="Car Model Year"
+              placeholder="Enter Model Year"
+              class="w-full"
+              :error="claimForm.errors.car_model_year"
+            />
+            <x-input
+              v-if="isCarLOB"
+              v-model="claimForm.car_make"
+              type="text"
+              label="Car Make"
+              placeholder="Enter Car Make"
+              class="w-full"
+              :error="claimForm.errors.car_make"
+            />
+            <x-input
+              v-if="isCarLOB"
+              v-model="claimForm.car_model"
+              type="text"
+              label="Car Model"
+              placeholder="Enter Car Model"
+              class="w-full"
+              :error="claimForm.errors.car_model"
+            />
+          </template>
+          <template v-if="isEdit">
+            <x-input
+              v-model="claimForm.approved_repair_amount"
+              type="number"
+              step="0.01"
+              label="Approved Repair Amount"
+              placeholder="Enter Amount"
+              class="w-full"
+              :error="claimForm.errors.approved_repair_amount"
+            />
+            <x-input
+              v-model="claimForm.approved_total_loss_amount"
+              type="number"
+              step="0.01"
+              label="Approved Total Loss Amount"
+              placeholder="Enter Amount"
+              class="w-full"
+              :error="claimForm.errors.approved_total_loss_amount"
+            />
+            <x-input
+              v-model="claimForm.approved_cash_loss_amount"
+              type="number"
+              step="0.01"
+              label="Approved Cash Loss Amount"
+              placeholder="Enter Amount"
+              class="w-full"
+              :error="claimForm.errors.approved_cash_loss_amount"
+            />
+          </template>
+
         </div>
         <div class="grid sm:grid-cols-2 gap-4">
           <!-- Incident Story -->
@@ -645,6 +637,7 @@ function onSubmit(isValid) {
 
           <!-- Claim Denial Reason (when editing) -->
           <x-textarea
+            v-if="isEdit"
             v-model="claimForm.claim_denial_reason"
             label="Claim Denial Reason"
             placeholder="Note..."

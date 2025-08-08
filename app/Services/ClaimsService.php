@@ -20,7 +20,7 @@ use App\Traits\CentralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 class ClaimsService extends BaseService
 {
@@ -253,7 +253,7 @@ class ClaimsService extends BaseService
             return $policies;
 
         } catch (\Exception $e) {
-            Log::error('Error searching active policies', [
+            LoggerService::error('Error searching active policies', extra: [
                 'error' => $e->getMessage(),
                 'email' => $email,
                 'policy_number' => $policyNumber,
@@ -285,6 +285,14 @@ class ClaimsService extends BaseService
                 'claimTypeId' => $data['claim_type_id'] ?? null,
             ];
 
+
+            if (! empty($data['customer_id'])) {
+                $apiData['customerId'] = $data['customer_id'];
+            }
+            if (! empty($data['insurance_provider_id'])) {
+                $apiData['insuranceProviderId'] = $data['insurance_provider_id'];
+            }
+
             // Add vehicle information if available
             if (! empty($data['car_make'])) {
                 $apiData['carMake'] = $data['car_make'];
@@ -310,7 +318,7 @@ class ClaimsService extends BaseService
             return $response;
 
         } catch (\Exception $e) {
-            Log::error('Error creating claim request', [
+            LoggerService::error('Error creating claim request', extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'data' => $data,
@@ -323,8 +331,10 @@ class ClaimsService extends BaseService
     /**
      * Update an existing claim request
      */
-    public function updateClaim(ClaimRequest $claimRequest, array $data): ClaimRequest
+    public function updateClaim($uuid, array $data): ClaimRequest
     {
+        $claimRequest = $this->getClaimById($uuid); 
+
         try {
             DB::beginTransaction();
 
@@ -351,12 +361,11 @@ class ClaimsService extends BaseService
             ])->filter()->toArray();
 
             if (! empty($detailData)) {
-                $detail = $claimRequest->claimRequestDetails()->first();
-                if ($detail) {
-                    $detail->update($detailData);
+                $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
+                if ($claimRequestDetail) {
+                    $claimRequestDetail->update($detailData);
                 } else {
-                    $detailData['claim_request_id'] = $claimRequest->id;
-                    ClaimRequestDetail::create($detailData);
+                    $claimRequest->claimRequestDetails()->create($detailData);
                 }
             }
 
@@ -372,11 +381,12 @@ class ClaimsService extends BaseService
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error updating claim request', [
+            LoggerService::error('Error updating claim request', extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $claimRequest->id,
                 'data' => $data,
-            ]);
+            ]); 
+            
             throw $e;
         }
     }
@@ -510,7 +520,7 @@ class ClaimsService extends BaseService
             return $claim->fresh();
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error updating claim status', [
+            LoggerService::error('Error updating claim status', extra: [
                 'error' => $e->getMessage(),
                 'claim_id' => $claim->id,
                 'status' => $status,
