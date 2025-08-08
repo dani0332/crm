@@ -24,10 +24,6 @@ class TravelAllocation implements Allocation
 
     public function execute()
     {
-        if ($response = AiAdvisorAllocator::try(QuoteTypes::TRAVEL, $this->uuid)) {
-            return $response;
-        }
-
         $allocationRequest = new AllocationRequest(
             quoteType: QuoteTypes::TRAVEL,
             quoteUUID: $this->uuid,
