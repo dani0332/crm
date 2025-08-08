@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -47,6 +49,7 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -166,7 +169,7 @@ class SendUpdateLogService
             case LifeQuote::class:
                 $quoteRelations = [
                     'quoteRelations' => [
-                        'lifeQuoteRequestDetail' => [
+                        'quoteDetail' => [
                             'skipColumns' => $requestDetailsSkipColumns,
                             'fillColumns' => ['advisor_assigned_date' => now()],
                         ],
@@ -497,13 +500,19 @@ class SendUpdateLogService
 
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
         $quoteModel = $this->getModelObject($quoteTypeCode);
-        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get()->toArray();
+
+        if (count($childRecords) > 0) {
+            $childRecords = array_filter($childRecords, function ($item) use ($quote) {
+                return str_starts_with($item['code'], $quote->code);
+            });
+        }
 
         $_return = [
             'quote_type_id' => $quoteTypeId,
             'parent_lead_ref_id' => '',
             'uuid' => '',
-            'childLeadsCount' => $childRecords->count(),
+            'childLeadsCount' => count($childRecords),
             'childLeads' => '',
             'childLeadsUuid' => '',
         ];
@@ -513,9 +522,9 @@ class SendUpdateLogService
             $_return['uuid'] = explode('-', $quote->parent_duplicate_quote_id)[1];
         }
 
-        if ($childRecords->count() <= 1) {
-            $_return['childLeads'] = $childRecords->value('code');
-            $_return['childLeadsUuid'] = $childRecords->value('uuid');
+        if (count($childRecords) == 1) {
+            $_return['childLeads'] = $childRecords[0]['code'];
+            $_return['childLeadsUuid'] = $childRecords[0]['uuid'];
         }
 
         return $_return;
@@ -651,7 +660,12 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $payments = $repository::getBy('uuid', $quoteUuid)->payments;
+            $quote = $repository::getBy('uuid', $quoteUuid);
+            $payments = $quote?->payments ?? null;
+            if ($payments === null || $payments->isEmpty()) {
+                $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
+                $payments = $quote?->payments ?? null;
+            }
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
@@ -1044,6 +1058,14 @@ class SendUpdateLogService
             $quoteDetails,
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
+        $sageRequestPayload->quoteTypeId = $sendUpdateLog->quote_type_id;
+        $sageRequestPayload->customer_id = $quoteDetails->customer_id;
+        $commissionChargeIds = $preparedDetailsForEndorsement['splitPayments']->flatMap(function ($paymentSplit) {
+            return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
+                ->pluck('transaction_id')
+                ->toArray();
+        })->toArray();
+        $sageRequestPayload->commissionChargeId = count($commissionChargeIds) > 0 ? implode(',', $commissionChargeIds) : '';
 
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
@@ -1188,7 +1210,7 @@ class SendUpdateLogService
                         'current_quote_status_id' => $newLeadStatus,
                         'previous_quote_status_id' => $oldLeadStatus,
                     ]);
-                    (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->updateInsurerDetails);
+                    (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $sendUpdateLog->quote_type_id, QuoteJourneyEnum::CANCELLED);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $oldLeadStatus = $quote->quote_status_id;
@@ -1358,6 +1380,10 @@ class SendUpdateLogService
             'quoteId' => $sendUpdateLog->personal_quote_id, // for email status save
             'refID' => $sendUpdateLog->code,
         ];
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
+        }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
@@ -1803,5 +1829,22 @@ class SendUpdateLogService
     public function isReversalInvoiceEndorsement($taxInvoiceNumber)
     {
         return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
+    }
+
+    public function isEndorsementBookingActionDisabled($sendUpdateLog)
+    {
+        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health) {
+            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->first();
+            $quoteDetails = HealthQuote::where('code', $personalQuote->code)->first();
+
+            $emirateOfYourVisaId = $quoteDetails?->emirate_of_your_visa_id;
+            if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 }

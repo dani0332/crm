@@ -10,5 +10,7 @@
     "leftjoin",
     "Queueable"
   ],
-  "editor.inlineSuggest.showToolbar": "always"
+  "editor.inlineSuggest.showToolbar": "always",
+  "doppler.autocomplete.enable": false,
+  "doppler.hover.enable": true
 }
