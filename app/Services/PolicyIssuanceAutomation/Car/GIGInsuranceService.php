@@ -631,11 +631,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $executeOCRProcessingResponse;
         }
 
-        if (isset($executeOCRProcessingResponse['processing']) && $executeOCRProcessingResponse['processing']) {
-            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR processing is in progress, will continue via batch callback');
+        // if (isset($executeOCRProcessingResponse['processing']) && $executeOCRProcessingResponse['processing']) {
+        //     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR processing is in progress, will continue via batch callback');
 
-            return $executeOCRProcessingResponse;
-        }
+        //     return $executeOCRProcessingResponse;
+        // }
 
         if (isset($executeOCRProcessingResponse['completed_step'])) {
             $process->update(['completed_step' => $executeOCRProcessingResponse['completed_step']]);
@@ -686,9 +686,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         $this->dispatchPopulateDocumentDataBatch($quote, $uploadedDocuments, $process);
 
-        $response['status'] = true;
-        $response['message'] = 'OCR processing batch dispatched successfully. Processing is in progress...';
-        $response['processing'] = true;
+        $response['status'] = 'true';
+        // $response['processing'] = 'true';
+        $response['message'] = 'OCR processing batch dispatched successfully';
         $response['documents_count'] = $uploadedDocuments->count();
 
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR processing batch dispatched for '.$uploadedDocuments->count().' documents');
@@ -731,7 +731,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                         'updated_at' => now(),
                     ]);
 
-                    $this->executeStepSequence($quote, $process, self::BOOK_POLICY);
+                    // $this->executeStepSequence($quote, $process, self::BOOK_POLICY);
                 })
                 ->catch(function (Batch $batch, Throwable $e) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing failed completely: '.$e->getMessage());
@@ -1191,14 +1191,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
                 return $response;
             }
-            if ($policyIssuance->completed_step == self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
-                $response['isEditBookingDetailsDisabled'] = false;
-                $response['message'] = 'Booking Details is editable';
-
-                return $response;
-            }
-
-            if ($policyIssuance->completed_step == self::EXECUTE_OCR_PROCESSING) {
+            if (in_array($policyIssuance->completed_step, [self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, self::EXECUTE_OCR_PROCESSING])) {
+                $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
 
