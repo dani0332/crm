@@ -48,6 +48,7 @@ use App\Models\KycLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\PolicyIssuance;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -483,6 +484,7 @@ class AMLController extends Controller
     private function InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote)
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
+        $insurerAMLScreeningResponse = [];
 
         if (isTapEnabled()) {
             LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start');
@@ -496,17 +498,24 @@ class AMLController extends Controller
                 session()->put('insurerAMLScreeningResponse');
                 InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                 $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                if (! empty($insurerAMLScreeningResponse)) {
+                if (! empty($getInsurerScreeningResponse)) {
                     $insurerAMLScreeningResponse = [
                         'status' => $getInsurerScreeningResponse['status'],
                         'message' => $getInsurerScreeningResponse['message'],
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                     ];
+
+                    if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
+                        $insurerAMLScreeningResponse['autoCaptureStatus'] = $getInsurerScreeningResponse['autoCaptureStatus'];
+                        $insurerAMLScreeningResponse['autoCaptureMessage'] = $getInsurerScreeningResponse['autoCaptureMessage'];
+                    }
                 }
                 session()->forget('insurerAMLScreeningResponse');
             }
             LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed');
         }
+
+        return $insurerAMLScreeningResponse;
     }
 
     private function updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote)
@@ -859,30 +868,34 @@ class AMLController extends Controller
 
     public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
     {
-
-        app(LivaInsuranceService::class)->updateQuoteRequest('test');
-
-        dd('working');
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
         LoggerService::startQuoteLogging($quote);
 
-        $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+        $response = ['success' => false];
+        $insurerAMLScreeningResponse = [];
 
-        if ($preparedFormData) {
-            if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
-                $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+        if ($insuredKycRequest->customer_type == CustomerTypeEnum::Individual) {
+            $insurerAMLScreeningResponse = $this->InsurerScreening($insuredKycRequest->quote_type_id, $insuredKycRequest, $quote);
+
+            if (! empty($insurerAMLScreeningResponse)) {
+                $response['insurer_screening'] = [
+                    'status' => $insurerAMLScreeningResponse['status'],
+                    'message' => $insurerAMLScreeningResponse['message'],
+                    'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched'] ?? false,
+                    'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
+                    'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
+                ];
             }
-
-            if (app(PolicyIssuanceService::class)->checkAllowedAutomations($quoteType, $quote)) {
-                app(CentralService::class)->autoCapturePaymentProcess($quoteType, $quote);
-            }
-
-            return response()->json(['success' => true]);
         }
 
-        return response()->json(['success' => false]);
+        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared) {
+            $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+            $response['success'] = $preparedFormData;
+        }
+
+        return response()->json($response);
     }
 
     public function stopHapexReminder($quote)

@@ -39,7 +39,7 @@ class PolicyIssuanceService
     public function checkAllowedAutomations($quoteType, $quote)
     {
         $allowedQuoteTypes = [QuoteTypes::CAR->value];
-        $allowedInsuranceProviders = [InsuranceProvidersEnum::AXA];
+        $allowedInsuranceProviders = [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA];
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);

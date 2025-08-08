@@ -21,7 +21,7 @@ const patternFieldDisable = ref(true);
 const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
 const syncProcessLoading = ref(false);
 
-const emit = defineEmits(['update:insurerPortalSyncData']); 
+const emit = defineEmits(['update:insurerPortalSyncData']);
 
 const insuredDetails = page.props.insuredDetails;
 const lookups = page.props.lookups;
@@ -306,12 +306,36 @@ const syncInsurerPortalUpdates = () => {
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
+  let insuranceProviderCode =page.props.quoteRequest?.plan?.insurance_provider?.code;
+
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
 
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
+        if(response.data.insurer_screening) {
+          if(response.data.insurer_screening.status == 'AML_SCREENING_FAILED') {
+            notification.error({
+              title: response.data.insurer_screening.message || `${insuranceProviderCode} server connection issue. Please check API logs for details of the error`,
+              position: 'top',
+            });
+          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED') {
+            if(response.data.insurer_screening.autoCaptureStatus == 'success') {
+              notification.success({
+                title: response.data.insurer_screening.autoCaptureMessage,
+                timeout: 30000,
+              });
+            }
+            if(response.data.insurer_screening.autoCaptureStatus == 'failed') {
+              notification.error({
+                title: response.data.insurer_screening.autoCaptureMessage ?? 'Auto capture payment process failed',
+                position: 'top',
+                timeout: 30000,
+              });
+            }
+          }
+        }
         if (response.data.success) {
           notification.success({
             title: 'KYC Document uploaded successfully',
@@ -329,6 +353,7 @@ const submitInsuredKycForm = isValid => {
           });
           kycFormDetails.processing = false;
         }
+
       })
       .catch(errors => {
         Object.keys(errors.response.data.errors).forEach(function (key) {

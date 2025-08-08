@@ -5,6 +5,7 @@ namespace App\Services\PolicyIssuanceAutomation\Car;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
@@ -176,14 +177,14 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        if ($nextStepToBeExecuted === self::BOOK_POLICY) {
+        /* if ($nextStepToBeExecuted === self::BOOK_POLICY) {
             $bookPolicyResponse = $this->executeBookPolicyStep($quote, $process);
             if (isset($bookPolicyResponse['status']) && ! $bookPolicyResponse['status']) {
                 return $bookPolicyResponse;
             }
 
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        }
+        } */
 
         // Return success response when all steps are completed
         return [
@@ -276,9 +277,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $payload = [
             'RetrieveRequest' => [
-                'RetrieveType' => '6',
-                'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ '7874552',
-                'PartnerTrnReferenceNumber' => 'Yer7h346gfr',
+                'RetrieveType' => $quote->source == LeadSourceEnum::RENEWAL_UPLOAD ? '6' : '5',
+                'TransactionNumber' => $quote?->carQuotePlanDetail?->insurer_quote_no,
+                'PartnerTrnReferenceNumber' => $quote->uuid,
                 'Documents' => [
                     'DocsInResponse' => true,
                     'DocsDetails' => [
@@ -437,9 +438,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $payload = [
             'PolicyRequest' => [
-                'QuotationNo' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874552,
+                'QuotationNo' => $quote?->carQuotePlanDetail?->insurer_quote_no,
                 'PremiumPayable' => $payment->total_amount,
-                'PartnerTrnReferenceNumber' => /* $quote->code ?? */ '123456',
+                'PartnerTrnReferenceNumber' => $quote->uuid,
                 'Documents' => [
                     'DocsInResponse' => false,
                     'DocsDetails' => [
@@ -590,8 +591,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         $payload['UploadDocumentsRequest'] = [
-            'TransactionType' => '5',
-            'TransactionNumber' => /* $quote?->carQuotePlanDetail?->insurer_quote_no ?? */ 7874552, // TODO: Use actual quote number
+            'TransactionType' => $quote->source == LeadSourceEnum::RENEWAL_UPLOAD ? '6' : '5',
+            'TransactionNumber' => $quote?->carQuotePlanDetail?->insurer_quote_no,
             'Attachments' => $attachments,
         ];
 

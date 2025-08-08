@@ -1359,15 +1359,41 @@ class SplitPaymentService
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 
-    private function shouldProcessPayment($paymentSplit, $isFromJob, $modelType)
+    private function shouldProcessPayment($paymentSplit, $isFromJob, $modelType): bool
     {
-        $paymentNotApproved = ! $paymentSplit->payment->is_approved;
+        $paymentCode = $paymentSplit->code;
+        $payment = $paymentSplit->payment;
+        $insuranceProvider = $payment->insuranceProvider->code ?? null;
+        $paymentNotApproved = ($modelType == QuoteTypes::TRAVEL->value && $insuranceProvider == InsuranceProvidersEnum::ALNC) ? ! $payment->is_approved : true;
 
-        // Check if it's from a job and the model type is a travel quote with a specific insurance provider
-        $isTravelQuoteFromJob = $isFromJob && $modelType == QuoteTypes::TRAVEL->value;
-        $isAlncInsurance = $paymentSplit->payment->insuranceProvider->code == InsuranceProvidersEnum::ALNC;
+        LoggerService::info(
+            "Evaluating shouldProcessPayment for split payment Code: {$paymentCode}", [
+                'isFromJob' => $isFromJob ? 'true' : 'false',
+                'modelType' => $modelType,
+                'paymentNotApproved' => $paymentNotApproved ? 'true' : 'false',
+                'insuranceProvider' => $insuranceProvider,
+            ]
+        );
 
-        return $paymentNotApproved && (! $isFromJob || ($isTravelQuoteFromJob && $isAlncInsurance));
+        // Check if the job is triggered for Travel or Car quotes
+        $isTravelOrCarQuote = in_array($modelType, [QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value]);
+        LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: ".($isTravelOrCarQuote ? 'true' : 'false'));
+
+        // Check if the insurance provider is ALNC or AXA
+        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
+        LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
+
+        // Only process if payment is not approved and:
+        // - not from job, or
+        // - from job AND is Travel/Car AND provider is ALNC/AXA
+        $shouldProcess = $paymentNotApproved && (
+            ! $isFromJob ||
+            ($isTravelOrCarQuote && $isAlncOrAxa)
+        );
+
+        LoggerService::info("Split payment Code: {$paymentCode} shouldProcess: ".($shouldProcess ? 'true' : 'false'));
+
+        return $shouldProcess;
     }
 
     private function shouldCreateReceipt($parentPayment, $paymentSplit): bool

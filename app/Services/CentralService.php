@@ -49,6 +49,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -1390,7 +1391,6 @@ class CentralService extends BaseService
             ];
 
             return Ken::request('/capture-payment-validation', 'put', $data);
-
         } catch (\Throwable $th) {
             LoggerService::error('capturePaymentValidation failed',
                 context: [
@@ -1504,16 +1504,17 @@ class CentralService extends BaseService
         return $paymentGatewayIds;
     }
 
-    public function autoCapturePaymentProcess($quoteType, $quote, $premiumCheckEnabled = true)
+    public function autoCapturePaymentProcess($quoteTypeId, $quote, $premiumCheckEnabled = true)
     {
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started');
-
-        if (! app(AMLService::class)->autoCaptureValidationCheck($quote)) {
-            return ['status' => false, 'message' => 'Auto capture payment process failed'];
-        }
-
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
         $payment = $quote->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->code);
+
+        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
+
+        if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+            return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
+        }
 
         if ($premiumCheckEnabled) {
             // Premium check call to check if the premium is valid
@@ -1529,18 +1530,28 @@ class CentralService extends BaseService
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
-                return;
+                // TODO:: This should be dynamic as per insurance provider and need to check with API team about the response message
+                // $messages = [
+                //     'Capture amount exceeds the authorized amount' => 'Capture amount in IMCRM and either is greater than Authorized amount',
+                //     'Capture amount exceeds the authorized amount and differs from premium in GIG portal' => 'Capture amount in IMCRM and both are greater than Authorized amount',
+                //     'Premium mismatch with GIG portal' => 'Capture amount in IMCRM and both are less than or equal to Authorized amount',
+                //     'Premium in GIG portal exceeds the authorized amount and differs from capture amount' => 'Capture amount in IMCRM and getQuote premium is greater than Authorized amount, but the Capture amount is less than or equal to the Authorized amount',
+                //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
+                // ];
+
+                $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
+
+                return ['status' => false, 'message' => $message, 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to '.$message];
             }
 
             LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' success', extra: $logExtra);
         }
 
-        LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
         $paymentSplits = $payment->paymentSplits;
         $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
 
         $splitPaymentApprovalRequest = new SplitPaymentApproveRequest([
-            'modelType' => $quoteType->value,
+            'modelType' => $quoteType->code,
             'quote_id' => $quote->id,
             'plan_id' => $payment->plan_id,
             'payment_code' => $payment->code,
@@ -1556,6 +1567,13 @@ class CentralService extends BaseService
 
         $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
         LoggerService::info(__FUNCTION__.' - Split payment approval process completed', extra: ['paymentCode' => $payment->code]);
+
+        if (is_string($response)) {
+            return ['message' => $response, 'autoCaptureStatus' => GenericRequestEnum::SUCCESS, 'autoCaptureMessage' => 'Auto capture payment process started'];
+        }
+
+        $response['autoCaptureStatus'] = GenericRequestEnum::SUCCESS;
+        $response['autoCaptureMessage'] = 'Auto capture payment process started';
 
         return $response;
     }
