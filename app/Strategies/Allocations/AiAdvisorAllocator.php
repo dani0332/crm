@@ -22,16 +22,19 @@ class AiAdvisorAllocator
             return false;
         }
 
-        $advisor = self::tryAssignment($quoteType, $uuid);
+        [
+            'advisor' => $advisor,
+            'isAdvisorAlreadyAssigned' => $isAdvisorAlreadyAssigned,
+        ] = self::tryAssignment($quoteType, $uuid);
 
         if (! $advisor) {
             return false;
         }
 
-        return self::runProcess($quoteType, $uuid, $advisor, $assignPipe);
+        return self::runAIProcess($quoteType, $uuid, $advisor, $assignPipe, $isAdvisorAlreadyAssigned);
     }
 
-    private static function runProcess(QuoteTypes $quoteType, string $uuid, User $advisor, $assignPipe)
+    private static function runAIProcess(QuoteTypes $quoteType, string $uuid, User $advisor, $assignPipe, bool $isAdvisorAlreadyAssigned)
     {
         $allocationRequest = new AllocationRequest(
             quoteType: $quoteType,
@@ -39,8 +42,8 @@ class AiAdvisorAllocator
             overrideAdvisorId: true
         );
 
-        $allocationRequest->set('advisor', $advisor);
-        $allocationRequest->set('isAIAdvisor', true);
+        $allocationRequest->setAdvisor($advisor);
+        $allocationRequest->set('isAdvisorAlreadyAssigned', $isAdvisorAlreadyAssigned);
 
         try {
             return Pipeline::send($allocationRequest)->through([
@@ -57,7 +60,7 @@ class AiAdvisorAllocator
         }
     }
 
-    private static function tryAssignment(QuoteTypes $quoteType, string $uuid): ?User
+    private static function tryAssignment(QuoteTypes $quoteType, string $uuid): ?array
     {
         $lead = $quoteType->model()->where('uuid', $uuid)->first();
 
@@ -65,18 +68,13 @@ class AiAdvisorAllocator
             return null;
         }
 
+        $data = [];
+
         if ($lead->isAIAdviserRequired()) {
-            if ($lead->isAIAdvisorAssigned()) {
+            $data['isAdvisorAlreadyAssigned'] = $lead->isAIAdvisorAssigned();
+            $data['advisor'] = User::getAiAdvisor();
 
-            } else {
-                $lead->assignToAIAdvisor();
-            }
-
-            $lead->refresh();
-
-            return $lead->advisor;
-        } else {
-            $lead->unAssignAIAdvisor();
+            return $data;
         }
 
         return null;
