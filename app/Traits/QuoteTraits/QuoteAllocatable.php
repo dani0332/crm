@@ -273,6 +273,10 @@ trait QuoteAllocatable
 
     public function assignToAIAdvisor()
     {
+        if ($this->isAIAdvisorAssigned()) {
+            return;
+        }
+
         $aiAdvisor = User::getAiAdvisor();
 
         if (! $aiAdvisor) {
@@ -287,15 +291,8 @@ trait QuoteAllocatable
         ]);
     }
 
-    public function unAssignAIAdvisor()
+    public function isAIAdvisorAssigned(): bool
     {
-        if ($this->isAIAdvisorAssigned()) {
-            $this->touch('ai_advisor_unassigned_at');
-        }
-    }
-
-    public function isAIAdvisorAssigned()
-    {
-        return ! empty($this->advisor_id) && ! empty($this->ai_advisor_assigned_at) && empty($this->ai_advisor_unassigned_at);
+        return ! empty($this->advisor) && $this->advisor->isAi() && ! empty($this->ai_advisor_assigned_at);
     }
 }
