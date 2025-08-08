@@ -49,18 +49,17 @@ class CarCQFRenewalService
 
         $startDate = Carbon::now()->addDays((int) $renewalDaysThreshold);
         LoggerService::info(self::class." - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
-            $isQuoteExists = CarQuote::whereDate('policy_expiry_date', $startDate)
-            ->whereNotIn('quote_status_id', 
-                    [QuoteStatusEnum::PolicyCancelled,
+        $isQuoteExists = CarQuote::whereDate('policy_expiry_date', $startDate)
+            ->whereNotIn('quote_status_id',
+                [QuoteStatusEnum::PolicyCancelled,
                     QuoteStatusEnum::PolicyCancelledReissued,
                     QuoteStatusEnum::CancellationPending]
-                )->whereIn('payment_status_id', [
-                PaymentStatusEnum::PAID,
-                PaymentStatusEnum::PARTIALLY_PAID,
-                PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PARTIAL_CAPTURED,
-            ])
-         
+            )->whereIn('payment_status_id', [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+                ])
             ->first();
 
         if (empty($isQuoteExists)) {
@@ -70,11 +69,11 @@ class CarCQFRenewalService
         }
         $renewalsUploadLeads = $this->createRenewalsUploadLeads();
         CarQuote::whereDate('policy_expiry_date', $startDate)
-        ->whereNotIn('quote_status_id', 
-                    [QuoteStatusEnum::PolicyCancelled,
+            ->whereNotIn('quote_status_id',
+                [QuoteStatusEnum::PolicyCancelled,
                     QuoteStatusEnum::PolicyCancelledReissued,
                     QuoteStatusEnum::CancellationPending]
-                )
+            )
             ->whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
