@@ -16,7 +16,6 @@ use App\Facades\Ken;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
-use App\Models\InsurerRequestResponse;
 use App\Models\Payment;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
@@ -58,6 +57,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     const BOOK_POLICY_API_FAILED_STATUS_ID = 4;
     const BOOK_POLICY_API_FAILED = 'Book Policy API Failed';
     const BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
+
     public $currentInsurerApiStatus = null;
     public $headers = [];
 
@@ -772,12 +772,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 return response()->json([
                     'success' => true,
                     'message' => 'Quote details retrieved successfully from insurer portal',
-                    'data' => $getQuoteResponseMapping ?? null
+                    'data' => $getQuoteResponseMapping ?? null,
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal'
+                    'message' => $response['message'] ?? 'Failed to retrieve quote details from insurer portal',
                 ]);
             }
         } catch (\Exception $e) {
@@ -785,7 +785,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while retrieving quote details from insurer portal'
+                'message' => 'An error occurred while retrieving quote details from insurer portal',
             ]);
         }
     }

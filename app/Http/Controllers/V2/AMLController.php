@@ -48,7 +48,6 @@ use App\Models\KycLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
-use App\Models\PolicyIssuance;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -61,10 +60,8 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -1074,12 +1071,12 @@ class AMLController extends Controller
 
                 default => response()->json([
                     'success' => false,
-                    'message' => 'Quote type not supported'
+                    'message' => 'Quote type not supported',
                 ]),
             },
             default => response()->json([
                 'success' => false,
-                'message' => 'Quote type not supported'
+                'message' => 'Quote type not supported',
             ]),
         };
     }
