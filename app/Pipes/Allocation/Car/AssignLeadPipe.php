@@ -19,6 +19,12 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if ($this->allocationRequest->get('isAdvisorAlreadyAssigned')) {
+            $this->allocationRequest->markAsAllocated();
+
+            return $next($request);
+        }
+
         $this->assign(function () {
             $this->sendWhatsappNotificationToCustomer();
         });
