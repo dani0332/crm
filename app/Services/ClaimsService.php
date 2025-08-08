@@ -39,6 +39,7 @@ class ClaimsService extends BaseService
             'uuid',
             'code',
             'incident',
+            'incident_date',
             'first_name',
             'last_name',
             'email',
@@ -52,11 +53,16 @@ class ClaimsService extends BaseService
             'personal_quote_id',
             'insurance_provider_id',
             'policy_number',
+            'claim_number',
             'claim_status_id',
             'claim_sub_status_id',
             'claim_type_id',
             'claim_request_type_id',
             'whatsapp_consent',
+            'approved_repair_amount',
+            'approved_total_loss_amount',
+            'approved_cash_loss_amount',
+            'claim_decline_reason',
             'created_at',
         ])
             ->with([
@@ -188,6 +194,7 @@ class ClaimsService extends BaseService
     public function getClaimById($uuid)
     {
         return $this->query->where('uuid', $uuid)->first();
+    
     }
 
     /**
@@ -340,11 +347,12 @@ class ClaimsService extends BaseService
 
             // Separate claim request data from detail data
             $claimRequestData = collect($data)->only([
-                'uuid', 'code', 'incident', 'incident_story', 'first_name', 'last_name', 'email', 'mobile_no',
-                'customer_id', 'source', 'manager_id', 'manager_assigned_date', 'quote_uuid',
-                'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
-                'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
-                'whatsapp_consent', 'selected_policy_id', 'policy_not_listed', 'insurer_claim_number',
+                'incident_story', 'incident_date', 'first_name', 'last_name', 
+                'email', 'mobile_no', 'customer_id', 'source', 'manager_id', 'manager_assigned_date', 
+                'quote_uuid', 'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
+                'claim_number', 'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
+                'whatsapp_consent', 'selected_policy_id', 'policy_not_listed', 'claim_decline_reason',
+                'approved_repair_amount', 'approved_total_loss_amount', 'approved_cash_loss_amount',
             ])->filter()->toArray();
 
             // Store incident_story as incident field
@@ -357,7 +365,7 @@ class ClaimsService extends BaseService
 
             // Handle claim request detail updates
             $detailData = collect($data)->only([
-                'car_make', 'car_model', 'service_type_id', 'request_reference_number', 'user_ip',
+                'car_make', 'car_model', 'model_year', 'plat_number', 'service_type_id', 'request_reference_number', 'user_ip',
             ])->filter()->toArray();
 
             if (! empty($detailData)) {
@@ -383,10 +391,10 @@ class ClaimsService extends BaseService
             DB::rollback();
             LoggerService::error('Error updating claim request', extra: [
                 'error' => $e->getMessage(),
-                'claim_request_id' => $claimRequest->id,
+                'claim_request_id' => $uuid,
                 'data' => $data,
             ]); 
-            
+
             throw $e;
         }
     }
@@ -542,22 +550,18 @@ class ClaimsService extends BaseService
             // Handle auto-status updates based on amount fields
             if (isset($additionalData['approved_repair_amount']) && $additionalData['approved_repair_amount'] > 0) {
                 $claim->approved_repair_amount = $additionalData['approved_repair_amount'];
-                $claim->updateClaimSubStatus($this->getSubStatusByName('Repair approved & work in progress'));
             }
 
             if (isset($additionalData['approved_total_loss_amount']) && $additionalData['approved_total_loss_amount'] > 0) {
                 $claim->approved_total_loss_amount = $additionalData['approved_total_loss_amount'];
-                $claim->updateClaimSubStatus($this->getSubStatusByName('Total Loss Offer Letter shared'));
             }
 
             if (isset($additionalData['approved_cash_loss_amount']) && $additionalData['approved_cash_loss_amount'] > 0) {
                 $claim->approved_cash_loss_amount = $additionalData['approved_cash_loss_amount'];
-                $claim->updateClaimSubStatus($this->getSubStatusByName('Cash loss approved'));
             }
 
             if (isset($additionalData['claim_denial_reason']) && ! empty($additionalData['claim_denial_reason'])) {
                 $claim->claim_denial_reason = $additionalData['claim_denial_reason'];
-                $claim->updateClaimSubStatus($this->getSubStatusByName('Claim denied'));
             }
 
             $claim->save();

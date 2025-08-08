@@ -159,7 +159,7 @@ class ClaimsController extends Controller
         try {
             // Load claim request with all relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
-
+            //dd($claimRequest->toArray());
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -170,7 +170,7 @@ class ClaimsController extends Controller
         } catch (Exception $e) {
             LoggerService::error('Error loading claim request details', extra: [
                 'error' => $e->getMessage(),
-                'claim_request_id' => $claimRequest->id,
+                'claim_request_id' => $uuid,
                 'user_id' => auth()->id(),
             ]);
 

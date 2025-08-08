@@ -65,13 +65,7 @@ const managersOptions = computed(() => {
     })) || []
   );
 });
-
-const statusOptions = computed(() => {
-  return Object.entries(props.dropdowns.claimStatuses).map(([id, text]) => ({
-    value: parseInt(id),
-    label: text,
-  }));
-});
+ 
 
 const subStatusOptions = computed(() => {
   return (
@@ -328,28 +322,7 @@ function deleteClaim() {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Status Update -->
-            <div class="bg-gray-50 p-4 rounded">
-              <h4 class="font-semibold mb-3 text-gray-700">Update Status</h4>
-              <div class="flex gap-2">
-                <x-select
-                  v-model="statusForm.claim_status_id"
-                  placeholder="Select Status"
-                  :options="statusOptions"
-                  class="flex-1"
-                />
-                <x-button
-                  size="sm"
-                  color="primary"
-                  @click="updateStatus"
-                  :loading="statusForm.processing"
-                >
-                  Update
-                </x-button>
-              </div>
-            </div>
-
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> 
             <!-- Sub-Status Update -->
             <div class="bg-gray-50 p-4 rounded">
               <h4 class="font-semibold mb-3 text-gray-700">
@@ -493,11 +466,11 @@ function deleteClaim() {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">QUOTE TYPE</dt>
-                <dd>{{ claim.quoteType?.text }}</dd>
+                <dd>{{ claim.quote_type?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CLAIM TYPE</dt>
-                <dd>{{ claim.claimType?.text }}</dd>
+                <dd>{{ claim.claim_type?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY NUMBER</dt>
@@ -532,22 +505,7 @@ function deleteClaim() {
               </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">STATUS</dt>
-                <dd>
-                  <x-tag
-                    size="sm"
-                    :color="
-                      claim.claim_status === 'Closed'
-                        ? 'success'
-                        : claim.claim_status === 'Open'
-                          ? 'warning'
-                          : claim.claim_status === 'Cancelled'
-                            ? 'error'
-                            : 'info'
-                    "
-                  >
-                    {{ claim.claim_status }}
-                  </x-tag>
-                </dd>
+                <dd>  {{ claim.claim_status.text }}  </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUB STATUS</dt>

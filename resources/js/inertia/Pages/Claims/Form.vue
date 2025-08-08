@@ -27,10 +27,10 @@ const claimForm = useForm({
   claim_number: props.claim?.claim_number || '',
 
   // Car-specific fields (visible when editing)
-  plate_number: props.claim?.plate_number || '',
-  car_make: props.claim?.car_make || '',
-  car_model: props.claim?.car_model || '',
-  car_model_year: props.claim?.car_model_year || '',
+  plat_number: props.claim?.claim_request_details?.plat_number || '',
+  car_make: props.claim?.claim_request_details?.car_make || '',
+  car_model: props.claim?.claim_request_details?.car_model || '',
+  model_year: props.claim?.claim_request_details?.model_year || '',
 
   // Financial fields (visible when editing)
   approved_repair_amount: props.claim?.approved_repair_amount || '',
@@ -38,12 +38,12 @@ const claimForm = useForm({
   approved_cash_loss_amount: props.claim?.approved_cash_loss_amount || '',
 
   // Claim denial reason (visible when editing)
-  claim_denial_reason: props.claim?.claim_denial_reason || '',
+  claim_decline_reason: props.claim?.claim_decline_reason || '',
 
   /* Health-specific fields */
   claim_request_type_id: props.claim?.claim_request_type_id || '',
-  service_type_id: props.claim?.service_type_id || '',
-  request_reference_number: props.claim?.request_reference_number || '',
+  service_type_id: props.claim?.claim_request_details?.service_type_id || '',
+  request_reference_number: props.claim?.claim_request_details?.request_reference_number || '',
 
   // Policy Selection
   selected_policy_id: null,
@@ -558,21 +558,21 @@ function onSubmit(isValid) {
             <!-- Additional fields for Car LOB when editing -->
             <x-input
               v-if="isCarLOB"
-              v-model="claimForm.plate_number"
+              v-model="claimForm.plat_number"
               type="text"
               label="Plate Number"
               placeholder="Enter Plate Number"
               class="w-full"
-              :error="claimForm.errors.plate_number"
+              :error="claimForm.errors.plat_number"
             />
             <x-input
               v-if="isCarLOB"
-              v-model="claimForm.car_model_year"
+              v-model="claimForm.model_year"
               type="number"
               label="Car Model Year"
               placeholder="Enter Model Year"
               class="w-full"
-              :error="claimForm.errors.car_model_year"
+              :error="claimForm.errors.model_year"
             />
             <x-input
               v-if="isCarLOB"
@@ -638,12 +638,12 @@ function onSubmit(isValid) {
           <!-- Claim Denial Reason (when editing) -->
           <x-textarea
             v-if="isEdit"
-            v-model="claimForm.claim_denial_reason"
+            v-model="claimForm.claim_decline_reason"
             label="Claim Denial Reason"
             placeholder="Note..."
             rows="4"
             class="w-full"
-            :error="claimForm.errors.claim_denial_reason"
+            :error="claimForm.errors.claim_decline_reason"
           />
         </div>
       </div>

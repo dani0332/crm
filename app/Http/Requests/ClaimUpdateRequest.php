@@ -110,7 +110,7 @@ class ClaimUpdateRequest extends FormRequest
             ],
 
             // Car-specific fields
-            'plate_number' => [
+            'plat_number' => [
                 'nullable',
                 'string',
                 'max:20',
@@ -125,7 +125,7 @@ class ClaimUpdateRequest extends FormRequest
                 'string',
                 'max:100',
             ],
-            'car_model_year' => [
+            'model_year' => [
                 'nullable',
                 'integer',
                 'min:1900',
@@ -148,7 +148,7 @@ class ClaimUpdateRequest extends FormRequest
                 'numeric',
                 'min:0',
             ],
-            'claim_denial_reason' => [
+            'claim_decline_reason' => [
                 'nullable',
                 'string',
                 'max:2000',

@@ -5,16 +5,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Traits\FilterCriteria;
-use App\Traits\QuoteModelTrait;
+use App\Traits\FilterCriteria; 
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\MorphMany; 
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -27,6 +24,8 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property string $uuid
  * @property string $code
  * @property string|null $incident
+ * @property \Carbon\Carbon|null $incident_date
+ * @property string|null $claim_decline_reason
  * @property string $first_name
  * @property string $last_name
  * @property string $email
@@ -40,11 +39,15 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property int|null $personal_quote_id
  * @property int|null $insurance_provider_id
  * @property string|null $policy_number
+ * @property string|null $claim_number
  * @property int|null $claim_status_id
  * @property int|null $claim_sub_status_id
  * @property int|null $claim_type_id
  * @property int|null $claim_request_type_id
  * @property bool $whatsapp_consent
+ * @property float|null $approved_repair_amount
+ * @property float|null $approved_total_loss_amount
+ * @property float|null $approved_cash_loss_amount
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  */
@@ -54,9 +57,9 @@ class ClaimRequest extends Model implements AuditableContract
 
     protected $table = 'claim_requests';
     protected $fillable = [
-        'uuid',
-        'code',
         'incident',
+        'claim_decline_reason',
+        'incident_date', 
         'first_name',
         'last_name',
         'email',
@@ -70,15 +73,25 @@ class ClaimRequest extends Model implements AuditableContract
         'personal_quote_id',
         'insurance_provider_id',
         'policy_number',
+        'claim_number',
         'claim_status_id',
         'claim_sub_status_id',
         'claim_type_id',
         'claim_request_type_id',
         'whatsapp_consent',
+        'approved_repair_amount',
+        'approved_total_loss_amount',
+        'approved_cash_loss_amount',
+        'created_at',
+        'updated_at',
     ];
     protected $casts = [
+        'incident_date' => 'datetime',
         'manager_assigned_date' => 'datetime',
         'whatsapp_consent' => 'boolean',
+        'approved_repair_amount' => 'decimal:2',
+        'approved_total_loss_amount' => 'decimal:2',
+        'approved_cash_loss_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -112,16 +125,6 @@ class ClaimRequest extends Model implements AuditableContract
         parent::boot();
 
         static::creating(function ($claimRequest) {
-            // Generate UUID if not provided
-            if (empty($claimRequest->uuid)) {
-                $claimRequest->uuid = (string) Str::uuid();
-            }
-
-            // Generate code if not provided
-            if (empty($claimRequest->code)) {
-                $claimRequest->code = self::generateCode();
-            }
-
             // Set default source if not provided
             if (empty($claimRequest->source)) {
                 $claimRequest->source = 'IMCRM';
@@ -132,43 +135,16 @@ class ClaimRequest extends Model implements AuditableContract
                 $claimRequest->whatsapp_consent = false;
             }
         });
-
-        static::deleting(function ($claimRequest) {
-            // Delete related claim request details
-            $claimRequest->claimRequestDetails()->delete();
-            // Delete related documents
-            $claimRequest->documents()->delete();
-        });
+ 
     }
-
-    /**
-     * Generate a unique code for the claim request
-     * Format: CR-<8 digit unique characters>
-     */
-    private static function generateCode(): string
-    {
-        $prefix = 'CR-';
-
-        do {
-            $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $randomString = '';
-
-            for ($i = 0; $i < 8; $i++) {
-                $randomString .= $characters[mt_rand(0, strlen($characters) - 1)];
-            }
-
-            $code = $prefix.$randomString;
-        } while (self::where('code', $code)->exists());
-
-        return $code;
-    }
+ 
 
     /**
      * Relationships
      */
-    public function claimRequestDetails(): HasMany
+    public function claimRequestDetails()
     {
-        return $this->hasMany(ClaimRequestDetail::class, 'claim_request_id');
+        return $this->hasOne(ClaimRequestDetail::class, 'claim_request_id');
     }
 
     public function customer(): BelongsTo
@@ -299,14 +275,14 @@ class ClaimRequest extends Model implements AuditableContract
         $this->save();
     }
 
-    public function getCreatedAtAttribute($table)
+    public function getDisplayCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getDisplayUpdatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
 
