@@ -12,6 +12,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\QuoteTypeId;
 
 class EndingPoliciesReportService extends ManagementReport
 {
@@ -40,21 +41,26 @@ class EndingPoliciesReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
             ->select(
                 'c.first_name',
                 'c.last_name',
-                'policy_number',
+                'personal_quotes.policy_number',
                 'ip.text as insurer',
                 'qt.code as line_of_business',
                 'personal_quotes.policy_start_date',
                 'personal_quotes.policy_expiry_date as policy_end_date',
-                DB::raw('SUM(premium) as collected_amount'),
+                DB::raw('SUM(personal_quotes.premium) as collected_amount'),
                 DB::raw('SUM(personal_quotes.price_vat_applicable) as price_vat_applicable'),
-                DB::raw('SUM(vat) as total_vat'),
-                DB::raw('SUM(price_vat_not_applicable) as price_vat_not_applicable'),
+                DB::raw('SUM(personal_quotes.vat) as total_vat'),
+                DB::raw('SUM(personal_quotes.price_vat_not_applicable) as price_vat_not_applicable'),
                 DB::raw('SUM(p.discount_value) as discount'),
-                DB::raw('SUM(personal_quotes.price_vat_applicable + price_vat_not_applicable + vat - p.discount_value) as total_price'),
-                DB::raw('(SUM(personal_quotes.price_vat_applicable + price_vat_not_applicable + vat - p.discount_value) - SUM(premium)) as pending_balance'),
+                DB::raw('SUM(personal_quotes.price_vat_applicable + personal_quotes.price_vat_not_applicable + personal_quotes.vat - p.discount_value) as total_price'),
+                DB::raw('(SUM(personal_quotes.price_vat_applicable + personal_quotes.price_vat_not_applicable + personal_quotes.vat - p.discount_value) - SUM(personal_quotes.premium)) as pending_balance'),
                 DB::raw('SUM(p.commission_vat_applicable) as commission_vat_applicable'),
                 DB::raw('SUM(p.commission_vat) as commission_vat'),
                 DB::raw('SUM(p.commission_vat_not_applicable) as commission_vat_not_applicable'),
@@ -63,6 +69,8 @@ class EndingPoliciesReportService extends ManagementReport
                 'dp.name as department',
                 'personal_quotes.source',
                 'personal_quotes.notes',
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with'
             );
 
         $this->applyFilters($query, $request, isSSR: true);
@@ -106,6 +114,9 @@ class EndingPoliciesReportService extends ManagementReport
             $item->commission_vat_applicable = number_format($item->commission_vat_applicable, 2);
             $item->commission_vat = number_format($item->commission_vat, 2);
             $item->commission_vat_not_applicable = number_format($item->commission_vat_not_applicable, 2);
+            $item->currently_insured_with_text = $item->quote_type_id === QuoteTypeId::Car
+                ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
+                : ($item->currently_insured_with_text ?? 'N/A');
         });
     }
 
