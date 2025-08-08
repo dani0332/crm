@@ -319,6 +319,12 @@ class CentralController extends Controller
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
+
+            $isAUHHealthLead = strtolower($request->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
+            if ($isAUHHealthLead) {
+                return response()->json(['message' => 'This is an Abu Dhabi health quote lead. Please book the policy manually.'], 200);
+            }
+
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
