@@ -42,7 +42,7 @@ trait PrivateClient
     public function applyPcpTag(string $leadUuid, int $quoteTypeId): bool
     {
         if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
-            LoggerService::warning('LOB not allowed.', extra: [
+            LoggerService::warning('LOB not eligible for PCP yet.', extra: [
                 'quoteTypeId' => $quoteTypeId,
             ]);
 
