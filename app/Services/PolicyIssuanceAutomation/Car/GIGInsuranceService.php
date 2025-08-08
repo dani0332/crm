@@ -10,6 +10,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -447,6 +448,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $policyIssuanceResponse;
         }
 
+        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued]);
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
 
