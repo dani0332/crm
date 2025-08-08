@@ -63,7 +63,7 @@ class QuoteDocument extends Model implements AuditableContract
     public function documentUrl() : Attribute
     {
         return Attribute::make(
-            get: fn ($value) => storageUrl() . $this->doc_url,
+            get: fn () => storageUrl() . $this->doc_url,
         );
     }
 }
