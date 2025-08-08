@@ -16,7 +16,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
-use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\SendFailedCarRenewalsJob;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
@@ -154,7 +153,7 @@ class CarCQFRenewalService
 
                     continue;
                 }
-              
+
                 // Check if the quote is a duplicate
                 if ($this->isDuplicateQuote($quote)) {
                     LoggerService::info(self::class.' - Duplicate quote detected. Skipping processing');
@@ -166,16 +165,17 @@ class CarCQFRenewalService
                 }
 
                 // Check if the quote is an Insly renewal and if the renewal criteria is met
-                if($quote->source == LeadSourceEnum::INSLY){
+                if ($quote->source == LeadSourceEnum::INSLY) {
                     $isInslyRenewal = $this->checkInslyRenewal($quote);
                     if (! $isInslyRenewal) {
                         LoggerService::info(self::class.' - Insly renewal criteria not met for policy number', ['policy_number' => $quote->policy_number]);
                         $validationErrors = ['policy_number' => "Insly renewal criteria not met for policy number: $quote->policy_number"];
                         $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, false, $validationErrors);
-                            continue;
-                        }
-                } 
-                
+
+                        continue;
+                    }
+                }
+
                 Sleep::for(3)->seconds();
                 LoggerService::info(self::class.' - Processing quote');
                 $this->storeCarCQFRenewalQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold);
@@ -203,29 +203,29 @@ class CarCQFRenewalService
             $endorsementFinancial = false;
             $policyPeriodExtension = false;
             $isUpdateBooked = false;
-           
-            if ($quote->source === LeadSourceEnum::INSLY && !empty($sendUpdateLogs)) {
+
+            if ($quote->source === LeadSourceEnum::INSLY && ! empty($sendUpdateLogs)) {
                 foreach ($sendUpdateLogs as $log) {
-                  
-                    if($log->isEndorsementFinancial()){
+
+                    if ($log->isEndorsementFinancial()) {
                         $endorsementFinancial = true;
                         LoggerService::info(self::class.' - Endorsement financial found  ', ['policy_number' => $quote->policy_number]);
                     }
 
-                    if($log->isPolicyPeriodExtension()){
-                        LoggerService::info(self::class.' - Policy period extension found ',['policy_number'=>$quote->policy_number]);
+                    if ($log->isPolicyPeriodExtension()) {
+                        LoggerService::info(self::class.' - Policy period extension found ', ['policy_number' => $quote->policy_number]);
                         $policyPeriodExtension = true;
-                       
+
                     }
-                   if($log->isUpdateBooked()){
-                       LoggerService::info(self::class.' - Update booked found ',['policy_number'=>$quote->policy_number]);
+                    if ($log->isUpdateBooked()) {
+                        LoggerService::info(self::class.' - Update booked found ', ['policy_number' => $quote->policy_number]);
                         $isUpdateBooked = true;
-                   }
+                    }
                 }
             }
 
         }
-        
+
         return $endorsementFinancial && $policyPeriodExtension && $isUpdateBooked;
     }
     public function validateQuote($quote)
