@@ -62,7 +62,7 @@ const additionalVehicleTransactionDetailsForm = useForm({
   rta_plate_category: carQuoteRequestDetail.value?.rta_plate_category ?? '',
   vehicle_color: carQuoteRequestDetail.value?.vehicle_color ?? '',
   plate_color: carQuoteRequestDetail.value?.plate_color ?? '',
-  bank_loan: carQuoteRequestDetail.value?.bank_loan ?? '',
+  bank_loan: carQuoteRequestDetail.value?.bank_loan?.toString() ?? '',
   bank_name: carQuoteRequestDetail.value?.bank_name ?? '',
   first_registration_date: carQuoteRequestDetail.value?.first_registration_date ?? '',
   policy_effective_date: carQuoteRequestDetail.value?.policy_effective_date ?? '',
@@ -291,22 +291,22 @@ watch(
               v-model="additionalVehicleTransactionDetailsForm.bank_loan"
               :rules="[isRequired]"
               :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' }
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' }
               ]"
               placeholder="Select Bank Loan"
               :disabled="hasNotEditPermission"
             />
           </x-field>
 
-          <x-field label="Bank Name" :required="! isGIG">
+          <x-field label="Bank Name" :required="! isGIG && additionalVehicleTransactionDetailsForm.bank_loan === '1'">
             <x-select
               filterable
               v-model="additionalVehicleTransactionDetailsForm.bank_name"
               placeholder="Select Bank Name"
               :options="bankNameOptions"
-              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== 1 || hasNotEditPermission"
-              :rules="(! isGIG) ? [isRequired] : []"
+              :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || hasNotEditPermission"
+              :rules="(! isGIG && additionalVehicleTransactionDetailsForm.bank_loan === '1') ? [isRequired] : []"
               class="w-full"
             />
           </x-field>
