@@ -47,6 +47,11 @@ class AllocationRequest
         return $this->teamId;
     }
 
+    public function overrideAdvisorId(bool $override = true)
+    {
+        $this->overrideAdvisorId = $override;
+    }
+
     public function isOverrideAdvisorRequest()
     {
         return $this->overrideAdvisorId;

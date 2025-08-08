@@ -81,6 +81,10 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->allocationRequest->markAsAIG();
         }
 
+        if (!$lead->isAIAdviserRequired() && $lead->isAIAdvisorAssigned()) {
+            $this->allocationRequest->overrideAdvisorId();
+        }
+
         return $lead;
     }
 
