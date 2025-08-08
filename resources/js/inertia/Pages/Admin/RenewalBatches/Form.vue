@@ -382,34 +382,6 @@ onMounted(() => {
                     carAdvisors.find(item => item.id === value).name
                   }}</span>
                 </div>
-                <!-- <x-select
-                  v-model="batchForm.segment_volume"
-                  name="segment_volume"
-                  placeholder="Please select Segment Volume"
-                  :options="
-                    carAdvisors.map(item => ({
-                      value: item.id,
-                      label: item.name,
-                    }))
-                  "
-                  filterable
-                  filterPlaceholder="Filter Segment Volume...."
-                  multiple
-                  truncate
-                  required
-                  :rules="[isRequired]"
-                >
-                  <template #content-footer>
-                    <ui-select-actions
-                      @select-all="
-                        batchForm.segment_volume = carAdvisors.map(
-                          item => item.id,
-                        )
-                      "
-                      @clear="batchForm.segment_volume = []"
-                    />
-                  </template>
-                </x-select> -->
               </td>
               <td class="p-3 border text-center">
                 <div v-for="value in batchForm.segment_value">
@@ -417,34 +389,6 @@ onMounted(() => {
                     carAdvisors.find(item => item.id === value).name
                   }}</span>
                 </div>
-                <!-- <x-select
-                  v-model="batchForm.segment_value"
-                  name="segment_value"
-                  placeholder="Please select Segment Value"
-                  :options="
-                    carAdvisors.map(item => ({
-                      value: item.id,
-                      label: item.name,
-                    }))
-                  "
-                  filterable
-                  filterPlaceholder="Filter Segment Value...."
-                  multiple
-                  truncate
-                  required
-                  :rules="[isRequired]"
-                >
-                  <template #content-footer>
-                    <ui-select-actions
-                      @select-all="
-                        batchForm.segment_value = carAdvisors.map(
-                          item => item.id,
-                        )
-                      "
-                      @clear="batchForm.segment_value = []"
-                    />
-                  </template>
-                </x-select> -->
               </td>
               <td class="p-3 border text-center">
                 <x-button
