@@ -18,6 +18,7 @@ class AiAdvisorSeeder extends Seeder
             ['email' => 'ai@insurancemarket.ae'],
             [
                 'name' => 'AI Advisor',
+                'is_ai_user' => true,
                 'password' => Hash::make(Str::random(30)),
                 'email_verified_at' => now(),
                 'created_at' => now(),
