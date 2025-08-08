@@ -336,7 +336,7 @@ class AllocationService extends BaseService
 
             $data = [
                 'advisorId' => $request->getAdvisor()?->id ?? $lead?->advisor_id,
-                'isAIAdvisor' => $request->get('isAIAdvisor', false),
+                'isAIAdvisor' => $request->getAdvisor()?->isAi(),
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
