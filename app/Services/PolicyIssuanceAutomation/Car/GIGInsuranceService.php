@@ -21,6 +21,7 @@ use App\Http\Requests\SendBookPolicyRequest;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
@@ -74,6 +75,10 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     private $maxRetries = 5;
     private $retryDelay = 10000; // 10 seconds
+
+    private const CAR_REGISTRATION_CARD_DOC_TYPE_CODE = 'DT01';
+    private const DRIVING_LICENSE_DOC_TYPE_CODE = 'DT02';
+    private const NATIONAL_ID_DOC_TYPE_CODE = 'DT03';
 
     private const POLICY_DOC_TAX_INVOICE = 'Tax invoice';
     private const POLICY_DOC_COMMISSION_STATEMENT = 'Commission statement';
@@ -417,19 +422,19 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         return collect([
             QuoteDocumentsEnum::CAR_REGISTRATION_CARD => [
                 'code' => QuoteDocumentsEnum::CAR_REGISTRATION_CARD,
-                'insurerDocCode' => 'DT01',
+                'insurerDocCode' => self::CAR_REGISTRATION_CARD_DOC_TYPE_CODE,
                 'insurerDocName' => 'Car Registration Document',
                 'uploaded' => false,
             ],
             QuoteDocumentsEnum::DRIVING_LICENSE => [
                 'code' => QuoteDocumentsEnum::DRIVING_LICENSE,
-                'insurerDocCode' => 'DT02',
+                'insurerDocCode' => self::DRIVING_LICENSE_DOC_TYPE_CODE,
                 'insurerDocName' => 'Driving License',
                 'uploaded' => false,
             ],
             QuoteDocumentsEnum::CAR_EMIRATE_ID => [
                 'code' => QuoteDocumentsEnum::CAR_EMIRATE_ID,
-                'insurerDocCode' => 'DT03',
+                'insurerDocCode' => self::NATIONAL_ID_DOC_TYPE_CODE,
                 'insurerDocName' => 'National ID',
                 'uploaded' => false,
             ],
@@ -1107,46 +1112,110 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' started');
 
         try {
-            $payload = ['quoteTypeId' => $quoteTypeId, 'quoteUID' => $quoteDetails->uuid];
-            $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
+            $response = Ken::request('/get-quote-from-insurer?quoteTypeId='.$quoteTypeId.'&quoteUID='.$quoteDetails->uuid, 'get');
             $responseData = $response['data'];
-
             $getQuoteResponseMapping = [
-                'rtaTransactionType' => $responseData->authorityTransactionDetails->code,
-                'plateCode' => $this->extractPlateCode($responseData->plateNumber), // optional
-                'plateNumber' => $this->extractPlateNumber($responseData->plateNumber), // optional
-                'trafficCodeNumber' => $responseData->motorInformation->trafficFileNumber,
-                'chassisNumber' => $responseData->motorInformation->chassisNumber,
-                'engineNumber' => $responseData->motorInformation->engineNumber,
-                'rtaPlateCategory' => '',
-                'vehicleColor' => $responseData->motorInformation->vehicleColor->code,
-                'plateColor' => $responseData->motorInformation->plateColor->code,
-                'bankLoan' => $responseData->motorInformation->isVehicleMortgaged,
-                'bankName' => ($responseData->motorInformation->isVehicleMortgaged) ? $responseData->motorInformation->bankName : '', // optional
-                'firstRegistrationDate' => $responseData->policySchedule->creationDate,
-                'policyEffectiveDate' => $responseData->policySchedule->effectiveDate,
-                'policyExpiryDate' => $responseData->policySchedule->expirationDate, // optional
-                'certificateStartDate' => $responseData->certificateInceptionDate,
-                'certificateEndDate' => $responseData->certificateEndDate, // optional
-                'annualMileageEstimate' => '', // optional
-                'isInsuredAndDriverSame' => $responseData->policyHolder->isPolicyHolderDriver,
-                'driverFirstName' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->givenName : $responseData->driver->firstName, // optional
-                'driverLastName' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->surName : $responseData->driver->lastName, // optional
-                'driverDob' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->birthDate : $responseData->driver->dateOfBirth, // optional
-                'driverGender' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->gender->value : $responseData->driver->gender,
-                'driverLicenseNumber' => '',
-                'licenseIssuePlace' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->firstDrivingLicenseIssueCountry->code : $responseData->driver->nationality->value, // optional
-                'licenseIssueDate' => '', // optional
-                'licenseExpiryDate' => '',
-                'uaeDrivingExperience' => '', // optional
-                'homeCountryLicenseIssuance' => '', // optional
-                'homeCountryDrivingExperience' => '', // optional
+                'rtaTransactionType' => $responseData['authorityTransactionDetails']['code'] ?? null,
+                'plateCode' => isset($responseData['plateNumber']) ? $this->extractPlateCode($responseData['plateNumber']) : null,
+                'plateNumber' => isset($responseData['plateNumber']) ? $this->extractPlateNumber($responseData['plateNumber']) : null,
+                'trafficCodeNumber' => $responseData['motorInformation']['trafficFileNumber'] ?? null,
+                'chassisNumber' => $responseData['motorInformation']['chassisNumber'] ?? null,
+                'engineNumber' => $responseData['motorInformation']['engineNumber'] ?? null,
+                'rtaPlateCategory' => $responseData['motorInformation']['rtaPlateCategory'] ?? '',
+                'vehicleColor' => $responseData['motorInformation']['vehicleColor']['code'] ?? null,
+                'plateColor' => $responseData['motorInformation']['plateColor']['code'] ?? null,
+                'bankLoan' => $responseData['motorInformation']['isVehicleMortgaged'] ?? null,
+                'bankName' => !empty($responseData['motorInformation']['isVehicleMortgaged']) ? ($responseData['motorInformation']['bankName'] ?? '') : '',
+                'firstRegistrationDate' => $responseData['policySchedule']['creationDate'] ?? null,
+                'policyEffectiveDate' => $responseData['policySchedule']['effectiveDate'] ?? null,
+                'policyExpiryDate' => $responseData['policySchedule']['expirationDate'] ?? null,
+                'certificateStartDate' => $responseData['motorInformation']['certificateInceptionDate'] ?? '',
+                'certificateEndDate' => $responseData['motorInformation']['certificateEndDate'] ?? '',
+                'annualMileageEstimate' => $responseData['annualMileageEstimate'] ?? '',
+                'isInsuredAndDriverSame' => ($responseData['policyHolder']['isPolicyHolderDriver'] ? '1' : '0') ?? null,
+                'driverFirstName' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                    ? (
+                        $responseData['policyHolder']['isPolicyHolderDriver']
+                            ? ($responseData['policyHolder']['person']['givenName'] ?? null)
+                            : ($responseData['driver']['firstName'] ?? null)
+                    )
+                    : null,
+                'driverLastName' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                    ? (
+                        $responseData['policyHolder']['isPolicyHolderDriver']
+                            ? ($responseData['policyHolder']['person']['surName'] ?? null)
+                            : ($responseData['driver']['lastName'] ?? null)
+                    )
+                    : null,
+                'driverDob' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                    ? (
+                        $responseData['policyHolder']['isPolicyHolderDriver']
+                            ? ($responseData['policyHolder']['person']['birthDate'] ?? null)
+                            : ($responseData['driver']['dateOfBirth'] ?? null)
+                    )
+                    : null,
+                'driverGender' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                    ? strtolower(
+                        $responseData['policyHolder']['isPolicyHolderDriver']
+                            ? ($responseData['policyHolder']['person']['gender']['value'] ?? null)
+                            : ($responseData['driver']['gender'] ?? null)
+                    )
+                    : null,
+                'driverLicenseNumber' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
+                    ? (
+                        collect($responseData['policyHolder']['documents'])
+                            ->first(fn($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docId']
+                            ?? null
+                    )
+                    : null,
+                'licenseExpiryDate' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
+                    ? (
+                        collect($responseData['policyHolder']['documents'])
+                            ->first(fn($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docExpiryDate']
+                            ?? null
+                    )
+                    : null,
+                'uaeDrivingExperience' => $responseData['policyHolder']['policyHolderDrivingExperience'] ?? '',
             ];
 
-            if (isset($response['status']) && $response['status'] === true) {
+            if (isset($response['data'])) {
+                $vehicleAndDriverDetails = [
+                    'rta_transaction_type' => $getQuoteResponseMapping['rtaTransactionType'] ?? null,
+                    'plate_code' => $getQuoteResponseMapping['plateCode'] ?? null,
+                    'plate_number' => $getQuoteResponseMapping['plateNumber'] ?? null,
+                    'traffic_code_number' => $getQuoteResponseMapping['trafficCodeNumber'] ?? null,
+                    'chassis_number' => $getQuoteResponseMapping['chassisNumber'] ?? null,
+                    'engine_number' => $getQuoteResponseMapping['engineNumber'] ?? null,
+                    'rta_plate_category' => $getQuoteResponseMapping['rtaPlateCategory'] ?? null,
+                    'vehicle_color' => $getQuoteResponseMapping['vehicleColor'] ?? null,
+                    'plate_color' => $getQuoteResponseMapping['plateColor'] ?? null,
+                    'bank_loan' => $getQuoteResponseMapping['bankLoan'] ?? null,
+                    'bank_name' => $getQuoteResponseMapping['bankName'] ?? null,
+                    'first_registration_date' => $getQuoteResponseMapping['firstRegistrationDate'] ?? null,
+                    'policy_effective_date' => $getQuoteResponseMapping['policyEffectiveDate'] ?? null,
+                    'policy_expiry_date' => '',
+                    'certificate_start_date' => $getQuoteResponseMapping['certificateStartDate'] ?? null,
+                    'certificate_end_date' => $getQuoteResponseMapping['certificateEndDate'] ?? null,
+                    'annual_mileage_estimate' => $getQuoteResponseMapping['annualMileageEstimate'] ?? null,
+                    'is_insured_and_driver_same' => $getQuoteResponseMapping['isInsuredAndDriverSame'] ?? null,
+                    'driver_first_name' => $getQuoteResponseMapping['driverFirstName'] ?? null,
+                    'driver_last_name' => $getQuoteResponseMapping['driverLastName'] ?? null,
+                    'driver_dob' => $getQuoteResponseMapping['driverDob'] ?? null,
+                    'driver_gender' => $getQuoteResponseMapping['driverGender'] ?? null,
+                    'driver_license_number' => $getQuoteResponseMapping['driverLicenseNumber'] ?? null,
+                    'license_expiry_date' => $getQuoteResponseMapping['licenseExpiryDate'] ?? null,
+                    'uae_driving_experience' => $getQuoteResponseMapping['uaeDrivingExperience'] ?? null,
+                ];
+
+                $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
+                // TODO:: this needs to be verify
+                if ($carQuoteRequestDetails) {
+                    $carQuoteRequestDetails->update($vehicleAndDriverDetails);
+                }
+
                 return response()->json([
                     'success' => true,
-                    'message' => 'Quote details retrieved successfully from insurer portal',
+                    'message' => 'Quote details retrieved and updated successfully',
                     'data' => $getQuoteResponseMapping ?? null,
                 ]);
             } else {

@@ -16,6 +16,7 @@ const lookups = page.props.lookups;
 
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const isSyncFromInsurer = ref(false);
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -141,7 +142,7 @@ const isDriverNameFieldsRequired = computed(() => {
 // Watch for changes in is_insured_and_driver_same to clear driver names when they become disabled
 watch(() => additionalDriverDetailsForm.is_insured_and_driver_same, (newValue) => {
   // If insured and driver are the same (1 or '1'), clear the driver name fields
-  if (newValue === 1 || newValue === '1') {
+  if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
     additionalDriverDetailsForm.driver_first_name = '';
     additionalDriverDetailsForm.driver_last_name = '';
   }
@@ -157,12 +158,8 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         driverDob: 'driver_dob',
         driverGender: 'driver_gender',
         driverLicenseNumber: 'driver_license_number',
-        licenseIssuePlace: 'license_issue_place',
-        licenseIssueDate: 'license_issue_date',
         licenseExpiryDate: 'license_expiry_date',
         uaeDrivingExperience: 'uae_driving_experience',
-        homeCountryLicenseIssuance: 'home_country_license_issuance',
-        homeCountryDrivingExperience: 'home_country_driving_experience',
       },
     };
 
@@ -171,6 +168,9 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         additionalDriverDetailsForm[targetKey] = driverDetails[sourceKey];
       }
     });
+    if (driverDetails?.isInsuredAndDriverSame === '1') {
+      isSyncFromInsurer.value = true;
+    }
   }
 }, { deep: true });
 
