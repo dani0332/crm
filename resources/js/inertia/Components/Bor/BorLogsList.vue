@@ -6,6 +6,7 @@ import BorDoneModal from './BorDoneModal.vue'
 import BorViewDocumentModal from './BorViewDocumentModal.vue'
 import Pagination from '../Pagination.vue'
 
+const notification = useNotifications('toast'); // Fix: Use consistent notification import
 
 const props = defineProps({
   logs: {
@@ -111,42 +112,36 @@ const handleEditBor = (log = null) => {
   emit('edit-bor', log)
 }
 
-const handleCopyLink = (log) => {
+const handleCopyLink = async (log) => {
   // Copy the BOR link to clipboard
-  const borLink = route('bor.customer.sign', log.document_id)
-  
-  if (navigator.clipboard && window.isSecureContext) {
-    // Use the Clipboard API
-    navigator.clipboard.writeText(borLink).then(() => {
-      // Show success notification
-      const notification = useNotifications('toast')
-      notification.success({
-        title: 'Link Copied',
-        message: 'BOR signing link copied to clipboard',
-        position: 'top',
-      })
-    }).catch(err => {
-      console.error('Failed to copy link: ', err)
-    })
-  } else {
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea')
-    textArea.value = borLink
-    document.body.appendChild(textArea)
-    textArea.focus()
-    textArea.select()
-    try {
-      document.execCommand('copy')
-      const notification = useNotifications('toast')
-      notification.success({
-        title: 'Link Copied',
-        message: 'BOR signing link copied to clipboard',
-        position: 'top',
-      })
-    } catch (err) {
-      console.error('Failed to copy link: ', err)
+  const borGenerateLink = route('bor.requests.generate-link', log.id)
+  const response = await axios.get(borGenerateLink)
+  const borLink = response.data.data;
+  console.log(borLink);
+  try {
+    if (response.data.success) {
+        const el = document.createElement('textarea');
+        el.value = borLink;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        notification.success({
+          title: 'Bor Request Link copied to clipboard',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Bor Request Link Generation Failed',
+          position: 'top',
+        });
     }
-    document.body.removeChild(textArea)
+  } catch (err) {
+    notification.error({
+      title: 'Bor Request Link Generation Failed',
+      position: 'top',
+    });
   }
 }
 

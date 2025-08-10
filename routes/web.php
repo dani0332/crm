@@ -902,6 +902,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // BOR (Broker on Record) Routes
     Route::group(['prefix' => 'bor'], function () {
         // BOR Request Management
+        Route::get('requests/{id}/generate-link', [BorController::class, 'generateLink'])->name('bor.requests.generate-link');
         Route::resource('requests', BorController::class)->names('bor.requests')->only(['index', 'store', 'update']);
         
         // BOR Status and Action Management (CRM Interface)

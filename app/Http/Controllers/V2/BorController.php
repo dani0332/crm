@@ -153,6 +153,27 @@ class BorController extends Controller
     }
 
     /**
+     * This function is used to generate a link for the BOR request
+     *
+     * @param BorLog $borLog
+     * @return void
+     */
+    public function generateLink($borLogId)
+    {
+        $borLog = BorLog::findOrFail($borLogId);
+        $borLog->load('personalQuote');
+        $quote = $borLog->personalQuote;
+        $quoteType = strtolower(QuoteTypes::getName($quote->quote_type_id)->value) .'-insurance';
+        $quoteUuid = $quote->uuid;
+        $ecomUrl = config('constants.AFIA_WEBSITE_DOMAIN') ?? '';
+        $requestLink = $ecomUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor';
+        return response()->json([
+            'success' => true,
+            'data' => $requestLink,
+        ]);
+    }
+
+    /**
      * Upload BOR document
      */
     public function uploadDocument(Request $request, $id = null): JsonResponse
