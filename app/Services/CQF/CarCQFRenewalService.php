@@ -42,6 +42,7 @@ class CarCQFRenewalService
     private $totalQuotesProcessed = 0;
     private $errorQuotes = 0;
     private $failedQuotes = [];
+    private $validationErrorsList = [];
     private $epCodes = [];
     public function processCarCQFRenewalLeads()
     {
@@ -118,8 +119,41 @@ class CarCQFRenewalService
         } else {
             LoggerService::info(self::class.' - Car CQF Renewal Leads processing completed');
         }
+   
     }
 
+    public function mapValidationHTML($errors)
+    {
+      
+        // foreach ($errors as $key => $error) {
+        //     $html .= '<tr>
+        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">
+        //         '.$key.'
+        //     </td>
+        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
+        //         '.$error.'
+        //     </td>
+        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
+        //         '.$quote->policy_number.'
+        //     </td>
+        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
+        //         '.$quote->policy_number.'
+        //     </td>
+        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
+        //         VALIDATION_FAILED
+        //     </td>
+        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
+        //                 <span style="color: #dc2626">•</span> '.$error.'
+        //         </td>
+        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">
+        //         '.$quote->policy_expiry_date.'
+        //     </td>
+        //     </tr>
+        // }
+        // }
+
+        return $html;
+    }
     public function createRenewalsUploadLeads()
     {
         $uploadLeadData = [
@@ -157,6 +191,7 @@ class CarCQFRenewalService
                 if ($this->isDuplicateQuote($quote)) {
                     LoggerService::info(self::class.' - Duplicate quote detected. Skipping processing');
                     $validationErrors = ['policy_number' => "Duplicate quote detected for policy number: $quote->policy_number"];
+                    $this->validationErrorsList[] = ['policy_number' => $quote->policy_number, 'message' => "Duplicate quote detected for policy number: $quote->policy_number"];
 
                     $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, false, $validationErrors);
 
@@ -169,6 +204,7 @@ class CarCQFRenewalService
                     if (! $isInslyRenewal) {
                         LoggerService::info(self::class.' - Insly renewal criteria not met for policy number', ['policy_number' => $quote->policy_number]);
                         $validationErrors = ['policy_number' => "Insly renewal criteria not met for policy number: $quote->policy_number"];
+                        $this->validationErrorsList[] = ['policy_number' => $quote->policy_number, 'message' => "Insly renewal criteria not met for policy number: $quote->policy_number"];
                         $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, false, $validationErrors);
 
                         continue;
@@ -249,6 +285,7 @@ class CarCQFRenewalService
             $errors = $validator->errors()->toArray();
             foreach ($errors as $field => $message) {
                 $errors[$field] = $message[0];
+                $this->validationErrors[] = ['policy_number' => $quote->policy_number, 'message' => $errors[$field].' '.$message[0] ];
             }
         }
 
@@ -291,6 +328,7 @@ class CarCQFRenewalService
             $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
             $renewalQuoteProcess->status = RenewalProcessStatuses::BAD_DATA;
             $renewalQuoteProcess->validation_errors = $validationErrors;
+            $this->validationErrors[] = $validationErrors;
             $renewalQuoteProcess->data = $this->mapFailedQuoteData($quote);
             $renewalQuoteProcess->save();
             $this->errorQuotes++;
@@ -301,18 +339,9 @@ class CarCQFRenewalService
     }
     public function mapFailedQuoteData($quote)
     {
-        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
+        
 
-        // Calculate the policy expiry date based on the start date + 365 days
-        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
-        $newPolicyExpiryDate = $policyStartDate->copy()->addDays(120);
-
-        LoggerService::info(self::class.' - Policy Details', [
-            'policyExpiryDate' => $policyExpiryDate,
-            'policyStartDate' => $policyStartDate,
-            'newPolicyExpiryDate' => $newPolicyExpiryDate,
-        ]);
-
+     
         // Get insurance provider safely to avoid null pointer exception
         $insuranceProvider = app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with);
 
