@@ -71,6 +71,11 @@ class AutomateActivitiesCommand extends Command
                 'eligible_for_automate' => false,
                 'quote_type_id' => QuoteTypeId::Travel,
             ],
+            BusinessQuote::class => [
+                'eligible_for_automate' => true,
+                'quote_type_id' => QuoteTypeId::Business,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
+            ],
             PersonalQuote::class => [
                 'eligible_for_automate' => true,
                 'multiple_lobs' => true,

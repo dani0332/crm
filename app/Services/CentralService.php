@@ -803,6 +803,10 @@ class CentralService extends BaseService
                 'quote_type_id' => QuoteTypeId::Yacht,
                 'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::YACHT_RENEWALS])->first()->id,
             ],
+            BusinessQuote::class => [
+                'quote_type_id' => QuoteTypeId::Business,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
+            ],
         ];
 
         $quoteTypeDetail = null;
@@ -898,7 +902,7 @@ class CentralService extends BaseService
                 ->orderBy('sorting_order')
                 ->first();
         }
-
+        
         if ($getActivitySchedule && $quoteDetails->advisor_id && ! $lastActivityDueDateIsGreater) {
             $activity = Activities::create([
                 'title' => $getActivitySchedule->name,
@@ -918,7 +922,6 @@ class CentralService extends BaseService
                 'activity_schedule_id' => $getActivitySchedule->id,
                 'source' => LeadSourceEnum::IMCRM,
             ]);
-
             return $activity;
         }
 
