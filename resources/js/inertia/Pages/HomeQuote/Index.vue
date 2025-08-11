@@ -916,16 +916,6 @@ const formatDate = dateString =>
           >
             Export via email
           </x-button>
-          <x-button
-            v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
-            size="sm"
-            color="emerald"
-            :loading="exportLoader"
-            @click="onPUAExport"
-            class="justify-self-start mr-3"
-          >
-            Export PUA Updates
-          </x-button>
           <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald" class="mr-3">
               Export
@@ -940,6 +930,17 @@ const formatDate = dateString =>
               </span>
             </template>
           </x-tooltip>
+
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_HOME_PUA_UPDATES)"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click="onPUAExport"
+            class="justify-self-start mr-3"
+          >
+            Export PUA Updates
+          </x-button>
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">

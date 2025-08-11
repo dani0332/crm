@@ -69,7 +69,7 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
     {
         return app(HomeQuoteRepository::class)
             ->exportPUAUpdates($this->requestParams)
-            ->select('q.source', 'q.payment_status_id', 'q.premium')
+            ->select('personal_quotes.source', 'personal_quotes.payment_status_id', 'personal_quotes.premium')
             ->get();
     }
 
@@ -116,33 +116,33 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
     {
         $quotes = $this->getQuotesData();
 
-        return $quotes->merge($this->prepareSummary());
+        return collect($quotes)->merge($this->prepareSummary());
     }
 
     private function getQuotesData()
     {
         return app(HomeQuoteRepository::class)->exportPUAUpdates($this->requestParams)->select(
-            'q.code as RefId',
-            'q.source as source',
+            'personal_quotes.code as RefId',
+            'personal_quotes.source as source',
             DB::raw("'Home Insurance' as PropertyType"),
             DB::raw("'Property' as PropertyCategory"),
-            'n.text as nationality',
-            'qs.text as LeadStatus',
-            'ps.text as PaymentStatus',
-            'q.payment_status_id',
+            'nationality.text as nationality',
+            'quote_status.text as LeadStatus',
+            'payment_status.text as PaymentStatus',
+            'personal_quotes.payment_status_id',
             DB::raw("'Home Insurance' as InsuranceType"),
             DB::raw("'Home Property Plan' as PlanName"),
             DB::raw("'Comprehensive' as PlanType"),
-            DB::raw("ip.text as Insurer"),
-            'q.premium as PremiumAuth',
-            'q.premium_authorized as PremiumCaptured',
-            'q.first_name',
-            'q.last_name',
-            'q.mobile_no',
-            'q.email',
-            'q.payment_status_date as paidAt',
+            DB::raw("insurance_provider.text as Insurer"),
+            'personal_quotes.premium as PremiumAuth',
+            'personal_quotes.premium_authorized as PremiumCaptured',
+            'personal_quotes.first_name',
+            'personal_quotes.last_name',
+            'personal_quotes.mobile_no',
+            'personal_quotes.email',
+            'personal_quotes.payment_status_date as paidAt',
             DB::raw("'Premium Update' as PUAType"),
-            'q.created_at as createdAt',
+            'personal_quotes.created_at as createdAt',
         )->get();
     }
 
