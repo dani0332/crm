@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\TeamNameEnum;
@@ -66,15 +67,11 @@ class AutomateActivitiesCommand extends Command
                 'eligible_for_automate' => true,
                 'quote_type_id' => QuoteTypeId::Business,
                 'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+                'group_medical_renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
             ],
             TravelQuote::class => [
                 'eligible_for_automate' => false,
                 'quote_type_id' => QuoteTypeId::Travel,
-            ],
-            BusinessQuote::class => [
-                'eligible_for_automate' => true,
-                'quote_type_id' => QuoteTypeId::Business,
-                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
             ],
             PersonalQuote::class => [
                 'eligible_for_automate' => true,
@@ -199,6 +196,13 @@ class AutomateActivitiesCommand extends Command
                                     ->when($quoteDetail->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteDetail, $quoteTypeDetail) {
                                         $renewalTeamID = isset($quoteTypeDetail['multiple_lobs']) ?
                                             $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['renewal_team'] : $quoteTypeDetail['renewal_team'];
+
+                                        // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
+                                        if (isset($quoteTypeDetail['group_medical_renewal_team']) && 
+                                            property_exists($quoteDetail, 'business_type_of_insurance_id') &&
+                                            $quoteDetail->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                                            $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
+                                        }
 
                                         return $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
