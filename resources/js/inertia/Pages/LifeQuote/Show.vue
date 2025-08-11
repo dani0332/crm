@@ -276,7 +276,9 @@ const sendOCAEmail = () => {
     .post(route('life-quotes-send-oca-email'), {
       quote_uuid: page.props.quote.uuid,
       // Add the version to the plan ID to ensure each selected plan is uniquely identified
-      plan_ids: selectedPlans.value.map(plan => plan.planId+"_v"+plan.version),
+      plan_ids: selectedPlans.value.map(
+        plan => plan.planId + '_v' + plan.version,
+      ),
     })
     .then(res => {
       notification.success({
@@ -332,7 +334,9 @@ const downloadComparisionPdf = () => {
       {
         quote_uuid: page.props.quote.uuid,
         // Add the version to the plan ID to ensure each selected plan is uniquely identified
-        plan_ids: selectedPlans.value.map(plan => plan.planId+"_v"+plan.version),
+        plan_ids: selectedPlans.value.map(
+          plan => plan.planId + '_v' + plan.version,
+        ),
       },
       {
         responseType: 'blob',
