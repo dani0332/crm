@@ -194,7 +194,7 @@ class ClaimsService extends BaseService
     public function getClaimById($uuid)
     {
         return $this->query->where('uuid', $uuid)->first();
-    
+
     }
 
     /**
@@ -340,20 +340,22 @@ class ClaimsService extends BaseService
      */
     public function updateClaim($uuid, array $data): ClaimRequest
     {
-        $claimRequest = $this->getClaimById($uuid); 
+        $claimRequest = $this->getClaimById($uuid);
 
         try {
             DB::beginTransaction();
 
             // Separate claim request data from detail data
             $claimRequestData = collect($data)->only([
-                'incident_story', 'incident_date', 'first_name', 'last_name', 
-                'email', 'mobile_no', 'customer_id', 'source', 'manager_id', 'manager_assigned_date', 
+                'incident_story', 'incident_date', 'first_name', 'last_name',
+                'email', 'mobile_no', 'customer_id', 'source', 'manager_id', 'manager_assigned_date',
                 'quote_uuid', 'quote_type_id', 'personal_quote_id', 'insurance_provider_id', 'policy_number',
                 'claim_number', 'claim_status_id', 'claim_sub_status_id', 'claim_type_id', 'claim_request_type_id',
                 'whatsapp_consent', 'selected_policy_id', 'policy_not_listed', 'claim_decline_reason',
                 'approved_repair_amount', 'approved_total_loss_amount', 'approved_cash_loss_amount',
             ])->filter()->toArray();
+
+
 
             // Store incident_story as incident field
             if (isset($claimRequestData['incident_story'])) {
@@ -363,10 +365,38 @@ class ClaimsService extends BaseService
 
             $claimRequest->update($claimRequestData);
 
-            // Handle claim request detail updates
+            // Handle claim request detail updates with quote type logic
             $detailData = collect($data)->only([
                 'car_make', 'car_model', 'model_year', 'plat_number', 'service_type_id', 'request_reference_number', 'user_ip',
-            ])->filter()->toArray();
+            ])->toArray();
+
+            // Handle quote type specific field clearing
+            $quoteTypeId = $data['quote_type_id'] ?? null;
+            // Clear fields based on quote type (don't filter null values as we want to set them)
+            if ($quoteTypeId == QuoteTypeId::Car) {
+                // Clear health-related detail fields
+                $detailData['service_type_id'] = null;
+                $detailData['request_reference_number'] = null;
+            } elseif ($quoteTypeId == QuoteTypeId::Health) {
+                // Clear car-related detail fields
+                $detailData['car_make'] = null;
+                $detailData['car_model'] = null;
+                $detailData['model_year'] = null;
+                $detailData['plat_number'] = null;
+            } else {
+                // Clear both car and health detail fields
+                $detailData['service_type_id'] = null;
+                $detailData['request_reference_number'] = null;
+                $detailData['car_make'] = null;
+                $detailData['car_model'] = null;
+                $detailData['model_year'] = null;
+                $detailData['plat_number'] = null;
+            }
+
+            // Filter out empty strings but keep null values for database updates
+            $detailData = array_filter($detailData, function($value) {
+                return $value !== '';
+            });
 
             if (! empty($detailData)) {
                 $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
@@ -393,7 +423,7 @@ class ClaimsService extends BaseService
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'data' => $data,
-            ]); 
+            ]);
 
             throw $e;
         }

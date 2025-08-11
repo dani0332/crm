@@ -145,6 +145,38 @@ const isHealthLOB = computed(() => {
   return page.props.quoteTypeIds?.Health === claimForm.quote_type_id;
 });
 
+// Watch for quote_type_id changes to clear irrelevant fields
+watch(() => claimForm.quote_type_id, (newQuoteTypeId) => {
+  const page = usePage();
+  const carQuoteTypeId = page.props.quoteTypeIds?.Car;
+  const healthQuoteTypeId = page.props.quoteTypeIds?.Health;
+
+  if (newQuoteTypeId === carQuoteTypeId) {
+    // Clear health-related fields when Car is selected
+    claimForm.claim_request_type_id = null;
+    claimForm.service_type_id = null;
+    claimForm.request_reference_number = null;
+  } else if (newQuoteTypeId === healthQuoteTypeId) {
+    // Clear car-related fields when Health is selected
+    claimForm.plat_number = null;
+    claimForm.car_make = null;
+    claimForm.car_model = null;
+    claimForm.model_year = null;
+  } else {
+    // Clear both car and health fields when neither is selected
+    // Health fields
+    claimForm.claim_request_type_id = null;
+    claimForm.service_type_id = null;
+    claimForm.request_reference_number = null;
+
+    // Car fields
+    claimForm.plat_number = null;
+    claimForm.car_make = null;
+    claimForm.car_model = null;
+    claimForm.model_year = null;
+  }
+});
+
 // Check if there are validation errors (excluding general error messages)
 const hasValidationErrors = computed(() => {
   const errors = claimForm.errors;
@@ -327,11 +359,11 @@ function onSubmit(isValid) {
     }
 
     let method = 'post';
-    let url = `/claim`; 
+    let url = `/claim`;
 
     if (props.isEdit && props.claim) {
       method = 'put';
-      url = `/claim/${props.claim.uuid}`; 
+      url = `/claim/${props.claim.uuid}`;
     }
 
     claimForm.submit(method, url, {
@@ -365,9 +397,10 @@ function onSubmit(isValid) {
           }
         }
       },
-      onSuccess: () => { 
-        // Redirect to claims list
-         router.visit('/claims');
+      onSuccess: (page) => {
+        // Show success message from backend
+        const message = page.props?.flash?.success || page.props?.message || 'Claim saved successfully!';
+        console.log('Form submission finished' , message);
       },
       onFinish: () => {
         // Always called after success or error

@@ -210,12 +210,13 @@ class ClaimsController extends Controller
      * Update the specified claim request
      */
     public function update(ClaimUpdateRequest $request, $uuid): RedirectResponse
-    { 
+    {
         try {
             $updatedClaimRequest = $this->claimsService->updateClaim($uuid, $request->validated());
 
-            return redirect()->route('claims.show', $updatedClaimRequest->uuid)
+            return redirect()->route('claims.edit', $updatedClaimRequest->uuid)
                 ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
+
         } catch (Exception $e) {
             LoggerService::error('Error updating claim request', extra: [
                 'error' => $e->getMessage(),
@@ -226,7 +227,7 @@ class ClaimsController extends Controller
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update claim. Please try again.');
+                ->withErrors( $e->getMessage());
         }
     }
 
