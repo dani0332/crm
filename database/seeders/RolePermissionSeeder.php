@@ -319,7 +319,7 @@ class RolePermissionSeeder extends Seeder
     private function addEmbeddedProductPaymentCancelAdminPermission(): void
     {
         $permission = Permission::firstOrCreate([
-            'name' => PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

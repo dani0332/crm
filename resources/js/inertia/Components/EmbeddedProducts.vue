@@ -730,7 +730,7 @@ const onAddDocumentSubmit = event => {
                     (getFirstPriceWithTransaction(item.prices)?.transactions[0]
                       ?.payment_status_id == paymentStatusEnum.CAPTURED &&
                       can(
-                        permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
+                        permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
                       )))
                 "
                 size="xs"
@@ -760,7 +760,7 @@ const onAddDocumentSubmit = event => {
           v-if="
             canAny([
               permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
-              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
+              permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
             ])
           "
           title="Cancel Payment"
