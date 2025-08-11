@@ -473,7 +473,7 @@ const onVoidSubmit = isValid => {
       voidPaymentForm.processing = false;
     });
 };
-const rolesEnum = page.props.rolesEnum || {};
+
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
