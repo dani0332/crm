@@ -758,9 +758,11 @@ class CentralController extends Controller
         }
 
         // Dynamic permission check based on quote type
-        $permission = $quoteType === 'Car'
-            ? PermissionsEnum::EXPORT_CAR_PUA_UPDATES
-            : PermissionsEnum::EXPORT_CAR_PUA_UPDATES; // Fallback to car permission for now
+        $permission = match ($quoteType) {
+            'Car' => PermissionsEnum::EXPORT_CAR_PUA_UPDATES,
+            'Home' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
+            default => PermissionsEnum::EXPORT_CAR_PUA_UPDATES, // Fallback to car permission
+        };
 
         if (! auth()->user()->can($permission)) {
             return response()->json(['message' => "User Has No Permission to Download {$quoteType} PUA Updates."], 403);
