@@ -729,7 +729,9 @@ const onAddDocumentSubmit = event => {
                         paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
                     (getFirstPriceWithTransaction(item.prices)?.transactions[0]
                       ?.payment_status_id == paymentStatusEnum.CAPTURED &&
-                      can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN)))
+                      can(
+                        permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
+                      )))
                 "
                 size="xs"
                 color="#ff5e00"
