@@ -783,7 +783,14 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             ];
 
             if (isset($response['status']) && $response['status'] === true) {
-                app(AMLService::class)->saveAdditionalVehicleAndDriverDetails((object) $getQuoteResponseMapping, $quoteDetails);
+                $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails((object) $getQuoteResponseMapping, $quoteDetails);
+
+                if (! $response['status']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $response['message'],
+                    ]);
+                }
 
                 return response()->json([
                     'success' => true,
