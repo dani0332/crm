@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Services\CarQuoteService;
+use App\Repositories\HomeQuoteRepository;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
+class HomePUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
 {
     use Exportable;
 
@@ -18,8 +18,8 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
 
     public function __construct($requestParams = [])
     {
-
-        $this->data = app(CarQuoteService::class)->exportPUAAuthorized($requestParams);
+        info("1. HomeNonPUAQuoteExport");
+        $this->data = app(HomeQuoteRepository::class)->exportPUAAuthorized($requestParams);
     }
 
     public function collection()
@@ -40,7 +40,6 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) ['Teams' => '']);
             $exportData->push((object) ['Total' => '']);
-
         }
 
         foreach ($teamCounts as $team) {
@@ -50,7 +49,7 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             ]);
         }
 
-        // Define all possible payment statusses
+        // Define all possible payment statuses for home insurance
         $allStatuses = [
             'Payment Link Requested By Customer' => 0,
             'Payment Link In Progress' => 0,
@@ -87,8 +86,6 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             'Lead Status',
             'Payment Status',
             'Source',
-            'Make',
-            'Model',
             'Assigned Advisor Email',
         ];
     }
@@ -103,8 +100,6 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
                 $quote->leadstatus,
                 $quote->paymentstatus,
                 $quote->source,
-                $quote->make,
-                $quote->model,
                 $quote->assignedadvisoremail,
             ];
         } elseif (isset($quote->Team)) {

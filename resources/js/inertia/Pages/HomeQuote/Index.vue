@@ -117,6 +117,8 @@ const filters = reactive({
   advisor_assigned_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  authorize_date: '',
+  captured_date: '',
   private_client: 'all',
 });
 
@@ -240,6 +242,57 @@ const onDataExport = (exportType = 'download') => {
     });
 };
 
+const onPUAExport = () => {
+  // Clean up date filter arrays to avoid duplication
+  const filtersForExport = { ...filters };
+  
+  // Ensure date filters are properly formatted as arrays
+  if (filtersForExport.authorize_date && Array.isArray(filtersForExport.authorize_date)) {
+    filtersForExport.authorize_date = filtersForExport.authorize_date.slice(0, 2);
+  }
+  if (filtersForExport.captured_date && Array.isArray(filtersForExport.captured_date)) {
+    filtersForExport.captured_date = filtersForExport.captured_date.slice(0, 2);
+  }
+
+  const data = useObjToUrl(filtersForExport);
+  const url = `/Home/pua-leads-export?${data}`;
+  
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'),
+    exportType: 'download',
+    url: url,
+    filters: { ...filtersForExport },
+  };
+  
+  exportLoader.value = true;
+
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start PUA export',
+        position: 'top',
+      });
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+      throw err;
+    });
+};
+
 function onSubmit(isValid) {
   if (isValid) {
     if (validateDateRange()) {
@@ -303,11 +356,67 @@ const handleSelectedFilters = selectedFilters => {
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status_id',
+    'insurer_aml_status',
+    'advisors',
+    'renewal_batches',
+    'payment_status',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    // Check for indexed array format like authorize_date[0], authorize_date[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
+      }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status_id[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
     } else {
-      filters[key] = params[key];
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_cold' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else if (key === 'is_stale' && (value === '0' || value === '1')) {
+      // Boolean-like fields  
+      filters[key] = parseInt(value);
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -728,6 +837,22 @@ const formatDate = dateString =>
           multi-calendars-solo
         />
         <DatePicker
+          v-model="filters.authorize_date"
+          label="Authorize Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
           v-if="hasRole(rolesEnum.HomeManager)"
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
@@ -790,6 +915,16 @@ const formatDate = dateString =>
             class="justify-self-start mr-3"
           >
             Export via email
+          </x-button>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click="onPUAExport"
+            class="justify-self-start mr-3"
+          >
+            Export PUA Updates
           </x-button>
           <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald" class="mr-3">

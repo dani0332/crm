@@ -4,8 +4,9 @@ namespace App\Exports;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Services\CarQuoteService;
+use App\Repositories\HomeQuoteRepository;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -13,7 +14,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, WithStyles
+class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
@@ -35,7 +36,6 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     protected $newBusinessTPC;
     protected $renewalsTPC;
     protected $requestParams;
-    protected $quotesData;
 
     public function __construct($requestParams = [])
     {
@@ -67,9 +67,9 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
 
     private function fetchData()
     {
-        return app(CarQuoteService::class)
+        return app(HomeQuoteRepository::class)
             ->exportPUAUpdates($this->requestParams)
-            ->select('cqr.source', 'cqr.payment_status_id', 'cqr.premium_captured')
+            ->select('q.source', 'q.payment_status_id', 'q.premium')
             ->get();
     }
 
@@ -101,7 +101,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
         if ($this->isValidPaymentStatus($result->payment_status_id)) {
             $this->{$counts}[$result->payment_status_id]++;
         }
-        $this->{$tpc} += $result->premium_captured;
+        $this->{$tpc} += $result->premium ?? 0;
     }
 
     private function isValidPaymentStatus(int $status): bool
@@ -121,26 +121,28 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
 
     private function getQuotesData()
     {
-        return app(CarQuoteService::class)->exportPUAUpdates($this->requestParams)->select(
-            'cqr.code as RefId',
-            'cqr.source as source',
-            'cmk.text as CarMake',
-            'cmd.text as CarModel',
-            'n.text as Nationality',
+        return app(HomeQuoteRepository::class)->exportPUAUpdates($this->requestParams)->select(
+            'q.code as RefId',
+            'q.source as source',
+            DB::raw("'Home Insurance' as PropertyType"),
+            DB::raw("'Property' as PropertyCategory"),
+            'n.text as nationality',
             'qs.text as LeadStatus',
             'ps.text as PaymentStatus',
-            'cqr.payment_status_id',
-            'vt.text as VehicleType',
-            'cp.text as PlanName',
-            'cp.repair_type as PlanType',
-            'ip.text as Insurer',
-            'cqr.premium as PremiumAuth',
-            'cqr.premium_captured as PremiumCaptured',
-            'cqr.dob as dob',
-            'cqr.car_value as carValue',
-            'cqr.paid_at as paidAt',
-            'cqp.pua_type as PUAType',
-            'cqr.created_at as createdAt',
+            'q.payment_status_id',
+            DB::raw("'Home Insurance' as InsuranceType"),
+            DB::raw("'Home Property Plan' as PlanName"),
+            DB::raw("'Comprehensive' as PlanType"),
+            DB::raw("ip.text as Insurer"),
+            'q.premium as PremiumAuth',
+            'q.premium_authorized as PremiumCaptured',
+            'q.first_name',
+            'q.last_name',
+            'q.mobile_no',
+            'q.email',
+            'q.payment_status_date as paidAt',
+            DB::raw("'Premium Update' as PUAType"),
+            'q.created_at as createdAt',
         )->get();
     }
 
@@ -184,23 +186,25 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     public function headings(): array
     {
         return [[
-            "CAR PUA (Payment Status Date : $this->formatDate)",
+            "HOME PUA (Payment Status Date : $this->formatDate)",
         ], [
             'Ref-ID',
-            'Car Make',
-            'Car Model',
+            'Property Type',
+            'Property Category',
             'Nationality',
             'Lead Status',
             'Payment Status',
             'Payment Status ID',
-            'Vehicle Type',
+            'Insurance Type',
             'Plan Name',
             'Plan Type',
             'Insurer',
             'Premium Auth',
             'Premium Captured',
-            'DOB',
-            'Car Value',
+            'First Name',
+            'Last Name',
+            'Mobile No',
+            'Email',
             'Paid At',
             'PUA Type',
             'Created At',
@@ -222,7 +226,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         return array_merge(
             ['Payment Status' => $row->PaymentStatus, 'Count' => $row->Count],
-            array_fill(0, 14, '') // Fill remaining columns with empty strings
+            array_fill(0, 20, '') // Fill remaining columns with empty strings
         );
     }
 
@@ -230,20 +234,22 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         return [
             $row->RefId ?? self::NA_VALUE,
-            $row->CarMake ?? self::NA_VALUE,
-            $row->CarModel ?? self::NA_VALUE,
-            $row->Nationality ?? self::NA_VALUE,
+            $row->PropertyType ?? self::NA_VALUE,
+            $row->PropertyCategory ?? self::NA_VALUE,
+            $row->nationality ?? self::NA_VALUE,
             $row->LeadStatus ?? self::NA_VALUE,
             $row->PaymentStatus ?? self::NA_VALUE,
             $row->payment_status_id ?? self::NA_VALUE,
-            $row->VehicleType ?? self::NA_VALUE,
+            $row->InsuranceType ?? self::NA_VALUE,
             $row->PlanName ?? self::NA_VALUE,
             $row->PlanType ?? self::NA_VALUE,
             $row->Insurer ?? self::NA_VALUE,
             $row->PremiumAuth ?? self::NA_VALUE,
             $row->PremiumCaptured ?? self::NA_VALUE,
-            $this->formatDate($row->dob),
-            $row->carValue ?? self::NA_VALUE,
+            $row->first_name ?? self::NA_VALUE,
+            $row->last_name ?? self::NA_VALUE,
+            $row->mobile_no ?? self::NA_VALUE,
+            $row->email ?? self::NA_VALUE,
             $this->formatDate($row->paidAt),
             $row->PUAType ?? self::NA_VALUE,
             $this->formatDate($row->createdAt),

@@ -2,31 +2,35 @@
 
 namespace App\Exports;
 
-use App\Services\CarQuoteService;
-use Illuminate\Http\Request;
+use App\Repositories\HomeQuoteRepository;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
+class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
 {
     use Exportable;
 
-    protected $data;
+    protected $nonPUALeads;
+    protected $puaLeads;
 
     public function __construct($requestParams = [])
     {
-
-        $this->data = app(CarQuoteService::class)->exportPUAAuthorized($requestParams);
+        info("2. HomeNonPUAQuoteExport");
+        $this->nonPUALeads = app(HomeQuoteRepository::class)->exportnonPUAAuthorized($requestParams);
+        $this->puaLeads = app(HomeQuoteRepository::class)->exportPUAAuthorized($requestParams);
     }
 
     public function collection()
     {
-        $leads = $this->data[0];
+        $leads = $this->nonPUALeads[0];
 
-        $teamCounts = $this->data[1];
+        $nonPUALeadCounts = $this->nonPUALeads[0]->count();
+        $puaLeadCounts = $this->puaLeads[0]->count();
+
+        $teamCounts = $this->nonPUALeads[1];
 
         $exportData = collect();
 
@@ -34,23 +38,33 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             $exportData->push($lead);
         }
 
+        // ADD BLANK LINE
         if ($teamCounts->isNotEmpty()) {
             $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) [' ' => ' ']);
-            $exportData->push((object) ['Teams' => '']);
-            $exportData->push((object) ['Total' => '']);
-
         }
+
+        $exportData->push((object) [
+            'NonPUA' => 'PUA: ',
+            'Total' => $puaLeadCounts ?: '0',
+        ]);
+        $exportData->push((object) [
+            'NonPUA' => 'Non-PUA: ',
+            'Total' => $nonPUALeadCounts ?: '0',
+        ]);
+        // ADD BLANK LINE
+        $exportData->push((object) [' ' => ' ']);
+        $exportData->push((object) [' ' => ' ']);
 
         foreach ($teamCounts as $team) {
             $exportData->push((object) [
                 'Team' => $team->Team,
-                'Total' => $team->Total,
+                'Total' => $team->Total ?: '0',
             ]);
         }
 
-        // Define all possible payment statusses
+        // Define all statuses for home insurance
         $allStatuses = [
             'Payment Link Requested By Customer' => 0,
             'Payment Link In Progress' => 0,
@@ -87,8 +101,6 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             'Lead Status',
             'Payment Status',
             'Source',
-            'Make',
-            'Model',
             'Assigned Advisor Email',
         ];
     }
@@ -103,19 +115,17 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
                 $quote->leadstatus,
                 $quote->paymentstatus,
                 $quote->source,
-                $quote->make,
-                $quote->model,
                 $quote->assignedadvisoremail,
+            ];
+        } elseif (isset($quote->NonPUA)) {
+            return [
+                $quote->NonPUA,
+                $quote->Total,
             ];
         } elseif (isset($quote->Team)) {
             return [
                 $quote->Team,
                 $quote->Total ?? number_format(0),
-            ];
-        } elseif (isset($quote->{'Teams'})) {
-            return [
-                'Teams',
-                'Total Count',
             ];
         } elseif (isset($quote->{'Quote Status'})) {
             return [

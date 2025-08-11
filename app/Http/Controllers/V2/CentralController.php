@@ -29,6 +29,8 @@ use App\Exports\PersonalQuotesExport;
 use App\Exports\PUAQuoteExport;
 use App\Exports\PUAUpdatesExport;
 use App\Exports\RetentionReportExport;
+use App\Factories\PUAExportFactory;
+use App\Enums\quoteTypeCode;
 use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
@@ -748,13 +750,23 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request)
+    public function exportPUAUpdates(Request $request, string $quoteType)
     {
-        if (! auth()->user()->can(PermissionsEnum::EXPORT_CAR_PUA_UPDATES)) {
-            return response()->json(['message' => 'User Has No Permission to Download PUA Updates.'], 403);
+        // Validate quote type using the factory
+        if (!PUAExportFactory::isValidQuoteType($quoteType)) {
+            return response()->json(['message' => "Invalid quote type: {$quoteType}"], 400);
         }
 
-        $zipFileName = 'PUA-UPDATES.zip';
+        // Dynamic permission check based on quote type
+        $permission = $quoteType === 'Car'
+            ? PermissionsEnum::EXPORT_CAR_PUA_UPDATES
+            : PermissionsEnum::EXPORT_CAR_PUA_UPDATES; // Fallback to car permission for now
+
+        if (! auth()->user()->can($permission)) {
+            return response()->json(['message' => "User Has No Permission to Download {$quoteType} PUA Updates."], 403);
+        }
+
+        $zipFileName = "PUA-UPDATES-{$quoteType}.zip";
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
 
@@ -763,15 +775,25 @@ class CentralController extends Controller
         }
 
         try {
-            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA-AUTHORIZED.xlsx');
-            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('NON-PUA-AUTHORIZED.xlsx');
-            $puaUpdatesExport = app(PUAUpdatesExport::class)->download('PUA-UPDATES.xlsx');
+            $exports = PUAExportFactory::createExports($quoteType, $request->all());
 
-            $files = [
-                ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => 'PUA-AUTHORIZED.xlsx'],
-                ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => 'NON-PUA-AUTHORIZED.xlsx'],
-                ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => 'PUA-UPDATES.xlsx'],
-            ];
+            $files = [];
+
+            if (!empty($exports)) {
+                info(" starting export");
+                $puaUpdateExport = $exports['pua_quote']->download("{$quoteType}-PUA-AUTHORIZED.xlsx");
+                $nonPuaUpdateExport = $exports['non_pua_quote']->download("{$quoteType}-NON-PUA-AUTHORIZED.xlsx");
+                $puaUpdatesExport = $exports['pua_updates']->download("{$quoteType}-PUA-UPDATES.xlsx");
+
+                $files = [
+                    ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-NON-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-UPDATES.xlsx"],
+                ];
+            } else {
+                $zip->close();
+                return response()->json(['message' => "No PUA exports available for {$quoteType} quote type."], 400);
+            }
 
             foreach ($files as $file) {
                 if (file_exists($file['path'])) {
@@ -781,7 +803,18 @@ class CentralController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error processing exports: '.$e->getMessage()], 500);
+            $appTrace = collect($e->getTrace())
+                ->filter(function ($trace) {
+                    // Check if any value in the trace contains 'App/' or 'app/'
+                    return collect($trace)->contains(function ($value) {
+                        return is_string($value) && (str_contains($value, 'App/') || str_contains($value, 'app/'));
+                    });
+                })
+                ->values(); // Re-index the array
+            
+            LoggerService::error('PUA Export Error - App Trace:', $appTrace->toArray());
+            
+            return response()->json(['message' => 'Error processing exports: '.$e->getMessage().' file:'.$e->getFile().'line:'.$e->getLine()], 500);
         }
 
         $zip->close();
