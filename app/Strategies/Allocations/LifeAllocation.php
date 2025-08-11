@@ -53,6 +53,13 @@ class LifeAllocation extends BaseAllocation
 
         $emails = [];
 
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+        if (count($emails) > 0) {
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
+
+            return $emails;
+        }
+
         if ($amount < 1000000 && in_array($category, [self::CAT_A])) {
             $emails = [$gaurav, $vivian];
         } elseif ($amount >= 1000000 && $amount <= 2000000 && in_array($category, [self::CAT_A])) {
