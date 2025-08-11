@@ -2717,7 +2717,7 @@ const getTotalAnnualPriceAED = () => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="false"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <QuotePayments
@@ -2774,6 +2774,7 @@ const getTotalAnnualPriceAED = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <SendUpdates
