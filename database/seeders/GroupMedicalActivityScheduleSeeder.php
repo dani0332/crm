@@ -23,20 +23,22 @@ class GroupMedicalActivityScheduleSeeder extends Seeder
         // Get role and team IDs
         $gmAdvisorRole = Role::where('name', RolesEnum::GMAdvisor)->first();
         $gmManagerRole = Role::where('name', RolesEnum::GMManager)->first();
-        
+
         // Get teams for Group Medical - using multiple teams as shown in screenshot
         $entryLevelTeam = Team::where('name', TeamNameEnum::EBP)->first(); // Entry-Level
-        $goodTeam = Team::where('name', TeamNameEnum::RM_SPEED)->first(); // Good  
+        $goodTeam = Team::where('name', TeamNameEnum::RM_SPEED)->first(); // Good
         $bestTeam = Team::where('name', TeamNameEnum::RM_NB)->first(); // Best
         $renewalTeam = Team::where('name', TeamNameEnum::RM_RENEWALS)->first(); // RM-Renewals
 
-        if (!$gmAdvisorRole || !$gmManagerRole) {
+        if (! $gmAdvisorRole || ! $gmManagerRole) {
             $this->command->error('Required GM roles not found. Please ensure GM_ADVISOR and GM_MANAGER roles exist.');
+
             return;
         }
 
-        if (!$entryLevelTeam || !$goodTeam || !$bestTeam || !$renewalTeam) {
+        if (! $entryLevelTeam || ! $goodTeam || ! $bestTeam || ! $renewalTeam) {
             $this->command->error('Required teams not found. Please ensure Entry-Level, Good, Best, and RM-Renewals teams exist.');
+
             return;
         }
 
@@ -85,7 +87,7 @@ class GroupMedicalActivityScheduleSeeder extends Seeder
                     ],
                 ],
             ],
-            
+
             // RENEWAL ACTIVITIES - RM-Renewals team
             [
                 'teams' => [$renewalTeam],

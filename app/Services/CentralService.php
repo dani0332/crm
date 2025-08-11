@@ -902,7 +902,7 @@ class CentralService extends BaseService
                 ->orderBy('sorting_order')
                 ->first();
         }
-        
+
         if ($getActivitySchedule && $quoteDetails->advisor_id && ! $lastActivityDueDateIsGreater) {
             $activity = Activities::create([
                 'title' => $getActivitySchedule->name,
@@ -922,6 +922,7 @@ class CentralService extends BaseService
                 'activity_schedule_id' => $getActivitySchedule->id,
                 'source' => LeadSourceEnum::IMCRM,
             ]);
+
             return $activity;
         }
 
