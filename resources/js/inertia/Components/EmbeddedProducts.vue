@@ -473,7 +473,7 @@ const onVoidSubmit = isValid => {
       voidPaymentForm.processing = false;
     });
 };
-const rolesEnum = page.props.rolesEnum;
+const rolesEnum = page.props.rolesEnum || {};
 const hasRole = role => useHasRole(role);
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
