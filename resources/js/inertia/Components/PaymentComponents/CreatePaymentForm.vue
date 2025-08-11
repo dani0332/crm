@@ -2348,7 +2348,10 @@ const getPlanName = computed(() => {
     return props.quoteRequest?.insurance_provider_plan?.text || 'Not Available';
   }
 
-  if (!props.isLifePlanDetailsEnabled && props.quoteType === quoteTypeCodeEnum.Life) {
+  if (
+    !props.isLifePlanDetailsEnabled &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
     if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
       lifePlanText.value = props.quoteRequest.insurance_provider_plan.text;
     }

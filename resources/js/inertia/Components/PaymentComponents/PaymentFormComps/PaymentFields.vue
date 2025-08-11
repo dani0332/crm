@@ -96,7 +96,10 @@ const totalAmountFormat = computed(() => {
 
 // Computed property to check if frequency should be readonly/disabled for life quotes
 const isLifeQuoteFrequencyReadonly = computed(() => {
-  return props.quoteType === props.quoteTypeCodeEnum.Life && !props.isLifePlanDetailsEnabled;
+  return (
+    props.quoteType === props.quoteTypeCodeEnum.Life &&
+    !props.isLifePlanDetailsEnabled
+  );
 });
 
 const localDiscountValue = ref(props.discountValue);

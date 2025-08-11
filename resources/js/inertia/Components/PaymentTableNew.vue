@@ -143,7 +143,10 @@ const insurerReceiptNumberCheckInProcess = ref(false);
 
 // Short: is life plan details enabled
 const isLifePlanDetailsEnabled = computed(() => {
-  return props.quoteType === quoteTypeCodeEnum.Life && props.isPlanDetailSectionEnabled;
+  return (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.isPlanDetailSectionEnabled
+  );
 });
 
 // for life only
@@ -158,7 +161,10 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
 
-if (!isLifePlanDetailsEnabled.value && props.quoteType === quoteTypeCodeEnum.Life) {
+if (
+  !isLifePlanDetailsEnabled.value &&
+  props.quoteType === quoteTypeCodeEnum.Life
+) {
   quoteTypesToCheck.push(quoteTypeCodeEnum.Life);
 }
 
@@ -202,7 +208,10 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
-} else if (props.quoteType === quoteTypeCodeEnum.Life && !props.isPlanDetailSectionEnabled) {
+} else if (
+  props.quoteType === quoteTypeCodeEnum.Life &&
+  !props.isPlanDetailSectionEnabled
+) {
   initialAmount.value = getInitalAmountForLifeLOB();
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
@@ -263,7 +272,10 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
-} else if (!isLifePlanDetailsEnabled.value && props.quoteType === quoteTypeCodeEnum.Life) {
+} else if (
+  !isLifePlanDetailsEnabled.value &&
+  props.quoteType === quoteTypeCodeEnum.Life
+) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
@@ -397,7 +409,10 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = async () => {
-  if (!isLifePlanDetailsEnabled.value && props.quoteType === quoteTypeCodeEnum.Life) {
+  if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
     if (
       exchangeRate.value == 0 &&
       props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED'
@@ -812,7 +827,10 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Home
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
-    } else if (!isLifePlanDetailsEnabled.value && props.quoteType === quoteTypeCodeEnum.Life) {
+    } else if (
+      !isLifePlanDetailsEnabled.value &&
+      props.quoteType === quoteTypeCodeEnum.Life
+    ) {
       initialAmount.value = getInitalAmountForLifeLOB();
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -830,7 +848,10 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
-  } else if (!isLifePlanDetailsEnabled.value && props.quoteType === quoteTypeCodeEnum.Life) {
+  } else if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
