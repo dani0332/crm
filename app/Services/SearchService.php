@@ -389,8 +389,8 @@ class SearchService extends BaseService
 
             // Search by policy number
             if ($request->has('policy_number') && ! isset($request->code)) {
-                // Use FULLTEXT search
-                $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->policy_number.'"']);
+                // Use exact match for better performance
+                $query->where('personal_quotes.policy_number', $request->policy_number);
             }
 
             // Search by mobile number (exact match)
