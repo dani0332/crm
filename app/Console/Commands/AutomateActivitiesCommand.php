@@ -198,7 +198,7 @@ class AutomateActivitiesCommand extends Command
                                             $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['renewal_team'] : $quoteTypeDetail['renewal_team'];
 
                                         // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
-                                        if (isset($quoteTypeDetail['group_medical_renewal_team']) && 
+                                        if (isset($quoteTypeDetail['group_medical_renewal_team']) &&
                                             $quoteDetail->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                                             $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
                                         }
