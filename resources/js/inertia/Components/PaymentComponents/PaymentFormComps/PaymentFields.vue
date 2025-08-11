@@ -68,6 +68,7 @@ const props = defineProps({
   paymentStatusEnum: Object,
   quoteType: String,
   quoteTypeCodeEnum: Object,
+  isLifePlanDetailsEnabled: Boolean,
 });
 
 const totalPriceFormat = computed(() => {
@@ -95,7 +96,7 @@ const totalAmountFormat = computed(() => {
 
 // Computed property to check if frequency should be readonly/disabled for life quotes
 const isLifeQuoteFrequencyReadonly = computed(() => {
-  return props.quoteType === props.quoteTypeCodeEnum.Life;
+  return props.quoteType === props.quoteTypeCodeEnum.Life && !props.isLifePlanDetailsEnabled;
 });
 
 const localDiscountValue = ref(props.discountValue);
