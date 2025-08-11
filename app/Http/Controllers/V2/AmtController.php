@@ -138,7 +138,10 @@ class AmtController extends Controller
 
         /* Below conditions have AND relationship between them */
         $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT) ?: false;
+        \Log::info('Can assign client support after permission check: ' . json_encode($canAssignClientSupport));
+
         $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS->value) : false;
+        \Log::info('Can assign client support after product check: ' . json_encode($canAssignClientSupport));
 
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
@@ -556,12 +559,12 @@ class AmtController extends Controller
             return collect([]);
         }
 
-        $loggedInUserRoles = Auth::user()->roles->pluck('name')->toArray();
+//        $loggedInUserRoles = Auth::user()->roles->pluck('name')->toArray();
 
-        if ((! in_array(RolesEnum::CLIENTSUPPORTLEAD, $loggedInUserRoles) &&
-            ! in_array(RolesEnum::CLIENTSUPPORT, $loggedInUserRoles))) {
-            return collect([]);
-        }
+//        if ((! in_array(RolesEnum::CLIENTSUPPORTLEAD, $loggedInUserRoles) &&
+//            ! in_array(RolesEnum::CLIENTSUPPORT, $loggedInUserRoles))) {
+//            return collect([]);
+//        }
 
         return User::activeUser()
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
