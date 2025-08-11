@@ -8,8 +8,10 @@ use App\Enums\ClaimsEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\Claim;
-use App\Models\ClaimRequest;
-use App\Models\ClaimRequestDetail;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\YearOfManufacture;
+use App\Models\ClaimRequest; 
 use App\Models\ClaimsStatus;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
@@ -441,6 +443,9 @@ class ClaimsService extends BaseService
             'claimsManagers' => $this->getClaimsManagers(),
             'claimRequestTypes' => $this->getClaimRequestTypes(),
             'claimServiceTypes' => $this->getClaimServiceTypes(),
+            'carMake' => $this->getCarMake(),
+            'carModel' => [],
+            'carModelYear' => $this->getCarModelYear(),
         ];
     }
 
@@ -624,4 +629,13 @@ class ClaimsService extends BaseService
         }
     }
 
+    public function getCarMake(): array
+    { 
+        return CarMake::select('code as id', 'text')->where('is_active', true)->get()->toArray();
+    }
+
+    public function getCarModelYear(): array
+    {
+        return YearOfManufacture::select('text')->orderBy('sort_order')->get()->toArray();
+    }
 }

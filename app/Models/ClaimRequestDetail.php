@@ -6,13 +6,10 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
-use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -57,14 +54,12 @@ class ClaimRequestDetail extends Model implements AuditableContract
     // Filterable fields for search functionality
     public $filterables = [
         'claim_request_id' => FilterTypes::EXACT,
-        'claim_uuid' => FilterTypes::EXACT,
         'car_make' => FilterTypes::EXACT,
         'car_model' => FilterTypes::EXACT,
         'model_year' => FilterTypes::EXACT,
         'plat_number' => FilterTypes::EXACT,
         'service_type_id' => FilterTypes::IN,
         'request_reference_number' => FilterTypes::EXACT,
-        'user_ip' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
     ];
 
@@ -148,14 +143,14 @@ class ClaimRequestDetail extends Model implements AuditableContract
         $this->save();
     }
 
-    public function getCreatedAtAttribute($table)
+    public function getShowCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getShowUpdatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
 

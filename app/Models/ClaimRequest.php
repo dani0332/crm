@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Traits\FilterCriteria; 
+use App\Traits\FilterCriteria;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany; 
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -59,7 +59,7 @@ class ClaimRequest extends Model implements AuditableContract
     protected $fillable = [
         'incident',
         'claim_decline_reason',
-        'incident_date', 
+        'incident_date',
         'first_name',
         'last_name',
         'email',
@@ -135,9 +135,9 @@ class ClaimRequest extends Model implements AuditableContract
                 $claimRequest->whatsapp_consent = false;
             }
         });
- 
+
     }
- 
+
 
     /**
      * Relationships

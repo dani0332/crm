@@ -10,6 +10,7 @@ const props = defineProps({
   canDelete: Boolean,
 });
 
+const modelClass = 'App\\Models\\ClaimRequest';
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -65,7 +66,7 @@ const managersOptions = computed(() => {
     })) || []
   );
 });
- 
+
 
 const subStatusOptions = computed(() => {
   return (
@@ -322,7 +323,7 @@ function deleteClaim() {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> 
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Sub-Status Update -->
             <div class="bg-gray-50 p-4 rounded">
               <h4 class="font-semibold mb-3 text-gray-700">
@@ -630,18 +631,11 @@ function deleteClaim() {
     </div>
 
     <!-- Audit Logs -->
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Audit Logs</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <AuditLogs :id="claim.id" :auditType="'Claim'" />
-        </template>
-      </Collapsible>
-    </div>
+    <AuditLogs
+      :type="modelClass"
+      :id="$page.props.claim.id"
+      :quoteCode="$page.props.claim.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>

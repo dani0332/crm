@@ -214,7 +214,7 @@ class ClaimsController extends Controller
         try {
             $updatedClaimRequest = $this->claimsService->updateClaim($uuid, $request->validated());
 
-            return redirect()->route('claims.edit', $updatedClaimRequest->uuid)
+            return redirect()->route('claims.show', $updatedClaimRequest->uuid)
                 ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {

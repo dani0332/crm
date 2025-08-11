@@ -117,6 +117,7 @@ const claimTypeOptions = computed(() => {
     })) || []
   );
 });
+
 const claimServiceTypeOptions = computed(() => {
   return (
     props.dropdowns?.claimServiceTypes?.map(ct => ({
@@ -125,6 +126,7 @@ const claimServiceTypeOptions = computed(() => {
     })) || []
   );
 });
+
 const claimRequestTypeOptions = computed(() => {
   return (
     props.dropdowns?.claimRequestTypes?.map(ct => ({
@@ -133,6 +135,53 @@ const claimRequestTypeOptions = computed(() => {
     })) || []
   );
 });
+
+
+const carModelYearOptions = computed(() => {
+  return props.dropdowns?.carModelYear?.map(item => ({
+    value: item.text,
+    label: item.text,
+  }));
+});
+
+const carMakeOptions = computed(() => {
+  return (
+    props.dropdowns?.carMake?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || []
+  );
+});
+
+const carModelOptions = computed(() => {
+  return (
+    props.dropdowns?.carModel?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || []
+  );
+});
+
+const getCarModel = reset => { 
+  let carMakeCode = props.dropdowns?.carMake.find(item => item.text === claimForm.car_make)?.id;
+  console.log('carMakeCode', carMakeCode , ', reset' , reset);
+
+  axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
+    props.dropdowns.carModel = data;
+    if (claimForm.car_model !== null && reset) {
+      claimForm.car_model = null;
+    }
+  });
+};
+
+  
+  // Call getCarModel on page load if car_make is already set
+  onMounted(() => {
+    if (claimForm.car_make) {
+      getCarModel(false);
+    }
+  });
+
 
 // Check if the selected line of business is Car
 const isCarLOB = computed(() => {
@@ -366,7 +415,10 @@ function onSubmit(isValid) {
       url = `/claim/${props.claim.uuid}`;
     }
 
-    claimForm.submit(method, url, {
+    claimForm.transform(data => ({
+      ...data,
+      car_make: carMakeOptions.value.find(item => item.value === data.car_make)?.label,
+    })).submit(method, url, {
       onError: errors => {
         console.log('Form errors:', errors);
 
@@ -414,6 +466,10 @@ function onSubmit(isValid) {
       position: 'top',
     });
   }
+
+
+
+
 }
 </script>
 
@@ -430,7 +486,7 @@ function onSubmit(isValid) {
         </p>
       </div>
       <div>
-        <Link href="/claim">
+        <Link :href="route('claims.index')">
           <x-button size="sm" color="#ff5e00">Claims List</x-button>
         </Link>
       </div>
@@ -586,44 +642,42 @@ function onSubmit(isValid) {
             @input="resetPolicySelection"
           />
 
-
-          <template v-if="isCarLOB && isEdit">
-            <!-- Additional fields for Car LOB when editing -->
-            <x-input
-              v-if="isCarLOB"
+          <template v-if="isCarLOB && isEdit"> 
+            <x-select 
+              v-model="claimForm.car_make"
+              @update:modelValue="getCarModel(true)"
+              label="Car Make"
+              placeholder="Select Car Make"
+              :options="carMakeOptions"
+              filterable
+              filterPlaceholder="Filter Car Make...."
+              :error="claimForm.errors.car_make"
+            />
+            <x-select 
+              v-model="claimForm.car_model"
+              label="Car Model"
+              placeholder="Select Car Model"
+              :options="carModelOptions"
+              filterable
+              filterPlaceholder="Filter Car Model...."
+              :error="claimForm.errors.car_model"
+            />
+            <x-select 
+              v-model="claimForm.model_year"
+              label="Car Model Year"
+              placeholder="Select Car Model Year"
+              :options="carModelYearOptions"
+              filterable
+              filterPlaceholder="Filter Car Model Year...."
+              :error="claimForm.errors.model_year"
+            />
+            <x-input 
               v-model="claimForm.plat_number"
               type="text"
               label="Plate Number"
               placeholder="Enter Plate Number"
               class="w-full"
               :error="claimForm.errors.plat_number"
-            />
-            <x-input
-              v-if="isCarLOB"
-              v-model="claimForm.model_year"
-              type="number"
-              label="Car Model Year"
-              placeholder="Enter Model Year"
-              class="w-full"
-              :error="claimForm.errors.model_year"
-            />
-            <x-input
-              v-if="isCarLOB"
-              v-model="claimForm.car_make"
-              type="text"
-              label="Car Make"
-              placeholder="Enter Car Make"
-              class="w-full"
-              :error="claimForm.errors.car_make"
-            />
-            <x-input
-              v-if="isCarLOB"
-              v-model="claimForm.car_model"
-              type="text"
-              label="Car Model"
-              placeholder="Enter Car Model"
-              class="w-full"
-              :error="claimForm.errors.car_model"
             />
           </template>
           <template v-if="isEdit">
