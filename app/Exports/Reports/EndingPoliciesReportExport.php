@@ -62,6 +62,6 @@ class EndingPoliciesReportExport extends BaseReportsExport
 
     public static function afterSheet(AfterSheet $event)
     {
-        self::performSum($event, ['G', 'H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'P']);
+        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q']);
     }
 }
