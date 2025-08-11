@@ -473,7 +473,7 @@ const onVoidSubmit = isValid => {
       voidPaymentForm.processing = false;
     });
 };
-const hasAnyRole = roles => useHasAnyRole(roles);
+
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
@@ -726,7 +726,12 @@ const onAddDocumentSubmit = event => {
                         embeddedProductTypeEnum.NON_INSURANCE &&
                       getFirstPriceWithTransaction(item.prices)?.transactions[0]
                         ?.payments[0]?.payment_gateway_id ==
-                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                      can(
+                        permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
+                      )))
                 "
                 size="xs"
                 color="#ff5e00"
@@ -748,24 +753,16 @@ const onAddDocumentSubmit = event => {
               >
                 Void Payment
               </x-button>
-              <!--              <x-button
-                v-if="
-                  item.can_book_embedded_product &&
-                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
-                    ?.payments[0]?.payment_gateway_id ==
-                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
-                "
-                size="xs"
-                color="emerald"
-                @click.prevent="rescheduleEPBooking(item)"
-              >
-                Book Embedded Product
-              </x-button>-->
             </div>
           </template>
         </DataTable>
         <x-modal
-          v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+          v-if="
+            canAny([
+              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
+              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
+            ])
+          "
           title="Cancel Payment"
           v-model="modals.cancelPayment"
           size="md"
