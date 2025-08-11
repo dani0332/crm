@@ -359,6 +359,8 @@ class HealthQuoteService extends BaseService
         $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
         $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
+        logger()->debug("HealthQuoteService getGridData toRawSql: " . $query->toRawSql());
+
         return $query;
     }
 

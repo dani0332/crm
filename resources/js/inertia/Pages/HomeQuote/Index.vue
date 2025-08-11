@@ -245,7 +245,7 @@ const onDataExport = (exportType = 'download') => {
 const onPUAExport = () => {
   // Clean up date filter arrays to avoid duplication
   const filtersForExport = { ...filters };
-  
+
   // Ensure date filters are properly formatted as arrays
   if (filtersForExport.authorize_date && Array.isArray(filtersForExport.authorize_date)) {
     filtersForExport.authorize_date = filtersForExport.authorize_date.slice(0, 2);
@@ -256,14 +256,14 @@ const onPUAExport = () => {
 
   const data = useObjToUrl(filtersForExport);
   const url = `/Home/pua-leads-export?${data}`;
-  
+
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'),
     exportType: 'download',
     url: url,
     filters: { ...filtersForExport },
   };
-  
+
   exportLoader.value = true;
 
   logAndExportQuotes(payload)
@@ -412,7 +412,7 @@ function setQueryStringFilters() {
       // Boolean-like fields
       filters[key] = parseInt(value);
     } else if (key === 'is_stale' && (value === '0' || value === '1')) {
-      // Boolean-like fields  
+      // Boolean-like fields
       filters[key] = parseInt(value);
     } else {
       // Keep as string for dates, text fields, enums, etc.

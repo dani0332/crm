@@ -57,6 +57,8 @@ let availableFilters = {
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 };
 
 const canExport = ref(false);
@@ -771,6 +773,24 @@ const insurerAMLStatusOption = computed(() => {
         <DatePicker
           v-model="filters.booking_date"
           label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Authorize Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Captured Date"
           class="w-full"
           range
           multi-calendars

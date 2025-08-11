@@ -136,6 +136,42 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByAdvisorAssignedDates('travelQuoteRequestDetail', 'advisor_assigned_date')
             ->filterBySegment('travel_quote_request')
             ->filterByPrivateClient(request('private_client'))
+            ->when($this->hasFilterValue('authorize_date', $requestParams), function ($query) use ($requestParams) {
+                $authorizedAtRange = $this->getFilterValue('authorize_date', $requestParams);
+
+                // Handle authorize_date as an array of two dates [start_date, end_date]
+                if (is_array($authorizedAtRange) && count($authorizedAtRange) >= 2) {
+                    $startDate = $authorizedAtRange[0];
+                    $endDate = $authorizedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false)
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when($this->hasFilterValue('captured_date', $requestParams), function ($query) use ($requestParams) {
+                $capturedAtRange = $this->getFilterValue('captured_date', $requestParams);
+
+                // Handle captured_date as an array of two dates [start_date, end_date]
+                if (is_array($capturedAtRange) && count($capturedAtRange) >= 2) {
+                    $startDate = $capturedAtRange[0];
+                    $endDate = $capturedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false)
+                            ]);
+                        });
+                    }
+                }
+            })
             ->when($this->hasFilterValue('previous_quote_policy_number', $requestParams), function ($query) use ($requestParams) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', requestParams: $requestParams)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', requestParams: $requestParams));
             })
@@ -305,6 +341,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
         $query = $this->buildGrid();
 
         $this->applyFilters($query, $requestParams);
+
+        logger()->debug("TravelQuoteQueryBuilder toRawSql: " . $query->toRawSql());
 
         return $query;
     }

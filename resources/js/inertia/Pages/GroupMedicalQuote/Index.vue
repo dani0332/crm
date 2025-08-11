@@ -73,6 +73,8 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   advisor_assigned_date: [],
+  authorize_date: '',
+  captured_date: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -724,6 +726,22 @@ const insurerAMLStatusOption = computed(() => {
         <DatePicker
           v-model="filters.booking_date"
           label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Authorize Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Captured Date"
           class="w-full"
           range
           multi-calendars

@@ -50,6 +50,8 @@ let availableFilters = {
   insurer_commmission_invoice_number: '',
   advisor_assigned_date: [],
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -490,6 +492,22 @@ const insurerAMLStatusOption = computed(() => {
           label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Authorize Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
         <x-select
           v-model="filters.quote_status_id"

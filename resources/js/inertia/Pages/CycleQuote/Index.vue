@@ -54,6 +54,8 @@ let availableFilters = {
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 };
 
 const filters = reactive(availableFilters);
@@ -777,6 +779,22 @@ const insurerAMLStatusOption = computed(() => {
           label="Last Modified Date"
           range
           format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Authorize Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
 
         <x-input

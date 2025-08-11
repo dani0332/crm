@@ -257,6 +257,23 @@ class AmtController extends Controller
             $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
+        // Apply authorize_date filter
+        if (!empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+            $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
+            $data->whereBetween('py.authorized_at', [$startDate, $endDate]);
+        }
+
+        // Apply captured_date filter
+        if (!empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+            $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
+            $data->whereBetween('py.captured_at', [$startDate, $endDate]);
+        }
+
+        // Add debug logging
+        logger()->debug("AmtController toRawSql: " . $data->toRawSql());
+
         $this->adjustQueryByDateFilters($data, 'bqr');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
