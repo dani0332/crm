@@ -314,7 +314,7 @@ class EndorsementReportService extends ManagementReport
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
             $item->status = ucwords(str_replace('_', ' ', strtolower($item->status)));
-            $item->currently_insured_with_text = $item->quote_type_id === QuoteTypeId::Car
+            $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
                 ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
                 : ($item->currently_insured_with_text ?? 'N/A');
         });
