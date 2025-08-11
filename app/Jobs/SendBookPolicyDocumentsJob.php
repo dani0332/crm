@@ -6,6 +6,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
@@ -66,6 +67,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($this->data->model_type));
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+
+        $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
 
         info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Type: '.$this->data->model_type.', Type Id: '.$quoteTypeId);
 
@@ -175,6 +178,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->quoteTypeId = $quoteTypeId;
             $emailData->quoteId = $quote->id;
             $emailData->policyWordingHandbook = $policyWordingDoc;
+            $emailData->isHealthAUH = $isAUHHealthLead;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));

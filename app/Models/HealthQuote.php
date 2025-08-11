@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -489,5 +491,10 @@ class HealthQuote extends Model implements AuditableContract
     public function ftcEmailLogs()
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function isAUHLead(bool $shouldCheckSource = true)
+    {
+        return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
     }
 }
