@@ -33,6 +33,7 @@ class RolePermissionSeeder extends Seeder
         $this->addNationalityAllocationConfigPermission();
         $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
+        $this->addLeadsByEmailPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -295,6 +296,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::OVERRIDE_COMMISSION_LIMIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addLeadsByEmailPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::LEADS_BY_EMAIL,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

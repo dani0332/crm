@@ -1043,10 +1043,12 @@ const onLeadStatus = () => {
     .post(`/quotes/Car/${page.props.record.id}/update-lead-status`, {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
-        notification.error({
-          title: errors.value,
-          position: 'top',
+        Object.keys(errors).forEach(function (key) {
+          console.log(errors[key]);
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
         });
       },
     });
