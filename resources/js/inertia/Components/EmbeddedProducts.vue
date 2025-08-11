@@ -728,9 +728,9 @@ const onAddDocumentSubmit = event => {
                       getFirstPriceWithTransaction(item.prices)?.transactions[0]
                         ?.payments[0]?.payment_gateway_id ==
                         paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
-                      (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
                       ?.payment_status_id == paymentStatusEnum.CAPTURED &&
-                        hasRole(rolesEnum.Engineering)))
+                      hasRole(rolesEnum.Engineering)))
                 "
                 size="xs"
                 color="#ff5e00"
