@@ -894,9 +894,9 @@ class CentralService extends BaseService
                 })
                 ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail, $quoteDetails) {
                     $renewalTeamID = $quoteTypeDetail['renewal_team'] ?? null;
-                    
+
                     // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
-                    if (isset($quoteTypeDetail['group_medical_renewal_team']) && 
+                    if (isset($quoteTypeDetail['group_medical_renewal_team']) &&
                         property_exists($quoteDetails, 'business_type_of_insurance_id') &&
                         $quoteDetails->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                         $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
