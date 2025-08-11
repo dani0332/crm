@@ -3359,8 +3359,8 @@ class SageApiService
         $isErrorOccurred = $sageErrorMessageOnSuccess && str_contains($sageErrorMessageOnSuccess, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE);
 
         if (isset($postedResponse['error']) || $isErrorOccurred) {
-            $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess  : 'Error while making Apply payment Posted to sage';
-            $message = $isErrorOccurred ? $sageErrorMessageOnSuccess  : 'postUpfrontApplyPaymentAPInvoice failed';
+            $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess : 'Error while making Apply payment Posted to sage';
+            $message = $isErrorOccurred ? $sageErrorMessageOnSuccess : 'postUpfrontApplyPaymentAPInvoice failed';
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
@@ -3480,7 +3480,7 @@ class SageApiService
         $isErrorOccurred = $sageErrorMessageOnSuccess && str_contains($sageErrorMessageOnSuccess, SageEnum::SAGE_ERROR_OCCURRED_MESSAGE);
 
         if (isset($postedResponse['error']) || $isErrorOccurred) {
-            $errorMessage =  $isErrorOccurred ? $sageErrorMessageOnSuccess : 'Error while making Apply payment Posted to sage';
+            $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess : 'Error while making Apply payment Posted to sage';
             $message = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' postSplitApplyPaymentAPInvoice failed';
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
