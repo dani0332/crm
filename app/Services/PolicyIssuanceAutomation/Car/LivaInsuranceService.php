@@ -57,6 +57,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     const BOOK_POLICY_API_FAILED_STATUS_ID = 4;
     const BOOK_POLICY_API_FAILED = 'Book Policy API Failed';
     const BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
+    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 4;
+    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Get and Upload Policy Documents to IMCRM API Failed';
+    const OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
+    const OCR_PROCESSING_API_FAILED = 'OCR Processing API Failed';
 
     public $currentInsurerApiStatus = null;
     public $headers = [];
@@ -715,12 +719,24 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
     }
 
+    public function getInsurerAPIStatuses()
+    {
+        return [
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
+            self::POLICY_ISSUANCE_API_FAILED_STATUS_ID => self::POLICY_ISSUANCE_API_FAILED,
+            self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
+            self::OCR_PROCESSING_API_FAILED_STATUS_ID => self::OCR_PROCESSING_API_FAILED,
+            self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
+        ];
+    }
+
     public function getFailedIssuanceAPIStatuses()
     {
         return [
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
             self::POLICY_ISSUANCE_API_FAILED_STATUS_ID,
-            self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
+            self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
+            self::OCR_PROCESSING_API_FAILED_STATUS_ID,
             self::BOOK_POLICY_API_FAILED_STATUS_ID,
         ];
     }
