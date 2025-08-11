@@ -199,7 +199,6 @@ class AutomateActivitiesCommand extends Command
 
                                         // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
                                         if (isset($quoteTypeDetail['group_medical_renewal_team']) && 
-                                            property_exists($quoteDetail, 'business_type_of_insurance_id') &&
                                             $quoteDetail->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                                             $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
                                         }
