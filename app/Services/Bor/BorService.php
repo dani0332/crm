@@ -4,6 +4,7 @@ namespace App\Services\Bor;
 
 use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\BorLog;
 use App\Models\DocumentType;
@@ -169,6 +170,9 @@ class BorService
         
         // Enrich the created BOR log with document data
         $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
+
+        $personalQuote->quote_status_id = QuoteStatusEnum::PendingBorRequest;
+        $personalQuote->save();
         
         return ['borLog' => $enrichedBorLog, 'emailSent' => $emailSent];
     }

@@ -105,14 +105,21 @@ class QuoteStatusSeeder extends Seeder
             //     'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
             // ], $commonData);
 
-            QuoteStatusMap::firstOrCreate([
-                'quote_type_id' => $quoteType->id,
-                'quote_status_id' => QuoteStatusEnum::PaymentInitiated,
-            ], $commonData);
+            // This have been run for prod/uat/test
+            // QuoteStatusMap::firstOrCreate([
+            //     'quote_type_id' => $quoteType->id,
+            //     'quote_status_id' => QuoteStatusEnum::PaymentInitiated,
+            // ], $commonData);
+
+            // This have been run for prod/uat/test 
+            // QuoteStatusMap::firstOrCreate([
+            //     'quote_type_id' => $quoteType->id,
+            //     'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
+            // ], $commonData);
 
             QuoteStatusMap::firstOrCreate([
                 'quote_type_id' => $quoteType->id,
-                'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
+                'quote_status_id' => QuoteStatusEnum::PendingBorRequest,
             ], $commonData);
         }
     }
