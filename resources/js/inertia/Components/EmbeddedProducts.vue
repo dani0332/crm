@@ -474,7 +474,6 @@ const onVoidSubmit = isValid => {
     });
 };
 const rolesEnum = page.props.rolesEnum || {};
-const hasRole = role => useHasRole(role);
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
@@ -730,7 +729,7 @@ const onAddDocumentSubmit = event => {
                         paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
                     (getFirstPriceWithTransaction(item.prices)?.transactions[0]
                       ?.payment_status_id == paymentStatusEnum.CAPTURED &&
-                      hasRole(rolesEnum.Engineering)))
+                      can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN)))
                 "
                 size="xs"
                 color="#ff5e00"

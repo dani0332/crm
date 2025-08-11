@@ -263,7 +263,7 @@ class EmbeddedProductRepository extends BaseRepository
             if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
                 $canCancel = false;
-                if (auth()->user()->hasRole(RolesEnum::Engineering)) {
+                if (auth()->user()->can(PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN)) {
                     $canCancel = true;
 
                 } elseif ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
