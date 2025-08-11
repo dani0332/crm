@@ -757,7 +757,12 @@ const onAddDocumentSubmit = event => {
           </template>
         </DataTable>
         <x-modal
-          v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+          v-if="
+            canAny([
+              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
+              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
+            ])
+          "
           title="Cancel Payment"
           v-model="modals.cancelPayment"
           size="md"
