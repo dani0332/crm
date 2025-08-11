@@ -56,11 +56,11 @@ class CarCQFRenewalService
                     QuoteStatusEnum::PolicyCancelledReissued,
                     QuoteStatusEnum::CancellationPending]
             )->whereIn('payment_status_id', [
-            PaymentStatusEnum::PAID,
-            PaymentStatusEnum::PARTIALLY_PAID,
-            PaymentStatusEnum::CAPTURED,
-            PaymentStatusEnum::PARTIAL_CAPTURED,
-                ])
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+            ])
             ->first();
 
         if (empty($isQuoteExists)) {
@@ -119,12 +119,12 @@ class CarCQFRenewalService
         } else {
             LoggerService::info(self::class.' - Car CQF Renewal Leads processing completed');
         }
-   
+
     }
 
     public function mapValidationHTML($errors)
     {
-      
+
         // foreach ($errors as $key => $error) {
         //     $html .= '<tr>
         //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">
@@ -285,7 +285,7 @@ class CarCQFRenewalService
             $errors = $validator->errors()->toArray();
             foreach ($errors as $field => $message) {
                 $errors[$field] = $message[0];
-                $this->validationErrors[] = ['policy_number' => $quote->policy_number, 'message' => $errors[$field].' '.$message[0] ];
+                $this->validationErrors[] = ['policy_number' => $quote->policy_number, 'message' => $errors[$field].' '.$message[0]];
             }
         }
 
@@ -339,9 +339,7 @@ class CarCQFRenewalService
     }
     public function mapFailedQuoteData($quote)
     {
-        
 
-     
         // Get insurance provider safely to avoid null pointer exception
         $insuranceProvider = app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with);
 
