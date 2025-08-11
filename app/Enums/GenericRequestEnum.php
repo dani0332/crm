@@ -49,10 +49,12 @@ final class GenericRequestEnum extends Enum
     const SEND_UPDATE_QUOTE_TYPE_MARSHAL = 99; // this quote type pass to Marshal Service for capture payment, not added on quote type enums because getting conflict while calling quotes.
     public const ERROR = 'ERROR';
     const FAILED = 'failed';
+    const PASSED = 'passed';
     const TYPE_LEAD = 'lead';
     const TYPE_ENDORSEMENT = 'endorsement';
     const DEFAULT_NATIONALITY = 56;
     const EBAO_QUOTE_STATUS = 'Quote';
     const EBAO_UW_APPROVAL_STATUS_NO = 'N';
     const SUCCESS = 'success';
+    const CALL_TYPE_QUOTE_INFO = 'quoteInfo';
 }

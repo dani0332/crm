@@ -24,6 +24,7 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\User;
+use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -81,7 +82,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private const NATIONAL_ID_DOC_TYPE_CODE = 'DT03';
 
     private const POLICY_DOC_TAX_INVOICE = 'Tax invoice';
-    private const POLICY_DOC_COMMISSION_STATEMENT = 'Commission statement';
+    private const POLICY_DOC_TAX_INVOICE_BY_BUYER = 'Tax invoice by buyer';
     private const POLICY_DOC_RECEIPT = 'Receipt with reference';
     private const POLICY_DOC_POLICY_SCHEDULE = 'Motor Insurance Policy Schedule';
     private const POLICY_DOC_CERTIFICATE_OF_INSURANCE = 'Certificate of Insurance';
@@ -496,6 +497,9 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $response;
         }
 
+        // Sync latest Car Quote Info to Quote
+        app(CentralService::class)->syncLatestCarQuoteInfoToQuote($quote);
+
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
         $response['completed_step'] = self::ISSUE_POLICY;
@@ -549,7 +553,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         foreach ($policyDocuments as $policyDocument) {
             // TODO:: this is a temporary fix to skip certificate of insurance document, this will be removed when the certificate of insurance document is uploaded to IMCRM on PROD
-            if(str_contains($policyDocument->name, 'Certificate of Insurance')) {
+            // Reminder:: Commission statement is same as Tax invoice raised by buyer
+            if(str_contains($policyDocument->name, 'Certificate of Insurance') || str_contains($policyDocument->name, 'Commission statement')) {
                 continue;
             }
             
@@ -638,12 +643,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $executeOCRProcessingResponse;
         }
 
-        // if (isset($executeOCRProcessingResponse['processing']) && $executeOCRProcessingResponse['processing']) {
-        //     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR processing is in progress, will continue via batch callback');
-
-        //     return $executeOCRProcessingResponse;
-        // }
-
         if (isset($executeOCRProcessingResponse['completed_step'])) {
             $process->update(['completed_step' => $executeOCRProcessingResponse['completed_step']]);
             $process = $process->refresh();
@@ -658,24 +657,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR processing started');
         $response = ['status' => false, 'completed_step' => self::EXECUTE_OCR_PROCESSING, 'error' => null, 'message' => null];
 
-        // Verify that the previous step completed successfully
-        $getAndUploadPolicyDocumentsToIMCRMStepCompleted = $process->completed_step === self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
-
-        if (! $getAndUploadPolicyDocumentsToIMCRMStepCompleted) {
-            $response['error'] = 'Get and upload policy documents to IMCRM step not completed';
-            $response['message'] = 'Get and upload policy documents to IMCRM step must be completed before OCR processing';
-
-            return $response;
-        }
-
         // Get the policy documents that were uploaded in the previous step
         // These are the document types that should have been uploaded to IMCRM
         $policyDocumentTypes = [
             DocumentTypeCode::TI, // Tax Invoice
             DocumentTypeCode::CTIRBB, // Tax Invoice Raised By Buyer
-            DocumentTypeCode::CPD_RECEIPT, // Receipt
-            DocumentTypeCode::CPS, // Policy Schedule
-            DocumentTypeCode::CPC, // Policy Certificate
         ];
 
         // Get documents that were recently uploaded (after the upload step started)
@@ -766,7 +752,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     {
         $documentCodeMapping = [
             self::POLICY_DOC_TAX_INVOICE => DocumentTypeCode::TI,
-            self::POLICY_DOC_COMMISSION_STATEMENT => DocumentTypeCode::CTIRBB,
+            self::POLICY_DOC_TAX_INVOICE_BY_BUYER => DocumentTypeCode::CTIRBB,
             self::POLICY_DOC_RECEIPT => DocumentTypeCode::CPD_RECEIPT,
             self::POLICY_DOC_POLICY_SCHEDULE => DocumentTypeCode::CPS,
             self::POLICY_DOC_CERTIFICATE_OF_INSURANCE => DocumentTypeCode::CPC,
@@ -1115,102 +1101,73 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $response = Ken::request('/get-quote-from-insurer?quoteTypeId='.$quoteTypeId.'&quoteUID='.$quoteDetails->uuid, 'get');
             $responseData = $response['data'];
             $getQuoteResponseMapping = [
-                'rtaTransactionType' => $responseData['authorityTransactionDetails']['code'] ?? null,
-                'plateCode' => isset($responseData['plateNumber']) ? $this->extractPlateCode($responseData['plateNumber']) : null,
-                'plateNumber' => isset($responseData['plateNumber']) ? $this->extractPlateNumber($responseData['plateNumber']) : null,
-                'trafficCodeNumber' => $responseData['motorInformation']['trafficFileNumber'] ?? null,
-                'chassisNumber' => $responseData['motorInformation']['chassisNumber'] ?? null,
-                'engineNumber' => $responseData['motorInformation']['engineNumber'] ?? null,
-                'rtaPlateCategory' => $responseData['motorInformation']['rtaPlateCategory'] ?? '',
-                'vehicleColor' => $responseData['motorInformation']['vehicleColor']['code'] ?? null,
-                'plateColor' => $responseData['motorInformation']['plateColor']['code'] ?? null,
-                'bankLoan' => $responseData['motorInformation']['isVehicleMortgaged'] ?? null,
-                'bankName' => !empty($responseData['motorInformation']['isVehicleMortgaged']) ? ($responseData['motorInformation']['bankName'] ?? '') : '',
-                'firstRegistrationDate' => $responseData['policySchedule']['creationDate'] ?? null,
-                'policyEffectiveDate' => $responseData['policySchedule']['effectiveDate'] ?? null,
-                'policyExpiryDate' => $responseData['policySchedule']['expirationDate'] ?? null,
-                'certificateStartDate' => $responseData['motorInformation']['certificateInceptionDate'] ?? '',
-                'certificateEndDate' => $responseData['motorInformation']['certificateEndDate'] ?? '',
-                'annualMileageEstimate' => $responseData['annualMileageEstimate'] ?? '',
-                'isInsuredAndDriverSame' => ($responseData['policyHolder']['isPolicyHolderDriver'] ? '1' : '0') ?? null,
-                'driverFirstName' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                'rta_transaction_type' => $responseData['authorityTransactionDetails']['code'] ?? null,
+                'plate_code' => isset($responseData['plateNumber']) ? $this->extractPlateCode($responseData['plateNumber']) : null,
+                'plate_number' => isset($responseData['plateNumber']) ? $this->extractPlateNumber($responseData['plateNumber']) : null,
+                'traffic_code_number' => $responseData['motorInformation']['trafficFileNumber'] ?? null,
+                'chassis_number' => $responseData['motorInformation']['chassisNumber'] ?? null,
+                'engine_number' => $responseData['motorInformation']['engineNumber'] ?? null,
+                'rta_plate_category' => $responseData['motorInformation']['rtaPlateCategory'] ?? '',
+                'vehicle_color' => $responseData['motorInformation']['vehicleColor']['code'] ?? null,
+                'plate_color' => $responseData['motorInformation']['plateColor']['code'] ?? null,
+                'bank_loan' => $responseData['motorInformation']['isVehicleMortgaged'] ?? null,
+                'bank_name' => !empty($responseData['motorInformation']['isVehicleMortgaged']) ? ($responseData['motorInformation']['bankName'] ?? '') : '',
+                'first_registration_date' => $responseData['policySchedule']['creationDate'] ?? null,
+                'policy_effective_date' => $responseData['policySchedule']['effectiveDate'] ?? null,
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'] ?? null,
+                'certificate_start_date' => $responseData['motorInformation']['certificateInceptionDate'] ?? '',
+                'certificate_end_date' => $responseData['motorInformation']['certificateEndDate'] ?? '',
+                'annual_mileage_estimate' => $responseData['annualMileageEstimate'] ?? '',
+                'is_insured_and_driver_same' => ($responseData['policyHolder']['isPolicyHolderDriver'] ? '1' : '0') ?? null,
+                'driver_first_name' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
                     ? (
                         $responseData['policyHolder']['isPolicyHolderDriver']
                             ? ($responseData['policyHolder']['person']['givenName'] ?? null)
                             : ($responseData['driver']['firstName'] ?? null)
                     )
                     : null,
-                'driverLastName' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                'driver_last_name' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
                     ? (
                         $responseData['policyHolder']['isPolicyHolderDriver']
                             ? ($responseData['policyHolder']['person']['surName'] ?? null)
                             : ($responseData['driver']['lastName'] ?? null)
                     )
                     : null,
-                'driverDob' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                'driver_dob' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
                     ? (
                         $responseData['policyHolder']['isPolicyHolderDriver']
                             ? ($responseData['policyHolder']['person']['birthDate'] ?? null)
                             : ($responseData['driver']['dateOfBirth'] ?? null)
                     )
                     : null,
-                'driverGender' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
+                'driver_gender' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
                     ? strtolower(
                         $responseData['policyHolder']['isPolicyHolderDriver']
                             ? ($responseData['policyHolder']['person']['gender']['value'] ?? null)
                             : ($responseData['driver']['gender'] ?? null)
                     )
                     : null,
-                'driverLicenseNumber' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
+                'driver_license_number' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
                     ? (
                         collect($responseData['policyHolder']['documents'])
                             ->first(fn($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docId']
                             ?? null
                     )
                     : null,
-                'licenseExpiryDate' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
+                'driver_license_expiry_date' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
                     ? (
                         collect($responseData['policyHolder']['documents'])
                             ->first(fn($doc) => isset($doc['docType']['code']) && $doc['docType']['code'] === self::DRIVING_LICENSE_DOC_TYPE_CODE)['docExpiryDate']
                             ?? null
                     )
                     : null,
-                'uaeDrivingExperience' => $responseData['policyHolder']['policyHolderDrivingExperience'] ?? '',
+                'driver_uae_driving_experience' => $responseData['policyHolder']['policyHolderDrivingExperience'] ?? '',
             ];
 
             if (isset($response['data'])) {
-                $vehicleAndDriverDetails = [
-                    'rta_transaction_type' => $getQuoteResponseMapping['rtaTransactionType'] ?? null,
-                    'plate_code' => $getQuoteResponseMapping['plateCode'] ?? null,
-                    'plate_number' => $getQuoteResponseMapping['plateNumber'] ?? null,
-                    'traffic_code_number' => $getQuoteResponseMapping['trafficCodeNumber'] ?? null,
-                    'chassis_number' => $getQuoteResponseMapping['chassisNumber'] ?? null,
-                    'engine_number' => $getQuoteResponseMapping['engineNumber'] ?? null,
-                    'rta_plate_category' => $getQuoteResponseMapping['rtaPlateCategory'] ?? null,
-                    'vehicle_color' => $getQuoteResponseMapping['vehicleColor'] ?? null,
-                    'plate_color' => $getQuoteResponseMapping['plateColor'] ?? null,
-                    'bank_loan' => $getQuoteResponseMapping['bankLoan'] ?? null,
-                    'bank_name' => $getQuoteResponseMapping['bankName'] ?? null,
-                    'first_registration_date' => $getQuoteResponseMapping['firstRegistrationDate'] ?? null,
-                    'policy_effective_date' => $getQuoteResponseMapping['policyEffectiveDate'] ?? null,
-                    'policy_expiry_date' => '',
-                    'certificate_start_date' => $getQuoteResponseMapping['certificateStartDate'] ?? null,
-                    'certificate_end_date' => $getQuoteResponseMapping['certificateEndDate'] ?? null,
-                    'annual_mileage_estimate' => $getQuoteResponseMapping['annualMileageEstimate'] ?? null,
-                    'is_insured_and_driver_same' => $getQuoteResponseMapping['isInsuredAndDriverSame'] ?? null,
-                    'driver_first_name' => $getQuoteResponseMapping['driverFirstName'] ?? null,
-                    'driver_last_name' => $getQuoteResponseMapping['driverLastName'] ?? null,
-                    'driver_dob' => $getQuoteResponseMapping['driverDob'] ?? null,
-                    'driver_gender' => $getQuoteResponseMapping['driverGender'] ?? null,
-                    'driver_license_number' => $getQuoteResponseMapping['driverLicenseNumber'] ?? null,
-                    'license_expiry_date' => $getQuoteResponseMapping['licenseExpiryDate'] ?? null,
-                    'uae_driving_experience' => $getQuoteResponseMapping['uaeDrivingExperience'] ?? null,
-                ];
-
                 $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
-                // TODO:: this needs to be verify
                 if ($carQuoteRequestDetails) {
-                    $carQuoteRequestDetails->update($vehicleAndDriverDetails);
+                    $carQuoteRequestDetails->update($getQuoteResponseMapping);
                 }
 
                 return response()->json([
@@ -1240,7 +1197,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
-            'isPolicyDocumentUploadDisabled' => true,
             'isEditBookingDetailsDisabled' => true,
             'message' => 'All steps are locked',
             'insurer_api_status' => $quote->insurer_api_status,
@@ -1249,14 +1205,13 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
             if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
-                $response['isPolicyDocumentUploadDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
 
                 return $response;
             }
             if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
-                $response['isPolicyDocumentUploadDisabled'] = false;
+                $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
 
@@ -1273,7 +1228,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $response;
         } elseif (! $policyIssuance) {
             $response['isEditPolicyDetailsDisabled'] = false;
-            $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
         }

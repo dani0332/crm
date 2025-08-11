@@ -7,6 +7,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -39,6 +40,7 @@ use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
+use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -1637,5 +1639,62 @@ class CentralService extends BaseService
         LoggerService::info('fn:checkInsurerReceiptNumber - Receipt number does not exist: '.$receiptNumber);
 
         return ['status' => true, 'message' => 'Receipt number does not exist'];
+    }
+
+    public function syncLatestCarQuoteInfoToQuote($quote): array
+    {
+        $return = ['status' => true, 'message' => 'Latest Car Quote Info API response synced to the quote.'];
+
+        LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Sync latest Car Quote Info to Quote started');
+        $latestCarQuoteInfo = InsurerRequestResponse::where([
+            'quote_uuid' => $quote->uuid,
+            'call_type' => GenericRequestEnum::CALL_TYPE_QUOTE_INFO,
+            'status' => GenericRequestEnum::PASSED,
+        ])->latest()->first();
+
+        if (! $latestCarQuoteInfo) {
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Latest Car Quote Info API response not found');
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response not found for the given quote.'
+            ];
+        }
+
+        $responseData = json_decode($latestCarQuoteInfo->response, true);
+        $payment = $quote->payments()->mainLeadPayment()->first();
+
+        DB::beginTransaction();
+
+        try {
+            $payment->update([
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'commission_vat_applicable' => $responseData['selectedPlan']['premium']['commission']['amount'],
+            ]);
+
+            $quote->update([
+                'policy_issuance_date' => $responseData['policySchedule']['creationDate'],
+                'policy_start_date' => $responseData['policySchedule']['effectiveDate'],
+                'policy_expiry_date' => $responseData['policySchedule']['expirationDate'],
+                'price_vat_applicable' => $responseData['selectedPlan']['premium']['premium']['amount'],
+                'vat' => $responseData['selectedPlan']['premium']['vatOnPremium']['amount'],
+                'price_with_vat' => $responseData['selectedPlan']['premium']['grossPremium']['amount'],
+            ]);
+
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Sync latest Car Quote Info to Quote completed');
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LoggerService::info('fn:'.__FUNCTION__.' - Quote Ref-ID:'. $quote->code.' - Transaction failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            $return = [
+                'status' => false,
+                'message' => 'Latest Car Quote Info API response synced to the quote failed',
+            ];
+        }
+
+        return $return;
     }
 }
