@@ -761,8 +761,7 @@ const onAddDocumentSubmit = event => {
             canAny([
               permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
               permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
-            ])
-          "
+            ])"
           title="Cancel Payment"
           v-model="modals.cancelPayment"
           size="md"
