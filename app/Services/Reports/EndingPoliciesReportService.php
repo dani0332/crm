@@ -70,7 +70,8 @@ class EndingPoliciesReportService extends ManagementReport
                 'personal_quotes.source',
                 'personal_quotes.notes',
                 'ciw.text as currently_insured_with_text',
-                'cqr.currently_insured_with as currently_insured_with'
+                'cqr.currently_insured_with as currently_insured_with',
+                'personal_quotes.quote_type_id',
             );
 
         $this->applyFilters($query, $request, isSSR: true);
