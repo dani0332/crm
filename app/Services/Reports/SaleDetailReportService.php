@@ -83,7 +83,7 @@ class SaleDetailReportService extends ManagementReport
                 'p.commmission_percentage',
                 'personal_quotes.policy_booking_date',
                 'ps.sage_reciept_id',
-                DB::raw(Customer::formattedPcpTagCase('cm') . ' as pcp_tag_formatted'),
+                DB::raw(Customer::formattedPcpTagCase('cm').' as pcp_tag_formatted'),
                 'ciw.text as currently_insured_with_text',
                 'cqr.currently_insured_with as currently_insured_with'
             )

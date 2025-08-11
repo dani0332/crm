@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Exports\Reports\EndingPoliciesReportExport;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -12,7 +13,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\QuoteTypeId;
 
 class EndingPoliciesReportService extends ManagementReport
 {
