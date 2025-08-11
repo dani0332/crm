@@ -522,7 +522,7 @@ class SendUpdateLogService
             $_return['uuid'] = explode('-', $quote->parent_duplicate_quote_id)[1];
         }
 
-        if (count($childRecords) == 1) {
+        if (! empty($childRecords) && count($childRecords) == 1) {
             $_return['childLeads'] = $childRecords[0]['code'];
             $_return['childLeadsUuid'] = $childRecords[0]['uuid'];
         }
