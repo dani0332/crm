@@ -731,7 +731,8 @@ const onAddDocumentSubmit = event => {
                       ?.payment_status_id == paymentStatusEnum.CAPTURED &&
                       can(
                         permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL_ADMIN,
-                      )))"
+                      )))
+                "
                 size="xs"
                 color="#ff5e00"
                 :disabled="!item.can_cancel_payment"
