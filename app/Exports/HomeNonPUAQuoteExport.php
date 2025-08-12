@@ -73,8 +73,9 @@ class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
         // Count leads by status
         foreach ($leads as $lead) {
-            if (isset($allStatuses[$lead->leadstatus])) {
-                $allStatuses[$lead->leadstatus]++;
+            $leadStatus = $lead->quoteStatus->text ?? '';
+            if (isset($allStatuses[$leadStatus])) {
+                $allStatuses[$leadStatus]++;
             }
         }
 
@@ -112,10 +113,10 @@ class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
                 $quote->RefID,
                 $quote->premiumauthorized,
                 $quote->paymentauthdate ? date(config('constants.datetime_format'), strtotime($quote->paymentauthdate)) : '',
-                $quote->leadstatus,
+                $quote->quoteStatus->text ?? '',
                 $quote->paymentstatus,
                 $quote->source,
-                $quote->assignedadvisoremail,
+                $quote->advisor->email ?? '',
             ];
         } elseif (isset($quote->NonPUA)) {
             return [

@@ -69,8 +69,14 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
     {
         return app(HomeQuoteRepository::class)
             ->exportPUAUpdates($this->requestParams)
-            ->select('personal_quotes.source', 'personal_quotes.payment_status_id', 'personal_quotes.premium')
-            ->get();
+            ->get()
+            ->map(function ($quote) {
+                return (object) [
+                    'source' => $quote->source,
+                    'payment_status_id' => $quote->payment_status_id,
+                    'premium' => $quote->premium,
+                ];
+            });
     }
 
     private function initializeCounters(): void
@@ -121,29 +127,33 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
 
     private function getQuotesData()
     {
-        return app(HomeQuoteRepository::class)->exportPUAUpdates($this->requestParams)->select(
-            'personal_quotes.code as RefId',
-            'personal_quotes.source as source',
-            DB::raw("'Home Insurance' as PropertyType"),
-            DB::raw("'Property' as PropertyCategory"),
-            'nationality.text as nationality',
-            'quote_status.text as LeadStatus',
-            'payment_status.text as PaymentStatus',
-            'personal_quotes.payment_status_id',
-            DB::raw("'Home Insurance' as InsuranceType"),
-            DB::raw("'Home Property Plan' as PlanName"),
-            DB::raw("'Comprehensive' as PlanType"),
-            DB::raw("insurance_provider.text as Insurer"),
-            'personal_quotes.premium as PremiumAuth',
-            'personal_quotes.premium_authorized as PremiumCaptured',
-            'personal_quotes.first_name',
-            'personal_quotes.last_name',
-            'personal_quotes.mobile_no',
-            'personal_quotes.email',
-            'personal_quotes.payment_status_date as paidAt',
-            DB::raw("'Premium Update' as PUAType"),
-            'personal_quotes.created_at as createdAt',
-        )->get();
+        $results = app(HomeQuoteRepository::class)->exportPUAUpdates($this->requestParams)->get();
+        
+        return $results->map(function ($quote) {
+            return (object) [
+                'RefId' => $quote->RefID,
+                'source' => $quote->source,
+                'PropertyType' => 'Home Insurance',
+                'PropertyCategory' => 'Property',
+                'nationality' => $quote->nationality->text ?? 'N/A',
+                'LeadStatus' => $quote->quoteStatus->text ?? 'N/A',
+                'PaymentStatus' => $quote->paymentStatus->text ?? 'N/A',
+                'payment_status_id' => $quote->payment_status_id,
+                'InsuranceType' => 'Home Insurance',
+                'PlanName' => 'Home Property Plan',
+                'PlanType' => 'Comprehensive',
+                'Insurer' => $quote->insuranceProvider->text ?? 'N/A',
+                'PremiumAuth' => $quote->premium,
+                'PremiumCaptured' => $quote->premiumauthorized,
+                'first_name' => $quote->first_name,
+                'last_name' => $quote->last_name,
+                'mobile_no' => $quote->mobile_no,
+                'email' => $quote->email,
+                'paidAt' => $quote->paymentauthdate,
+                'PUAType' => 'Premium Update',
+                'createdAt' => $quote->created_at,
+            ];
+        });
     }
 
     private function prepareSummary(): Collection
