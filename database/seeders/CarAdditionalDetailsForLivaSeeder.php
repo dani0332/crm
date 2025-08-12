@@ -46,7 +46,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         ];
 
         foreach ($plateCodes as $plateCode) {
-            Lookup::createOrFirst([
+            Lookup::firstOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::PLATE_CODE,
                 'code' => $plateCode,
@@ -61,7 +61,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function rtaTransactionType()
     {
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '10',
@@ -72,7 +72,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '20',
@@ -83,7 +83,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '30',
@@ -94,7 +94,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '40',
@@ -105,7 +105,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '50',
@@ -116,7 +116,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '60',
@@ -127,7 +127,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => '70',
@@ -141,7 +141,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function rtaPlateCategory()
     {
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '14',
@@ -152,7 +152,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '18',
@@ -163,7 +163,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '39',
@@ -174,7 +174,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '42',
@@ -185,7 +185,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '45',
@@ -196,7 +196,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => '36',
@@ -210,7 +210,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function vehicleColor()
     {
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '1',
@@ -221,7 +221,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '2',
@@ -232,7 +232,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '3',
@@ -243,7 +243,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '4',
@@ -254,7 +254,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '5',
@@ -265,7 +265,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '6',
@@ -276,7 +276,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '7',
@@ -287,7 +287,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '8',
@@ -298,7 +298,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::VEHICLE_COLOR,
             'code' => '9',
@@ -556,7 +556,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
         ];
 
         foreach ($banks as $bank) {
-            Lookup::createOrFirst([
+            Lookup::firstOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::BANK_NAME,
                 'code' => $bank[0],
@@ -571,7 +571,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
 
     private function annualMileageEstimate()
     {
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '1',
@@ -582,7 +582,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '2',
@@ -593,7 +593,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '3',
@@ -604,7 +604,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '4',
@@ -615,7 +615,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '5',
@@ -626,7 +626,7 @@ class CarAdditionalDetailsForLivaSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
             'code' => '6',
