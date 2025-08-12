@@ -13,13 +13,13 @@ class SendFailedCarRenewalsJob implements ShouldQueue
 {
     use Queueable;
 
-    public $failedQuotes;
+    public $failedPolicyNumbers;
     /**
      * Create a new job instance.
      */
-    public function __construct($failedQuotes)
+    public function __construct($failedPolicyNumbers)
     {
-        $this->failedQuotes = $failedQuotes;
+        $this->failedPolicyNumbers = $failedPolicyNumbers;
     }
 
     /**
@@ -31,11 +31,11 @@ class SendFailedCarRenewalsJob implements ShouldQueue
         $workflowSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
 
         if ($workflowSwitch) {
-            app(CarEmailService::class)->sendFailedCarRenewals($this->failedQuotes);
+            app(CarEmailService::class)->sendFailedCarRenewals($this->failedPolicyNumbers);
 
-            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.implode(', ', $this->failedQuotes));
+            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.implode(', ', $this->failedPolicyNumbers));
         } else {
-            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.$this->failedQuotes);
+            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.$this->failedPolicyNumbers);
         }
 
     }

@@ -41,7 +41,7 @@ class CarCQFRenewalService
 {
     private $totalQuotesProcessed = 0;
     private $errorQuotes = 0;
-    private $failedQuotes = [];
+    private $failedPolicyNumbers = [];
     private $validationErrorsList = [];
     private $epCodes = [];
     public function processCarCQFRenewalLeads()
@@ -114,7 +114,7 @@ class CarCQFRenewalService
                 });
         }
         if ($this->errorQuotes > 0) {
-            SendFailedCarRenewalsJob::dispatch($this->failedQuotes);
+            SendFailedCarRenewalsJob::dispatch($this->failedPolicyNumbers);
             LoggerService::info(self::class." - Car CQF Renewal Leads processing completed with errors: {$this->errorQuotes}");
         } else {
             LoggerService::info(self::class.' - Car CQF Renewal Leads processing completed');
@@ -332,7 +332,7 @@ class CarCQFRenewalService
             $renewalQuoteProcess->data = $this->mapFailedQuoteData($quote);
             $renewalQuoteProcess->save();
             $this->errorQuotes++;
-            $this->failedQuotes[] = $quote->policy_number;
+            $this->failedPolicyNumbers[] = $quote->policy_number;
             LoggerService::info(self::class.' - Renewal Quote Process not created for quote');
         }
 

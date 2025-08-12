@@ -30,6 +30,8 @@ use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use App\Models\RenewalQuoteProcess;
+use App\Models\RenewalsUploadLeads;
 
 class CarEmailService extends BaseService
 {
@@ -783,12 +785,71 @@ class CarEmailService extends BaseService
         $renewalsManagersEmails = User::role(\App\Enums\RolesEnum::CarRenewalManager)
             ->pluck('email')
             ->toArray();
-
+        $failedRenewalProcesses = RenewalQuoteProcess::whereIn('policy_number', $failedQuotes)->get();
+        $failedRenewalProcessesHTML = $failedRenewalProcesses->map(function ($process) {
+            $rowHtml  = '<tr>';
+            $rowHtml .= '<td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'
+                     .  htmlspecialchars($process->id)
+                     .  '</td>';
+        
+            $rowHtml .= '<td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'
+                     .  htmlspecialchars($process->renewalsUploadLead->file_name ?? 'N/A')
+                     .  '</td>';
+        
+            $rowHtml .= '<td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'
+                     .  htmlspecialchars($process->quote_type)
+                     .  '</td>';
+        
+            $rowHtml .= '<td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'
+                     .  htmlspecialchars($process->policy_number)
+                     .  '</td>';
+        
+            $rowHtml .= '<td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'
+                     .  htmlspecialchars($process->status)
+                     .  '</td>';
+        
+            $rowHtml .= '<td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">';
+            if (!empty($process->validation_errors)) {
+                $errors = is_array($process->validation_errors) ? $process->validation_errors : [$process->validation_errors];
+                foreach ($errors as $error) {
+                    if (is_array($error)) {
+                        foreach ($error as $errMsg) {
+                            $rowHtml .= '<span style="color: #dc2626">•</span> ' . htmlspecialchars($errMsg) . '<br>';
+                        }
+                    } else {
+                        $rowHtml .= '<span style="color: #dc2626">•</span> ' . htmlspecialchars($error) . '<br>';
+                    }
+                }
+            } else {
+                $rowHtml .= 'N/A';
+            }
+            $rowHtml .= '</td>';
+        
+            $rowHtml .= '<td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'
+                     .  htmlspecialchars($process->created_at ? $process->created_at->format('Y-m-d') : 'N/A')
+                     .  '</td>';
+        
+            $rowHtml .= '</tr>';
+        
+            return $rowHtml; // ✅ return string instead of echo
+        });
+        $renewalUploadLead = RenewalsUploadLeads::where('id', $failedRenewalProcesses->first()->renewals_upload_lead_id)->first();
+                // If you want one string of all rows:
+        $failedRenewalProcessesHTML = $failedRenewalProcessesHTML->implode('');
         return (object) [
             'failedQuotes' => $failedQuotes,
+            'quoteUID'=>'',
             'renewalsManagersEmails' => $renewalsManagersEmails ?? [],
+            'renewalManagerEmail' => $renewalsManagersEmails[0] ?? '',
             'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
+            'tableContent' => $failedRenewalProcessesHTML,
+            'dateOfAttempt' => now()->format('Y-m-d'),
+            'failedLeadsCount' => count($failedQuotes),
+            'fileName' => $renewalUploadLead->file_name ?? '',
+            'fileDownloadUrl' => route('validation-failed-download', ['id' => $renewalUploadLead->id]),
+            
         ];
     }
 
 }
+
