@@ -152,14 +152,14 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
   if (driverDetails) {
     const fieldMappings = {
       driverDetails: {
-        isInsuredAndDriverSame: 'is_insured_and_driver_same',
-        driverFirstName: 'driver_first_name',
-        driverLastName: 'driver_last_name',
-        driverDob: 'driver_dob',
-        driverGender: 'driver_gender',
-        driverLicenseNumber: 'driver_license_number',
-        licenseExpiryDate: 'license_expiry_date',
-        uaeDrivingExperience: 'uae_driving_experience',
+        is_insured_and_driver_same: 'is_insured_and_driver_same',
+        driver_first_name: 'driver_first_name',
+        driver_last_name: 'driver_last_name',
+        driver_dob: 'driver_dob',
+        driver_gender: 'driver_gender',
+        driver_license_number: 'driver_license_number',
+        driver_license_expiry_date: 'license_expiry_date',
+        driver_uae_driving_experience: 'uae_driving_experience',
       },
     };
 
@@ -168,7 +168,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         additionalDriverDetailsForm[targetKey] = driverDetails[sourceKey];
       }
     });
-    if (driverDetails?.isInsuredAndDriverSame === '1') {
+    if (driverDetails?.is_insured_and_driver_same === '1') {
       isSyncFromInsurer.value = true;
     }
   }
