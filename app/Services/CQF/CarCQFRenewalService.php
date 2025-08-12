@@ -122,7 +122,6 @@ class CarCQFRenewalService
 
     }
 
-
     public function createRenewalsUploadLeads()
     {
         $uploadLeadData = [
