@@ -1007,21 +1007,7 @@ const allowStatusUpdate = computed(() => {
       :expanded="sectionExpanded"
     />
 
-    <BorLogsSection
-      :leadId="quote.id"
-      lob="Business"
-      :customerType="quote.customer_type"
-      :customerData="{
-        firstName: quote.first_name,
-        lastName: quote.last_name,
-        companyName: quote.company_name,
-        currentlyInsuredWith: quote.currently_insured_with
-      }"
-      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
-      :insuranceProviders="insuranceProviders"
-      :expanded="sectionExpanded"
-      :documentTypes="documentTypes"
-    />
+    
 
     <LastYearPolicyDetail
       v-if="
@@ -1185,6 +1171,22 @@ const allowStatusUpdate = computed(() => {
       :expanded="sectionExpanded"
       quoteType="Business"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      lob="Business"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy

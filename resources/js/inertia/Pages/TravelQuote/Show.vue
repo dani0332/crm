@@ -2892,22 +2892,6 @@ const fullAddress = computed(() => {
       :expanded="sectionExpanded"
     />
 
-    <BorLogsSection
-      :leadId="quote.id"
-      :lob="modelType"
-      :customerType="quote.customer_type"
-      :customerData="{
-        firstName: quote.first_name,
-        lastName: quote.last_name,
-        companyName: quote.company_name,
-        currentlyInsuredWith: quote.insurance_provider_id
-      }"
-      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
-      :insuranceProviders="insuranceProviders"
-      :expanded="sectionExpanded"
-      :documentTypes="documentTypes"
-    />
-
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
@@ -3622,6 +3606,22 @@ const fullAddress = computed(() => {
       @sendPolicyToClient="sendPolicyToClient"
       @verifyDocuments="getupdateDocumentValidate(true)"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="modelType"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.insurance_provider_id
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy

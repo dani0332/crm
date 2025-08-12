@@ -331,21 +331,7 @@ const record = computed(() => page.props.quote);
       </Collapsible>
     </div>
 
-    <BorLogsSection
-      :leadId="quote.id"
-      :lob="quoteType"
-      :customerType="quote.customer_type"
-      :customerData="{
-        firstName: quote.first_name,
-        lastName: quote.last_name,
-        companyName: quote.company_name,
-        currentlyInsuredWith: quote.currently_insured_with
-      }"
-      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
-      :insuranceProviders="insuranceProviders"
-      :expanded="sectionExpanded"
-      :documentTypes="documentTypes"
-    />
+    
 
     <LastYearPolicyDetail
       v-if="
@@ -398,6 +384,22 @@ const record = computed(() => page.props.quote);
       :quote="quote"
       :expanded="sectionExpanded"
       quoteType="Jetski"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <SendUpdates
