@@ -1855,7 +1855,7 @@ function handleOcrNotification(event) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RTA UPLOAD STATUS</dt>
-                <dd>{{ quote.rta_upload_status ? 'Done' : 'Pending' }}</dd>
+                <dd>{{ record.rta_upload_status ? 'Done' : 'Pending' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">

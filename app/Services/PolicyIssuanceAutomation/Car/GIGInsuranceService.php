@@ -454,7 +454,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $policyIssuanceResponse;
         }
 
-        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued]);
+        $quote->update([
+            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+            'policy_number' => $policyIssuanceResponse['data']['data']->policyId,
+        ]);
+        
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
 
@@ -595,7 +599,28 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'document' => $quoteDocument,
             ]);
 
-            $certificateOfInsuranceAvailable = $certificateOfInsuranceAvailable || ($docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id) ? true : false;
+            // TODO:: This is a temporary fix to upload the same content as CPC to simulate Certificate of Insurance without API call just for testing purposes 
+            // If Policy Schedule (CPS) uploaded, also upload the same content as CPC to simulate Certificate of Insurance without API call
+            if ($docMapping && isset($docMapping['code']) && $docMapping['code'] === DocumentTypeCode::CPS && ($quoteDocument?->id ?? false)) {
+                $duplicateDocName = self::POLICY_DOC_CERTIFICATE_OF_INSURANCE;
+                $cpcDocument = $this->uploadAndAttachToQuoteDocuments(
+                    $quote,
+                    $document['data']?->document?->content,
+                    DocumentTypeCode::CPC,
+                    $duplicateDocName
+                );
+
+                $uploadedDocumentsToIMCRM->push([
+                    'name' => $duplicateDocName,
+                    'uploaded' => $cpcDocument?->id ? true : false,
+                    'message' => 'Uploaded as CPC duplicate of Policy Schedule',
+                    'document' => $cpcDocument,
+                ]);
+
+                $docName = $duplicateDocName;
+            }
+
+            $certificateOfInsuranceAvailable = $docName === self::POLICY_DOC_CERTIFICATE_OF_INSURANCE && $quoteDocument?->id;
         }
 
         $quote->update(['rta_upload_status' => $certificateOfInsuranceAvailable ? self::RTA_UPLOAD_STATUS_DONE : self::RTA_UPLOAD_STATUS_PENDING]);
