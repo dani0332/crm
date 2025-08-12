@@ -788,7 +788,6 @@ class CarEmailService extends BaseService
         $failedRenewalProcesses = RenewalQuoteProcess::whereIn('policy_number', collect($failedQuotes)->first())->first();
         $renewalUploadLead = RenewalsUploadLeads::where('id', $failedRenewalProcesses->renewals_upload_lead_id)->first();
 
-
         return (object) [
             'failedQuotes' => implode(', ', $failedQuotes),
             'quoteUID' => '',

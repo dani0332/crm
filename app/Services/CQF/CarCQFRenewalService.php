@@ -14,8 +14,11 @@ use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Exports\RenewalFailedValidationExport;
+use App\Exports\RenewalHealthUpdateFailedValidationExport;
 use App\Jobs\SendFailedCarRenewalsJob;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
@@ -36,10 +39,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
-use App\Exports\RenewalHealthUpdateFailedValidationExport;
-use App\Enums\QuoteTypeShortCode;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\RenewalFailedValidationExport;
 
 class CarCQFRenewalService
 {
@@ -508,13 +508,14 @@ class CarCQFRenewalService
             'registration_type.required' => 'Registration type is required.',
         ];
     }
-    
-    public function getCarCQFValidations(){
+
+    public function getCarCQFValidations()
+    {
         $quoteFaileds = request('quotePolicyNumbers') ?? [];
         $policyNumbers = is_array($quoteFaileds) ? $quoteFaileds : explode(',', $quoteFaileds);
-        $failedRenewalProcesses = RenewalQuoteProcess::select('id','quote_type','policy_number','status' ,'validation_errors','created_at','renewals_upload_lead_id')->where('status', RenewalProcessStatuses::BAD_DATA)->whereIn('policy_number', $policyNumbers)->get()->toArray();
-  
-        $failedRenewalProcesses = collect($failedRenewalProcesses)->map(function ($process){
+        $failedRenewalProcesses = RenewalQuoteProcess::select('id', 'quote_type', 'policy_number', 'status', 'validation_errors', 'created_at', 'renewals_upload_lead_id')->where('status', RenewalProcessStatuses::BAD_DATA)->whereIn('policy_number', $policyNumbers)->get()->toArray();
+
+        $failedRenewalProcesses = collect($failedRenewalProcesses)->map(function ($process) {
             return [
                 'id' => $process['id'],
                 'quote_type' => $process['quote_type'],
@@ -525,7 +526,8 @@ class CarCQFRenewalService
                 'file_download_url' => route('downloadValidationFailedFile', ['id' => $process['renewals_upload_lead_id']]),
             ];
 
-        }); 
+        });
+
         return $failedRenewalProcesses;
 
     }
