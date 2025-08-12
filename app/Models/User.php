@@ -195,6 +195,11 @@ class User extends Authenticatable implements AuditableContract
         return $isAdvisor;
     }
 
+    public function isSupportUser()
+    {
+        return $this->hasRole(RolesEnum::CLIENTSUPPORT);
+    }
+
     public function isSpecificTeamAdvisor($teamType)
     {
         $userRoles = $this->usersroles()->get();
