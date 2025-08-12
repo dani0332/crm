@@ -38,6 +38,7 @@ class RulesController extends Controller
             'ruleUsers',
             'ruleType',
             'leadSource',
+            'quoteType',
         ]);
 
         return inertia('Admin/AllocationConfig/Rules/Index', [
@@ -50,6 +51,7 @@ class RulesController extends Controller
      */
     public function create()
     {
+
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
@@ -78,7 +80,7 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        $rule = Rule::with('ruleType')->with('ruleUsers')->findOrFail($id);
+        $rule = Rule::with('ruleType')->with(['ruleUsers',  'quoteType'])->findOrFail($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
             'rule' => $rule,
@@ -99,6 +101,7 @@ class RulesController extends Controller
                 'ruleUsers',
                 'ruleType',
                 'leadSource',
+                'quoteType',
             ]),
         ]);
     }
