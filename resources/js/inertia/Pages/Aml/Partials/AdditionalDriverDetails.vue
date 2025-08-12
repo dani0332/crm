@@ -50,7 +50,7 @@ const additionalDriverDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
-  is_insured_and_driver_same: carDetail.value?.is_insured_and_driver_same ?? '',
+  is_insured_and_driver_same: carDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: carDetail.value?.driver_first_name ?? '',
   driver_last_name: carDetail.value?.driver_last_name ?? '',
   driver_dob: carDetail.value?.driver_dob ?? '',
@@ -92,6 +92,14 @@ const submitAdditionalDriverDetailsForm = (isValid) => {
       notification.error({
         title: error.response.data.message,
         position: 'top',
+      });
+    }).catch(error => {
+      const flash_messages = error.response.data.errors;
+      Object.keys(flash_messages).forEach(function (key) {
+        notification.error({
+          title: flash_messages[key],
+          position: 'top',
+        });
       });
     }).finally(() => {
       additionalDriverDetailsForm.processing = false;
@@ -155,8 +163,8 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
             v-model="additionalDriverDetailsForm.is_insured_and_driver_same"
             :rules="[isRequired]"
             :options="[
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' }
+              { value: '1', label: 'Yes' },
+              { value: '0', label: 'No' }
             ]"
             placeholder="Select Is Insured and Driver Same"
             :disabled="hasNotEditPermission"
