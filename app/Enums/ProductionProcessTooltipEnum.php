@@ -48,4 +48,5 @@ final class ProductionProcessTooltipEnum extends Enum
     const COMMISSION_VAT_NOT_APPLICABLE_FILLED = 'This option is disabled because Commission (VAT not applicable) has already been entered.';
     const POLICY_SUM_ASSURED = 'Sum assured as per the issued policy schedule & documents.';
     const SUM_ASSURED_CURRENCY = 'Currency of sum assured as per the issued policy schedule & documents.';
+    const HEALTH_AUH_BOOKING_NOTE = 'Note: Abu Dhabi policy financials will be recorded manually and not entered in Sage.';
 }
