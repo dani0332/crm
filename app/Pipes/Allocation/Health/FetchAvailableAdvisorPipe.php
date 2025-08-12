@@ -159,7 +159,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $advisors;
     }
 
-    private function determineFinalAdvisorIdsBasedOnRules(HealthQuote $lead, $availableUserIds, $rules, $teamId): mixed
+    protected function determineFinalAdvisorIdsBasedOnRules(HealthQuote $lead, $availableUserIds, $rules, $teamId): mixed
     {
 
         if (count($rules) > 0) {
@@ -189,10 +189,10 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         return $finalEligibleUserIds;
     }
-    private function getUserIdsFromRuleRecords($matchedRuleRecords): array
+    protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
     {
         // Get the lead source users from the first matched rule record.
-        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers ?? null;
 
         // Check if the lead source users contain a comma (,) indicating multiple users.
         if (str_contains($leadSourceUsers, ',')) {
@@ -206,7 +206,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         // Return the array of user IDs.
         return $userIds;
     }
-    private function getFinalAdvisorId($finalEligibleUserIds)
+    protected function getFinalAdvisorId($finalEligibleUserIds)
     {
         if ($this->allocationRequest->get('hasBuyLeadAdvisors')) {
             return $this->evaluateBuyLeadAdvisor($finalEligibleUserIds);
@@ -216,7 +216,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
     }
 
-    private function evaluateBuyLeadAdvisor($finalEligibleUserIds)
+    protected function evaluateBuyLeadAdvisor($finalEligibleUserIds)
     {
         foreach ($finalEligibleUserIds as $advisorId) {
             $buyLeadRequest = BuyLeadRequest::getRequest(
@@ -236,6 +236,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             }
         }
 
-        return 0;
+        return null;
     }
 }

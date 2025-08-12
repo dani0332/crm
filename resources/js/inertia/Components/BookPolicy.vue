@@ -62,6 +62,10 @@ const props = defineProps({
     type: Function,
     default: () => () => false,
   },
+  isPlanDetailSectionEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isLoading = ref(false);
@@ -583,7 +587,7 @@ const disableCommissionVatApplicable = computed(() => {
 });
 
 const showCurrencyFields = computed(() => {
-  return isLifeLead;
+  return isLifeLead && !props.isPlanDetailSectionEnabled;
 });
 
 const showNonAEDFields = computed(() => {
