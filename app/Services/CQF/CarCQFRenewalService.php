@@ -36,6 +36,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
+use App\Exports\RenewalHealthUpdateFailedValidationExport;
+use App\Enums\QuoteTypeShortCode;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\RenewalFailedValidationExport;
 
 class CarCQFRenewalService
 {
@@ -503,6 +507,40 @@ class CarCQFRenewalService
             'car_model_id.required' => 'Car model is required.',
             'registration_type.required' => 'Registration type is required.',
         ];
+    }
+    
+    public function getCarCQFValidations(){
+        $quoteFaileds = request('quotePolicyNumbers') ?? [];
+        $policyNumbers = is_array($quoteFaileds) ? $quoteFaileds : explode(',', $quoteFaileds);
+        $failedRenewalProcesses = RenewalQuoteProcess::select('id','quote_type','policy_number','status' ,'validation_errors','created_at','renewals_upload_lead_id')->where('status', RenewalProcessStatuses::BAD_DATA)->whereIn('policy_number', $policyNumbers)->get()->toArray();
+  
+        $failedRenewalProcesses = collect($failedRenewalProcesses)->map(function ($process){
+            return [
+                'id' => $process['id'],
+                'quote_type' => $process['quote_type'],
+                'policy_number' => $process['policy_number'],
+                'status' => $process['status'],
+                'validation_errors' => $process['validation_errors'],
+                'created_at' => $process['created_at'],
+                'file_download_url' => route('downloadValidationFailedFile', ['id' => $process['renewals_upload_lead_id']]),
+            ];
+
+        }); 
+        return $failedRenewalProcesses;
+
+    }
+    public function downloadValidationFailedFile($id)
+    {
+        $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
+
+        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            return Excel::download(new RenewalHealthUpdateFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        }
+        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+            return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        }
+
+        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }
 
 }

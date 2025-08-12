@@ -52,6 +52,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Services\CQF\CarCQFRenewalService;
 
 class ApiController extends Controller
 {
@@ -445,5 +446,16 @@ class ApiController extends Controller
         return response()->json([
             'public_url' => $publicUrl,
         ]);
+    }
+
+    public function getCarCQFValidations()
+    {
+        return response()->json([
+            'data' => app(CarCQFRenewalService::class)->getCarCQFValidations(),
+        ]);
+    }
+    public function downloadValidationFailedFile($id)
+    {
+        return app(CarCQFRenewalService::class)->downloadValidationFailedFile($id);
     }
 }
