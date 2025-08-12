@@ -56,7 +56,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
-
         if ($this->insurance_provider_code === InsuranceProvidersEnum::AXA) {
             $rules = array_merge($rules, $this->getRtaSpecificRules());
         }
