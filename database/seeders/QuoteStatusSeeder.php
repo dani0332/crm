@@ -73,7 +73,21 @@ class QuoteStatusSeeder extends Seeder
             //         'created_by' => 'muhammad.waris@myalfred.com',
             //         'updated_by' => 'muhammad.waris@myalfred.com',
             //     ],
-        ];
+                [   
+                    'code' => 'PendingBorRequest',
+                    'text' => 'Pending Bor Request',
+                    'text_ar' => 'Pending Bor Request',
+                    'is_active' => 1,
+                    'sort_order' => 22,
+                    'is_deleted' => 0,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                    'deleted_at' => null,
+                    'uuid' => 'ea826923-11bb-11ee-a8a6-2a23318a2520',
+                    'created_by' => 'muhammad.waris@myalfred.com',
+                    'updated_by' => 'muhammad.waris@myalfred.com',
+                ],
+            ];
 
         foreach ($quoteStatusSeeder as $quoteStatus) {
             $conditions = [
