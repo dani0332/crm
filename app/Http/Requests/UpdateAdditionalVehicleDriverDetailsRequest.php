@@ -28,41 +28,48 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             'quote_type_id' => 'required|integer',
             'quote_uuid' => 'required|string',
             'insurance_provider_code' => 'required|string',
-            'rta_transaction_type' => 'required',
-            'traffic_code_number' => 'required',
-            'engine_number' => 'required',
-            'chassis_number' => 'required',
-            'vehicle_color' => 'required',
-            'bank_loan' => 'required',
-            'first_registration_date' => 'required|date',
-            'policy_effective_date' => 'required|date',
-            'certificate_start_date' => 'required|date',
-            'is_insured_and_driver_same' => 'required|integer',
-            'driver_gender' => 'required|string|in:male,female',
-            'driver_license_number' => 'required|string|max:255',
         ];
 
-        if ($this->insurance_provider_code == InsuranceProvidersEnum::AXA) {
-            $rules['plate_color'] = 'required|string';
-            $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
+        if (request()->is_insured_and_driver_same) {
+            if ($this->insurance_provider_code == InsuranceProvidersEnum::AXA) {
+                $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
+            } elseif ($this->insurance_provider_code == InsuranceProvidersEnum::RSA) {
+                $rules['driver_first_name'] = 'required|string';
+                $rules['driver_last_name'] = 'required|string';
+                $rules['driver_dob'] = 'required|date|before:today';
+                $rules['uae_driving_experience'] = 'required';
+                $rules['home_country_license_issuance'] = 'required';
+                $rules['home_country_driving_experience'] = 'required';
+                $rules['is_insured_and_driver_same'] = 'required|integer';
+                $rules['driver_gender'] = 'required|string|in:male,female';
+                $rules['driver_license_number'] = 'required|string|max:255';
+            }
+        } else {
+            $rules['plate_color'] = 'nullable|string';
+            $rules['rta_transaction_type'] = 'required';
+            $rules['chassis_number'] = 'required|string|max:17|min:17|regex:/^[a-zA-Z0-9]+$/';
+            $rules['engine_number'] = 'required';
+            $rules['vehicle_color'] = 'required';
+            $rules['bank_loan'] = 'required';
+            $rules['first_registration_date'] = 'required|date';
+            $rules['policy_effective_date'] = 'required|date';
+            $rules['certificate_start_date'] = 'required|date';
+
+            if ($this->insurance_provider_code == InsuranceProvidersEnum::AXA) {
+                $rules['plate_color'] = 'required|string';
+            } elseif ($this->insurance_provider_code == InsuranceProvidersEnum::RSA) {
+                $rules['plate_code'] = 'required';
+                $rules['plate_number'] = 'required';
+                $rules['bank_name'] = 'required_if:bank_loan,1';
+                $rules['policy_expiry_date'] = 'required|date';
+                $rules['certificate_end_date'] = 'required|date';
+                $rules['annual_mileage_estimate'] = 'required|integer';
+                $rules['traffic_code_number'] = 'required|numeric';
+                $rules['policy_effective_date'] = 'required|after_or_equal:today';
+            }
         }
 
-        if ($this->insurance_provider_code == InsuranceProvidersEnum::RSA) {
-            $rules['plate_code'] = 'required';
-            $rules['plate_number'] = 'required';
-            $rules['bank_name'] = 'required_if:bank_loan,1';
-            $rules['policy_expiry_date'] = 'required|date';
-            $rules['certificate_end_date'] = 'required|date';
-            $rules['annual_mileage_estimate'] = 'required|integer';
-            $rules['driver_first_name'] = 'required|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
-            $rules['driver_last_name'] = 'required|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
-            $rules['driver_dob'] = 'required|date|before:today';
-            $rules['uae_driving_experience'] = 'required|numeric|min:0|max:50';
-            $rules['home_country_license_issuance'] = 'required_if:is_insured_and_driver_same,0|string|max:255';
-            $rules['home_country_driving_experience'] = 'required_if:is_insured_and_driver_same,0|numeric|min:0|max:50';
-        }
-
-        return [];
+        return $rules;
     }
 
     /**
