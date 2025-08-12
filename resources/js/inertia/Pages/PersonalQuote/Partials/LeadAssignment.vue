@@ -1,4 +1,6 @@
 <script setup>
+import { XTooltip } from '@indielayer/ui';
+
 const props = defineProps({
   selected: {
     type: Array,
@@ -130,16 +132,24 @@ onMounted(() => {
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="onAssignLead" :auto-focus="false" v-if="props.canAssignLeadAdvisor">
         <div class="w-full flex flex-col md:flex-row gap-4">
-          <x-select
-            v-model="assignForm.assigned_advisor_id"
-            label="Assign Advisor"
-            :options="props.advisors"
-            placeholder="Select Advisor"
-            class="flex-1 w-auto"
-            filterable
-            single
-            v-if="readOnlyMode.isDisable === true"
-          />
+          <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
+            <x-tooltip position="top">
+              <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block">
+                Assign Advisor
+              </label>
+              <template #tooltip>
+                <span>Advisor Assignment</span>
+              </template>
+            </x-tooltip>
+            <x-select
+              v-model="assignForm.assigned_advisor_id"
+              :options="props.advisors"
+              placeholder="Select Advisor"
+              class="w-full"
+              filterable
+              single
+            />
+          </div>
           <div class="mb-3 md:pt-6">
             <x-button
               color="orange"
@@ -158,16 +168,24 @@ onMounted(() => {
       <div v-if="(props.supportUsers && props.supportUsers.length > 0) && props.canAssignClientSupport" class="" >
         <x-form @submit="onAssignSupportUser" :auto-focus="false" >
           <div class="w-full flex flex-col md:flex-row gap-4">
-            <x-select
-              v-model="supportAssignForm.support_user_id"
-              label="Assign Support User (OE)"
-              :options="props.supportUsers"
-              placeholder="Select Support User"
-              class="flex-1 w-auto"
-              filterable
-              single
-              v-if="readOnlyMode.isDisable === true"
-            />
+            <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
+              <x-tooltip position="top">
+                <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block">
+                  Assign Support User (OE)
+                </label>
+                <template #tooltip>
+                  <span>Support User Assignment</span>
+                </template>
+              </x-tooltip>
+              <x-select
+                v-model="supportAssignForm.support_user_id"
+                :options="props.supportUsers"
+                placeholder="Select Support User"
+                class="w-full"
+                filterable
+                single
+              />
+            </div>
             <div class="mb-3 md:pt-6">
               <x-button
                 color="orange"
