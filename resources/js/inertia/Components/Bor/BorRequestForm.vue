@@ -683,7 +683,7 @@ onMounted(() => {
 
               <!-- Chassis Number (Motor LOBs with Sukoon Insurance) -->
               <x-input
-                v-if="isMotorLob && (isSukoonInsurance || form.chassis_number)"
+                v-if="isMotorLob"
                 label="CHASSIS NUMBER"
                 v-model="form.chassis_number"
                 placeholder="Enter chassis number"
