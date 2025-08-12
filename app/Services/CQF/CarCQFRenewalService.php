@@ -122,38 +122,7 @@ class CarCQFRenewalService
 
     }
 
-    public function mapValidationHTML($errors)
-    {
 
-        // foreach ($errors as $key => $error) {
-        //     $html .= '<tr>
-        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">
-        //         '.$key.'
-        //     </td>
-        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
-        //         '.$error.'
-        //     </td>
-        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
-        //         '.$quote->policy_number.'
-        //     </td>
-        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
-        //         '.$quote->policy_number.'
-        //     </td>
-        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
-        //         VALIDATION_FAILED
-        //     </td>
-        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">'.
-        //                 <span style="color: #dc2626">•</span> '.$error.'
-        //         </td>
-        //     <td valign="top" style="border-width: 1px; border-color: #e5e7eb; padding: 8px 16px; vertical-align: top;">
-        //         '.$quote->policy_expiry_date.'
-        //     </td>
-        //     </tr>
-        // }
-        // }
-
-        return $html;
-    }
     public function createRenewalsUploadLeads()
     {
         $uploadLeadData = [
