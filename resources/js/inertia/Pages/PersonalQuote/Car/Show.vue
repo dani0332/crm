@@ -2697,22 +2697,6 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
     />
 
-    <BorLogsSection
-      :leadId="record.id"
-      :lob="quoteType"
-      :customerType="record.customer_type"
-      :customerData="{
-        firstName: record.first_name,
-        lastName: record.last_name,
-        companyName: record.company_name,
-        currentlyInsuredWith: record.currently_insured_with
-      }"
-      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
-      :insuranceProviders="insuranceProviders"
-      :expanded="sectionExpanded"
-      :documentTypes="documentTypes"
-    />
-
     <UBODetails
       v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
@@ -3938,6 +3922,22 @@ function handleOcrNotification(event) {
       quoteType="Car"
       :paymentStatusEnum="paymentStatusEnum"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="record.id"
+      :lob="quoteType"
+      :customerType="record.customer_type"
+      :customerData="{
+        firstName: record.first_name,
+        lastName: record.last_name,
+        companyName: record.company_name,
+        currentlyInsuredWith: record.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy

@@ -1007,22 +1007,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
-    <BorLogsSection
-      :leadId="quote.id"
-      :lob="quoteType"
-      :customerType="quote.customer_type"
-      :customerData="{
-        firstName: quote.first_name,
-        lastName: quote.last_name,
-        companyName: quote.company_name,
-        currentlyInsuredWith: quote.currently_insured_with
-      }"
-      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
-      :insuranceProviders="insuranceProviders"
-      :expanded="sectionExpanded"
-      :documentTypes="documentTypes"
-    />
-
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
@@ -1136,6 +1120,22 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       quoteType="Cycle"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerType="quote.customer_type"
+      :customerData="{
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
     />
 
     <BookPolicy
