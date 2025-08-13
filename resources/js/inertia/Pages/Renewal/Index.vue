@@ -39,8 +39,8 @@ let availableFilters = {
   product: '',
   expiry_date: '',
   page: 1,
-  policy_expiry_date_start: '',
-  policy_expiry_date_end: '',
+  previous_policy_expiry_date_start: '',
+  previous_policy_expiry_date_end: '',
   mobile_no: '',
 };
 
@@ -165,14 +165,14 @@ const permissionsEnum = page.props.permissionsEnum;
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.policy_expiry_date_start"
-          name="policy_expiry_date_start"
-          label="Policy Expiry Date Start"
+          v-model="filters.previous_policy_expiry_date_start"
+          name="previous_policy_expiry_date_start"
+          label="Previous Policy Expiry Date Start"
         />
         <DatePicker
-          v-model="filters.policy_expiry_date_end"
-          name="policy_expiry_date_end"
-          label="Renewal Expiry End Date"
+          v-model="filters.previous_policy_expiry_date_end"
+          name="previous_policy_expiry_date_end"
+          label="Previous Policy Expiry End"
         />
 
         <x-select
