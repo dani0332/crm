@@ -26,7 +26,13 @@ class LifeAllocation extends BaseAllocation
     protected function getAdvisorEmails($storageKey = null)
     {
         $category = $this->evaluateCategory();
-        $amount = $this->lead->currency?->convertToAED((float) $this->lead?->sum_insured_value ?? 0);
+        $amount = $this->lead?->lifeQuote?->currency?->convertToAED((float) $this->lead?->lifeQuote?->sum_insured_value ?? 0);
+
+        if (empty($amount)) {
+            LoggerService::info('LifeAllocation: No amount found');
+
+            return [];
+        }
 
         if ($this->lead->isFIC(QuoteTypes::LIFE)) {
             LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');
@@ -46,6 +52,13 @@ class LifeAllocation extends BaseAllocation
         $sourabh = 'sourabh.yadav@insurancemarket.ae';
 
         $emails = [];
+
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+        if (count($emails) > 0) {
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
+
+            return $emails;
+        }
 
         if ($amount < 1000000 && in_array($category, [self::CAT_A])) {
             $emails = [$gaurav, $vivian];
