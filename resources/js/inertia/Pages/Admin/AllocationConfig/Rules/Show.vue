@@ -37,6 +37,10 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
           <dt class="font-medium">Rule Type</dt>
           <dd>{{ rule.rule_type.name }}</dd>
         </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Quote Type</dt>
+          <dd>{{ rule.quote_type.name ?? 'N/A' }}</dd>
+        </div>
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Rule Users</dt>
