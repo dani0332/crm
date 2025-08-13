@@ -19,6 +19,9 @@ class CorplineAllocation extends BaseAllocation
 
             return $this->getAdvisorByEmails($onlineStatus, $emails);
         }
+
+        $this->skipRuleUsers = true;
+
         $emails = $this->getAdvisorEmails(ApplicationStorageEnums::CORPLINE_ADVISORS);
 
         return $this->getAdvisorByEmails($onlineStatus, $emails);
@@ -31,6 +34,7 @@ class CorplineAllocation extends BaseAllocation
                 $q->select('business_type_of_insurance_user.user_id')->from('business_type_of_insurance_user')->where('business_type_of_insurance_user.business_type_of_insurance_id', $this->lead->business_type_of_insurance_id);
             })
             ->whereIn('users.email', $emails)
+            ->logRawSql()
             ->first();
     }
 }

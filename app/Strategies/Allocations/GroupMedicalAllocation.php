@@ -26,6 +26,7 @@ class GroupMedicalAllocation extends BaseAllocation
         $this->lead = $this->getLeadBaseQuery()
             ->whereNotNull('health_plan_type_id')
             ->whereNotNull('number_of_employees')
+            ->logRawSql()
             ->first();
     }
     protected function fetchAdvisor(int $onlineStatus)
@@ -49,8 +50,12 @@ class GroupMedicalAllocation extends BaseAllocation
 
             return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::GMAdvisor])
                 ->whereIn('users.email', $emails)
+                ->logRawSql()
                 ->first();
         }
+
+        $this->skipRuleUsers = true;
+
         $team = $this->getTeamByCriteria($planType, $this->lead->number_of_employees);
 
         LoggerService::info(self::class." - group medical team: {$team} | plan type: {$planType} | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |
@@ -68,6 +73,7 @@ class GroupMedicalAllocation extends BaseAllocation
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::GMAdvisor])
             ->whereIn('users.email', $emails)
+            ->logRawSql()
             ->first();
     }
 
