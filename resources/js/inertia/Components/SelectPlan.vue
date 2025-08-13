@@ -20,10 +20,10 @@ const props = defineProps({
 
 const page = usePage();
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const leadSourceEnum = page.props.leadSource;
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 const isPlanSelectionEnable = ref(false);
-const isPlanSelectionDisable = ref(false);
 const hasAnyAuthorizedPayment = ref(false);
 const hasAnyPendingPayment = ref(false);
 const hasSameGateway = ref(true);
@@ -33,6 +33,21 @@ const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
 
 const emit = defineEmits(['update:selectedPlanChanged']);
+
+const isPlanSelectionDisable = computed(() => {
+  const quoteType = props.quoteType?.toLowerCase();
+  const isSourceIMCRM = props.extraDetails?.quoteSource == leadSourceEnum.IMCRM;
+  const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
+  const isALNCProvider = props.plan?.providerCode == 'ALNC';
+
+  if (quoteType == 'travel' && isSourceIMCRM && isNormalPlan && isALNCProvider) {
+    return page.props.travelers.filter(traveler => 
+      (!traveler.first_name) || (!traveler.last_name) || (!traveler.passport)
+    ).length > 0;
+  }
+
+  return false;
+});
 
 const closeSelectPlanConfirmModal = () => {
   showSelectPlanConfirm.value = false;
@@ -342,14 +357,6 @@ watch(() => {
     isPlanSelectionEnable.value =
       props.plan?.actualPremium > 0 &&
       can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
-
-    const isSourceIMCRM = props.extraDetails?.quoteSource == 'IMCRM';
-    const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
-    const isALNCProvider = props.plan?.providerCode == 'ALNC';
-
-    if(quoteType == 'travel' && isSourceIMCRM && isNormalPlan && isALNCProvider) {
-      isPlanSelectionDisable.value = page.props.travelers.filter(traveler => (!traveler.first_name) || (!traveler.last_name) || (!traveler.passport)).length > 0;
-    }
   }
 });
 const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
