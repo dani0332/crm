@@ -16,7 +16,7 @@ use App\Jobs\CompanyCarFollowupJob;
 use App\Jobs\CompanyCarOCBJob;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\NBMotorFollowupEmailJob;
-use App\Jobs\SendAIAdvisorOCBJob;
+use App\Jobs\OCB\SendAIAdvisorOCBJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
