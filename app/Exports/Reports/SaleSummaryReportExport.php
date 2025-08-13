@@ -79,7 +79,7 @@ class SaleSummaryReportExport extends BaseReportsExport
         $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
 
         $sumCoumns = ['B', ...$commonColumns];
-        if (in_array($event->getConcernable()->groupByColumn, ['advisor'])) {
+        if (in_array($event->getConcernable()->groupByColumn, ['advisor', 'support_user'])) {
             $sumCoumns = [...$commonColumns, 'N'];
         }
         self::performSum($event, $sumCoumns);

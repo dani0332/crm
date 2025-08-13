@@ -143,7 +143,7 @@ watchEffect(() => {
     ? tableHeader.unshift(newItem)
     : tableHeader.splice(0, 1, newItem);
 
-  if (props.groupBy === 'advisor') {
+  if (props.groupBy === 'advisor' || props.groupBy === 'support_user') {
     if (!tableHeader.some(item => item.value === 'department')) {
       tableHeader.unshift({ ...headerMap.department, value: 'department' });
     }
