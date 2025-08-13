@@ -33,7 +33,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
 
     private function rtaTransactionType()
     {
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => 'RTT01',
@@ -44,7 +44,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => 'RTT03',
@@ -55,7 +55,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => 'RTT04',
@@ -66,7 +66,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => 'RTT07',
@@ -77,7 +77,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
             'code' => 'RTT10',
@@ -91,7 +91,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
 
     private function rtaPlateCategory()
     {
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => 'RPC01',
@@ -102,7 +102,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => 'RPC02',
@@ -113,7 +113,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => 'RPC03',
@@ -124,7 +124,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => 'RPC04',
@@ -135,7 +135,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::createOrFirst([
+        Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Car,
             'key' => LookupsEnum::RTA_PLATE_CATEGORY,
             'code' => 'RPC05',
@@ -530,7 +530,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
         ];
 
         foreach ($colors as $code => $text) {
-            Lookup::createOrFirst([
+            Lookup::firstOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::VEHICLE_COLOR,
                 'code' => $code,
@@ -675,7 +675,7 @@ class CarGIGVehicleTransactionDriverDetailsForAMLSeeder extends Seeder
         ];
 
         foreach ($banks as $bank) {
-            Lookup::createOrFirst([
+            Lookup::firstOrCreate([
                 'quote_type_id' => QuoteTypeId::Car,
                 'key' => LookupsEnum::BANK_NAME,
                 'code' => $bank[0],
