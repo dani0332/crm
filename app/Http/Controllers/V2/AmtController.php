@@ -140,6 +140,9 @@ class AmtController extends Controller
         $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT) ?: false;
         \Log::info('Can assign client support after permission check: '.json_encode($canAssignClientSupport));
 
+        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD) : false;
+        \Log::info('Can assign client support after role check: '.json_encode($canAssignClientSupport));
+
         $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS->value) : false;
         \Log::info('Can assign client support after product check: '.json_encode($canAssignClientSupport));
 
@@ -251,6 +254,23 @@ class AmtController extends Controller
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
+
+        // Apply authorize_date filter
+        if (!empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+            $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
+            $data->whereBetween('py.authorized_at', [$startDate, $endDate]);
+        }
+
+        // Apply captured_date filter
+        if (!empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+            $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
+            $data->whereBetween('py.captured_at', [$startDate, $endDate]);
+        }
+
+        // Add debug logging
+        logger()->debug("AmtController toRawSql: " . $data->toRawSql());
 
         $this->adjustQueryByDateFilters($data, 'bqr');
 
@@ -570,7 +590,7 @@ class AmtController extends Controller
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_products as up', 'up.user_id', '=', 'users.id')
-            ->where('r.name', RolesEnum::CLIENTSUPPORT)
+            ->whereIn('r.name', [RolesEnum::CLIENTSUPPORT, RolesEnum::CLIENTSUPPORTLEAD])
             ->where('up.product_id', $groupMedicalProduct->id)
             ->selectRaw("users.id, CONCAT(users.name, ' - ', r.name) as name, r.name as role ")
             ->orderBy('users.name')
