@@ -45,13 +45,13 @@ enum ClaimsEnum: string
     public static function getClaimTypeCodes(): array
     {
         return [
-            self::CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE,
-            self::CLAIM_TYPE_RECOVERABLE_CLAIM_CODE,
-            self::CLAIM_TYPE_UNKNOWN_DAMAGE_CLAIM_CODE,
-            self::CLAIM_TYPE_WATER_DAMAGE_CODE,
-            self::CLAIM_TYPE_THEFT_CODE,
-            self::CLAIM_TYPE_FIRE_ARSON_CODE,
-            self::CLAIM_TYPE_WINDSCREEN_ONLY_CODE,
+            self::CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE->value,
+            self::CLAIM_TYPE_RECOVERABLE_CLAIM_CODE->value,
+            self::CLAIM_TYPE_UNKNOWN_DAMAGE_CLAIM_CODE->value,
+            self::CLAIM_TYPE_WATER_DAMAGE_CODE->value,
+            self::CLAIM_TYPE_THEFT_CODE->value,
+            self::CLAIM_TYPE_FIRE_ARSON_CODE->value,
+            self::CLAIM_TYPE_WINDSCREEN_ONLY_CODE->value,
         ];
     }
 
@@ -61,9 +61,9 @@ enum ClaimsEnum: string
     public static function getClaimRequestTypeCodes(): array
     {
         return [
-            self::CLAIM_REQUEST_TYPE_REIMBURSEMENT_CODE,
-            self::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE,
-            self::CLAIM_REQUEST_TYPE_ASK_A_QUESTION_CODE,
+            self::CLAIM_REQUEST_TYPE_REIMBURSEMENT_CODE->value,
+            self::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE->value,
+            self::CLAIM_REQUEST_TYPE_ASK_A_QUESTION_CODE->value,
         ];
     }
 
@@ -73,8 +73,8 @@ enum ClaimsEnum: string
     public static function getClaimServiceTypeCodes(): array
     {
         return [
-            self::CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE,
-            self::CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE,
+            self::CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE->value,
+            self::CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE->value,
         ];
     }
 
@@ -84,40 +84,22 @@ enum ClaimsEnum: string
     public static function getClaimRequestAccessTypeCodes(): array
     {
         return [
-            self::CLAIM_REQUEST_ACCESS_TYPE_SYSTEM_GENERATED_CODE,
-            self::CLAIM_REQUEST_ACCESS_TYPE_MANUAL_CODE,
+            self::CLAIM_REQUEST_ACCESS_TYPE_SYSTEM_GENERATED_CODE->value,
+            self::CLAIM_REQUEST_ACCESS_TYPE_MANUAL_CODE->value,
         ];
     }
 
-    /**
-     * Check if the given value is a valid claim type code
-     */
-    public static function isValidClaimTypeCode(string $code): bool
+    public static function asArray(): array
     {
-        return in_array($code, array_column(self::getClaimTypeCodes(), 'value'));
-    }
+        $result = [];
+        foreach (self::cases() as $case) {
+            $result[$case->name] = [
+                'name' => $case->name,
+                'value' => $case->value,
+            ];
+        }
 
-    /**
-     * Check if the given value is a valid claim request type code
-     */
-    public static function isValidClaimRequestTypeCode(string $code): bool
-    {
-        return in_array($code, array_column(self::getClaimRequestTypeCodes(), 'value'));
+        return $result;
     }
-
-    /**
-     * Check if the given value is a valid claim service type code
-     */
-    public static function isValidClaimServiceTypeCode(string $code): bool
-    {
-        return in_array($code, array_column(self::getClaimServiceTypeCodes(), 'value'));
-    }
-
-    /**
-     * Check if the given value is a valid claim request access type code
-     */
-    public static function isValidClaimRequestAccessTypeCode(string $code): bool
-    {
-        return in_array($code, array_column(self::getClaimRequestAccessTypeCodes(), 'value'));
-    }
+ 
 }

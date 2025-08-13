@@ -68,14 +68,16 @@ class ClaimsService extends BaseService
             'created_at',
         ])
             ->with([
-                'quoteType:id,text',
-                'claimType:id,text',
+                'quoteType:id,code,text',
+                'claimType:id,code,text',
                 'manager:id,name',
                 'claimStatus:id,text',
                 'claimSubStatus:id,text',
-                'insuranceProvider:id,text',
-                'claimRequestType:id,text',
-                'claimRequestDetails',
+                'insuranceProvider:id,code,text',
+                'claimRequestType:id,code,text',
+                'claimRequestDetails' => function($query) {
+                    $query->with('serviceType:id,code,text');
+                },
             ]);
     }
 
@@ -432,6 +434,116 @@ class ClaimsService extends BaseService
     }
 
     /**
+     * Update specific claim details (focused method for claim details form)
+     */
+    public function updateClaimDetails($uuid, array $data): ClaimRequest
+    {
+        $claimRequest = $this->getClaimById($uuid);
+
+        if (!$claimRequest) {
+            throw new \Exception("Claim request not found with UUID: {$uuid}");
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Define which fields belong to the main claim request table
+            $claimRequestFields = [
+                'claim_type_id',
+                'claim_number', 
+                'claim_decline_reason',
+                'claim_request_type_id',
+            ];
+
+            // Define which fields belong to the claim request details table
+            $claimRequestDetailFields = [
+                'plat_number',
+                'car_make',
+                'car_model', 
+                'model_year',
+                'service_type_id',
+            ];
+
+            // Separate data for claim request table
+            $claimRequestData = collect($data)
+                ->only($claimRequestFields)
+                ->filter(function ($value) {
+                    return $value !== null && $value !== '';
+                })
+                ->toArray();
+
+            // Update claim request if there's data
+            if (!empty($claimRequestData)) {
+                $claimRequest->update($claimRequestData);
+                
+                LoggerService::info('Claim request main table updated', [
+                    'claim_request_id' => $claimRequest->id,
+                    'updated_fields' => array_keys($claimRequestData),
+                    'updated_by' => Auth::id(),
+                ]);
+            }
+
+            // Separate data for claim request details table
+            $detailData = collect($data)
+                ->only($claimRequestDetailFields)
+                ->filter(function ($value) {
+                    return $value !== null && $value !== '';
+                })
+                ->toArray();
+
+            // Handle claim request details update/create
+            if (!empty($detailData)) {
+                $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
+                
+                if ($claimRequestDetail) {
+                    $claimRequestDetail->update($detailData);
+                    LoggerService::info('Claim request details updated', [
+                        'claim_request_id' => $claimRequest->id,
+                        'detail_id' => $claimRequestDetail->id,
+                        'updated_fields' => array_keys($detailData),
+                        'updated_by' => Auth::id(),
+                    ]);
+                } else {
+                    // Create new detail record if it doesn't exist
+                    $detailData['claim_request_id'] = $claimRequest->id;
+                    $claimRequestDetail = $claimRequest->claimRequestDetails()->create($detailData);
+                    LoggerService::info('Claim request details created', [
+                        'claim_request_id' => $claimRequest->id,
+                        'detail_id' => $claimRequestDetail->id,
+                        'created_fields' => array_keys($detailData),
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            }
+
+            // Log the overall update
+            LoggerService::info('Claim details updated successfully', [
+                'claim_request_id' => $claimRequest->id,
+                'code' => $claimRequest->code,
+                'updated_by' => Auth::id(),
+                'main_table_updates' => !empty($claimRequestData),
+                'details_table_updates' => !empty($detailData),
+            ]);
+
+            DB::commit();
+
+            return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            LoggerService::error('Error updating claim details', extra: [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'claim_request_id' => $uuid,
+                'data' => $data,
+                'updated_by' => Auth::id(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
      * Get dropdown data for forms
      */
     public function getDropdownData(): array
@@ -538,96 +650,7 @@ class ClaimsService extends BaseService
             ->get()
             ->toArray();
     }
-
-    /**
-     * Update claim status
-     */
-    public function updateClaimStatus(Claim $claim, string $status): Claim
-    {
-        try {
-            DB::beginTransaction();
-
-            $claim->update(['claim_status' => $status]);
-
-            // Log the status change
-            LoggerService::info('Claims status updated', [
-                'claim_id' => $claim->id,
-                'ref_id' => $claim->ref_id,
-                'old_status' => $claim->getOriginal('claim_status'),
-                'new_status' => $status,
-                'updated_by' => Auth::id(),
-            ]);
-
-            DB::commit();
-
-            return $claim->fresh();
-        } catch (\Exception $e) {
-            DB::rollback();
-            LoggerService::error('Error updating claim status', extra: [
-                'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'status' => $status,
-            ]);
-            throw $e;
-        }
-    }
-
-    /**
-     * Update claim sub-status and auto-update related fields
-     */
-    public function updateClaimSubStatus(Claim $claim, int $subStatusId, ?array $additionalData = null): Claim
-    {
-        try {
-            DB::beginTransaction();
-
-            $claim->updateClaimSubStatus($subStatusId, $additionalData['reason'] ?? null);
-
-            // Handle auto-status updates based on amount fields
-            if (isset($additionalData['approved_repair_amount']) && $additionalData['approved_repair_amount'] > 0) {
-                $claim->approved_repair_amount = $additionalData['approved_repair_amount'];
-            }
-
-            if (isset($additionalData['approved_total_loss_amount']) && $additionalData['approved_total_loss_amount'] > 0) {
-                $claim->approved_total_loss_amount = $additionalData['approved_total_loss_amount'];
-            }
-
-            if (isset($additionalData['approved_cash_loss_amount']) && $additionalData['approved_cash_loss_amount'] > 0) {
-                $claim->approved_cash_loss_amount = $additionalData['approved_cash_loss_amount'];
-            }
-
-            if (isset($additionalData['claim_denial_reason']) && ! empty($additionalData['claim_denial_reason'])) {
-                $claim->claim_denial_reason = $additionalData['claim_denial_reason'];
-            }
-
-            $claim->save();
-
-            DB::commit();
-
-            return $claim->fresh();
-        } catch (\Exception $e) {
-            DB::rollback();
-            throw $e;
-        }
-    }
-
-    /**
-     * Update complaint status
-     */
-    public function updateComplaintStatus(Claim $claim, string $status, ?string $notes = null): Claim
-    {
-        try {
-            DB::beginTransaction();
-
-            $claim->updateComplaintStatus($status, $notes);
-
-            DB::commit();
-
-            return $claim->fresh();
-        } catch (\Exception $e) {
-            DB::rollback();
-            throw $e;
-        }
-    }
+   
 
     public function getCarMake(): array
     { 

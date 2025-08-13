@@ -1,62 +1,112 @@
-<script setup>
+<script setup> 
 const props = defineProps({
   claim: Object,
-  additionalContacts: Object,
-  auditLogs: Object,
-  claimHistory: Object,
+  dropdowns: Object, 
+  additionalContacts: Object, 
   documents: Object,
-  dropdowns: Object,
-  canEdit: Boolean,
-  canDelete: Boolean,
 });
 
 const modelClass = 'App\\Models\\ClaimRequest';
 const page = usePage();
+const claimsEnum = page.props.claimsEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
+const { isRequired } = useRules();
 
 const quoteTypeIds = page.props.quoteTypeIds;
 
 const sectionExpanded = ref(true);
 
-// Assignment form for managers
-const assignmentForm = useForm({
-  manager_id: props.claim.manager_id || '',
-  manager_type: 'primary',
+
+const claimForm = useForm({ 
+
+  quote_type_id: props.claim?.quote_type_id,
+
+  // Car-specific fields (visible when editing)
+  plat_number: props.claim?.claim_request_details?.plat_number || '',
+  car_make: props.claim?.claim_request_details?.car_make || '',
+  car_model: props.claim?.claim_request_details?.car_model || '',
+  model_year: props.claim?.claim_request_details?.model_year || '',
+
+  /* Health-specific fields */
+  claim_request_type_id: props.claim?.claim_request_type_id || '',
+  service_type_id: props.claim?.claim_request_details?.service_type_id || '',
+
+  // Additional Fields
+  claim_type_id: props.claim?.claim_type_id || '',  
+  claim_number: props.claim?.claim_number || '',
+
+  // Claim denial reason (visible when editing)
+  claim_decline_reason: props.claim?.claim_decline_reason || '',
+ 
 });
 
-// Status update form
-const statusForm = useForm({
-  claim_status_id: props.claim.claim_status_id || '',
+
+
+const carModelYearOptions = computed(() => {
+  return props.dropdowns?.carModelYear?.map(item => ({
+    value: item.text,
+    label: item.text,
+  }));
 });
 
-// Sub-status update form
-const subStatusForm = useForm({
-  claim_sub_status_id: props.claim.claim_sub_status_id || '',
+const claimRequestTypeOptions = computed(() => {
+  return (
+    props.dropdowns?.claimRequestTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
 });
 
-// Source update form
-const sourceForm = useForm({
-  source: props.claim.source || '',
+const claimServiceTypeOptions = computed(() => {
+  return (
+    props.dropdowns?.claimServiceTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
 });
 
-// WhatsApp consent form
-const whatsappForm = useForm({
-  whatsapp_consent: props.claim.whatsapp_consent || false,
+const claimTypeOptions = computed(() => {
+  return (
+    props.dropdowns?.claimTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
 });
 
-// Complaint status form
-const complaintStatusForm = useForm({
-  complaint_status: props.claim.complaint_status || '',
-  notes: '',
+const carMakeOptions = computed(() => {
+  return (
+    props.dropdowns?.carMake?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || []
+  );
 });
 
-// Follow-up scheduling form
-const followUpForm = useForm({
-  next_follow_up_date: props.claim.next_follow_up_date || '',
-  notes: '',
+const carModelOptions = computed(() => {
+  return (
+    props.dropdowns?.carModel?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || []
+  );
 });
+
+const getCarModel = reset => { 
+  let carMakeCode = props.dropdowns?.carMake.find(item => item.text === claimForm.car_make)?.id;
+  console.log('carMakeCode', carMakeCode , ', reset' , reset);
+
+  axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
+    props.dropdowns.carModel = data;
+    if (claimForm.car_model !== null && reset) {
+      claimForm.car_model = null;
+    }
+  });
+};
 
 const managersOptions = computed(() => {
   return (
@@ -86,143 +136,20 @@ const complaintStatusOptions = computed(() => {
   );
 });
 
-// Check if the claim is vehicle-related
+// Check if the selected line of business is Car
+const isPendingClaimRequestType = computed(() => {
+  return page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE === page.props.claim.claim_request_type.code;
+});
+
+// Check if the selected line of business is Car
 const isCarLOB = computed(() => {
-  return quoteTypeIds.Car === props.claim.line_of_business_id;
+  return page.props.quoteTypeIds?.Car === page.props.claim.quote_type_id;
 });
 
-// Check if the claim is health-related
+// Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
-  return quoteTypeIds.Health === props.claim.line_of_business_id;
+  return page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
 });
-
-// Check if claim is overdue
-const isOverdue = computed(() => {
-  if (!props.claim.next_follow_up_date) return false;
-  return new Date(props.claim.next_follow_up_date) < new Date();
-});
-
-function assignManager() {
-  if (!assignmentForm.manager_id) {
-    notification.error({
-      title: 'Please select a manager',
-      position: 'top',
-    });
-    return;
-  }
-
-  assignmentForm.post(`/claim/${props.claim.id}/assign-manager`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Manager assigned successfully',
-        position: 'top',
-      });
-    },
-    onError: errors => {
-      notification.error({
-        title: 'Error assigning manager',
-        position: 'top',
-      });
-    },
-  });
-}
-
-function updateStatus() {
-  if (!statusForm.claim_status_id) {
-    notification.error({
-      title: 'Please select a status',
-      position: 'top',
-    });
-    return;
-  }
-
-  statusForm.post(`/claim/${props.claim.id}/update-status`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Status updated successfully',
-        position: 'top',
-      });
-    },
-    onError: errors => {
-      notification.error({
-        title: 'Error updating status',
-        position: 'top',
-      });
-    },
-  });
-}
-
-function updateSubStatus() {
-  if (!subStatusForm.claim_sub_status_id) {
-    notification.error({
-      title: 'Please select a sub-status',
-      position: 'top',
-    });
-    return;
-  }
-
-  subStatusForm.post(`/claim/${props.claim.id}/update-sub-status`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Sub-status updated successfully',
-        position: 'top',
-      });
-    },
-    onError: errors => {
-      notification.error({
-        title: 'Error updating sub-status',
-        position: 'top',
-      });
-    },
-  });
-}
-
-function updateComplaintStatus() {
-  complaintStatusForm.post(`/claim/${props.claim.id}/update-complaint-status`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Complaint status updated successfully',
-        position: 'top',
-      });
-    },
-    onError: errors => {
-      notification.error({
-        title: 'Error updating complaint status',
-        position: 'top',
-      });
-    },
-  });
-}
-
-function scheduleFollowUp() {
-  if (!followUpForm.next_follow_up_date) {
-    notification.error({
-      title: 'Please select a follow-up date',
-      position: 'top',
-    });
-    return;
-  }
-
-  followUpForm.post(`/claim/${props.claim.id}/schedule-follow-up`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Follow-up scheduled successfully',
-        position: 'top',
-      });
-    },
-    onError: errors => {
-      notification.error({
-        title: 'Error scheduling follow-up',
-        position: 'top',
-      });
-    },
-  });
-}
 
 function formatDate(date) {
   if (!date) return '-';
@@ -234,6 +161,7 @@ function formatDate(date) {
 }
 
 function formatDateTime(date) {
+  console.log('formatDateTime -> date -> ', date);
   if (!date) return '-';
   return new Date(date).toLocaleString('en-US', {
     year: 'numeric',
@@ -252,25 +180,25 @@ function formatCurrency(amount) {
   }).format(amount);
 }
 
-function deleteClaim() {
-  if (confirm('Are you sure you want to delete this claim?')) {
-    router.delete(`/claim/${props.claim.id}`, {
-      onSuccess: () => {
-        notification.success({
-          title: 'Claim deleted successfully',
-          position: 'top',
-        });
-        router.visit('/claim');
-      },
-      onError: errors => {
+const updateClaim = isValid => {
+  if (!isValid) return;
+
+  claimForm.post(route('claims.update.details', props.claim?.uuid), {
+    preserveScroll: true,
+    onSuccess: response => {
+      console.log('response', response); 
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
         notification.error({
-          title: 'Error deleting claim',
+          title: errors[key],
           position: 'top',
         });
-      },
-    });
-  }
-}
+      });
+    },
+  });
+};
+
 </script>
 
 <template>
@@ -279,18 +207,9 @@ function deleteClaim() {
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">
-          Claim Details - {{ claim.ref_id }}
+          Claim Details - {{ claim.uuid }}
         </h2>
-        <x-tag
-          v-if="claim.complaint_status === 'Complaint Open'"
-          size="sm"
-          color="error"
-        >
-          Complaint Open
-        </x-tag>
-        <x-tag v-else-if="isOverdue" size="sm" color="amber">
-          Overdue Follow-up
-        </x-tag>
+         
       </template>
       <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
         <div class="flex gap-2">
@@ -311,129 +230,9 @@ function deleteClaim() {
       </div>
     </StickyHeader>
 
-    <!-- Quick Actions -->
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Quick Actions
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Sub-Status Update -->
-            <div class="bg-gray-50 p-4 rounded">
-              <h4 class="font-semibold mb-3 text-gray-700">
-                Update Sub-Status
-              </h4>
-              <div class="flex gap-2">
-                <x-select
-                  v-model="subStatusForm.claim_sub_status_id"
-                  placeholder="Select Sub-Status"
-                  :options="subStatusOptions"
-                  filterable
-                  filterPlaceholder="Filter Sub-Status...."
-                  class="flex-1"
-                />
-                <x-button
-                  size="sm"
-                  color="warning"
-                  @click="updateSubStatus"
-                  :loading="subStatusForm.processing"
-                >
-                  Update
-                </x-button>
-              </div>
-            </div>
-
-            <!-- Manager Assignment -->
-            <div class="bg-gray-50 p-4 rounded">
-              <h4 class="font-semibold mb-3 text-gray-700">Assign Manager</h4>
-              <div class="flex gap-2">
-                <x-select
-                  v-model="assignmentForm.manager_id"
-                  placeholder="Select Manager"
-                  :options="managersOptions"
-                  filterable
-                  filterPlaceholder="Filter Managers...."
-                  class="flex-1"
-                />
-                <x-button
-                  size="sm"
-                  color="success"
-                  @click="assignManager"
-                  :loading="assignmentForm.processing"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-
-            <!-- Complaint Status Update -->
-            <div class="bg-gray-50 p-4 rounded">
-              <h4 class="font-semibold mb-3 text-gray-700">Complaint Status</h4>
-              <div class="flex gap-2">
-                <x-select
-                  v-model="complaintStatusForm.complaint_status"
-                  placeholder="Select Complaint Status"
-                  :options="complaintStatusOptions"
-                  class="flex-1"
-                />
-                <x-button
-                  size="sm"
-                  color="info"
-                  @click="updateComplaintStatus"
-                  :loading="complaintStatusForm.processing"
-                >
-                  Update
-                </x-button>
-              </div>
-            </div>
-
-            <!-- Follow-up Scheduling -->
-            <div class="bg-gray-50 p-4 rounded">
-              <h4 class="font-semibold mb-3 text-gray-700">
-                Schedule Follow-up
-              </h4>
-              <div class="flex gap-2">
-                <DatePicker
-                  v-model="followUpForm.next_follow_up_date"
-                  placeholder="Select Date"
-                  class="flex-1"
-                />
-                <x-button
-                  size="sm"
-                  color="purple"
-                  @click="scheduleFollowUp"
-                  :loading="followUpForm.processing"
-                >
-                  Schedule
-                </x-button>
-              </div>
-            </div>
-
-            <!-- Overdue Alert -->
-            <div
-              v-if="isOverdue"
-              class="bg-red-50 p-4 rounded border-l-4 border-red-400"
-            >
-              <h4 class="font-semibold mb-2 text-red-700">Overdue Follow-up</h4>
-              <p class="text-sm text-red-600">
-                This claim requires follow-up (Due:
-                {{ formatDate(claim.next_follow_up_date) }})
-              </p>
-            </div>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
-
     <!-- Claim Details -->
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
+    <div class="p-4 rounded shadow my-6 bg-white">
+      <Collapsible :expanded="sectionExpanded"> 
         <template #header>
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
@@ -443,12 +242,223 @@ function deleteClaim() {
         </template>
         <template #body>
           <x-divider class="my-4" />
+          <x-form :form="claimForm" @submit="updateClaim">
+            <div class="text-sm">
+              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">CODE</dt>
+                  <dd class="font-mono">{{ claim.code }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">SOURCE</dt>
+                  <dd>{{ claim.source || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Line Of Business</dt>
+                  <dd>{{ claim.quote_type?.text }}</dd>
+                </div>
+                <template v-if="claim.claim_request_details">
+                  <template v-if="isCarLOB">
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">VEHICLE PLATE NUMBER</dt>
+                      <dd> 
+                        <x-input 
+                            v-model="claimForm.plat_number"
+                            type="text"
+                            placeholder="Enter Plate Number"
+                            class="w-full"
+                            :error="claimForm.errors.plat_number"
+                          />
+                        </dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">VEHICLE MAKE</dt>
+                      <dd>
+                        <template v-if="claim.claim_request_details.car_make">
+                          {{ claim.claim_request_details.car_make   }}
+                        </template>
+                        <template v-else>
+                        <x-select
+                          v-model="claimForm.car_make"
+                          @update:modelValue="getCarModel(true)"
+                          :options="carMakeOptions"
+                          placeholder="Select Vehicle Make"
+                          class="w-full"
+                          :error="claimForm.errors.car_make"
+                        />
+                        </template>
+                      </dd>
+                    </div>
+                    
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">VEHICLE MODEL</dt>
+                      <dd>
+                        <template v-if="claim.claim_request_details.car_model">
+                          {{ claim.claim_request_details.car_model }}
+                        </template>
+                        <template v-else>
+                          <x-select 
+                            v-model="claimForm.car_model"
+                            placeholder="Select Vehicle Model"
+                            :options="carModelOptions"
+                            filterable
+                            filterPlaceholder="Filter Car Model...."
+                            :error="claimForm.errors.car_model"
+                          />
+                        </template>
+                      </dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">VEHICLE YEAR</dt>
+                      <dd>
+                        <template v-if="claim.claim_request_details.model_year">
+                          {{ claim.claim_request_details.model_year }}
+                        </template>
+                        <template v-else>
+                          <x-select             
+                            v-model="claimForm.model_year" 
+                            placeholder="Select Car Model Year"
+                            :options="carModelYearOptions"
+                            filterable
+                            filterPlaceholder="Filter Car Model Year...."
+                            :error="claimForm.errors.model_year"
+                          />    
+                        </template>
+                      </dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">APPROVED REPAIR AMOUNT</dt>
+                      <dd>{{ formatCurrency(claim.approved_repair_amount) }}</dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">APPROVED TOTAL LOSS AMOUNT</dt>
+                      <dd>{{ formatCurrency(claim.approved_total_loss_amount) }}</dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">APPROVED CASH LOSS AMOUNT</dt>
+                      <dd>{{ formatCurrency(claim.approved_cash_loss_amount) }}</dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">CLAIM DENIAL REASON</dt>
+                      <dd>
+                        <x-textarea 
+                          v-model="claimForm.claim_decline_reason" 
+                          placeholder="Claim Denial Reason..."
+                          rows="4"
+                          class="w-full"
+                          :error="claimForm.errors.claim_decline_reason"
+                        />
+                      </dd>
+                    </div>
+                  </template>
+                  <template v-if="isHealthLOB">
+                    <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">HEALTH CLAIM REQUEST TYPE</dt>
+                      <dd>
+                        <x-select
+                          v-model="claimForm.claim_request_type_id" 
+                          placeholder="Select Claim Request Type"
+                          :options="claimRequestTypeOptions"
+                          :rules="[isRequired]"
+                          filterable
+                          filterPlaceholder="Filter Claim Request Type...."
+                          :error="claimForm.errors.claim_request_type_id"
+                        />
+                      </dd>
+                    </div>
+                    <div v-if="isPendingClaimRequestType" class="grid sm:grid-cols-2">
+                      <dt class="font-medium">HEALTH CLAIM SERVICE TYPE</dt>
+                      <dd>
+                        <x-select
+                          v-model="claimForm.service_type_id"
+                          :options="claimServiceTypeOptions"
+                          placeholder="Select Service Type"
+                          class="w-full"
+                          :error="claimForm.errors.service_type_id"
+                        />
+                      </dd>
+                    </div>
+                  </template>
+                </template> 
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Insurer Claim Number</dt>
+                  <dd>
+                    <x-input
+                      v-model="claimForm.claim_number"
+                      type="text" 
+                      placeholder="Enter Insurer Claim Number"
+                      class="w-full"
+                      :error="claimForm.errors.claim_number"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">POLICY NUMBER</dt>
+                  <dd>{{ claim.policy_number || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">POLICY ADVISOR</dt>
+                  <dd>{{ claim.policy_advisor || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">CLAIMS MANAGER</dt>
+                  <dd>{{ claim.claimsManager?.name || '-' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">CLAIM TYPE</dt>
+                  <dd>
+                    <x-select
+                      v-model="claimForm.claim_type_id" 
+                      placeholder="Select Claim Type"
+                      :options="claimTypeOptions"
+                      :rules="[isRequired]"
+                      filterable
+                      filterPlaceholder="Filter Claim Type...."
+                      :error="claimForm.errors.claim_type_id"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INCIDENT DATE</dt>
+                  <dd>{{ formatDate(claim.incident_date) }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">CREATED DATE</dt>
+                  <dd>{{ formatDateTime(claim.created_at) }}</dd>
+                </div>
+              </dl>
+              <x-divider class="my-4" />
+              <div class="flex justify-end">
+                  <x-button
+                    v-if="can(permissionsEnum.CLAIM_EDIT)"
+                    class="mt-4"
+                    color="emerald"
+                    size="sm"
+                    :loading="claimForm.processing"
+                    type="submit"
+                  >
+                    Update
+                  </x-button>
+                </div>
+            </div>
+          </x-form>
+        </template>
+      </Collapsible>
+    </div>
+    <!-- Customer Details -->
+    <div class="p-4 rounded shadow my-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Customer Details
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CODE</dt>
-                <dd class="font-mono">{{ claim.code }}</dd>
-              </div>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words py-8">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FIRST NAME</dt>
                 <dd>{{ claim.first_name }}</dd>
@@ -464,166 +474,7 @@ function deleteClaim() {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">MOBILE NUMBER</dt>
                 <dd>{{ claim.mobile_no }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">QUOTE TYPE</dt>
-                <dd>{{ claim.quote_type?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CLAIM TYPE</dt>
-                <dd>{{ claim.claim_type?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">POLICY NUMBER</dt>
-                <dd>{{ claim.policy_number || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SOURCE</dt>
-                <dd>{{ claim.source || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">INCIDENT</dt>
-                <dd>{{ claim.incident || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">INSURANCE PROVIDER</dt>
-                <dd>{{ claim.insuranceProvider?.name || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">WHATSAPP CONSENT</dt>
-                <dd>{{ claim.whatsapp_consent ? 'Yes' : 'No' }}</dd>
-              </div>
-              <!-- Vehicle Details if available -->
-              <template v-if="claim.claimRequestDetails?.length > 0">
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">VEHICLE MAKE</dt>
-                  <dd>{{ claim.claimRequestDetails[0].car_make || '-' }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">VEHICLE MODEL</dt>
-                  <dd>{{ claim.claimRequestDetails[0].car_model || '-' }}</dd>
-                </div>
-              </template>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">STATUS</dt>
-                <dd>  {{ claim.claim_status.text }}  </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUB STATUS</dt>
-                <dd>{{ claim.claimSubStatus?.text || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">INCIDENT DATE</dt>
-                <dd>{{ formatDate(claim.incident_date) }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">LEAD SOURCE</dt>
-                <dd>{{ claim.lead_source || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">POLICY ADVISOR</dt>
-                <dd>{{ claim.policy_advisor || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ formatDateTime(claim.created_at) }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">LAST MODIFIED DATE</dt>
-                <dd>{{ formatDateTime(claim.updated_at) }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ASSIGNED CLAIMS MANAGER</dt>
-                <dd>{{ claim.assignedClaimsManager?.name || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CLAIMS MANAGER</dt>
-                <dd>{{ claim.claimsManager?.name || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">MANAGER ASSIGNED DATE</dt>
-                <dd>{{ formatDate(claim.claims_manager_assigned_date) }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">COMPLAINT STATUS</dt>
-                <dd>
-                  <x-tag
-                    size="sm"
-                    :color="
-                      claim.complaint_status === 'Complaint Open'
-                        ? 'error'
-                        : claim.complaint_status === 'Complaint Closed'
-                          ? 'success'
-                          : 'gray'
-                    "
-                  >
-                    {{ claim.complaint_status }}
-                  </x-tag>
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">NEXT FOLLOW-UP DATE</dt>
-                <dd :class="{ 'text-red-600 font-semibold': isOverdue }">
-                  {{ formatDate(claim.next_follow_up_date) }}
-                  <span v-if="isOverdue" class="ml-2 text-red-500"
-                    >(Overdue)</span
-                  >
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2" v-if="isCarLOB">
-                <dt class="font-medium">PLATE NUMBER</dt>
-                <dd>{{ claim.plate_number || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2" v-if="isCarLOB">
-                <dt class="font-medium">VEHICLE MAKE</dt>
-                <dd>{{ claim.vehicle_make || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2" v-if="isCarLOB">
-                <dt class="font-medium">VEHICLE MODEL</dt>
-                <dd>{{ claim.vehicle_model || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2" v-if="isCarLOB">
-                <dt class="font-medium">VEHICLE YEAR</dt>
-                <dd>{{ claim.vehicle_year || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2" v-if="isHealthLOB">
-                <dt class="font-medium">HEALTH CLAIM SERVICE TYPE</dt>
-                <dd>{{ claim.health_claim_service_type || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2" v-if="isHealthLOB">
-                <dt class="font-medium">HEALTH SERVICE TYPE</dt>
-                <dd>{{ claim.health_service_type || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">APPROVED REPAIR AMOUNT</dt>
-                <dd>{{ formatCurrency(claim.approved_repair_amount) }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">APPROVED TOTAL LOSS AMOUNT</dt>
-                <dd>{{ formatCurrency(claim.approved_total_loss_amount) }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">APPROVED CASH LOSS AMOUNT</dt>
-                <dd>{{ formatCurrency(claim.approved_cash_loss_amount) }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CLAIM DENIAL REASON</dt>
-                <dd>{{ claim.claim_denial_reason || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ADDITIONAL NOTES</dt>
-                <dd>
-                  {{ claim.additional_notes || 'No additional notes provided' }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CREATED BY</dt>
-                <dd>{{ claim.createdBy?.name || '-' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">UPDATED BY</dt>
-                <dd>{{ claim.updatedBy?.name || '-' }}</dd>
-              </div>
+              </div> 
             </dl>
           </div>
         </template>

@@ -93,8 +93,7 @@ class ClaimRequest extends Model implements AuditableContract
         'approved_total_loss_amount' => 'decimal:2',
         'approved_cash_loss_amount' => 'decimal:2',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'updated_at' => 'datetime', 
     ];
 
     // Filterable fields for search functionality

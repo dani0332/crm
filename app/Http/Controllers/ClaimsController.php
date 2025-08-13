@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Http\Requests\ClaimDetailsUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\Claim;
-use App\Models\ClaimRequest;
 use App\Services\ClaimsService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -29,7 +29,7 @@ class ClaimsController extends Controller
         $this->claimsService = $claimsService;
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_EXPORT_DATA], ['only' => ['export']]);
     }
@@ -167,12 +167,13 @@ class ClaimsController extends Controller
                 'claim' => $claimRequest,
                 'dropdowns' => $dropdownData,
             ]);
+
         } catch (Exception $e) {
             LoggerService::error('Error loading claim request details', extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'user_id' => auth()->id(),
-            ]);
+            ]);      
 
             return redirect()->route('claims.index')
                 ->with('error', 'Failed to load claim details.');
@@ -231,38 +232,30 @@ class ClaimsController extends Controller
         }
     }
 
-    /**
-     * Update claim status (AJAX endpoint)
-     */
-    public function updateStatus(Request $request, Claim $claim): JsonResponse
+    public function updateClaimDetails(ClaimDetailsUpdateRequest $request, $uuid): RedirectResponse
     {
-        $request->validate([
-            'status' => 'required|string|in:pending,in_progress,resolved,closed,cancelled',
-        ]);
-
         try {
-            $updatedClaim = $this->claimsService->updateClaimStatus($claim, $request->status);
+            // Get only the validated data that should be updated
+            $validatedData = $request->validatedForUpdate();
+            
+            $updatedClaimRequest = $this->claimsService->updateClaimDetails($uuid, $validatedData);
+            
+            return redirect()->route('claims.show', $updatedClaimRequest->uuid)
+                ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Claim status has been updated successfully.',
-                'claim' => $updatedClaim,
-            ]);
         } catch (Exception $e) {
-            LoggerService::error('Error updating claim status', extra: [
+            LoggerService::error('Error updating claim details', extra: [
                 'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'status' => $request->status,
+                'claim_request_id' => $uuid,
+                'data' => $request->validatedForUpdate(),
                 'user_id' => auth()->id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update claim status.',
-            ], 500);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors($e->getMessage());
         }
     }
-
 
     /**
      * Export claims data
@@ -352,91 +345,6 @@ class ClaimsController extends Controller
         }
     }
 
-
-
-    /**
-     * Update claim sub-status with auto-updates (AJAX endpoint)
-     */
-    public function updateSubStatus(Request $request, Claim $claim): JsonResponse
-    {
-
-        $request->validate([
-            'sub_status_id' => 'required|integer|exists:lookups,id',
-            'approved_repair_amount' => 'nullable|numeric|min:0',
-            'approved_total_loss_amount' => 'nullable|numeric|min:0',
-            'approved_cash_loss_amount' => 'nullable|numeric|min:0',
-            'claim_denial_reason' => 'nullable|string',
-        ]);
-
-        try {
-            $updatedClaim = $this->claimsService->updateClaimSubStatus(
-                $claim,
-                $request->sub_status_id,
-                $request->only([
-                    'approved_repair_amount',
-                    'approved_total_loss_amount',
-                    'approved_cash_loss_amount',
-                    'claim_denial_reason',
-                ])
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Claim sub-status has been updated successfully.',
-                'claim' => $updatedClaim,
-            ]);
-        } catch (Exception $e) {
-            LoggerService::error('Error updating claim sub-status', extra: [
-                'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'sub_status_id' => $request->sub_status_id,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update claim sub-status.',
-            ], 500);
-        }
-    }
-
-    /**
-     * Update insurer claim number (AJAX endpoint)
-     */
-    public function updateInsurerClaimNumber(Request $request, Claim $claim): JsonResponse
-    {
-        // Check permission
-        $this->authorize('update', $claim);
-
-        $request->validate([
-            'insurer_claim_number' => 'required|string|max:255',
-        ]);
-
-        try {
-            $updatedClaim = $this->claimsService->updateInsurerClaimNumber(
-                $claim,
-                $request->insurer_claim_number
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Insurer claim number has been updated successfully.',
-                'claim' => $updatedClaim,
-            ]);
-        } catch (Exception $e) {
-            LoggerService::error('Error updating insurer claim number', extra: [
-                'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'insurer_claim_number' => $request->insurer_claim_number,
-                'user_id' => auth()->id(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update insurer claim number.',
-            ], 500);
-        }
-    }
 
     /**
      * AI optimize message (AJAX endpoint)

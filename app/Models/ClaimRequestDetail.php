@@ -47,8 +47,7 @@ class ClaimRequestDetail extends Model implements AuditableContract
     ];
     protected $casts = [
         'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'updated_at' => 'datetime', 
     ];
 
     // Filterable fields for search functionality
@@ -143,14 +142,14 @@ class ClaimRequestDetail extends Model implements AuditableContract
         $this->save();
     }
 
-    public function getShowCreatedAtAttribute($table)
+    public function getDisplayCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function getShowUpdatedAtAttribute($table)
+    public function getDisplayUpdatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
 

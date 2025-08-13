@@ -238,6 +238,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/claim/{uuid}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
         Route::put('/claim/{uuid}', [ClaimsController::class, 'update'])->name('claims.update'); 
         Route::post('claim/search-policies', [ClaimsController::class, 'searchPolicies'])->name('claims.search-policies');
+        Route::post('claim/update-details/{uuid}', [ClaimsController::class, 'updateClaimDetails'])->name('claims.update.details');
         /*
                     // Claims AJAX routes
             Route::post('claims/{claim}/assign-manager', [ClaimsController::class, 'assignManager'])->name('claims.assign-manager');

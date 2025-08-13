@@ -35,6 +35,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\ClaimsEnum;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -144,6 +145,7 @@ class HandleInertiaRequests extends Middleware
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
+            'claimsEnum' => ClaimsEnum::asArray(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
