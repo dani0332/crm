@@ -58,6 +58,7 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -777,6 +778,7 @@ class AMLService
         ])->first();
 
         $providerName = InsuranceProvidersEnum::getTextByCode($paymentDetails?->insuranceProvider?->code);
+        $isLIVA = $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::RSA;
 
         if (
             $quoteTypeId == QuoteTypes::CAR->id() &&
@@ -865,11 +867,17 @@ class AMLService
 
                 $insurerScreeningPayload['rtaTransactionType'] = [
                     'code' => $carQuoteRequestDetails->rta_transaction_type ?? null,
-                    'value' => $rtaTransactionType?->text ?? null,
+                    'value' => $isLIVA ? app(LivaInsuranceService::class)->registrationType($carQuoteRequestDetails->rta_transaction_type) : ($rtaTransactionType?->text ?? null),
                     'authority' => 'RTA',
                 ];
 
-                $insurerScreeningPayload['plateCodeNumber'] = $carQuoteRequestDetails->plate_code.$carQuoteRequestDetails->plate_number ?? null;
+                if ($isLIVA) {
+                    $insurerScreeningPayload['plateCode'] = $carQuoteRequestDetails->plate_code ?? null;
+                    $insurerScreeningPayload['plateNumber'] = $carQuoteRequestDetails->plate_number ?? null;
+                } else {
+                    $insurerScreeningPayload['plateCodeNumber'] = $carQuoteRequestDetails->plate_code.$carQuoteRequestDetails->plate_number ?? null;
+                }
+
                 $insurerScreeningPayload['trafficCodeNumber'] = $carQuoteRequestDetails->traffic_code_number ?? null;
                 $insurerScreeningPayload['engineNumber'] = $carQuoteRequestDetails->engine_number ?? null;
                 $insurerScreeningPayload['rtaPlateCategory'] = $rtaPlateCategory?->text ?? null;
@@ -2121,7 +2129,7 @@ class AMLService
         }
 
         return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO
-            && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUPremiumMatchOTE_STATUS;
+            && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUOTE_STATUS;
     }
 
     private function registrationType($rtaTransactionType)

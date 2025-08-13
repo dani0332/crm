@@ -954,4 +954,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         return $this->livaHttpCall($endPoint, $payload, 'RetrieveResponse');
     } */
+
+    public function registrationType($rtaTransactionType)
+    {
+        return match ($rtaTransactionType) {
+            '10' => 'NVR',
+            '20' => 'CO',
+            '30' => 'CO',
+            '40' => 'VR',
+            '50' => 'VR',
+        };
+    }
 }
