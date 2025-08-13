@@ -39,9 +39,9 @@ const emit = defineEmits(['update:selectedPlanChanged']);
 
 const isPlanSelectionDisable = computed(() => {
   const quoteType = props.quoteType?.toLowerCase();
-  const isSourceIMCRM = quote?.source == leadSourceEnum.IMCRM;
   const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
-  const isALNCProvider = props.plan?.providerCode == insuranceProviderCodeEnum.ALNC;
+  const isSourceIMCRM = quote?.source == leadSourceEnum?.IMCRM;
+  const isALNCProvider = props.plan?.providerCode == insuranceProviderCodeEnum?.ALNC;
 
   if (quoteType == 'travel' && isSourceIMCRM && isNormalPlan && isALNCProvider) {
     const travelers = page.props.travelers ?? [];

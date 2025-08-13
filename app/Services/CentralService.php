@@ -494,8 +494,8 @@ class CentralService extends BaseService
         }
 
         $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
-        $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
         $isNormalPlan = $data['planType'] == 'normalPlans';
+        $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
         $isALNCProvider = $data['provider_code'] == InsuranceProvidersEnum::ALNC;
 
         if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
