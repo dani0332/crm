@@ -120,7 +120,7 @@ class DocumentTypesSeeder extends Seeder
                 'is_active' => 1,
                 'quote_type_id' => QuoteTypeId::CompanyCar,
                 'folder_path' => 'car',
-                'accepted_files' => '.pdf,.docx,.doc,.jpeg,.jpg,.png',
+                'accepted_files' => '.pdf,.docx,.doc,.jpeg,.jpg,.png,.webp',
                 'max_files' => 10,
                 'max_size' => 25,
                 'is_required' => 1,
