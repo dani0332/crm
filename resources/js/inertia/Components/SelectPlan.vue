@@ -23,6 +23,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 const isPlanSelectionEnable = ref(false);
+const isPlanSelectionDisable = ref(false);
 const hasAnyAuthorizedPayment = ref(false);
 const hasAnyPendingPayment = ref(false);
 const hasSameGateway = ref(true);
@@ -323,7 +324,9 @@ const updateSelectedPlan = () => {
 };
 
 watch(() => {
-  if (props.quoteType.toLowerCase() == 'health') {
+  const quoteType = props.quoteType?.toLowerCase();
+
+  if (quoteType == 'health') {
     let premiumCalculate =
       props.plan?.actualPremium +
       (props.plan?.policyFee || 0) +
@@ -336,6 +339,14 @@ watch(() => {
     isPlanSelectionEnable.value =
       props.plan?.actualPremium > 0 &&
       can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
+
+    const isSourceIMCRM = props.extraDetails?.quoteSource == 'IMCRM';
+    const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
+    const isALNCProvider = props.plan?.providerCode == 'ALNC';
+
+    if(quoteType == 'travel' && isSourceIMCRM && isNormalPlan && isALNCProvider) {
+      isPlanSelectionDisable.value = page.props.travelers.filter(traveler => (!traveler.first_name) || (!traveler.last_name) || (!traveler.passport)).length > 0;
+    }
   }
 });
 const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
@@ -350,7 +361,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
       color="success"
       outlined
       :loading="isLoading"
-      :disabled="isDisabled"
+      :disabled="isDisabled || isPlanSelectionDisable"
       @click.prevent="checkAndUpdateSelectedPlan()"
     >
       Select
