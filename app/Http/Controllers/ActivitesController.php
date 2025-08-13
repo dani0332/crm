@@ -182,6 +182,7 @@ class ActivitesController extends Controller
         $record = $this->activitiesService->getActivityById($request->activity_id);
         if (isset($record)) {
             $record->status = $record->status == 0 ? 1 : 0;
+            $record->is_cold = $record->is_cold == 0 ? 1 : 0;
             $record->save();
         }
     }

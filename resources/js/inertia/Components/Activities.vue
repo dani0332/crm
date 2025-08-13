@@ -189,22 +189,26 @@ const activityEdit = data => {
           :rows-per-page="15"
           :hide-footer="activities.length < 15"
         >
-          <template #item-due_date="{ due_date }">
-            <template v-if="compareDueDate(due_date)">
+          <template #item-due_date="item">
+            <template
+              v-if="compareDueDate(item.due_date) && item.is_cold === 0"
+            >
               <x-tooltip placement="top">
                 <p
                   :class="
-                    compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
+                    compareDueDate(item.due_date) && item.is_cold === 0
+                      ? 'bg-error-300 rounded p-1'
+                      : ''
                   "
                 >
-                  {{ due_date }}
+                  {{ item.due_date }}
                 </p>
                 <template #tooltip>
                   <span>Pending overdue Task, please complete immediately</span>
                 </template>
               </x-tooltip>
             </template>
-            <span v-else>{{ due_date }}</span>
+            <span v-else>{{ item.due_date }}</span>
           </template>
 
           <template #item-status="{ status, id }">
