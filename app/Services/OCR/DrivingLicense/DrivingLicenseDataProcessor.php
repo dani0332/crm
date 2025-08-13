@@ -90,8 +90,8 @@ class DrivingLicenseDataProcessor
                 return false;
             }
 
-            // Only update fields that have values and are not already filled
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate, $carQuoteDetail);
+            // Update all fields with OCR data
+            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
 
             if (! empty($dataToUpdate)) {
                 $carQuoteDetail->update($dataToUpdate);
@@ -104,7 +104,7 @@ class DrivingLicenseDataProcessor
                 return true;
             }
 
-            LoggerService::info('CarQuoteRequestDetail - No new driving license data to update - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('CarQuoteRequestDetail - No OCR driving license data to update - Quote UUID: '.$this->quote->uuid);
 
             return false;
 

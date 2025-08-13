@@ -100,8 +100,8 @@ class MulkiyaDataProcessor
                 return false;
             }
 
-            // Only update fields that have values and are not already filled
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate, $carQuoteDetail);
+            // Update all fields with OCR data
+            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
 
             if (! empty($dataToUpdate)) {
                 $carQuoteDetail->update($dataToUpdate);
@@ -114,7 +114,7 @@ class MulkiyaDataProcessor
                 return true;
             }
 
-            LoggerService::info('CarQuoteRequestDetail - No new data to update - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('CarQuoteRequestDetail - No OCR data to update - Quote UUID: '.$this->quote->uuid);
 
             return false;
 
@@ -128,7 +128,7 @@ class MulkiyaDataProcessor
     private function updateCarQuote(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate, $quote);
+            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
 
             if (! empty($dataToUpdate)) {
                 LoggerService::info('CarQuote update - Data to be updated - Quote UUID: '.$this->quote->uuid, extra: [
@@ -147,8 +147,8 @@ class MulkiyaDataProcessor
                 return true;
             }
 
-            LoggerService::info('CarQuote - No new data to update - Quote UUID: '.$this->quote->uuid, extra: [
-                'reason' => 'All fields already have values or no valid data provided',
+            LoggerService::info('CarQuote - No OCR data to update - Quote UUID: '.$this->quote->uuid, extra: [
+                'reason' => 'No valid OCR data provided',
             ]);
 
             return false;
@@ -187,9 +187,9 @@ class MulkiyaDataProcessor
                 $fieldsToUpdate
             );
 
-            // If record already existed, update only empty fields
+            // If record already existed, update with OCR data
             if (! $registrationCertificate->wasRecentlyCreated) {
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate, $registrationCertificate);
+                $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
 
                 if (! empty($dataToUpdate)) {
                     $registrationCertificate->update($dataToUpdate);
@@ -199,7 +199,7 @@ class MulkiyaDataProcessor
                         'updated_fields' => array_keys($dataToUpdate),
                     ]);
                 } else {
-                    LoggerService::info('RegistrationCertificate - No new data to update - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('RegistrationCertificate - No OCR data to update - Quote UUID: '.$this->quote->uuid);
                 }
             } else {
                 LoggerService::info('RegistrationCertificate created successfully - Quote UUID: '.$quote->uuid, extra: [

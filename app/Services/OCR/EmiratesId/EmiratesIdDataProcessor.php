@@ -147,8 +147,8 @@ class EmiratesIdDataProcessor
                 $updateData['id_number'] = $this->extractedData['eid_number'];
             }
 
-            // Only update fields that have values and are not already filled
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($updateData, $insured);
+            // Update all fields with OCR data
+            $dataToUpdate = OcrUtils::getFieldsToUpdate($updateData);
 
             if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
@@ -161,7 +161,7 @@ class EmiratesIdDataProcessor
                 return true;
             }
 
-            LoggerService::info('Insured table - No new data to update - Quote UUID: '.$this->quote->uuid, extra: [
+            LoggerService::info('Insured table - No OCR data to update - Quote UUID: '.$this->quote->uuid, extra: [
                 'insured_id' => $insured->id,
             ]);
 
@@ -208,8 +208,8 @@ class EmiratesIdDataProcessor
             $insuredKyc = $insured->insuredKyc;
 
             if ($insuredKyc) {
-                // Only update fields that have values and are not already filled
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($kycData, $insuredKyc);
+                // Update all fields with OCR data
+                $dataToUpdate = OcrUtils::getFieldsToUpdate($kycData);
 
                 if (! empty($dataToUpdate)) {
                     $insuredKyc->update($dataToUpdate);
@@ -221,7 +221,7 @@ class EmiratesIdDataProcessor
 
                     return true;
                 } else {
-                    LoggerService::info('InsuredKyc table - No new data to update - Quote UUID: '.$this->quote->uuid, extra: [
+                    LoggerService::info('InsuredKyc table - No OCR data to update - Quote UUID: '.$this->quote->uuid, extra: [
                         'insured_id' => $insured->id,
                     ]);
 
