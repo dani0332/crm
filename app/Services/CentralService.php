@@ -482,9 +482,11 @@ class CentralService extends BaseService
 
     public function validateIsTravelPlanSelectable($quoteType, $data): array
     {
-        if ($data['quoteSource'] == LeadSourceEnum::IMCRM && $data['planType'] == 'normalPlans'
-            && $data['provider_code'] == InsuranceProvidersEnum::ALNC
-        ) {
+        $isSourceIMCRM = ($data['quoteSource'] ?? null) == LeadSourceEnum::IMCRM;
+        $isNormalPlan = ($data['planType'] ?? null) == 'normalPlans';
+        $isALNCProvider = ($data['provider_code'] ?? null) == InsuranceProvidersEnum::ALNC;
+
+        if ($isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
             $customerMembers = CustomerMembersRepository::where([
                 'quote_type' => ltrim($quoteModelObject, '\\'),
