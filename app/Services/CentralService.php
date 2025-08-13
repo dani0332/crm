@@ -35,6 +35,7 @@ use App\Models\ApplicationStorage;
 use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerMembers;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -55,7 +56,6 @@ use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
-use App\Repositories\CustomerMembersRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
@@ -482,14 +482,25 @@ class CentralService extends BaseService
 
     public function validateIsTravelPlanSelectable($quoteType, $data): array
     {
+        $validator = Validator::make($data, [
+            'quoteId' => 'required',
+            'quoteSource' => 'required',
+            'planType' => 'required',
+            'provider_code' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors()->toArray();
+        }
+
         $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
-        $isSourceIMCRM = ($data['quoteSource'] ?? null) == LeadSourceEnum::IMCRM;
-        $isNormalPlan = ($data['planType'] ?? null) == 'normalPlans';
-        $isALNCProvider = ($data['provider_code'] ?? null) == InsuranceProvidersEnum::ALNC;
+        $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
+        $isNormalPlan = $data['planType'] == 'normalPlans';
+        $isALNCProvider = $data['provider_code'] == InsuranceProvidersEnum::ALNC;
 
         if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
-            $customerMembers = CustomerMembersRepository::where([
+            $customerMembers = CustomerMembers::where([
                 'quote_type' => ltrim($quoteModelObject, '\\'),
                 'quote_id' => $data['quoteId'] ?? null,
                 'customer_type' => CustomerTypeEnum::Individual,
