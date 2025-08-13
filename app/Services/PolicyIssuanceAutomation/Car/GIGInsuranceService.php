@@ -754,18 +754,25 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             Bus::batch($documentOCRJobs)
                 ->then(function (Batch $batch) use ($quote, $process) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - All OCR jobs completed successfully (perfect success)');
-                    
+
+                    LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Last executed Step: '.$process->completed_step);
+
                     $process->update([
                         'completed_step' => self::EXECUTE_OCR_PROCESSING,
                         'updated_at' => now(),
                     ]);
+
+                    LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Completed Step: '.$process->completed_step);
+
+                    $process = $process->refresh();
+                    $quote = $quote->refresh();
 
                     $this->executeStepSequence($quote, $process, self::BOOK_POLICY);
                 })
                 ->catch(function (Batch $batch, Throwable $e) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing failed completely: '.$e->getMessage());
                 })
-                ->finally(function (Batch $batch) use ($quote, $process) {
+                ->finally(function (Batch $batch) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing completed');
                     
                     if ($batch->hasFailures()) {
@@ -885,7 +892,6 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function bookPolicy($quote): array
     {
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' started');
-
         $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
 
         $updateBookingDetailsResponse = $this->updateBookingDetails($quote);
@@ -896,6 +902,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             return $response;
         }
 
+        $quote->refresh();
         $preCheckResult = $this->validateBookPolicy($quote);
         if (! $preCheckResult['status']) {
             $response['error'] = $preCheckResult['error'];
@@ -912,14 +919,17 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $request->send_policy_type = SendPolicyTypeEnum::SAGE;
         $request->transaction_payment_status = null;
 
+        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Book Policy execution initiated, creating Sage process');
         $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, [], $createSageProcessResponse, '', self::BOOK_POLICY, $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
 
         if (! $createSageProcessResponse['status']) {
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Book Policy execution failed, Error: '.$createSageProcessResponse['message']);
             $response['error'] = $createSageProcessResponse['message'];
 
             return $response;
         }
+        
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
 
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' ended');
@@ -932,12 +942,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     private function updateBookingDetails($quote): array
     {
-        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Pre-checking for update booking details');
+        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Update booking details process started');
         $response = ['status' => true, 'error' => null, 'message' => null];
 
         // TODO:: this should be move in the service class
+        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Updating commission details');
         $updateCommission = app(ManualCommissionUpdateService::class)->updateCommissionForLeads([$quote->code]);
         if (! $updateCommission['status']) {
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Failed to update commission details');
             $response['status'] = false;
             $response['error'] = $updateCommission['error'];
             $response['message'] = $updateCommission['message'];
@@ -945,6 +957,24 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CAR->value, $quote->payments, $quote->quoteDocuments);
+
+        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Booking Details before exeuting validation', extra: [
+            'invoice_date' => $payment->insurer_invoice_date,
+            'insurer_tax_invoice_number' => $payment->insurer_tax_number,
+            'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+            'discount' => $payment->discount_value,
+            'transaction_payment_status' => $bookPolicyPayload['transactionPaymentStatus'],
+            'broker_invoice_number' => $bookPolicyPayload['brokerInvoiceNo'],
+            'commission_vat_not_applicable' => $payment->commission_vat_not_applicable,
+            'commission_vat_applicable' => $payment->commission_vat_applicable,
+            'total_commission' => $payment->commission,
+            'invoice_description' => $bookPolicyPayload['invoiceDescription'],
+            'vat_on_commission' => $payment->commission_vat,
+            'commission_percentage' => $payment->commmission_percentage,
+            'payment_code' => $payment->code,
+            'model_type' => self::TYPE,
+            'quote_id' => $quote->id,
+        ]);
 
         try {
             $updateBookingRequest = [
@@ -973,7 +1003,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
             if ($validator->fails()) {
                 $response['status'] = false;
-                $response['error'] = 'BookPolicyRequest validation failed';
+                $response['error'] = $validator->errors()->first() ?? 'BookPolicyRequest validation failed';
                 $response['message'] = $validator->errors()->first();
 
                 LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - BookPolicyRequest validation failed: '.$response['message']);
@@ -981,20 +1011,24 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 return $response;
             }
 
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Updating booking details');
             $updateBookingDetailsResponse = app(CentralService::class)->updateBookingDetails($updateBookingRequest, $bookPolicyRequest);
 
             if (! $updateBookingDetailsResponse['status']) {
+                LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Failed to update booking details');
                 $response['status'] = false;
                 $response['error'] = $updateBookingDetailsResponse['message'];
                 $response['message'] = $updateBookingDetailsResponse['message'];
             }
+
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Update booking details process completed');
 
         } catch (Exception $e) {
             $response['status'] = false;
             $response['error'] = 'Booking update error: '.$e->getMessage();
             $response['message'] = 'An error occurred while updating booking details: '.$e->getMessage();
 
-            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Booking update exception: '.$e->getMessage());
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Booking update process failed, Exception: '.$e->getMessage());
         }
 
         return $response;
@@ -1002,7 +1036,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
     private function validateBookPolicy($quote): array
     {
-        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Validating book policy prerequisites');
+        LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Validating book policy prerequisites process started');
         $response = ['status' => true, 'error' => null, 'message' => null];
 
         try {
@@ -1021,7 +1055,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
             if ($validator->fails()) {
                 $response['status'] = false;
-                $response['error'] = 'SendBookPolicyRequest validation failed';
+                $response['error'] = $validator->errors()->first() ?? 'SendBookPolicyRequest validation failed';
                 $response['message'] = $validator->errors()->first();
 
                 LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - SendBookPolicyRequest validation failed: '.$response['message']);
@@ -1029,7 +1063,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 return $response;
             }
 
-            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - All prerequisites validated successfully');
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - All prerequisites validated successfully, Validate prerequisites process completed');
             $response['message'] = 'All book policy prerequisites validated successfully';
 
         } catch (Exception $e) {
@@ -1037,7 +1071,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $response['error'] = 'Validation error: '.$e->getMessage();
             $response['message'] = 'An error occurred during validation: '.$e->getMessage();
 
-            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Validation exception: '.$e->getMessage());
+            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Validate prerequisites process failed, Exception: '.$e->getMessage());
         }
 
         return $response;
