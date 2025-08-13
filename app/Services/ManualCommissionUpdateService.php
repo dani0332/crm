@@ -28,19 +28,24 @@ class ManualCommissionUpdateService extends BaseService
 
         $totalCommissionInPercentage = ($totalCommissionWithoutVat / $totalPriceWithoutVat) * 100;
 
-        $commissionPercentageMin = 0;
-        $commissionPercentageMax = 0;
-        $commissionPercentageExceedsLimit = false;
+		$commissionPercentageMin = 0;
+		$commissionPercentageMax = 0;
+		$commissionPercentageExceedsLimit = false;
 
-        if ($brokerCommission && $brokerCommission->fixed_commission) {
-            $commissionPercentageMin = max(($brokerCommission->fixed_commission - 2.5), 0);
-            $commissionPercentageMax = $brokerCommission->fixed_commission + 2.5;
+		$fixedCommission = 0.0;
+		if ($brokerCommission !== null && isset($brokerCommission->fixed_commission)) {
+			$fixedCommission = (float) $brokerCommission->fixed_commission;
+		}
 
-            if ($totalCommissionInPercentage < $commissionPercentageMin ||
-                $totalCommissionInPercentage > $commissionPercentageMax) {
-                $commissionPercentageExceedsLimit = true;
-            }
-        }
+		$commissionPercentageMin = max(($fixedCommission - 2.5), 0.0);
+		$commissionPercentageMax = $fixedCommission > 0.0 ? $fixedCommission + 2.5 : 0.0;
+
+		if ($commissionPercentageMin != 0.0 && $commissionPercentageMax != 0.0) {
+			if ($totalCommissionInPercentage < $commissionPercentageMin ||
+				$totalCommissionInPercentage > $commissionPercentageMax) {
+				$commissionPercentageExceedsLimit = true;
+			}
+		}
 
         return [
             'min_percentage' => $commissionPercentageMin,
@@ -103,25 +108,6 @@ class ManualCommissionUpdateService extends BaseService
         foreach ($carQuoteRefIds as $refId) {
             try {
                 $carQuoteDetails = CarQuote::where('code', $refId)->first();
-
-                // if (! $carQuoteDetails) {
-                //     $results[$refId] = [
-                //         'success' => false,
-                //         'error' => 'Car quote not found',
-                //     ];
-
-                //     continue;
-                // }
-
-                // if ($carQuoteDetails->quote_status_id !== QuoteStatusEnum::PolicyBooked) {
-                //     $results[$refId] = [
-                //         'success' => false,
-                //         'error' => 'Policy is not booked yet',
-                //     ];
-
-                //     continue;
-                // }
-
                 $payment = $carQuoteDetails->payment;
                 $insuranceProvider = getInsuranceProvider($payment, QuoteTypes::CAR->value, $carQuoteDetails);
                 $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
