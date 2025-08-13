@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -53,6 +55,7 @@ use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
@@ -63,6 +66,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
 {
@@ -466,6 +470,72 @@ class CentralService extends BaseService
                 'new_method' => $newPaymentMethod,
             ]);
         }
+    }
+
+    public function validateIsPlanSelectable($quoteType, $data): array
+    {
+        return match(ucfirst($quoteType)) {
+            QuoteTypes::TRAVEL->value => $this->validateIsTravelPlanSelectable($quoteType, $data),
+            default => [],
+        };
+    }
+
+    public function validateIsTravelPlanSelectable($quoteType, $data): array
+    {
+        if($data['quoteSource'] == LeadSourceEnum::IMCRM && $data['planType'] == 'normalPlans' 
+            && $data['provider_code'] == InsuranceProvidersEnum::ALNC
+        ) {
+            $quoteModelObject = $this->getModelObject(strtolower($quoteType));
+            $customerMembers = CustomerMembersRepository::where([
+                'quote_type' => ltrim($quoteModelObject, '\\'),
+                'quote_id' => $data['quoteId'] ?? null,
+                'customer_type' => CustomerTypeEnum::Individual,
+                'deleted_at' => null,
+            ])
+                ->select('id', 'code', 'first_name', 'last_name', 'passport')
+                ->get();
+
+            $errorsMessages = $this->validateCustomerMembersInfo($customerMembers->toArray());
+
+            return $errorsMessages;
+        }
+        return [];
+    }
+
+    function validateCustomerMembersInfo(array $members): array
+    {
+        $validator = Validator::make(
+            ['members' => $members],
+            [
+                'members'                 => 'required|array|min:1',
+                'members.*.first_name'    => 'required',
+                'members.*.last_name'     => 'required',
+                'members.*.passport'      => 'required',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            $finalErrors = [];
+
+            if ($errors->has('members')) {
+                $finalErrors['members_count'] = ['At least one customer member is required.'];
+            }
+            if ($errors->has('members.*.first_name')) {
+                $finalErrors['first_name'] = ['Please enter first_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.last_name')) {
+                $finalErrors['last_name'] = ['Please enter last_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.passport')) {
+                $finalErrors['passport'] = ['Please enter passport numbers for all members before selecting a plan.'];
+            }
+
+            return $finalErrors;
+        }
+
+        return [];
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)

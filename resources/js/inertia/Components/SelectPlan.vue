@@ -222,6 +222,9 @@ const updateSelectedPlan = () => {
 
   if (props.quoteType.toLocaleLowerCase() == 'travel') {
     data.planType = props.extraDetails?.planType;
+    data.quoteSource = props.extraDetails?.quoteSource;
+    data.quoteId = props.extraDetails?.quoteId;
+
     if (props.extraDetails?.selectedPlansIds.length > 0) {
       for (let i = 0; i < props.extraDetails?.selectedPlansIds.length; i++) {
         if (
