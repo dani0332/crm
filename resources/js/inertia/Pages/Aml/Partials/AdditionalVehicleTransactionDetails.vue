@@ -539,295 +539,273 @@ watch(
         <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
 
           <!-- RTA Transaction Type -->
-          <x-field label="RTA Transaction Type" required>
-            <x-select
-              filterable
-              v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type"
-              :rules="[isRequired]"
-              :options="rtaTransactionTypeOptions"
-              placeholder="Select RTA Transaction Type"
-              :disabled="isFieldDisabled('rta_transaction_type') || hasNotEditPermission"
-            />
-          </x-field>
+          <x-select
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.rta_transaction_type"
+            :rules="[isRequired]"
+            :options="rtaTransactionTypeOptions"
+            placeholder="Select RTA Transaction Type"
+            label="RTA Transaction Type"
+            :disabled="isFieldDisabled('rta_transaction_type') || hasNotEditPermission"
+            :tooltip="`Type of transaction with the traffic department for your vehicle`"
+            required
+          />
 
           <!-- Plate Code -->
-          <x-field
-            label="Plate Code"
-            :required="isFieldRequired('plate_code')"
+          <x-input
             v-if="isGIG"
-          >
-            <x-input
-              v-model="additionalVehicleTransactionDetailsForm.plate_code"
-              :rules="getFieldRules('plate_code')"
-              placeholder="Plate Code"
-              type="text"
-              :disabled="isFieldDisabled('plate_code') || hasNotEditPermission"
-              :readonly="fieldConfig.plate_code?.readonly"
-            />
-          </x-field>
-          <x-field
+            v-model="additionalVehicleTransactionDetailsForm.plate_code"
+            :rules="getFieldRules('plate_code')"
+            :required="isFieldRequired('plate_code')"
+            placeholder="Plate Code"
+            type="text"
+            :disabled="isFieldDisabled('plate_code') || hasNotEditPermission"
+            :readonly="fieldConfig.plate_code?.readonly"
             label="Plate Code"
-            :required="registrationNoValidation"
+            :tooltip="`Official plate code and registration number`"
+          />
+          <x-select
             v-else
-          >
-            <x-select
-              filterable
-              v-model="additionalVehicleTransactionDetailsForm.plate_code"
-              :rules="(registrationNoValidation) ? [isRequired] : []"
-              placeholder="Select Plate Code"
-              :options="plateCodeOptions"
-              class="w-full"
-              :disabled="hasNotEditPermission"
-            />
-          </x-field>
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.plate_code"
+            :rules="(registrationNoValidation) ? [isRequired] : []"
+            :required="registrationNoValidation"
+            placeholder="Select Plate Code"
+            :options="plateCodeOptions"
+            class="w-full"
+            :disabled="hasNotEditPermission"
+            label="Plate Code"
+            :tooltip="`Official plate code and registration number`"
+          />
 
           <!-- Plate Number -->
-          <x-field
-            label="Plate Number"
-            :required="isFieldRequired('plate_number')"
+          <x-input
             v-if="isGIG"
-          >
-            <x-input
-              v-model="additionalVehicleTransactionDetailsForm.plate_number"
-              :rules="getFieldRules('plate_number')"
-              placeholder="Plate Number"
-              type="text"
-              :disabled="isFieldDisabled('plate_number') || hasNotEditPermission"
-              :readonly="fieldConfig.plate_number?.readonly"
-            />
-          </x-field>
-
-          <x-field
+            v-model="additionalVehicleTransactionDetailsForm.plate_number"
+            :rules="getFieldRules('plate_number')"
+            :required="isFieldRequired('plate_number')"
+            placeholder="Plate Number"
+            type="text"
+            :disabled="isFieldDisabled('plate_number') || hasNotEditPermission"
+            :readonly="fieldConfig.plate_number?.readonly"
             label="Plate Number"
-            :required="registrationNoValidation"
+            :tooltip="`Official plate code and registration number`"
+          />
+          <x-input
             v-else
-          >
-            <x-input
-              v-model="additionalVehicleTransactionDetailsForm.plate_number"
-              :rules="(registrationNoValidation) ? [isRequired] : []"
-              placeholder="Plate Number"
-              type="text"
-              :disabled="isFieldDisabled('plate_number') || hasNotEditPermission"
-              :readonly="fieldConfig.plate_number?.readonly"
-            />
-          </x-field>
+            v-model="additionalVehicleTransactionDetailsForm.plate_number"
+            :rules="(registrationNoValidation) ? [isRequired] : []"
+            :required="registrationNoValidation"
+            placeholder="Plate Number"
+            type="text"
+            :disabled="isFieldDisabled('plate_number') || hasNotEditPermission"
+            :readonly="fieldConfig.plate_number?.readonly"
+            label="Plate Number"
+            :tooltip="`Official plate code and registration number`"
+          />
 
           <!-- Traffic Code Number -->
-          <x-field label="Traffic Code Number" required>
-            <x-input
-              v-model="additionalVehicleTransactionDetailsForm.traffic_code_number"
-              :rules="[isRequired]"
-              placeholder="Traffic Code Number"
-              type="text"
-              :disabled="isFieldDisabled('traffic_code_number') || hasNotEditPermission"
-            />
-          </x-field>
+          <x-input
+            v-model="additionalVehicleTransactionDetailsForm.traffic_code_number"
+            :rules="[isRequired]"
+            placeholder="Traffic Code Number"
+            type="text"
+            :disabled="isFieldDisabled('traffic_code_number') || hasNotEditPermission"
+            required
+            label="Traffic Code Number"
+            :tooltip="`Unique traffic file number assigned by the traffic department`"
+          />
 
           <!-- Chassis Number -->
-          <x-field label="Chassis Number" required>
-            <x-input
-              v-model="additionalVehicleTransactionDetailsForm.chassis_number"
-              :rules="[isRequired, rules.chassisNumberCheck]"
-              @keypress="chassisNumberValidate('keypress')"
-              @blur="chassisNumberValidate('blur')"
-              placeholder="Chassis Number"
-              type="text"
-              :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
-              :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission"
-            />
-          </x-field>
+          <x-input
+            v-model="additionalVehicleTransactionDetailsForm.chassis_number"
+            :rules="[isRequired, rules.chassisNumberCheck]"
+            @keypress="chassisNumberValidate('keypress')"
+            @blur="chassisNumberValidate('blur')"
+            placeholder="Chassis Number"
+            type="text"
+            :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
+            :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission"
+            required
+            label="Chassis Number"
+            :tooltip="`Vehicle chassis number`"
+          />
 
           <!-- Engine Number -->
-          <x-field
-            label="Engine Number"
+          <x-input
+            v-model="additionalVehicleTransactionDetailsForm.engine_number"
+            :rules="getFieldRules('engine_number')"
             :required="isFieldRequired('engine_number')"
-          >
-            <x-input
-              v-model="additionalVehicleTransactionDetailsForm.engine_number"
-              :rules="getFieldRules('engine_number')"
-              placeholder="Engine Number"
-              type="text"
-              :disabled="isFieldDisabled('engine_number') || hasNotEditPermission"
-            />
-          </x-field>
+            placeholder="Engine Number"
+            type="text"
+            :disabled="isFieldDisabled('engine_number') || hasNotEditPermission"
+            label="Engine Number"
+            :tooltip="`Vehicle engine number`"
+          />
 
           <!-- RTA Plate Category -->
-          <x-field
-            label="RTA Plate Category"
+          <x-select
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.rta_plate_category"
+            :rules="getFieldRules('rta_plate_category')"
             :required="isFieldRequired('rta_plate_category')"
-          >
-            <x-select
-              filterable
-              v-model="additionalVehicleTransactionDetailsForm.rta_plate_category"
-              :rules="getFieldRules('rta_plate_category')"
-              :options="rtaPlateCategoryOptions"
-              placeholder="Select RTA Plate Category"
-              :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission"
-            />
-          </x-field>
+            :options="rtaPlateCategoryOptions"
+            placeholder="Select RTA Plate Category"
+            :disabled="isFieldDisabled('rta_plate_category') || hasNotEditPermission"
+            label="RTA Plate Category"
+            :tooltip="`Vehicle plate type as defined by the traffic department (e.g., private, commercial)`"
+          />
 
           <!-- Vehicle Color -->
-          <x-field label="Vehicle Color" required>
-            <x-select
-              filterable
-              v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
-              :options="vehicleColorOptions"
-              :rules="[isRequired]"
-              placeholder="Select Vehicle Color"
-              :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission"
-              class="w-full"
-            />
-          </x-field>
+          <x-select
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
+            :options="vehicleColorOptions"
+            :rules="[isRequired]"
+            required
+            placeholder="Select Vehicle Color"
+            :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission"
+            class="w-full"
+            label="Vehicle Color"
+            :tooltip="`Vehicle color as per the official documentation`"
+          />
 
-          <x-field label="Plate Color" :required="isFieldRequired('plate_color')">
-            <x-select
-              filterable
-              v-model="additionalVehicleTransactionDetailsForm.plate_color"
-              :options="plateColorOptions"
-              :rules="getFieldRules('plate_color')"
-              placeholder="Select Plate Color"
-              :disabled="isFieldDisabled('plate_color') || hasNotEditPermission"
-              class="w-full"
-            />
-          </x-field>
+          <x-select
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.plate_color"
+            :options="plateColorOptions"
+            :rules="getFieldRules('plate_color')"
+            :required="isFieldRequired('plate_color')"
+            placeholder="Select Plate Color"
+            :disabled="isFieldDisabled('plate_color') || hasNotEditPermission"
+            class="w-full"
+            label="Plate Color"
+            :tooltip="`Plate color as per the official documentation`"
+          />
 
           <!-- Bank Loan -->
-          <x-field label="Bank Loan?" required>
-            <x-select
-              v-model="additionalVehicleTransactionDetailsForm.bank_loan"
-              :rules="getFieldRules('bank_loan')"
-              :options="[
-                { value: '1', label: 'Yes' },
-                { value: '0', label: 'No' }
-              ]"
-              placeholder="Select Bank Loan"
-              :disabled="isFieldDisabled('bank_loan') || hasNotEditPermission"
-            />
-          </x-field>
+          <x-select
+            v-model="additionalVehicleTransactionDetailsForm.bank_loan"
+            :rules="getFieldRules('bank_loan')"
+            required
+            :options="[{ value: '1', label: 'Yes' }, { value: '0', label: 'No' }]"
+            placeholder="Select Bank Loan"
+            :disabled="isFieldDisabled('bank_loan') || hasNotEditPermission"
+            label="Bank Loan"
+            :tooltip="`Indicates vehicle is under bank finance or loan agreement`"
+          />
 
           <!-- Bank Name -->
-          <div v-if="isGIG">
-            <x-field
-              label="Bank Name"
-              :required="isFieldRequired('bank_name')"
-            >
-              <ComboBox
-                :single="true"
-                v-model="additionalVehicleTransactionDetailsForm.bank_name"
-                placeholder="Select Bank Name"
-                :options="bankNameOptions"
-                :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || isFieldDisabled('bank_name') || hasNotEditPermission"
-                :rules="getFieldRules('bank_name')"
-                class="w-full"
-              />
-            </x-field>
-          </div>
-          <div v-else>
-            <x-field label="Bank Name" :required="additionalVehicleTransactionDetailsForm.bank_loan === '1'">
-              <x-select
-                filterable
-                v-model="additionalVehicleTransactionDetailsForm.bank_name"
-                placeholder="Select Bank Name"
-                :options="bankNameOptions"
-                :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || hasNotEditPermission"
-                :rules="(additionalVehicleTransactionDetailsForm.bank_loan === '1') ? [isRequired] : []"
-                class="w-full"
-              />
-            </x-field>
-          </div>
+          <x-select
+            v-if="isGIG"
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.bank_name"
+            placeholder="Select Bank Name"
+            :options="bankNameOptions"
+            :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || isFieldDisabled('bank_name') || hasNotEditPermission"
+            :rules="getFieldRules('bank_name')"
+            :required="isFieldRequired('bank_name')"
+            class="w-full"
+            label="Bank Name"
+            :tooltip="`Name of the bank that issued the vehicle loan`"
+          />
+          <x-select
+            v-else
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.bank_name"
+            placeholder="Select Bank Name"
+            :options="bankNameOptions"
+            :disabled="additionalVehicleTransactionDetailsForm.bank_loan !== '1' || hasNotEditPermission"
+            :rules="(additionalVehicleTransactionDetailsForm.bank_loan === '1') ? [isRequired] : []"
+            :required="additionalVehicleTransactionDetailsForm.bank_loan === '1'"
+            class="w-full"
+            label="Bank Name"
+            :tooltip="`Name of the bank that issued the vehicle loan`"
+          />
 
           <!-- First Registration Date -->
-          <x-field
-            label="First Registration Date"
+          <DatePicker
+            v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
+            :rules="getFieldRules('first_registration_date')"
             :required="isFieldRequired('first_registration_date')"
-          >
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.first_registration_date"
-              :rules="getFieldRules('first_registration_date')"
-              placeholder="First Registration Date"
-              :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission"
-            />
-          </x-field>
+            placeholder="First Registration Date"
+            :disabled="isFieldDisabled('first_registration_date') || hasNotEditPermission"
+            label="First Registration Date"
+            :tooltip="`Date the vehicle was first registered with the traffic department`"
+          />
 
           <!-- Policy Effective Date -->
-          <x-field
-            label="Policy Effective Date"
+          <DatePicker
+            v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
+            :rules="getFieldRules('policy_effective_date')"
             :required="isFieldRequired('policy_effective_date')"
-          >
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
-              :rules="getFieldRules('policy_effective_date')"
-              placeholder="Policy Effective Date"
-              :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission"
-              :readonly="fieldConfig.policy_effective_date?.readonly"
-            />
-          </x-field>
+            placeholder="Policy Effective Date"
+            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission"
+            :readonly="fieldConfig.policy_effective_date?.readonly"
+            label="Policy Effective Date"
+            :tooltip="`Start date of the insurance policy coverage`"
+          />
 
           <!-- Policy Expiry Date -->
-          <x-field
-            label="Policy Expiry Date"
+          <DatePicker
+            v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
+            :rules="getFieldRules('policy_expiry_date')"
             :required="isFieldRequired('policy_expiry_date')"
-          >
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.policy_expiry_date"
-              :rules="getFieldRules('policy_expiry_date')"
-              placeholder="Policy Expiry Date"
-              :disabled="isFieldDisabled('policy_expiry_date') || hasNotEditPermission"
-              :readonly="fieldConfig.policy_expiry_date?.readonly"
-            />
-          </x-field>
+            placeholder="Policy Expiry Date"
+            :disabled="isFieldDisabled('policy_expiry_date') || hasNotEditPermission"
+            :readonly="fieldConfig.policy_expiry_date?.readonly"
+            label="Policy Expiry Date"
+            :tooltip="`Expiry date of the insurance policy coverage`"
+          />
 
           <!-- Certificate Start Date -->
-          <x-field
-            label="Certificate Start Date"
+          <DatePicker
+            v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
+            :rules="getFieldRules('certificate_start_date')"
             :required="isFieldRequired('certificate_start_date')"
-          >
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
-              :rules="getFieldRules('certificate_start_date')"
-              placeholder="Certificate Start Date"
-              :disabled="isFieldDisabled('certificate_start_date') || hasNotEditPermission"
-              :readonly="fieldConfig.certificate_start_date?.readonly"
-            />
-          </x-field>
+            placeholder="Certificate Start Date"
+            :disabled="isFieldDisabled('certificate_start_date') || hasNotEditPermission"
+            :readonly="fieldConfig.certificate_start_date?.readonly"
+            label="Certificate Start Date"
+            :tooltip="`Start date for the insurance certificate validity period`"
+          />
 
           <!-- Certificate End Date -->
-          <x-field
-            label="Certificate End Date"
+          <DatePicker
+            v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
+            :rules="getFieldRules('certificate_end_date')"
             :required="isFieldRequired('certificate_end_date')"
-          >
-            <DatePicker
-              v-model="additionalVehicleTransactionDetailsForm.certificate_end_date"
-              :rules="getFieldRules('certificate_end_date')"
-              placeholder="Certificate End Date"
-              :disabled="isFieldDisabled('certificate_end_date') || hasNotEditPermission"
-              :readonly="fieldConfig.certificate_end_date?.readonly"
-            />
-          </x-field>
+            placeholder="Certificate End Date"
+            :disabled="isFieldDisabled('certificate_end_date') || hasNotEditPermission"
+            :readonly="fieldConfig.certificate_end_date?.readonly"
+            label="Certificate End Date"
+            :tooltip="`End date for the insurance certificate validity period`"
+          />
 
           <!-- Annual Mileage Estimate -->
-          <x-field
-            label="Annual Mileage Estimate"
+          <x-input
+            v-if="isGIG"
+            v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
+            :rules="getFieldRules('annual_mileage_estimate')"
             :required="isFieldRequired('annual_mileage_estimate')"
-          >
-            <x-input
-              v-if="isGIG"
-              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
-              :rules="getFieldRules('annual_mileage_estimate')"
-              placeholder="Select Annual Mileage Estimate"
-              type="text"
-              :disabled="isFieldDisabled('annual_mileage_estimate') || hasNotEditPermission"
-            />
-            <x-select
-              v-else
-              filterable
-              v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
-              :rules="getFieldRules('annual_mileage_estimate')"
-              :options="annualMileageEstimateOptions"
-              placeholder="Select Annual Mileage Estimate"
-              :disabled="isFieldDisabled('annual_mileage_estimate') || hasNotEditPermission"
-            />
-          </x-field>
+            placeholder="Select Annual Mileage Estimate"
+            type="text"
+            :disabled="isFieldDisabled('annual_mileage_estimate') || hasNotEditPermission"
+            label="Annual Mileage Estimate"
+            :tooltip="`Estimated annual mileage driven by the vehicle`"
+          />
+          <x-select
+            v-else
+            filterable
+            v-model="additionalVehicleTransactionDetailsForm.annual_mileage_estimate"
+            :rules="getFieldRules('annual_mileage_estimate')"
+            :required="isFieldRequired('annual_mileage_estimate')"
+            :options="annualMileageEstimateOptions"
+            placeholder="Select Annual Mileage Estimate"
+            :disabled="isFieldDisabled('annual_mileage_estimate') || hasNotEditPermission"
+            label="Annual Mileage Estimate"
+            :tooltip="`Estimated annual mileage of the vehicle`"
+          />
         </dl>
         <div
           class="flex justify-end my-5 gap-x-2"
