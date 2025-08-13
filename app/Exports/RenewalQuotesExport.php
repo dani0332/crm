@@ -38,6 +38,7 @@ class RenewalQuotesExport
     public function map($quote): array
     {
         $payment = $quote->payments->first();
+
         return [
             $quote->code,
             $quote->first_name.' '.$quote->last_name,
