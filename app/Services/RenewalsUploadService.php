@@ -823,6 +823,9 @@ class RenewalsUploadService
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
 
             $transApprovedId = $this->isFakeEmail($customerData['email']) ? $this->getquoteStatusIdbyCode(quoteStatusCode::FAKE) : $transApprovedId;
+
+            LoggerService::info('fn: createQuote transApprovedId: '.$transApprovedId);
+
             $quoteData = [
                 'customer_id' => $customer->id,
                 'first_name' => $customerData['first_name'],
@@ -1767,7 +1770,7 @@ class RenewalsUploadService
 
     public function getquoteStatusIdbyCode($quoteStatus)
     {
-        return QuoteStatus::where('code', '=', $quoteStatus)->where('is_active', 1)->value('id');
+        return QuoteStatus::where('code', '=', $quoteStatus)->where('is_active', true)->value('id');
     }
 
     public function generateRandomString()
