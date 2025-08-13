@@ -85,7 +85,7 @@ class PolicyIssuanceService
 
         /* Get Unique Insurer per lob to get the statuses for which automation is enabled */
         $uniqueInsurerListByLob = PolicyIssuance::with(['insuranceProvider:id,code,text'])
-            ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS])
+            ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS])
             ->select(['quote_type', 'insurance_provider_id'])
             ->distinct()->get();
 
@@ -112,6 +112,7 @@ class PolicyIssuanceService
             $insuranceProvider = $policyIssuanceProcess?->insuranceProvider;
             if ($this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationEnabled()) {
                 $statuses[] = PolicyIssuanceEnum::PENDING_STATUS;
+                $statuses[] = PolicyIssuanceEnum::BOOKING_PENDING_STATUS;
             }
             if ($this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationRetryEnabledForTimeout()) {
                 $statuses[] = PolicyIssuanceEnum::TIMEOUT_STATUS;

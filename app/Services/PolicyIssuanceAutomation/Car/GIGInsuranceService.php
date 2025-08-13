@@ -759,15 +759,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
                     $process->update([
                         'completed_step' => self::EXECUTE_OCR_PROCESSING,
+                        'status' => PolicyIssuanceEnum::BOOKING_PENDING_STATUS,
                         'updated_at' => now(),
                     ]);
 
-                    LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Completed Step: '.$process->completed_step);
-
                     $process = $process->refresh();
-                    $quote = $quote->refresh();
-
-                    $this->executeStepSequence($quote, $process, self::BOOK_POLICY);
+                    (new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps();
                 })
                 ->catch(function (Batch $batch, Throwable $e) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing failed completely: '.$e->getMessage());
@@ -953,6 +950,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $response['status'] = false;
             $response['error'] = $updateCommission['error'];
             $response['message'] = $updateCommission['message'];
+
+            // return $response;
         }
 
         $payment = $quote->payments()->mainLeadPayment()->first();
@@ -1271,6 +1270,14 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             'message' => 'All steps are locked',
             'insurer_api_status' => $quote->insurer_api_status,
         ];
+
+        if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All Steps are editable';
+
+            return $response;
+        }
 
         if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
             if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {

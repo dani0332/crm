@@ -51,7 +51,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
         if ($this->isProcessable($this->process)) {
 
-            $this->process->update(['status' => PolicyIssuanceEnum::PROCESSING_STATUS]);
+            $processingStatus = $this->process->status === PolicyIssuanceEnum::PENDING_STATUS ? PolicyIssuanceEnum::PROCESSING_STATUS : PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS;
+            $this->process->update(['status' => $processingStatus]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
 
             $quoteType = $this->process?->quote_type;
@@ -109,7 +110,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     private function isProcessable($process)
     {
-        return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
+        return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::BOOKING_PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
     }
 
 }
