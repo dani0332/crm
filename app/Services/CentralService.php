@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
@@ -1510,6 +1511,7 @@ class CentralService extends BaseService
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
             }, $quote->members->toArray()));
+            $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
