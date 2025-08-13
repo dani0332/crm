@@ -248,7 +248,7 @@ const generatePdf = () => {
       }
 
       notification.success({
-        title: 'Pdf generated successfully, it will be uploaded  in the Documents section shortly.',
+        title: 'Pdf generated successfully, it will be uploaded in the Documents section shortly.',
         position: 'top',
       });
 
