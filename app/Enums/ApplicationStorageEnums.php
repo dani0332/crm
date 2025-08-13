@@ -243,4 +243,5 @@ final class ApplicationStorageEnums extends Enum
     /* Cut Off Dates */
     public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
     public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
+    public const BIRD_AI_ADVISOR_OCB = 'BIRD_AI_ADVISOR_OCB';
 }

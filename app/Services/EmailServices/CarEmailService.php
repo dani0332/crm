@@ -16,6 +16,7 @@ use App\Jobs\CompanyCarFollowupJob;
 use App\Jobs\CompanyCarOCBJob;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\NBMotorFollowupEmailJob;
+use App\Jobs\SendAIAdvisorOCBJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -110,12 +111,18 @@ class CarEmailService extends BaseService
                 return $responseCode;
             }
             if ($lead->advisor_id) {
-                $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+                if ($lead->isAIAdvisorAssigned()) {
+                    // Send AI Advisor Email
+                    SendAIAdvisorOCBJob::dispatch(QuoteTypes::CAR, $lead->uuid)->delay(Carbon::now()->addMinute());
+                } else {
+                    $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
 
-                $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
-                $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
-                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
-                info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+                    $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
+                    $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
+                    NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
+                    info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
+
+                }
             } else {
                 info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
                 $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
@@ -766,4 +773,47 @@ class CarEmailService extends BaseService
         }
     }
 
+    public function sendCarAIAdvisorOCB($lead)
+    {
+        try {
+            LoggerService::info(self::class.' - Sending Car AI Advisor OCB email');
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildCarAIAdvisorOCBData($lead, $advisor);
+
+            $AIWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_AI_ADVISOR_OCB, useCache: true);
+            if ($AIWorkflow) {
+                $response = app(BirdService::class)->triggerWebHookRequest($AIWorkflow, $emailData);
+                LoggerService::info(self::class.' - sendCarAIAdvisorOCB - Event triggered ', ['response_status_code' => $response->status_code, 'lead_status_id' => $lead->quote_status_id]);
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                }
+            }
+
+            return $response ?? null;
+        } catch (\Exception  $exception) {
+            LoggerService::error(self::class.' - sendCarAIAdvisorOCB - Error while sending quote workflow for lead ', exception: $exception);
+        }
+    }
+
+    private function buildCarAIAdvisorOCBData($lead, $advisor)
+    {
+        return (object) [
+            'CarMake' => $lead->carMake?->text,
+            'CarModel' => $lead->carModel?->text,
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'advisorMobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorProfilePhotoPath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
+            'advisorWhatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'createdAt' => $lead->created_at,
+            'customerEmail' => $lead->email,
+            'customerFullName' => "{$lead->first_name} {$lead->last_name}",
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'quoteUID' => $lead->uuid,
+            'refID' => $lead->code,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+        ];
+    }
 }
