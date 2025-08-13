@@ -44,7 +44,8 @@ const isPlanSelectionDisable = computed(() => {
   const isALNCProvider = props.plan?.providerCode == insuranceProviderCodeEnum.ALNC;
 
   if (quoteType == 'travel' && isSourceIMCRM && isNormalPlan && isALNCProvider) {
-    return page.props.travelers.filter(traveler => 
+    const travelers = page.props.travelers ?? [];
+    return travelers.filter(traveler => 
       (!traveler.first_name) || (!traveler.last_name) || (!traveler.passport)
     ).length > 0;
   }
