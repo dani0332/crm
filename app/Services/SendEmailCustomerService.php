@@ -1696,9 +1696,8 @@ class SendEmailCustomerService extends BaseService
 
     public function sendSupportUserAssignmentEmail($emailData)
     {
-
         // Convert leads array to HTML list
-        $leads = collect($emailData->get('params')['leads']) ?? [];
+        $leads = collect($emailData->get('params')['leads'] ?? []);
         $quotesHtml = '';
 
         if ($leads->isNotEmpty()) {
@@ -1710,8 +1709,6 @@ class SendEmailCustomerService extends BaseService
             })->pipe(function ($items) {
                 return '<ul>'.$items->implode('').'</ul>';
             });
-        } else {
-            $quotesHtml = '';
         }
 
         $birdEmailData = (object) [
@@ -1724,10 +1721,12 @@ class SendEmailCustomerService extends BaseService
         ];
 
         $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
-        info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$oeAssignmentEvent->value);
-
+        
         if ($oeAssignmentEvent) {
+            info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$oeAssignmentEvent->value);
             $response = app(BirdService::class)->triggerWebHookRequest($oeAssignmentEvent->value, $birdEmailData);
+        } else {
+            LoggerService::error('Support User (OE) Assignment: BIRD_OE_ASSIGNMENT_WORKFLOW not found in ApplicationStorage. Bird request has not been triggered.');
         }
     }
 }
