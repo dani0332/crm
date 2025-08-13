@@ -84,36 +84,75 @@ const rules = {
   },
 };
 
+const plateCodeOptions = computed(() => {
+  return useGenerateOptions(lookups?.plate_code ?? [], 'code', 'text');
+});
+
+const carDetail = computed(() => {
+  return page.props.quoteRequest?.car_quote_request_detail;
+});
+
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   additional_vehicle_transaction_details: true,
-  rta_transaction_type: page.props.quoteRequest?.car_quote_request_detail?.rta_transaction_type?.toString() ?? '',
-  plate_code: page.props.quoteRequest?.car_quote_request_detail?.plate_code ?? '',
-  plate_number: page.props.quoteRequest?.car_quote_request_detail?.plate_number ?? '',
-  traffic_code_number: page.props.quoteRequest?.car_quote_request_detail?.traffic_code_number ?? '',
-  chassis_number: page.props.quoteRequest?.car_quote_request_detail?.chassis_number ?? '',
-  engine_number: page.props.quoteRequest?.car_quote_request_detail?.engine_number ?? '',
-  rta_plate_category: page.props.quoteRequest?.car_quote_request_detail?.rta_plate_category ?? '',
-  vehicle_color: page.props.quoteRequest?.car_quote_request_detail?.vehicle_color ?? '',
-  plate_color: page.props.quoteRequest?.car_quote_request_detail?.plate_color ?? '',
-  bank_loan: page.props.quoteRequest?.car_quote_request_detail?.bank_loan?.toString() ?? '',
-  bank_name: page.props.quoteRequest?.car_quote_request_detail?.bank_name ?? '',
-  first_registration_date: page.props.quoteRequest?.car_quote_request_detail?.first_registration_date ?? '',
-  policy_effective_date: page.props.quoteRequest?.car_quote_request_detail?.policy_effective_date ?? '',
-  policy_expiry_date: page.props.quoteRequest?.car_quote_request_detail?.policy_expiry_date ?? '',
-  certificate_start_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_start_date ?? '',
-  certificate_end_date: page.props.quoteRequest?.car_quote_request_detail?.certificate_end_date ?? '',
-  annual_mileage_estimate: page.props.quoteRequest?.car_quote_request_detail?.annual_mileage_estimate?.toString() ?? '',
+  rta_transaction_type: carDetail.value?.rta_transaction_type?.toString() ?? '',
+  plate_code: carDetail.value?.plate_code ?? '',
+  plate_number: carDetail.value?.plate_number ?? '',
+  traffic_code_number: carDetail.value?.traffic_code_number ?? '',
+  chassis_number: carDetail.value?.chassis_number ?? '',
+  engine_number: carDetail.value?.engine_number ?? '',
+  rta_plate_category: carDetail.value?.rta_plate_category ?? '',
+  vehicle_color: carDetail.value?.vehicle_color ?? '',
+  plate_color: carDetail.value?.plate_color ?? '',
+  bank_loan: carDetail.value?.bank_loan?.toString() ?? '',
+  bank_name: carDetail.value?.bank_name ?? '',
+  first_registration_date: carDetail.value?.first_registration_date ?? '',
+  policy_effective_date: carDetail.value?.policy_effective_date ?? '',
+  policy_expiry_date: carDetail.value?.policy_expiry_date ?? '',
+  certificate_start_date: carDetail.value?.certificate_start_date ?? '',
+  certificate_end_date: carDetail.value?.certificate_end_date ?? '',
+  annual_mileage_estimate: carDetail.value?.annual_mileage_estimate?.toString() ?? '',
   previous_policy_provider: '', // For GIG renewal detection
 });
 
 const hasNotEditPermission = computed(() => {
-  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS);
+  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
 });
 
-// Computed properties for insurance provider checks
+watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
+  if (vehicleTransactionDetails) {
+    const fieldMappings = {
+      vehicleTransactionDetails: {
+        rta_transaction_type: 'rta_transaction_type',
+        plate_code: 'plate_code',
+        plate_number: 'plate_number',
+        traffic_code_number: 'traffic_code_number',
+        chassis_number: 'chassis_number',
+        engine_number: 'engine_number',
+        rta_plate_category: 'rta_plate_category',
+        vehicle_color: 'vehicle_color',
+        plate_color: 'plate_color',
+        bank_loan: 'bank_loan',
+        bank_name: 'bank_name',
+        first_registration_date: 'first_registration_date',
+        policy_effective_date: 'policy_effective_date',
+        policy_expiry_date: 'policy_expiry_date',
+        certificate_start_date: 'certificate_start_date',
+        certificate_end_date: 'certificate_end_date',
+        annual_mileage_estimate: 'annual_mileage_estimate',
+      },
+    };
+
+    Object.entries(fieldMappings.vehicleTransactionDetails).forEach(([sourceKey, targetKey]) => {
+      if (vehicleTransactionDetails?.[sourceKey]) {
+        additionalVehicleTransactionDetailsForm[targetKey] = vehicleTransactionDetails[sourceKey];
+      }
+    });
+  }
+}, { deep: true });
+
 const isGIG = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.AXA;
 });
@@ -454,6 +493,38 @@ onMounted(() => {
     loadFieldConfigurationFromProps();
   }
 });
+// for new business only.
+watch(
+  () => additionalVehicleTransactionDetailsForm.policy_effective_date,
+  (newVal) => {
+  if (isLIVA.value && newVal) {
+    // Add 13 months to policy_effective_date for policy_expiry_date
+    const effectiveDate = new Date(newVal);
+    const expiryDate = new Date(effectiveDate);
+    expiryDate.setMonth(expiryDate.getMonth() + 13);
+
+    // Format date as YYYY-MM-DD for the form
+    const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
+    additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
+    additionalVehicleTransactionDetailsForm.certificate_end_date = formattedExpiryDate;
+    additionalVehicleTransactionDetailsForm.certificate_start_date = newVal;
+  }
+});
+
+const registrationNoValidation = ref(false);
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.rta_transaction_type,
+  (newVal) => {
+    if (isLIVA.value && newVal) {
+      if (newVal == '10') {
+        registrationNoValidation.value = false
+      } else {
+        registrationNoValidation.value = true;
+      }
+    }
+  }
+);
 </script>
 
 <template>
@@ -599,7 +670,6 @@ onMounted(() => {
             :tooltip="`Vehicle color as per the official documentation`"
           />
 
-          <!-- Plate Color -->
           <x-select
             filterable
             v-model="additionalVehicleTransactionDetailsForm.plate_color"
@@ -737,7 +807,6 @@ onMounted(() => {
             :tooltip="`Estimated annual mileage of the vehicle`"
           />
         </dl>
-
         <div
           class="flex justify-end my-5 gap-x-2"
           v-if="hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)"

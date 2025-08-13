@@ -260,6 +260,7 @@ class AMLController extends Controller
                 LookupsEnum::VEHICLE_COLOR,
                 LookupsEnum::BANK_NAME,
                 LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
+                LookupsEnum::PLATE_CODE,
             ]);
 
             $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());

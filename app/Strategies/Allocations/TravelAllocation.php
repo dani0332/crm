@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
+use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
@@ -39,6 +40,7 @@ class TravelAllocation implements Allocation
                 VerifyAlreadyInProgressAllocationPipe::class,
                 EvaluateTeamPipe::class,
                 ValidateNationalityConfigPipe::class,
+                ApplyRuleExclusionPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 ResetNationalityConfigPipe::class,
                 FetchAvailableAdvisorPipe::class,

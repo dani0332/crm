@@ -40,6 +40,9 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['vehicle_color'] = 'required';
             $rules['bank_loan'] = 'required';
             $rules['first_registration_date'] = 'required|date';
+            if ($this->insurance_provider_code === InsuranceProvidersEnum::RSA) {
+                $rules['policy_effective_date'] = 'required|after_or_equal:today';
+            }
         } else {
             $rules['is_insured_and_driver_same'] = 'required|integer';
             $rules['driver_first_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
@@ -53,7 +56,10 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
-        $rules = array_merge($rules, $this->getRtaSpecificRules());
+
+        if ($this->insurance_provider_code === InsuranceProvidersEnum::AXA) {
+            $rules = array_merge($rules, $this->getRtaSpecificRules());
+        }
 
         return $rules;
     }
