@@ -133,9 +133,9 @@ const tableHeader2 = [
   { text: 'Ref ID', value: 'code' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
-  { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
+  { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
+  { text: 'PREVIOUS GROSS PREMIUM', value: 'previous_quote_policy_premium' },
 ];
 
 const businessHeaders = [
