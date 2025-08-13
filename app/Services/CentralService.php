@@ -474,7 +474,7 @@ class CentralService extends BaseService
 
     public function validateIsPlanSelectable($quoteType, $data): array
     {
-        return match(ucfirst($quoteType)) {
+        return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => $this->validateIsTravelPlanSelectable($quoteType, $data),
             default => [],
         };
@@ -482,7 +482,7 @@ class CentralService extends BaseService
 
     public function validateIsTravelPlanSelectable($quoteType, $data): array
     {
-        if($data['quoteSource'] == LeadSourceEnum::IMCRM && $data['planType'] == 'normalPlans' 
+        if ($data['quoteSource'] == LeadSourceEnum::IMCRM && $data['planType'] == 'normalPlans'
             && $data['provider_code'] == InsuranceProvidersEnum::ALNC
         ) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
@@ -499,18 +499,19 @@ class CentralService extends BaseService
 
             return $errorsMessages;
         }
+
         return [];
     }
 
-    function validateCustomerMembersInfo(array $members): array
+    public function validateCustomerMembersInfo(array $members): array
     {
         $validator = Validator::make(
             ['members' => $members],
             [
-                'members'                 => 'required|array|min:1',
-                'members.*.first_name'    => 'required',
-                'members.*.last_name'     => 'required',
-                'members.*.passport'      => 'required',
+                'members' => 'required|array|min:1',
+                'members.*.first_name' => 'required',
+                'members.*.last_name' => 'required',
+                'members.*.passport' => 'required',
             ]
         );
 
