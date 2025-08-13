@@ -16,10 +16,6 @@ const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSyncFromInsurer = ref(false);
 
-const hasPermission = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
-const isSyncFromInsurer = ref(false);
-
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
   { value: 'male', label: 'Male' },
