@@ -21,6 +21,9 @@ const props = defineProps({
 const page = usePage();
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const leadSourceEnum = page.props.leadSource;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const quote = page.props.quote;
+
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 const isPlanSelectionEnable = ref(false);
@@ -36,9 +39,9 @@ const emit = defineEmits(['update:selectedPlanChanged']);
 
 const isPlanSelectionDisable = computed(() => {
   const quoteType = props.quoteType?.toLowerCase();
-  const isSourceIMCRM = props.extraDetails?.quoteSource == leadSourceEnum.IMCRM;
+  const isSourceIMCRM = quote?.source == leadSourceEnum.IMCRM;
   const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
-  const isALNCProvider = props.plan?.providerCode == 'ALNC';
+  const isALNCProvider = props.plan?.providerCode == insuranceProviderCodeEnum.ALNC;
 
   if (quoteType == 'travel' && isSourceIMCRM && isNormalPlan && isALNCProvider) {
     return page.props.travelers.filter(traveler => 
@@ -237,8 +240,8 @@ const updateSelectedPlan = () => {
 
   if (props.quoteType.toLocaleLowerCase() == 'travel') {
     data.planType = props.extraDetails?.planType;
-    data.quoteSource = props.extraDetails?.quoteSource;
-    data.quoteId = props.extraDetails?.quoteId;
+    data.quoteSource = quote?.source;
+    data.quoteId = quote?.id;
 
     if (props.extraDetails?.selectedPlansIds.length > 0) {
       for (let i = 0; i < props.extraDetails?.selectedPlansIds.length; i++) {

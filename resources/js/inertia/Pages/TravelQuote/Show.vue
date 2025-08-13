@@ -3359,8 +3359,6 @@ const fullAddress = computed(() => {
                         seniorPlansIds: seniorPlansIds.ids,
                         selectedPlansIds: selectedPlanIds,
                         planType: 'normalPlans',
-                        quoteId: quote.id,
-                        quoteSource: quote.source,
                       }"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
@@ -3465,8 +3463,6 @@ const fullAddress = computed(() => {
                           seniorPlansIds: seniorPlansIds.ids,
                           selectedPlansIds: selectedPlanIds,
                           planType: 'seniorPlans',
-                          quoteId: quote.id,
-                          quoteSource: quote.source,
                         }"
                         :insuranceProviderId="item.id"
                         :code="quote.code"
