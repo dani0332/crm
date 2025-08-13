@@ -26,6 +26,7 @@ const tableHeader = [
   { text: 'ID', value: 'id' },
   { text: 'Rule Name', value: 'name' },
   { text: 'Rule Type', value: 'rule_type.name' },
+  { text: 'Quote Type', value: 'quote_type.name' },
   { text: 'Lead Source', value: 'lead_source.name' },
   { text: 'Rule Users', value: 'rule_users' },
   { text: 'Is Active', value: 'is_active' },
