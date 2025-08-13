@@ -27,6 +27,7 @@ enum OCRDocumentTypeEnum: string
             'CPS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE,
             'CEID' => self::ID_CARD,
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
+            'EID_CAR' => self::ID_CARD,
             default => null,
         };
     }
