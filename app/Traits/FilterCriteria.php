@@ -22,9 +22,9 @@ trait FilterCriteria
 
         if (count($filters) && isset($this->filterables) && count($this->filterables)) {
             foreach ($this->filterables as $key => $operator) {
-                if ($this->hasFilterValue($key, $filters) || $operator == FilterTypes::DATE_BETWEEN) {                 
+                if ($this->hasFilterValue($key, $filters) || $operator == FilterTypes::DATE_BETWEEN) {
                     $value = $this->getFilterValue($key, $filters);
-                  
+
                     switch ($operator) {
                         case FilterTypes::EXACT:
                             if ($key == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER_TEXT) {
@@ -76,8 +76,7 @@ trait FilterCriteria
                                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                                 $query->whereBetween('updated_at', [$dateFrom, $dateTo]);
-                            }
-                            elseif($this->hasFilterValue('previous_policy_expiry_date_start', $filters) && $this->hasFilterValue('previous_policy_expiry_date_end', $filters)) {
+                            } elseif ($this->hasFilterValue('previous_policy_expiry_date_start', $filters) && $this->hasFilterValue('previous_policy_expiry_date_end', $filters)) {
                                 $startDate = Carbon::parse($this->getFilterValue('previous_policy_expiry_date_start', $filters))->format('Y-m-d');
                                 $endDate = Carbon::parse($this->getFilterValue('previous_policy_expiry_date_end', $filters))->format('Y-m-d');
                                 $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
