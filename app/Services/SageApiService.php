@@ -3486,7 +3486,6 @@ class SageApiService
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
         LoggerService::info('SAGE API : '.$quote->code.' : postSplitApplyPaymentAPInvoice completed successfully');
-        // TODO:: This undefined variable need to defined properly
         if ($isLiveApiCallStep18) {
             $this->logSageApiCall($aPPostReceipts, $postedResponse, $quote, $quote, $currentStep, $totalSteps);
         }

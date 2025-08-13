@@ -70,7 +70,7 @@ final class SageEnum extends Enum
     // AR Commission Pre Payments Receipts
     const CREATE_AR_COM_PP_REC = 'CREATE_AR_COM_PP_REC';
     const RTP_AR_COM_PP_REC = 'RTP_AR_COM_PP_REC';
-    const POST_AR_COM_PP_REC = 'POST_COM_PP_REC';
+    const POST_AR_COM_PP_REC = 'POST_AR_COM_PP_REC';
 
     // AR Invoices - Upfront
     const EP_SRT_CREATE_AR_PREM_COMM_INV = 'EP_SRT_CREATE_AR_PREM_COMM_INV';
