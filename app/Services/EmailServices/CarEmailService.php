@@ -796,11 +796,13 @@ class CarEmailService extends BaseService
         }
     }
 
-    private function buildCarAIAdvisorOCBData($lead, $advisor)
+    private function buildCarAIAdvisorOCBData($lead, User $advisor)
     {
         return (object) [
             'CarMake' => $lead->carMake?->text,
             'CarModel' => $lead->carModel?->text,
+            'advisorId' => $advisor->id,
+            'advisorDetails' => $advisor,
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'advisorMobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
@@ -810,10 +812,11 @@ class CarEmailService extends BaseService
             'createdAt' => $lead->created_at,
             'customerEmail' => $lead->email,
             'customerFullName' => "{$lead->first_name} {$lead->last_name}",
-            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'customerMobile' => ! empty($lead->mobile_no) ? formatMobileNo($lead->mobile_no) : '', (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'quoteUID' => $lead->uuid,
             'refID' => $lead->code,
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+            'isAIAdvisor' => $advisor->isAi(),
         ];
     }
 }
