@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
@@ -338,6 +339,10 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
+        // Check if this is an Abu Dhabi health quote lead
+        $bookPolicyDetails['isHealthAUHLead'] = strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
+                                            isset($record->emirate_of_your_visa_id) &&
+                                            $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
 
         return $bookPolicyDetails;
     }
