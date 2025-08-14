@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -255,7 +256,12 @@ class BusinessQuoteService extends BaseService
             'referenceUrl' => $appUrl,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
+
+            if (Auth::user()->hasRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
+                $dataArr['supportUserId'] = Auth::user()->id;
+            } else {
+                $dataArr['advisorId'] = Auth::user()->id;
+            }
         }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
