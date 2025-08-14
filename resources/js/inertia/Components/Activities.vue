@@ -191,16 +191,14 @@ const activityEdit = data => {
         >
           <template #item-due_date="item">
             <template
-              v-if="compareDueDate(item.due_date) && item.is_cold === 0"
+              v-if="
+                compareDueDate(item.due_date) &&
+                item.is_cold === 1 &&
+                item.status === 0
+              "
             >
               <x-tooltip placement="top">
-                <p
-                  :class="
-                    compareDueDate(item.due_date) && item.is_cold === 0
-                      ? 'bg-error-300 rounded p-1'
-                      : ''
-                  "
-                >
+                <p class="bg-error-300 rounded p-1">
                   {{ item.due_date }}
                 </p>
                 <template #tooltip>
