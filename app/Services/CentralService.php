@@ -54,12 +54,9 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
-use App\Repositories\QuoteStatusRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\SavingsQuoteService;
-use App\Services\QuoteDocumentService;
-use App\Services\QuoteJourneyService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
@@ -157,12 +154,14 @@ class CentralService extends BaseService
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $lob = quoteTypeCode::Business;
                     $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
-
+                    $dataArr['companyName'] = $parentRecord->company_name ?? '';
+                    $dataArr['numberOfEmployees'] = $parentRecord->number_of_employees ?? '';
+                    $dataArr['healthPlanTypeId'] = $parentRecord->health_plan_type_id ?? '';
                     if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
                         $dataArr['businessTypeOfInsuranceId'] = QuoteTypeId::Business;
                     }
+                    $lob = quoteTypeCode::Business;
                 }
 
                 if (in_array($lob, [
@@ -1170,15 +1169,16 @@ class CentralService extends BaseService
         // Check if quote status is locked - if so, don't change status due to document uploads
         if ($this->isQuoteStatusLocked($quote)) {
             LoggerService::info("Quote Code: {$quoteCode} - Status is LOCKED {$currentQuoteStatus}, preventing document uploads from changing status");
+
             return;
         }
-        
+
         $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-        LoggerService::info("Quote Code: {$quoteCode} - Policy details filled: " . ($isPolicyDetailsFilled ? 'YES' : 'NO'));
-        
+        LoggerService::info("Quote Code: {$quoteCode} - Policy details filled: ".($isPolicyDetailsFilled ? 'YES' : 'NO'));
+
         if ($isPolicyDetailsFilled) {
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
-            
+
             if ($this->canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId)) {
                 $previousQuoteStatus = $quote->quote_status_id;
                 $updateData = [
@@ -1188,7 +1188,7 @@ class CentralService extends BaseService
                 ];
 
                 $quote->update($updateData);
-                
+
                 LoggerService::info("Quote Code: {$quoteCode} - Status updated: {$previousQuoteStatus} → {$quote->quote_status_id}");
 
                 // Create status log and trigger journey if status actually changed
@@ -1223,7 +1223,7 @@ class CentralService extends BaseService
             QuoteStatusEnum::POLICY_BOOKING_QUEUED,
             QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
-        
+
         return in_array($quote->quote_status_id, $statusesThatPreventDocumentUploads);
     }
 
@@ -1233,23 +1233,23 @@ class CentralService extends BaseService
     private function canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId): bool
     {
         $quoteCode = $quote->code;
-        
+
         // First, check if all required documents are uploaded (most expensive check first)
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
         $hasAllRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
-        
-        LoggerService::info("Quote Code: {$quoteCode} - Document check: Required docs uploaded=" . ($hasAllRequiredDocuments ? 'YES' : 'NO'));
-        
+
+        LoggerService::info("Quote Code: {$quoteCode} - Document check: Required docs uploaded=".($hasAllRequiredDocuments ? 'YES' : 'NO'));
+
         // If documents are not uploaded, no need to check other conditions
-        if (!$hasAllRequiredDocuments) {
+        if (! $hasAllRequiredDocuments) {
             return false;
         }
-        
+
         // Only check transaction approved status if documents are uploaded
         $hasTransactionApprovedHistory = app(QuoteStatusLogService::class)->hasTransactionApprovedStatus($quoteTypeId, $quote->id);
         $isCurrentlyTransactionApproved = $quote->quote_status_id === QuoteStatusEnum::TransactionApproved;
-        
-        return ($hasTransactionApprovedHistory || $isCurrentlyTransactionApproved);
+
+        return $hasTransactionApprovedHistory || $isCurrentlyTransactionApproved;
     }
 
     /**

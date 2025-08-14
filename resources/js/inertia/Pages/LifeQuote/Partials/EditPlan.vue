@@ -958,7 +958,7 @@ const formattedActualPremium = useFormattedNumberField(
           <dl class="flex flex-row">
             <dt class="font-bold text-lg ml-4">Total Price:</dt>
             <dd class="text-lg">
-              &nbsp; AED {{ numberFormat(actualPremium) }}
+              &nbsp; {{ editForm.currency }} {{ numberFormat(actualPremium) }}
             </dd>
           </dl>
 
@@ -1005,7 +1005,7 @@ const formattedActualPremium = useFormattedNumberField(
             <dl class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
               <dd class="text-sm">
-                &nbsp; AED {{ numberFormat(actualPremium) }}
+                &nbsp; {{ editForm.currency }} {{ numberFormat(actualPremium) }}
               </dd>
             </dl>
           </div>
@@ -1063,7 +1063,9 @@ const formattedActualPremium = useFormattedNumberField(
             <!-- Total Price section -->
             <div class="flex items-center">
               <span class="font-bold mr-2">Total Price:</span>
-              <span class="">AED {{ numberFormat(actualPremium) }}</span>
+              <span class="">
+                {{ editForm.currency }} {{ numberFormat(actualPremium) }}
+              </span>
             </div>
           </div>
         </div>

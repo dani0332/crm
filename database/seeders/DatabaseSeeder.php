@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
+            CPARulesSeeder::class,
         ]);
     }
 }
