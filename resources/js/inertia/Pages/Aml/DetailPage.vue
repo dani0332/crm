@@ -28,6 +28,7 @@ const props = defineProps({
   defaultNationality: String,
   screeningType: String,
   gigInsurerDefaultEmail: String,
+  isPrivateCar: Boolean,
 });
 const page = usePage();
 const hasRole = role => useHasRole(role);
