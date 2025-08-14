@@ -116,6 +116,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use App\Http\Requests\AssignSupportUserRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -2378,13 +2379,8 @@ class CRUDController extends Controller
     /**
      * Assign support user to quote (dynamic for all LOBs)
      */
-    public function assignSupportUser(Request $request)
+    public function assignSupportUser(AssignSupportUserRequest $request)
     {
-        $request->validate([
-            'support_user_id' => 'required|exists:users,id',
-            'assigned_lead_id' => 'required|string',
-            'modelType' => 'required|string',
-        ]);
 
         $leadIds = explode(',', $request->assigned_lead_id);
         $supportUserId = $request->support_user_id;
