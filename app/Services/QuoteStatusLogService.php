@@ -13,7 +13,7 @@ class QuoteStatusLogService extends BaseService
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->id,
             'current_quote_status_id' => $quote->quote_status_id,
-            'previous_quote_status_id' => $oldQuoteStatus
+            'previous_quote_status_id' => $oldQuoteStatus,
         ]);
     }
 
