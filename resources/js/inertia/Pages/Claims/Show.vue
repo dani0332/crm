@@ -781,6 +781,7 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
                   placeholder="Claim Sub Status"
                   class="w-full uppercase"
                   filterable
+                  required
                 />
 
               </div>
