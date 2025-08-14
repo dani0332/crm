@@ -171,8 +171,8 @@ class BorService
         // Enrich the created BOR log with document data
         $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
 
-        $personalQuote->quote_status_id = QuoteStatusEnum::PendingBorRequest;
-        $personalQuote->save();
+        $quoteObject->quote_status_id = QuoteStatusEnum::PendingBorRequest;
+        $quoteObject->save();
         
         return ['borLog' => $enrichedBorLog, 'emailSent' => $emailSent];
     }
