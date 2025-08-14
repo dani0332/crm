@@ -142,7 +142,7 @@ class BorInsurerNotificationMail extends Mailable
      */
     private function getBirdWorkflowUrl()
     {
-        $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_INSURER_NOTIFICATION_WORKFLOW_URL)->first();
+        $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
         return $workflowConfig ? $workflowConfig->value : null;
     }
 } 

@@ -275,13 +275,16 @@ class BorController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            LoggerService::error('BOR cancellation failed', [
-                'bor_id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'line' => $e->getLine(),
-                'request_data' => $request->except(['password']),
-            ]);
+            if($e->getCode() !== 200) {
+                LoggerService::error('BOR cancellation failed', [
+                    'bor_id' => $id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'line' => $e->getLine(),
+                    'request_data' => $request->except(['password']),
+                ]);
+            }
+            
 
             return redirect()->back()->withErrors([
                 'general' => $e->getMessage()

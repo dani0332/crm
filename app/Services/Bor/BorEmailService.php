@@ -139,8 +139,9 @@ class BorEmailService
                 return false;
             }
 
-            $mail = new BorStatusUpdateMail($borLog, $customerData, $oldStatus, $newStatus);
-            return $mail->sendViaBird();
+            // $mail = new BorStatusUpdateMail($borLog, $customerData, $oldStatus, $newStatus);
+            // return $mail->sendViaBird();
+            return true;
 
         } catch (\Exception $e) {
             LoggerService::error('BOR Status Update Email Service failed', [

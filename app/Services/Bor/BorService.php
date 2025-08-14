@@ -239,7 +239,7 @@ class BorService
         $borLog = BorLog::findOrFail($id);
 
         if (!$borLog->allowsCancellation()) {
-            throw new \Exception('This BOR cannot be cancelled in its current status: ' . $borLog->status);
+            throw new \Exception('This BOR cannot be cancelled in its current status: ' . $borLog->status, 200);
         }
 
         DB::beginTransaction();
@@ -252,15 +252,7 @@ class BorService
                 throw new \Exception('Failed to cancel BOR request. Please try again.');
             }
 
-            // Send cancellation notification
-            $this->borEmailService->sendBorStatusUpdateEmail(
-                $borLog,
-                $oldStatus,
-                BorStatusEnum::CANCELLED
-            );
-
             DB::commit();
-
             // Enrich the updated BOR log with document data
             $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
             
@@ -332,7 +324,7 @@ class BorService
         $borLog = BorLog::findOrFail($borLogId);
         $personalQuote = $borLog->personalQuote;
         $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
-        $quoteObject = $this->getQuoteObject($quoteType, $personalQuote->quote_id);
+        $quoteObject = checkPersonalQuotes($quoteType) ? $personalQuote : $this->getQuoteObject($quoteType, $personalQuote->quote_id);
         
         // Auto-determine document type code based on the lead's LOB if not provided
         $documentTypeCode = $data['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
