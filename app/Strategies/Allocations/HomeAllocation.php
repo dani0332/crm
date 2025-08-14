@@ -198,6 +198,8 @@ class HomeAllocation extends BaseAllocation
             return $emails;
         }
 
+        $this->skipRuleUsers = true;
+
         if ($this->isValueLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a value lead, fetching value advisors');
 
@@ -232,6 +234,7 @@ class HomeAllocation extends BaseAllocation
         Log::info('HomeAllocation: Getting advisor from base query', ['emailsCount' => count($emails), 'roleId' => RolesEnum::HomeAdvisor]);
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::HomeAdvisor])
             ->whereIn('users.email', $emails)
+            ->logRawSql()
             ->first();
 
         Log::info('HomeAllocation: Home Advisor fetch result', [
