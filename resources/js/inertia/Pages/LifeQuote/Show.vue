@@ -5,13 +5,14 @@ import {
   preventInvalidInputs,
   useIsQuoteCreatedAfterCutoff,
 } from '@/inertia/Composables/utilities.js';
+import { watch } from 'vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
@@ -407,7 +408,11 @@ const getTotalAnnualPremiumAED = item => {
     };
 
     const premiumInAED =
-      Math.round(item.actualPremium * planExchangeRate.value * 100) / 100;
+      Math.round(
+        item.isApi
+          ? item.actualPremium * planExchangeRate.value * 100
+          : item.totalPrice * planExchangeRate.value * 100,
+      ) / 100;
     const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
 
     return numberFormat(totalAnnualPremiumAED);
@@ -601,11 +606,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
   activityForm.quote_id = page.props.quote.id;
@@ -903,8 +904,21 @@ const linkEntity = () => {
 const readOnlyMode = reactive({
   isDisable: true,
 });
+
+const shouldShowPlanDetailsSection = computed(() => {
+  const cutoffDate = props.lifeCutOffDate
+    ? new Date(props.lifeCutOffDate)
+    : new Date('2025-07-25 12:00:00');
+
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
+    return false;
+  }
+
+  return true;
+});
+
 onMounted(() => {
-  if (page.props.quote.is_ecommerce) {
+  if (!shouldShowPlanDetailsSection.value) {
     onLoadAvailablePlansData();
   }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
@@ -979,18 +993,6 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-
-const shouldShowPlanDetailsSection = computed(() => {
-  const cutoffDate = props.lifeCutOffDate
-    ? new Date(props.lifeCutOffDate)
-    : new Date('2025-07-25 12:00:00');
-
-  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
-    return false;
-  }
-
-  return true;
-});
 
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
@@ -1166,6 +1168,19 @@ const updateExchangeRate = item => {
 
 const enableExchangeRateEdit = () => {
   isExchangeRateEditable.value = true;
+};
+
+const getTotalAnnualPriceAED = () => {
+  const priceInAED =
+    Math.round(
+      (ecomDetail.value?.isManualPlan
+        ? ecomDetail.value?.totalPrice * planExchangeRate.value
+        : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100,
+    ) / 100;
+
+  return numberFormat(
+    priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
+  );
 };
 </script>
 <template>
@@ -2161,7 +2176,9 @@ const enableExchangeRateEdit = () => {
                       {{
                         numberFormat(
                           Math.round(
-                            item.actualPremium * planExchangeRate * 100,
+                            item.isApi
+                              ? item.actualPremium * planExchangeRate * 100
+                              : item.totalPrice * planExchangeRate * 100,
                           ) / 100,
                         )
                       }}
@@ -2388,14 +2405,7 @@ const enableExchangeRateEdit = () => {
               >
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
-                  {{
-                    numberFormat(
-                      (ecomDetail?.isManualPlan
-                        ? ecomDetail?.totalPrice * planExchangeRate
-                        : ecomDetail?.actualPremium * planExchangeRate) *
-                        (page.props.quote?.life_quote?.payment_term ?? 1),
-                    )
-                  }}
+                  {{ getTotalAnnualPriceAED() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2709,7 +2719,7 @@ const enableExchangeRateEdit = () => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="false"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <QuotePayments
@@ -2782,6 +2792,7 @@ const enableExchangeRateEdit = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <SendUpdates

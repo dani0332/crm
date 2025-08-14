@@ -43,8 +43,10 @@ class AuditRepository extends BaseRepository
             ->where(function ($q) use ($auditables) {
                 if (request()->has('auditable_id') && request()->auditable_id) {
                     $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
-                } else {
-                    $q->where('auditable_type', $auditables['auditable_type']);
+                }
+                if (request()->has('quote_type_id') && request()->quote_type_id) {
+                    $q->where('auditable_type', $auditables['auditable_type'])
+                        ->where('new_values->quote_type_id', request()->quote_type_id);
                 }
             });
         /*if ($code != '') {
@@ -86,6 +88,37 @@ class AuditRepository extends BaseRepository
                 return $value;
             };
 
+            // Extract and transform profiles from config
+            $extractProfiles = function ($values) {
+                if (isset($values['config'])) {
+                    $config = json_decode($values['config'], true);
+                    if (isset($config['profiles']) && is_array($config['profiles'])) {
+                        $simplifiedProfiles = [];
+                        foreach ($config['profiles'] as $profile) {
+                            $simplifiedProfile = [
+                                'nationalityIds' => $profile['nationalityIds'] ?? [],
+                                'isDefaultCriteria' => $profile['isDefaultCriteria'] ?? false,
+                            ];
+
+                            // Extract criteria fields
+                            $criteria = [];
+                            foreach ($profile as $key => $value) {
+                                if (is_array($value) && isset($value['label']) && isset($value['value'])) {
+                                    $criteria[$value['label']] = $value['value'];
+                                }
+                            }
+                            $simplifiedProfile['criteria'] = $criteria;
+
+                            $simplifiedProfiles[] = $simplifiedProfile;
+                        }
+                        $values['profiles'] = $simplifiedProfiles;
+                        unset($values['config']); // Remove the complex config
+                    }
+                }
+
+                return $values;
+            };
+
             $transformedNew = [];
             foreach ($newValues as $key => $value) {
                 if (isset($fieldMap[$key])) {
@@ -94,6 +127,7 @@ class AuditRepository extends BaseRepository
                     $transformedNew[$key] = $value;
                 }
             }
+            $transformedNew = $extractProfiles($transformedNew);
 
             $transformedOld = [];
             foreach ($oldValues as $key => $value) {
@@ -103,6 +137,7 @@ class AuditRepository extends BaseRepository
                     $transformedOld[$key] = $value;
                 }
             }
+            $transformedOld = $extractProfiles($transformedOld);
 
             $audit->new_values = json_encode($transformedNew);
             $audit->old_values = json_encode($transformedOld);

@@ -316,8 +316,14 @@ class SageApiEmbeddedProductService
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             } else {
                 if (isset($postedResponse['error'])) {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber']);
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber'], extra: [
+                        'error' => $postedResponse['error'],
+                    ]);
                     $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' :  Error while posting to sage';
+                    $sageErrorMessage = $postedResponse['error']['message']['value'] ?? $postedResponse['error'] ?? null;
+                    if ($this->sageApiService->sageHasProcessingConflict($sageErrorMessage)) {
+                        $response['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
+                    }
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
 
                     return $response;
@@ -333,7 +339,9 @@ class SageApiEmbeddedProductService
             $response['status'] = true;
             $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' : Prepayment created';
         } else {
-            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Document number not generated from Sage');
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$sukoonMedXEPTransaction->code.' SAGE API Payments Error: Document number not generated from Sage', extra: [
+                'sageResponse' => $sageResponse,
+            ]);
             $this->logSageApiCall($payLoadOptions, $sageResponse, $sukoonMedXEPTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
             $response['message'] = ' EP code: '.$sukoonMedXEPTransaction->code.' : Document number not generated from sage - Ref:'.$quote->code;
         }
@@ -1115,7 +1123,7 @@ class SageApiEmbeddedProductService
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -1144,7 +1152,7 @@ class SageApiEmbeddedProductService
                     'TaxClass1' => $taxClass,
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionTotalAmount),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -1356,7 +1364,7 @@ class SageApiEmbeddedProductService
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTaxes' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,

@@ -62,6 +62,10 @@ const props = defineProps({
     type: Function,
     default: () => () => false,
   },
+  isPlanDetailSectionEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isLoading = ref(false);
@@ -118,6 +122,10 @@ const dateToDMYWithTime = date => {
   }
   return '';
 };
+
+let isHealthAUHLead = ref(
+  page.props.bookPolicyDetails.isHealthAUHLead || false,
+);
 
 const commissionErrorMessage =
   'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.';
@@ -579,7 +587,7 @@ const disableCommissionVatApplicable = computed(() => {
 });
 
 const showCurrencyFields = computed(() => {
-  return isLifeLead;
+  return isLifeLead && !props.isPlanDetailSectionEnabled;
 });
 
 const showNonAEDFields = computed(() => {
@@ -621,6 +629,11 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
   );
 });
 
+const isSendTypeSage = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  return sendPolicyType == sendPolicyTypeEnum.SAGE;
+});
+
 const showSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -653,7 +666,8 @@ const disableBookPolicyButton = computed(() => {
     !props.bookPolicyDetails?.bookButton ||
     bp.isEditing ||
     disableIfPolicyFailedAndNoBookingFailedEditPermission.value ||
-    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+    !can(permissionsEnum.BOOK_POLICY_BUTTON) ||
+    isHealthAUHLead.value
   );
 });
 
@@ -1744,7 +1758,8 @@ const isDocTypeLoading = docType => {
                         bp.isEditing ||
                         is_lacking_payment ||
                         disableIfPolicyFailedAndNoBookingFailedEditPermission ||
-                        isDisabledSendPCB
+                        isDisabledSendPCB ||
+                        (isHealthAUHLead && isSendTypeSage)
                       "
                       v-if="showSendAndBookPolicyButton"
                     >
@@ -1771,7 +1786,8 @@ const isDocTypeLoading = docType => {
                       bp.isEditing ||
                       is_lacking_payment ||
                       isAMLNotClearedForTravelQuote ||
-                      disableIfPolicyFailedAndNoBookingFailedEditPermission
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                      (isHealthAUHLead && isSendTypeSage)
                     "
                     v-if="showSendAndBookPolicyButton"
                   >
@@ -1954,6 +1970,11 @@ const isDocTypeLoading = docType => {
                 </template>
               </template>
             </div>
+            <template v-if="isHealthAUHLead">
+              <p class="text-gray-500 text-sm text-right mt-3 mb-2 mx-4">
+                {{ productionProcessTooltipEnum.HEALTH_AUH_BOOKING_NOTE }}
+              </p>
+            </template>
           </div>
         </x-form>
       </template>

@@ -250,6 +250,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
+    public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -423,10 +424,12 @@ final class PermissionsEnum extends Enum
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
+    public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
+    public const LEADS_BY_EMAIL = 'leads-by-email';
     public const BOR_DOCUMENT_UPLOAD = 'bor-document-upload';
-    
+
     // Savings Permissions
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
     public const SAVINGS_QUOTES_CREATE = 'savings-quotes-create';

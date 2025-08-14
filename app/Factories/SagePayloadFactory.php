@@ -8,6 +8,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SagePaymentMethodsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -114,7 +115,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
@@ -202,7 +203,7 @@ class SagePayloadFactory
                     'DocumentTotalBeforeTaxes' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'Terms' => self::getTermsCode(count($paymentSplits)),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
@@ -281,7 +282,7 @@ class SagePayloadFactory
                     'TaxClass1' => 5,
                     'DocumentTotalBeforeTax' => $request->discount,
                     'DocumentTotalIncludingTax' => $request->discount,
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $description,
@@ -369,7 +370,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -399,7 +400,7 @@ class SagePayloadFactory
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // / commissionIncludingVat means commission_vat_applicable,
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -515,7 +516,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
@@ -543,7 +544,7 @@ class SagePayloadFactory
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
@@ -1258,6 +1259,10 @@ class SagePayloadFactory
             $sageRequest->collection_amount = $splitAmount;
         }
 
+        if (! isset($sageRequest->quoteTypeId)) {
+            $sageRequest->quoteTypeId = QuoteTypes::getIdFromValue($sageRequest->quoteType);
+        }
+
         if (! isset($sageRequest->advisor_id)) {
             $sageRequest->advisor_id = $quote->advisor_id;
         }
@@ -1291,7 +1296,18 @@ class SagePayloadFactory
         $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
-        $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
+
+        if (! isset($sageRequest->insurerReceiptNumber)) {
+            $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
+        }
+        if (! isset($sageRequest->premiumWithTax)) {
+            $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
+        }
+        if (! isset($sageRequest->insurerPremiumNumber)) {
+            $sageRequest->insurerPremiumNumber = (string) mb_substr($payment->insurer_tax_number, -18);
+            $sageRequest->originalInsurerPremiumNumber = (string) $payment->insurer_tax_number;
+        }
+
         $sageRequest->policyNumber = $policyNumber;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
 

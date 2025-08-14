@@ -6,6 +6,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\BuyLeadRequest;
+use App\Models\HealthQuote;
 use App\Models\Team;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
@@ -63,45 +64,62 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $next($request);
     }
 
+    private function getTeamId()
+    {
+        $parentTeamId = Team::where('name', TeamNameEnum::HEALTH)->active()->where('type', TeamTypeEnum::PRODUCT)->value('id');
+        $teamId = Team::where('name', $this->lead->health_team_type)->active()->where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $parentTeamId)->value('id');
+
+        return $teamId;
+    }
     protected function fetchAvailableAdvisor()
     {
-        $advisor = null;
+        $teamId = $this->getTeamId();
+        $advisors = $this->fetchEligibleAdvisors(true, $teamId);
+        $availableAdvisorIds = $advisors->pluck('user_id')->toArray() ?? [];
+        $rules = $this->allocationRequest->get('rules') ?? [];
+        $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($this->lead, $availableAdvisorIds, $rules, $teamId);
 
-        if ($this->lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
-            $advisor = $this->fetchAdvisorByType('getBLAdvisorByStatus');
-        }
+        $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
 
-        if (empty($advisor) || ! $advisor) {
-            $advisor = $this->fetchAdvisorByType('getAdvisorByStatus');
-        }
+        $advisor = User::find($advisorId);
 
         return $advisor;
     }
 
-    protected function fetchAdvisorByType(string $methodName)
+    protected function fetchEligibleAdvisors(bool $onlineStatus = true, $teamId = null)
+    {
+        $advisors = [];
+
+        if ($this->lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
+            $advisors = $this->fetchAdvisorByType('getBLAdvisorsByStatus', $teamId);
+
+        }
+
+        if (count($advisors) < 1) {
+            $advisors = $this->fetchAdvisorByType('getAdvisorsByStatus', $teamId);
+        }
+
+        return $advisors;
+    }
+    protected function fetchAdvisorByType(string $methodName, $teamId = null)
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
-
-        $parentTeamId = Team::where('name', TeamNameEnum::HEALTH)->active()->where('type', TeamTypeEnum::PRODUCT)->value('id');
-
-        $teamId = Team::where('name', $this->lead->health_team_type)->active()->where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $parentTeamId)->value('id');
-
+        $eligibleUsers = [];
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class."::fetchAdvisorByType - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
-            $eligibleUser = $this->{$methodName}($status, $teamId);
+            $eligibleUsers = $this->{$methodName}($status, $teamId);
+            if (count($eligibleUsers) > 0) {
+                LoggerService::info(self::class.'::fetchAdvisorByType - advisors found: '.json_encode($eligibleUsers->pluck('user_id')->toArray()));
 
-            if ($eligibleUser) {
-                LoggerService::info(self::class."::fetchAdvisorByType - eligible user found for team: {$this->lead->health_team_type} with status: {$status} and user id: {$eligibleUser->id}");
-
-                return $eligibleUser;
+                return $eligibleUsers;
             }
         }
 
-        return null;
+        return $eligibleUsers;
     }
 
-    protected function getBLAdvisorByStatus($status, $teamId = null)
+    protected function getBLAdvisorsByStatus($status, $teamId = null)
     {
         LoggerService::info(self::class."::getBLAdvisorByStatus - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
@@ -111,7 +129,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $this->lead->isValueLead()
         );
 
-        $advisor = $this->getAdvisorBaseQuery($status, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor], true)
+        $advisors = $this->getAdvisorBaseQuery($status, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor], true)
             ->when($this->lead->isValueLead(), function ($q) {
                 $q->isValueUser($this->allocationRequest->getQuoteType());
             }, function ($q) {
@@ -119,43 +137,105 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             })
             ->whereIn('users.id', $buyLeadRequestedUserIds)
             ->logRawSql()
-            ->first();
+            ->get();
 
-        if ($advisor) {
-            LoggerService::info(self::class."::getBLAdvisorByStatus - found Advisor: {$advisor->user_id} for team: {$this->lead->health_team_type} with current status as {$status}");
+        if (count($advisors) > 0) {
+            $this->allocationRequest->set('hasBuyLeadAdvisors', true);
+            LoggerService::info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray()).' found');
+        }
 
+        return $advisors;
+    }
+
+    protected function getAdvisorsByStatus($onlineStatus, $teamId = null)
+    {
+        LoggerService::info(self::class."::getAdvisorsByStatus - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$onlineStatus}");
+
+        $advisors = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
+            ->where('la.normal_allocation_enabled', true)
+            ->logRawSql()
+            ->get();
+
+        return $advisors;
+    }
+
+    protected function determineFinalAdvisorIdsBasedOnRules(HealthQuote $lead, $availableUserIds, $rules, $teamId): mixed
+    {
+
+        if (count($rules) > 0) {
+            // If there are rules, retrieve user IDs from the rule records.
+            $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
+
+            LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
+
+            // Find the intersection of available user IDs and rule user IDs.
+            $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
+
+            LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+        } else {
+            // If no rules are found, get user IDs from rule lead sources.
+            $ruleUsers = (empty($teamId) || $teamId == 0) ? $this->allocationRequest->get('ruleUsers') : [];
+
+            LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUsers).' and teamId is : '.$teamId);
+
+            // Ensure $ruleUsers is always an array to avoid array_diff() error.
+            $finalEligibleUserIds = array_diff(
+                $availableUserIds,
+                is_array($ruleUsers) ? $ruleUsers : []
+            );
+
+            LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+        }
+
+        return $finalEligibleUserIds;
+    }
+    protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
+    {
+        // Get the lead source users from the first matched rule record.
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers ?? null;
+
+        // Check if the lead source users contain a comma (,) indicating multiple users.
+        if (str_contains($leadSourceUsers, ',')) {
+            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
+            $userIds = array_map('intval', explode(',', $leadSourceUsers));
+        } else {
+            // If there's only one user, cast it to an integer and store it in a single-element array.
+            $userIds = [(int) $leadSourceUsers];
+        }
+
+        // Return the array of user IDs.
+        return $userIds;
+    }
+    protected function getFinalAdvisorId($finalEligibleUserIds)
+    {
+        if ($this->allocationRequest->get('hasBuyLeadAdvisors')) {
+            return $this->evaluateBuyLeadAdvisor($finalEligibleUserIds);
+        }
+
+        // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
+        return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
+    }
+
+    protected function evaluateBuyLeadAdvisor($finalEligibleUserIds)
+    {
+        foreach ($finalEligibleUserIds as $advisorId) {
             $buyLeadRequest = BuyLeadRequest::getRequest(
                 $this->allocationRequest->getQuoteType(),
                 $this->allocationRequest->isSIC(),
-                $advisor->user_id,
-                $this->lead->isValueLead()
+                $advisorId,
+                $this->lead->isValueLead(),
             );
 
             if ($buyLeadRequest) {
                 $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
 
-                $buyLeadRequest->startProcessing();
+                LoggerService::info("Buy Lead Request {$buyLeadRequest->id} found for advisor ID: {$advisorId}  ");
+                $this->allocationRequest->getBuyLeadRequest()->startProcessing();
 
-                return User::find($advisor->user_id);
-            } else {
-                LoggerService::warning(self::class."::getBLAdvisorByStatus - Advisor found but Buy Lead Request not found for Advisor: {$advisor->user_id}");
-
-                return null;
+                return $advisorId;
             }
         }
 
         return null;
-    }
-
-    protected function getAdvisorByStatus($onlineStatus, $teamId = null)
-    {
-        LoggerService::info(self::class."::getAdvisorByStatus - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$onlineStatus}");
-
-        $advisor = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
-            ->where('la.normal_allocation_enabled', true)
-            ->logRawSql()
-            ->first();
-
-        return $advisor ? User::find($advisor->user_id) : null;
     }
 }

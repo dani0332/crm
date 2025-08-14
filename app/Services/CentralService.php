@@ -155,12 +155,14 @@ class CentralService extends BaseService
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $lob = quoteTypeCode::Business;
                     $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
-
+                    $dataArr['companyName'] = $parentRecord->company_name ?? '';
+                    $dataArr['numberOfEmployees'] = $parentRecord->number_of_employees ?? '';
+                    $dataArr['healthPlanTypeId'] = $parentRecord->health_plan_type_id ?? '';
                     if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
                         $dataArr['businessTypeOfInsuranceId'] = QuoteTypeId::Business;
                     }
+                    $lob = quoteTypeCode::Business;
                 }
 
                 if (in_array($lob, [
