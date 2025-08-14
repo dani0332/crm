@@ -26,10 +26,12 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Jobs\AutomationFailedJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
@@ -1638,6 +1640,9 @@ class CentralService extends BaseService
                 'responsePremiumAmount' => isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null,
             ];
 
+            // responsePremiumAmount (GetQuote : (Premium >  Total Price) or (Premium <  Total Price)) in this case line 7 validation text
+            // responsePremiumAmount GetQuote: UW = N & Premium >  Total Price in this case line 8 validation text
+
             if ($capturePaymentResponse['status'] == PaymentCaptureValidationEnum::FAILED) {
                 LoggerService::info(__FUNCTION__.' - paymentsCaptureValidation check for Insurance Provider: '.$insuranceProvider->text.' failed', extra: $logExtra);
 
@@ -1649,6 +1654,16 @@ class CentralService extends BaseService
                 //     'Premium in GIG portal exceeds the authorized amount and differs from capture amount' => 'Capture amount in IMCRM and getQuote premium is greater than Authorized amount, but the Capture amount is less than or equal to the Authorized amount',
                 //     'Capture amount exceeds authorized amount and differs from premium in GIG  portal' => 'Capture amount in IMCRM and getQuote premium is less than or equal to the Authorized amount, but the Capture amount is greater than Authorized amount',
                 // ];
+
+                LoggerService::info('fn:autoCapturePaymentProcess - Going to dispatch AutomationFailedJob');
+                AutomationFailedJob::dispatch(
+                    $quote,
+                    QuoteTypeId::Car,
+                    `Please coordinate with the Insurer's Portal for any discrepancies or changes in the premium.`,
+                    'Quote Referred To Insurer UW',
+                    'Payment Capture',
+                    WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                )->onQueue('policy-issuance-automation');
 
                 $message = $capturePaymentResponse['message'] ?? 'Premium mismatch on Insurer portal';
 
