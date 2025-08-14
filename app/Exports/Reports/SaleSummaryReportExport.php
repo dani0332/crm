@@ -14,8 +14,10 @@ class SaleSummaryReportExport extends BaseReportsExport
 
     public function headings(): array
     {
+        $groupByColumn = $this->groupByColumn == 'support_user' ? 'OE/AE' : $this->groupByColumn;
+
         $headings = [
-            ucwords(str_replace('_', ' ', $this->groupByColumn)),
+            ucwords(str_replace('_', ' ', $groupByColumn)),
         ];
 
         if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
