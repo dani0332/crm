@@ -166,11 +166,6 @@ const requiredFields = computed(() => {
     }
   }
 
-  // Health LOB may require policy number
-  if (isHealthLob.value && form.customer_type == 'Individual') {
-    fields.policy_number = true;
-  }
-
   return fields;
 });
 

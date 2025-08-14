@@ -163,7 +163,8 @@ class BorService
         $borLog = BorLog::create($data);
 
         // Send BOR request email
-        $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
+
+        $quoteObject->advisor_id !== null && $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
 
         // Update email sent status
         // $borLog->update(['email_sent' => $emailSent]);
@@ -171,8 +172,12 @@ class BorService
         // Enrich the created BOR log with document data
         $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
 
-        $quoteObject->quote_status_id = QuoteStatusEnum::PendingBorRequest;
-        $quoteObject->save();
+        // Update quote status to pending bor request if not already in a status that allows BOR request
+        $statuses = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::TransactionApproved];
+        if(! in_array($quoteObject->quote_status_id, $statuses)) {
+            $quoteObject->quote_status_id = QuoteStatusEnum::PendingBorRequest;
+            $quoteObject->save();
+        }
         
         return ['borLog' => $enrichedBorLog, 'emailSent' => $emailSent];
     }
