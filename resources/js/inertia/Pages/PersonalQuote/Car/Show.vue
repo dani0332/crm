@@ -3932,7 +3932,7 @@ function handleOcrNotification(event) {
         firstName: record.first_name,
         lastName: record.last_name,
         companyName: record.company_name,
-        currentlyInsuredWith: record.currently_insured_with
+        currentlyInsuredWith: record.insurance_provider_id
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"

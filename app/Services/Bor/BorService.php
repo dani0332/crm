@@ -166,7 +166,7 @@ class BorService
         $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
 
         // Update email sent status
-        $borLog->update(['email_sent' => $emailSent]);
+        // $borLog->update(['email_sent' => $emailSent]);
         
         // Enrich the created BOR log with document data
         $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
