@@ -134,7 +134,7 @@ class AmtController extends Controller
 
         // Get support users (OE role with Group Medical product access)
         $supportUsers = app(UserService::class)->getSupportUsers([
-            'product_filter' => QuoteTypes::BUSINESS,
+            'product_filter' => QuoteTypes::GROUP_MEDICAL,
             'include_role_in_name' => true,
             'return_format' => 'collection'
         ]);
