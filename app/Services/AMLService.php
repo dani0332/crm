@@ -21,9 +21,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Ken;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Requests\AMLCheckRequest;
+use App\Jobs\AutomationFailedJob;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
@@ -948,6 +950,16 @@ class AMLService
                 $kycLogDetails['match_found'] = 1;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
+
+                LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob');
+                AutomationFailedJob::dispatch(
+                    $quoteDetails,
+                    QuoteTypeId::Car,
+                    'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
+                    'Quote Finalized But Premium Not Matched',
+                    'Quote Finalization',
+                    WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                )->onQueue('policy-issuance-automation');
             }
         }
 
