@@ -7,6 +7,7 @@ use App\Models\QuoteStatusLog;
 
 class QuoteStatusLogService extends BaseService
 {
+    // todo: will move this to event listener
     public function createQuoteStatusLog($quoteTypeId, $quote, $oldQuoteStatus)
     {
         QuoteStatusLog::create([
