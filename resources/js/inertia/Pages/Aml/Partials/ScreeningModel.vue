@@ -11,6 +11,8 @@ const props = defineProps({
 const page = usePage();
 const { isRequired } = useRules();
 const notification = useToast();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -729,6 +731,9 @@ const handleModalClose = () => {
   screeningFormDetails.customer_type = oldCustomerType.value;
   customerTypeConfirmationModel.value = false;
 };
+
+const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = createReusableTemplate();
+
 </script>
 <template>
   <x-modal
@@ -1060,16 +1065,29 @@ const handleModalClose = () => {
       "
       :isPayerDetails="true"
     />
-    <div class="flex justify-center my-5">
+    <SubmitForScreeningBtnTemplate>
       <x-button
         class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
         size="sm"
         color="success"
         type="submit"
         :loading="screeningFormDetails.processing"
+        :disabled="!can(permissionsEnum.AMLList)"
       >
         Submit For AML Screening
       </x-button>
+    </SubmitForScreeningBtnTemplate>
+    <div class="flex justify-center my-5">
+      <x-tooltip
+        v-if="!can(permissionsEnum.AMLList)"
+        placement="bottom"
+      >
+        <SubmitForScreeningBtnReuseTemplate/>
+        <template #tooltip>You don't have permission to edit this section</template>
+      </x-tooltip>
+      <template v-else>
+        <SubmitForScreeningBtnReuseTemplate />
+      </template>
     </div>
     <x-divider class="mb-4 mt-1" />
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

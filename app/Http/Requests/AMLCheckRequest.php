@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -55,6 +56,15 @@ class AMLCheckRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (! auth()->user()->can(PermissionsEnum::AMLList)) {
+                $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
+            }
+        });
     }
 
     public function messages(): array
