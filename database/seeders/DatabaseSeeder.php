@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             CarAdditionalDetailsForLivaSeeder::class,
             CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
             CPARulesSeeder::class,
+            AutomationSeeder::class,
         ]);
     }
 }
