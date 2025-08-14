@@ -138,7 +138,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
-            $ruleUserIds = (empty($teamId) || $teamId == 0) ? $this->allocationRequest->get('ruleUserIds') : [];
+            $ruleUserIds = $this->allocationRequest->get('ruleUserIds');
 
             LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUserIds).' and teamId is : '.$teamId);
 
