@@ -238,9 +238,9 @@ class BorService
     {
         $borLog = BorLog::findOrFail($id);
 
-        if (!$borLog->allowsCancellation()) {
-            throw new \Exception('This BOR cannot be cancelled in its current status: ' . $borLog->status, 200);
-        }
+        // if (!$borLog->allowsCancellation()) {
+        //     throw new \Exception('This BOR cannot be cancelled in its current status: ' . $borLog->status, 200);
+        // }
 
         DB::beginTransaction();
 
