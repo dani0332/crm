@@ -123,29 +123,35 @@ const source_type_list = [
 ];
 const tableHeader = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'PC Tagging', value: 'pc_qualified' },
 ];
 const tableHeader2 = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
   { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
   { text: 'PREVIOUS GROSS PREMIUM', value: 'previous_quote_policy_premium' },
+  { text: 'PC Tagging', value: 'pc_qualified' },
 ];
 
 const businessHeaders = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'SUB TYPE', value: 'subtype' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'PC Tagging', value: 'pc_qualified' },
 ];
 
 const can = permission => useCan(permission);
@@ -295,6 +301,9 @@ const permissionsEnum = page.props.permissionsEnum;
             ? currently_insured_with.text
             : currently_insured_with
         }}
+      </template>
+      <template #item-pc_qualified="{ pc_qualified }">
+        {{ pc_qualified == 1 ? 'Yes' : 'No' }}
       </template>
     </DataTable>
 
