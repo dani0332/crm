@@ -47,6 +47,7 @@ use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
+use App\Services\UserService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -132,7 +133,11 @@ class AmtController extends Controller
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
 
         // Get support users (OE role with Group Medical product access)
-        $supportUsers = $this->getSupportUsers();
+        $supportUsers = app(UserService::class)->getSupportUsers([
+            'product_filter' => QuoteTypes::BUSINESS,
+            'include_role_in_name' => true,
+            'return_format' => 'collection'
+        ]);
 
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
 
@@ -563,38 +568,5 @@ class AmtController extends Controller
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),
         ]);
-    }
-
-    /**
-     * Get support users (OE role with Group Medical product access)
-     */
-    private function getSupportUsers()
-    {
-        $groupMedicalProduct = Team::where('type', TeamTypeEnum::PRODUCT)
-            ->where('name', QuoteTypes::BUSINESS)
-            ->where('is_active', 1)
-            ->first();
-
-        if (! $groupMedicalProduct) {
-            return collect([]);
-        }
-
-        //        $loggedInUserRoles = Auth::user()->roles->pluck('name')->toArray();
-
-        //        if ((! in_array(RolesEnum::CLIENTSUPPORTLEAD, $loggedInUserRoles) &&
-        //            ! in_array(RolesEnum::CLIENTSUPPORT, $loggedInUserRoles))) {
-        //            return collect([]);
-        //        }
-
-        return User::activeUser()
-            ->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
-            ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->join('user_products as up', 'up.user_id', '=', 'users.id')
-            ->whereIn('r.name', [RolesEnum::CLIENTSUPPORT, RolesEnum::CLIENTSUPPORTLEAD])
-            ->where('up.product_id', $groupMedicalProduct->id)
-            ->selectRaw("users.id, CONCAT(users.name, ' - ', r.name) as name, r.name as role ")
-            ->orderBy('users.name')
-            ->distinct()
-            ->get();
     }
 }

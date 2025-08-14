@@ -4,9 +4,14 @@ namespace App\Services;
 
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
+use App\Enums\QuoteTypes;
+use App\Models\Role;
+use App\Models\Team;
 use App\Models\User;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class UserService extends BaseService
 {
@@ -116,5 +121,115 @@ class UserService extends BaseService
     public function getDepartmentsList()
     {
         return DB::table('departments')->where('is_active', 1)->orderBy('name')->get();
+    }
+
+    /**
+     * Get support users with role concatenation
+     * Unified method combining fetchSupportUserList and getSupportUsers functionality
+     * 
+     * @param array $options Configuration options:
+     *   - roles: array of role names (default: [CLIENTSUPPORT, CLIENTSUPPORTLEAD])
+     *   - product_filter: specific product name/code to filter by
+     *   - department_filter: department IDs to filter by
+     *   - line_of_business_filter: line of business codes to filter by
+     *   - business_insurance_type_filter: business insurance type IDs to filter by
+     *   - include_role_in_name: boolean to concatenate role with name (default: false)
+     *   - return_format: 'collection' or 'array' (default: 'collection')
+     * 
+     * @return Collection|array
+     */
+    public function getSupportUsers(array $options = []): Collection|array
+    {
+        // Default options
+        $roles = $options['roles'] ?? [RolesEnum::CLIENTSUPPORT, RolesEnum::CLIENTSUPPORTLEAD];
+        $includeRoleInName = $options['include_role_in_name'] ?? false;
+        $returnFormat = $options['return_format'] ?? 'collection';
+        
+        // Filter to existing roles only
+        $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
+        
+        if (empty($existingRoles)) {
+            return $returnFormat === 'array' ? [] : collect([]);
+        }
+
+        // Build the base query using Eloquent relationships
+        $query = User::query()
+            ->with(['roles' => function ($query) use ($existingRoles) {
+                $query->whereIn('name', $existingRoles);
+            }])
+            ->whereHas('roles', function ($query) use ($existingRoles) {
+                $query->whereIn('name', $existingRoles);
+            })
+            ->where('is_active', 1);
+
+        // Apply product filter (specific product or line of business)
+        if (!empty($options['product_filter'])) {
+            $productFilter = $options['product_filter'];
+            
+            // Check if it's a specific product name (like QuoteTypes::BUSINESS for Group Medical)
+            if (is_string($productFilter)) {
+                $query->whereHas('products', function ($q) use ($productFilter) {
+                    $q->where('type', TeamTypeEnum::PRODUCT)
+                        ->where('name', $productFilter)
+                        ->where('is_active', 1);
+                });
+            }
+        }
+
+        // Apply line of business filter
+        if (!empty($options['line_of_business_filter'])) {
+            $lineOfBusinessFilter = is_array($options['line_of_business_filter']) 
+                ? $options['line_of_business_filter'] 
+                : [$options['line_of_business_filter']];
+            
+            // Convert line of business to product codes
+            $productCodes = collect($lineOfBusinessFilter)
+                ->map(fn($item) => QuoteTypes::getName($item))
+                ->filter()
+                ->toArray();
+
+            if (!empty($productCodes)) {
+                $query->whereHas('products', function ($q) use ($productCodes) {
+                    $q->where('type', TeamTypeEnum::PRODUCT)
+                        ->whereIn('teams.code', $productCodes);
+                });
+            }
+        }
+
+        // Apply department filter
+        if (!empty($options['department_filter'])) {
+            $query->whereIn('department_id', (array) $options['department_filter']);
+        }
+
+        // Apply business insurance type filter
+        if (!empty($options['business_insurance_type_filter'])) {
+            $query->whereHas('businessTypes', function ($q) use ($options) {
+                $q->whereIn('business_type_of_insurance.id', (array) $options['business_insurance_type_filter']);
+            });
+        }
+
+        // Execute query and format results
+        $users = $query->orderBy('name')->get();
+
+        // Transform the results
+        $result = $users->map(function ($user) use ($includeRoleInName) {
+            if ($includeRoleInName && $user->roles->isNotEmpty()) {
+                // Get the first matching role for concatenation
+                $role = $user->roles->first();
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name . ' - ' . $role->name,
+                    'role' => $role->name,
+                    'original_name' => $user->name,
+                ];
+            }
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+            ];
+        });
+
+        return $returnFormat === 'array' ? $result->toArray() : $result;
     }
 }

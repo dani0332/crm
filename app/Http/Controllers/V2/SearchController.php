@@ -20,6 +20,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\SearchService;
+use App\Services\UserService;
 use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
@@ -31,7 +32,10 @@ class SearchController extends Controller
         $sendUpdateTypes = $sendUpdateStatuses = [];
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList);
         $getAdvisorsList = UserRepository::advisorsList();
-        $getSupportUserList = UserRepository::supportUserList();
+        $getSupportUserList = app(UserService::class)->getSupportUsers([
+            'include_role_in_name' => true,
+            'return_format' => 'array'
+        ]);
         $quoteStatuses = app(LookupService::class)->getLeadStatuses([QuoteStatusEnum::SentForTransactionApproval], [QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued]);
         $paymentStatuses = PaymentStatus::withActive()->whereNotIn('id', [
             PaymentStatusEnum::CAPTURED,
