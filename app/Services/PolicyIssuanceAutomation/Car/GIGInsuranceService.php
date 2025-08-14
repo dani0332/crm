@@ -91,19 +91,19 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     const POLICY_AUTOMATION_STATUS_YES_ID = 1;
     const POLICY_AUTOMATION_STATUS_NO_ID = 2;
     const UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID = 2;
-    const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Document Upload API Failed';
+    const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Insurer Document Upload Failed';
     const UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE = 'Document Upload via API';
     const POLICY_ISSUANCE_API_FAILED_STATUS_ID = 3;
-    const POLICY_ISSUANCE_API_FAILED = 'Policy Issuance API Failed';
+    const POLICY_ISSUANCE_API_FAILED = 'Policy Creation Failed';
     const POLICY_ISSUANCE_API_ACTION_MESSAGE = 'Policy Issuance via API';
     const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 4;
-    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Get and Upload Policy Documents to IMCRM API Failed';
+    const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Policy Document Retrieval Failed';
     const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_ACTION_MESSAGE = 'Get and Upload Policy Documents to IMCRM via API';
     const OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
     const OCR_PROCESSING_API_FAILED = 'OCR Processing API Failed';
     const OCR_PROCESSING_API_ACTION_MESSAGE = 'OCR Processing via API';
     const BOOK_POLICY_API_FAILED_STATUS_ID = 6;
-    const BOOK_POLICY_API_FAILED = 'Book Policy API Failed';
+    const BOOK_POLICY_API_FAILED = 'Send and Book Policy Failed';
     const BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
 
     public function __construct()
@@ -290,7 +290,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         if (! $uploadDocumentsResponse['status']) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - '.$uploadDocumentsResponse['message'] ?? 'Document upload failed', extra: ['response' => $uploadDocumentsResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Document Upload');
 
             return $uploadDocumentsResponse;
         }
@@ -453,7 +453,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - '.$policyIssuanceResponse['message'] ?? 'Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::POLICY_ISSUANCE_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::POLICY_ISSUANCE_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Policy Creation');
 
             return $policyIssuanceResponse;
         }
@@ -462,7 +462,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_number' => $policyIssuanceResponse['data']['data']->policyId,
         ]);
-        
+
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
 
@@ -523,7 +523,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         if (! $getAndUploadPolicyDocumentsToIMCRMResponse['status']) {
             LoggerService::info('$this->getLogPrefix(__FUNCTION__) Quote : '.$quote->code.' - '.$getAndUploadPolicyDocumentsToIMCRMResponse['message'] ?? 'Upload policy documents to IMCRM failed', extra: ['response' => $getAndUploadPolicyDocumentsToIMCRMResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Retrieve Document ');
 
             return $getAndUploadPolicyDocumentsToIMCRMResponse;
         }
@@ -565,7 +565,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             if(str_contains($policyDocument->name, 'Certificate of Insurance') || str_contains($policyDocument->name, 'Commission statement')) {
                 continue;
             }
-            
+
             $quoteDocument = null;
             $docName = $policyDocument->name ?? 'Unknown Document'; // Initialize with fallback name
             $docMapping = null;
@@ -603,7 +603,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'document' => $quoteDocument,
             ]);
 
-            // TODO:: This is a temporary fix to upload the same content as CPC to simulate Certificate of Insurance without API call just for testing purposes 
+            // TODO:: This is a temporary fix to upload the same content as CPC to simulate Certificate of Insurance without API call just for testing purposes
             // If Policy Schedule (CPS) uploaded, also upload the same content as CPC to simulate Certificate of Insurance without API call
             if ($docMapping && isset($docMapping['code']) && $docMapping['code'] === DocumentTypeCode::CPS && ($quoteDocument?->id ?? false)) {
                 $duplicateDocName = self::POLICY_DOC_CERTIFICATE_OF_INSURANCE;
@@ -771,7 +771,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 })
                 ->finally(function (Batch $batch) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing completed');
-                    
+
                     if ($batch->hasFailures()) {
                         $successfulJobs = $batch->totalJobs - $batch->failedJobs;
                         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Partial failure detected. Stats: Total: '.$batch->totalJobs.', Failed: '.$batch->failedJobs.', Successful: '.$successfulJobs);
@@ -873,7 +873,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - '.$triggerBookPolicyResponse['message'] ?? 'Book policy failed', extra: ['response' => $triggerBookPolicyResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::BOOK_POLICY_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::BOOK_POLICY_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Send And Book Policy');
 
             return $triggerBookPolicyResponse;
         }
@@ -926,7 +926,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
             return $response;
         }
-        
+
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
 
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' ended');
