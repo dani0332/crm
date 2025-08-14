@@ -1,21 +1,16 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatusLog;
 use Carbon\Carbon;
 
-class QuoteStatusLogRepository extends BaseRepository
+class QuoteStatusLogService extends BaseService
 {
-    public function model()
+    public function createQuoteStatusLog($quoteTypeId, $quote, $oldQuoteStatus)
     {
-        return QuoteStatusLog::class;
-    }
-
-    public function fetchCreate($quoteTypeId, $quote, $oldQuoteStatus)
-    {
-        $this->create([
+        QuoteStatusLog::create([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->id,
             'current_quote_status_id' => $quote->quote_status_id,
@@ -28,9 +23,9 @@ class QuoteStatusLogRepository extends BaseRepository
     /**
      * Check if quote has transaction approved status in its history
      */
-    public function fetchHasTransactionApprovedStatus($quoteTypeId, $quoteId)
+    public function hasTransactionApprovedStatus($quoteTypeId, $quoteId)
     {
-        return $this->where('quote_type_id', $quoteTypeId)
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
             ->where('quote_request_id', $quoteId)
             ->where(function ($query) {
                 $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
