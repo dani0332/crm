@@ -439,8 +439,10 @@ class CarCQFRenewalService
             'vehicle_type_id' => $quote->vehicle_type_id,
             'cylinder' => $quote->cylinder,
             'year_of_manufacture' => $quote->year_of_manufacture,
+            'nationality_id' => $quote->nationality_id,
             'currently_insured_with' => $quote?->plan?->insuranceProvider?->text ?? null,
             'vehicle_category' => $quote->vehicle_category,
+            'year_of_first_registration' => $quote->year_of_first_registration,
             'car_type_insurance_id' => $quote->car_type_insurance_id,
             'seat_capacity' => $quote->seat_capacity,
             'tier_id' => $quote->tier_id,
@@ -456,7 +458,7 @@ class CarCQFRenewalService
 
         return $quoteData;
     }
-
+ 
     public function getCustomerEntity($newquote, $oldquote)
     {
         $entityMapping = QuoteRequestEntityMapping::with('entity')
