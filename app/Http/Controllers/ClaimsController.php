@@ -7,6 +7,7 @@ use App\Http\Requests\ClaimDetailsUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
+use App\Http\Requests\ClaimStatusUpdateRequest;
 use App\Models\Claim;
 use App\Services\ClaimsService;
 use Exception;
@@ -166,6 +167,7 @@ class ClaimsController extends Controller
             return Inertia::render('Claims/Show', [
                 'claim' => $claimRequest,
                 'dropdowns' => $dropdownData,
+                'requiredFieldsFilled' => $this->claimsService->isRequiredFieldsFilled($claimRequest),
             ]);
 
         } catch (Exception $e) {
@@ -254,6 +256,25 @@ class ClaimsController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->withErrors($e->getMessage());
+        }
+    }
+
+    public function updateClaimStatuses(ClaimStatusUpdateRequest $request, $uuid): RedirectResponse
+    {
+        try {
+            $updatedClaimRequest = $this->claimsService->updateClaimStatus($uuid, $request->validated());
+            
+            return redirect()->back()->with('success', 'Claim status updated successfully.');
+            
+        } catch (Exception $e) {
+            LoggerService::error('Error updating claim status', extra: [
+                'error' => $e->getMessage(),
+                'claim_request_id' => $uuid,
+                'data' => $request->validated(),
+                'user_id' => auth()->id(),
+            ]);
+            
+            return redirect()->back()->with('error', 'Failed to update claim status. Please try again.');
         }
     }
 

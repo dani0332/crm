@@ -446,6 +446,8 @@ final class PermissionsEnum extends Enum
     public const CLAIM_EDIT = 'claim-edit';
     public const CLAIM_SHOW = 'claim-show';
     public const CLAIMS_EXPORT_DATA = 'claim-export-data';
+    public const CLAIMS_STATUS_UPDATE = 'claim-status-update';
+    public const CLAIMS_SUB_STATUS_UPDATE = 'claim-sub-status-update';
     // End of Claims Permissions
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
@@ -521,6 +523,8 @@ final class PermissionsEnum extends Enum
             self::CLAIM_EDIT,
             self::CLAIM_SHOW,
             self::CLAIMS_EXPORT_DATA,
+            self::CLAIMS_STATUS_UPDATE,
+            self::CLAIMS_SUB_STATUS_UPDATE,
         ];
     }
 }

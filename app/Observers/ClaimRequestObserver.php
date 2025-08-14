@@ -11,12 +11,13 @@ class ClaimRequestObserver
 {
     public function updating(ClaimRequest $claimRequest): void
     {
+        $claimService = new ClaimsService();
         if ($claimRequest->isDirty('claim_number')) {
             $originalClaimNumber = $claimRequest->getOriginal('claim_number');
             $newClaimNumber = $claimRequest->claim_number;
 
             if (empty($originalClaimNumber) && !empty($newClaimNumber)) {
-                (new ClaimsService)->updateClaimSubStatusToClaimRegistered($claimRequest);
+                $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
             }
         }
 
@@ -24,9 +25,9 @@ class ClaimRequestObserver
             $originalClaimSubStatusId = $claimRequest->getOriginal('claim_sub_status_id');
             $newClaimSubStatusId = $claimRequest->claim_sub_status_id;
 
-            $shouldCloseTheClaim = (new ClaimsService)->checkSubStatusForClaimClosure($claimRequest, $newClaimSubStatusId);
+            $shouldCloseTheClaim = $claimService->checkSubStatusForClaimClosure($claimRequest, $newClaimSubStatusId);
             if ($shouldCloseTheClaim) {
-                (new ClaimsService)->markClaimAsClosed($claimRequest);
+                $claimService->markClaimAsClosedAndSendReviewEmail($claimRequest);
             }
 
         }
@@ -41,9 +42,10 @@ class ClaimRequestObserver
      */
     public function creating(ClaimRequest $claimRequest): void
     {
+        $claimService = new ClaimsService();
         // If claim number is provided during creation, set status to "Claim registered"
         if (!empty($claimRequest->claim_number)) {
-            (new ClaimsService)->updateClaimSubStatusToClaimRegistered($claimRequest);
+            $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
         }
     }
 
