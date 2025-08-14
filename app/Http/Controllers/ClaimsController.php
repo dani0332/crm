@@ -134,8 +134,8 @@ class ClaimsController extends Controller
         try {
             $claim = $this->claimsService->createClaim($request->validated());
 
-            if (! empty($claim->errors) || ! empty($claim->message)) {
-                vAbort($claim->message);
+            if (! empty($claim->errors)) {
+                vAbort($claim->errors);
             }
             return redirect()->route('claims.show', $claim->claimUID)->with('success', "Claim {$claim->claimUID} has been created successfully.");
         } catch (Exception $e) {
@@ -173,7 +173,7 @@ class ClaimsController extends Controller
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'user_id' => auth()->id(),
-            ]);      
+            ]);
 
             return redirect()->route('claims.index')
                 ->with('error', 'Failed to load claim details.');
@@ -237,9 +237,9 @@ class ClaimsController extends Controller
         try {
             // Get only the validated data that should be updated
             $validatedData = $request->validatedForUpdate();
-            
+
             $updatedClaimRequest = $this->claimsService->updateClaimDetails($uuid, $validatedData);
-            
+
             return redirect()->route('claims.show', $updatedClaimRequest->uuid)
                 ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 

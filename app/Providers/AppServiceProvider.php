@@ -7,6 +7,8 @@ use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\ClaimRequest;
+use App\Models\ClaimRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
@@ -26,6 +28,8 @@ use App\Observers\BusinessQuoteDetailObserver;
 use App\Observers\BusinessQuoteObserver;
 use App\Observers\CarQuoteDetailObserver;
 use App\Observers\CarQuoteObserver;
+use App\Observers\ClaimRequestDetailObserver;
+use App\Observers\ClaimRequestObserver;
 use App\Observers\CustomerAddressObserver;
 use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
@@ -91,6 +95,10 @@ class AppServiceProvider extends ServiceProvider
         PaymentSplits::observe(PaymentSplitsObserver::class);
         CustomerAddress::observe(CustomerAddressObserver::class);
         SendUpdateLog::observe(SendUpdateLogObserver::class);
+
+        // Claim Request Observers
+        ClaimRequest::observe(ClaimRequestObserver::class);
+        ClaimRequestDetail::observe(ClaimRequestDetailObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

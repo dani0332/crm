@@ -11,7 +11,7 @@ use App\Models\Claim;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\YearOfManufacture;
-use App\Models\ClaimRequest; 
+use App\Models\ClaimRequest;
 use App\Models\ClaimsStatus;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
@@ -77,6 +77,9 @@ class ClaimsService extends BaseService
                 'claimRequestType:id,code,text',
                 'claimRequestDetails' => function($query) {
                     $query->with('serviceType:id,code,text');
+                },
+                'personalQuote' => function($query) {
+                    $query->with('advisor:id,name', 'insuranceProvider:id,code,text');
                 },
             ]);
     }
@@ -347,7 +350,7 @@ class ClaimsService extends BaseService
         $claimRequest = $this->getClaimById($uuid);
 
         try {
-            DB::beginTransaction();
+
 
             // Separate claim request data from detail data
             $claimRequestData = collect($data)->only([
@@ -366,7 +369,6 @@ class ClaimsService extends BaseService
                 $claimRequestData['incident'] = $claimRequestData['incident_story'];
                 unset($claimRequestData['incident_story']);
             }
-
             $claimRequest->update($claimRequestData);
 
             // Handle claim request detail updates with quote type logic
@@ -418,11 +420,9 @@ class ClaimsService extends BaseService
                 'updated_by' => Auth::id(),
             ]);
 
-            DB::commit();
 
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
         } catch (\Exception $e) {
-            DB::rollback();
             LoggerService::error('Error updating claim request', extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
@@ -438,6 +438,7 @@ class ClaimsService extends BaseService
      */
     public function updateClaimDetails($uuid, array $data): ClaimRequest
     {
+
         $claimRequest = $this->getClaimById($uuid);
 
         if (!$claimRequest) {
@@ -445,21 +446,21 @@ class ClaimsService extends BaseService
         }
 
         try {
-            DB::beginTransaction();
 
             // Define which fields belong to the main claim request table
             $claimRequestFields = [
                 'claim_type_id',
-                'claim_number', 
+                'claim_number',
                 'claim_decline_reason',
                 'claim_request_type_id',
+                'incident_date',
             ];
 
             // Define which fields belong to the claim request details table
             $claimRequestDetailFields = [
                 'plat_number',
                 'car_make',
-                'car_model', 
+                'car_model',
                 'model_year',
                 'service_type_id',
             ];
@@ -467,15 +468,12 @@ class ClaimsService extends BaseService
             // Separate data for claim request table
             $claimRequestData = collect($data)
                 ->only($claimRequestFields)
-                ->filter(function ($value) {
-                    return $value !== null && $value !== '';
-                })
                 ->toArray();
 
             // Update claim request if there's data
             if (!empty($claimRequestData)) {
                 $claimRequest->update($claimRequestData);
-                
+
                 LoggerService::info('Claim request main table updated', [
                     'claim_request_id' => $claimRequest->id,
                     'updated_fields' => array_keys($claimRequestData),
@@ -486,15 +484,12 @@ class ClaimsService extends BaseService
             // Separate data for claim request details table
             $detailData = collect($data)
                 ->only($claimRequestDetailFields)
-                ->filter(function ($value) {
-                    return $value !== null && $value !== '';
-                })
                 ->toArray();
 
             // Handle claim request details update/create
             if (!empty($detailData)) {
                 $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
-                
+
                 if ($claimRequestDetail) {
                     $claimRequestDetail->update($detailData);
                     LoggerService::info('Claim request details updated', [
@@ -525,12 +520,10 @@ class ClaimsService extends BaseService
                 'details_table_updates' => !empty($detailData),
             ]);
 
-            DB::commit();
 
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
 
         } catch (\Exception $e) {
-            DB::rollback();
             LoggerService::error('Error updating claim details', extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -650,10 +643,10 @@ class ClaimsService extends BaseService
             ->get()
             ->toArray();
     }
-   
+
 
     public function getCarMake(): array
-    { 
+    {
         return CarMake::select('code as id', 'text')->where('is_active', true)->get()->toArray();
     }
 
@@ -661,4 +654,52 @@ class ClaimsService extends BaseService
     {
         return YearOfManufacture::select('text')->orderBy('sort_order')->get()->toArray();
     }
+
+
+    public function updateClaimSubStatusToClaimRegistered(ClaimRequest $claimRequest): void
+    {
+        try {
+            $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
+            $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED;
+            if ($isCarQuoteType) {
+                $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION;
+            }
+            // Find the "Claim initiated" status for the specific quote type
+            $claimInitiatedStatus = ClaimsStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('parent', 0)->first();
+
+            // If no specific status found for the quote type, try to find a general one
+            if (!$claimInitiatedStatus) {
+                $claimInitiatedStatus = ClaimsStatus::where('text', $claimRegisterStatusKey)->whereNull('quote_type_id')->where('is_active', 1)->where('parent', 0)->first();
+            }
+
+            if ($claimInitiatedStatus) {
+                // Update the claim sub status without triggering another observer event
+                $claimRequest->claim_sub_status_id = $claimInitiatedStatus->id;
+
+                LoggerService::info('Claim sub status updated to "Claim registered"', extra: [
+                    'claim_request_id' => $claimRequest->id,
+                    'claim_uuid' => $claimRequest->uuid,
+                    'claim_sub_status_id' => $claimInitiatedStatus->id,
+                    'quote_type_id' => $claimRequest->quote_type_id,
+                    'trigger' => 'claim_number_entered',
+                    'updated_by' => Auth::id(),
+                ]);
+            } else {
+                LoggerService::warning('Could not find "Claim registered" status', extra: [
+                    'claim_request_id' => $claimRequest->id,
+                    'claim_uuid' => $claimRequest->uuid,
+                    'quote_type_id' => $claimRequest->quote_type_id,
+                ]);
+            }
+        } catch (\Exception $e) {
+            LoggerService::error('Error updating claim sub status to "Claim registered"', extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
+
 }

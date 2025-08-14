@@ -9,6 +9,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Enums\QuoteTypes;
+use App\Enums\ClaimsEnum;
+use App\Models\Lookup;
 
 class ClaimDetailsUpdateRequest extends FormRequest
 {
@@ -69,7 +71,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'exists:lookups,id',
             ],
             'claim_number' => [
-                'nullable',
+                'required',
                 'string',
                 'max:100',
             ],
@@ -77,6 +79,12 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:2000',
+            ],
+            'incident_date' => [
+                'required',
+                'date',
+                'date_format:Y-m-d',
+                'before:today',
             ],
         ];
     }
@@ -102,6 +110,11 @@ class ClaimDetailsUpdateRequest extends FormRequest
             'claim_type_id.integer' => 'Claim type must be a number.',
             'claim_number.max' => 'Claim number cannot exceed 100 characters.',
             'claim_decline_reason.max' => 'Claim decline reason cannot exceed 2000 characters.',
+            'incident_date.required' => 'Incident date is required.',
+            'incident_date.date' => 'Incident date must be a valid date.',
+            'incident_date.date_format' => 'Incident date must be in the format YYYY-MM-DD.',
+            'incident_date.before' => 'Incident date must be before today.',
+            'incident_date.before_or_equal' => 'Incident date must be before or equal to today.',
         ];
     }
 
@@ -120,6 +133,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
             'claim_type_id' => 'claim type',
             'claim_number' => 'insurer claim number',
             'claim_decline_reason' => 'claim decline reason',
+            'incident_date' => 'incident date',
         ];
     }
 
@@ -156,6 +170,9 @@ class ClaimDetailsUpdateRequest extends FormRequest
             }
             if(!request()->claim_type_id){
                 $validator->errors()->add('claim_type_id', 'Claim type is required.');
+            }
+            if(!request()->incident_date){
+                $validator->errors()->add('incident_date', 'Incident date is required.');
             }
         });
     }
@@ -194,7 +211,11 @@ class ClaimDetailsUpdateRequest extends FormRequest
             $validator->errors()->add('claim_request_type_id', 'Claim request type is required.');
         }
 
-        if (!$this->filled('service_type_id')) {
+        $claimRequestTypeId = $this->claim_request_type_id;
+        $claimRequestType = Lookup::find($claimRequestTypeId);
+        $isPendingClaimRequestType = $claimRequestType->code === ClaimsEnum::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE;
+
+        if ($isPendingClaimRequestType && !$this->filled('service_type_id')) {
             $validator->errors()->add('service_type_id', 'Service type is required.');
         }
     }
@@ -221,11 +242,6 @@ class ClaimDetailsUpdateRequest extends FormRequest
      */
     public function validatedForUpdate(): array
     {
-        $validated = $this->validated();
-        
-        // Filter out empty strings and keep only non-null values
-        return array_filter($validated, function ($value) {
-            return $value !== '' && $value !== null;
-        });
+        return $this->validated();
     }
 }
