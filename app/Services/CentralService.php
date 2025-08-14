@@ -50,6 +50,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
+use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
@@ -1334,6 +1335,67 @@ class CentralService extends BaseService
         LoggerService::info('fn:voidPayment - Void authorized payment process completed for payment code: '.$paymentCode);
 
         return ['status' => true, 'message' => 'Void payment processed'];
+    }
+
+    /**
+     * Send automation email to Bird
+     * @param $lead
+     * @param $emailData | should be object
+     * @param $quoteTypeId
+     * @param $emailType
+     * @return int|null
+     */
+    public function sendAutomationEmail($lead, $emailData, $quoteTypeId, $emailType)
+    {
+        LoggerService::startQuoteLogging($lead);
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
+            $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
+
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            if ($birdUrl) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
+                LoggerService::info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                }
+            } else {
+                LoggerService::info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+        }
+    }
+
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, $workflowType)
+    {
+        try {
+            $flowType = constant("App\Enums\QuoteFlowType::{$workflowType}");
+
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => $quoteTypeId,
+                    'flow_type' => $flowType,
+                    'flow_id' => $runId,
+                ]);
+                LoggerService::info("{$emailType} run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                LoggerService::info("{$emailType} run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Exception $ex) {
+            $errorMessage = "{$emailType}-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            LoggerService::info($errorMessage);
+            LoggerService::info("{$emailType}-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+        }
     }
 
     public function removeInsurerPaymentLink($request)
