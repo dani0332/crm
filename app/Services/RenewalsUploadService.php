@@ -2217,7 +2217,7 @@ class RenewalsUploadService
                             }
 
                             if ($leadData->premium) {
-                                if (!empty($leadData->provider_name) && !$leadData->plan_type) {
+                                if (! empty($leadData->provider_name) && ! $leadData->plan_type) {
                                     $leadValidationErrors->push('Repair Type is required');
                                 } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
                                     $leadValidationErrors->push('Excess should be 0 with TPL');
@@ -2230,13 +2230,13 @@ class RenewalsUploadService
                                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no) {
                                     $leadValidationErrors->push('Insurer Quote No is required');
                                 }
-                                if ($leadData->excess && (!isset($leadData->premium) || $leadData->premium <= 0)) {
+                                if ($leadData->excess && (! isset($leadData->premium) || $leadData->premium <= 0)) {
                                     $leadValidationErrors->push('Renewal Premium is required when Excess is provided');
                                 }
                                 if (! $leadData->provider_name) {
                                     $leadValidationErrors->push('Provider Name is required');
                                 }
-                                if (!empty($leadData->provider_name) && !$leadData->plan_name) {
+                                if (! empty($leadData->provider_name) && ! $leadData->plan_name) {
                                     $leadValidationErrors->push('Plan Name is required');
                                 }
 
@@ -2249,25 +2249,25 @@ class RenewalsUploadService
                                 }
                                 if (isset($carPlan)) {
                                     // Required if Renewal Premium is available
-                                    if ((isset($leadData->premium) && $leadData->premium <= 0)  &&  ! $leadData->driver_cover) {
+                                    if ((isset($leadData->premium) && $leadData->premium <= 0) && ! $leadData->driver_cover) {
                                         $leadValidationErrors->push('PAB Driver is required with Renewal Premium');
                                     }
                                     // Required if Renewal Premium is available
                                     if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->driver_cover_amount === '') {
                                         $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium ');
                                     }
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) &&  ! $leadData->passenger_cover) {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && ! $leadData->passenger_cover) {
                                         $leadValidationErrors->push('PAB Passenger is required with Renewal Premium ');
                                     }
-                                    
+
                                     if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
                                     }
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) &&  $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
                                         $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                     }
 
-                                    if ((isset($leadData->premium) && $leadData->premium > 0) &&  $leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- Oman Cover is required');
                                     }
                                     if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->road_side_assistance_amount == '') {
