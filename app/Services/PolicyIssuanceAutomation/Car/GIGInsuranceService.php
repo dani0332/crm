@@ -1045,6 +1045,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                 'send_policy_type' => SendPolicyTypeEnum::SAGE,
                 'is_send_policy' => false,
                 'transaction_payment_status' => null,
+                'through_automation' => true,
             ];
             request()->merge($requestData);
 

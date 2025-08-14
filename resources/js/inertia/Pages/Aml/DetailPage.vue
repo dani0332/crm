@@ -42,6 +42,7 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
+  isPrivateCar: Boolean,
 });
 const page = usePage();
 const hasRole = role => useHasRole(role);

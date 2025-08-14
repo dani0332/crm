@@ -57,6 +57,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
@@ -345,6 +346,7 @@ class AMLController extends Controller
             'isAnyEscalated' => $isAnyEscalated,
             'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType->id, $quoteRequest->id),
             'permissionsEnum' => PermissionsEnum::asArray(),
+            'isPrivateCar' => ! InsuranceProviderRepository::isCommercialVehicles($quoteRequest),
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 

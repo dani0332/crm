@@ -196,7 +196,8 @@ const showVehicleAndDrvicerDetails = computed(() => {
       page.props.insuranceProviderCodeEnum.RSA, // LIVA
       page.props.insuranceProviderCodeEnum.AXA, // GIG
       page.props.insuranceProviderCodeEnum.OIC, // SUKOON
-    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code)
+    ].includes(page.props.quoteRequest?.plan?.insurance_provider.code) && 
+    (page.props.isPrivateCar ?? false)
   );
 });
 
