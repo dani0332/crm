@@ -33,7 +33,7 @@ class RenewalQuotesExport
             'Previous advisor',
             'Commission',
             $this->exportType == 'BUSINESS' ? 'Business Type' : '',
-            'PC Tagging'
+            'PC Tagging',
         ];
     }
 
