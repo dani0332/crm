@@ -19,6 +19,17 @@ class ClaimRequestObserver
                 (new ClaimsService)->updateClaimSubStatusToClaimRegistered($claimRequest);
             }
         }
+
+        if ($claimRequest->isDirty('claim_sub_status_id')) {
+            $originalClaimSubStatusId = $claimRequest->getOriginal('claim_sub_status_id');
+            $newClaimSubStatusId = $claimRequest->claim_sub_status_id;
+
+            $shouldCloseTheClaim = (new ClaimsService)->checkSubStatusForClaimClosure($claimRequest, $newClaimSubStatusId);
+            if ($shouldCloseTheClaim) {
+                (new ClaimsService)->markClaimAsClosed($claimRequest);
+            }
+
+        }
     }
 
     public function updated(ClaimRequest $claimRequest): void{}

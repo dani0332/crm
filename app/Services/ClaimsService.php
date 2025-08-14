@@ -701,5 +701,50 @@ class ClaimsService extends BaseService
         }
     }
 
+    public function checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool
+    {
+        $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
+        $isHealthQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Health;
+        $isLifeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Life;
+
+        $subStatusListForClaimClosed = [
+            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID,
+            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN,
+            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED,
+        ];
+
+        if ($isCarQuoteType) {
+            $subStatusListForClaimClosed = [
+                ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED,
+                ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED,
+                ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED,
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN,
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED,
+            ];
+        }
+
+        if ($isHealthQuoteType) {
+            $subStatusListForClaimClosed[] = [
+                ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_APPROVED,
+                ClaimsEnum::CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED,
+            ];
+        }
+
+        if ($isLifeQuoteType) {
+            $subStatusListForClaimClosed = [
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID,
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED,
+            ];
+        }
+
+        return in_array($newClaimSubStatusId, $subStatusListForClaimClosed);
+    }
+
+    public function markClaimAsClosed(ClaimRequest $claimRequest): void
+    {
+        $claimRequest->claim_status_id = ClaimsStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED)->where('is_active', 1)->first()->id;
+        $claimRequest->save();
+    }
+
 
 }
