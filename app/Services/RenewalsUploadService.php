@@ -2129,7 +2129,7 @@ class RenewalsUploadService
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
                 } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
-                    LoggerService::info('CQF VALIDATION - Checking Quote Existence 1 - '.$lead->policy_number);
+                    LoggerService::info('CQF VALIDATION - Checking Quote Existence  - '.$lead->policy_number);
                     if (! $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first()) {
                         $leadValidationErrors->push('Quote does not exist for this policy number, use upload and create');
                     } else {
@@ -2217,7 +2217,7 @@ class RenewalsUploadService
                             }
 
                             if ($leadData->premium) {
-                                if (! $leadData->plan_type) {
+                                if (!empty($leadData->provider_name) && !$leadData->plan_type) {
                                     $leadValidationErrors->push('Repair Type is required');
                                 } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
                                     $leadValidationErrors->push('Excess should be 0 with TPL');
@@ -2230,13 +2230,13 @@ class RenewalsUploadService
                                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no) {
                                     $leadValidationErrors->push('Insurer Quote No is required');
                                 }
-                                if (! $leadData->premium && $leadData->excess) {
-                                    $leadValidationErrors->push('Renewal Premium is required with Excess');
+                                if ($leadData->excess && (!isset($leadData->premium) || $leadData->premium <= 0)) {
+                                    $leadValidationErrors->push('Renewal Premium is required when Excess is provided');
                                 }
                                 if (! $leadData->provider_name) {
                                     $leadValidationErrors->push('Provider Name is required');
                                 }
-                                if (! $leadData->plan_name) {
+                                if (!empty($leadData->provider_name) && !$leadData->plan_name) {
                                     $leadValidationErrors->push('Plan Name is required');
                                 }
 
@@ -2248,40 +2248,40 @@ class RenewalsUploadService
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
                                 if (isset($carPlan)) {
-                                    if (! $leadData->driver_cover) {
-                                        $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
+                                    // Required if Renewal Premium is available
+                                    if ((isset($leadData->premium) && $leadData->premium <= 0)  &&  ! $leadData->driver_cover) {
+                                        $leadValidationErrors->push('PAB Driver is required with Renewal Premium');
                                     }
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
+                                    // Required if Renewal Premium is available
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->driver_cover_amount === '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium ');
                                     }
-                                    if (! $leadData->passenger_cover) {
-                                        $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) &&  ! $leadData->passenger_cover) {
+                                        $leadValidationErrors->push('PAB Passenger is required with Renewal Premium ');
                                     }
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
+                                    
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
                                     }
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) &&  $leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
                                         $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                     }
 
-                                    if ($leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) &&  $leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- Oman Cover is required');
                                     }
-                                    if ($leadData->road_side_assistance_amount == '') {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->road_side_assistance_amount == '') {
                                         $leadValidationErrors->push('Amount- Road Side Assistance is required with Renewal Premium & Excess');
                                     }
-                                    if ($leadData->plan_type != CarPlanType::TPL && ! $leadData->oman_cover) {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && $leadData->plan_type != CarPlanType::TPL && ! $leadData->oman_cover) {
                                         $leadValidationErrors->push('Oman cover is required');
                                     }
-                                    if (! $leadData->road_side_assistance) {
+                                    if ((isset($leadData->premium) && $leadData->premium > 0) && ! $leadData->road_side_assistance) {
                                         $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
                                     }
-                                    if (! $leadData->year_of_first_registration) {
-                                        $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
-                                    }
+                                    // if (! $leadData->year_of_first_registration) {
+                                    //     $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
+                                    // }
 
                                     $carPlan->load([
                                         'carAddons' => function ($q) {
