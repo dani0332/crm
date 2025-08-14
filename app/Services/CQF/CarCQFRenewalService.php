@@ -458,7 +458,7 @@ class CarCQFRenewalService
 
         return $quoteData;
     }
- 
+
     public function getCustomerEntity($newquote, $oldquote)
     {
         $entityMapping = QuoteRequestEntityMapping::with('entity')
