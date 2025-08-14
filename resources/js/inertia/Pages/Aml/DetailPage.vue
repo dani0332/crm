@@ -689,7 +689,7 @@ const insuredId = props.insuredDetails?.insured?.id ?? null;
       </dl>
       <div class="flex justify-end">
         <x-button
-          v-if="can(permissionsEnum.SKIP_BRIDGER_AML) || true"
+          v-if="can(permissionsEnum.SKIP_BRIDGER_AML)"
           class="mt-4 mr-2"
           color="red"
           size="sm"

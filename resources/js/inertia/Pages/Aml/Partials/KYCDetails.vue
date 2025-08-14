@@ -525,6 +525,9 @@ watch(
     }
   },
 );
+
+const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = createReusableTemplate();
+
 </script>
 <template>
   <x-form @submit="submitInsuredKycForm" :auto-focus="false">
@@ -1147,31 +1150,33 @@ watch(
         type="button"
         class="px-6"
         @click="syncInsurerPortalUpdates"
-        :disabled="!isSyncEnabled"
+        :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)"
         :loading="syncProcessLoading"
       >
         Sync
       </x-button>
-      <x-button
-        v-if="kycFormDetails.insured_id"
-        size="sm"
-        color="orange"
-        type="submit"
-        class="px-6"
-        :loading="kycFormDetails.processing"
-      >
-        Save
-      </x-button>
-      <x-tooltip v-else placement="left">
-        <x-button size="sm" color="orange" type="submit" class="px-6" disabled>
+      <SubmitInsuredKycFormBtnTemplate>
+        <x-button
+            size="sm"
+            color="orange"
+            type="submit"
+            class="px-6"
+            :loading="kycFormDetails.processing"
+            :disabled="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)"
+        >
           Save
         </x-button>
+      </SubmitInsuredKycFormBtnTemplate>
+
+      <x-tooltip v-if="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)" placement="left">
+        <SubmitInsuredKycFormBtnReuseTemplate />
         <template #tooltip>
-          <span class="custom-tooltip-content">
-            Search the Insured's ID number
-          </span>
+            {{ kycFormDetails.insured_id ? 'You don\'t have permission to edit this section' : 'Search the Insured\'s ID number' }}
         </template>
       </x-tooltip>
+      <template v-else>
+        <SubmitInsuredKycFormBtnReuseTemplate />
+      </template>
     </div>
   </x-form>
 </template>
