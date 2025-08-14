@@ -1087,13 +1087,13 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = 
             type="submit"
             class="px-6"
             :loading="kycFormDetails.processing"
-            :disabled="!can(permissionsEnum.AMLList) || kycFormDetails.insured_id"
+            :disabled="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)"
         >
           Save
         </x-button>
       </SubmitInsuredKycFormBtnTemplate>
 
-      <x-tooltip v-if="!can(permissionsEnum.AMLList) || kycFormDetails.insured_id" placement="left">
+      <x-tooltip v-if="(!can(permissionsEnum.AMLList)) || (!kycFormDetails.insured_id)" placement="left">
         <SubmitInsuredKycFormBtnReuseTemplate />
         <template #tooltip>
             {{ kycFormDetails.insured_id ? 'You don\'t have permission to edit this section' : 'Search the Insured\'s ID number' }}
