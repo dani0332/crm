@@ -784,11 +784,10 @@ class BusinessQuoteService extends BaseService
                 )->delay(now()->addSeconds(5));
 
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to dispatch support user assignment email job', [
+                LoggerService::error('Failed to dispatch support user assignment email job. Message: '.$e->getMessage(), [
                     'support_user_id' => $supportUserId,
                     'lead_ids' => $updatedLeadIds,
-                    'model_type' => $modelType,
-                    'error' => $e->getMessage(),
+                    'model_type' => $modelType
                 ]);
             }
         }

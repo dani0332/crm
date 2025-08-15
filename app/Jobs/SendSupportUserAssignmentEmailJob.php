@@ -114,13 +114,6 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ], $e);
 
-            Log::error('SendSupportUserAssignmentEmailJob failed', [
-                'support_user_id' => $this->supportUserId,
-                'lead_ids' => $this->leadIds,
-                'quote_type' => $this->quoteType->value,
-                'error' => $e->getMessage(),
-            ]);
-
             throw $e;
         }
     }
