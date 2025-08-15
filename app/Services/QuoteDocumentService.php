@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeText;
@@ -17,6 +18,7 @@ use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
 use App\Models\DocumentType;
 use App\Models\HealthPlanPolicyWording;
@@ -238,6 +240,9 @@ class QuoteDocumentService extends BaseService
                 'document_category' => $data['document_category'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
+
+            // update the Bor log reference with uploaded document time and status
+            $data['document_category'] !== null && $this->updateBorLogReference($data['document_category']);
 
             if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
@@ -1013,6 +1018,16 @@ class QuoteDocumentService extends BaseService
             }
         } catch (RequestException $e) {
             return ['exists' => false, 'size' => null];
+        }
+    }
+
+    private function updateBorLogReference($borReference)
+    {
+        $borLog = BorLog::where('bor_reference', $borReference)->first();
+        if($borLog) {
+            $borLog->date_uploaded = now();
+            $borLog->status = BorStatusEnum::DOCUMENT_UPLOADED;
+            $borLog->save();
         }
     }
 

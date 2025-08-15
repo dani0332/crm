@@ -59,7 +59,7 @@ class BorFormRequest extends FormRequest
                 // Chassis number validation for Sukoon insurance (OIC code)
                 $insuranceProviderId = $this->input('insurance_provider_id');
                 if ($insuranceProviderId !== null && $this->isSukoonInsurance($insuranceProviderId)) {
-                    $rules['chassis_number'] = ['required', 'string', 'max:40'];
+                    $rules['chassis_number'] = ['required', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
                 } else {
                     $rules['insurance_provider_id'] = ['integer', 'exists:insurance_provider,id'];
                     $rules['chassis_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];

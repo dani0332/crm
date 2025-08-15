@@ -79,6 +79,14 @@ class BorLog extends Model
     /**
      * @return string
      */
+    public function getPolicyExpiryAttribute($table)
+    {
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT_ONLY'));
+    }
+
+    /**
+     * @return string
+     */
     public function getDateSignedAttribute($table)
     {
         if (empty($table) || $table == null) {

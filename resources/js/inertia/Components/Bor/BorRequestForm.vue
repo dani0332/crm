@@ -255,6 +255,8 @@ const prefillFormFromBorLog = () => {
   form.policy_number = borLog.policy_number || '';
   form.policy_expiry = borLog.policy_expiry || '';
   form.chassis_number = borLog.chassis_number || '';
+  form.additional_notes = borLog.additional_notes || '';
+  form.reason = borLog.reason || '';
   
   // Set the selected insurer
   if (borLog.insurance_provider_id) {
@@ -707,9 +709,9 @@ onMounted(() => {
                 <textarea
                   v-model="form.additional_notes"
                   rows="3"
+                  disabled
                   class="w-full border border-orange-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="Enter any additional notes or comments about this BOR request..."
-                  :disabled="isSubmitting"
                 ></textarea>
               </div>
 
@@ -718,8 +720,8 @@ onMounted(() => {
                 label="REASON"
                 v-model="form.reason"
                 :options="reasonOptions"
+                disabled
                 placeholder="Select a reason"
-                :disabled="isSubmitting"
                 clearable
               />
             </div>
