@@ -3925,8 +3925,8 @@ function handleOcrNotification(event) {
     <BorLogsSection
       :leadId="record.id"
       :lob="quoteType"
-      :customerType="record.customer_type"
       :customerData="{
+        customerType: record.customer_type,
         firstName: record.first_name,
         lastName: record.last_name,
         companyName: record.company_name,

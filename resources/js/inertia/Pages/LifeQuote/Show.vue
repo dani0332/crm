@@ -2764,8 +2764,8 @@ const getTotalAnnualPriceAED = () => {
     <BorLogsSection
       :leadId="quote.id"
       :lob="quoteType"
-      :customerType="quote.customer_type"
       :customerData="{
+        customerType: quote.customer_type,
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.company_name,

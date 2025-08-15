@@ -61,7 +61,7 @@ const signedDocuments = computed(() => {
 const form = useForm({
   lead_id: props.leadId,
   lob: props.lob,
-  customer_type: '',
+  customer_type: props.customerData.customerType,
   insurer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
@@ -806,7 +806,7 @@ onMounted(() => {
           color="orange"
           type="submit"
         >
-          {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update and Send' : 'Save and Send') }}
+          {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update' : 'Save and Send') }}
         </x-button>
       </div>
     </template>

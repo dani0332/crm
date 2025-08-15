@@ -34,15 +34,15 @@ class BorFormRequest extends FormRequest
         
         // Customer type specific validation
         if ($customerType === 'Individual') {
-            $rules['insurer_name'] = ['required', 'string', 'max:255'];
+            $rules['insurer_name'] = ['required', 'string', 'max:150'];
             $rules['company_name'] = ['nullable'];
         } elseif ($customerType === 'Entity') {
-            $rules['company_name'] = ['required', 'string', 'max:255'];
+            $rules['company_name'] = ['required', 'string', 'max:150'];
             $rules['insurer_name'] = ['nullable'];
         } else {
             // If customer_type is not set yet, make both optional for now
-            $rules['insurer_name'] = ['nullable', 'string', 'max:255'];
-            $rules['company_name'] = ['nullable', 'string', 'max:255'];
+            $rules['insurer_name'] = ['nullable', 'string', 'max:150'];
+            $rules['company_name'] = ['nullable', 'string', 'max:150'];
         }
 
         // LOB-specific validation rules
@@ -53,28 +53,28 @@ class BorFormRequest extends FormRequest
         if ($customerType === 'Individual') {
             // Motor LOB specific fields for Individual insurers
             if ($isMotorLob) {
-                $rules['policy_number'] = ['required', 'string', 'max:255'];
+                $rules['policy_number'] = ['required', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
                 $rules['policy_expiry'] = ['required', 'date', 'after:today'];
                 
                 // Chassis number validation for Sukoon insurance (OIC code)
                 $insuranceProviderId = $this->input('insurance_provider_id');
                 if ($insuranceProviderId !== null && $this->isSukoonInsurance($insuranceProviderId)) {
-                    $rules['chassis_number'] = ['required', 'string', 'max:255'];
+                    $rules['chassis_number'] = ['required', 'string', 'max:40'];
                 } else {
                     $rules['insurance_provider_id'] = ['integer', 'exists:insurance_provider,id'];
-                    $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
+                    $rules['chassis_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
                 }
             } else {
                 // Non-motor LOBs for Individual insurers - these fields are optional
-                $rules['policy_number'] = ['nullable', 'string', 'max:255'];
+                $rules['policy_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
                 $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
-                $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
+                $rules['chassis_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
             }
         } else {
             // Entity insurers don't need policy fields
-            $rules['policy_number'] = ['nullable', 'string', 'max:255'];
+            $rules['policy_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
             $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
-            $rules['chassis_number'] = ['nullable', 'string', 'max:255'];
+            $rules['chassis_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
         }
 
         return $rules;
@@ -93,6 +93,7 @@ class BorFormRequest extends FormRequest
             'company_name.required' => 'Company name is required for entity insurers.',
             'insurance_provider_id.exists' => 'The selected insurance provider does not exist.',
             'policy_number.required' => 'Policy number is required for this type of insurance.',
+            'policy_number.regex' => 'Policy number cannot be empty or contain only spaces.',
             'policy_expiry.required' => 'Policy expiry date is required for this type of insurance.',
             'policy_expiry.after' => 'Policy expiry date must be in the future.',
             'chassis_number.required' => 'Chassis number is required for Sukoon insurance.',
