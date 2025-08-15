@@ -1021,6 +1021,12 @@ class QuoteDocumentService extends BaseService
         }
     }
 
+    /**
+     * Update the Bor log reference with uploaded document time and status
+     *
+     * @param string $borReference
+     * @return void
+     */
     private function updateBorLogReference($borReference)
     {
         $borLog = BorLog::where('bor_reference', $borReference)->first();
