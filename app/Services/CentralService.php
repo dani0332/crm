@@ -63,7 +63,6 @@ use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CentralService extends BaseService
 {
@@ -1159,57 +1158,99 @@ class CentralService extends BaseService
     public function updateQuoteInformation($type, $id)
     {
         if ($type == 'send-update') {
-            return true;
+            return;
         }
         if (request()->has('quote_type')) {
             $type = request()->quote_type;
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+        $quoteCode = $quote->code;
+        $currentQuoteStatus = $quote->quote_status_id;
+        // Check if quote status is locked - if so, don't change status due to document uploads
+        if ($this->isQuoteStatusLocked($quote)) {
+            LoggerService::info("Quote Code: {$quoteCode} - Status is LOCKED {$currentQuoteStatus}, preventing document uploads from changing status");
 
-        LoggerService::info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
-        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
-            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            LoggerService::info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
-            if ($isPolicyDetailsFilled) {
-                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-                $hasTransactionApprovedStatus = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-                    ->where('quote_request_id', $quote->id)
-                    ->where(function ($query) {
-                        $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
-                            ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
-                    })->exists();
-
-                $isCurrentlyTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
-                $hasRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
-
-                if (($hasTransactionApprovedStatus || $isCurrentlyTransactionApproved) && $hasRequiredDocuments) {
-                    $oldQuoteStatus = $quote->quote_status_id;
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
-                        'policy_issuance_status_other' => '',
-                    ]);
-                    LoggerService::info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
-
-                    // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
-                    // No need to create quote status log
-                    if ($oldQuoteStatus != $quote->quote_status_id) {
-                        QuoteStatusLog::create([
-                            'quote_type_id' => $quoteTypeId,
-                            'quote_request_id' => $quote->id,
-                            'current_quote_status_id' => $quote->quote_status_id,
-                            'previous_quote_status_id' => $oldQuoteStatus,
-                            'created_at' => Carbon::now(),
-                            'updated_at' => Carbon::now(),
-                        ]);
-                        (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
-                    }
-                    LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
-                }
-            }
+            return;
         }
+
+        $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
+        LoggerService::info("Quote Code: {$quoteCode} - Policy details filled: ".($isPolicyDetailsFilled ? 'YES' : 'NO'));
+
+        if ($isPolicyDetailsFilled) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+
+            if ($this->canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId)) {
+                $previousQuoteStatus = $quote->quote_status_id;
+                $updateData = [
+                    'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                    'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+                    'policy_issuance_status_other' => '',
+                ];
+
+                $quote->update($updateData);
+
+                LoggerService::info("Quote Code: {$quoteCode} - Status updated: {$previousQuoteStatus} → {$quote->quote_status_id}");
+
+                // Create status log and trigger journey if status actually changed
+                if ($previousQuoteStatus != $quote->quote_status_id) {
+                    app(QuoteStatusLogService::class)->createQuoteStatusLog($quoteTypeId, $quote, $previousQuoteStatus);
+                    (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
+                    LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
+                } else {
+                    LoggerService::info("Quote Code: {$quoteCode} - No status change, skipping log creation");
+                }
+            } else {
+                LoggerService::info("Quote Code: {$quoteCode} - Cannot update to Policy Issued, requirements not met");
+            }
+        } else {
+            LoggerService::info("Quote Code: {$quoteCode} - Policy details not filled, skipping status update");
+        }
+    }
+
+    /**
+     * Check if quote is in a locked status that prevents document uploads from changing status
+     */
+    private function isQuoteStatusLocked($quote): bool
+    {
+        $statusesThatPreventDocumentUploads = [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+            // These statuses prevent document uploads from changing quote status
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+        ];
+
+        return in_array($quote->quote_status_id, $statusesThatPreventDocumentUploads);
+    }
+
+    /**
+     * Determine if a quote can be updated to Policy Issued status.
+     */
+    private function canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId): bool
+    {
+        $quoteCode = $quote->code;
+
+        // First, check if all required documents are uploaded (most expensive check first)
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
+        $hasAllRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
+
+        LoggerService::info("Quote Code: {$quoteCode} - Document check: Required docs uploaded=".($hasAllRequiredDocuments ? 'YES' : 'NO'));
+
+        // If documents are not uploaded, no need to check other conditions
+        if (! $hasAllRequiredDocuments) {
+            return false;
+        }
+
+        // Only check transaction approved status if documents are uploaded
+        $hasTransactionApprovedHistory = app(QuoteStatusLogService::class)->hasTransactionApprovedStatus($quoteTypeId, $quote->id);
+        $isCurrentlyTransactionApproved = $quote->quote_status_id === QuoteStatusEnum::TransactionApproved;
+
+        return $hasTransactionApprovedHistory || $isCurrentlyTransactionApproved;
     }
 
     /**
