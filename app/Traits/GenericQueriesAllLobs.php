@@ -744,7 +744,7 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * Check if the payment is split and all payment splits are paid.
+     * Check if the payment is split and all payment splits are paid or not fully paid
      * This method checks if the given payment has a frequency of split payments
      * and verifies if all associated payment splits have a payment status of 'paid'.
      *
