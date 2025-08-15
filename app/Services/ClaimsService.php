@@ -109,52 +109,66 @@ class ClaimsService extends BaseService
         }
 
         if (! empty($filters['email'])) {
-            $query->where('email_address', $filters['email']);
+            $query->where('email', $filters['email']);
         }
 
-        if (! empty($filters['phone_number'])) {
-            $query->where('phone_number', $filters['phone_number']);
+        if (! empty($filters['mobile_no'])) {
+            $query->where('mobile_no', $filters['mobile_no']);
         }
 
         if (! empty($filters['claim_status_id'])) {
-            $query->where('claims_status_id', $filters['claim_status_id']);
+            $query->where('claim_status_id', $filters['claim_status_id']);
         }
 
         if (! empty($filters['claim_sub_status_id'])) {
             $query->where('claim_sub_status_id', $filters['claim_sub_status_id']);
         }
 
-        if (! empty($filters['assigned_claims_manager_id'])) {
-            $query->where('assigned_claims_manager_id', $filters['assigned_claims_manager_id']);
+        if (! empty($filters['manager_id'])) {
+            $query->where('manager_id', $filters['manager_id']);
         }
 
-        if (! empty($filters['line_of_business_id'])) {
-            $query->where('line_of_business_id', $filters['line_of_business_id']);
+        if (! empty($filters['quote_type_id'])) {
+            $query->where('quote_type_id', $filters['quote_type_id']);
         }
 
         if (! empty($filters['policy_number'])) {
             $query->where('policy_number', 'like', '%'.$filters['policy_number'].'%');
-        }
-
-        if (! empty($filters['plate_number'])) {
-            $query->where('plate_number', 'like', '%'.$filters['plate_number'].'%');
-        }
-
-        if (! empty($filters['vehicle_make'])) {
-            $query->where('vehicle_make', 'like', '%'.$filters['vehicle_make'].'%');
-        }
-
-        if (! empty($filters['vehicle_model'])) {
-            $query->where('vehicle_model', 'like', '%'.$filters['vehicle_model'].'%');
-        }
-
-        if (! empty($filters['vehicle_year'])) {
-            $query->where('vehicle_year', $filters['vehicle_year']);
-        }
+        }        
 
         // Date filtering - handle start date, end date, or both
-        if (! empty($filters['created_date_start']) && ! empty($filters['created_date_end'])) {
-            $query->whereBetween('created_at', [$filters['created_date_start'], $filters['created_date_end']]);
+        if (! empty($filters['created_at_start']) && ! empty($filters['created_at_end'])) {
+            $query->whereBetween('created_at', [$filters['created_at_start'], $filters['created_at_end']]);
+        }
+
+
+        // Filter by car details stored in claim_request_details table
+        if (! empty($filters['car_make'])) {
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Filtering by car_make: ' . $filters['car_make']);
+            $query->whereHas('claimRequestDetails', function($subQuery) use ($filters) {
+                $subQuery->where('car_make', 'like', '%'.$filters['car_make'].'%');
+            });
+        }
+
+        if (! empty($filters['car_model'])) {
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Filtering by car_model: ' . $filters['car_model']);
+            $query->whereHas('claimRequestDetails', function($subQuery) use ($filters) {
+                $subQuery->where('car_model', 'like', '%'.$filters['car_model'].'%');
+            });
+        }
+
+        if (! empty($filters['model_year'])) {
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Filtering by model_year: ' . $filters['model_year']);
+            $query->whereHas('claimRequestDetails', function($subQuery) use ($filters) {
+                $subQuery->where('model_year', $filters['model_year']);
+            });
+        }
+
+        if (! empty($filters['plat_number'])) {
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Filtering by plat_number: ' . $filters['plat_number']);
+            $query->whereHas('claimRequestDetails', function($subQuery) use ($filters) {
+                $subQuery->where('plat_number', 'like', '%'.$filters['plat_number'].'%');
+            });
         }
 
         return $query;
@@ -163,31 +177,28 @@ class ClaimsService extends BaseService
     public function getFilters(Request $request)
     {
         return $request->only([
-            'ref_id',
+            'code',
             'first_name',
             'last_name',
-            'email_address',
-            'phone_number',
-            'created_date_start',
-            'created_date_end',
+            'email',
+            'mobile_no',
+            'created_at_start',
+            'created_at_end',
             'claim_status_id',
             'claim_sub_status_id',
-            'assigned_claims_manager_id',
-            'claims_manager_id',
-            'claims_manager_assigned_date',
-            'line_of_business_id',
-            'plate_number',
-            'vehicle_make',
-            'vehicle_model',
-            'vehicle_year',
+            'manager_id',
+            'assigned_manager_id',
+            'lead_manager_id',
+            'manager_assigned_date', 
+            'quote_type_id',
             'policy_number',
-            'assigned_leads',
-            'unassigned_leads',
-            'next_follow_up_date',
             'complaint_status',
-            'claim_type_id',
-            'assigned_to_id',
-            'created_at',
+            'next_follow_up_date',
+            'plat_number',
+            'car_make',
+            'car_model',
+            'model_year', 
+            'assigned_status',     
         ]);
     }
 
@@ -236,15 +247,9 @@ class ClaimsService extends BaseService
                 ->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked]) // Active policy statuses
                 ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
                     $query->where(function ($subQuery) use ($email, $policyNumber) {
-                        if ($email) {
-                            $subQuery->where('personal_quotes.email', $email);
-                        }
+                        $subQuery->where('personal_quotes.email', $email);
                         if ($policyNumber) {
-                            if ($email) {
-                                $subQuery->orWhere('personal_quotes.policy_number', $policyNumber);
-                            } else {
-                                $subQuery->where('personal_quotes.policy_number', $policyNumber);
-                            }
+                            $subQuery->orWhere('personal_quotes.policy_number', $policyNumber);
                         }
                     });
                 })

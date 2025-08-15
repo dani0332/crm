@@ -18,11 +18,12 @@ let availableFilters = {
   last_name: '',
   email: '',
   mobile_no: '',
-  created_start_date: '',
-  created_end_date: '',
+  created_at_start: '',
+  created_at_end: '',
   claim_status_id: '',
   claim_sub_status_id: '',
   manager_id: '',
+  assigned_manager_id: '',
   manager_assigned_date: '',
   quote_type_id: '',
   policy_number: '',
@@ -55,6 +56,7 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'VEHICLE MAKE', value: 'car_make' },
   { text: 'VEHICLE MODEL', value: 'car_model' },
+  { text: 'VEHICLE YEAR', value: 'model_year' },
   { text: 'STATUS', value: 'claim_status' },
   { text: 'ASSIGNED TO', value: 'manager' },
   { text: 'CREATED AT', value: 'created_at' },
@@ -125,15 +127,47 @@ const complaintStatusOptions = computed(() => {
   );
 });
 
-const vehicleMakeOptions = computed(() => {
-  return [];
+const carMakeOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.carMake?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || []
+  );
 });
 
-const vehicleModelOptions = computed(() => {
-  return [];
+const carModelOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.carModel?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || []
+  );
 });
 
-function onSubmit(isValid) {
+const getCarModel = reset => {
+  let carMakeCode = props.claimDropdownOptions?.carMake.find(item => item.text === filters.car_make)?.id;
+  console.log('carMakeCode', carMakeCode , ', reset' , reset);
+
+  axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
+    props.claimDropdownOptions.carModel = data;
+    if (claimForm.car_model !== null && reset) {
+      claimForm.car_model = null;
+    }
+  });
+};
+
+
+const carModelYearOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.carModelYear?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || []
+  );
+});
+
+function searchClaims(isValid) {
   if (isValid) {
     filters.page = 1;
     Object.keys(filters).forEach(
@@ -142,7 +176,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('/claim', {
+    router.visit(route('claims.index'), {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -162,54 +196,7 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
-
-function assignManager(claimId, managerId) {
-  router.post(
-    `/claim/${claimId}/assign-manager`,
-    {
-      manager_id: managerId,
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Manager assigned successfully',
-          position: 'top',
-        });
-      },
-      onError: errors => {
-        notification.error({
-          title: 'Error assigning manager',
-          position: 'top',
-        });
-      },
-    },
-  );
-}
-
-function updateStatus(claimId, status) {
-  router.post(
-    `/claim/${claimId}/update-status`,
-    {
-      status: status,
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Status updated successfully',
-          position: 'top',
-        });
-      },
-      onError: errors => {
-        notification.error({
-          title: 'Error updating status',
-          position: 'top',
-        });
-      },
-    },
-  );
-}
+  
 
 function exportClaims() {
   loader.export = true;
@@ -221,12 +208,12 @@ function exportClaims() {
 
 // Check if selected line of business is car
 const isCarLOB = computed(() => {
-  return quoteTypeIds.Car === filters.line_of_business_id;
+  return quoteTypeIds.Car === filters.quote_type_id;
 });
 
 // Watcher to clear vehicle-specific filters when line of business changes away from car/bike
 watch(
-  () => filters.line_of_business_id,
+  () => filters.quote_type_id,
   (newValue, oldValue) => {
     if (newValue !== oldValue) {
       console.log('Line of business changed to:', newValue);
@@ -238,10 +225,10 @@ watch(
 
       // Clear vehicle-specific filters if not a vehicle type
       if (!isVehicleType) {
-        filters.plate_number = '';
-        filters.vehicle_make = '';
-        filters.vehicle_model = '';
-        filters.vehicle_year = '';
+        filters.plat_number = '';
+        filters.car_make = '';
+        filters.car_model = '';
+        filters.model_year = '';
 
         console.log('Cleared vehicle-specific filters');
       }
@@ -261,38 +248,10 @@ watch(
         </Link>
       </div>
     </div>
-    <x-divider class="my-4" />
-
-    <!-- Statistics Cards -->
-    <!-- <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" v-if="statistics">
-      <div class="bg-white p-4 rounded shadow">
-        <div class="text-2xl font-bold text-blue-600">
-          {{ statistics.total_claims }}
-        </div>
-        <div class="text-sm text-gray-600">Total Claims</div>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <div class="text-2xl font-bold text-yellow-600">
-          {{ statistics.pending_claims }}
-        </div>
-        <div class="text-sm text-gray-600">Pending Claims</div>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <div class="text-2xl font-bold text-green-600">
-          {{ statistics.completed_claims }}
-        </div>
-        <div class="text-sm text-gray-600">Completed Claims</div>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <div class="text-2xl font-bold text-red-600">
-          {{ statistics.cancelled_claims }}
-        </div>
-        <div class="text-sm text-gray-600">Cancelled Claims</div>
-      </div>
-    </div> -->
+    <x-divider class="my-4" /> 
 
     <!-- Filters -->
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form @submit="searchClaims" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-input
           v-model="filters.ref_id"
@@ -327,24 +286,24 @@ watch(
           class="w-full"
         />
         <x-input
-          v-model="filters.phone_number"
+          v-model="filters.mobile_no"
           type="text"
-          name="phone_number"
+          name="mobile_no"
           label="Mobile Number"
           placeholder="Search by Mobile Number"
           class="w-full"
         />
         <!-- Date filters -->
         <DatePicker
-          v-model="filters.created_date_start"
-          name="created_date_start"
+          v-model="filters.created_at_start"
+          name="created_at_start"
           label="Created Date Start "
           placeholder="Select Date From"
           format="yyyy-MM-dd"
         />
         <DatePicker
-          v-model="filters.created_date_end"
-          name="created_date_end"
+          v-model="filters.created_at_end"
+          name="created_at_end"
           label="Created Date End "
           placeholder="Select Date To"
           format="yyyy-MM-dd"
@@ -368,7 +327,7 @@ watch(
         />
 
         <x-select
-          v-model="filters.assigned_claim_manager_id"
+          v-model="filters.manager_id"
           label="Assigned Claims Manager"
           placeholder="Select Manager"
           :options="managersOptions"
@@ -378,7 +337,7 @@ watch(
         />
 
         <x-select
-          v-model="filters.claim_manager_id"
+          v-model="filters.manager_id"
           label="Claims Lead"
           placeholder="Select Manager"
           :options="managersOptions"
@@ -387,15 +346,15 @@ watch(
           clearable
         />
         <DatePicker
-          v-model="filters.claim_manager_assigned_date"
-          name="claim_manager_assigned_date"
+          v-model="filters.manager_assigned_date"
+          name="manager_assigned_date"
           label="Claims Manager Assigned Date "
           placeholder="Select Assigned Date"
           format="yyyy-MM-dd"
         />
 
         <x-select
-          v-model="filters.line_of_business_id"
+          v-model="filters.quote_type_id"
           label="Line of Business"
           placeholder="Select Line of Business"
           :options="lineOfBusinessOptions"
@@ -442,38 +401,40 @@ watch(
         <template v-if="isCarLOB">
           <!-- Vehicle specific filters -->
           <x-input
-            v-model="filters.plate_number"
+            v-model="filters.plat_number"
             type="text"
-            name="plate_number"
+            name="plat_number"
             label="Plate Number"
             placeholder="Search by Plate Number"
             class="w-full"
           />
           <x-select
-            v-model="filters.vehicle_make"
+            v-model="filters.car_make"
+            @update:modelValue="getCarModel(true)"
             label="Vehicle Make"
             placeholder="Select Vehicle Make"
-            :options="vehicleMakeOptions"
+            :options="carMakeOptions"
             filterable
             filterPlaceholder="Filter Vehicle Make...."
             clearable
           />
           <x-select
-            v-model="filters.vehicle_model"
+            v-model="filters.car_model"
             label="Vehicle Model"
             placeholder="Select Vehicle Model"
-            :options="vehicleModelOptions"
+            :options="carModelOptions"
             filterable
             filterPlaceholder="Filter Vehicle Model...."
             clearable
           />
-          <x-input
-            v-model="filters.vehicle_year"
-            type="number"
-            name="vehicle_year"
+          <x-select
+            v-model="filters.model_year"
             label="Vehicle Year"
-            placeholder="Search by Vehicle Year"
-            class="w-full"
+            placeholder="Select Vehicle Year"
+            :options="carModelYearOptions"
+            filterable
+            filterPlaceholder="Filter Vehicle Year...."
+            clearable
           />
         </template>
       </div>
@@ -557,28 +518,28 @@ watch(
         {{ insurer_claim_number }}
       </template>
 
-      <template #item-plate_number="{ plate_number }">
-        {{ plate_number }}
+      <template #item-plat_number="{ claim_request_details }">
+        {{ claim_request_details.plat_number }}
       </template>
 
-      <template #item-vehicle_make="{ vehicle_make }">
-        {{ vehicle_make }}
+      <template #item-car_make="{ claim_request_details }">
+        {{ claim_request_details.car_make }}
       </template>
 
-      <template #item-vehicle_model="{ vehicle_model }">
-        {{ vehicle_model }}
+      <template #item-car_model="{ claim_request_details }">
+        {{ claim_request_details.car_model }}
       </template>
 
-      <template #item-vehicle_year="{ vehicle_year }">
-        {{ vehicle_year }}
+      <template #item-model_year="{ claim_request_details }">
+        {{ claim_request_details.model_year }}
       </template>
 
       <template #item-claims_status="{ claims_status }">
         {{ claims_status?.text }}
       </template>
 
-      <template #item-assigned_to="{ assigned_to }">
-        {{ assigned_to?.name }}
+      <template #item-manager="{ manager }">
+        {{ manager?.name }} 
       </template>
 
       <template #item-created_at="{ created_at }">
