@@ -21,7 +21,7 @@ class PetAllocation extends BaseAllocation
     {
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class." - trying to get {$role} with current status: {$status}");
-            $eligibleUser = $this->getAdvisorBaseQuery($status, [$role])->whereIn('users.email', $emails)->first();
+            $eligibleUser = $this->getAdvisorBaseQuery($status, [$role])->whereIn('users.email', $emails)->logRawSql()->first();
 
             if ($eligibleUser) {
                 LoggerService::info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}");
@@ -57,7 +57,11 @@ class PetAllocation extends BaseAllocation
 
                 return $advisor;
             }
+
+            return $this->findEligibleAdvisor($statusOrder, RolesEnum::HomeAdvisor, $emails);
         }
+
+        $this->skipRuleUsers = true;
 
         $petAdvisorEmails = $this->getAdvisorEmails(ApplicationStorageEnums::PET_ADVISORS);
         if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $petAdvisorEmails)) {
