@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Exports\Reports\EndorsementReportExport;
 use App\Models\Customer;
 use App\Models\Lookup;
@@ -129,6 +130,8 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.status',
                 'ps.sage_reciept_id',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -148,6 +151,11 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
@@ -221,6 +229,8 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.status',
                 DB::raw("'N/A' as sage_reciept_id"),
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -238,6 +248,11 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
@@ -299,6 +314,9 @@ class EndorsementReportService extends ManagementReport
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
             $item->status = ucwords(str_replace('_', ' ', strtolower($item->status)));
+            $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
+                ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
+                : ($item->currently_insured_with_text ?? 'N/A');
         });
     }
 
