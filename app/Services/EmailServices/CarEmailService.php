@@ -781,25 +781,36 @@ class CarEmailService extends BaseService
 
     public function buildFailedCarRenewalsEmailData($failedQuotes)
     {
-        // Retrieve emails of all users with the CarRenewalManager role
+        // Retrieve all CarRenewalManager emails in a single query
         $renewalsManagersEmails = User::role(\App\Enums\RolesEnum::CarRenewalManager)
             ->pluck('email')
-            ->toArray();
-        $failedRenewalProcesses = RenewalQuoteProcess::whereIn('policy_number', collect($failedQuotes)->first())->first();
-        $renewalUploadLead = RenewalsUploadLeads::where('id', $failedRenewalProcesses->renewals_upload_lead_id)->first();
+            ->filter()
+            ->values()
+            ->all();
+
+        // Get all failed renewal processes for the given policy numbers
+        $failedPolicyNumbers = collect($failedQuotes)->unique()->values()->all();
+        $failedRenewalProcess = RenewalQuoteProcess::whereIn('policy_number', $failedPolicyNumbers)
+            ->latest('id')
+            ->first();
+
+        // Get the related RenewalsUploadLeads record, if available
+        $renewalUploadLead = $failedRenewalProcess ? RenewalsUploadLeads::find($failedRenewalProcess->renewals_upload_lead_id) : null;
 
         return (object) [
-            'failedQuotes' => implode(', ', $failedQuotes),
-            'quoteUID' => '',
-            'renewalsManagersEmails' => $renewalsManagersEmails ?? [],
-            'renewalManagerEmail' => $renewalsManagersEmails[0] ?? '',
-            'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
-            'dateOfAttempt' => now()->format('Y-m-d'),
-            'failedLeadsCount' => count($failedQuotes),
-            'fileName' => $renewalUploadLead->file_name ?? '',
-            'fileDownloadUrl' => route('validation-failed-download', ['id' => $renewalUploadLead->id]),
-
+            'failedQuotes'            => implode(', ', $failedPolicyNumbers),
+            'quoteUID'                => '', // Not used, reserved for future
+            'renewalsManagersEmails'  => $renewalsManagersEmails,
+            'renewalManagerEmail'     => $renewalsManagersEmails[0] ?? '',
+            'workflowType'            => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
+            'dateOfAttempt'           => now()->format('Y-m-d'),
+            'failedLeadsCount'        => count($failedPolicyNumbers) ?? 0,
+            'fileName'                => $renewalUploadLead?->file_name ?? '',
+            'fileDownloadUrl'         => $renewalUploadLead
+                ? route('validation-failed-download', ['id' => $renewalUploadLead->id])
+                : null,
         ];
+    
     }
 
 }
