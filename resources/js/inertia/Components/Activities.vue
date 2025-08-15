@@ -192,9 +192,8 @@ const activityEdit = data => {
           <template #item-due_date="item">
             <template
               v-if="
-                compareDueDate(item.due_date) &&
-                item.is_cold === 1 &&
-                item.status === 0
+                (compareDueDate(item.due_date) && item.is_cold === 1) ||
+                (compareDueDate(item.due_date) && item.status === 0)
               "
             >
               <x-tooltip placement="top">
