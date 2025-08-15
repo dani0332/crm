@@ -41,7 +41,7 @@ enum ClaimsEnum: string
 
     /* Claim Request Status  */
     case CLAIM_STATUS_OPEN = 'Open';
-    case CLAIM_STATUS_CLOSED = 'Closed';
+    case CLAIM_STATUS_CLOSED = 'Close';
 
     // General Claim Sub Statuses
     case CLAIM_SUB_STATUS_NEW_CLAIM = 'New claim';

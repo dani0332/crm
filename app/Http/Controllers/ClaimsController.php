@@ -263,7 +263,6 @@ class ClaimsController extends Controller
     {
         try {
             $updatedClaimRequest = $this->claimsService->updateClaimStatus($uuid, $request->validated());
-
             return redirect()->back()->with('success', 'Claim status updated successfully.');
 
         } catch (Exception $e) {
@@ -281,89 +280,9 @@ class ClaimsController extends Controller
     /**
      * Export claims data
      */
-    public function export(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function export(Request $request)
     {
-        // Check permission
-        $this->authorize('viewAny', Claim::class);
-
-        try {
-            // Apply same filters as index
-            $query = $this->claimsService->getGridData($this->genericModel, $request);
-            $claims = $query->get();
-
-            // Create CSV export
-            $filename = 'claims_'.now()->format('Y-m-d_H-i-s').'.csv';
-            $headers = [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            ];
-
-            $callback = function () use ($claims) {
-                $file = fopen('php://output', 'w');
-
-                // CSV headers
-                fputcsv($file, [
-                    'Ref ID',
-                    'First Name',
-                    'Last Name',
-                    'Email',
-                    'Phone Number',
-                    'Line of Business',
-                    'Claim Type',
-                    'Claim Sub Status',
-                    'Policy Number',
-                    'Insurer Claim Number',
-                    'Claim Status',
-                    'Assigned Claims Manager',
-                    'Claims Manager',
-                    'Created Date',
-                    'Next Follow Up Date',
-                    'Plate Number',
-                    'Vehicle Make',
-                    'Vehicle Model',
-                    'Vehicle Year',
-                    'Complaint Status',
-                ]);
-
-                // CSV data
-                foreach ($claims as $claim) {
-                    fputcsv($file, [
-                        $claim->ref_id,
-                        $claim->first_name,
-                        $claim->last_name,
-                        $claim->email,
-                        $claim->phone_number,
-                        $claim->line_of_business,
-                        $claim->claim_type,
-                        $claim->claim_sub_status,
-                        $claim->policy_number,
-                        $claim->insurer_claim_number,
-                        $claim->claim_status,
-                        $claim->assigned_claims_manager,
-                        $claim->claims_manager,
-                        $claim->created_at,
-                        $claim->next_follow_up_date,
-                        $claim->plate_number,
-                        $claim->vehicle_make,
-                        $claim->vehicle_model,
-                        $claim->vehicle_year,
-                        $claim->complaint_status,
-                    ]);
-                }
-
-                fclose($file);
-            };
-
-            return response()->stream($callback, 200, $headers);
-        } catch (Exception $e) {
-            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error exporting claims', extra: [
-                'error' => $e->getMessage(),
-                'user_id' => auth()->id(),
-            ]);
-
-            return redirect()->back()
-                ->with('error', 'Failed to export claims data.');
-        }
+         //
     }
 
 

@@ -1,4 +1,6 @@
 <script setup>
+import { router } from '@inertiajs/vue3'
+
 const props = defineProps({
   claim: Object,
   dropdowns: Object,
@@ -416,6 +418,7 @@ const updateClaimStatus = isValid => {
       preserveScroll: true,
       onSuccess: response => {
         console.log('response', response);
+        router.visit(route('claims.show', props.claim?.uuid), {  preserveScroll: true, });
       },
       onError: errors => {
         Object.keys(errors).forEach(function (key) {

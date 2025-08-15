@@ -737,10 +737,10 @@ class ClaimsService extends BaseService
         }
 
         if ($isHealthQuoteType) {
-            $subStatusListForClaimClosed[] = [
+            $subStatusListForClaimClosed = array_merge($subStatusListForClaimClosed, [
                 ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_APPROVED->value,
                 ClaimsEnum::CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED->value,
-            ];
+            ]);
         }
 
         if ($isLifeQuoteType) {
@@ -807,13 +807,13 @@ class ClaimsService extends BaseService
                 $statusUpdateData['claim_sub_status_id'] = $data['claim_sub_status_id'];
             }
 
-            if (isset($data['claim_status_id'])) {
-                $statusUpdateData['claim_status_id'] = $data['claim_status_id'];
-            } else {
-                $subStatus = ClaimsStatus::find($data['claim_sub_status_id']);
-                $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : ClaimsEnum::CLAIM_STATUS_OPEN->value;
+            $subStatus = ClaimsStatus::find($data['claim_sub_status_id']);
+            $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
+            if ($targetStatus) {
                 $statusUpdateData['claim_status_id'] = ClaimsStatus::where('text', $targetStatus)->where('parent', true)->where('is_active', 1)->first()?->id;
-            }
+            }elseif (isset($data['claim_status_id'])) {
+                $statusUpdateData['claim_status_id'] = $data['claim_status_id'];
+            } 
 
             // Update the claim request
             if (!empty($statusUpdateData)) {
