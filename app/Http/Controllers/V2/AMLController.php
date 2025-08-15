@@ -525,6 +525,7 @@ class AMLController extends Controller
                         'status' => $getInsurerScreeningResponse['status'],
                         'message' => $getInsurerScreeningResponse['message'],
                         'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
+                        'isRenewalLead' => $getInsurerScreeningResponse['isRenewalLead'] ?? false,
                     ];
 
                     if (isset($getInsurerScreeningResponse['autoCaptureStatus'])) {
@@ -906,13 +907,14 @@ class AMLController extends Controller
                     'status' => $insurerAMLScreeningResponse['status'],
                     'message' => $insurerAMLScreeningResponse['message'],
                     'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched'] ?? false,
+                    'isRenewalLead' => $insurerAMLScreeningResponse['isRenewalLead'] ?? false,
                     'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
                     'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
                 ];
             }
         }
 
-        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared) {
+        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['isRenewalLead']) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
         }
