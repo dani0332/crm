@@ -150,6 +150,7 @@ class AmtController extends Controller
 
         $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS->value) : false;
         \Log::info('Can assign client support after product check: '.json_encode($canAssignClientSupport));
+        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::GROUP_MEDICAL->value) : false;
 
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
