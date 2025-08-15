@@ -14,6 +14,7 @@ const notification = useToast();
 const lookups = page.props.lookups;
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const isSyncFromInsurer = ref(false);
 
 // Computed options for dropdowns
 const driverGenderOptions = computed(() => [
@@ -65,13 +66,17 @@ const additionalDriverDetailsForm = useForm({
 });
 
 const hasNotEditPermission = computed(() => {
-  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
+  return !hasPermission(permissionsEnum.EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS);
 });
 
-const submitAdditionalDriverDetailsForm = (isValid) => {
+const submitAdditionalDriverDetailsForm = async (isValid) => {
   if (isValid) {
+    // Clear any previous errors
+    additionalDriverDetailsForm.clearErrors();
+
     additionalDriverDetailsForm.processing = true;
-    axios.post('/kyc/update-additional-vehicle-driver-details', additionalDriverDetailsForm).then(response => {
+    try {
+      const response = await axios.post('/kyc/update-additional-vehicle-driver-details', additionalDriverDetailsForm);
       if (response.data.success) {
         notification.success({
           title: response.data.message,
@@ -88,22 +93,29 @@ const submitAdditionalDriverDetailsForm = (isValid) => {
           position: 'top',
         });
       }
-    }).catch(error => {
-      notification.error({
-        title: error.response.data.message,
-        position: 'top',
-      });
-    }).catch(error => {
-      const flash_messages = error.response.data.errors;
-      Object.keys(flash_messages).forEach(function (key) {
+    } catch (error) {
+      // Handle validation errors (422 status)
+      if (error.response && error.response.status === 422) {
+        const validationErrors = error.response.data.errors;
+        if (validationErrors) {
+          // Set each validation error on the form
+          Object.entries(validationErrors).forEach(([field, messages]) => {
+            notification.error({
+              title: messages[0],
+              position: 'top',
+            });
+            additionalDriverDetailsForm.setError(field, messages[0]);
+          });
+        }
+      } else {
         notification.error({
-          title: flash_messages[key],
+          title: 'Error saving driver details',
           position: 'top',
         });
-      });
-    }).finally(() => {
+      }
+    } finally {
       additionalDriverDetailsForm.processing = false;
-    });
+    }
   }
 };
 
@@ -117,6 +129,25 @@ const isLIVA = computed(() => {
 
 const isSUKOON = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
+});
+
+// Computed property to check if driver name fields should be disabled
+const isDriverNameFieldsDisabled = computed(() => {
+  return additionalDriverDetailsForm.is_insured_and_driver_same === 1 || additionalDriverDetailsForm.is_insured_and_driver_same === '1';
+});
+
+// Computed property to check if driver name fields should be required
+const isDriverNameFieldsRequired = computed(() => {
+  return (additionalDriverDetailsForm.is_insured_and_driver_same === 0 || additionalDriverDetailsForm.is_insured_and_driver_same === '0');
+});
+
+// Watch for changes in is_insured_and_driver_same to clear driver names when they become disabled
+watch(() => additionalDriverDetailsForm.is_insured_and_driver_same, (newValue) => {
+  // If insured and driver are the same (1 or '1'), clear the driver name fields
+  if ((newValue === 1 || newValue === '1') && !isSyncFromInsurer.value) {
+    additionalDriverDetailsForm.driver_first_name = '';
+    additionalDriverDetailsForm.driver_last_name = '';
+  }
 });
 
 watch(() => props.insurerPortalSyncData, (driverDetails) => {
@@ -143,6 +174,9 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         additionalDriverDetailsForm[targetKey] = driverDetails[sourceKey];
       }
     });
+    if (driverDetails?.is_insured_and_driver_same === '1') {
+      isSyncFromInsurer.value = true;
+    }
   }
 }, { deep: true });
 </script>
@@ -158,131 +192,143 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
     <x-form @submit="submitAdditionalDriverDetailsForm">
       <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
         <!-- Is Insured and Driver Same -->
-        <x-field label="Is the Insured and Driver the same?" required>
-          <x-select
-            v-model="additionalDriverDetailsForm.is_insured_and_driver_same"
-            :rules="[isRequired]"
-            :options="[
-              { value: '1', label: 'Yes' },
-              { value: '0', label: 'No' }
-            ]"
-            placeholder="Select Is Insured and Driver Same"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-select
+          v-model="additionalDriverDetailsForm.is_insured_and_driver_same"
+          :rules="[isRequired]"
+          :options="[
+            { value: '1', label: 'Yes' },
+            { value: '0', label: 'No' }
+          ]"
+          placeholder="Select Is Insured and Driver Same"
+          :disabled="hasNotEditPermission"
+          label="Is the Insured and Driver the same?"
+          :tooltip="'Indicates if the insured person is also the main driver of the vehicle'"
+          required
+        />
 
-        <!-- Driver Name -->
-        <x-field label="Driver First Name" :required="! isGIG">
-          <x-input
-            v-model="additionalDriverDetailsForm.driver_first_name"
-            :rules="(! isGIG) ? [isRequired] : []"
-            placeholder="Driver First Name"
-            type="text"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <!-- Driver Name - disabled when insured and driver are the same -->
+        <x-input
+          v-model="additionalDriverDetailsForm.driver_first_name"
+          :rules="isDriverNameFieldsRequired ? [isRequired] : []"
+          :required="isDriverNameFieldsRequired"
+          placeholder="Driver First Name"
+          type="text"
+          :disabled="isDriverNameFieldsDisabled || hasNotEditPermission"
+          label="Driver First Name"
+          :tooltip="'First name of the driver operating the insured vehicle'"
+        />
 
-        <x-field label="Driver Last Name" :required="! isGIG">
-          <x-input
-            v-model="additionalDriverDetailsForm.driver_last_name"
-            :rules="(! isGIG) ? [isRequired] : []"
-            placeholder="Driver Last Name"
-            type="text"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-input
+          v-model="additionalDriverDetailsForm.driver_last_name"
+          :rules="isDriverNameFieldsRequired ? [isRequired] : []"
+          :required="isDriverNameFieldsRequired"
+          placeholder="Driver Last Name"
+          type="text"
+          :disabled="isDriverNameFieldsDisabled || hasNotEditPermission"
+          label="Driver Last Name"
+          :tooltip="'Last name of the driver operating the insured vehicle'"
+        />
 
-        <x-field label="Driver DOB" :required="isSUKOON">
-          <DatePicker
-            v-model="additionalDriverDetailsForm.driver_dob"
-            :rules="isSUKOON ? [isRequired] : []"
-            placeholder="Driver DOB"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <DatePicker
+          v-model="additionalDriverDetailsForm.driver_dob"
+          :rules="isSUKOON ? [isRequired] : []"
+          :required="isSUKOON"
+          placeholder="Driver DOB"
+          :disabled="hasNotEditPermission"
+          label="Driver DOB"
+          :tooltip="'Date of birth of the driver'"
+        />
 
-        <x-field label="Driver Gender" :required="! isSUKOON">
-          <x-select
-            v-model="additionalDriverDetailsForm.driver_gender"
-            :rules="(! isSUKOON) ? [isRequired] : []"
-            :options="driverGenderOptions"
-            placeholder="Select Driver Gender"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-select
+          v-model="additionalDriverDetailsForm.driver_gender"
+          :rules="(! isSUKOON) ? [isRequired] : []"
+          :required="! isSUKOON"
+          :options="driverGenderOptions"
+          placeholder="Select Driver Gender"
+          :disabled="hasNotEditPermission"
+          label="Driver Gender"
+          :tooltip="'Gender of the driver'"
+        />
 
-        <x-field label="Driver License Number" required>
-          <x-input
-            v-model="additionalDriverDetailsForm.driver_license_number"
-            :rules="[isRequired]"
-            placeholder="Driver License Number"
-            type="text"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-input
+          v-model="additionalDriverDetailsForm.driver_license_number"
+          :rules="[isRequired]"
+          required
+          placeholder="Driver License Number"
+          type="text"
+          :disabled="hasNotEditPermission"
+          label="Driver License Number"
+          :tooltip="`Driver's license number issued by the local authority`"
+        />
 
-        <x-field label="License Issue Place" :required="isSUKOON">
-          <x-select
-            v-model="additionalDriverDetailsForm.license_issue_place"
-            :rules="isSUKOON ? [isRequired] : []"
-            :options="licenseIssuePlaceOptions"
-            placeholder="Select License Issue Place"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-select
+          v-model="additionalDriverDetailsForm.license_issue_place"
+          :rules="isSUKOON ? [isRequired] : []"
+          :required="isSUKOON"
+          :options="licenseIssuePlaceOptions"
+          placeholder="Select License Issue Place"
+          :disabled="hasNotEditPermission"
+          label="License Issue Place"
+          :tooltip="`Emirate where the driver's license was issued`"
+        />
 
-        <x-field label="License Issue Date" :required="isSUKOON">
-          <DatePicker
-            v-model="additionalDriverDetailsForm.license_issue_date"
-            :rules="isSUKOON ? [isRequired] : []"
-            placeholder="License Issue Date"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <DatePicker
+          v-model="additionalDriverDetailsForm.license_issue_date"
+          :rules="isSUKOON ? [isRequired] : []"
+          :required="isSUKOON"
+          placeholder="License Issue Date"
+          :disabled="hasNotEditPermission"
+          label="License Issue Date"
+          :tooltip="`Date of issuance of the current driver's license`"
+        />
 
-        <x-field label="License Expiry Date" :required="! isLIVA">
-          <DatePicker
-            v-model="additionalDriverDetailsForm.license_expiry_date"
-            placeholder="License Expiry Date"
-            :rules="(! isLIVA) ? [isRequired] : []"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <DatePicker
+          v-model="additionalDriverDetailsForm.license_expiry_date"
+          placeholder="License Expiry Date"
+          :rules="(! isLIVA) ? [isRequired] : []"
+          :required="! isLIVA"
+          :disabled="hasNotEditPermission"
+          label="License Expiry Date"
+          :tooltip="`Expiry date of the current driver's license`"
+        />
 
         <!-- TODO: Required only if 'Driver same as Client?' is NO -->
-        <x-field label="UAE Driving Experience" :required="isLIVA">
-          <x-select
-            filterable
-            v-model="additionalDriverDetailsForm.uae_driving_experience"
-            :rules="isLIVA ? [isRequired] : []"
-            :options="drivingExperienceOptions"
-            placeholder="Select UAE License Years"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-select
+          filterable
+          v-model="additionalDriverDetailsForm.uae_driving_experience"
+          :rules="isLIVA ? [isRequired] : []"
+          :required="isLIVA"
+          :options="drivingExperienceOptions"
+          placeholder="Select UAE License Years"
+          :disabled="hasNotEditPermission"
+          label="UAE Driving Experience"
+          :tooltip="`Number of years the driver has held a valid license in the UAE`"
+        />
 
-        <x-field label="Home Country License Issuance" :required="! isGIG">
-          <x-select
-            filterable
-            v-model="additionalDriverDetailsForm.home_country_license_issuance"
-            :rules="(! isGIG) ? [isRequired] : []"
-            placeholder="Select License Home Country"
-            :options="nationalitiesOptions"
-            class="w-full"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-select
+          filterable
+          v-model="additionalDriverDetailsForm.home_country_license_issuance"
+          :rules="(! isGIG) ? [isRequired] : []"
+          :required="! isGIG"
+          placeholder="Select License Home Country"
+          :options="nationalitiesOptions"
+          class="w-full"
+          :disabled="hasNotEditPermission"
+          label="Home Country License Issuance"
+          :tooltip="`Select the home country where the driver's license was issued`"
+        />
 
-        <x-field label="Home Country Driving Experience" :required="isLIVA">
-          <x-select
-            filterable
-            v-model="additionalDriverDetailsForm.home_country_driving_experience"
-            :rules="isLIVA ? [isRequired] : []"
-            :options="drivingExperienceOptions"
-            placeholder="Select Driver Years Home Country"
-            :disabled="hasNotEditPermission"
-          />
-        </x-field>
+        <x-select
+          filterable
+          v-model="additionalDriverDetailsForm.home_country_driving_experience"
+          :rules="isLIVA ? [isRequired] : []"
+          :required="isLIVA"
+          :options="drivingExperienceOptions"
+          placeholder="Select Driver Years Home Country"
+          :disabled="hasNotEditPermission"
+          label="Home Country Driving Experience"
+          :tooltip="`Number of years the driver has held a valid license in their home country`"
+        />
       </dl>
       <div
         class="flex justify-end my-5 gap-x-2"

@@ -56,6 +56,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
@@ -83,7 +84,8 @@ class AMLController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('permission:aml-list', ['only' => ['index']]);
+        $this->middleware('permission:' . PermissionsEnum::AMLList . '|' . PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS, 
+            ['only' => ['index']]);
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
 
@@ -311,6 +313,7 @@ class AMLController extends Controller
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
             'isAnyEscalated' => $isAnyEscalated,
+            'isPrivateCar' => ! InsuranceProviderRepository::isCommercialVehicles($quoteRequest),
         ], $businessPayload ?? []));
     }
 

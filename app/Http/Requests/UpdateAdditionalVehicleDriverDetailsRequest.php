@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
 use App\Models\CarQuote;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -253,6 +254,10 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            if (! auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)) {
+                $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
+            }
+
             $this->validateDriverDetails($validator);
             $this->validateRtaTransactionTypeRules($validator);
         });

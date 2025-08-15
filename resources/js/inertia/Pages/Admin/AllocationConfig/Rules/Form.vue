@@ -4,6 +4,7 @@ const props = defineProps({
   id: String,
   usersList: Object,
   rulesTypeList: Object,
+  quoteTypes: Object,
 });
 const { isRequired, isNumber } = useRules();
 
@@ -17,6 +18,7 @@ const ruleForm = useForm({
   is_active: props.rule?.is_active ? true : false,
   rule_users: props.rule?.rule_users.map(x => x.id) ?? [],
   rule_type: props.rule?.rule_type.id ?? null,
+  quote_type_id: props.rule?.quote_type?.id.toString() ?? '',
 });
 
 const ruleUsers = computed(() => {
@@ -39,6 +41,16 @@ const ruleTypes = computed(() => {
   });
 });
 
+const quoteTypesOptions = computed(() => {
+  let quoteTypesList = Object.values(props.quoteTypes);
+  return quoteTypesList.map(quoteType => {
+    return {
+      value: quoteType.id,
+      label: quoteType.name,
+    };
+  });
+});
+
 const selectedUsers = computed(() => {
   if (!props.rule || !props.rule.rule_users) {
     return [];
@@ -49,6 +61,10 @@ const selectedUsers = computed(() => {
 
 const selectedRuleType = computed(() => {
   return props.rule && props.rule.rule_type ? props.rule.rule_type.id : null;
+});
+
+const selectedQuoteType = computed(() => {
+  return props.rule && props.rule.quote_type ? props.rule.quote_type.id : null;
 });
 
 function onSubmit(isValid) {
@@ -87,6 +103,7 @@ function onSubmit(isValid) {
     </div>
   </div>
   <x-divider class="my-4" />
+
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-input
@@ -105,6 +122,18 @@ function onSubmit(isValid) {
         filterable
         filterPlaceholder="Filter Rule Type...."
         placeholder="Select Rule Type"
+        required
+        :rules="[isRequired]"
+      />
+
+      <x-select
+        v-model="ruleForm.quote_type_id"
+        label="Quote Type"
+        :options="quoteTypesOptions"
+        :error="ruleForm.errors.quote_type_id"
+        filterable
+        filterPlaceholder="Filter Quote Type...."
+        placeholder="Select Quote Type"
         required
         :rules="[isRequired]"
       />

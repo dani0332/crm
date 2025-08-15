@@ -7,6 +7,7 @@ use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
 
 class PetAllocation extends BaseAllocation
 {
@@ -45,6 +46,17 @@ class PetAllocation extends BaseAllocation
 
         if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
+
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+
+        if (count($emails) > 0) {
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
+            if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $emails)) {
+                LoggerService::info(self::class." - eligible pet advisor found with  user id: {$advisor->id}, rule condition: true");
+
+                return $advisor;
+            }
         }
 
         $petAdvisorEmails = $this->getAdvisorEmails(ApplicationStorageEnums::PET_ADVISORS);

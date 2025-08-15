@@ -37,4 +37,5 @@ final class WorkflowTypeEnum extends Enum
     public const LIFE_BIRTHDAY_WISH_EMAIL = 'life_birthday_wish_email';
     public const LIFE_AUTOMATED_FOLLOWUPS = 'life_automated_followups';
     public const SIC_HEALTH_FOLLOWUPS_WA = 'sic_health_followups_wa';
+    public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
 }
