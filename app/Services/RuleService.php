@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RuleTypeEnum;
 use App\Models\LeadSource;
 use App\Models\Rule;
@@ -255,6 +256,19 @@ class RuleService extends BaseService
             ->distinct()
             ->pluck('rule_users.user_id')
             ->toArray();
+    }
 
+    public function getRuleUserIds(QuoteTypes $quoteType, bool $excludeVehicleUseRule = false): mixed
+    {
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->where('rules.quote_type_id', $quoteType->id())
+            ->where('rules.is_active', 1)
+            ->distinct()
+            ->when($quoteType === QuoteTypes::CAR && $excludeVehicleUseRule, function ($query) {
+                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
+            })
+            ->pluck('rule_users.user_id')
+            ->toArray();
     }
 }
