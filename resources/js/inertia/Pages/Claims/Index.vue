@@ -66,13 +66,11 @@ const statusOptions = computed(() => {
   if (!props.claimDropdownOptions?.claimStatuses) {
     return [];
   }
-
-  // Convert indexed array to options format
-  return Object.entries(props.claimDropdownOptions.claimStatuses).map(
-    ([id, text]) => ({
-      value: parseInt(id),
-      label: text,
-    }),
+  return (
+    props.claimDropdownOptions?.claimStatuses?.map(cs => ({
+      value: cs.id,
+      label: cs.text,
+    })) || []
   );
 });
 
@@ -102,7 +100,7 @@ const claimTypeOptions = computed(() => {
 const claimSubStatusOptions = computed(() => {
   return (
     props.claimDropdownOptions?.claimSubStatuses
-      ?.filter(ct => ct.quote_type_id === filters.line_of_business_id)
+      ?.filter(ct => ct.quote_type_id === filters.quote_type_id)
       ?.map(ct => ({
         value: ct.id,
         label: ct.text,
