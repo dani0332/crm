@@ -966,7 +966,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($epTransaction as $item) {
                 $product_id = $item->product_id;
-                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)?->embedded_product_id;
                 $payment = $item['payments'][0];
 
                 $data = [
