@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
+use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
@@ -366,7 +367,7 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
         ]);
 
-        $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        /* $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         if (! $advisorId) {
             $response = QuoteTypes::getName($quoteType)->allocate($uuid, $unassistedTeamId);
             if ($response && $response['advisorId']) {
@@ -375,21 +376,14 @@ class PolicyIssuanceService
                     'advisorId' => $advisorId,
                 ]);
             }
-        }
+        } */
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
             'advisorId' => $advisorId,
         ]);
 
         if ($advisorId) {
-            // TODO: confirm this
-            if (is_numeric($quoteType)) {
-                $quoteType = QuoteTypes::getName($quoteType)->value;
-            }
-            if ($quoteType === QuoteTypes::TRAVEL->value) {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
-                SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
-            } elseif ($quoteType === QuoteTypes::CAR->value) {
+            if ($quoteType === QuoteTypes::CAR->value) {
                 // For other quote types, we need to dispatch respective failure email job
                 LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob');
                 AutomationFailedJob::dispatch(
@@ -398,17 +392,9 @@ class PolicyIssuanceService
                     'Please coordinate with the IT Department to address and rectify the issue.',
                     $statusAPIFailed,
                     $processInvolved,
-                    WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                    WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+                    UserNameEnum::PA_USER
                 )->onQueue('policy-issuance-automation');
-            }
-
-            /* Send Failed notification only when Insurer API status is not failed already to prevent multiple email triggers and Insurer API Status is not null */
-            if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
-                if ($quoteType === QuoteTypes::TRAVEL->value) {
-                    SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
-                } else {
-                    // For other quote types, we need to dispatch respective failure email job
-                }
             }
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Quote Document Customer Email Checks', extra: [
