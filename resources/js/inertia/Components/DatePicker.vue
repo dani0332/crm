@@ -140,6 +140,6 @@ const iconPosition = computed(() => {
 }
 
 .dp--clear-btn {
-  top: 50% !important;
+  top: 2.7rem !important;
 }
 </style>
