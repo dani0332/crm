@@ -24,13 +24,13 @@ class ClaimRequestEmailService extends BaseService
     /**
      * Send Google review email to customer
      *
-     * @param ClaimRequest $claimRequest The claim request that was closed
+     * @param  ClaimRequest  $claimRequest  The claim request that was closed
      * @return int|null HTTP status code or null if failed
      */
     public function sendGoogleReviewEmail(ClaimRequest $claimRequest): ?int
     {
         try {
-            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Sending Google review email - Claim UUID: ' . $claimRequest->uuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Sending Google review email - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'customer_email' => $claimRequest->email,
@@ -43,18 +43,19 @@ class ClaimRequestEmailService extends BaseService
             // Get Bird webhook URL from application storage
             $googleReviewEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::GOOGLE_REVIEW_EMAIL)->first();
 
-            if (!$googleReviewEvent) {
-                LoggerService::warning(self::class . '::' . __FUNCTION__ . ' - Google review email workflow key not found - Claim UUID: ' . $claimRequest->uuid, [
+            if (! $googleReviewEvent) {
+                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Google review email workflow key not found - Claim UUID: '.$claimRequest->uuid, [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                 ]);
+
                 return null;
             }
 
             // Trigger Bird webhook
             $response = app(BirdService::class)->triggerWebHookRequest($googleReviewEvent->value, $emailData);
 
-            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Google review email workflow triggered - Claim UUID: ' . $claimRequest->uuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Google review email workflow triggered - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'response_status' => $response->status_code,
@@ -64,7 +65,7 @@ class ClaimRequestEmailService extends BaseService
             return $response->status_code;
 
         } catch (Exception $e) {
-            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error sending Google review email - Claim UUID: ' . $claimRequest->uuid, [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error sending Google review email - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'error' => $e->getMessage(),
@@ -77,9 +78,6 @@ class ClaimRequestEmailService extends BaseService
 
     /**
      * Build email data for Google review email
-     *
-     * @param ClaimRequest $claimRequest
-     * @return object
      */
     private function buildGoogleReviewEmailData(ClaimRequest $claimRequest): object
     {
@@ -106,27 +104,26 @@ class ClaimRequestEmailService extends BaseService
 
     /**
      * Check if customer is eligible for Google review email
-     *
-     * @param ClaimRequest $claimRequest
-     * @return bool
      */
     public function isEligibleForReviewEmail(ClaimRequest $claimRequest): bool
     {
         // Check if customer has email
         if (empty($claimRequest->email)) {
-            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Customer not eligible for Google review email - no email address - Claim UUID: ' . $claimRequest->uuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Customer not eligible for Google review email - no email address - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
             ]);
+
             return false;
         }
 
         // Check if claim has policy number (indicates it's a valid claim)
         if (empty($claimRequest->policy_number)) {
-            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Customer not eligible for Google review email - no policy number - Claim UUID: ' . $claimRequest->uuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Customer not eligible for Google review email - no policy number - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
             ]);
+
             return false;
         }
 

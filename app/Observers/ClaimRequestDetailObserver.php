@@ -8,30 +8,18 @@ use App\Models\ClaimRequestDetail;
 
 class ClaimRequestDetailObserver
 {
-    public function updating(ClaimRequestDetail $claimRequestDetail): void
-    {
+    public function updating(ClaimRequestDetail $claimRequestDetail): void {}
 
-    }
- 
-    public function updated(ClaimRequestDetail $claimRequestDetail): void
-    {
-
-    }
+    public function updated(ClaimRequestDetail $claimRequestDetail): void {}
 
     /**
      * Handle the ClaimRequestDetail "creating" event.
      */
-    public function creating(ClaimRequestDetail $claimRequestDetail): void
-    {
-
-    }
+    public function creating(ClaimRequestDetail $claimRequestDetail): void {}
 
     /**
      * Handle the ClaimRequestDetail "created" event.
      */
-    public function created(ClaimRequestDetail $claimRequestDetail): void
-    {
-
-    }
+    public function created(ClaimRequestDetail $claimRequestDetail): void {}
 
 }

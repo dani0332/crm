@@ -47,7 +47,7 @@ class ClaimRequestDetail extends Model implements AuditableContract
     ];
     protected $casts = [
         'created_at' => 'datetime',
-        'updated_at' => 'datetime', 
+        'updated_at' => 'datetime',
     ];
 
     // Filterable fields for search functionality
@@ -73,7 +73,6 @@ class ClaimRequestDetail extends Model implements AuditableContract
             }
         });
     }
-
 
     /**
      * Relationships

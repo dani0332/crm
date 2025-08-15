@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Enums\ClaimsEnum;
+use App\Jobs\SendGoogleReviewEmailJob;
 use App\Models\ClaimRequest;
+use App\Models\ClaimsStatus;
 use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
-use App\Jobs\SendGoogleReviewEmailJob;
-use App\Enums\ClaimsEnum;
-use App\Models\ClaimsStatus;
 
 class ClaimRequestObserver
 {
     public function updating(ClaimRequest $claimRequest): void
     {
-        $claimService = new ClaimsService();
+        $claimService = new ClaimsService;
         if ($claimRequest->isDirty('claim_number')) {
             $originalClaimNumber = $claimRequest->getOriginal('claim_number');
             $newClaimNumber = $claimRequest->claim_number;
 
-            if (empty($originalClaimNumber) && !empty($newClaimNumber)) {
+            if (empty($originalClaimNumber) && ! empty($newClaimNumber)) {
                 $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
             }
         }
@@ -37,16 +37,14 @@ class ClaimRequestObserver
         }
     }
 
-
-
     /**
      * Handle the ClaimRequest "creating" event.
      */
     public function creating(ClaimRequest $claimRequest): void
     {
-        $claimService = new ClaimsService();
+        $claimService = new ClaimsService;
         // If claim number is provided during creation, set status to "Claim registered"
-        if (!empty($claimRequest->claim_number)) {
+        if (! empty($claimRequest->claim_number)) {
             $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
         }
     }
@@ -72,30 +70,25 @@ class ClaimRequestObserver
 
     /**
      * Check if the given claim status ID represents a closed status
-     *
-     * @param int|null $statusId
-     * @return bool
      */
     private function isClaimStatusClosed(?int $statusId): bool
     {
-        if (!$statusId) {
+        if (! $statusId) {
             return false;
         }
 
         $closedStatus = ClaimsStatus::where('id', $statusId)->where('is_active', 1)->first();
+
         return $closedStatus !== null && $closedStatus->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
     }
 
     /**
      * Dispatch Google review email job for the claim request
-     *
-     * @param ClaimRequest $claimRequest
-     * @return void
      */
     private function dispatchGoogleReviewEmail(ClaimRequest $claimRequest): void
     {
         try {
-            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Dispatching Google review email job - Claim UUID: ' . $claimRequest->uuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'customer_email' => $claimRequest->email,
@@ -105,7 +98,7 @@ class ClaimRequestObserver
             SendGoogleReviewEmailJob::dispatch($claimRequest->uuid);
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Failed to dispatch Google review email job - Claim UUID: ' . $claimRequest->uuid, [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'error' => $e->getMessage(),

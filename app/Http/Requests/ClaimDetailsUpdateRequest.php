@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Enums\PermissionsEnum;
+use App\Enums\ClaimsEnum;
+use App\Enums\QuoteTypes;
+use App\Models\Lookup;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
-use App\Enums\QuoteTypes;
-use App\Enums\ClaimsEnum;
-use App\Models\Lookup;
 
 class ClaimDetailsUpdateRequest extends FormRequest
 {
@@ -49,7 +47,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'nullable',
                 'integer',
                 'min:1900',
-                'max:' . (date('Y') + 1),
+                'max:'.(date('Y') + 1),
             ],
 
             // Health-specific fields (only when quote_type_id is Health)
@@ -162,16 +160,16 @@ class ClaimDetailsUpdateRequest extends FormRequest
             $quoteTypeId = request()?->quote_type_id;
             $isCarLob = $quoteTypeId == QuoteTypes::CAR->id();
             $isHealthLob = $quoteTypeId == QuoteTypes::HEALTH->id();
-            if($isCarLob){
+            if ($isCarLob) {
                 $this->validateCarFields($validator);
             }
-            if($isHealthLob){
+            if ($isHealthLob) {
                 $this->validateHealthFields($validator);
             }
-            if(!request()->claim_type_id){
+            if (! request()->claim_type_id) {
                 $validator->errors()->add('claim_type_id', 'Claim type is required.');
             }
-            if(!request()->incident_date){
+            if (! request()->incident_date) {
                 $validator->errors()->add('incident_date', 'Incident date is required.');
             }
         });
@@ -183,20 +181,20 @@ class ClaimDetailsUpdateRequest extends FormRequest
     private function validateCarFields($validator): void
     {
         // If car_make is provided, car_model should also be provided (when editing)
-        if (!$this->filled('car_model')) {
+        if (! $this->filled('car_model')) {
             $validator->errors()->add('car_model', 'Vehicle model is required when vehicle make is specified.');
         }
 
         // If car_model is provided, car_make should also be provided
-        if (!$this->filled('car_make')) {
+        if (! $this->filled('car_make')) {
             $validator->errors()->add('car_make', 'Vehicle make is required when vehicle model is specified.');
         }
 
-        if (!$this->filled('plat_number')) {
+        if (! $this->filled('plat_number')) {
             $validator->errors()->add('plat_number', 'Vehicle plate number is required when vehicle model is specified.');
         }
 
-        if (!$this->filled('model_year')) {
+        if (! $this->filled('model_year')) {
             $validator->errors()->add('model_year', 'Vehicle year is required when vehicle model is specified.');
         }
     }
@@ -207,7 +205,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
     private function validateHealthFields($validator): void
     {
         // Add any health-specific validation logic here if needed
-        if (!$this->filled('claim_request_type_id')) {
+        if (! $this->filled('claim_request_type_id')) {
             $validator->errors()->add('claim_request_type_id', 'Claim request type is required.');
         }
 
@@ -215,7 +213,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
         $claimRequestType = Lookup::find($claimRequestTypeId);
         $isPendingClaimRequestType = $claimRequestType->code === ClaimsEnum::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE;
 
-        if ($isPendingClaimRequestType && !$this->filled('service_type_id')) {
+        if ($isPendingClaimRequestType && ! $this->filled('service_type_id')) {
             $validator->errors()->add('service_type_id', 'Service type is required.');
         }
     }

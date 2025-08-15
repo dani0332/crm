@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ClaimsEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\ClaimsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use Illuminate\Database\Seeder;

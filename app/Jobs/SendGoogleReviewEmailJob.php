@@ -46,8 +46,6 @@ class SendGoogleReviewEmailJob implements ShouldQueue
 
     /**
      * Create a new job instance.
-     *
-     * @param string $claimRequestUuid
      */
     public function __construct(string $claimRequestUuid)
     {
@@ -56,14 +54,11 @@ class SendGoogleReviewEmailJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @param ClaimRequestEmailService $googleReviewEmailService
-     * @return void
      */
     public function handle(ClaimRequestEmailService $googleReviewEmailService): void
     {
         try {
-            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Job started - Claim UUID: ' . $this->claimRequestUuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Job started - Claim UUID: '.$this->claimRequestUuid, [
                 'claim_request_uuid' => $this->claimRequestUuid,
                 'time' => now(),
             ]);
@@ -71,20 +66,22 @@ class SendGoogleReviewEmailJob implements ShouldQueue
             // Find the claim request
             $claimRequest = ClaimRequest::where('uuid', $this->claimRequestUuid)->first();
 
-            if (!$claimRequest) {
-                LoggerService::warning(self::class . '::' . __FUNCTION__ . ' - Claim request not found - Claim UUID: ' . $this->claimRequestUuid, [
+            if (! $claimRequest) {
+                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Claim request not found - Claim UUID: '.$this->claimRequestUuid, [
                     'claim_request_uuid' => $this->claimRequestUuid,
                 ]);
+
                 return;
             }
 
             // Check if customer is eligible for review email
-            if (!$googleReviewEmailService->isEligibleForReviewEmail($claimRequest)) {
-                LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Customer not eligible for Google review email - Claim UUID: ' . $claimRequest->uuid, [
+            if (! $googleReviewEmailService->isEligibleForReviewEmail($claimRequest)) {
+                LoggerService::info(self::class.'::'.__FUNCTION__.' - Customer not eligible for Google review email - Claim UUID: '.$claimRequest->uuid, [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'customer_email' => $claimRequest->email,
                 ]);
+
                 return;
             }
 
@@ -93,13 +90,13 @@ class SendGoogleReviewEmailJob implements ShouldQueue
 
             // Log success or failure based on response code
             if (in_array($responseCode, [200, 201])) {
-                LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Google review email sent successfully - Claim UUID: ' . $this->claimRequestUuid, [
+                LoggerService::info(self::class.'::'.__FUNCTION__.' - Google review email sent successfully - Claim UUID: '.$this->claimRequestUuid, [
                     'response_code' => $responseCode,
                     'customer_email' => $claimRequest->email,
                     'claim_uuid' => $this->claimRequestUuid,
                 ]);
             } else {
-                LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Google review email failed to send - Claim UUID: ' . $this->claimRequestUuid, [
+                LoggerService::error(self::class.'::'.__FUNCTION__.' - Google review email failed to send - Claim UUID: '.$this->claimRequestUuid, [
                     'response_code' => $responseCode,
                     'customer_email' => $claimRequest->email,
                     'claim_uuid' => $this->claimRequestUuid,
@@ -107,7 +104,7 @@ class SendGoogleReviewEmailJob implements ShouldQueue
             }
 
         } catch (Exception $e) {
-            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Job failed - Claim UUID: ' . $this->claimRequestUuid, [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Job failed - Claim UUID: '.$this->claimRequestUuid, [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'claim_request_uuid' => $this->claimRequestUuid,
@@ -120,13 +117,10 @@ class SendGoogleReviewEmailJob implements ShouldQueue
 
     /**
      * Handle a job failure.
-     *
-     * @param Exception $exception
-     * @return void
      */
     public function failed(Exception $exception): void
     {
-        LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Job permanently failed after all retries - Claim UUID: ' . $this->claimRequestUuid, [
+        LoggerService::error(self::class.'::'.__FUNCTION__.' - Job permanently failed after all retries - Claim UUID: '.$this->claimRequestUuid, [
             'error' => $exception->getMessage(),
             'claim_request_uuid' => $this->claimRequestUuid,
             'attempts' => $this->attempts(),

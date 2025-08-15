@@ -77,7 +77,7 @@ class ClaimStatusesSeeder extends Seeder
 
         // Quote Type IDs for Non-Motor
         $nonMotorQuoteTypes = [
-            QuoteTypeId::Life,QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Travel, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::TradeCredit,
+            QuoteTypeId::Life, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Travel, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::TradeCredit,
             QuoteTypeId::GroupMedical, QuoteTypeId::Corpline, QuoteTypeId::CompanyCar, QuoteTypeId::JobLoss, QuoteTypeId::JBLS, QuoteTypeId::Savings,
         ];
 

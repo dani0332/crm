@@ -39,7 +39,7 @@ enum ClaimsEnum: string
     case CLAIM_REQUEST_ACCESS_TYPE_SYSTEM_GENERATED_CODE = 'system-generated';
     case CLAIM_REQUEST_ACCESS_TYPE_MANUAL_CODE = 'manual';
 
-    /* Claim Request Status  */
+    /* Claim Request Status */
     case CLAIM_STATUS_OPEN = 'Open';
     case CLAIM_STATUS_CLOSED = 'Close';
 

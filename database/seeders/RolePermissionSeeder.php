@@ -338,7 +338,6 @@ class RolePermissionSeeder extends Seeder
         }
     }
 
-
     private function addLeadsByEmailPermission(): void
     {
         Permission::firstOrCreate([
