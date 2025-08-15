@@ -798,19 +798,19 @@ class CarEmailService extends BaseService
         $renewalUploadLead = $failedRenewalProcess ? RenewalsUploadLeads::find($failedRenewalProcess->renewals_upload_lead_id) : null;
 
         return (object) [
-            'failedQuotes'            => implode(', ', $failedPolicyNumbers),
-            'quoteUID'                => '', // Not used, reserved for future
-            'renewalsManagersEmails'  => $renewalsManagersEmails,
-            'renewalManagerEmail'     => $renewalsManagersEmails[0] ?? '',
-            'workflowType'            => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
-            'dateOfAttempt'           => now()->format('Y-m-d'),
-            'failedLeadsCount'        => count($failedPolicyNumbers) ?? 0,
-            'fileName'                => $renewalUploadLead?->file_name ?? '',
-            'fileDownloadUrl'         => $renewalUploadLead
+            'failedQuotes' => implode(', ', $failedPolicyNumbers),
+            'quoteUID' => '', // Not used, reserved for future
+            'renewalsManagersEmails' => $renewalsManagersEmails,
+            'renewalManagerEmail' => $renewalsManagersEmails[0] ?? '',
+            'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
+            'dateOfAttempt' => now()->format('Y-m-d'),
+            'failedLeadsCount' => count($failedPolicyNumbers) ?? 0,
+            'fileName' => $renewalUploadLead?->file_name ?? '',
+            'fileDownloadUrl' => $renewalUploadLead
                 ? route('validation-failed-download', ['id' => $renewalUploadLead->id])
                 : null,
         ];
-    
+
     }
 
 }
