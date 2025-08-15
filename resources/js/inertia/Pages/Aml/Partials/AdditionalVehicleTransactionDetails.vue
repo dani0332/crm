@@ -519,41 +519,6 @@ watch(() => props.insurerPortalSyncData, (vehicleTransactionDetails) => {
   }
 }, { deep: true });
 
-const chassisNumberValidate = eventType => {
-  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
-  if (eventType == 'keypress') {
-    const event = window.event || event;
-    const key = event.key;
-    if (
-      !regex.test(key) &&
-      key !== 'Backspace' &&
-      key !== 'Delete' &&
-      key !== 'ArrowLeft' &&
-      key !== 'ArrowRight'
-    ) {
-      event.preventDefault();
-    }
-  }
-  if (eventType == 'blur') {
-    const lengthValid =
-      additionalVehicleTransactionDetailsForm.chassis_number?.length >= 8 &&
-      additionalVehicleTransactionDetailsForm.chassis_number?.length <= 17;
-    const isAlphanumeric = regex.test(additionalVehicleTransactionDetailsForm.chassis_number);
-    if (
-      additionalVehicleTransactionDetailsForm.chassis_number &&
-      (!lengthValid || !isAlphanumeric)
-    ) {
-      additionalVehicleTransactionDetailsForm.errors.chassis_number =
-        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
-      event.preventDefault();
-      return true;
-    } else {
-      additionalVehicleTransactionDetailsForm.clearErrors('chassis_number');
-      return false;
-    }
-  }
-};
-
 // Initialize field configuration on component mount
 onMounted(() => {
   if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
