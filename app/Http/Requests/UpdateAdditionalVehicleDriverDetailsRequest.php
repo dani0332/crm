@@ -34,7 +34,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 
         if (isset($this->additional_vehicle_transaction_details) && $this->additional_vehicle_transaction_details == true) {
             $rules['rta_transaction_type'] = 'required';
-            $rules['plate_color'] = 'required|string';
             $rules['traffic_code_number'] = 'required';
             $rules['engine_number'] = 'required';
             $rules['chassis_number'] = 'required';
@@ -43,6 +42,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['first_registration_date'] = 'required|date';
             if ($this->insurance_provider_code === InsuranceProvidersEnum::RSA) {
                 $rules['policy_effective_date'] = 'required|after_or_equal:today';
+            } else {
+                $rules['plate_color'] = 'required|string';
             }
         } else {
             $rules['is_insured_and_driver_same'] = 'required|integer';
@@ -52,8 +53,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['driver_gender'] = 'required|string|in:male,female';
             $rules['driver_license_number'] = 'required|string|max:255';
             $rules['uae_driving_experience'] = 'required|numeric|min:0|max:50';
-            $rules['home_country_license_issuance'] = 'required_if:is_insured_and_driver_same,0|string|max:255';
-            $rules['home_country_driving_experience'] = 'required_if:is_insured_and_driver_same,0|numeric|min:0|max:50';
+            $rules['home_country_license_issuance'] = 'required';
+            $rules['home_country_driving_experience'] = 'required';
             $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 

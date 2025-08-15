@@ -785,7 +785,7 @@ watch(
             :rules="getFieldRules('policy_expiry_date')"
             :required="isFieldRequired('policy_expiry_date')"
             placeholder="Policy Expiry Date"
-            :disabled="isFieldDisabled('policy_expiry_date') || hasNotEditPermission"
+            disabled
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
             :tooltip="`Expiry date of the insurance policy coverage`"
@@ -797,7 +797,7 @@ watch(
             :rules="getFieldRules('certificate_start_date')"
             :required="isFieldRequired('certificate_start_date')"
             placeholder="Certificate Start Date"
-            :disabled="isFieldDisabled('certificate_start_date') || hasNotEditPermission"
+            disabled
             :readonly="fieldConfig.certificate_start_date?.readonly"
             label="Certificate Start Date"
             :tooltip="`Start date for the insurance certificate validity period`"
@@ -809,7 +809,7 @@ watch(
             :rules="getFieldRules('certificate_end_date')"
             :required="isFieldRequired('certificate_end_date')"
             placeholder="Certificate End Date"
-            :disabled="isFieldDisabled('certificate_end_date') || hasNotEditPermission"
+            disabled
             :readonly="fieldConfig.certificate_end_date?.readonly"
             label="Certificate End Date"
             :tooltip="`End date for the insurance certificate validity period`"
