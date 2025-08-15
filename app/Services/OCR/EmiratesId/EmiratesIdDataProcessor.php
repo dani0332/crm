@@ -184,6 +184,10 @@ class EmiratesIdDataProcessor
             if (! empty($this->extractedData['country'])) {
                 $kycData['country_of_residence'] = $this->extractedData['country'];
             }
+            
+            if (! empty($this->extractedData['nationality'])) {
+                $kycData['place_of_birth'] = $this->extractedData['nationality'];
+            }
 
             if (! empty($this->extractedData['issuing_date'])) {
                 $kycData['id_issuance_date'] = $this->extractedData['issuing_date'];
@@ -382,6 +386,7 @@ class EmiratesIdDataProcessor
                 ],
                 'kyc_data' => $insuredKyc ? [
                     'country_of_residence' => $insuredKyc->country_of_residence,
+                    'place_of_birth' => $insuredKyc->place_of_birth,
                     'id_issuance_date' => $insuredKyc->id_issuance_date,
                     'id_expiry_date' => $insuredKyc->id_expiry_date,
                     'issuance_place' => $insuredKyc->issuance_place,
