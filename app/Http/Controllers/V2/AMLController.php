@@ -62,6 +62,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
@@ -84,7 +85,7 @@ class AMLController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('permission:' . PermissionsEnum::AMLList . '|' . PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS, 
+        $this->middleware('permission:' . PermissionsEnum::AMLList . '|' . PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
             ['only' => ['index']]);
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
@@ -263,7 +264,8 @@ class AMLController extends Controller
                 LookupsEnum::PLATE_CODE,
             ]);
 
-            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+            $nationalities['nationalityList'] = app(LivaInsurancePayloadMapping::class)->nationalityList();
+            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray(), $nationalities);
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
@@ -312,6 +314,7 @@ class AMLController extends Controller
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
+            'isInsurerSyncEnabled' => app(AMLService::class)->isInsurerSyncEnabled($quoteType->id, $quoteRequest->id, $quoteRequest?->insuranceProvider?->code),
             'isAnyEscalated' => $isAnyEscalated,
             'isPrivateCar' => ! InsuranceProviderRepository::isCommercialVehicles($quoteRequest),
         ], $businessPayload ?? []));

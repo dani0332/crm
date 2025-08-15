@@ -15,6 +15,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Facades\Ken;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\WatermarkDocumentsJob;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\Payment;
 use App\Services\AMLService;
@@ -746,55 +747,54 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quoteDetails->code.' started');
 
         try {
-            $payload = ['quoteTypeId' => $quoteTypeId, 'quoteUID' => $quoteDetails->uuid];
-            $response = Ken::request('/get-quote-from-insurer', 'get', $payload);
+            $response = Ken::request("/get-quote-from-insurer?quoteTypeId=$quoteTypeId&quoteUID=$quoteDetails->uuid", 'get');
             $responseData = $response['data'];
 
+            // Extract driver name parts for first and last name
+            $driverName = $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverName'] ?? '';
+            $nameParts = explode(' ', $driverName, 2);
+            $driverFirstName = $nameParts[0] ?? '';
+            $driverLastName = $nameParts[1] ?? '';
+
             $getQuoteResponseMapping = [
-                'rta_transaction_type' => $responseData->authorityTransactionDetails->code,
-                'plate_code' => $responseData->plateNumber, // optional
-                'plate_number' => $responseData->plateNumber, // optional
-                'traffic_code_number' => $responseData->motorInformation->trafficFileNumber,
-                'chassis_number' => $responseData->motorInformation->chassisNumber,
-                'engine_number' => $responseData->motorInformation->engineNumber,
-                'rta_plate_category' => '',
-                'vehicle_color' => $responseData->motorInformation->vehicleColor->code,
-                'plate_color' => $responseData->motorInformation->plateColor->code,
-                'bank_loan' => $responseData->motorInformation->isVehicleMortgaged,
-                'bank_name' => ($responseData->motorInformation->isVehicleMortgaged) ? $responseData->motorInformation->bankName : '', // optional
-                'first_registration_date' => $responseData->policySchedule->creationDate,
-                'policy_effective_date' => $responseData->policySchedule->effectiveDate,
-                'policy_expiry_date' => $responseData->policySchedule->expirationDate, // optional
-                'certificate_start_date' => $responseData->certificateInceptionDate,
-                'certificate_end_date' => $responseData->certificateEndDate, // optional
-                'annual_mileage_estimate' => '', // optional
-                'is_insured_and_driver_same' => $responseData->policyHolder->isPolicyHolderDriver,
-                'driver_first_name' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->givenName : $responseData->driver->firstName, // optional
-                'driver_last_name' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->surName : $responseData->driver->lastName, // optional
-                'driver_dob' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->birthDate : $responseData->driver->dateOfBirth, // optional
-                'driver_gender' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->gender->value : $responseData->driver->gender,
-                'driver_license_number' => '',
-                'driver_license_issue_place' => ($responseData->policyHolder->isPolicyHolderDriver) ? $responseData->policyHolder->person->firstDrivingLicenseIssueCountry->code : $responseData->driver->nationality->value, // optional
-                'driver_license_issue_date' => '', // optional
-                'driver_license_expiry_date' => '',
-                'driver_uae_driving_experience' => '', // optional
-                'home_country_license_issuance' => '', // optional
-                'home_country_driving_experience' => '', // optional
+                'rta_transaction_type' => (string) ($responseData['VehicleDetails']['RtaTransactionType'] ?? ''),
+                'plate_code' => $responseData['VehicleDetails']['RegnNoText'] ?? '', // optional
+                'plate_number' => $responseData['VehicleDetails']['RegnNoNumber'] ?? '', // optional
+                'traffic_code_number' => $responseData['VehicleDetails']['TcfNo'] ?? '',
+                'chassis_number' => $responseData['VehicleDetails']['ChassisNo'] ?? '',
+                'engine_number' => $responseData['VehicleDetails']['EngineNo'] ?? '',
+                'rta_plate_category' => (string) ($responseData['VehicleDetails']['PlateCategory'] ?? ''),
+                'vehicle_color' => (string) ($responseData['VehicleDetails']['ColorCode'] ?? ''),
+                'plate_color' => '', // Not available in response
+                'bank_loan' => ! empty($responseData['VehicleDetails']['CarFinanceCode']) ? '1' : '0',
+                'bank_name' => $responseData['VehicleDetails']['CarFinanceCode'] ?? '', // optional
+                'first_registration_date' => $responseData['VehicleDetails']['DateOfRegn'] ?? '',
+                'policy_effective_date' => $responseData['PolicyEffectiveDate'] ?? '',
+                'policy_expiry_date' => $responseData['PolicyExpiryDate'] ?? '', // optional
+                'certificate_start_date' => $responseData['VehicleDetails']['CertificateStartDate'] ?? '',
+                'certificate_end_date' => $responseData['VehicleDetails']['CertificateEndDate'] ?? '', // optional
+                'annual_mileage_estimate' => '', // Not available in response
+                'is_insured_and_driver_same' => ($responseData['DriverDetails'][0]['AdditionalDriverDetails']['MainDriverInd'] ?? '') === 'Y' ? '1' : '0',
+                'driver_first_name' => $driverFirstName, // optional
+                'driver_last_name' => $driverLastName, // optional
+                'driver_dob' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverDOB'] ?? '', // optional
+                'driver_gender' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['DriverGender'] === 'M' ? 'male' : 'female',
+                'driver_license_number' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LicenseNo'] ?? '',
+                'driver_license_issue_place' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
+                'driver_uae_driving_experience' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['LocalLicense'] ?? 0, // optional
+                'home_country_license_issuance' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['FirstDrvLicCountry'] ?? '', // optional
+                'home_country_driving_experience' => $responseData['DriverDetails'][0]['AdditionalDriverDetails']['OtherLicense'] ?? 0, // optional
             ];
 
-            if (isset($response['status']) && $response['status'] === true) {
-                $response = app(AMLService::class)->saveAdditionalVehicleAndDriverDetails((object) $getQuoteResponseMapping, $quoteDetails);
-
-                if (! $response['status']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $response['message'],
-                    ]);
+            if (! isset($response['errors'])) {
+                $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
+                if ($carQuoteRequestDetails) {
+                    $carQuoteRequestDetails->update($getQuoteResponseMapping);
                 }
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Quote details retrieved successfully from insurer portal',
+                    'message' => 'Quote details retrieved and updated successfully',
                     'data' => $getQuoteResponseMapping ?? null,
                 ]);
             } else {

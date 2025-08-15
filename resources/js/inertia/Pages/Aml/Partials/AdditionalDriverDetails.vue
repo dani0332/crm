@@ -22,14 +22,6 @@ const driverGenderOptions = computed(() => [
   { value: 'female', label: 'Female' },
 ])
 
-const licenseIssuePlaceOptions = computed(() => {
-  return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
-});
-
-const nationalitiesOptions = computed(() => {
-  return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
-});
-
 const drivingExperienceOptions = computed(() => {
   const options = [{ value: '0', label: 'No Experience' }]
 
@@ -60,9 +52,9 @@ const additionalDriverDetailsForm = useForm({
   license_issue_place: carDetail.value?.driver_license_issue_place?.toString() ?? '',
   license_issue_date: carDetail.value?.driver_license_issue_date ?? '',
   license_expiry_date: carDetail.value?.driver_license_expiry_date ?? '',
-  uae_driving_experience: carDetail.value?.driver_uae_driving_experience?.toString() ?? '',
+  uae_driving_experience: carDetail.value?.driver_uae_driving_experience ?? '',
   home_country_license_issuance: carDetail.value?.home_country_license_issuance ?? '',
-  home_country_driving_experience: carDetail.value?.home_country_driving_experience?.toString() ?? '',
+  home_country_driving_experience: carDetail.value?.home_country_driving_experience ?? '',
 });
 
 const hasNotEditPermission = computed(() => {
@@ -129,6 +121,22 @@ const isLIVA = computed(() => {
 
 const isSUKOON = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.OIC;
+});
+
+const licenseIssuePlaceOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(lookups?.nationalityList ?? [], 'id', 'text');
+  } else {
+    return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
+  }
+});
+
+const nationalitiesOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(lookups?.nationalityList ?? [], 'id', 'text');
+  } else {
+    return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
+  }
 });
 
 // Computed property to check if driver name fields should be disabled
@@ -262,6 +270,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
         />
 
         <x-select
+          filterable
           v-model="additionalDriverDetailsForm.license_issue_place"
           :rules="isSUKOON ? [isRequired] : []"
           :required="isSUKOON"

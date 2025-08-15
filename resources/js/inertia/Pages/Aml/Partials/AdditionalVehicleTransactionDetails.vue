@@ -703,6 +703,7 @@ watch(
           />
 
           <x-select
+            v-if="isGIG"
             filterable
             v-model="additionalVehicleTransactionDetailsForm.plate_color"
             :options="plateColorOptions"
