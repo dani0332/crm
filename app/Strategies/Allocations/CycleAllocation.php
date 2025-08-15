@@ -19,8 +19,6 @@ class CycleAllocation extends BaseAllocation
             return $this->getAdvisorByEmails($onlineStatus, $emails);
         }
 
-        $this->skipRuleUsers = true;
-
         $emails = $this->getAdvisorEmails(ApplicationStorageEnums::CYCLE_ADVISORS);
 
         return $this->getAdvisorByEmails($onlineStatus, $emails);
@@ -29,7 +27,6 @@ class CycleAllocation extends BaseAllocation
     {
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CycleAdvisor])
             ->whereIn('users.email', $emails)
-            ->logRawSql()
             ->first();
     }
 }

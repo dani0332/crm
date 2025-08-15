@@ -17,17 +17,13 @@ class YachtAllocation extends BaseAllocation
 
             return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::YachtAdvisor])
                 ->whereIn('users.email', $emails)
-                ->logRawSql()
                 ->first();
         } else {
             $emails = $this->getAdvisorEmails(ApplicationStorageEnums::YACHT_ADVISORS);
         }
 
-        $this->skipRuleUsers = true;
-
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::YachtAdvisor])
             ->whereIn('users.email', $emails)
-            ->logRawSql()
             ->first();
     }
 }
