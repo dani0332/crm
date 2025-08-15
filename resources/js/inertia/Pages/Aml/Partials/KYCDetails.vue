@@ -312,13 +312,14 @@ const submitInsuredKycForm = isValid => {
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
+        console.log('response', response); // TODO:: this log is temporary
         if(response.data.insurer_screening) {
           if(response.data.insurer_screening.status == 'AML_SCREENING_FAILED') {
             notification.error({
               title: response.data.insurer_screening.message || 'GIG server connection issue. Please check API logs for details of the error',
               position: 'top',
             });
-          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED') {
+          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED' || response.data.insurer_screening.isRenewalLead) {
             if(response.data.insurer_screening.autoCaptureStatus == 'success') {
               notification.success({
                 title: response.data.insurer_screening.autoCaptureMessage,
