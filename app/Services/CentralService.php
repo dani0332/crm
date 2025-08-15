@@ -1551,7 +1551,7 @@ class CentralService extends BaseService
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
             }, $quote->members->toArray()));
-            $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id;
+            $emailData->emirateOfYourVisaId = "$quote->emirate_of_your_visa_id";
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
