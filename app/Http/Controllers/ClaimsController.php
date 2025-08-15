@@ -53,7 +53,7 @@ class ClaimsController extends Controller
                 'statistics' => [],
             ]);
         } catch (Exception $e) {
-            LoggerService::error('Error loading claims index', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error loading claims index', extra: [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
@@ -82,7 +82,7 @@ class ClaimsController extends Controller
                 'claim' => null,
             ]);
         } catch (Exception $e) {
-            LoggerService::error('Error loading claims create form', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error loading claims create form', extra: [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
@@ -111,7 +111,7 @@ class ClaimsController extends Controller
                 'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
             ]);
         } catch (Exception $e) {
-            LoggerService::error('Error searching policies', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error searching policies', extra: [
                 'error' => $e->getMessage(),
                 'email' => $request->getEmail(),
                 'policy_number' => $request->getPolicyNumber(),
@@ -140,10 +140,10 @@ class ClaimsController extends Controller
             }
             return redirect()->route('claims.show', $claim->claimUID)->with('success', "Claim {$claim->claimUID} has been created successfully.");
         } catch (Exception $e) {
-            LoggerService::warning('Error creating claim', extra:[
+            LoggerService::warning(self::class . '::' . __FUNCTION__ . ' - Error creating claim', extra:[
                 'error' => $e->getMessage(),
                 'data' => $request->validated(),
-                'user_id' => Auth::id(),
+                'user_id' => auth()->id(),
             ]);
 
             return redirect()->back()
@@ -171,7 +171,7 @@ class ClaimsController extends Controller
             ]);
 
         } catch (Exception $e) {
-            LoggerService::error('Error loading claim request details', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error loading claim request details - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'user_id' => auth()->id(),
@@ -199,7 +199,7 @@ class ClaimsController extends Controller
                 'dropdowns' => $dropdownData,
             ]);
         } catch (Exception $e) {
-            LoggerService::error('Error loading claim request edit form', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error loading claim request edit form - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_uuid' => $uuid,
                 'user_id' => auth()->id(),
@@ -221,7 +221,7 @@ class ClaimsController extends Controller
                 ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {
-            LoggerService::error('Error updating claim request', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error updating claim request - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'data' => $request->validated(),
@@ -246,7 +246,7 @@ class ClaimsController extends Controller
                 ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {
-            LoggerService::error('Error updating claim details', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error updating claim details - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'data' => $request->validatedForUpdate(),
@@ -263,17 +263,17 @@ class ClaimsController extends Controller
     {
         try {
             $updatedClaimRequest = $this->claimsService->updateClaimStatus($uuid, $request->validated());
-            
+
             return redirect()->back()->with('success', 'Claim status updated successfully.');
-            
+
         } catch (Exception $e) {
-            LoggerService::error('Error updating claim status', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error updating claim status - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'data' => $request->validated(),
                 'user_id' => auth()->id(),
             ]);
-            
+
             return redirect()->back()->with('error', 'Failed to update claim status. Please try again.');
         }
     }
@@ -356,7 +356,7 @@ class ClaimsController extends Controller
 
             return response()->stream($callback, 200, $headers);
         } catch (Exception $e) {
-            LoggerService::error('Error exporting claims', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error exporting claims', extra: [
                 'error' => $e->getMessage(),
                 'user_id' => auth()->id(),
             ]);
@@ -386,7 +386,7 @@ class ClaimsController extends Controller
                 'optimized_message' => $optimizedMessage,
             ]);
         } catch (Exception $e) {
-            LoggerService::error('Error optimizing message', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error optimizing message', extra: [
                 'error' => $e->getMessage(),
                 'message' => $request->message,
                 'user_id' => auth()->id(),
@@ -422,9 +422,9 @@ class ClaimsController extends Controller
                 'message' => 'Notification sent successfully.',
             ]);
         } catch (Exception $e) {
-            LoggerService::error('Error sending notification', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error sending notification', extra: [
                 'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
+                'claim_uuid' => $claim->uuid,
                 'user_id' => auth()->id(),
             ]);
 

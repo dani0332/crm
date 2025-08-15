@@ -256,7 +256,7 @@ class ClaimsService extends BaseService
                 ->simplePaginate($this->perPage);
 
             // Log the search
-            LoggerService::info('Policy search performed', [
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Policy search performed', [
                 'email' => $email,
                 'policy_number' => $policyNumber,
                 'results_count' => count($policies),
@@ -267,7 +267,7 @@ class ClaimsService extends BaseService
             return $policies;
 
         } catch (\Exception $e) {
-            LoggerService::error('Error searching active policies', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error searching active policies', extra: [
                 'error' => $e->getMessage(),
                 'email' => $email,
                 'policy_number' => $policyNumber,
@@ -332,7 +332,7 @@ class ClaimsService extends BaseService
             return $response;
 
         } catch (\Exception $e) {
-            LoggerService::error('Error creating claim request', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error creating claim request', extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'data' => $data,
@@ -414,16 +414,16 @@ class ClaimsService extends BaseService
             }
 
             // Log the update
-            LoggerService::info('Claim request updated successfully', [
-                'claim_request_id' => $claimRequest->id,
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim request updated successfully - Claim UUID: ' . $claimRequest->uuid, [
+                'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
-                'updated_by' => Auth::id(),
+                'updated_by' => auth()->id(),
             ]);
 
 
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
         } catch (\Exception $e) {
-            LoggerService::error('Error updating claim request', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error updating claim request - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'data' => $data,
@@ -474,8 +474,8 @@ class ClaimsService extends BaseService
             if (!empty($claimRequestData)) {
                 $claimRequest->update($claimRequestData);
 
-                LoggerService::info('Claim request main table updated', [
-                    'claim_request_id' => $claimRequest->id,
+                LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim request main table updated - Claim UUID: ' . $claimRequest->uuid, [
+                    'claim_uuid' => $claimRequest->uuid,
                     'updated_fields' => array_keys($claimRequestData),
                     'updated_by' => Auth::id(),
                 ]);
@@ -492,8 +492,8 @@ class ClaimsService extends BaseService
 
                 if ($claimRequestDetail) {
                     $claimRequestDetail->update($detailData);
-                    LoggerService::info('Claim request details updated', [
-                        'claim_request_id' => $claimRequest->id,
+                    LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim request details updated - Claim UUID: ' . $claimRequest->uuid, [
+                        'claim_uuid' => $claimRequest->uuid,
                         'detail_id' => $claimRequestDetail->id,
                         'updated_fields' => array_keys($detailData),
                         'updated_by' => Auth::id(),
@@ -502,8 +502,8 @@ class ClaimsService extends BaseService
                     // Create new detail record if it doesn't exist
                     $detailData['claim_request_id'] = $claimRequest->id;
                     $claimRequestDetail = $claimRequest->claimRequestDetails()->create($detailData);
-                    LoggerService::info('Claim request details created', [
-                        'claim_request_id' => $claimRequest->id,
+                    LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim request details created - Claim UUID: ' . $claimRequest->uuid, [
+                        'claim_uuid' => $claimRequest->uuid,
                         'detail_id' => $claimRequestDetail->id,
                         'created_fields' => array_keys($detailData),
                         'created_by' => Auth::id(),
@@ -512,8 +512,8 @@ class ClaimsService extends BaseService
             }
 
             // Log the overall update
-            LoggerService::info('Claim details updated successfully', [
-                'claim_request_id' => $claimRequest->id,
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim details updated successfully - Claim UUID: ' . $claimRequest->uuid, [
+                'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
                 'updated_by' => Auth::id(),
                 'main_table_updates' => !empty($claimRequestData),
@@ -524,12 +524,11 @@ class ClaimsService extends BaseService
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
 
         } catch (\Exception $e) {
-            LoggerService::error('Error updating claim details', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error updating claim details - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'claim_request_id' => $uuid,
                 'data' => $data,
-                'updated_by' => Auth::id(),
+                'updated_by' => auth()->id(),
             ]);
 
             throw $e;
@@ -690,7 +689,7 @@ class ClaimsService extends BaseService
                 // Update the claim sub status without triggering another observer event
                 $claimRequest->claim_sub_status_id = $claimInitiatedStatus->id;
 
-                LoggerService::info('Claim sub status updated to "Claim registered"', extra: [
+                LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim sub status updated to "Claim registered" - Claim UUID: ' . $claimRequest->uuid, extra: [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'claim_sub_status_id' => $claimInitiatedStatus->id,
@@ -699,14 +698,14 @@ class ClaimsService extends BaseService
                     'updated_by' => Auth::id(),
                 ]);
             } else {
-                LoggerService::warning('Could not find "Claim registered" status', extra: [
+                LoggerService::warning(self::class . '::' . __FUNCTION__ . ' - Could not find "Claim registered" status - Claim UUID: ' . $claimRequest->uuid, extra: [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'quote_type_id' => $claimRequest->quote_type_id,
                 ]);
             }
         } catch (\Exception $e) {
-            LoggerService::error('Error updating claim sub status to "Claim registered"', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error updating claim sub status to "Claim registered" - Claim UUID: ' . $claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'error' => $e->getMessage(),
@@ -715,49 +714,57 @@ class ClaimsService extends BaseService
         }
     }
 
-    public function checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool
+    public function checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusCode): bool
     {
         $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
         $isHealthQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Health;
         $isLifeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Life;
 
         $subStatusListForClaimClosed = [
-            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID,
-            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN,
-            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED,
+            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID->value,
+            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN->value,
+            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
         ];
 
         if ($isCarQuoteType) {
             $subStatusListForClaimClosed = [
-                ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED,
-                ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED,
-                ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED,
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN,
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED,
+                ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED->value,
+                ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED->value,
+                ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED->value,
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN->value,
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
             ];
         }
 
         if ($isHealthQuoteType) {
             $subStatusListForClaimClosed[] = [
-                ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_APPROVED,
-                ClaimsEnum::CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED,
+                ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_APPROVED->value,
+                ClaimsEnum::CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED->value,
             ];
         }
 
         if ($isLifeQuoteType) {
             $subStatusListForClaimClosed = [
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID,
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED,
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID->value,
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
             ];
         }
 
-        return in_array($newClaimSubStatusId, $subStatusListForClaimClosed);
+        return in_array($newClaimSubStatusCode, $subStatusListForClaimClosed);
     }
 
-    public function markClaimAsClosedAndSendReviewEmail(ClaimRequest $claimRequest): void
+    public function markClaimAsClosed(ClaimRequest $claimRequest): void
     {
-        $claimRequest->claim_status_id = ClaimsStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED)->where('is_active', 1)->first()?->id;
-        $claimRequest->save();
+        $claimStatusClosed = ClaimsStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED)->where('is_active', 1)->first();
+        if ($claimStatusClosed) {
+            $claimRequest->update(['claim_status_id' => $claimStatusClosed->id]);
+            LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim status updated to "Closed" - Claim UUID: ' . $claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_status_id' => $claimStatusClosed->id,
+                'updated_by' => Auth::id(),
+            ]);
+        }
     }
 
     public function isRequiredFieldsFilled(ClaimRequest $claimRequest): bool
@@ -772,7 +779,7 @@ class ClaimsService extends BaseService
 
         $isRequiredFieldsFilled = false;
 
-        if ($isCarQuoteType) { 
+        if ($isCarQuoteType) {
             $isRequiredFieldsFilled = $claimRequestDetails->plat_number && $claimRequestDetails->car_make && $claimRequestDetails->car_model && $claimRequestDetails->model_year;
         }
 
@@ -795,23 +802,24 @@ class ClaimsService extends BaseService
         try {
             // Prepare the status update data
             $statusUpdateData = [];
-            
+
             if (isset($data['claim_sub_status_id'])) {
                 $statusUpdateData['claim_sub_status_id'] = $data['claim_sub_status_id'];
             }
-            
+
             if (isset($data['claim_status_id'])) {
                 $statusUpdateData['claim_status_id'] = $data['claim_status_id'];
             } else {
-                // Auto-determine claim status based on sub status if not provided
-                $this->autoUpdateClaimStatusBasedOnSubStatus($claimRequest, $data['claim_sub_status_id']);
+                $subStatus = ClaimsStatus::find($data['claim_sub_status_id']);
+                $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : ClaimsEnum::CLAIM_STATUS_OPEN->value;
+                $statusUpdateData['claim_status_id'] = ClaimsStatus::where('text', $targetStatus)->where('parent', true)->where('is_active', 1)->first()?->id;
             }
 
             // Update the claim request
             if (!empty($statusUpdateData)) {
                 $claimRequest->update($statusUpdateData);
 
-                LoggerService::info('Claim status updated successfully', [
+                LoggerService::info(self::class . '::' . __FUNCTION__ . ' - Claim status updated successfully - Claim UUID: ' . $claimRequest->uuid, [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'code' => $claimRequest->code,
@@ -827,7 +835,7 @@ class ClaimsService extends BaseService
             return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
 
         } catch (\Exception $e) {
-            LoggerService::error('Error updating claim status', extra: [
+            LoggerService::error(self::class . '::' . __FUNCTION__ . ' - Error updating claim status - Claim UUID: ' . $uuid, extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'claim_request_id' => $uuid,
@@ -839,52 +847,4 @@ class ClaimsService extends BaseService
         }
     }
 
-    /**
-     * Auto-update claim status based on sub status
-     */
-    private function autoUpdateClaimStatusBasedOnSubStatus(ClaimRequest $claimRequest, int $subStatusId): void
-    {
-        try {
-            // Get the sub status to determine if claim should be closed
-            $subStatus = ClaimsStatus::find($subStatusId);
-            
-            if (!$subStatus) {
-                return;
-            }
-
-            // Define closed statuses based on FRD requirements
-            $closedStatuses = [
-                'Repair completed and claim settled',
-                'Total loss paid and claim settled',
-                'Cash loss paid and claim settled',
-                'Claim withdrawn',
-                'Claim denied',
-                'Claim Paid',
-                'Request Denied',
-                'Request Approved',
-                'Answered & Closed',
-            ];
-
-            // Determine the appropriate claim status
-            $targetStatus = in_array($subStatus->text, $closedStatuses) ? 'Closed' : 'Open';
-
-            // Find the status ID
-            $claimStatus = ClaimsStatus::where('text', $targetStatus)
-                ->where('parent', true)
-                ->where('is_active', 1)
-                ->first();
-
-            if ($claimStatus) {
-                $claimRequest->claim_status_id = $claimStatus->id;
-                $claimRequest->save();
-            }
-
-        } catch (\Exception $e) {
-            LoggerService::warning('Could not auto-update claim status', extra: [
-                'claim_request_id' => $claimRequest->id,
-                'sub_status_id' => $subStatusId,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
 }
