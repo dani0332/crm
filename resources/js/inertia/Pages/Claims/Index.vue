@@ -144,8 +144,10 @@ const carModelOptions = computed(() => {
 });
 
 const getCarModel = reset => {
-  let carMakeCode = props.claimDropdownOptions?.carMake.find(item => item.text === filters.car_make)?.id;
-  console.log('carMakeCode', carMakeCode , ', reset' , reset);
+  let carMakeCode = props.claimDropdownOptions?.carMake.find(
+    item => item.text === filters.car_make,
+  )?.id;
+  console.log('carMakeCode', carMakeCode, ', reset', reset);
 
   axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
     props.claimDropdownOptions.carModel = data;
@@ -154,7 +156,6 @@ const getCarModel = reset => {
     }
   });
 };
-
 
 const carModelYearOptions = computed(() => {
   return (
@@ -194,7 +195,6 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
-  
 
 function exportClaims() {
   loader.export = true;
@@ -246,7 +246,7 @@ watch(
         </Link>
       </div>
     </div>
-    <x-divider class="my-4" /> 
+    <x-divider class="my-4" />
 
     <!-- Filters -->
     <x-form @submit="searchClaims" :auto-focus="false">
@@ -537,7 +537,7 @@ watch(
       </template>
 
       <template #item-manager="{ manager }">
-        {{ manager?.name }} 
+        {{ manager?.name }}
       </template>
 
       <template #item-created_at="{ created_at }">

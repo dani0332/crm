@@ -36,7 +36,7 @@ const quoteDocumentsTable = ref({
 });
 
 // Document management functions
-const onDocDelete = (docName) => {
+const onDocDelete = docName => {
   documentToDelete.value = docName;
   modals.value.docConfirm = true;
 };
@@ -44,18 +44,18 @@ const onDocDelete = (docName) => {
 const confirmDeleteDoc = async () => {
   try {
     quoteDocumentsTable.value.isLoading = true;
-    
+
     // Implement document deletion logic here
     // await deleteDocument(documentToDelete.value);
-    
+
     modals.value.docConfirm = false;
     documentToDelete.value = null;
-    
+
     notification.success({
       title: 'Document deleted successfully',
       position: 'top',
     });
-    
+
     emit('documentDeleted', documentToDelete.value);
   } catch (error) {
     notification.error({
@@ -68,12 +68,12 @@ const confirmDeleteDoc = async () => {
 };
 
 // Mock function - implement based on your requirements
-const memberDataDocs = (travelers) => {
+const memberDataDocs = travelers => {
   return travelers || [];
 };
 
-// Mock function - implement based on your requirements  
-const getupdateDocumentValidate = (validate) => {
+// Mock function - implement based on your requirements
+const getupdateDocumentValidate = validate => {
   console.log('Validating documents:', validate);
   // Implement document validation logic
 };
@@ -92,7 +92,7 @@ const displaySendPolicyButton = computed(() => {
 
 const readOnlyMode = computed(() => {
   return {
-    isDisable: can(permissionsEnum.DOCUMENT_UPLOAD) // Adjust based on your permissions
+    isDisable: can(permissionsEnum.DOCUMENT_UPLOAD), // Adjust based on your permissions
   };
 });
 
@@ -214,7 +214,7 @@ const permissions = computed(() => {
             :doc-types="documentTypes"
             :docs="quoteDocuments || []"
             :cdn="cdnPath"
-            @uploaded="(doc) => emit('documentUploaded', doc)"
+            @uploaded="doc => emit('documentUploaded', doc)"
           />
         </x-modal>
 

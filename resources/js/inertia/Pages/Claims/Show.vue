@@ -31,17 +31,17 @@ function formatDateTime(date) {
 }
 
 // Handle component updates
-const handleClaimUpdate = (response) => {
+const handleClaimUpdate = response => {
   console.log('Claim updated:', response);
   // You can add any additional logic here when claim is updated
 };
 
-const handleDocumentUploaded = (document) => {
+const handleDocumentUploaded = document => {
   console.log('Document uploaded:', document);
   // You can add any additional logic here when document is uploaded
 };
 
-const handleDocumentDeleted = (documentName) => {
+const handleDocumentDeleted = documentName => {
   console.log('Document deleted:', documentName);
   // You can add any additional logic here when document is deleted
 };
@@ -52,9 +52,7 @@ const handleDocumentDeleted = (documentName) => {
     <Head :title="`Claim ${claim.ref_id}`" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">
-          Claim Details - {{ claim.uuid }}
-        </h2>
+        <h2 class="text-xl font-semibold">Claim Details - {{ claim.uuid }}</h2>
       </template>
       <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
         <div class="flex gap-2">
@@ -83,9 +81,7 @@ const handleDocumentDeleted = (documentName) => {
     />
 
     <!-- Customer Details Component -->
-    <CustomerDetails
-      :claim="claim" 
-    />
+    <CustomerDetails :claim="claim" />
 
     <!-- Claim Status Component -->
     <ClaimStatus
