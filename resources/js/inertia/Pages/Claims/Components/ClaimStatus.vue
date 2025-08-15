@@ -1,5 +1,5 @@
 <script setup>
-import { router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3';
 
 const props = defineProps({
   claim: Object,
@@ -30,40 +30,60 @@ const statusOptions = computed(() => {
 
 const subStatusOptions = computed(() => {
   return (
-    props.dropdowns.claimSubStatuses?.filter(subStatus => subStatus.quote_type_id === page.props.claim.quote_type_id)?.map(subStatus => ({
-      value: subStatus.id,
-      label: subStatus.text,
-    })) || []
+    props.dropdowns.claimSubStatuses
+      ?.filter(
+        subStatus => subStatus.quote_type_id === page.props.claim.quote_type_id,
+      )
+      ?.map(subStatus => ({
+        value: subStatus.id,
+        label: subStatus.text,
+      })) || []
   );
 });
 
 const updateClaimStatus = isValid => {
   console.log('updateClaimStatus');
   claimStatusForm.post(route('claims.update.status', props.claim?.uuid), {
-      preserveScroll: true,
-      onSuccess: response => {
-        console.log('response', response);
-        router.visit(route('claims.show', props.claim?.uuid), {  preserveScroll: true, });
-        emit('update', response);
-      },
-      onError: errors => {
-        Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
-          });
+    preserveScroll: true,
+    onSuccess: response => {
+      console.log('response', response);
+      router.visit(route('claims.show', props.claim?.uuid), {
+        preserveScroll: true,
+      });
+      emit('update', response);
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
         });
-      },
-    });
+      });
+    },
+  });
 };
 
 const disableClaimStatusUpdate = computed(() => {
-  return !page.props.requiredFieldsFilled ||  !canAny([permissionsEnum.CLAIMS_STATUS_UPDATE, permissionsEnum.CLAIMS_SUB_STATUS_UPDATE]) ; 
+  return (
+    !page.props.requiredFieldsFilled ||
+    !canAny([
+      permissionsEnum.CLAIMS_STATUS_UPDATE,
+      permissionsEnum.CLAIMS_SUB_STATUS_UPDATE,
+    ])
+  );
 });
 </script>
 
 <template>
-  <div v-if="canAny([permissionsEnum.CLAIMS_STATUS_UPDATE, permissionsEnum.CLAIMS_SUB_STATUS_UPDATE])" class="p-4 rounded shadow mb-6 bg-white">
+  <div
+    v-if="
+      canAny([
+        permissionsEnum.CLAIMS_STATUS_UPDATE,
+        permissionsEnum.CLAIMS_SUB_STATUS_UPDATE,
+      ])
+    "
+    class="p-4 rounded shadow mb-6 bg-white"
+  >
     <Collapsible :expanded="true">
       <template #header>
         <div>
@@ -74,41 +94,42 @@ const disableClaimStatusUpdate = computed(() => {
         <x-divider class="my-4" />
         <x-form :form="claimStatusForm" @submit="updateClaimStatus">
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-          <div  v-if="can(permissionsEnum.CLAIMS_STATUS_UPDATE)" class="w-full md:w-1/2">
-            <div class="flex flex-col gap-4">
-              <x-select 
-                v-model="claimStatusForm.claim_status_id"
-                label="Claim Status"
-                :error="claimStatusForm.errors.claim_status_id"
-                :options="statusOptions"
-                :disabled="disableClaimStatusUpdate"
-                placeholder="Claim Status"
-                class="w-full uppercase"
-                filterable
-              />
-
+            <div
+              v-if="can(permissionsEnum.CLAIMS_STATUS_UPDATE)"
+              class="w-full md:w-1/2"
+            >
+              <div class="flex flex-col gap-4">
+                <x-select
+                  v-model="claimStatusForm.claim_status_id"
+                  label="Claim Status"
+                  :error="claimStatusForm.errors.claim_status_id"
+                  :options="statusOptions"
+                  :disabled="disableClaimStatusUpdate"
+                  placeholder="Claim Status"
+                  class="w-full uppercase"
+                  filterable
+                />
+              </div>
+            </div>
+            <div class="w-full md:w-1/2">
+              <div class="flex flex-col gap-4">
+                <x-select
+                  v-model="claimStatusForm.claim_sub_status_id"
+                  label="Claim Sub Status"
+                  :error="claimStatusForm.errors.claim_sub_status_id"
+                  :options="subStatusOptions"
+                  :disabled="disableClaimStatusUpdate"
+                  placeholder="Claim Sub Status"
+                  class="w-full uppercase"
+                  filterable
+                  required
+                />
+              </div>
             </div>
           </div>
-          <div class="w-full md:w-1/2">
-            <div class="flex flex-col gap-4">
-              <x-select
-                v-model="claimStatusForm.claim_sub_status_id"
-                label="Claim Sub Status"
-                :error="claimStatusForm.errors.claim_sub_status_id"
-                :options="subStatusOptions"
-                :disabled="disableClaimStatusUpdate"
-                placeholder="Claim Sub Status"
-                class="w-full uppercase"
-                filterable
-                required
-              />
 
-            </div>
-          </div>
-        </div>
-
-        <x-divider class="mt-4" />
-        <div class="flex justify-end">
+          <x-divider class="mt-4" />
+          <div class="flex justify-end">
             <x-button
               :disabled="disableClaimStatusUpdate"
               class="mt-4"
@@ -121,7 +142,6 @@ const disableClaimStatusUpdate = computed(() => {
             </x-button>
           </div>
         </x-form>
-
       </template>
     </Collapsible>
   </div>

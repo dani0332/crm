@@ -43,7 +43,8 @@ const claimForm = useForm({
   /* Health-specific fields */
   claim_request_type_id: props.claim?.claim_request_type_id || '',
   service_type_id: props.claim?.claim_request_details?.service_type_id || '',
-  request_reference_number: props.claim?.claim_request_details?.request_reference_number || '',
+  request_reference_number:
+    props.claim?.claim_request_details?.request_reference_number || '',
 
   // Policy Selection
   selected_policy_id: null,
@@ -136,7 +137,6 @@ const claimRequestTypeOptions = computed(() => {
   );
 });
 
-
 const carModelYearOptions = computed(() => {
   return props.dropdowns?.carModelYear?.map(item => ({
     value: item.text,
@@ -162,9 +162,11 @@ const carModelOptions = computed(() => {
   );
 });
 
-const getCarModel = reset => { 
-  let carMakeCode = props.dropdowns?.carMake.find(item => item.text === claimForm.car_make)?.id;
-  console.log('carMakeCode', carMakeCode , ', reset' , reset);
+const getCarModel = reset => {
+  let carMakeCode = props.dropdowns?.carMake.find(
+    item => item.text === claimForm.car_make,
+  )?.id;
+  console.log('carMakeCode', carMakeCode, ', reset', reset);
 
   axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
     props.dropdowns.carModel = data;
@@ -174,14 +176,12 @@ const getCarModel = reset => {
   });
 };
 
-  
-  // Call getCarModel on page load if car_make is already set
-  onMounted(() => {
-    if (claimForm.car_make) {
-      getCarModel(false);
-    }
-  });
-
+// Call getCarModel on page load if car_make is already set
+onMounted(() => {
+  if (claimForm.car_make) {
+    getCarModel(false);
+  }
+});
 
 // Check if the selected line of business is Car
 const isCarLOB = computed(() => {
@@ -195,36 +195,39 @@ const isHealthLOB = computed(() => {
 });
 
 // Watch for quote_type_id changes to clear irrelevant fields
-watch(() => claimForm.quote_type_id, (newQuoteTypeId) => {
-  const page = usePage();
-  const carQuoteTypeId = page.props.quoteTypeIds?.Car;
-  const healthQuoteTypeId = page.props.quoteTypeIds?.Health;
+watch(
+  () => claimForm.quote_type_id,
+  newQuoteTypeId => {
+    const page = usePage();
+    const carQuoteTypeId = page.props.quoteTypeIds?.Car;
+    const healthQuoteTypeId = page.props.quoteTypeIds?.Health;
 
-  if (newQuoteTypeId === carQuoteTypeId) {
-    // Clear health-related fields when Car is selected
-    claimForm.claim_request_type_id = null;
-    claimForm.service_type_id = null;
-    claimForm.request_reference_number = null;
-  } else if (newQuoteTypeId === healthQuoteTypeId) {
-    // Clear car-related fields when Health is selected
-    claimForm.plat_number = null;
-    claimForm.car_make = null;
-    claimForm.car_model = null;
-    claimForm.model_year = null;
-  } else {
-    // Clear both car and health fields when neither is selected
-    // Health fields
-    claimForm.claim_request_type_id = null;
-    claimForm.service_type_id = null;
-    claimForm.request_reference_number = null;
+    if (newQuoteTypeId === carQuoteTypeId) {
+      // Clear health-related fields when Car is selected
+      claimForm.claim_request_type_id = null;
+      claimForm.service_type_id = null;
+      claimForm.request_reference_number = null;
+    } else if (newQuoteTypeId === healthQuoteTypeId) {
+      // Clear car-related fields when Health is selected
+      claimForm.plat_number = null;
+      claimForm.car_make = null;
+      claimForm.car_model = null;
+      claimForm.model_year = null;
+    } else {
+      // Clear both car and health fields when neither is selected
+      // Health fields
+      claimForm.claim_request_type_id = null;
+      claimForm.service_type_id = null;
+      claimForm.request_reference_number = null;
 
-    // Car fields
-    claimForm.plat_number = null;
-    claimForm.car_make = null;
-    claimForm.car_model = null;
-    claimForm.model_year = null;
-  }
-});
+      // Car fields
+      claimForm.plat_number = null;
+      claimForm.car_make = null;
+      claimForm.car_model = null;
+      claimForm.model_year = null;
+    }
+  },
+);
 
 // Check if there are validation errors (excluding general error messages)
 const hasValidationErrors = computed(() => {
@@ -415,50 +418,57 @@ function onSubmit(isValid) {
       url = `/claim/${props.claim.uuid}`;
     }
 
-    claimForm.transform(data => ({
-      ...data,
-      car_make: carMakeOptions.value.find(item => item.value === data.car_make)?.label,
-    })).submit(method, url, {
-      onError: errors => {
-        console.log('Form errors:', errors);
+    claimForm
+      .transform(data => ({
+        ...data,
+        car_make: carMakeOptions.value.find(
+          item => item.value === data.car_make,
+        )?.label,
+      }))
+      .submit(method, url, {
+        onError: errors => {
+          console.log('Form errors:', errors);
 
-        // Handle different types of errors
-        if (typeof errors === 'object' && errors !== null) {
-          // Field-specific validation errors
-          claimForm.setError(errors);
+          // Handle different types of errors
+          if (typeof errors === 'object' && errors !== null) {
+            // Field-specific validation errors
+            claimForm.setError(errors);
 
-          // Show summary notification for validation errors
-          const errorMessages = [];
-          Object.keys(errors).forEach(field => {
-            if (Array.isArray(errors[field])) {
-              errorMessages.push(...errors[field]);
-            } else if (typeof errors[field] === 'string') {
-              errorMessages.push(errors[field]);
-            }
-          });
-
-          if (errorMessages.length > 0) {
-            notification.error({
-              title: 'Please correct the following errors:',
-              message:
-                errorMessages.slice(0, 3).join('. ') +
-                (errorMessages.length > 3 ? '...' : ''),
-              position: 'top',
-              duration: 6000,
+            // Show summary notification for validation errors
+            const errorMessages = [];
+            Object.keys(errors).forEach(field => {
+              if (Array.isArray(errors[field])) {
+                errorMessages.push(...errors[field]);
+              } else if (typeof errors[field] === 'string') {
+                errorMessages.push(errors[field]);
+              }
             });
+
+            if (errorMessages.length > 0) {
+              notification.error({
+                title: 'Please correct the following errors:',
+                message:
+                  errorMessages.slice(0, 3).join('. ') +
+                  (errorMessages.length > 3 ? '...' : ''),
+                position: 'top',
+                duration: 6000,
+              });
+            }
           }
-        }
-      },
-      onSuccess: (page) => {
-        // Show success message from backend
-        const message = page.props?.flash?.success || page.props?.message || 'Claim saved successfully!';
-        console.log('Form submission finished' , message);
-      },
-      onFinish: () => {
-        // Always called after success or error
-        console.log('Form submission finished');
-      },
-    });
+        },
+        onSuccess: page => {
+          // Show success message from backend
+          const message =
+            page.props?.flash?.success ||
+            page.props?.message ||
+            'Claim saved successfully!';
+          console.log('Form submission finished', message);
+        },
+        onFinish: () => {
+          // Always called after success or error
+          console.log('Form submission finished');
+        },
+      });
   } else {
     notification.error({
       title:
@@ -466,10 +476,6 @@ function onSubmit(isValid) {
       position: 'top',
     });
   }
-
-
-
-
 }
 </script>
 
@@ -594,7 +600,7 @@ function onSubmit(isValid) {
             filterPlaceholder="Filter Claim Type...."
             :error="claimForm.errors.claim_type_id"
           />
-          <template  v-if="isHealthLOB && isEdit">
+          <template v-if="isHealthLOB && isEdit">
             <x-input
               v-model="claimForm.request_reference_number"
               type="text"
@@ -642,8 +648,8 @@ function onSubmit(isValid) {
             @input="resetPolicySelection"
           />
 
-          <template v-if="isCarLOB && isEdit"> 
-            <x-select 
+          <template v-if="isCarLOB && isEdit">
+            <x-select
               v-model="claimForm.car_make"
               @update:modelValue="getCarModel(true)"
               label="Car Make"
@@ -653,7 +659,7 @@ function onSubmit(isValid) {
               filterPlaceholder="Filter Car Make...."
               :error="claimForm.errors.car_make"
             />
-            <x-select 
+            <x-select
               v-model="claimForm.car_model"
               label="Car Model"
               placeholder="Select Car Model"
@@ -662,7 +668,7 @@ function onSubmit(isValid) {
               filterPlaceholder="Filter Car Model...."
               :error="claimForm.errors.car_model"
             />
-            <x-select 
+            <x-select
               v-model="claimForm.model_year"
               label="Car Model Year"
               placeholder="Select Car Model Year"
@@ -671,7 +677,7 @@ function onSubmit(isValid) {
               filterPlaceholder="Filter Car Model Year...."
               :error="claimForm.errors.model_year"
             />
-            <x-input 
+            <x-input
               v-model="claimForm.plat_number"
               type="text"
               label="Plate Number"
@@ -709,7 +715,6 @@ function onSubmit(isValid) {
               :error="claimForm.errors.approved_cash_loss_amount"
             />
           </template>
-
         </div>
         <div class="grid sm:grid-cols-2 gap-4">
           <!-- Incident Story -->

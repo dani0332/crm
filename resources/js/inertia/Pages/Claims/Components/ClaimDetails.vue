@@ -11,7 +11,8 @@ const claimsEnum = page.props.claimsEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
-const { isRequired, maxCharacters, isNumber, minValue, maxValue, isValidName } = useRules();
+const { isRequired, maxCharacters, isNumber, minValue, maxValue, isValidName } =
+  useRules();
 
 const quoteTypeIds = page.props.quoteTypeIds;
 
@@ -92,8 +93,10 @@ const carModelYearOptions = computed(() => {
 });
 
 const getCarModel = reset => {
-  let carMakeCode = props.dropdowns?.carMake.find(item => item.text === claimForm.car_make)?.id;
-  console.log('carMakeCode', carMakeCode , ', reset' , reset);
+  let carMakeCode = props.dropdowns?.carMake.find(
+    item => item.text === claimForm.car_make,
+  )?.id;
+  console.log('carMakeCode', carMakeCode, ', reset', reset);
 
   axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
     props.dropdowns.carModel = data;
@@ -104,7 +107,10 @@ const getCarModel = reset => {
 };
 
 // Check if the claim request type is pending approval
-const isPendingClaimRequestType = ref(page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE === page.props.claim?.claim_request_type?.code);
+const isPendingClaimRequestType = ref(
+  page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE ===
+    page.props.claim?.claim_request_type?.code,
+);
 
 // Check if the selected line of business is Car
 const isCarLOB = computed(() => {
@@ -151,7 +157,8 @@ const validationRules = {
   platNumber: v => {
     if (!v) return true;
     if (v.length > 20) return 'Plate number cannot exceed 20 characters.';
-    if (!/^[A-Za-z0-9\-\s]+$/.test(v)) return 'Plate number can only contain letters, numbers, hyphens, and spaces.';
+    if (!/^[A-Za-z0-9\-\s]+$/.test(v))
+      return 'Plate number can only contain letters, numbers, hyphens, and spaces.';
     return true;
   },
 
@@ -175,7 +182,8 @@ const validationRules = {
     const currentYear = new Date().getFullYear();
     if (isNaN(year)) return 'Vehicle year must be a valid number.';
     if (year < 1900) return 'Vehicle year must be after 1900.';
-    if (year > currentYear + 1) return 'Vehicle year cannot be more than one year in the future.';
+    if (year > currentYear + 1)
+      return 'Vehicle year cannot be more than one year in the future.';
     return true;
   },
 
@@ -189,14 +197,15 @@ const validationRules = {
   // Claim decline reason validation
   claimDeclineReason: v => {
     if (!v) return true;
-    if (v.length > 2000) return 'Claim decline reason cannot exceed 2000 characters.';
+    if (v.length > 2000)
+      return 'Claim decline reason cannot exceed 2000 characters.';
     return true;
   },
 
   // Incident date validation
   incidentDate: v => {
     if (!v) return 'Incident date is required.';
-    
+
     let date;
     // Handle different date formats
     if (v instanceof Date) {
@@ -204,13 +213,13 @@ const validationRules = {
     } else if (typeof v === 'string') {
       // Try parsing the string - handle various formats
       date = new Date(v);
-      
+
       // If invalid, try parsing as ISO date format
       if (isNaN(date.getTime())) {
         const isoDate = v.includes('T') ? v : v + 'T00:00:00';
         date = new Date(isoDate);
       }
-      
+
       // If still invalid, try parsing DD/MM/YYYY format
       if (isNaN(date.getTime()) && v.includes('/')) {
         const parts = v.split('/');
@@ -225,22 +234,22 @@ const validationRules = {
     } else {
       date = new Date(v);
     }
-    
+
     const today = new Date();
     today.setHours(23, 59, 59, 999); // Set to end of today to allow today's date
-    
+
     console.log('Original value:', v, 'Parsed date:', date, 'Today:', today);
-    
+
     if (isNaN(date.getTime())) {
       return 'Incident date must be a valid date.';
     }
-    
+
     if (date > today) {
       return 'Incident date cannot be in the future.';
     }
-    
+
     return true;
-  }
+  },
 };
 
 // Validation functions that mirror the PHP validation logic
@@ -291,10 +300,12 @@ const validateHealthFields = () => {
     } else {
       // Check if it's pending approval type and service type is required
       const claimRequestType = props.dropdowns?.claimRequestTypes.find(
-        item => item.id === claimForm.claim_request_type_id
+        item => item.id === claimForm.claim_request_type_id,
       );
 
-      const isPendingType = claimRequestType?.code === claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE;
+      const isPendingType =
+        claimRequestType?.code ===
+        claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE;
 
       if (isPendingType && !claimForm.service_type_id) {
         errors.service_type_id = 'Service type is required.';
@@ -314,14 +325,18 @@ const validateCommonFields = () => {
   }
 
   // Incident date is always required
-  const incidentValidation = validationRules.incidentDate(claimForm.incident_date);
+  const incidentValidation = validationRules.incidentDate(
+    claimForm.incident_date,
+  );
   if (incidentValidation !== true) {
     errors.incident_date = incidentValidation;
   }
 
   // Validate claim number if provided
   if (claimForm.claim_number) {
-    const claimNumberValidation = validationRules.claimNumber(claimForm.claim_number);
+    const claimNumberValidation = validationRules.claimNumber(
+      claimForm.claim_number,
+    );
     if (claimNumberValidation !== true) {
       errors.claim_number = claimNumberValidation;
     }
@@ -329,7 +344,9 @@ const validateCommonFields = () => {
 
   // Validate claim decline reason if provided
   if (claimForm.claim_decline_reason) {
-    const declineReasonValidation = validationRules.claimDeclineReason(claimForm.claim_decline_reason);
+    const declineReasonValidation = validationRules.claimDeclineReason(
+      claimForm.claim_decline_reason,
+    );
     if (declineReasonValidation !== true) {
       errors.claim_decline_reason = declineReasonValidation;
     }
@@ -368,16 +385,16 @@ const validateForm = () => {
 };
 
 // Helper function to format date for backend
-const formatDateForBackend = (dateValue) => {
+const formatDateForBackend = dateValue => {
   if (!dateValue) return null;
-  
+
   let date;
   if (dateValue instanceof Date) {
     date = dateValue;
   } else if (typeof dateValue === 'string') {
     // Try parsing the string
     date = new Date(dateValue);
-    
+
     // If invalid, try parsing DD/MM/YYYY format
     if (isNaN(date.getTime()) && dateValue.includes('/')) {
       const parts = dateValue.split('/');
@@ -392,28 +409,34 @@ const formatDateForBackend = (dateValue) => {
   } else {
     date = new Date(dateValue);
   }
-  
+
   if (isNaN(date.getTime())) {
     console.error('Invalid date provided to formatDateForBackend:', dateValue);
     return null;
   }
-  
+
   // Return in YYYY-MM-DD format
   return date.toISOString().split('T')[0];
 };
 
 // Data preparation function that mirrors PHP prepareForValidation
-const prepareFormData = (data) => {
+const prepareFormData = data => {
   return {
     ...data,
     // Trim and normalize string fields
-    plat_number: data.plat_number ? data.plat_number.trim().toUpperCase() : null,
+    plat_number: data.plat_number
+      ? data.plat_number.trim().toUpperCase()
+      : null,
     car_make: data.car_make ? data.car_make.trim() : null,
     car_model: data.car_model ? data.car_model.trim() : null,
     claim_number: data.claim_number ? data.claim_number.trim() : null,
-    claim_decline_reason: data.claim_decline_reason ? data.claim_decline_reason.trim() : null,
+    claim_decline_reason: data.claim_decline_reason
+      ? data.claim_decline_reason.trim()
+      : null,
     // Format incident date
-    incident_date: data.incident_date ? formatDateForBackend(data.incident_date) : null,
+    incident_date: data.incident_date
+      ? formatDateForBackend(data.incident_date)
+      : null,
   };
 };
 
@@ -434,7 +457,8 @@ const updateClaim = isValid => {
     return;
   }
 
-  claimForm.transform(data => prepareFormData(data))
+  claimForm
+    .transform(data => prepareFormData(data))
     .post(route('claims.update.details', props.claim?.uuid), {
       preserveScroll: true,
       onSuccess: response => {
@@ -452,17 +476,29 @@ const updateClaim = isValid => {
     });
 };
 
-watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
-  console.log('newClaimRequestId', newClaimRequestId);
-  let requestTypeCode = props.dropdowns?.claimRequestTypes.find(item => item.id === newClaimRequestId)?.code;
-  if (requestTypeCode !== claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE) {
-    claimForm.service_type_id = null;
-    isPendingClaimRequestType.value = false;
-  } else {
-    isPendingClaimRequestType.value = true;
-  }
-  console.log('requestTypeCode', requestTypeCode, 'isPendingClaimRequestType', isPendingClaimRequestType.value);
-});
+watch(
+  () => claimForm.claim_request_type_id,
+  newClaimRequestId => {
+    console.log('newClaimRequestId', newClaimRequestId);
+    let requestTypeCode = props.dropdowns?.claimRequestTypes.find(
+      item => item.id === newClaimRequestId,
+    )?.code;
+    if (
+      requestTypeCode !== claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE
+    ) {
+      claimForm.service_type_id = null;
+      isPendingClaimRequestType.value = false;
+    } else {
+      isPendingClaimRequestType.value = true;
+    }
+    console.log(
+      'requestTypeCode',
+      requestTypeCode,
+      'isPendingClaimRequestType',
+      isPendingClaimRequestType.value,
+    );
+  },
+);
 </script>
 
 <template>
@@ -470,9 +506,7 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
     <Collapsible :expanded="true">
       <template #header>
         <div class="flex justify-between items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Claim Details
-          </h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Claim Details</h3>
         </div>
       </template>
       <template #body>
@@ -495,40 +529,46 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
               <template v-if="claim.claim_request_details">
                 <template v-if="isCarLOB">
                   <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">VEHICLE PLATE NUMBER <span class="text-red-500">*</span></dt>
+                    <dt class="font-medium">
+                      VEHICLE PLATE NUMBER <span class="text-red-500">*</span>
+                    </dt>
                     <dd>
                       <x-input
-                          v-model="claimForm.plat_number"
-                          type="text"
-                          placeholder="Enter Plate Number"
-                          class="w-full"
-                          :error="claimForm.errors.plat_number"
-                          :rules="[validationRules.platNumber]"
-                        />
-                      </dd>
+                        v-model="claimForm.plat_number"
+                        type="text"
+                        placeholder="Enter Plate Number"
+                        class="w-full"
+                        :error="claimForm.errors.plat_number"
+                        :rules="[validationRules.platNumber]"
+                      />
+                    </dd>
                   </div>
                   <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">VEHICLE MAKE <span class="text-red-500">*</span></dt>
+                    <dt class="font-medium">
+                      VEHICLE MAKE <span class="text-red-500">*</span>
+                    </dt>
                     <dd>
                       <template v-if="claim.claim_request_details.car_make">
-                        {{ claim.claim_request_details.car_make   }}
+                        {{ claim.claim_request_details.car_make }}
                       </template>
                       <template v-else>
-                      <x-select
-                        v-model="claimForm.car_make"
-                        @update:modelValue="getCarModel(true)"
-                        :options="carMakeOptions"
-                        placeholder="Select Vehicle Make"
-                        class="w-full"
-                        :error="claimForm.errors.car_make"
-                        :rules="[isRequired, validationRules.carMake]"
-                      />
+                        <x-select
+                          v-model="claimForm.car_make"
+                          @update:modelValue="getCarModel(true)"
+                          :options="carMakeOptions"
+                          placeholder="Select Vehicle Make"
+                          class="w-full"
+                          :error="claimForm.errors.car_make"
+                          :rules="[isRequired, validationRules.carMake]"
+                        />
                       </template>
                     </dd>
                   </div>
 
                   <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">VEHICLE MODEL <span class="text-red-500">*</span></dt>
+                    <dt class="font-medium">
+                      VEHICLE MODEL <span class="text-red-500">*</span>
+                    </dt>
                     <dd>
                       <template v-if="claim.claim_request_details.car_model">
                         {{ claim.claim_request_details.car_model }}
@@ -547,7 +587,9 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
                     </dd>
                   </div>
                   <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">VEHICLE YEAR <span class="text-red-500">*</span></dt>
+                    <dt class="font-medium">
+                      VEHICLE YEAR <span class="text-red-500">*</span>
+                    </dt>
                     <dd>
                       <template v-if="claim.claim_request_details.model_year">
                         {{ claim.claim_request_details.model_year }}
@@ -571,11 +613,15 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
                   </div>
                   <div class="grid sm:grid-cols-2">
                     <dt class="font-medium">APPROVED TOTAL LOSS AMOUNT</dt>
-                    <dd>{{ formatCurrency(claim.approved_total_loss_amount) }}</dd>
+                    <dd>
+                      {{ formatCurrency(claim.approved_total_loss_amount) }}
+                    </dd>
                   </div>
                   <div class="grid sm:grid-cols-2">
                     <dt class="font-medium">APPROVED CASH LOSS AMOUNT</dt>
-                    <dd>{{ formatCurrency(claim.approved_cash_loss_amount) }}</dd>
+                    <dd>
+                      {{ formatCurrency(claim.approved_cash_loss_amount) }}
+                    </dd>
                   </div>
                   <div class="grid sm:grid-cols-2">
                     <dt class="font-medium">CLAIM DENIAL REASON</dt>
@@ -593,7 +639,10 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
                 </template>
                 <template v-if="isHealthLOB">
                   <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">HEALTH CLAIM REQUEST TYPE <span class="text-red-500">*</span></dt>
+                    <dt class="font-medium">
+                      HEALTH CLAIM REQUEST TYPE
+                      <span class="text-red-500">*</span>
+                    </dt>
                     <dd>
                       <x-select
                         v-model="claimForm.claim_request_type_id"
@@ -606,8 +655,14 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
                       />
                     </dd>
                   </div>
-                  <div v-if="isPendingClaimRequestType" class="grid sm:grid-cols-2">
-                    <dt class="font-medium">HEALTH CLAIM SERVICE TYPE <span class="text-red-500">*</span></dt>
+                  <div
+                    v-if="isPendingClaimRequestType"
+                    class="grid sm:grid-cols-2"
+                  >
+                    <dt class="font-medium">
+                      HEALTH CLAIM SERVICE TYPE
+                      <span class="text-red-500">*</span>
+                    </dt>
                     <dd>
                       <x-select
                         v-model="claimForm.service_type_id"
@@ -647,7 +702,9 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
                 <dd>{{ claim.manager?.name || '-' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CLAIM TYPE <span class="text-red-500">*</span></dt>
+                <dt class="font-medium">
+                  CLAIM TYPE <span class="text-red-500">*</span>
+                </dt>
                 <dd>
                   <x-select
                     v-model="claimForm.claim_type_id"
@@ -661,13 +718,15 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">INCIDENT DATE <span class="text-red-500">*</span></dt>
+                <dt class="font-medium">
+                  INCIDENT DATE <span class="text-red-500">*</span>
+                </dt>
                 <dd>
                   <DatePicker
                     v-model="claimForm.incident_date"
                     placeholder="Select Incident Date"
                     :error="claimForm.errors.incident_date"
-                    :clearable="false" 
+                    :clearable="false"
                     :rules="[validationRules.incidentDate]"
                   />
                 </dd>
@@ -679,17 +738,17 @@ watch(() => claimForm.claim_request_type_id, (newClaimRequestId) => {
             </dl>
             <x-divider class="mt-4" />
             <div class="flex justify-end">
-                <x-button
-                  v-if="can(permissionsEnum.CLAIM_EDIT)"
-                  class="mt-4"
-                  color="emerald"
-                  size="sm"
-                  :loading="claimForm.processing"
-                  type="submit"
-                >
-                  Update
-                </x-button>
-              </div>
+              <x-button
+                v-if="can(permissionsEnum.CLAIM_EDIT)"
+                class="mt-4"
+                color="emerald"
+                size="sm"
+                :loading="claimForm.processing"
+                type="submit"
+              >
+                Update
+              </x-button>
+            </div>
           </div>
         </x-form>
       </template>
