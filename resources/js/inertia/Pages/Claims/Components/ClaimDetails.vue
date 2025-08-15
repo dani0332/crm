@@ -151,7 +151,7 @@ const validationRules = {
   platNumber: v => {
     if (!v) return true;
     if (v.length > 20) return 'Plate number cannot exceed 20 characters.';
-    if (!/^[A-Z0-9\-\s]+$/.test(v)) return 'Plate number can only contain letters, numbers, hyphens, and spaces.';
+    if (!/^[A-Za-z0-9\-\s]+$/.test(v)) return 'Plate number can only contain letters, numbers, hyphens, and spaces.';
     return true;
   },
 

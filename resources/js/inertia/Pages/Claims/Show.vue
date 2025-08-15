@@ -49,7 +49,7 @@ const handleDocumentDeleted = (documentName) => {
 
 <template>
   <div>
-    <Head :title="`Claim ${claim.ref_id}`" />
+    <Head :title="`Claim ${claim.code}`" />
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">

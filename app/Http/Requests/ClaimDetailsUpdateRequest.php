@@ -31,7 +31,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
-                'regex:/^[A-Z0-9\-\s]+$/',
+                'regex:/^[A-Za-z0-9\-\s]+$/',
             ],
             'car_make' => [
                 'nullable',
