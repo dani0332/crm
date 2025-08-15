@@ -49,6 +49,8 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\UserService;
 use App\Services\SplitPaymentService;
+use App\Services\Logger\LoggerService;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use App\Traits\TeamHierarchyTrait;
@@ -141,16 +143,13 @@ class AmtController extends Controller
 
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
 
-        /* Below conditions have AND relationship between them */
-        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT) ?: false;
-        \Log::info('Can assign client support after permission check: '.json_encode($canAssignClientSupport));
+        /* Check all conditions for client support assignment */
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SUPPORT_USER_ASSIGNMENT);
 
-        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD) : false;
-        \Log::info('Can assign client support after role check: '.json_encode($canAssignClientSupport));
-
-        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::BUSINESS->value) : false;
-        \Log::info('Can assign client support after product check: '.json_encode($canAssignClientSupport));
-        $canAssignClientSupport = $canAssignClientSupport ? Auth::user()->hasProduct(QuoteTypes::GROUP_MEDICAL->value) : false;
+        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT) &&
+                                 Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD) &&
+                                 Auth::user()->hasProduct(QuoteTypes::GROUP_MEDICAL->value);       
+        
 
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
@@ -274,9 +273,6 @@ class AmtController extends Controller
             $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
             $data->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
-
-        // Add debug logging
-        logger()->debug("AmtController toRawSql: " . $data->toRawSql());
 
         $this->adjustQueryByDateFilters($data, 'bqr');
 

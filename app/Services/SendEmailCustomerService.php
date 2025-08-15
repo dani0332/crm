@@ -21,6 +21,7 @@ use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Enums\Logger\LoggerFeatureEnum;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -1696,6 +1697,8 @@ class SendEmailCustomerService extends BaseService
 
     public function sendSupportUserAssignmentEmail($emailData)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SUPPORT_USER_ASSIGNMENT);
+        
         // Convert leads array to HTML list
         $leads = collect($emailData->get('params')['leads'] ?? []);
         $quotesHtml = '';

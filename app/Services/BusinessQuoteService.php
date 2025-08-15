@@ -746,4 +746,59 @@ class BusinessQuoteService extends BaseService
         // Return first two words for lengthy names (more than 3 words)
         return $words[0].' '.$words[1];
     }
+
+    /**
+     * Assign support user to quotes for business LOB
+     *
+     * @param array $leadIds
+     * @param int $supportUserId
+     * @param string $modelType
+     * @return string|null
+     */
+    public function assignSupportUser(array $leadIds, int $supportUserId, string $modelType): ?string
+    {
+        $updatedLeadIds = [];
+
+        foreach ($leadIds as $leadId) {
+            // Remove any type suffix if present (e.g., "123|business" -> "123")
+            $id = explode('|', $leadId)[0];
+
+            // Get the quote object using the trait method
+            $quote = $this->getQuoteObject('business', $id);
+            if ($quote) {
+                $quote->support_user_id = $supportUserId;
+                $quote->save();
+                $updatedLeadIds[] = $id;
+            }
+        }
+
+        // Send a single email for all assigned leads
+        if (! empty($updatedLeadIds) && $supportUserId) {
+            try {
+                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
+                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
+                    \Illuminate\Support\Facades\Auth::id(),
+                    $supportUserId,
+                    $updatedLeadIds,
+                    $quoteType
+                )->delay(now()->addSeconds(5));
+
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to dispatch support user assignment email job', [
+                    'support_user_id' => $supportUserId,
+                    'lead_ids' => $updatedLeadIds,
+                    'model_type' => $modelType,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Return success message if any leads were updated
+        if (! empty($updatedLeadIds)) {
+            $supportUserName = \App\Models\User::find($supportUserId)->name;
+            return $modelType.' Leads has been Assigned To '.$supportUserName;
+        }
+
+        return null;
+    }
 }

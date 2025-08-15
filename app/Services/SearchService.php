@@ -67,8 +67,6 @@ class SearchService extends BaseService
         // Select columns for normal query
         $baseQuery->select($selectColumns);
 
-        // logger()->debug("toRawSql: " . $baseQuery->toRawSql());
-
         // Use cursor for better memory usage with large result sets
         return $baseQuery->paginate(15)->withQueryString();
     }
