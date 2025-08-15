@@ -25,11 +25,30 @@ trait PrivateClient
     private const OPERATOR_IS_NULL = 'is null';
     private const OPERATOR_IS_NOT_NULL = 'is not null';
 
+    private function isLOBEligibleForPCP(int $quoteTypeId)
+    {
+        return in_array($quoteTypeId, [
+            QuoteTypeId::Car,
+            QuoteTypeId::Home,
+            QuoteTypeId::Health,
+            QuoteTypeId::Life,
+            QuoteTypeId::Yacht,
+        ]);
+    }
+
     /**
      * Apply PCP conditions and update pcp_tag on customer profile.
      */
     public function applyPcpTag(string $leadUuid, int $quoteTypeId): bool
     {
+        if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
+            LoggerService::warning('LOB not eligible for PCP yet.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return false;
+        }
+
         $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
         if (! class_exists($modelClass)) {
             LoggerService::warning('Model class not found.', extra: [

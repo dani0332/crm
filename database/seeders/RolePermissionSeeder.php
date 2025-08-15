@@ -33,6 +33,9 @@ class RolePermissionSeeder extends Seeder
         $this->addNationalityAllocationConfigPermission();
         $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
+        $this->addLeadsByEmailPermission();
+        $this->addEmbeddedProductPaymentCancelAdminPermission();
+
         $this->addClaimsPermissions(); // Add claims permissions
     }
 
@@ -335,4 +338,32 @@ class RolePermissionSeeder extends Seeder
         }
     }
 
+
+    private function addLeadsByEmailPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::LEADS_BY_EMAIL,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addEmbeddedProductPaymentCancelAdminPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $engineeringRole = Role::where('name', RolesEnum::Engineering)->first();
+
+        if ($engineeringRole && ! $engineeringRole->hasPermissionTo($permission)) {
+            $engineeringRole->givePermissionTo($permission);
+        }
+    }
 }
