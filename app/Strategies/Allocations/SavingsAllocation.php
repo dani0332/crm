@@ -14,7 +14,6 @@ class SavingsAllocation extends BaseAllocation
 {
     protected function fetchAdvisor(int $onlineStatus)
     {
-
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, QuoteTypeId::Savings);
 
         if (count($emails) > 0) {
@@ -22,13 +21,17 @@ class SavingsAllocation extends BaseAllocation
 
             return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager])
                 ->whereIn('users.email', $emails)
+                ->logRawSql()
                 ->first();
         }
+
+        $this->skipRuleUsers = true;
 
         $advisorIds = $this->getApplicableAdvisorIds();
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager])
             ->whereIn('users.id', $advisorIds)
+            ->logRawSql()
             ->first();
     }
 

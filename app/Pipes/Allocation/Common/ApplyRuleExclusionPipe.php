@@ -17,6 +17,9 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
         $rules = app(RuleService::class)->getUsersByLeadSourceRules($lead->source, $this->allocationRequest->getQuoteType()->id());
         $this->allocationRequest->set('rules', $rules);
 
+        $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->allocationRequest->getQuoteType());
+        $this->allocationRequest->set('ruleUserIds', $ruleUserIds);
+
         return $next($request);
     }
 }
