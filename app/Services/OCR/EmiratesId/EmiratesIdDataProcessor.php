@@ -182,11 +182,17 @@ class EmiratesIdDataProcessor
             $kycData = [];
 
             if (! empty($this->extractedData['country'])) {
-                $kycData['country_of_residence'] = $this->extractedData['country'];
+                $countryId = $this->getNationalityId($this->extractedData['country']);
+                if ($countryId) {
+                    $kycData['country_of_residence'] = $countryId;
+                }
             }
             
             if (! empty($this->extractedData['nationality'])) {
-                $kycData['place_of_birth'] = $this->extractedData['nationality'];
+                $nationalityId = $this->getNationalityId($this->extractedData['nationality']);
+                if ($nationalityId) {
+                    $kycData['place_of_birth'] = $nationalityId;
+                }
             }
 
             if (! empty($this->extractedData['issuing_date'])) {
@@ -260,9 +266,22 @@ class EmiratesIdDataProcessor
 
         $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
             ->orWhere('code', $nationality)
+            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
             ->first();
 
         return $nationalityRecord?->id;
+    }
+    
+    private function getNationalityName(?int $nationalityId): ?string
+    {
+        if (empty($nationalityId)) {
+            return null;
+        }
+        
+        $nationalityRecord = Nationality::find($nationalityId);
+        
+        // Return country_name if available, otherwise fall back to text
+        return $nationalityRecord?->country_name ?? $nationalityRecord?->text ?? null;
     }
 
     private function extractFirstName(string $fullName): string
@@ -386,7 +405,9 @@ class EmiratesIdDataProcessor
                 ],
                 'kyc_data' => $insuredKyc ? [
                     'country_of_residence' => $insuredKyc->country_of_residence,
+                    'country_of_residence_name' => $this->getNationalityName($insuredKyc->country_of_residence),
                     'place_of_birth' => $insuredKyc->place_of_birth,
+                    'place_of_birth_name' => $this->getNationalityName($insuredKyc->place_of_birth),
                     'id_issuance_date' => $insuredKyc->id_issuance_date,
                     'id_expiry_date' => $insuredKyc->id_expiry_date,
                     'issuance_place' => $insuredKyc->issuance_place,
