@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -555,5 +556,13 @@ class CarQuote extends BaseModel
     {
         return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function kycDocumentUser()
+    {
+        return $this->morphOne(QuoteDocument::class, 'quote_documentable')
+            ->where('document_type_code', DocumentTypeCode::KYCDOC)
+            ->whereNotNull('created_by_id')
+            ->latest('updated_at');
     }
 }

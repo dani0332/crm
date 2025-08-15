@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -33,8 +34,9 @@ class AutomationFailedJob implements ShouldQueue
     private $statusAPIFailed;
     private $processInvolved;
     private $workflowType;
+    private $userToSendEmail;
 
-    public function __construct($quote, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType)
+    public function __construct($quote, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
     {
         $this->quote = $quote;
         $this->quoteTypeId = $quoteTypeId;
@@ -42,6 +44,7 @@ class AutomationFailedJob implements ShouldQueue
         $this->processInvolved = $processInvolved;
         $this->statusAPIFailed = $statusAPIFailed;
         $this->workflowType = $workflowType;
+        $this->userToSendEmail = $sendTo;
     }
 
     /**
@@ -52,6 +55,13 @@ class AutomationFailedJob implements ShouldQueue
         LoggerService::startQuoteLogging($this->quote);
         LoggerService::info('job:AutomationFailedJob - Job started');
         // $providerName = InsuranceProvidersEnum::getTextByCode($this->quote?->insuranceProvider?->code);
+        if ($this->userToSendEmail == UserNameEnum::PA_USER) {
+            $this->advisorEmail = $this->quote?->kycDocumentUser?->createdBy?->email;
+            $this->advisorName = $this->quote?->kycDocumentUser?->createdBy?->name;
+        } else {
+            $this->advisorEmail = $this->quote->advisor->email;
+            $this->advisorName = $this->quote->advisor->name;
+        }
 
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
