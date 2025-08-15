@@ -21,9 +21,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Ken;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Requests\AMLCheckRequest;
+use App\Jobs\AutomationFailedJob;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
@@ -825,7 +827,7 @@ class AMLService
                 'chassisNumber' => $request['chassis_number'] ?? '',
                 'gender' => $this->formatGender($insuredDetails?->gender),
                 'dateOfBirth' => $insuredDetails?->dob,
-                'getQuoteEmail' => $request['get_quote_email_gig'] ?? null,
+                'getQuoteEmail' => $isLIVA ? 'hitesh.motwani@afia.ae' : $request['get_quote_email_gig'],
                 'insuredFirstName' => $insuredDetails?->first_name,
                 'insuredLastName' => $insuredDetails?->last_name,
             ];
@@ -931,6 +933,31 @@ class AMLService
     {
         session()->push('insurerAMLScreeningResponse', $screeningResponse);
         $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
+
+        $providerName = InsuranceProvidersEnum::getTextByCode($quoteDetails?->insuranceProvider?->code);
+        // For renewal uploads, skip KYC logging and status updates but proceed with auto capture
+        if (isset($screeningResponse['isRenewalLead']) && $screeningResponse['isRenewalLead']) {
+            LoggerService::info('fn:amlScreeningGIG - Renewal upload - Skipping KYC logging and status updates - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+
+            // Execute auto capture process for renewal uploads (without changing insurer_aml_status)
+            if ($quoteTypeId == QuoteTypes::CAR->id()) {
+                $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
+                $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
+
+                LoggerService::info(__FUNCTION__.' - Auto Capture Payment Process Triggered for Renewal Upload - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+                if (app(PolicyIssuanceService::class)->checkAllowedAutomations(QuoteTypes::getName($quoteTypeId)->value, $quoteDetails)) {
+                    $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($quoteTypeId, $quoteDetails);
+
+                    $insurerAMLScreeningResponse['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
+                    $insurerAMLScreeningResponse['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
+                }
+
+                session()->put('insurerAMLScreeningResponse', [$insurerAMLScreeningResponse]);
+            }
+
+            return;
+        }
+
         $insurePersonName = $insuredPersonDetails?->insured?->first_name.($insuredPersonDetails?->insured?->last_name == 'NULL' || $insuredPersonDetails?->insured?->last_name == null ? '' : ' '.$insuredPersonDetails?->insured?->last_name);
         $kycLogDetails = [
             'quote_request_id' => $quoteDetails->id,
@@ -943,7 +970,6 @@ class AMLService
             'search_type' => $customerType,
             'customer_code' => $insuredPersonDetails?->customer?->code ?? '',
         ];
-        $providerName = InsuranceProvidersEnum::getTextByCode($quoteDetails?->insuranceProvider?->code);
 
         if ($isScreeningCleared) {
             LoggerService::info('fn:amlScreeningGIG - '.$providerName.' AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
@@ -961,6 +987,16 @@ class AMLService
                 $kycLogDetails['match_found'] = 1;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
+
+                LoggerService::info('fn:amlScreeningGIG - Going to dispatch AutomationFailedJob');
+                AutomationFailedJob::dispatch(
+                    $quoteDetails,
+                    QuoteTypeId::Car,
+                    'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection',
+                    'Quote Finalized But Premium Not Matched',
+                    'Quote Finalization',
+                    WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+                )->onQueue('policy-issuance-automation');
             }
         }
 
@@ -971,7 +1007,7 @@ class AMLService
         LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
         $quoteDetails->refresh();
 
-        if ($quoteTypeId == QuoteTypes::CAR->id() && $insurerAMLStatus['insurer_aml_status'] == AMLStatusCode::InsurerAMLScreeningCleared) {
+        if ($quoteTypeId == QuoteTypes::CAR->id() && ($insurerAMLStatus['insurer_aml_status'] == AMLStatusCode::InsurerAMLScreeningCleared)) {
             $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
             $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
 

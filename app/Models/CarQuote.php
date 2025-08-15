@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -556,5 +557,13 @@ class CarQuote extends BaseModel
     public function isPolicyIssuanceFailed()
     {
         return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getFailedPolicyIssuanceAPIStatuses($this, QuoteTypes::CAR->value));
+    }
+
+    public function kycDocumentUser()
+    {
+        return $this->morphOne(QuoteDocument::class, 'quote_documentable')
+            ->where('document_type_code', DocumentTypeCode::KYCDOC)
+            ->whereNotNull('created_by_id')
+            ->latest('updated_at');
     }
 }

@@ -205,7 +205,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $triggerBookPolicyResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::BOOK_POLICY_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::BOOK_POLICY_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Send And Book Policy');
 
             return $triggerBookPolicyResponse;
         }
@@ -258,7 +258,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $uploadPolicyDocumentsToIMCRMResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Retrieve Document');
 
             return $uploadPolicyDocumentsToIMCRMResponse;
         }
@@ -419,7 +419,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy issuance failed', extra: ['response' => $policyIssuanceResponse]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::POLICY_ISSUANCE_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::POLICY_ISSUANCE_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Policy Creation');
 
             return $policyIssuanceResponse;
         }
@@ -525,7 +525,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Document upload failed', extra: ['response' => $uploadDocumentsResponse]);
 
             $this->currentInsurerApiStatus = self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID, 'Document Upload');
 
             return $uploadDocumentsResponse;
         }
@@ -773,7 +773,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 'policy_expiry_date' => $responseData['PolicyExpiryDate'] ?? '', // optional
                 'certificate_start_date' => $responseData['VehicleDetails']['CertificateStartDate'] ?? '',
                 'certificate_end_date' => $responseData['VehicleDetails']['CertificateEndDate'] ?? '', // optional
-                'annual_mileage_estimate' => '', // Not available in response
+                // 'annual_mileage_estimate' => '', // Not available in response
                 'is_insured_and_driver_same' => ($responseData['DriverDetails'][0]['AdditionalDriverDetails']['MainDriverInd'] ?? '') === 'Y' ? '1' : '0',
                 'driver_first_name' => $driverFirstName, // optional
                 'driver_last_name' => $driverLastName, // optional

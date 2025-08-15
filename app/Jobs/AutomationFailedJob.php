@@ -2,17 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteTypeId;
-use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\InsuranceProvidersEnum;
+use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Jobs\EP\SendEPJob;
-use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\SageApiService;
-use App\Services\SendEmailCustomerService;
-use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,24 +31,20 @@ class AutomationFailedJob implements ShouldQueue
     private $actionRequired;
     private $advisorEmail;
     private $advisorName;
-    private $imcrmReferenceNumber;
-    private $insurerApiStatus;
-    private $insurerName;
+    private $statusAPIFailed;
     private $processInvolved;
     private $workflowType;
+    private $userToSendEmail;
 
-    public function __construct($quote, $quoteTypeId, $actionRequired, $advisorEmail, $advisorName, $imcrmReferenceNumber, $insurerApiStatus, $insurerName, $processInvolved, $workflowType)
+    public function __construct($quote, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
     {
         $this->quote = $quote;
         $this->quoteTypeId = $quoteTypeId;
         $this->actionRequired = $actionRequired;
-        $this->advisorEmail = $advisorEmail;
-        $this->advisorName = $advisorName;
-        $this->imcrmReferenceNumber = $imcrmReferenceNumber;
-        $this->insurerApiStatus = $insurerApiStatus;
-        $this->insurerName = $insurerName;
         $this->processInvolved = $processInvolved;
+        $this->statusAPIFailed = $statusAPIFailed;
         $this->workflowType = $workflowType;
+        $this->userToSendEmail = $sendTo;
     }
 
     /**
@@ -64,14 +54,22 @@ class AutomationFailedJob implements ShouldQueue
     {
         LoggerService::startQuoteLogging($this->quote);
         LoggerService::info('job:AutomationFailedJob - Job started');
+        // $providerName = InsuranceProvidersEnum::getTextByCode($this->quote?->insuranceProvider?->code);
+        if ($this->userToSendEmail == UserNameEnum::PA_USER) {
+            $this->advisorEmail = $this->quote?->kycDocumentUser?->createdBy?->email;
+            $this->advisorName = $this->quote?->kycDocumentUser?->createdBy?->name;
+        } else {
+            $this->advisorEmail = $this->quote->advisor->email;
+            $this->advisorName = $this->quote->advisor->name;
+        }
 
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
-            'advisorEmail' => $this->advisorEmail,
-            'advisorName' => $this->advisorName,
-            'imcrmReferenceNumber' => $this->imcrmReferenceNumber,
-            'insurerApiStatus' => $this->insurerApiStatus,
-            'insurerName' => $this->insurerName,
+            'advisorEmail' => $this->quote->advisor->email,
+            'advisorName' => $this->quote->advisor->name,
+            'imcrmReferenceNumber' => $this->quote->code,
+            'insurerApiStatus' => $this->statusAPIFailed,
+            'insurerName' => $this->quote->first_name.' '.$this->quote->last_name,
             'processInvolved' => $this->processInvolved,
             'workflowType' => $this->workflowType,
         ];
