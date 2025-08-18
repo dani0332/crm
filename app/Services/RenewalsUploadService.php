@@ -2432,11 +2432,11 @@ class RenewalsUploadService
                                         $leadValidationErrors->push('Occupancy Status for Owners is required with Selected Ownership Status');
                                         break;
                                     }
-                                    if ($leadData->contents) {
-                                        LoggerService::info("fn - uploadedLeadsValidation - content is not required with selected ownership status $leadData->occupancy_status_for_owners");
-                                        $leadValidationErrors->push('Content is not required with Selected Ownership Status');
-                                        break;
-                                    }
+                                    // if ($leadData->contents) {
+                                    //     LoggerService::info("fn - uploadedLeadsValidation - content is not required with selected ownership status $leadData->occupancy_status_for_owners");
+                                    //     $leadValidationErrors->push('Content is not required with Selected Ownership Status');
+                                    //     break;
+                                    // }
                                     if ($leadData->personal_belongings) {
                                         LoggerService::info("fn - uploadedLeadsValidation - personal belongings is not required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Personal Belonging is not required with Selected Ownership Status');
