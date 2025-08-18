@@ -168,11 +168,8 @@ trait OcrFillable
             $dataToUpdate['insurer_commmission_invoice_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_commmission_invoice_number;
         }
 
-        if ($this->isEnabled($quote, $providersWithCommissionVatApplicable)) {
-            if (! $quote->payment?->commission_vat_applicable) {
-                $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->commission_vat_applicable;
-            }
-
+        if ($this->isEnabled($quote, $providersWithCommissionVatApplicable) && ! $quote->payment?->commission_vat_applicable) {
+            $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->commission_vat_applicable;
         }
 
         if (! empty($dataToUpdate)) {
