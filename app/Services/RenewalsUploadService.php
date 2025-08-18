@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\RenewalsHelperService;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanAddonsCode;
@@ -80,7 +79,6 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceProviderPlan;
-use App\Models\Lookup;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
@@ -89,7 +87,6 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteTag;
 use App\Models\QuoteType;
-use App\Models\RangeLookup;
 use App\Models\RenewalBatch;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
@@ -2426,7 +2423,7 @@ class RenewalsUploadService
                             if ($leadData->you_are_a) {
                                 LoggerService::info('fn - uploadedLeadsValidation - ownership status is '.$leadData->you_are_a);
                                 $leadPossessionType = $this->renewalsHelperService->getLookupByText(
-                                    LookupsEnum::POSSESSION_TYPE->value, 
+                                    LookupsEnum::POSSESSION_TYPE->value,
                                     $leadData->you_are_a
                                 );
                                 if (! $leadPossessionType) {
@@ -3368,7 +3365,5 @@ class RenewalsUploadService
 
         return true;
     }
-
-
 
 }

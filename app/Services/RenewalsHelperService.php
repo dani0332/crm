@@ -12,18 +12,18 @@ class RenewalsHelperService
         if (empty($text)) {
             return null;
         }
-        
+
         return Lookup::where('key', $key)
             ->where('text', trim($text))
             ->first();
     }
-    
+
     public function getRangeLookupByText(string $key, ?string $text): ?RangeLookup
     {
         if (empty($text)) {
             return null;
         }
-        
+
         return RangeLookup::where('key', $key)
             ->where('text', trim($text))
             ->first();
