@@ -2446,8 +2446,8 @@ class RenewalsUploadService
                                     }
 
                                     $leadCoverageType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->cover_required))])
-                                    ->where('key', LookupsEnum::COVERAGE_TYPE)
-                                    ->first();
+                                        ->where('key', LookupsEnum::COVERAGE_TYPE)
+                                        ->first();
 
                                     if ($leadCoverageType && $leadCoverageType->text === CoverageTypeEnum::BUILDING_AND_CONTENTS->value) {
                                         if (! $leadData->contents) {
