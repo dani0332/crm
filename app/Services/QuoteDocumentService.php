@@ -257,7 +257,7 @@ class QuoteDocumentService extends BaseService
 
             return $quoteDocument;
         } catch (\Exception $exception) {
-            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'], exception: $exception);
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -562,10 +562,7 @@ class QuoteDocumentService extends BaseService
             // Use QPDF as our primary watermarking approach
             return $this->qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
         } catch (\Exception $e) {
-            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
+            LoggerService::error('Error in watermarkPdf for UUID: '.$uuid, exception: $e);
 
             // Incase qpdfWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
