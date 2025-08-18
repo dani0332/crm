@@ -2,7 +2,6 @@
 import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import PaymentNotification from '../Components/PaymentNotification.vue';
-import OcrNotification from '../Components/OcrNotification.vue';
 import DocumentNotification from '../Components/DocumentNotification.vue';
 const page = usePage();
 
