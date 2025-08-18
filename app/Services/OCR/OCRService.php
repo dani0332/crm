@@ -234,6 +234,13 @@ class OCRService
                     }
                 }
 
+                $processedData = null;
+                if (is_array($data)) {
+                    $processedData = $data;
+                } elseif (is_object($data)) {
+                    $processedData = (array) $data;
+                }
+
                 $this->ocrLogService->logActivity(
                     $quote,
                     $documentType,
@@ -246,7 +253,7 @@ class OCRService
                         'provider_id' => $providerId,
                         'image' => $this->isMimeTypeImage($fileMimeType),
                     ],
-                    is_array($data) ? $data : (is_object($data) ? (array) $data : null),
+                    $processedData,
                     $executionTime,
                     null,
                     $userId
