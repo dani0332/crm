@@ -49,10 +49,8 @@ class PopulateDocumentData implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::OCR);
-
         if (! $this->validateMimeType()) {
-            LoggerService::info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+            LoggerService::info(self::class." - Invalid file mime type - Quote UUID: {$this->quote->uuid}");
 
             return;
         }
@@ -68,17 +66,17 @@ class PopulateDocumentData implements ShouldQueue
         );
 
         if ($isSuccess === null) {
-            LoggerService::info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
+            LoggerService::info(self::class." - Document data population skipped - Quote UUID: {$this->quote->uuid}");
 
             return;
         }
 
         if ($isSuccess) {
-            LoggerService::info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
+            LoggerService::info(self::class." - Document data populated successfully - Quote UUID: {$this->quote->uuid}");
         } else {
-            LoggerService::warning(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
+            LoggerService::warning(self::class." - Document data population failed - Quote UUID: {$this->quote->uuid}");
             $errorMessage = "OCR processing failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}";
-            LoggerService::error(self::class." - {$errorMessage}");
+            LoggerService::error(self::class." - OCR processing failed - Quote UUID: {$this->quote->uuid}");
             $this->fail(new Exception($errorMessage));
         }
 
@@ -95,9 +93,7 @@ class PopulateDocumentData implements ShouldQueue
 
     public function failed(\Throwable $exception)
     {
-        LoggerService::info(self::class.'::failed - OCR processing failed - Quote UUID: '.$this->quote->uuid, extra: [
-            'quote_uuid' => $this->quote->uuid,
-        ]);
+        LoggerService::info(self::class.'::failed - OCR processing failed - Quote UUID: '.$this->quote->uuid);
 
         // Send OCR fail notification for supported document types (skip for ecom)
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);

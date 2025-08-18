@@ -27,10 +27,7 @@ class DrivingLicenseDataProcessor
         try {
             $processedData = $this->drivingLicenseExtractor->extractSingleDrivingLicense()->getProcessedData();
 
-            LoggerService::info('Driving License data processor started - Quote UUID: '.$this->quote->uuid, extra: [
-                'quote_type' => class_basename($this->quote),
-                'extracted_fields' => array_keys(array_filter($processedData, fn ($v) => ! empty($v))),
-            ]);
+            LoggerService::info('Driving License data processor started - Quote UUID: '.$this->quote->uuid);
 
             if (empty($processedData['car_quote_detail_fields'])) {
                 LoggerService::warning('Driving License data processor - No valid data to process - Quote UUID: '.$this->quote->uuid);
@@ -48,9 +45,7 @@ class DrivingLicenseDataProcessor
 
             DB::commit();
 
-            LoggerService::info('Driving License data processing completed successfully - Quote UUID: '.$this->quote->uuid, extra: [
-                'car_quote_detail_updated' => $carQuoteDetailUpdated,
-            ]);
+            LoggerService::info('Driving License data processing completed successfully - Quote UUID: '.$this->quote->uuid);
 
             return $carQuoteDetailUpdated;
 
@@ -76,9 +71,7 @@ class DrivingLicenseDataProcessor
                     // Remove the nationality string since we only want to store the ID
                     unset($fieldsToUpdate['driver_nationality_string']);
                 } else {
-                    LoggerService::warning('Driver nationality could not be matched - Quote UUID: '.$quote->uuid, extra: [
-                        'nationality_string' => $fieldsToUpdate['driver_nationality_string'],
-                    ]);
+                    LoggerService::warning('Driver nationality could not be matched - Quote UUID: '.$quote->uuid);
                     // Remove the nationality field since we can't match it
                     unset($fieldsToUpdate['driver_nationality_string']);
                 }
@@ -93,10 +86,7 @@ class DrivingLicenseDataProcessor
                 if (! empty($dataToUpdate)) {
                     $carQuoteDetail->update($dataToUpdate);
 
-                    LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data - Quote UUID: '.$this->quote->uuid, extra: [
-                        'car_quote_detail_id' => $carQuoteDetail->id,
-                        'updated_fields' => array_keys($dataToUpdate),
-                    ]);
+                    LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data - Quote UUID: '.$this->quote->uuid);
 
                     $result = true;
                 } else {

@@ -172,10 +172,7 @@ class AuditableController extends Controller
             $auditableType = $request->input('type');
             $auditableId = $request->input('id');
 
-            LoggerService::info('Loading OCR logs', [
-                'auditable_type' => $auditableType,
-                'auditable_id' => $auditableId,
-            ]);
+            LoggerService::info('Loading OCR logs');
 
             $logs = OcrLog::where('ocr_loggable_type', $auditableType)
                 ->where('ocr_loggable_id', $auditableId)
@@ -204,10 +201,7 @@ class AuditableController extends Controller
                 'data' => $logs,
             ]);
         } catch (\Exception $e) {
-            LoggerService::error('Failed to load OCR logs', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            LoggerService::error('Failed to load OCR logs - ', exception: $e);
 
             return response()->json([
                 'success' => false,

@@ -73,20 +73,11 @@ class OcrLogService
         int $userId,
         string $uploadedThrough
     ): void {
-        Log::info('OCR activity logged - Quote UUID: '.$quote->uuid, [
-            'quote_id' => $quote->id,
-            'document_type' => $documentType->code,
-            'status' => $status,
-            'user_id' => $userId,
-            'uploaded_through' => $uploadedThrough,
-        ]);
+        Log::info('OCR activity logged - Quote UUID: '.$quote->uuid);
     }
 
     private function logError(Model $quote, \Exception $e): void
     {
-        Log::error('Failed to log OCR activity - Quote UUID: '.$quote->uuid, [
-            'quote_id' => $quote->id,
-            'error' => $e->getMessage(),
-        ]);
+        Log::error('Failed to log OCR activity - Quote UUID: '.$quote->uuid, exception: $e);
     }
 }

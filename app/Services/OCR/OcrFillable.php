@@ -52,7 +52,7 @@ trait OcrFillable
         try {
             return $date ? Carbon::parse($date)->format($format) : $default;
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during date parsing', exception: $e);
+            LoggerService::error(self::class.' - Exception occurred during date parsing: ', exception: $e);
 
             return $default;
         }
@@ -340,7 +340,7 @@ trait OcrFillable
                 default => false,
             };
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during data fill', exception: $e);
+            LoggerService::error(self::class.' - Exception occurred during data fill: ', exception: $e);
 
             return false;
         }
