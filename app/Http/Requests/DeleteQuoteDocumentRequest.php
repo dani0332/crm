@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Enums\PaymentGatewayEnum;
 
 class DeleteQuoteDocumentRequest extends FormRequest
 {
@@ -47,7 +47,7 @@ class DeleteQuoteDocumentRequest extends FormRequest
             }
 
             // validate if payment is authorized
-            if (!isset($quote->payment) ||
+            if (! isset($quote->payment) ||
                 ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
                 $quote->payment->payment_gateway_id != PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK)) {
                 $validator->errors()->add('type', 'Documents can be deleted once payment is authorized.');

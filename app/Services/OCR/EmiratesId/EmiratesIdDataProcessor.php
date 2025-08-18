@@ -187,7 +187,7 @@ class EmiratesIdDataProcessor
                     $kycData['country_of_residence'] = $countryId;
                 }
             }
-            
+
             if (! empty($this->extractedData['nationality'])) {
                 $nationalityId = $this->getNationalityId($this->extractedData['nationality']);
                 if ($nationalityId) {
@@ -271,15 +271,15 @@ class EmiratesIdDataProcessor
 
         return $nationalityRecord?->id;
     }
-    
+
     private function getNationalityName(?int $nationalityId): ?string
     {
         if (empty($nationalityId)) {
             return null;
         }
-        
+
         $nationalityRecord = Nationality::find($nationalityId);
-        
+
         // Return country_name if available, otherwise fall back to text
         return $nationalityRecord?->country_name ?? $nationalityRecord?->text ?? null;
     }

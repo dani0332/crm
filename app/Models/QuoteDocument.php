@@ -60,10 +60,10 @@ class QuoteDocument extends Model implements AuditableContract
         return $this->belongsTo(PaymentSplits::class, 'payment_split_id', 'id');
     }
 
-    public function documentUrl() : Attribute
+    public function documentUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => storageUrl() . $this->doc_url,
+            get: fn () => storageUrl().$this->doc_url,
         );
     }
 }
