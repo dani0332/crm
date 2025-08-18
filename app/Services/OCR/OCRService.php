@@ -63,8 +63,7 @@ class OCRService
         QuoteTypes $quoteType,
         Model $quote,
         string $docUrl,
-        OCRDocumentTypeEnum $docType,
-        string $fileMimeType
+        OCRDocumentTypeEnum $docType
     ) {
         $providerCode = null;
 
@@ -226,7 +225,7 @@ class OCRService
                 'document_category' => $documentCategory,
             ]);
 
-            $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
+            $data = $this->getData($quoteType, $quote, $url, $docType);
 
             // Calculate API call execution time
             $apiCallEndTime = microtime(true);
