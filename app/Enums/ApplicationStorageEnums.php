@@ -244,6 +244,8 @@ final class ApplicationStorageEnums extends Enum
     public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
     public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
 
+    public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
+
     /* Google Review Email */
     public const GOOGLE_REVIEW_EMAIL = 'google_review_email';
 }
