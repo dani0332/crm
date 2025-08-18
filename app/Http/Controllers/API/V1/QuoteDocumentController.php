@@ -60,11 +60,6 @@ class QuoteDocumentController extends Controller
      */
     public function store($quoteType, QuoteDocumentRequest $request)
     {
-        LoggerService::info(self::class.'::store', [
-            'quote_type' => $quoteType,
-            'request' => $request->all(),
-        ]);
-
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
         $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
@@ -79,11 +74,6 @@ class QuoteDocumentController extends Controller
      */
     public function destroy($quoteType, DeleteQuoteDocumentRequest $request)
     {
-        LoggerService::info('QuoteDocumentController::destroy', [
-            'quote_type' => $quoteType,
-            'request' => $request->all(),
-        ]);
-
         return $this->quoteDocumentService->deleteQuoteDocument($quoteType, $request->validated());
     }
 }
