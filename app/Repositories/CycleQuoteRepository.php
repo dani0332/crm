@@ -148,7 +148,7 @@ class CycleQuoteRepository extends BaseRepository
         });
 
         // Add debug logging
-        logger()->debug("CycleQuoteRepository toRawSql: " . $query->toRawSql());
+        LoggerService::sql("CycleQuoteRepository Grid Data", $query);
 
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 

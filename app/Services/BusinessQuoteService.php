@@ -471,7 +471,7 @@ class BusinessQuoteService extends BaseService
         }
 
         // Add debug logging
-        logger()->debug("BusinessQuoteService toRawSql: " . $this->query->toRawSql());
+        LoggerService::sql("BusinessQuoteService Grid Data", $this->query);
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
 

@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -243,7 +244,7 @@ class YachtQuoteRepository extends BaseRepository
         });
 
         // Add debug logging
-        logger()->debug("YachtQuoteRepository toRawSql: " . $query->toRawSql());
+        LoggerService::sql("YachtQuoteRepository Grid Data", $query);
 
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 

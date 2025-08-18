@@ -2064,7 +2064,7 @@ class CarQuoteService extends BaseService
             })
             ->orderBy('q.paid_at', 'desc');
 
-        logger()->debug("PUA AUTH toRawSql: " . $puaAuthUpdate->toRawSql());
+        LoggerService::sql("Car PUA Authorized Updates", $puaAuthUpdate);
 
 
         $puaAuthUpdate = $puaAuthUpdate->get();

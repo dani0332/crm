@@ -13,6 +13,7 @@ use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Config;
@@ -190,7 +191,7 @@ class PetQuoteRepository extends BaseRepository
         });
 
         // Add debug logging
-        logger()->debug("PetQuoteRepository toRawSql: " . $query->toRawSql());
+        LoggerService::sql("PetQuoteRepository Grid Data", $query);
 
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 

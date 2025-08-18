@@ -192,7 +192,7 @@ class LifeQuoteService extends BaseService
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
-        logger()->debug("Life/LifeQuoteService getLifeQuoteQuery toRawSql: " . $query->toRawSql());
+        LoggerService::sql("LifeQuoteService Quote Query", $query);
 
         return $query;
     }

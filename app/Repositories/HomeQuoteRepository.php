@@ -969,7 +969,7 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('personal_quotes.paid_at', 'desc')
         ;
 
-        logger()->debug("nonPUAAuthLead toRawSql: " . $nonPUAAuthLead->toRawSql());
+        LoggerService::sql("Home Non-PUA Authorized Leads", $nonPUAAuthLead);
 
         $nonPUAAuthLead = $nonPUAAuthLead->get();
 
@@ -1052,7 +1052,7 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->orderBy('personal_quotes.paid_at', 'desc')
             ;
-        logger()->debug("puaAuthUpdate toRawSql: " . $puaAuthUpdate->toRawSql());
+        LoggerService::sql("Home PUA Authorized Updates", $puaAuthUpdate);
         $puaAuthUpdate = $puaAuthUpdate->get();
 
         $puaAuthTeamUpdate = collect($puaAuthUpdate)
@@ -1156,7 +1156,7 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('personal_quotes.payment_status_date', 'desc')
             ;
 
-        logger()->debug("puaUpdatesQuery toRawSql: " . $puaUpdatesQuery->toRawSql());
+        LoggerService::sql("Home PUA Updates Query", $puaUpdatesQuery);
 
         return $puaUpdatesQuery;
     }

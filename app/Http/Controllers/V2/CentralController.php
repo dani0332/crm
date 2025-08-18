@@ -782,7 +782,7 @@ class CentralController extends Controller
             $files = [];
 
             if (!empty($exports)) {
-                info(" starting export");
+                LoggerService::info("PUA export starting", ['quote_type' => $quoteType]);
                 $puaUpdateExport = $exports['pua_quote']->download("{$quoteType}-PUA-AUTHORIZED.xlsx");
                 $nonPuaUpdateExport = $exports['non_pua_quote']->download("{$quoteType}-NON-PUA-AUTHORIZED.xlsx");
                 $puaUpdatesExport = $exports['pua_updates']->download("{$quoteType}-PUA-UPDATES.xlsx");
