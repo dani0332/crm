@@ -272,7 +272,7 @@ class AmtController extends Controller
         }
 
         // Add debug logging
-        logger()->debug("AmtController toRawSql: " . $data->toRawSql());
+        LoggerService::sql("AmtController Grid Data", $data);
 
         $this->adjustQueryByDateFilters($data, 'bqr');
 
