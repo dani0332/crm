@@ -19,6 +19,7 @@ class DrivingLicenseExtractor
     {
         $this->initializeExtractedData();
         $this->processOcrData();
+
         return $this;
     }
 
@@ -65,6 +66,7 @@ class DrivingLicenseExtractor
         if (is_object($personalInfo)) {
             $personalInfo = (array) $personalInfo;
         }
+
         return $personalInfo;
     }
 
