@@ -67,7 +67,7 @@ class DrivingLicenseDataProcessor
     {
         try {
             $result = false;
-            
+
             // Convert nationality string to nationality_id if nationality is provided
             if (! empty($fieldsToUpdate['driver_nationality_string'])) {
                 $nationalityId = $this->getNationalityId($fieldsToUpdate['driver_nationality_string']);
@@ -110,7 +110,7 @@ class DrivingLicenseDataProcessor
 
         } catch (Exception $e) {
             LoggerService::error('CarQuoteRequestDetail update failed for driving license - Quote UUID: '.$this->quote->uuid, exception: $e);
-            
+
             return false;
         }
     }
