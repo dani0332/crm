@@ -4,10 +4,13 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
+use App\Models\BrokerCommission;
 use App\Models\FtcEmailLog;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
+use App\Services\BrokerCommissionService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -107,9 +110,10 @@ class StorePaymentRequest extends FormRequest
                             if ($linkUsed) {
                                 $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
                             }
-                            $insurerProvider = InsuranceProvider::where('id', request()->input('insurance_provider_id'))->first();
-                            if ($insurerProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
-                                $validator->errors()->add('insurer_payment_link', 'Current insurance provider is not supported for this payment gateway. Please verify that the insurance provider is supported for this payment gateway.');
+                            $isPaymentLinkEnabled = $this->checkInsuranceProviderPaymentGateway($quoteModel);
+                            // dd($isPaymentLinkEnabled);
+                            if (! $isPaymentLinkEnabled) {
+                                $validator->errors()->add('insurer_payment_link', 'Current insurance provider is not supported for this payment gateway. Please verify that the insurance provider is supported for this payment gateway or broker commission is enabled for this insurance provider and plan.');
                             } else {
                                 request()->merge(['payment_gateway_id' => PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL]);
                                 request()->merge(['cc_payment_gateway' => strtoupper(PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL_TEXT)]);
@@ -132,5 +136,18 @@ class StorePaymentRequest extends FormRequest
                 $validator->errors()->add('value', 'Not Authorized to Add Credit Approval');
             }
         });
+    }
+
+
+    private function checkInsuranceProviderPaymentGateway($quoteModel)
+    {
+        $insuranceProviderId = request()->input('insurance_provider_id');
+        $insurerProvider = InsuranceProvider::where('id', $insuranceProviderId)->first();
+        $quoteTypeId = QuoteTypes::getIdFromValue(request()->input('modelType'));
+        $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
+        $planId = request()->input('plan_id') ?? null;
+        [, $brokerCommission, , $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        // dd($isPaymentLinkEnabled, $brokerCommission);
+        return $isPaymentLinkEnabled == 1 ;
     }
 }

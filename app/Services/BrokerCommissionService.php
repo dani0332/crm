@@ -63,6 +63,10 @@ class BrokerCommissionService
         $isCreditCardEnabled = $brokerCommission
                                 ? (! $brokerCommission->enable_payment_link && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL)
                                 : ($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL);
+        
+        $isPaymentLinkEnabled = $brokerCommission
+                                ? $brokerCommission->enable_payment_link
+                                : false;
 
         $insurersWithoutCCRenewal = [
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
@@ -80,7 +84,7 @@ class BrokerCommissionService
             Log::error('Quote code '.$quote->code.'Error in BrokerCommissionService::fetchBrokerCommission: '.$e->getMessage());
         }
 
-        return [$isCreditCardEnabled, $brokerCommission, false];
+        return [$isCreditCardEnabled, $brokerCommission, false, $isPaymentLinkEnabled];
     }
 
     /**
