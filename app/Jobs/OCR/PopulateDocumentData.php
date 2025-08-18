@@ -57,33 +57,29 @@ class PopulateDocumentData implements ShouldQueue
             return;
         }
 
-        try {
-            $isSuccess = app(OCRService::class)->process(
-                $this->quoteType,
-                $this->quote,
-                $this->documentType,
-                $this->documentPath,
-                $this->fileMimeType,
-                $this->userId,
-                $this->isEcom,
-            );
+        $isSuccess = app(OCRService::class)->process(
+            $this->quoteType,
+            $this->quote,
+            $this->documentType,
+            $this->documentPath,
+            $this->fileMimeType,
+            $this->userId,
+            $this->isEcom,
+        );
 
-            if ($isSuccess === null) {
-                LoggerService::info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
+        if ($isSuccess === null) {
+            LoggerService::info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
 
-                return;
-            }
+            return;
+        }
 
-            if ($isSuccess) {
-                LoggerService::info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
-            } else {
-                LoggerService::warning(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
-                $errorMessage = "OCR processing failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}";
-                LoggerService::error(self::class." - {$errorMessage}");
-                $this->fail(new Exception($errorMessage));
-            }
-        } catch (\Exception $e) {
-            throw $e;
+        if ($isSuccess) {
+            LoggerService::info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
+        } else {
+            LoggerService::warning(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}");
+            $errorMessage = "OCR processing failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} & Quote UUID {$this->quote->uuid}";
+            LoggerService::error(self::class." - {$errorMessage}");
+            $this->fail(new Exception($errorMessage));
         }
 
     }
