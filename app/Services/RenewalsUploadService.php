@@ -2449,7 +2449,7 @@ class RenewalsUploadService
                                     ->where('key', LookupsEnum::COVERAGE_TYPE)
                                     ->first();
 
-                                    if ($leadCoverageType->text === CoverageTypeEnum::BUILDING_AND_CONTENTS->value) {
+                                    if ($leadCoverageType && $leadCoverageType->text === CoverageTypeEnum::BUILDING_AND_CONTENTS->value) {
                                         if (! $leadData->contents) {
                                             LoggerService::info("fn - uploadedLeadsValidation - contents is required with selected ownership status $leadData->occupancy_status_for_owners");
                                             $leadValidationErrors->push('Contents is required with Selected Ownership Status');
