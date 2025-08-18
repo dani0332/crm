@@ -192,12 +192,12 @@ class PersonalQuoteRepository extends BaseRepository
 
                 return ['status' => true, 'message' => 'File Uploaded'];
             } catch (\Exception $exception) {
-                LoggerService::info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+                LoggerService::error('Error while uploading document - Ref: '.$quote->uuid, exception: $exception);
 
                 return ['status' => false, 'message' => $fileName.' :  '.($exception->getMessage() ?? 'Error uploading file')];
             }
         } catch (\Exception $exception) {
-            LoggerService::info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
+            LoggerService::error('Document Upload Error - UUID: '.$quote->uuid, exception: $exception);
 
             return ['status' => true, 'message' => $fileName.' :  Document upload failed, please try again'];
         }
