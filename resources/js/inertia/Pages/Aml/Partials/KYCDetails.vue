@@ -1146,7 +1146,6 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = 
     </dl>
     <div class="flex justify-end my-5 gap-x-2">
       <x-button
-        v-if="isSyncEnabled"
         size="sm"
         color="primary"
         type="button"
