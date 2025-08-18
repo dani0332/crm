@@ -135,7 +135,7 @@ class BorRequestMail extends Mailable
             $subjectLine = 'BOR '. $this->borLog->chassis_number . ' - ' . $name;
             return $subjectLine;
         }
-        $subjectLine = $name."'s " . $quoteType .' Insurance with Alfred '. $personalQuote->code;
+        $subjectLine = $name. ' For signature - Broker Appointment Letter '. $personalQuote->code;
         return $subjectLine;
     }
 
@@ -145,13 +145,14 @@ class BorRequestMail extends Mailable
     private function getCustomerName()
     {
         if ($this->borLog->customer_type === 'Entity') {
-            return $this->customerData['company_name'] ?? 'Valued Company';
+            return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
         }
         
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
+        $name = trim($firstName . ' ' . $lastName);
         
-        return trim($firstName . ' ' . $lastName) ?: 'Valued Customer';
+        return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
     }
 
     /**
