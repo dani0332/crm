@@ -14,12 +14,10 @@ class DocumentNotificationEvent implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public array $data;
-    public string $status;
 
-    public function __construct(array $data, string $status = 'info')
+    public function __construct(array $data)
     {
         $this->data = $data;
-        $this->status = $status;
     }
 
     public function broadcastOn()
@@ -34,9 +32,6 @@ class DocumentNotificationEvent implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
-        return [
-            'data' => $this->data,
-            'status' => $this->status,
-        ];
+        return $this->data;
     }
 }

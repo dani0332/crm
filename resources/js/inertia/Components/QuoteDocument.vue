@@ -227,8 +227,7 @@ const getS3TempUrl = async docURL => {
 const documentVerificationStatus = ref(page.props.quote.documents_verified);
 
 const handleDocumentNotification = event => {
-  const { data, status } = event.detail;
-  const quoteUID = data?.data?.quoteUID || data?.quoteUID;
+  const { quoteUID, status } = event.detail;
 
   if (quoteUID === page.props.quote.uuid && status === 'success') {
     documentVerificationStatus.value = true;

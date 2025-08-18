@@ -16,10 +16,7 @@ const listen = () => {
   worker.port.addEventListener('message', e => {
     window.dispatchEvent(
       new CustomEvent('document-notification', {
-        detail: {
-          data: e.data,
-          status: e.data.status,
-        },
+        detail: e.data,
       }),
     );
   });

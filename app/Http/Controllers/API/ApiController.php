@@ -18,6 +18,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -449,12 +450,8 @@ class ApiController extends Controller
         ]);
     }
 
-    public function documentNotification(Request $request)
+    public function documentNotification(DocumentNotificationRequest $request)
     {
-        $request->validate(
-            ['quoteUID' => self::REQUIRED_STRING]
-        );
-
         return $this->apiService->documentNotification($request);
     }
 }

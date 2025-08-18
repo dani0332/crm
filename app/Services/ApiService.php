@@ -10,6 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Events\DocumentNotificationEvent;
 use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -482,20 +483,17 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow triggered successfully!');
     }
 
-    public function documentNotification($request)
+    public function documentNotification(DocumentNotificationRequest $request)
     {
         try {
-
-            $data = $request->all();
             $notificationData = [
-                'quoteUID' => $data['quoteUID'],
-                'status' => 'success',
+                'quoteUID' => $request->quoteUID,
+                'status' => $request->status,
             ];
-
-            event(new DocumentNotificationEvent($notificationData, 'success'));
+            
+            event(new DocumentNotificationEvent($notificationData));
 
             return apiResponse(null, Response::HTTP_OK, 'Document notification received!');
-
         } catch (Exception $e) {
             LoggerService::error('Document notification processing failed', exception: $e);
 
