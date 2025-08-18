@@ -1181,7 +1181,7 @@ const allowStatusUpdate = computed(() => {
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.company_name,
-        currentlyInsuredWith: quote.currently_insured_with
+        currentlyInsuredWith: quote.insurance_provider_id
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"

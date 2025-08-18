@@ -1476,8 +1476,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         customerType: quote.customer_type,
         firstName: quote.first_name,
         lastName: quote.last_name,
-        companyName: quote.company_name,
-        currentlyInsuredWith: quote.currently_insured_with
+        companyName: quote.business_company_name,
+        currentlyInsuredWith: quote.insurance_provider_id
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"
