@@ -180,6 +180,7 @@ class EmiratesIdDataProcessor
     private function updateInsuredKycTable(Insured $insured): bool
     {
         try {
+            $result = false;
             $kycData = [];
 
             if (! empty($this->extractedData['country'])) {
@@ -230,13 +231,11 @@ class EmiratesIdDataProcessor
                         'updated_fields' => array_keys($dataToUpdate),
                     ]);
 
-                    return true;
+                    $result = true;
                 } else {
                     LoggerService::info('InsuredKyc table - No OCR data to update - Quote UUID: '.$this->quote->uuid, extra: [
                         'insured_id' => $insured->id,
                     ]);
-
-                    return false;
                 }
             } else {
                 $kycData['insured_id'] = $insured->id;
@@ -247,8 +246,10 @@ class EmiratesIdDataProcessor
                     'created_fields' => array_keys($kycData),
                 ]);
 
-                return true;
+                $result = true;
             }
+
+            return $result;
 
         } catch (Exception $e) {
             LoggerService::error('Failed to update InsuredKyc table - Quote UUID: '.$this->quote->uuid, exception: $e, extra: [
