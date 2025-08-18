@@ -56,13 +56,20 @@ class AIGWorkflowJob implements ShouldQueue
             $quote = $quoteType->model()->where('uuid', $this->quoteUuid)->first();
 
             if (! $quote) {
-                info("AIGWorkflowJob - Quote not found - Ref ID: {$this->quoteUuid} | Time: ".now());
+                LoggerService::error("AIGWorkflowJob - Quote not found - Ref ID: {$this->quoteUuid} | Time: ".now());
 
                 return;
             }
-
-            // Use the CarEmailService to send the AIG workflow
-            $carEmailService->sendAIGWorkflow($quote);
+            if ($quote->isAIAdvisorAssigned()) {
+                // Send AI Advisor Email
+                SendAIAdvisorOCBJob::dispatch(QuoteTypes::CAR, $quote->uuid)->delay(Carbon::now()->addMinute());
+                LoggerService::info("AIGWorkflowJob - AI Advisor Email sent ");
+            }
+            else {
+                // Use the CarEmailService to send the AIG workflow
+                $carEmailService->sendAIGWorkflow($quote);
+                LoggerService::info("AIGWorkflowJob - AIG workflow sent ");
+            }
 
             info("AIGWorkflowJob - Completed successfully for Ref ID: {$this->quoteUuid} | Time: ".now());
 
