@@ -465,7 +465,7 @@ const insurerAMLStatusOption = computed(() => {
         />
         <DatePicker
           v-model="filters.authorize_date"
-          label="Authorize Date"
+          label="Payment Authorised Date"
           class="w-full"
           range
           multi-calendars
@@ -473,7 +473,7 @@ const insurerAMLStatusOption = computed(() => {
         />
         <DatePicker
           v-model="filters.captured_date"
-          label="Captured Date"
+          label="Payment Captured Date"
           class="w-full"
           range
           multi-calendars
