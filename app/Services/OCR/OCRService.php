@@ -123,11 +123,12 @@ class OCRService
 
     private function getProviderId(Model $quote): ?int
     {
-        if (!$quote->payments || $quote->payments->isEmpty()) {
+        if (! $quote->payments || $quote->payments->isEmpty()) {
             return null;
         }
 
         $latestPayment = $quote->payments->first();
+
         return $latestPayment && $latestPayment->insuranceProvider
             ? $latestPayment->insuranceProvider->id
             : null;
@@ -147,9 +148,9 @@ class OCRService
 
     private function handleServiceAvailability(Model $quote, DocumentType $documentType, int $userId): bool
     {
-        if (!$this->isOCRServiceAvailable()) {
+        if (! $this->isOCRServiceAvailable()) {
             LoggerService::error('OCR Service Unavailable - Quote UUID: '.$quote->uuid);
-            
+
             $this->ocrLogService->logActivity(
                 $quote,
                 $documentType,
@@ -160,18 +161,18 @@ class OCRService
                 'OCR service unavailable',
                 $userId
             );
-            
+
             return false;
         }
-        
+
         return true;
     }
 
     private function handleDocumentTypeValidation(Model $quote, QuoteTypes $quoteType, DocumentType $documentType, OCRDocumentTypeEnum $docType, int $userId): bool
     {
-        if (!$docType?->isEnabled($quoteType)) {
+        if (! $docType?->isEnabled($quoteType)) {
             LoggerService::info(self::class."::process - OCR is not enabled for this document type {$documentType->code} - Quote UUID: ".$quote->uuid);
-            
+
             $this->ocrLogService->logActivity(
                 $quote,
                 $documentType,
@@ -182,18 +183,18 @@ class OCRService
                 'OCR not enabled for this document type',
                 $userId
             );
-            
+
             return false;
         }
-        
+
         return true;
     }
 
     private function processOcrData(
-        Model $quote, 
-        QuoteTypes $quoteType, 
+        Model $quote,
+        QuoteTypes $quoteType,
         DocumentType $documentType,
-        OCRDocumentTypeEnum $docType, 
+        OCRDocumentTypeEnum $docType,
         string $url,
         string $fileMimeType,
         int $userId,
@@ -205,33 +206,33 @@ class OCRService
     ): ?bool {
         $apiCallEndTime = microtime(true);
         $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
-        
+
         LoggerService::info('OCR API call completed - Quote UUID: '.$quote->uuid);
-        LoggerService::info(self::class.'::process - Data received from getData - Quote UUID: '.$quote->uuid .' - apiCallEndTime: '. $apiCallEndTime .' - apiCallExecutionTime: '. $apiCallExecutionTime);
-        
+        LoggerService::info(self::class.'::process - Data received from getData - Quote UUID: '.$quote->uuid.' - apiCallEndTime: '.$apiCallEndTime.' - apiCallExecutionTime: '.$apiCallExecutionTime);
+
         $dataFilledResponse = $this->fill($quote, $docType, $data, $documentCategory);
-        
+
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         if ($isQuoteStatusTransectionApproved) {
             (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
-        } elseif (!$isEcom) {
+        } elseif (! $isEcom) {
             event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
         }
-        
+
         // Send end notification for successful processing (skip for ecom)
-        if (!$isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
+        if (! $isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
             event(new OcrNotifications($quote, 'end', 'OCR processing completed successfully', null, $docType?->value, $userId));
         }
-        
+
         // Calculate execution time and log success
         $endTime = microtime(true);
         $executionTime = round(($endTime - $startTime) * 1000, 2);
-        
+
         LoggerService::info('OCR processing completed successfully - Quote UUID: '.$quote->uuid);
-        
+
         $providerId = $this->getProviderId($quote);
         $processedData = is_array($data) ? $data : ((is_object($data)) ? (array) $data : null);
-        
+
         $this->ocrLogService->logActivity(
             $quote,
             $documentType,
@@ -242,15 +243,15 @@ class OCRService
             null,
             $userId
         );
-        
+
         return $dataFilledResponse;
     }
 
     private function handleProcessingFailure(
-        Model $quote, 
-        QuoteTypes $quoteType, 
+        Model $quote,
+        QuoteTypes $quoteType,
         DocumentType $documentType,
-        OCRDocumentTypeEnum $docType, 
+        OCRDocumentTypeEnum $docType,
         string $url,
         string $fileMimeType,
         int $userId,
@@ -258,11 +259,11 @@ class OCRService
     ): bool {
         $endTime = microtime(true);
         $executionTime = round(($endTime - $startTime) * 1000, 2);
-        
+
         LoggerService::warning('OCR processing failed - no data received - Quote UUID: '.$quote->uuid);
-        
+
         $providerId = $this->getProviderId($quote);
-        
+
         $this->ocrLogService->logActivity(
             $quote,
             $documentType,
@@ -273,16 +274,16 @@ class OCRService
             'OCR processing failed - no data received',
             $userId
         );
-        
+
         return false;
     }
 
     private function handleProcessingException(
         \Exception $e,
-        Model $quote, 
-        QuoteTypes $quoteType, 
+        Model $quote,
+        QuoteTypes $quoteType,
         DocumentType $documentType,
-        OCRDocumentTypeEnum $docType, 
+        OCRDocumentTypeEnum $docType,
         string $url,
         string $fileMimeType,
         int $userId,
@@ -290,11 +291,11 @@ class OCRService
     ): void {
         $endTime = microtime(true);
         $executionTime = round(($endTime - $startTime) * 1000, 2);
-        
+
         LoggerService::error('OCR processing failed with exception - Quote UUID: '.$quote->uuid, exception: $e);
-        
+
         $providerId = $this->getProviderId($quote);
-        
+
         $this->ocrLogService->logActivity(
             $quote,
             $documentType,
@@ -305,7 +306,7 @@ class OCRService
             'OCR processing failed with exception: '.$e->getMessage(),
             $userId
         );
-        
+
         throw $e;
     }
 
@@ -327,7 +328,7 @@ class OCRService
 
         // Check if OCR service is available
         $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
-        if (!$serviceCheck) {
+        if (! $serviceCheck) {
             return false;
         }
 
@@ -335,12 +336,12 @@ class OCRService
 
         // Validate document type
         $docTypeCheck = $this->handleDocumentTypeValidation($quote, $quoteType, $documentType, $docType, $userId);
-        if (!$docTypeCheck) {
+        if (! $docTypeCheck) {
             return null;
         }
 
         // Send start notification (skip for ecom)
-        if (!$isEcom && $this->requiresOcrNotifications($docType)) {
+        if (! $isEcom && $this->requiresOcrNotifications($docType)) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
         }
 
@@ -355,41 +356,41 @@ class OCRService
 
             if ($data) {
                 $result = $this->processOcrData(
-                    $quote, 
-                    $quoteType, 
-                    $documentType, 
-                    $docType, 
-                    $url, 
-                    $fileMimeType, 
-                    $userId, 
-                    $isEcom, 
-                    $documentCategory, 
-                    $startTime, 
-                    $apiCallStartTime, 
+                    $quote,
+                    $quoteType,
+                    $documentType,
+                    $docType,
+                    $url,
+                    $fileMimeType,
+                    $userId,
+                    $isEcom,
+                    $documentCategory,
+                    $startTime,
+                    $apiCallStartTime,
                     $data
                 );
             } else {
                 $result = $this->handleProcessingFailure(
-                    $quote, 
-                    $quoteType, 
-                    $documentType, 
-                    $docType, 
-                    $url, 
-                    $fileMimeType, 
-                    $userId, 
+                    $quote,
+                    $quoteType,
+                    $documentType,
+                    $docType,
+                    $url,
+                    $fileMimeType,
+                    $userId,
                     $startTime
                 );
             }
         } catch (\Exception $e) {
             $this->handleProcessingException(
                 $e,
-                $quote, 
-                $quoteType, 
-                $documentType, 
-                $docType, 
-                $url, 
-                $fileMimeType, 
-                $userId, 
+                $quote,
+                $quoteType,
+                $documentType,
+                $docType,
+                $url,
+                $fileMimeType,
+                $userId,
                 $startTime
             );
         }
