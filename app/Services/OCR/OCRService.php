@@ -2,7 +2,6 @@
 
 namespace App\Services\OCR;
 
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -135,7 +134,7 @@ class OCRService
         $startTime = microtime(true);
         $documentCategory = $documentType->category;
 
-                    LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
+        LoggerService::info('Starting OCR processing - Quote UUID: '.$quote->uuid);
 
         // Check if OCR service is available
         if (! $this->isOCRServiceAvailable()) {

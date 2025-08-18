@@ -3,7 +3,6 @@
 namespace App\Jobs\OCR;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
