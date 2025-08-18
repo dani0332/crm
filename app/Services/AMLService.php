@@ -2143,14 +2143,26 @@ class AMLService
         return true;
     }
 
-    public function isInsurerSyncEnabled($quoteTypeId, $quoteRequestId)
+    /**
+     * Check if insurer sync is enabled for the given quote type and request.
+     */
+    public function isInsurerSyncEnabled($quoteType, $quote): bool
     {
-        $insurerScreenType = [InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA];
+        $insurerScreenType = [
+            InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
+            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
+        ];
+        $payment = $quote->payments()->mainLeadPayment()->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
+
+        if (! in_array($insuranceProvider?->code, array_keys($insurerScreenType))) {
+            return false;
+        }
 
         $kycLogs = KycLog::withTrashed()->where([
-            'quote_request_id' => $quoteRequestId,
-            'quote_type_id' => $quoteTypeId,
-        ])->where('screening_type', $insurerScreenType[InsuranceProvidersEnum::AXA])->latest()->first();
+            'quote_request_id' => $quote->id,
+            'quote_type_id' => $quoteType->id,
+        ])->where('screening_type', $insurerScreenType[$insuranceProvider->code])->latest()->first();
 
         if (! $kycLogs) {
             return false;
