@@ -33,6 +33,7 @@ use InvalidArgumentException;
 class ApiService
 {
     private const LEAD_NOT_FOUND = 'Lead not found!';
+    private const QUOTE_NOT_FOUND = 'Quote not found!';
     public function fetchSignupUrl($request)
     {
         try {
@@ -336,7 +337,7 @@ class ApiService
 
         $quote = $model::where('uuid', $data['quoteUUID'])->first();
         if (! $quote) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+            return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
         }
 
         // Sync Courier Quote with MACRM if Policy Issued
@@ -371,7 +372,7 @@ class ApiService
                 if (! $quote) {
                     info("Quote not found with uuid: {$quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
-                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
                 }
             }
 
@@ -424,7 +425,7 @@ class ApiService
             if (! $quote) {
                 LoggerService::info('Quote not found');
 
-                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
             }
 
             // Atomic update - only proceeds if travel_aig_flow_executed_at is null

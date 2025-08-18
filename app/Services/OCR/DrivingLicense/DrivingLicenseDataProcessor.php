@@ -66,6 +66,8 @@ class DrivingLicenseDataProcessor
     private function updateCarQuoteRequestDetail(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
+            $result = false;
+            
             // Convert nationality string to nationality_id if nationality is provided
             if (! empty($fieldsToUpdate['driver_nationality_string'])) {
                 $nationalityId = $this->getNationalityId($fieldsToUpdate['driver_nationality_string']);
@@ -84,33 +86,31 @@ class DrivingLicenseDataProcessor
 
             $carQuoteDetail = $quote->carQuoteRequestDetail;
 
-            if (! $carQuoteDetail) {
+            if ($carQuoteDetail) {
+                // Update all fields with OCR data
+                $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
+
+                if (! empty($dataToUpdate)) {
+                    $carQuoteDetail->update($dataToUpdate);
+
+                    LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data - Quote UUID: '.$this->quote->uuid, extra: [
+                        'car_quote_detail_id' => $carQuoteDetail->id,
+                        'updated_fields' => array_keys($dataToUpdate),
+                    ]);
+
+                    $result = true;
+                } else {
+                    LoggerService::info('CarQuoteRequestDetail - No OCR driving license data to update - Quote UUID: '.$this->quote->uuid);
+                }
+            } else {
                 LoggerService::warning('CarQuoteRequestDetail not found for quote - Quote UUID: '.$this->quote->uuid);
-
-                return false;
             }
 
-            // Update all fields with OCR data
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
-
-            if (! empty($dataToUpdate)) {
-                $carQuoteDetail->update($dataToUpdate);
-
-                LoggerService::info('CarQuoteRequestDetail updated successfully with driving license data - Quote UUID: '.$this->quote->uuid, extra: [
-                    'car_quote_detail_id' => $carQuoteDetail->id,
-                    'updated_fields' => array_keys($dataToUpdate),
-                ]);
-
-                return true;
-            }
-
-            LoggerService::info('CarQuoteRequestDetail - No OCR driving license data to update - Quote UUID: '.$this->quote->uuid);
-
-            return false;
+            return $result;
 
         } catch (Exception $e) {
             LoggerService::error('CarQuoteRequestDetail update failed for driving license - Quote UUID: '.$this->quote->uuid, exception: $e);
-
+            
             return false;
         }
     }
