@@ -32,6 +32,7 @@ use InvalidArgumentException;
 
 class ApiService
 {
+    private const LEAD_NOT_FOUND = 'Lead not found!';
     public function fetchSignupUrl($request)
     {
         try {
@@ -193,7 +194,7 @@ class ApiService
             if (! $lead) {
                 LoggerService::warning("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
-                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
             }
 
             if ($lead->sic_flow_enabled) {
@@ -282,7 +283,7 @@ class ApiService
         $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
         }
 
         if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
@@ -309,7 +310,7 @@ class ApiService
         $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
         }
 
         if ($lead->isAUHLead(false)) {
@@ -459,7 +460,7 @@ class ApiService
             case QuoteTypes::HEALTH:
                 $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
                 if (! $lead) {
-                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Lead not found!');
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, self::LEAD_NOT_FOUND);
                 }
                 if (getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid)) {
                     if (! app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)) {
