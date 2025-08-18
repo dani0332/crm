@@ -10,6 +10,7 @@ use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Nationality;
+use App\Exceptions\OCR\OcrProcessingException;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
@@ -42,7 +43,7 @@ class EmiratesIdDataProcessor
 
             $insured = $this->getOrCreateInsuredRecord();
             if (! $insured) {
-                throw new Exception('Failed to get or create Insured record');
+                throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
             }
 
             $insuredUpdated = $this->updateInsuredTable($insured);
