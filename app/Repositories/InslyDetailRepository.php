@@ -707,16 +707,17 @@ class InslyDetailRepository extends BaseRepository
             $parsedUrl = parse_url($url);
             $pathArray = explode('/', $parsedUrl['path']);
             // remove empty values and reset indexes
-            $pathArray = array_values(array_filter($pathArray, function($value) {
-                return !empty($value) || $value === 0;
+            $pathArray = array_values(array_filter($pathArray, function ($value) {
+                return ! empty($value) || $value === 0;
             }));
             $quoteType = $pathArray[1] ?? null;
             $uuid = $pathArray[2] ?? null;
-            if(!$quoteType || !$uuid){
+            if (! $quoteType || ! $uuid) {
                 return null;
             }
             $isPersonalQuote = checkPersonalQuotes(ucfirst($quoteType));
             $path = $isPersonalQuote ? '/personal-quotes/'.strtolower($quoteType).'/'.$uuid : '/quotes/'.strtolower($quoteType).'/'.$uuid;
+
             return $hostUrl.$path;
         }
 
