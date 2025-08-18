@@ -812,7 +812,7 @@ class RenewalsUploadService
             if ($this->checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject, $quoteType)) {
                 return false;
             }
-            $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEWLEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
+            $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? QuoteStatusEnum::NewLead : QuoteStatusEnum::Allocated;
 
             // advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -827,7 +827,10 @@ class RenewalsUploadService
 
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
 
-            $transApprovedId = $this->isFakeEmail($customerData['email']) ? $this->getquoteStatusIdbyCode(quoteStatusCode::FAKE) : $transApprovedId;
+            $transApprovedId = $this->isFakeEmail($customerData['email']) ? QuoteStatusEnum::Fake : $transApprovedId;
+
+            LoggerService::info('fn: createQuote for uuid: '.$quoteUuid.' transApprovedId: '.$transApprovedId);
+
             $quoteData = [
                 'customer_id' => $customer->id,
                 'first_name' => $customerData['first_name'],
