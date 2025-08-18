@@ -76,7 +76,8 @@ class BorPdfService
             }
 
             // Prepare data for PDF template (without signature)
-            $data = $this->preparePdfData($borLog, $lead, false);
+            $includeSignature = $borLog->date_signed ? true : false;
+            $data = $this->preparePdfData($borLog, $lead, $includeSignature);
             // Generate PDF
             $pdf = Pdf::loadView('pdf.bor-document', $data)
                 ->setPaper('a4', 'portrait')
@@ -144,10 +145,8 @@ class BorPdfService
             
             // Customer Information
             'customer_type' => $borLog->customer_type,
-            'customer_name' => $borLog->customer_type === 'Individual' 
-                ? ($lead->first_name . ' ' . $lead->last_name)
-                : $borLog->insurer_name,
-            'company_name' => $borLog->customer_type === 'Entity' ? $borLog->insurer_name : null,
+            'customer_name' => $borLog->insurer_name ?? ($lead->first_name . ' ' . $lead->last_name) ?? null,
+            'company_name' => $borLog->insurer_name ?? $lead->company_name ?? null,
             'customer_email' => $lead->email,
             'customer_phone' => $lead->phone,
             
@@ -165,7 +164,7 @@ class BorPdfService
             // Signature Information
             'include_signature' => $includeSignature && $temporaryUrl,
             'signature_path' => $includeSignature ? $temporaryUrl : null,
-            'signature_name' => $borLog->customer_signature_name ?? $borLog->insurer_name,
+            'signature_name' => $borLog->customer_signature_name ?? $borLog->insurer_name ?? $borLog->company_name,
             'date_signed' => $borLog->date_signed, // Already formatted as string by model accessor
             
             // Additional Information

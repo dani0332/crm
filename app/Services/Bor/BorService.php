@@ -85,6 +85,7 @@ class BorService
                 $code = $doc->document_type_code;
                 $allowedCodes = [
                     DocumentTypeCode::BAL,
+                    DocumentTypeCode::BAL_BS,
                     DocumentTypeCode::BAL_BIKE,
                     DocumentTypeCode::BAL_TRVL,
                     DocumentTypeCode::BAL_HOME,

@@ -145,7 +145,7 @@
         <div class="signature-section">
             <div class="accept-button">Signed and Accepted</div>
             
-            <p><strong>Name:</strong> {{ $signature_name ?? $customer_name ?? 'John Wick' }}</p>
+            <p><strong>Name:</strong> {{ $customer_type === 'Entity' ? $company_name : $customer_name }}</p>
             <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
             
             <div class="signature-box">
@@ -158,7 +158,7 @@
         <div class="signature-section">
             <div class="accept-button">Sign and accept</div>
             
-            <p><strong>Name:</strong> {{ $customer_name ?? 'John Wick' }}</p>
+            <p><strong>Name:</strong> {{ $customer_name ?? ' ' }}</p>
             <p><strong>Date signed:</strong> _____________________</p>
         </div>
     @endif
