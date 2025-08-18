@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\RenewalsHelperService;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanAddonsCode;
@@ -131,6 +132,7 @@ class RenewalsUploadService
     protected $userService;
     protected $healthQuoteService;
     protected $homeQuoteService;
+    protected $renewalsHelperService;
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
@@ -142,7 +144,8 @@ class RenewalsUploadService
         SendEmailCustomerService $sendEmailCustomerService,
         UserService $userService,
         HealthQuoteService $healthQuoteService,
-        HomeQuoteService $homeQuoteService
+        HomeQuoteService $homeQuoteService,
+        RenewalsHelperService $renewalsHelperService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->capiRequestService = $capiRequestService;
@@ -154,6 +157,7 @@ class RenewalsUploadService
         $this->userService = $userService;
         $this->healthQuoteService = $healthQuoteService;
         $this->homeQuoteService = $homeQuoteService;
+        $this->renewalsHelperService = $renewalsHelperService;
     }
 
     /*
@@ -2418,9 +2422,10 @@ class RenewalsUploadService
                             }
                             if ($leadData->you_are_a) {
                                 LoggerService::info('fn - uploadedLeadsValidation - ownership status is '.$leadData->you_are_a);
-                                $leadPossessionType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->you_are_a))])
-                                    ->where('key', LookupsEnum::POSSESSION_TYPE->value)
-                                    ->first();
+                                $leadPossessionType = $this->renewalsHelperService->getLookupByText(
+                                    LookupsEnum::POSSESSION_TYPE->value, 
+                                    $leadData->you_are_a
+                                );
                                 if (! $leadPossessionType) {
                                     LoggerService::info('fn - uploadedLeadsValidation - ownership status is invalid '.$leadData->you_are_a);
                                     $leadValidationErrors->push('Invalid Ownership Status Text');
@@ -2445,9 +2450,7 @@ class RenewalsUploadService
                                         break;
                                     }
 
-                                    $leadCoverageType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->cover_required))])
-                                    ->where('key', LookupsEnum::COVERAGE_TYPE)
-                                    ->first();
+                                    $leadCoverageType = $this->renewalsHelperService->getLookupByText(LookupsEnum::COVERAGE_TYPE->value, $leadData->cover_required);
 
                                     if ($leadCoverageType && $leadCoverageType->text === CoverageTypeEnum::BUILDING_AND_CONTENTS->value) {
                                         if (! $leadData->contents) {
@@ -2459,9 +2462,10 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->i_live_in_a) {
-                                $leadAccommodationType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->i_live_in_a))])
-                                    ->where('key', LookupsEnum::ACCOMMODATION_TYPE)
-                                    ->first();
+                                $leadAccommodationType = $this->renewalsHelperService->getLookupByText(
+                                    LookupsEnum::ACCOMMODATION_TYPE->value,
+                                    $leadData->i_live_in_a
+                                );
                                 if (! $leadAccommodationType) {
                                     LoggerService::info('fn - uploadedLeadsValidation - type of property is invalid '.$leadData->i_live_in_a);
                                     $leadValidationErrors->push('Invalid Type of Property Text');
@@ -2469,9 +2473,10 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->occupancy_status_for_owners) {
-                                $leadOccupancyType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->occupancy_status_for_owners))])
-                                    ->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)
-                                    ->first();
+                                $leadOccupancyType = $this->renewalsHelperService->getLookupByText(
+                                    LookupsEnum::OWNER_OCCUPANCY_TYPE->value,
+                                    $leadData->occupancy_status_for_owners
+                                );
                                 if (! $leadOccupancyType) {
                                     LoggerService::info('fn - uploadedLeadsValidation - occupancy status for owners is invalid '.$leadData->occupancy_status_for_owners);
                                     $leadValidationErrors->push('Invalid Occupancy Status for Owners Text');
@@ -2479,9 +2484,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->cover_required) {
-                                $leadCoverageType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->cover_required))])
-                                    ->where('key', LookupsEnum::COVERAGE_TYPE)
-                                    ->first();
+                                $leadCoverageType = $this->renewalsHelperService->getLookupByText(LookupsEnum::COVERAGE_TYPE->value, $leadData->cover_required);
                                 if (! $leadCoverageType) {
                                     LoggerService::info('fn - uploadedLeadsValidation - cover required is invalid '.$leadData->cover_required);
                                     $leadValidationErrors->push('Invalid Cover Required Text');
@@ -2489,9 +2492,10 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->contents) {
-                                $leadContents = RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->contents))])
-                                    ->where('key', RangeLookupKeyEnums::CONTENT_VALUES)
-                                    ->first();
+                                $leadContents = $this->renewalsHelperService->getRangeLookupByText(
+                                    RangeLookupKeyEnums::CONTENT_VALUES->value,
+                                    $leadData->contents
+                                );
                                 if (! $leadContents) {
                                     LoggerService::info('fn - uploadedLeadsValidation - contents is invalid '.$leadData->contents);
                                     $leadValidationErrors->push('Invalid Contents Text');
@@ -2499,9 +2503,10 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->personal_belongings) {
-                                $leadPersonalBelongings = RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->personal_belongings))])
-                                    ->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)
-                                    ->first();
+                                $leadPersonalBelongings = $this->renewalsHelperService->getRangeLookupByText(
+                                    RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES->value,
+                                    $leadData->personal_belongings
+                                );
                                 if (! $leadPersonalBelongings) {
                                     LoggerService::info('fn - uploadedLeadsValidation - personal belongings is invalid '.$leadData->personal_belongings);
                                     $leadValidationErrors->push('Invalid Personal Belongings Text');
@@ -3360,5 +3365,7 @@ class RenewalsUploadService
 
         return true;
     }
+
+
 
 }
