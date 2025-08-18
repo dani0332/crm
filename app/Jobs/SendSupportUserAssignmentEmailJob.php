@@ -126,6 +126,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
         $model = $this->quoteType->model();
 
         return $model::whereIn('id', $this->leadIds)
+            ->with(['advisor'])
             ->get()
             ->map(function ($lead) {
                 // Determine quote_type first
@@ -140,6 +141,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
                     'id' => $lead->id,
                     'uuid' => $lead->uuid,
                     'code' => $lead->code ?? $lead->id,
+                    'advisor_email' => $lead->advisor?->email,
                     'created_at' => Carbon::parse($lead->created_at)->format('d M Y H:i'),
                     'lead_url' => $this->quoteType->url($lead->uuid),
                     'quote_type' => $quoteType,
@@ -166,6 +168,8 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
             return $quoteType; // string or null
         })->filter()->unique();
 
+        $advisorEmails = $leads->pluck('advisor_email')->filter()->unique();
+
         if ($quoteTypes->count() == 1) {
             $quoteTypeName = $quoteTypes->first();
         } else {
@@ -177,11 +181,14 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
                 'email' => $supportUser->email,
                 'name' => $supportUser->name,
             ],
+            'cc' => [
+                $assignerUser->email,
+                ...$advisorEmails
+            ],
             'params' => [
                 'quoteTypeName' => $quoteTypeName,
                 'supportUserName' => $supportUser->name,
                 'assignerName' => $assignerUser->name,
-                'assignerEmail' => $assignerUser->email,
                 'leads' => $leads,
             ],
             'tags' => [

@@ -1698,7 +1698,7 @@ class SendEmailCustomerService extends BaseService
     public function sendSupportUserAssignmentEmail($emailData)
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SUPPORT_USER_ASSIGNMENT);
-        
+
         // Convert leads array to HTML list
         $leads = collect($emailData->get('params')['leads'] ?? []);
         $quotesHtml = '';
@@ -1719,12 +1719,13 @@ class SendEmailCustomerService extends BaseService
             'supportUserName' => $emailData->get('to')['name'] ?? '',
             'assignerName' => $emailData->get('params')['assignerName'] ?? '',
             'assignerEmail' => $emailData->get('params')['assignerEmail'] ?? '',
+            'ccEmails' => $emailData->get('cc') ?? [],
             'quoteTypeName' => $emailData->get('params')['quoteTypeName'] ?? '',
             'quotes' => $quotesHtml,
         ];
 
         $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
-        
+
         if ($oeAssignmentEvent) {
             info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$oeAssignmentEvent->value);
             $response = app(BirdService::class)->triggerWebHookRequest($oeAssignmentEvent->value, $birdEmailData);
