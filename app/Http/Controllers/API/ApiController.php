@@ -57,6 +57,8 @@ class ApiController extends Controller
 {
     use GenericQueriesAllLobs, PrivateClient;
 
+    private const REQUIRED_STRING = 'required|string';
+
     public $apiService;
     public $inboundEmailsHookService;
     public $outboundEmailsHookService;
@@ -297,7 +299,7 @@ class ApiController extends Controller
     public function homeSyncSAL(Request $request)
     {
         $request->validate([
-            'quoteUID' => 'required|string', // Ensure quoteUID is present
+            'quoteUID' => self::REQUIRED_STRING, // Ensure quoteUID is present
         ]);
 
         Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
@@ -437,7 +439,7 @@ class ApiController extends Controller
     public function homeRenewalOCBAttachment(Request $request)
     {
         $request->validate([
-            'quoteUID' => 'required|string',
+            'quoteUID' => self::REQUIRED_STRING,
         ]);
 
         $publicUrl = app(HomeEmailService::class)->attachHomeOCBPDFToEmail($request->quoteUID);
@@ -450,7 +452,7 @@ class ApiController extends Controller
     public function documentNotification(Request $request)
     {
         $request->validate(
-            ['quoteUID' => 'required|string']
+            ['quoteUID' => self::REQUIRED_STRING]
         );
 
         return $this->apiService->documentNotification($request);
