@@ -9,6 +9,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CarRegistrationType;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\CarVehicleUse;
+use App\Enums\CoverageTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
@@ -2416,6 +2417,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->you_are_a) {
+                                LoggerService::info('fn - uploadedLeadsValidation - ownership status is '.$leadData->you_are_a);
                                 $leadPossessionType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->you_are_a))])
                                     ->where('key', LookupsEnum::POSSESSION_TYPE->value)
                                     ->first();
@@ -2425,7 +2427,7 @@ class RenewalsUploadService
                                     break;
                                 }
 
-                                if ($leadPossessionType->code === RangeLookupCodeEnum::LANDLORD_RENTING_OUT->value) {
+                                if (isset($leadPossessionType?->code) && $leadPossessionType->code === RangeLookupCodeEnum::LANDLORD_RENTING_OUT->value) {
                                     LoggerService::info("fn - uploadedLeadsValidation - occupancy status for owners is required with selected ownership status $leadData->occupancy_status_for_owners");
                                     if (! $leadData->occupancy_status_for_owners) {
                                         LoggerService::info("fn - uploadedLeadsValidation - occupancy status for owners is required with selected ownership status $leadData->occupancy_status_for_owners");
@@ -2446,6 +2448,18 @@ class RenewalsUploadService
                                         LoggerService::info("fn - uploadedLeadsValidation - building is required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Building is required with Selected Ownership Status');
                                         break;
+                                    }
+
+                                    $leadCoverageType = Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->cover_required))])
+                                    ->where('key', LookupsEnum::COVERAGE_TYPE)
+                                    ->first();
+
+                                    if ($leadCoverageType->text === CoverageTypeEnum::BUILDING_AND_CONTENTS->value) {
+                                        if (! $leadData->contents) {
+                                            LoggerService::info("fn - uploadedLeadsValidation - contents is required with selected ownership status $leadData->occupancy_status_for_owners");
+                                            $leadValidationErrors->push('Contents is required with Selected Ownership Status');
+                                            break;
+                                        }
                                     }
                                 }
                             }
