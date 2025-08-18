@@ -15,6 +15,7 @@ use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use App\Http\Requests\OcrLogsRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -161,14 +162,9 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadOcrLogs(Request $request)
+    public function loadOcrLogs(OcrLogsRequest $request)
     {
         try {
-            $request->validate([
-                'type' => 'required|string',
-                'id' => 'required|integer',
-            ]);
-
             $auditableType = $request->input('type');
             $auditableId = $request->input('id');
 
