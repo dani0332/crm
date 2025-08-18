@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref } from 'vue';
 
 const props = defineProps({
   type: {
@@ -14,7 +14,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-})
+});
 
 const ocrLogs = reactive({
   loading: false,
@@ -26,39 +26,37 @@ const ocrLogs = reactive({
     { text: 'Created At', value: 'created_at' },
     { text: 'Action', value: 'action' },
   ],
-})
+});
 
-const selectedLog = ref({})
+const selectedLog = ref({});
 const modals = reactive({
   ocrLog: false,
-})
+});
 
 const selectLog = item => {
-  selectedLog.value = item
-  modals.ocrLog = true
-}
+  selectedLog.value = item;
+  modals.ocrLog = true;
+};
 
 const onLoadOcrLogData = async () => {
-  ocrLogs.loading = true
+  ocrLogs.loading = true;
   try {
     const response = await axios.post('/ocr-logs', {
       type: props.type,
       id: props.id,
-    })
+    });
 
     if (response.data.success) {
-      ocrLogs.data = response.data.data
+      ocrLogs.data = response.data.data;
     } else {
-      console.error('Failed to load OCR logs:', response.data.message)
+      console.error('Failed to load OCR logs:', response.data.message);
     }
   } catch (error) {
-    console.error('Error loading OCR logs:', error)
+    console.error('Error loading OCR logs:', error);
   } finally {
-    ocrLogs.loading = false
+    ocrLogs.loading = false;
   }
-}
-
-
+};
 </script>
 
 <template>
@@ -108,19 +106,36 @@ const onLoadOcrLogData = async () => {
         </div>
         <div v-else class="relative">
           <!-- Loading Overlay -->
-          <div 
+          <div
             v-if="ocrLogs.loading"
             class="absolute inset-0 bg-white/75 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg"
           >
             <div class="flex flex-col items-center gap-3">
-              <svg class="animate-spin w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                class="animate-spin w-8 h-8 text-primary-600"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
-              <span class="text-sm text-gray-600 font-medium">Refreshing logs...</span>
+              <span class="text-sm text-gray-600 font-medium"
+                >Refreshing logs...</span
+              >
             </div>
           </div>
-          
+
           <DataTable
             table-class-name="compact tablefixed"
             :headers="ocrLogs.table"
@@ -134,7 +149,15 @@ const onLoadOcrLogData = async () => {
               <x-tag
                 v-if="status"
                 size="xs"
-                :color="status === 'success' ? 'success' : status === 'failed' ? 'red' : status === 'skipped' ? 'secondary' : 'secondary'"
+                :color="
+                  status === 'success'
+                    ? 'success'
+                    : status === 'failed'
+                      ? 'red'
+                      : status === 'skipped'
+                        ? 'secondary'
+                        : 'secondary'
+                "
                 class="mt-0.5 text-[10px]"
               >
                 <p>
@@ -168,12 +191,12 @@ const onLoadOcrLogData = async () => {
       show-close
       backdrop
     >
-             <div v-if="selectedLog">
-         <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
-           <div class="grid sm:grid-cols-2">
-             <dt class="font-medium">Document Type:</dt>
-             <dd>{{ selectedLog.document_type_name }}</dd>
-           </div>
+      <div v-if="selectedLog">
+        <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Document Type:</dt>
+            <dd>{{ selectedLog.document_type_name }}</dd>
+          </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Status:</dt>
@@ -181,7 +204,15 @@ const onLoadOcrLogData = async () => {
               <x-tag
                 v-if="selectedLog.status"
                 size="xs"
-                :color="selectedLog.status === 'success' ? 'success' : selectedLog.status === 'failed' ? 'red' : selectedLog.status === 'skipped' ? 'secondary' : 'secondary'"
+                :color="
+                  selectedLog.status === 'success'
+                    ? 'success'
+                    : selectedLog.status === 'failed'
+                      ? 'red'
+                      : selectedLog.status === 'skipped'
+                        ? 'secondary'
+                        : 'secondary'
+                "
                 class="mt-0.5 text-[10px]"
               >
                 {{ selectedLog.status.toUpperCase() }}
@@ -199,24 +230,24 @@ const onLoadOcrLogData = async () => {
             <dd>{{ selectedLog.provider_name || 'N/A' }}</dd>
           </div>
 
-                     <div class="grid sm:grid-cols-2">
-             <dt class="font-medium">Uploaded Through:</dt>
-             <dd>{{ selectedLog.uploaded_through }}</dd>
-           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Uploaded Through:</dt>
+            <dd>{{ selectedLog.uploaded_through }}</dd>
+          </div>
 
-           <div class="grid sm:grid-cols-2">
-             <dt class="font-medium">Uploaded By:</dt>
-             <dd>{{ selectedLog.user_name || 'N/A' }}</dd>
-           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Uploaded By:</dt>
+            <dd>{{ selectedLog.user_name || 'N/A' }}</dd>
+          </div>
 
-           <div class="grid sm:grid-cols-2">
-             <dt class="font-medium">Created At:</dt>
-             <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
-           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Created At:</dt>
+            <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
+          </div>
         </dl>
 
         <x-divider class="my-5" />
-        
+
         <!-- Request Data -->
         <div v-if="selectedLog.request_data">
           <dl class="">
@@ -224,7 +255,9 @@ const onLoadOcrLogData = async () => {
             <div
               class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
             >
-              <pre class="whitespace-pre-wrap">{{ JSON.stringify(selectedLog.request_data, null, 2) }}</pre>
+              <pre class="whitespace-pre-wrap">{{
+                JSON.stringify(selectedLog.request_data, null, 2)
+              }}</pre>
             </div>
           </dl>
         </div>
@@ -236,7 +269,9 @@ const onLoadOcrLogData = async () => {
             <div
               class="text-sm h-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
             >
-              <pre class="whitespace-pre-wrap">{{ JSON.stringify(selectedLog.response_data, null, 2) }}</pre>
+              <pre class="whitespace-pre-wrap">{{
+                JSON.stringify(selectedLog.response_data, null, 2)
+              }}</pre>
             </div>
           </dl>
         </div>
@@ -267,4 +302,4 @@ const onLoadOcrLogData = async () => {
       </template>
     </x-modal>
   </div>
-</template> 
+</template>

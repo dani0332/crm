@@ -197,7 +197,6 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
   window.addEventListener('document-notification', handleDocumentNotification);
-
 });
 
 const getS3TempUrl = async docURL => {
@@ -227,17 +226,20 @@ const getS3TempUrl = async docURL => {
 };
 const documentVerificationStatus = ref(page.props.quote.documents_verified);
 
-const handleDocumentNotification = (event) => {
+const handleDocumentNotification = event => {
   const { data, status } = event.detail;
   const quoteUID = data?.data?.quoteUID || data?.quoteUID;
-  
+
   if (quoteUID === page.props.quote.uuid && status === 'success') {
     documentVerificationStatus.value = true;
   }
 };
 
 onUnmounted(() => {
-  window.removeEventListener('document-notification', handleDocumentNotification);
+  window.removeEventListener(
+    'document-notification',
+    handleDocumentNotification,
+  );
 });
 </script>
 
@@ -259,9 +261,13 @@ onUnmounted(() => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
-          <x-tag v-if="quoteType == quoteTypeCodeEnum.Car"
-           :color="documentVerificationStatus ? 'success' : 'amber'">
-            {{ documentVerificationStatus ? 'Verified' : 'Verification Pending' }}
+          <x-tag
+            v-if="quoteType == quoteTypeCodeEnum.Car"
+            :color="documentVerificationStatus ? 'success' : 'amber'"
+          >
+            {{
+              documentVerificationStatus ? 'Verified' : 'Verification Pending'
+            }}
           </x-tag>
           <DownloadDocuments
             v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
@@ -319,7 +325,7 @@ onUnmounted(() => {
             size="sm"
             color="orange"
           >
-          Upload Documents
+            Upload Documents
           </x-button>
           <x-button
             size="sm"
@@ -399,10 +405,10 @@ onUnmounted(() => {
       backdrop
     >
       <x-tab-group v-model="selectedTab" variant="block">
-                 <x-tab
-           :value="index"
-           :label="key.replace(/_/g, ' ')"
-           v-for="(docType, key, index) in documentTypes"
+        <x-tab
+          :value="index"
+          :label="key.replace(/_/g, ' ')"
+          v-for="(docType, key, index) in documentTypes"
           :key="index"
           :disabled="
             key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
@@ -410,61 +416,61 @@ onUnmounted(() => {
             !quote.plan_id
           "
         >
-                     <div
-             v-for="documentType in docType"
-             :key="documentType.id"
-             class="grid md:grid-cols-2 gap-2 my-4 border-b"
-           >
-             <div class="flex flex-col gap-1">
-               <h5 class="text-sm font-semibold">
-                 {{ documentType.text }}
-                 <span class="text-red-500">
-                   {{ documentType.is_required ? '*' : '' }}</span
-                 >
-               </h5>
-               <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-               <p class="text-xs">
-                 Supported: {{ documentType.accepted_files }}
-               </p>
-               <p class="text-xs">
-                 Max file size: {{ documentType.max_size }} MB
-               </p>
+          <div
+            v-for="documentType in docType"
+            :key="documentType.id"
+            class="grid md:grid-cols-2 gap-2 my-4 border-b"
+          >
+            <div class="flex flex-col gap-1">
+              <h5 class="text-sm font-semibold">
+                {{ documentType.text }}
+                <span class="text-red-500">
+                  {{ documentType.is_required ? '*' : '' }}</span
+                >
+              </h5>
+              <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+              <p class="text-xs">
+                Supported: {{ documentType.accepted_files }}
+              </p>
+              <p class="text-xs">
+                Max file size: {{ documentType.max_size }} MB
+              </p>
 
-               <x-alert
-                 v-if="successStatus[documentType.id]"
-                 type="success"
-                 color="success"
-                 light
-               >
-                 <p class="text-sm">File uploaded successfully</p>
-               </x-alert>
+              <x-alert
+                v-if="successStatus[documentType.id]"
+                type="success"
+                color="success"
+                light
+              >
+                <p class="text-sm">File uploaded successfully</p>
+              </x-alert>
 
-               <x-alert
-                 v-if="errorMsg[documentType.id]"
-                 type="error"
-                 color="error"
-                 light
-               >
-                 <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
-               </x-alert>
-             </div>
-             <div class="pb-4">
-               <Dropzone
-                 :id="documentType.id"
-                 :accept="documentType.accepted_files"
-                 :max-files="documentType.max_files"
-                 :max-size="documentType.max_size"
-                 :loading="uploadingStatus[documentType.id]"
-                 :document-type-code="documentType.code"
-                 :isDisabled="
-                   documentType.code == documentTypeCodeEnum.AUDIT &&
-                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
-                 "
-                 :multiple="true"
-                 @change="uploadFile(documentType, $event)"
-               />
+              <x-alert
+                v-if="errorMsg[documentType.id]"
+                type="error"
+                color="error"
+                light
+              >
+                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+              </x-alert>
+            </div>
+            <div class="pb-4">
+              <Dropzone
+                :id="documentType.id"
+                :accept="documentType.accepted_files"
+                :max-files="documentType.max_files"
+                :max-size="documentType.max_size"
+                :loading="uploadingStatus[documentType.id]"
+                :document-type-code="documentType.code"
+                :isDisabled="
+                  documentType.code == documentTypeCodeEnum.AUDIT &&
+                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                "
+                :multiple="true"
+                @change="uploadFile(documentType, $event)"
+              />
 
-               <template
+              <template
                 v-for="quoteDocument in quoteDocuments.filter(
                   d => d.document_type_code == documentType.code,
                 )"

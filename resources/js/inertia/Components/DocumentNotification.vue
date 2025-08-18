@@ -9,8 +9,10 @@ const eventName = 'document.notification';
 let worker;
 
 const listen = () => {
-  worker = new SharedWorker('/build/workers/pusher.worker.js?v=' + new Date().getTime());
-  
+  worker = new SharedWorker(
+    '/build/workers/pusher.worker.js?v=' + new Date().getTime(),
+  );
+
   worker.port.addEventListener('message', e => {
     window.dispatchEvent(
       new CustomEvent('document-notification', {
@@ -49,4 +51,4 @@ onUnmounted(() => {
 });
 </script>
 
-<template></template> 
+<template></template>
