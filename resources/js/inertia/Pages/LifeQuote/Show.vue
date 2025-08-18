@@ -275,8 +275,8 @@ const sendOCAEmail = () => {
   axios
     .post(route('life-quotes-send-oca-email'), {
       quote_uuid: page.props.quote.uuid,
-     // Add the version to the plan ID to ensure each selected plan is uniquely identified
-     plan_ids: selectedPlans.value.map(
+      // Add the version to the plan ID to ensure each selected plan is uniquely identified
+      plan_ids: selectedPlans.value.map(
         plan => plan.planId + '_v' + plan.version,
       ),
     })
