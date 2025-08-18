@@ -272,7 +272,7 @@ trait OcrFillable
 
             if ($success) {
                 // we can remove after testing
-                $summary = (new MulkiyaDataProcessor($quote, $data))->getProcessingSummary($quote);
+                $summary = (new MulkiyaDataProcessor($quote, $data))->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Mulkiya data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
