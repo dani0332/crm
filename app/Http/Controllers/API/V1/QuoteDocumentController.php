@@ -8,7 +8,6 @@ use App\Http\Requests\QuoteDocumentRequest;
 use App\Http\Resources\DocumentTypeResource;
 use App\Http\Resources\QuoteDocumentResource;
 use App\Services\ActivitiesService;
-use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 
