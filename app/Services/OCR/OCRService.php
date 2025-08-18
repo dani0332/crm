@@ -47,7 +47,7 @@ class OCRService
 
             return $this->handleResponse($response, $endpoint);
         } catch (Exception $e) {
-            LoggerService::error(self::class." - Exception occurred during API call: {$e->getMessage()}");
+            LoggerService::error(self::class." - Exception occurred during API call", exception: $e);
 
             return ['ok' => false, 'object' => null, 'message' => $e->getMessage()];
         }
