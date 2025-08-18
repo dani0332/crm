@@ -145,7 +145,6 @@ class QuoteDocumentService extends BaseService
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
-        // dd($documentType);
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
