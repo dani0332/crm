@@ -6,11 +6,11 @@ namespace App\Services\OCR\EmiratesId;
 
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Exceptions\OCR\OcrProcessingException;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Nationality;
-use App\Exceptions\OCR\OcrProcessingException;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
