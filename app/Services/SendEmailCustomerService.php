@@ -1176,7 +1176,6 @@ class SendEmailCustomerService extends BaseService
                 $body['bcc'][] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL)];
             }
 
-
             LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
 
             $client = new \GuzzleHttp\Client;
