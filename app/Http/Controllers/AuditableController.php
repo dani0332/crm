@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OcrLogsRequest;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -15,7 +16,6 @@ use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use App\Http\Requests\OcrLogsRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 

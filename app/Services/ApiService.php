@@ -490,7 +490,7 @@ class ApiService
                 'quoteUID' => $request->quoteUID,
                 'status' => $request->status,
             ];
-            
+
             event(new DocumentNotificationEvent($notificationData));
 
             return apiResponse(null, Response::HTTP_OK, 'Document notification received!');
