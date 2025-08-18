@@ -117,7 +117,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             }
         }
 
-        return [];
+        return collect([]);
 
     }
 
