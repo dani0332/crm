@@ -17,6 +17,13 @@ class DrivingLicenseExtractor
 
     public function extractDrivingLicenseData(): self
     {
+        $this->initializeExtractedData();
+        $this->processOcrData();
+        return $this;
+    }
+
+    private function initializeExtractedData(): void
+    {
         $this->extractedData = [
             // Car Quote Request Detail fields (driving license related)
             'driver_license_number' => null,
@@ -35,7 +42,10 @@ class DrivingLicenseExtractor
             'ocr_model' => null,
             'ocr_provider' => null,
         ];
+    }
 
+    private function processOcrData(): void
+    {
         $ocrDataArray = [$this->data];
 
         foreach ($ocrDataArray as $ocrData) {
@@ -44,35 +54,41 @@ class DrivingLicenseExtractor
             }
 
             $data = is_object($ocrData) ? (array) $ocrData : $ocrData;
-
-            // Extract personal information if it exists
-            $personalInfo = $data['personalInformation'] ?? [];
-            if (is_object($personalInfo)) {
-                $personalInfo = (array) $personalInfo;
-            }
-
-            $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
-                // Car Quote Request Detail fields
-                'driver_license_number' => $data['licenseNumber'] ?? $this->extractedData['driver_license_number'],
-                'driver_license_issue_date' => $this->formatDate($data['issueDate'] ?? null) ?: $this->extractedData['driver_license_issue_date'],
-                'driver_license_expiry_date' => $this->formatDate($data['expiryDate'] ?? null) ?: $this->extractedData['driver_license_expiry_date'],
-                'driver_license_issue_place' => $data['placeOfIssue'] ?? $this->extractedData['driver_license_issue_place'],
-                'traffic_code_number' => $data['trafficCodeNumber'] ?? $this->extractedData['traffic_code_number'],
-
-                // Personal information fields - split full name into first and last name
-                'driver_first_name' => $this->extractFirstName($personalInfo['fullName'] ?? null) ?: $this->extractedData['driver_first_name'],
-                'driver_last_name' => $this->extractLastName($personalInfo['fullName'] ?? null) ?: $this->extractedData['driver_last_name'],
-                'driver_dob' => $this->formatDate($personalInfo['dateOfBirth'] ?? null) ?: $this->extractedData['driver_dob'],
-                'driver_gender' => $personalInfo['sex'] ?? $this->extractedData['driver_gender'],
-                'driver_nationality_string' => $personalInfo['nationality'] ?? $this->extractedData['driver_nationality_string'],
-
-                // Metadata
-                'ocr_model' => $data['model'] ?? $this->extractedData['ocr_model'],
-                'ocr_provider' => $data['provider'] ?? $this->extractedData['ocr_provider'],
-            ]));
+            $personalInfo = $this->getPersonalInfo($data);
+            $this->updateExtractedData($data, $personalInfo);
         }
+    }
 
-        return $this;
+    private function getPersonalInfo(array $data): array
+    {
+        $personalInfo = $data['personalInformation'] ?? [];
+        if (is_object($personalInfo)) {
+            $personalInfo = (array) $personalInfo;
+        }
+        return $personalInfo;
+    }
+
+    private function updateExtractedData(array $data, array $personalInfo): void
+    {
+        $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
+            // Car Quote Request Detail fields
+            'driver_license_number' => $data['licenseNumber'] ?? $this->extractedData['driver_license_number'],
+            'driver_license_issue_date' => $this->formatDate($data['issueDate'] ?? null) ?: $this->extractedData['driver_license_issue_date'],
+            'driver_license_expiry_date' => $this->formatDate($data['expiryDate'] ?? null) ?: $this->extractedData['driver_license_expiry_date'],
+            'driver_license_issue_place' => $data['placeOfIssue'] ?? $this->extractedData['driver_license_issue_place'],
+            'traffic_code_number' => $data['trafficCodeNumber'] ?? $this->extractedData['traffic_code_number'],
+
+            // Personal information fields - split full name into first and last name
+            'driver_first_name' => $this->extractFirstName($personalInfo['fullName'] ?? null) ?: $this->extractedData['driver_first_name'],
+            'driver_last_name' => $this->extractLastName($personalInfo['fullName'] ?? null) ?: $this->extractedData['driver_last_name'],
+            'driver_dob' => $this->formatDate($personalInfo['dateOfBirth'] ?? null) ?: $this->extractedData['driver_dob'],
+            'driver_gender' => $personalInfo['sex'] ?? $this->extractedData['driver_gender'],
+            'driver_nationality_string' => $personalInfo['nationality'] ?? $this->extractedData['driver_nationality_string'],
+
+            // Metadata
+            'ocr_model' => $data['model'] ?? $this->extractedData['ocr_model'],
+            'ocr_provider' => $data['provider'] ?? $this->extractedData['ocr_provider'],
+        ]));
     }
 
     public function extractSingleDrivingLicense(): self
