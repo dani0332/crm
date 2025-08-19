@@ -49,7 +49,7 @@ class DrivingLicenseExtractor
         $ocrDataArray = [$this->data];
 
         foreach ($ocrDataArray as $ocrData) {
-            if (!is_object($ocrData) && !is_array($ocrData)) {
+            if (! is_object($ocrData) && ! is_array($ocrData)) {
                 continue;
             }
 
@@ -62,6 +62,7 @@ class DrivingLicenseExtractor
     private function getPersonalInfo(array $data): array
     {
         $personalInfo = $data['personalInformation'] ?? [];
+
         return OcrUtils::ensureArray($personalInfo);
     }
 

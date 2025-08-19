@@ -58,7 +58,7 @@ class MulkiyaExtractor
         $ocrDataArray = [$this->data];
 
         foreach ($ocrDataArray as $ocrData) {
-            if (!is_object($ocrData) && !is_array($ocrData)) {
+            if (! is_object($ocrData) && ! is_array($ocrData)) {
                 continue;
             }
 
