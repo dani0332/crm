@@ -738,7 +738,7 @@ class SplitPaymentService
                 /*$sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
                 $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);*/
 
-                if ($sageARPrepaymentResponse['status'] /*&& $sageAPPrepaymentResponse['status']*/) {
+                if ($sageARPrepaymentResponse['status'] /* && $sageAPPrepaymentResponse['status'] */) {
                     LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageARPrepaymentResponse['message']}");
                 } else {
                     $sageMessage = $sageARPrepaymentResponse['message'];
