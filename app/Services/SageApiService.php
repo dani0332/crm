@@ -824,10 +824,10 @@ class SageApiService
             }
 
             // Apply Prepayments for AP Invoice
-            $applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
             if (! $applyPaymentAPInvoices['status']) {
                 return $applyPaymentAPInvoices;
-            }
+            }*/
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
