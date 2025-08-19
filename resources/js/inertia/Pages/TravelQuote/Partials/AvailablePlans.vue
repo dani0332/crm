@@ -167,13 +167,12 @@ const onUpdatePlan = () => {
     });
 };
 
-
 const showPriceColumn = computed(() => props.plan.per_member_price === true);
 
 const tableHeaders = computed(() => [
   { text: 'Member', value: 'member' },
   { text: 'DOB', value: 'dob' },
-  ...(showPriceColumn.value ? [{ text: 'Price', value: 'premium' }] : [])
+  ...(showPriceColumn.value ? [{ text: 'Price', value: 'premium' }] : []),
 ]);
 
 // Format prices on initial load
