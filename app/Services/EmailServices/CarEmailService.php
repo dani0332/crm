@@ -797,7 +797,7 @@ class CarEmailService extends BaseService
             'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
             'dateOfAttempt' => now()->format('Y-m-d'),
             'failedLeadsCount' => count($failedPolicyNumbers) ?? 0,
-            'fileDownloadUrl' => route('validation-failed-download', ['id' => $renewalsUploadLeadsId]),
+            'fileDownloadUrl' => route('downloadValidationFailedFile', ['id' => $renewalsUploadLeadsId]),
         ];
 
     }
