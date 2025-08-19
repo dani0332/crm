@@ -559,7 +559,7 @@ class QuoteDocumentService extends BaseService
             // Use QPDF as our primary watermarking approach
             return $this->qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
         } catch (\Exception $e) {
-            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
+            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", extra: [
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
             ]);

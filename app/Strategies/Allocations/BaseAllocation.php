@@ -122,7 +122,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
     {
-        Log::info('BaseAllocation: Starting getAdvisorBaseQuery', [
+        LoggerService::info('BaseAllocation: Starting getAdvisorBaseQuery', extra: [
             'onlineStatus' => $onlineStatus,
             'roles' => $roles,
             'quoteTypeId' => $this->getQuoteTypeId(),

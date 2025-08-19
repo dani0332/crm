@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\QuoteBatches;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -40,26 +41,26 @@ class AddBatchNumber extends Command
      */
     public function handle()
     {
-        Log::info('Add Batch Command Started');
+        LoggerService::info('Add Batch Command Started');
         try {
             $lastBatch = QuoteBatches::orderBy('id', 'desc')->first();
-            info('last batch : '.json_encode($lastBatch));
+            LoggerService::info('last batch : ',json_encode($lastBatch));
             if ($lastBatch == null) {
-                info('inside creating batches from scratch');
+                LoggerService::info('inside creating batches from scratch');
                 $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-06'));
                 $this->createBatches($batches);
             } elseif (! (now()->startOfDay() >= Carbon::parse($lastBatch->start_date)->startOfDay() && now()->endOfDay() <= Carbon::parse($lastBatch->end_date)->endOfDay())) {
-                info('inside creating batch of current week');
+                LoggerService::info('inside creating batch of current week');
                 $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date)->addDays(1));
                 $this->createBatches($batches);
             } else {
-                info('batches are update to date');
+                LoggerService::info('batches are update to date');
 
                 return true;
             }
         } catch (\Exception $e) {
-            info('Add Batch Number Job Failed');
-            info('message: '.$e->getMessage());
+            LoggerService::info('Add Batch Number Job Failed');
+            LoggerService::info('message: '.$e->getMessage());
         }
     }
 
@@ -69,7 +70,7 @@ class AddBatchNumber extends Command
             foreach ($batches as $batch) {
                 $this->insertQuoteBatch($batch);
             }
-            info('batches created');
+            LoggerService::info('batches created');
         }
     }
 

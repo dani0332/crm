@@ -1590,7 +1590,10 @@ class CarQuoteService extends BaseService
             $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isPhpEnabled' => true])
                 ->loadView($view, compact('quotePlans', 'planIds', 'quote', 'addons', 'ecomInsuranceLink'));
         } catch (\Throwable $e) {
-            logger()->debug('Exception: '.$e->getMessage(), ['line' => $e->getLine(), 'file' => $e->getFile()]);
+            LoggerService::error('Error generating PDF: '.$e->getMessage(), extra: [
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
         }
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
