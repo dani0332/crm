@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\OCR;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class OcrUtils
 {
-    /**
-     * Clean array by removing null and empty string values
-     */
     public static function getCleanData(array $data): array
     {
         return array_filter($data, function ($value) {
@@ -18,10 +16,6 @@ class OcrUtils
         });
     }
 
-    /**
-     * Determine which fields should be updated based on new value from OCR
-     * Always updates with OCR data when available (overwrites existing data)
-     */
     public static function getFieldsToUpdate(array $fieldsToUpdate): array
     {
         $dataToUpdate = [];
@@ -34,19 +28,64 @@ class OcrUtils
         return $dataToUpdate;
     }
 
-    /**
-     * Legacy method: Only update fields that are currently empty or null
-     * Kept for backward compatibility if needed
-     */
-    public static function getFieldsToUpdateOnlyEmpty(array $fieldsToUpdate, Model $model): array
+    public static function formatDate(?string $date): ?string
     {
-        $dataToUpdate = [];
-        foreach ($fieldsToUpdate as $field => $value) {
-            if ($value !== null && $value !== '' && (empty($model->$field) || $model->$field === null)) {
-                $dataToUpdate[$field] = $value;
-            }
+        if (empty($date)) {
+            return null;
         }
 
-        return $dataToUpdate;
+        try {
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public static function extractFirstName(?string $fullName): ?string
+    {
+        if (empty($fullName)) {
+            return null;
+        }
+
+        $nameParts = explode(' ', trim($fullName));
+
+        return $nameParts[0] ?? null;
+    }
+
+    public static function extractLastName(?string $fullName): ?string
+    {
+        if (empty($fullName)) {
+            return null;
+        }
+
+        $nameParts = explode(' ', trim($fullName));
+        if (count($nameParts) > 1) {
+            // Join all parts except the first as last name
+            return implode(' ', array_slice($nameParts, 1));
+        }
+
+        return null;
+    }
+
+    public static function formatGender(?string $gender): ?string
+    {
+        if (empty($gender)) {
+            return null;
+        }
+
+        return match (strtoupper(trim($gender))) {
+            'M', 'MALE' => 'Male',
+            'F', 'FEMALE' => 'Female',
+            default => $gender
+        };
+    }
+
+    public static function ensureArray($data): array
+    {
+        if (is_object($data)) {
+            return (array) $data;
+        }
+
+        return is_array($data) ? $data : [];
     }
 }
