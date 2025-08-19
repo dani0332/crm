@@ -2190,7 +2190,7 @@ class RenewalsUploadService
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                     }
                 }
-
+           
                 switch (strtoupper($lead->quote_type)) {
                     case QuoteTypeShortCode::CAR:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
@@ -2246,6 +2246,17 @@ class RenewalsUploadService
                                     }
                                 } else {
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
+                                }
+                                // Check if quote exists and validate 'Currently insured with' matches 'Provider Name'
+                                if (isset($quoteExist) && $quoteExist) {
+                                    // 'currently_insured_with' is the provider in Car Details, 'provider_name' is the column value
+                                    $currentlyInsuredWith = trim($quoteExist->currently_insured_with ?? '');
+                                    info("currentlyInsuredWith:".$currentlyInsuredWith);
+                                    $providerName = trim($leadData->provider_name ?? '');
+                                    info("providerName:".$providerName);
+                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0) {
+                                        $leadValidationErrors->push('Provider Name must match Currently Insured With');
+                                    }
                                 }
                                 if (isset($carPlan)) {
                                     // Required if Renewal Premium is available
