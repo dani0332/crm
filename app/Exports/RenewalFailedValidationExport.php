@@ -46,8 +46,9 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->previous_quote_policy_premium = 'Gross Premium';
             $firstRow->source = 'Sales channel';
             $firstRow->notes = 'Notes';
+            $firstRow->errors = 'Errors Messages';
             $firstRow->plan_name = 'Plan Name';
-            $firstRow->errors = 'Errors';
+
             $exportLeads->push($firstRow);
         } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             $firstRow = (object) [];
@@ -106,7 +107,8 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
                 if (isset($leadData['renewal_batch_id'])) {
                     unset($leadData['renewal_batch_id']);
                 }
-                $leadData['errors'] = $lead->validation_errors;
+                $leadData['errors'] = $lead->validation_errors ?? 'No errors';
+        
                 $exportLeads->push($leadData);
             }
         }
