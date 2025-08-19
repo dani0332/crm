@@ -457,7 +457,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             ],
         ];
 
-        $issuePolicy = $this->httpCall($endPoint, $payload, 'PolicyResponse');
+        $issuePolicy = $this->httpCall($endPoint, $payload, self::POLICY_ISSUANCE_RESPONSE);
 
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicy, $this->baseUrl.$endPoint, self::ISSUE_POLICY, $issuePolicy['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $this->policyIssuance);
 
@@ -479,7 +479,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'policy_expiry_date' => $issuePolicyResult?->PolicyExpiryDate,
             'price_vat_applicable' => $issuePolicyResult?->PremiumWithoutVAT,
             'vat' => $issuePolicyResult?->VatAmount,
-            'vat' => $issuePolicyResult?->Commission,
         ]);
 
         Payment::where('code', $quote->code)->update([
