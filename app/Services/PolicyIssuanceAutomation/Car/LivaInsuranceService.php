@@ -18,15 +18,14 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\Payment;
-use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SageApiService;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 
 class LivaInsuranceService implements PolicyIssuanceInterface
 {
@@ -1015,7 +1014,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                     LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Token retrieved successfully', extra: [
                         'expires_in' => $expiresIn,
-                        'expires_in_minutes' => round($expiresIn / 60, 2)
+                        'expires_in_minutes' => round($expiresIn / 60, 2),
                     ]);
 
                     return $accessToken;
@@ -1024,7 +1023,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
             LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Token request failed', extra: [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
 
             return null;

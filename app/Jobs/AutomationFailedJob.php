@@ -27,6 +27,7 @@ class AutomationFailedJob implements ShouldQueue
      * Create a new job instance.
      */
     private $quote;
+
     private $quoteTypeId;
     private $actionRequired;
     private $advisorEmail;

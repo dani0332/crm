@@ -1380,10 +1380,8 @@ class CentralService extends BaseService
 
     /**
      * Send automation email to Bird
-     * @param $lead
-     * @param $emailData | should be object
-     * @param $quoteTypeId
-     * @param $emailType
+     *
+     * @param  $emailData  | should be object
      * @return int|null
      */
     public function sendAutomationEmail($lead, $emailData, $quoteTypeId, $emailType)

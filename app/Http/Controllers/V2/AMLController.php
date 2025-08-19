@@ -85,7 +85,7 @@ class AMLController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('permission:' . PermissionsEnum::AMLList . '|' . PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
+        $this->middleware('permission:'.PermissionsEnum::AMLList.'|'.PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
             ['only' => ['index']]);
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
