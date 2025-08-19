@@ -768,18 +768,18 @@ class CarEmailService extends BaseService
         }
     }
 
-    public function sendFailedCarRenewals($failedQuotes)
+    public function sendFailedCarRenewals($failedQuotes, $renewalsUploadLeadsId)
     {
 
         $workflow = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
         if ($workflow) {
-            $response = app(BirdService::class)->triggerWebHookRequest($workflow->value, $this->buildFailedCarRenewalsEmailData($failedQuotes));
+            $response = app(BirdService::class)->triggerWebHookRequest($workflow->value, $this->buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId));
             LoggerService::info(self::class.' - sendFailedCarRenewals - Event triggered ');
         }
 
     }
 
-    public function buildFailedCarRenewalsEmailData($failedQuotes)
+    public function buildFailedCarRenewalsEmailData($failedQuotes, $renewalsUploadLeadsId)
     {
         // Retrieve all CarRenewalManager emails in a single query
         $renewalsManagersEmails = User::role(\App\Enums\RolesEnum::CarRenewalManager)
@@ -790,13 +790,6 @@ class CarEmailService extends BaseService
 
         // Get all failed renewal processes for the given policy numbers
         $failedPolicyNumbers = collect($failedQuotes)->unique()->values()->all();
-        $failedRenewalProcess = RenewalQuoteProcess::whereIn('policy_number', $failedPolicyNumbers)
-            ->latest('id')
-            ->first();
-
-        // Get the related RenewalsUploadLeads record, if available
-        $renewalUploadLead = $failedRenewalProcess ? RenewalsUploadLeads::find($failedRenewalProcess->renewals_upload_lead_id) : null;
-
         return (object) [
             'failedQuotes' => implode(', ', $failedPolicyNumbers),
             'quoteUID' => '', // Not used, reserved for future
@@ -805,10 +798,7 @@ class CarEmailService extends BaseService
             'workflowType' => WorkflowTypeEnum::CAR_CQF_RENEWALS_ERRORS,
             'dateOfAttempt' => now()->format('Y-m-d'),
             'failedLeadsCount' => count($failedPolicyNumbers) ?? 0,
-            'fileName' => $renewalUploadLead?->file_name ?? '',
-            'fileDownloadUrl' => $renewalUploadLead
-                ? route('validation-failed-download', ['id' => $renewalUploadLead->id])
-                : null,
+            'fileDownloadUrl' => route('validation-failed-download', ['id' => $renewalsUploadLeadsId]),
         ];
 
     }
