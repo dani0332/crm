@@ -260,7 +260,7 @@ class SearchService extends BaseService
             'insurance_provider.text as insurance_provider',
             'advisor.name as advisor_name',
             'support_user.name as support_user_name',
-            DB::raw(Customer::formattedPcpTagCase('customer') . ' as pcp_tag_formatted'),
+            DB::raw(Customer::formattedPcpTagCase('customer').' as pcp_tag_formatted'),
         ]);
 
         $query->select(array_merge($selectColumns, $excelExportColumns));

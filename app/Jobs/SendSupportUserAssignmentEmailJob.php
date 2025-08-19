@@ -15,7 +15,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 /**
  * SendSupportUserAssignmentEmailJob
@@ -183,7 +182,7 @@ class SendSupportUserAssignmentEmailJob implements ShouldQueue
             ],
             'cc' => [
                 $assignerUser->email,
-                ...$advisorEmails
+                ...$advisorEmails,
             ],
             'params' => [
                 'quoteTypeName' => $quoteTypeName,

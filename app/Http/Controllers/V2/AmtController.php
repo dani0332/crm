@@ -6,6 +6,7 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
@@ -18,7 +19,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
@@ -28,7 +28,6 @@ use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\KycLog;
 use App\Models\Nationality;
-use App\Models\Team;
 use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -44,13 +43,12 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
-use App\Services\UserService;
 use App\Services\SplitPaymentService;
-use App\Services\Logger\LoggerService;
-use App\Enums\Logger\LoggerFeatureEnum;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use App\Traits\TeamHierarchyTrait;
@@ -138,7 +136,7 @@ class AmtController extends Controller
         $supportUsers = app(UserService::class)->getSupportUsers([
             'product_filter' => QuoteTypes::GROUP_MEDICAL,
             'include_role_in_name' => true,
-            'return_format' => 'collection'
+            'return_format' => 'collection',
         ]);
 
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
@@ -149,7 +147,6 @@ class AmtController extends Controller
         $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT) &&
                                  Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD) &&
                                  Auth::user()->hasProduct(QuoteTypes::GROUP_MEDICAL->value);
-
 
         $model = 'Business';
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();

@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
-use App\Enums\QuoteTypes;
 use App\Models\Role;
-use App\Models\Team;
 use App\Models\User;
 use DB;
 use Illuminate\Http\Request;
@@ -127,16 +126,14 @@ class UserService extends BaseService
      * Get support users with role concatenation
      * Unified method combining fetchSupportUserList and getSupportUsers functionality
      *
-     * @param array $options Configuration options:
-     *   - roles: array of role names (default: [CLIENTSUPPORT, CLIENTSUPPORTLEAD])
-     *   - product_filter: specific product name/code to filter by
-     *   - department: department IDs to filter by
-     *   - line_of_business: line of business codes to filter by
-     *   - business_insurance_type: business insurance type IDs to filter by
-     *   - include_role_in_name: boolean to concatenate role with name (default: false)
-     *   - return_format: 'collection' or 'array' (default: 'collection')
-     *
-     * @return Collection|array
+     * @param  array  $options  Configuration options:
+     *                          - roles: array of role names (default: [CLIENTSUPPORT, CLIENTSUPPORTLEAD])
+     *                          - product_filter: specific product name/code to filter by
+     *                          - department: department IDs to filter by
+     *                          - line_of_business: line of business codes to filter by
+     *                          - business_insurance_type: business insurance type IDs to filter by
+     *                          - include_role_in_name: boolean to concatenate role with name (default: false)
+     *                          - return_format: 'collection' or 'array' (default: 'collection')
      */
     public function getSupportUsers(array $options = []): Collection|array
     {
@@ -163,7 +160,7 @@ class UserService extends BaseService
             ->where('is_active', 1);
 
         // Apply product filter (specific product or line of business)
-        if (!empty($options['product_filter'])) {
+        if (! empty($options['product_filter'])) {
             $productFilter = $options['product_filter'];
 
             // Normalize to array for consistent processing
@@ -175,6 +172,7 @@ class UserService extends BaseService
                 if ($filter instanceof QuoteTypes) {
                     return [$filter->value];
                 }
+
                 return [];
             })->unique()->values();
 
@@ -188,18 +186,18 @@ class UserService extends BaseService
         }
 
         // Apply line of business filter
-        if (!empty($options['line_of_business'])) {
+        if (! empty($options['line_of_business'])) {
             $lineOfBusinessFilter = is_array($options['line_of_business'])
                 ? $options['line_of_business']
                 : [$options['line_of_business']];
 
             // Convert line of business to product codes
             $productCodes = collect($lineOfBusinessFilter)
-                ->map(fn($item) => collect(QuoteTypes::getName($item)->getTeams())->pluck('value')->all())
+                ->map(fn ($item) => collect(QuoteTypes::getName($item)->getTeams())->pluck('value')->all())
                 ->filter()->flatten()
                 ->toArray();
 
-            if (!empty($productCodes)) {
+            if (! empty($productCodes)) {
                 $query->whereHas('products', function ($q) use ($productCodes) {
                     $q->where('type', TeamTypeEnum::PRODUCT)
                         ->whereIn('teams.code', $productCodes);
@@ -208,12 +206,12 @@ class UserService extends BaseService
         }
 
         // Apply department filter
-        if (!empty($options['department'])) {
+        if (! empty($options['department'])) {
             $query->whereIn('department_id', (array) $options['department']);
         }
 
         // Apply business insurance type filter
-        if (!empty($options['business_insurance_type'])) {
+        if (! empty($options['business_insurance_type'])) {
             $query->whereHas('businessTypes', function ($q) use ($options) {
                 $q->whereIn('business_type_of_insurance.id', (array) $options['business_insurance_type']);
             });
@@ -227,9 +225,10 @@ class UserService extends BaseService
             if ($includeRoleInName && $user->roles->isNotEmpty()) {
                 // Get the first matching role for concatenation
                 $role = $user->roles->first();
+
                 return [
                     'id' => $user->id,
-                    'name' => $user->name . ' - ' . $role->name,
+                    'name' => $user->name.' - '.$role->name,
                     'role' => $role->name,
                     'original_name' => $user->name,
                 ];

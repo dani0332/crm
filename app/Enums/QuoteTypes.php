@@ -417,8 +417,9 @@ enum QuoteTypes: string
         };
     }
 
-    public function getTeams(){
-        return match($this){
+    public function getTeams()
+    {
+        return match ($this) {
             self::BUSINESS => [
                 self::CORPLINE,
                 self::GROUP_MEDICAL,

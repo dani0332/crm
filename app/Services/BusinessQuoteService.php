@@ -749,11 +749,6 @@ class BusinessQuoteService extends BaseService
 
     /**
      * Assign support user to quotes for business LOB
-     *
-     * @param array $leadIds
-     * @param int $supportUserId
-     * @param string $modelType
-     * @return string|null
      */
     public function assignSupportUser(array $leadIds, int $supportUserId, string $modelType): ?string
     {
@@ -787,7 +782,7 @@ class BusinessQuoteService extends BaseService
                 LoggerService::error('Failed to dispatch support user assignment email job. Message: '.$e->getMessage(), [
                     'support_user_id' => $supportUserId,
                     'lead_ids' => $updatedLeadIds,
-                    'model_type' => $modelType
+                    'model_type' => $modelType,
                 ]);
             }
         }
@@ -795,6 +790,7 @@ class BusinessQuoteService extends BaseService
         // Return success message if any leads were updated
         if (! empty($updatedLeadIds)) {
             $supportUserName = \App\Models\User::find($supportUserId)->name;
+
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }
 

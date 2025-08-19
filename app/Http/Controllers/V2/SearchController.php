@@ -35,7 +35,7 @@ class SearchController extends Controller
         $getSupportUserList = app(UserService::class)->getSupportUsers([
             'include_role_in_name' => true,
             'return_format' => 'array',
-            ...request()->all()
+            ...request()->all(),
         ]);
         $quoteStatuses = app(LookupService::class)->getLeadStatuses([QuoteStatusEnum::SentForTransactionApproval], [QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued]);
         $paymentStatuses = PaymentStatus::withActive()->whereNotIn('id', [

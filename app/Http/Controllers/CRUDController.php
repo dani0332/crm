@@ -40,6 +40,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
+use App\Http\Requests\AssignSupportUserRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -116,7 +117,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use App\Http\Requests\AssignSupportUserRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -2379,7 +2379,7 @@ class CRUDController extends Controller
     /**
      * Get the appropriate service object based on modelType
      *
-     * @param string $modelType
+     * @param  string  $modelType
      * @return mixed
      */
     /**
@@ -2394,13 +2394,13 @@ class CRUDController extends Controller
         // Use the existing helper function to get service class name
         $serviceClassName = getServiceObject($modelType);
         $service = app($serviceClassName);
-        
+
         $successMessage = $service->assignSupportUser($leadIds, $supportUserId, $modelType);
-        
+
         if ($successMessage) {
             return Redirect::back()->with('success', $successMessage);
         }
-        
+
         return Redirect::back()->with('error', 'Failed to assign support user to leads. Please try again.');
     }
 }
