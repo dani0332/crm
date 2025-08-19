@@ -26,6 +26,7 @@ use App\Services\SageApiService;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class LivaInsuranceService implements PolicyIssuanceInterface
 {
@@ -38,6 +39,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public $policyIssuance = null;
 
+    public const POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY = InsuranceProvidersEnum::RSA.'_POLICY_ISSUANCE_API_ACCESS_TOKEN';
     public const UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const ISSUE_POLICY = 'IssuePolicy';
     public const UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'UploadPolicyDocumentsToIMCRM';
@@ -69,14 +71,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public function __construct()
     {
         $this->baseUrl = config('constants.LIVA_API_BASE_URL');
-        $this->headers = [
-            'Content-Type' => 'application/json',
-            'Authorization' => 'Basic '.config('constants.LIVA_BASIC_AUTH'),
-            'PartnerId' => config('constants.LIVA_PARENT_ID'),
-            'location' => config('constants.LIVA_LOCATION'),
-            'Authentication' => 'Bearer '.config('constants.LIVA_AUTHENTICATION'),
-            'SubscriptionKey' => config('constants.LIVA_SUBSCRIPTION_KEY'),
-        ];
     }
 
     private function getAPISteps(): array
@@ -118,6 +112,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public function executeSteps($process)
     {
         $response = ['status' => false, 'error' => null, 'message' => null];
+
+        $this->getAccessToken();
 
         $this->policyIssuance = $process;
         $quote = $process->model;
@@ -276,7 +272,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
         $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
-        $endPoint = 'transactions/retrieve/v1';
+        $endPoint = 'motor/transactions/retrieve/v1';
 
         $uploadedDocumentsToIMCRM = collect();
 
@@ -437,7 +433,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started - Policy Issuance ID : '.$process->id.' - Step : '.self::ISSUE_POLICY);
         $response = ['status' => false, 'completed_step' => self::ISSUE_POLICY, 'error' => null, 'message' => null];
 
-        $endPoint = 'policy/create/v2';
+        $endPoint = 'motor/policy/create/v2';
 
         $payment = $quote->payments()->mainLeadPayment()->first();
 
@@ -539,7 +535,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function uploadDocuments($quote)
     {
-        $endPoint = 'documents/upload/v2';
+        $endPoint = 'motor/documents/upload/v2';
         $response = ['status' => false, 'completed_step' => self::UPLOAD_DOCUMENTS, 'error' => null, 'message' => null];
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' started', extra: [
             'endPoint' => $endPoint,
@@ -861,7 +857,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'trim' => $quote?->carQuoteRequestDetail?->insurer_trim,
         ]);
 
-        $endPoint = 'quote/update/v2';
+        $endPoint = 'motor/quote/update/v2';
         $payload = [
             'QuotationRequest' => [
                 'CustomerDetails' => [
@@ -943,7 +939,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
     public function retrieveQuoteRequest()
     {
-        $endPoint = 'transactions/retrieve/v2';
+        $endPoint = 'motor/transactions/retrieve/v2';
         $payload['RetrieveRequest'] = [
             'RetrieveType' => '2', // Retrive Type 2 = New Business Quote Retrival
             'TransactionNumber' => '7860255', // Quote number
@@ -964,5 +960,78 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             '40' => 'VR',
             '50' => 'VR',
         };
+    }
+
+    public function getAccessToken(): ?string
+    {
+        $cachedToken = Cache::store('redis')->get(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY);
+        if ($cachedToken) {
+            $this->headers = [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Basic '.config('constants.LIVA_BASIC_AUTH'),
+                'PartnerId' => config('constants.LIVA_PARENT_ID'),
+                'location' => config('constants.LIVA_LOCATION'),
+                'Authentication' => 'Bearer '.$cachedToken,
+                'SubscriptionKey' => config('constants.LIVA_SUBSCRIPTION_KEY'),
+            ];
+
+            return $cachedToken;
+        }
+
+        $headers = [
+            'Content-Type' => 'application/x-www-form-urlencoded',
+        ];
+
+        $payload = [
+            'client_id' => config('constants.LIVA_CLIENT_ID'),
+            'client_secret' => config('constants.LIVA_CLIENT_SECRET'),
+            'grant_type' => 'client_credentials',
+            'scope' => config('constants.LIVA_SCOPE'),
+        ];
+
+        try {
+            $response = Http::timeout(20)
+                ->withHeaders($headers)
+                ->asForm() // This ensures proper form encoding
+                ->post(config('constants.LIVA_API_BASE_URL').'/auth-token', $payload);
+
+            if ($response->successful()) {
+                $responseData = $response->json();
+
+                $accessToken = $responseData['access_token'] ?? null;
+                $expiresIn = (int) ($responseData['expires_in'] ?? 3599);
+
+                if ($accessToken) {
+                    Cache::store('redis')->put(self::POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY, $accessToken, $expiresIn);
+
+                    $this->headers = [
+                        'Content-Type' => 'application/json',
+                        'Authorization' => 'Basic '.config('constants.LIVA_BASIC_AUTH'),
+                        'PartnerId' => config('constants.LIVA_PARENT_ID'),
+                        'location' => config('constants.LIVA_LOCATION'),
+                        'Authentication' => 'Bearer '.$accessToken,
+                        'SubscriptionKey' => config('constants.LIVA_SUBSCRIPTION_KEY'),
+                    ];
+
+                    LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Token retrieved successfully', extra: [
+                        'expires_in' => $expiresIn,
+                        'expires_in_minutes' => round($expiresIn / 60, 2)
+                    ]);
+
+                    return $accessToken;
+                }
+            }
+
+            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Token request failed', extra: [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+
+            return null;
+        } catch (Exception $e) {
+            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Token request exception', exception: $e);
+
+            return null;
+        }
     }
 }

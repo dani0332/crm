@@ -165,8 +165,10 @@ return [
     'LIVA_BASIC_AUTH' => env('LIVA_BASIC_AUTH', ''),
     'LIVA_PARENT_ID' => env('LIVA_PARENT_ID', ''),
     'LIVA_LOCATION' => env('LIVA_LOCATION', ''),
-    'LIVA_AUTHENTICATION' => env('LIVA_AUTHENTICATION', ''),
     'LIVA_SUBSCRIPTION_KEY' => env('LIVA_SUBSCRIPTION_KEY', ''),
+    'LIVA_CLIENT_ID' => env('LIVA_CLIENT_ID', ''),
+    'LIVA_CLIENT_SECRET' => env('LIVA_CLIENT_SECRET', ''),
+    'LIVA_SCOPE' => env('LIVA_SCOPE', ''),
 
     'LIFE_EMAIL_DATA_SOURCE' => env('LIFE_EMAIL_DATA_SOURCE', 'Life-Insurance-UAT'),
 ];
