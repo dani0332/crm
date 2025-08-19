@@ -263,16 +263,22 @@ class EmbeddedProductRepository extends BaseRepository
             $payment = $transaction->payments->first();
             if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
-                if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
+                $canCancel = false;
+                if (auth()->user()->can(PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE)) {
+                    $canCancel = true;
+
+                } elseif ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
                     $address = CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->first();
 
-                    return empty($address?->type);
+                    $canCancel = empty($address?->type);
 
+                } else {
+
+                    $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);
+                    $canCancel = $paymentDate->diffInDays(Carbon::now()) <= 3;
                 }
 
-                $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);
-
-                return $paymentDate->diffInDays(Carbon::now()) <= 3;
+                return $canCancel;
             }
         }
 
@@ -1167,7 +1173,6 @@ class EmbeddedProductRepository extends BaseRepository
             return false;
         }
 
-        $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
         $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false);
 
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);

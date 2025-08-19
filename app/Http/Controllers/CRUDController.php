@@ -290,6 +290,7 @@ class CRUDController extends Controller
             $quote_status = collect($quote_status)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::Lost;
             })->values();
+            $emirates = Emirate::getOptions();
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
             $userMaxCap = $todaysAllocationData['max_capacity'];
@@ -315,6 +316,7 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'emirates' => $emirates,
             ]);
         }
 
@@ -1152,11 +1154,13 @@ class CRUDController extends Controller
 
             $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
+            $isAUHLead = $this->healthQuoteService->isAUHLead($record->id);
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'emailStatuses' => $emailStatuses,
                 'quote' => $record,
+                'isAUHLead' => $isAUHLead,
                 'amlStatusName' => $amlStatusName,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
