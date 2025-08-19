@@ -20,6 +20,7 @@ class LifeAllocation extends BaseAllocation
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::LifeAdvisor])
             ->whereIn('users.email', $emails)
+            ->logRawSql()
             ->first();
     }
 
@@ -59,6 +60,8 @@ class LifeAllocation extends BaseAllocation
 
             return $emails;
         }
+
+        $this->skipRuleUsers = true;
 
         if ($amount < 1000000 && in_array($category, [self::CAT_A])) {
             $emails = [$gaurav, $vivian];

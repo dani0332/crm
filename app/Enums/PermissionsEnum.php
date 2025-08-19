@@ -270,6 +270,7 @@ final class PermissionsEnum extends Enum
     public const YACHT_CARD_VIEW = 'yacht-quotes-card';
     public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
     public const CORPLINE_CARD_VIEW = 'business-cards';
+    public const LIFE_CARD_VIEW = 'life-quotes-card';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
     public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
