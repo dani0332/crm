@@ -122,6 +122,14 @@ const filters = reactive({
   private_client: 'all',
 });
 
+// PUA Export Modal state
+const puaExportModal = reactive({
+  show: false,
+  exportType: 'all',
+  authorize_date: '',
+  captured_date: '',
+});
+
 const canExport = ref(false);
 watch(
   () => filters,
@@ -243,8 +251,16 @@ const onDataExport = (exportType = 'download') => {
 };
 
 const onPUAExport = () => {
-  // Clean up date filter arrays to avoid duplication
-  const filtersForExport = { ...filters };
+  // Open the PUA export modal
+  puaExportModal.show = true;
+};
+
+const onConfirmPUAExport = () => {
+  // Use the date filters from the modal
+  const filtersForExport = {
+    authorize_date: puaExportModal.authorize_date,
+    captured_date: puaExportModal.captured_date,
+  };
 
   // Ensure date filters are properly formatted as arrays
   if (filtersForExport.authorize_date && Array.isArray(filtersForExport.authorize_date)) {
@@ -265,6 +281,7 @@ const onPUAExport = () => {
   };
 
   exportLoader.value = true;
+  puaExportModal.show = false; // Close modal
 
   logAndExportQuotes(payload)
     .then(result => {
@@ -576,6 +593,16 @@ const resetDateFilters = filterName => {
       }
     },
   );
+});
+
+const yesterday = computed(() => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date;
+});
+
+const canExportPUA = computed(() => {
+  return puaExportModal.authorize_date || puaExportModal.captured_date;
 });
 
 const insurerAMLStatusOption = computed(() => {
@@ -1055,5 +1082,58 @@ const formatDate = dateString =>
         to: quotes.to,
       }"
     />
+
+    <!-- PUA Export Modal -->
+    <x-modal
+      v-model="puaExportModal.show"
+      size="lg"
+      title="Export Home PUA Updates"
+      show-close
+      backdrop
+      persistent
+    >
+      <div class="grid md:grid-cols-2 gap-4">
+        <DatePicker
+          v-model="puaExportModal.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          :max-date="yesterday"
+        />
+        <DatePicker
+          v-model="puaExportModal.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          :max-date="yesterday"
+        />
+      </div>
+
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="puaExportModal.show = false"
+        >
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <x-button
+          v-if="canExportPUA"
+          size="sm"
+          color="emerald"
+          :loading="exportLoader"
+          @click="onConfirmPUAExport"
+        >
+          Export Data
+        </x-button>
+      </template>
+    </x-modal>
   </div>
 </template>
