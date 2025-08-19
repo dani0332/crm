@@ -2,15 +2,17 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\ClaimsEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\CarMake;
+use App\Models\DocumentType;
 use App\Models\Claim;
 use App\Models\ClaimRequest;
-use App\Models\ClaimsStatus;
+use App\Models\ClaimStatus;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
@@ -578,7 +580,7 @@ class ClaimsService extends BaseService
      */
     public function getClaimSubStatuses(): array
     {
-        return ClaimsStatus::where('parent', false)
+        return ClaimStatus::where('parent', false)
             ->where('is_active', 1)
             ->select('id', 'text', 'quote_type_id')
             ->orderBy('sort_order')
@@ -591,7 +593,7 @@ class ClaimsService extends BaseService
      */
     public function getClaimStatuses(): array
     {
-        return ClaimsStatus::where('parent', true)
+        return ClaimStatus::where('parent', true)
             ->where('is_active', 1)
             ->select('id', 'text', 'quote_type_id')
             ->orderBy('sort_order')
@@ -670,11 +672,11 @@ class ClaimsService extends BaseService
                 $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION;
             }
             // Find the "Claim initiated" status for the specific quote type
-            $claimInitiatedStatus = ClaimsStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('parent', 0)->first();
+            $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('parent', 0)->first();
 
             // If no specific status found for the quote type, try to find a general one
             if (! $claimInitiatedStatus) {
-                $claimInitiatedStatus = ClaimsStatus::where('text', $claimRegisterStatusKey)->whereNull('quote_type_id')->where('is_active', 1)->where('parent', 0)->first();
+                $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->whereNull('quote_type_id')->where('is_active', 1)->where('parent', 0)->first();
             }
 
             if ($claimInitiatedStatus) {
@@ -747,7 +749,7 @@ class ClaimsService extends BaseService
 
     public function markClaimAsClosed(ClaimRequest $claimRequest): void
     {
-        $claimStatusClosed = ClaimsStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED)->where('is_active', 1)->first();
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->update(['claim_status_id' => $claimStatusClosed->id]);
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -798,10 +800,10 @@ class ClaimsService extends BaseService
                 $statusUpdateData['claim_sub_status_id'] = $data['claim_sub_status_id'];
             }
 
-            $subStatus = ClaimsStatus::find($data['claim_sub_status_id']);
+            $subStatus = ClaimStatus::find($data['claim_sub_status_id']);
             $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
             if ($targetStatus) {
-                $statusUpdateData['claim_status_id'] = ClaimsStatus::where('text', $targetStatus)->where('parent', true)->where('is_active', 1)->first()?->id;
+                $statusUpdateData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('parent', true)->where('is_active', 1)->first()?->id;
             } elseif (isset($data['claim_status_id'])) {
                 $statusUpdateData['claim_status_id'] = $data['claim_status_id'];
             }
@@ -836,6 +838,29 @@ class ClaimsService extends BaseService
 
             throw $e;
         }
+    }
+
+    public function getClaimDocumentTypes($quoteTypeId)
+    {
+        $claimDocumentTypes = DocumentType::active()
+        ->whereIn('category', [DocumentTypeCode::CLAIM])
+        ->where('quote_type_id', $quoteTypeId)
+        ->sortDocumentType()
+        ->get();
+
+        $documentTypesByCategory = $claimDocumentTypes->groupBy('category');
+        $orderedDocumentTypesByCategory = collect();
+
+        if ($documentTypesByCategory->has(DocumentTypeCode::CLAIM)) {
+            $orderedDocumentTypesByCategory->put(DocumentTypeCode::CLAIM, $documentTypesByCategory->get(DocumentTypeCode::CLAIM));
+        }
+
+        return $orderedDocumentTypesByCategory;
+    }
+
+    public function sendNotification(Claim $claim, array $data): void
+    {
+        
     }
 
 }

@@ -2,6 +2,7 @@
 const props = defineProps({
   claim: Object,
   documents: Object,
+  documentTypes: Object,
 });
 
 const emit = defineEmits(['update', 'documentUploaded', 'documentDeleted']);
@@ -45,9 +46,6 @@ const confirmDeleteDoc = async () => {
   try {
     quoteDocumentsTable.value.isLoading = true;
 
-    // Implement document deletion logic here
-    // await deleteDocument(documentToDelete.value);
-
     modals.value.docConfirm = false;
     documentToDelete.value = null;
 
@@ -67,32 +65,10 @@ const confirmDeleteDoc = async () => {
   }
 };
 
-// Mock function - implement based on your requirements
-const memberDataDocs = travelers => {
-  return travelers || [];
-};
-
-// Mock function - implement based on your requirements
-const getupdateDocumentValidate = validate => {
-  console.log('Validating documents:', validate);
-  // Implement document validation logic
-};
-
-// Mock function - implement based on your requirements
-const sendPolicyToClient = () => {
-  console.log('Sending policy to client');
-  // Implement send policy logic
-};
-
-// Computed properties for display logic
-const displaySendPolicyButton = computed(() => {
-  // Implement logic to determine when to show send policy button
-  return false;
-});
 
 const readOnlyMode = computed(() => {
   return {
-    isDisable: can(permissionsEnum.DOCUMENT_UPLOAD), // Adjust based on your permissions
+    isDisable: can(permissionsEnum.CLAIM_DOCUMENT_UPLOAD), // Adjust based on your permissions
   };
 });
 
@@ -113,61 +89,20 @@ const permissions = computed(() => {
             Documents
             <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
           </h3>
-          <div class="flex gap-2">
-            <Link
-              v-if="
-                claim?.insly_id &&
-                canAny([
-                  permissionsEnum.VIEW_LEGACY_DETAILS,
-                  permissionsEnum.VIEW_ALL_LEADS,
-                ])
-              "
-              :href="`/legacy-policy/${claim.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-tooltip placement="top">
-              <x-button
-                @click.prevent="getupdateDocumentValidate(true)"
-                v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
-                size="sm"
-                color="green"
-              >
-                Verify Documents
-              </x-button>
-              <template #tooltip>
-                Verify Documents: Clicking this button confirms that all
-                submitted documents are accurate and valid.
-              </template>
-            </x-tooltip>
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="primary"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="
-                displaySendPolicyButton &&
-                permissions.notProductionApproval &&
-                permissions.isQuoteDocumentEnabled
-              "
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
         </div>
+
       </template>
       <template #body>
         <x-divider class="my-4" />
+        <div class="flex justify-end items-center mb-4">
+          <x-button
+              @click.prevent="modals.doc = true"
+              size="sm"
+              color="primary"
+            >
+              Upload Documents
+            </x-button>
+        </div>
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
@@ -202,51 +137,135 @@ const permissions = computed(() => {
         </DataTable>
 
         <!-- Document Upload Modal -->
-        <x-modal
-          v-model="modals.doc"
-          size="xl"
-          title="Upload Documents"
-          show-close
-          backdrop
-        >
-          <LazyDocumentUploader
-            :members="memberDataDocs([])"
-            :doc-types="documentTypes"
-            :docs="quoteDocuments || []"
-            :cdn="cdnPath"
-            @uploaded="doc => emit('documentUploaded', doc)"
-          />
-        </x-modal>
 
-        <!-- Delete Confirmation Modal -->
-        <x-modal
-          v-model="modals.docConfirm"
-          title="Delete Document"
-          show-close
-          backdrop
-        >
-          <p>Are you sure you want to delete this document?</p>
-          <template #actions>
-            <div class="text-right space-x-4">
-              <x-button
-                size="sm"
-                ghost
-                @click.prevent="modals.docConfirm = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="error"
-                @click.prevent="confirmDeleteDoc"
-                :loading="quoteDocumentsTable.isLoading"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </x-modal>
       </template>
     </Collapsible>
+
+    <x-modal
+      v-model="modals.doc"
+      size="xl"
+      title="Upload Documents"
+      show-close
+      backdrop
+    >
+      <x-tab-group v-model="selectedTab" variant="block">
+        <x-tab
+          :value="index"
+          :label="key.replace(/_/g, ' ')"
+          v-for="(docType, key, index) in documentTypes"
+          :key="index"
+          :disabled="
+            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            !quote.insurance_provider_id &&
+            !quote.plan_id
+          "
+        >
+          <div
+            v-for="documentType in docType"
+            :key="documentType.id"
+            class="grid md:grid-cols-2 gap-2 my-4 border-b"
+          >
+            <div class="flex flex-col gap-1">
+              <h5 class="text-sm font-semibold">
+                {{ documentType.text }}
+                <span class="text-red-500">
+                  {{ documentType.is_required ? '*' : '' }}</span
+                >
+              </h5>
+              <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+              <p class="text-xs">
+                Supported: {{ documentType.accepted_files }}
+              </p>
+              <p class="text-xs">
+                Max file size: {{ documentType.max_size }} MB
+              </p>
+
+              <x-alert
+                v-if="successStatus[documentType.id]"
+                type="success"
+                color="success"
+                light
+              >
+                <p class="text-sm">File uploaded successfully</p>
+              </x-alert>
+
+              <x-alert
+                v-if="errorMsg[documentType.id]"
+                type="error"
+                color="error"
+                light
+              >
+                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+              </x-alert>
+            </div>
+            <div class="pb-4">
+              <Dropzone
+                :id="documentType.id"
+                :accept="documentType.accepted_files"
+                :max-files="documentType.max_files"
+                :max-size="documentType.max_size"
+                :loading="uploadingStatus[documentType.id]"
+                :document-type-code="documentType.code"
+                :isDisabled="
+                  documentType.code == documentTypeCodeEnum.AUDIT &&
+                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                "
+                :multiple="true"
+                @change="uploadFile(documentType, $event)"
+              />
+
+              <template
+                v-for="quoteDocument in quoteDocuments.filter(
+                  d => d.document_type_code == documentType.code,
+                )"
+                :key="quoteDocument.id"
+              >
+                <a
+                  v-if="hasAnyRole([rolesEnum.BetaUser])"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <a
+                  v-else
+                  :href="
+                    storageUrl +
+                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
+                  "
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </template>
+            </div>
+          </div>
+        </x-tab>
+      </x-tab-group>
+    </x-modal>
+    <x-modal
+      v-model="modals.docConfirm"
+      title="Delete Document"
+      show-close
+      backdrop
+    >
+      <p>Are you sure you want to delete this document?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="confirmDeleteDoc"
+            :loading="quoteDocumentsTable.isLoading"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>

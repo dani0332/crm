@@ -9,6 +9,7 @@ use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\Claim;
+use App\Models\ClaimStatus;
 use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
 use Exception;
@@ -160,14 +161,17 @@ class ClaimsController extends Controller
         try {
             // Load claim request with all relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
-            // dd($claimRequest->toArray());
+
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
+            $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
+            $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
 
             return Inertia::render('Claims/Show', [
                 'claim' => $claimRequest,
                 'dropdowns' => $dropdownData,
-                'requiredFieldsFilled' => $this->claimsService->isRequiredFieldsFilled($claimRequest),
+                'requiredFieldsFilled' => $requiredFieldsFilled,
+                'claimDocumentTypes' => $claimDocumentTypes,
             ]);
 
         } catch (Exception $e) {
@@ -289,21 +293,19 @@ class ClaimsController extends Controller
     /**
      * AI optimize message (AJAX endpoint)
      */
-    public function optimizeMessage(Request $request): JsonResponse
+    public function optimizeMessage(Request $request, ClaimStatus $claimStatus): JsonResponse
     {
         $request->validate([
-            'message' => 'required|string',
+            'message' => 'required|string|max:1000', 
         ]);
 
-        try {
-            // Placeholder for AI optimization logic
-            // In real implementation, this would call an AI service
+        try { 
             $optimizedMessage = $this->optimizeMessageWithAI($request->message);
 
             return response()->json([
-                'success' => true,
+                'status' => true,
                 'optimized_message' => $optimizedMessage,
-            ]);
+            ], 200 );
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', extra: [
                 'error' => $e->getMessage(),
@@ -312,7 +314,7 @@ class ClaimsController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Failed to optimize message.',
             ], 500);
         }
@@ -323,18 +325,15 @@ class ClaimsController extends Controller
      */
     public function sendNotification(Request $request, Claim $claim): JsonResponse
     {
-        // Check permission
-        $this->authorize('update', $claim);
 
         $request->validate([
-            'message' => 'required|string',
-            'send_email' => 'boolean',
-            'send_whatsapp' => 'boolean',
+            'customer_message' => 'required|string',
+            'ai_optimized_message' => 'required|string', 
+            'claim_sub_status_id' => 'required|exists:claim_sub_statuses,id',
         ]);
 
         try {
-            // Placeholder for notification sending logic
-            // In real implementation, this would send actual notifications
+            $this->claimsService->sendNotification($claim, $request->validated());
 
             return response()->json([
                 'success' => true,

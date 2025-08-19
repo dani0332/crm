@@ -1,6 +1,7 @@
 <script setup>
 import ClaimDetails from './Components/ClaimDetails.vue';
 import ClaimStatus from './Components/ClaimStatus.vue';
+import ClaimSubStatusAndCustomerUpdate from './Components/ClaimSubStatusAndCustomerUpdate.vue';
 import ClaimDocuments from './Components/ClaimDocuments.vue';
 import CustomerDetails from './Components/CustomerDetails.vue';
 
@@ -9,6 +10,8 @@ const props = defineProps({
   dropdowns: Object,
   additionalContacts: Object,
   documents: Object,
+  claimDocumentTypes: Object,
+  requiredFieldsFilled: Boolean,
 });
 
 const modelClass = 'App\\Models\\ClaimRequest';
@@ -86,6 +89,14 @@ const handleDocumentDeleted = documentName => {
     <!-- Claim Status Component -->
     <ClaimStatus
       :claim="claim"
+      :required-fields-filled="requiredFieldsFilled"
+      :dropdowns="dropdowns"
+      @update="handleStatusUpdate"
+    />
+    <!-- Claim Status Component -->
+    <ClaimSubStatusAndCustomerUpdate
+      :claim="claim"
+      :required-fields-filled="requiredFieldsFilled"
       :dropdowns="dropdowns"
       @update="handleStatusUpdate"
     />
@@ -97,6 +108,8 @@ const handleDocumentDeleted = documentName => {
       @update="handleClaimUpdate"
       @documentUploaded="handleDocumentUploaded"
       @documentDeleted="handleDocumentDeleted"
+      :cdn="cdnPath"
+      :document-types="claimDocumentTypes"
     />
 
     <!-- Audit Logs -->

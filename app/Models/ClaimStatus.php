@@ -9,7 +9,7 @@ use MongoDB\Laravel\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class ClaimsStatus extends Model implements AuditableContract
+class ClaimStatus extends Model implements AuditableContract
 {
     use Auditable, HasFactory, SoftDeletes;
 

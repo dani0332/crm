@@ -172,7 +172,7 @@ class ClaimRequest extends Model implements AuditableContract
 
     public function claimStatus(): BelongsTo
     {
-        return $this->belongsTo(ClaimsStatus::class, 'claim_status_id');
+        return $this->belongsTo(ClaimStatus::class, 'claim_status_id');
     }
 
     public function claimSubStatus(): BelongsTo

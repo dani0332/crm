@@ -7,7 +7,7 @@ namespace App\Observers;
 use App\Enums\ClaimsEnum;
 use App\Jobs\SendGoogleReviewEmailJob;
 use App\Models\ClaimRequest;
-use App\Models\ClaimsStatus;
+use App\Models\ClaimStatus;
 use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
 
@@ -77,7 +77,7 @@ class ClaimRequestObserver
             return false;
         }
 
-        $closedStatus = ClaimsStatus::where('id', $statusId)->where('is_active', 1)->first();
+        $closedStatus = ClaimStatus::where('id', $statusId)->where('is_active', 1)->first();
 
         return $closedStatus !== null && $closedStatus->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
     }

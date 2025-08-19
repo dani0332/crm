@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 const props = defineProps({
   claim: Object,
   dropdowns: Object,
+  requiredFieldsFilled: Boolean,
 });
 
 const emit = defineEmits(['update']);
@@ -16,7 +17,6 @@ const notification = useToast();
 
 const claimStatusForm = useForm({
   claim_status_id: props.claim?.claim_status_id || '',
-  claim_sub_status_id: props.claim?.claim_sub_status_id || '',
 });
 
 const statusOptions = computed(() => {
@@ -28,18 +28,6 @@ const statusOptions = computed(() => {
   );
 });
 
-const subStatusOptions = computed(() => {
-  return (
-    props.dropdowns.claimSubStatuses
-      ?.filter(
-        subStatus => subStatus.quote_type_id === page.props.claim.quote_type_id,
-      )
-      ?.map(subStatus => ({
-        value: subStatus.id,
-        label: subStatus.text,
-      })) || []
-  );
-});
 
 const updateClaimStatus = isValid => {
   console.log('updateClaimStatus');
@@ -65,10 +53,9 @@ const updateClaimStatus = isValid => {
 
 const disableClaimStatusUpdate = computed(() => {
   return (
-    !page.props.requiredFieldsFilled ||
+    !props.requiredFieldsFilled ||
     !canAny([
       permissionsEnum.CLAIMS_STATUS_UPDATE,
-      permissionsEnum.CLAIMS_SUB_STATUS_UPDATE,
     ])
   );
 });
@@ -79,7 +66,6 @@ const disableClaimStatusUpdate = computed(() => {
     v-if="
       canAny([
         permissionsEnum.CLAIMS_STATUS_UPDATE,
-        permissionsEnum.CLAIMS_SUB_STATUS_UPDATE,
       ])
     "
     class="p-4 rounded shadow mb-6 bg-white"
@@ -111,21 +97,7 @@ const disableClaimStatusUpdate = computed(() => {
                 />
               </div>
             </div>
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="claimStatusForm.claim_sub_status_id"
-                  label="Claim Sub Status"
-                  :error="claimStatusForm.errors.claim_sub_status_id"
-                  :options="subStatusOptions"
-                  :disabled="disableClaimStatusUpdate"
-                  placeholder="Claim Sub Status"
-                  class="w-full uppercase"
-                  filterable
-                  required
-                />
-              </div>
-            </div>
+
           </div>
 
           <x-divider class="mt-4" />

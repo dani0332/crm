@@ -2359,7 +2359,7 @@ class CRUDController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @param  \App\Models\ClaimStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
     private function getCarMakeDropdown()

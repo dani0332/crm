@@ -240,6 +240,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('claim/search-policies', [ClaimsController::class, 'searchPolicies'])->name('claims.search-policies');
         Route::post('claim/update-details/{uuid}', [ClaimsController::class, 'updateClaimDetails'])->name('claims.update.details');
         Route::post('claim/update-statuses/{uuid}', [ClaimsController::class, 'updateClaimStatuses'])->name('claims.update.status');
+        Route::post('claims/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
+        Route::post('claims/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
         /*
                     // Claims AJAX routes
             Route::post('claims/{claim}/assign-manager', [ClaimsController::class, 'assignManager'])->name('claims.assign-manager');

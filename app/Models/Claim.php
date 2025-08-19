@@ -239,7 +239,7 @@ class Claim extends Model implements AuditableContract
 
     public function claimStatus(): BelongsTo
     {
-        return $this->belongsTo(ClaimsStatus::class, 'claims_status_id');
+        return $this->belongsTo(ClaimStatus::class, 'claims_status_id');
     }
 
     public function claimSubStatus(): BelongsTo
@@ -272,7 +272,7 @@ class Claim extends Model implements AuditableContract
 
     public function claimsStatus(): BelongsTo
     {
-        return $this->belongsTo(ClaimsStatus::class, 'claims_status_id');
+        return $this->belongsTo(ClaimStatus::class, 'claims_status_id');
     }
 
     public function carRepairCoverage(): BelongsTo
