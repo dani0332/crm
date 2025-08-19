@@ -764,18 +764,28 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     ]);
 
                     $process = $process->refresh();
+                    LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Triggering next automation step: Policy Booking');
                     (new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps();
                 })
                 ->catch(function (Batch $batch, Throwable $e) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing failed completely: '.$e->getMessage());
+                    
+                    // Handle complete OCR failure - update status to failed
+                    app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
+                        $quote, 
+                        QuoteTypes::CAR->value, 
+                        self::OCR_PROCESSING_API_FAILED_STATUS_ID, 
+                        self::POLICY_AUTOMATION_STATUS_NO_ID
+                    );
                 })
                 ->finally(function (Batch $batch) use ($quote) {
                     LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - OCR batch processing completed');
-
+                    
+                    // Note: Not handling OCR failures here to avoid race condition with policy booking
+                    // OCR failures will be handled by the automation retry mechanism
                     if ($batch->hasFailures()) {
                         $successfulJobs = $batch->totalJobs - $batch->failedJobs;
                         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - Partial failure detected. Stats: Total: '.$batch->totalJobs.', Failed: '.$batch->failedJobs.', Successful: '.$successfulJobs);
-                        app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CAR->value, self::OCR_PROCESSING_API_FAILED_STATUS_ID, self::POLICY_AUTOMATION_STATUS_NO_ID);
                     }
                 })
                 ->allowFailures()
