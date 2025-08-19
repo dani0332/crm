@@ -1063,4 +1063,56 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             return null;
         }
     }
+
+    public function getStepsLockingStatus($quote): array
+    {
+        $policyIssuance = $quote->policyIssuance;
+        $response = [
+            'policyIssuance' => $policyIssuance,
+            'isEditPolicyDetailsDisabled' => true,
+            'isEditBookingDetailsDisabled' => true,
+            'message' => 'All steps are locked',
+            'insurer_api_status' => $quote->insurer_api_status,
+        ];
+
+        if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All Steps are editable';
+
+            return $response;
+        }
+
+        if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
+            if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
+                $response['isEditPolicyDetailsDisabled'] = false;
+                $response['isEditBookingDetailsDisabled'] = false;
+                $response['message'] = 'All Steps are editable';
+
+                return $response;
+            }
+            if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
+                $response['isEditPolicyDetailsDisabled'] = false;
+                $response['isEditBookingDetailsDisabled'] = false;
+                $response['message'] = 'Upload Documents and Update Booking Details are editable';
+
+                return $response;
+            }
+            if ($policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+                $response['isEditPolicyDetailsDisabled'] = false;
+                $response['isEditBookingDetailsDisabled'] = false;
+                $response['message'] = 'Booking Details is editable';
+
+                return $response;
+            }
+
+            return $response;
+        } elseif (! $policyIssuance) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All Steps are editable';
+        }
+
+        return $response;
+    }
 }
