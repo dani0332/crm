@@ -186,14 +186,14 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         }
 
-        /* if ($nextStepToBeExecuted === self::BOOK_POLICY) {
+        if ($nextStepToBeExecuted === self::BOOK_POLICY) {
             $bookPolicyResponse = $this->executeBookPolicyStep($quote, $process);
             if (isset($bookPolicyResponse['status']) && ! $bookPolicyResponse['status']) {
                 return $bookPolicyResponse;
             }
 
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-        } */
+        }
 
         // Return success response when all steps are completed
         return [
