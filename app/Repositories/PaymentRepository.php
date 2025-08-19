@@ -705,14 +705,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             }
 
-            $sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+            /* $sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
 
             $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
 
             if (! $sageAPPrepaymentResponse['status']) {
                 vAbort($sageAPPrepaymentResponse['message']);
 
-            }
+            }*/
         }
 
         // Now handle database operations within transaction
