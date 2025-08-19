@@ -171,7 +171,7 @@ onMounted(() => {
             <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
               <x-tooltip position="top">
                 <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block">
-                  Assign Support User (OE)
+                  Assign OE/AE
                 </label>
                 <template #tooltip>
                   <span>Support User Assignment</span>
