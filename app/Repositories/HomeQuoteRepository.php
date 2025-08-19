@@ -900,9 +900,6 @@ class HomeQuoteRepository extends BaseRepository
         $apuaHomePlans = $query->select(['puaType', 'quoteUuid', 'createdAt'])
             ->get();
 
-        info("Found " . count($apuaHomePlans) . " APUA HomePlans" .
-             (!empty($request['created_at_start']) || !empty($request['created_at_end']) ? " (with date filters)" : ""));
-
         // Extract unique quoteUuid values
             $apuaQuoteUuids = $apuaHomePlans->pluck('quoteUuid')
                 ->filter()
@@ -910,7 +907,7 @@ class HomeQuoteRepository extends BaseRepository
                 ->values()
                 ->toArray();
 
-            info("Unique APUA Quote UUIDs: " . count($apuaQuoteUuids));
+            LoggerService::info("Unique APUA Quote UUIDs", ['count' => count($apuaQuoteUuids)]);
 
         return $apuaQuoteUuids;
     }
@@ -920,7 +917,7 @@ class HomeQuoteRepository extends BaseRepository
      */
         public function exportnonPUAAuthorized($requestParams = [])
     {
-        info("exportnonPUAAuthorized");
+        LoggerService::info("exportnonPUAAuthorized started");
 
         // Create request object for filtering
         if (! empty($requestParams)) {
@@ -1002,7 +999,7 @@ class HomeQuoteRepository extends BaseRepository
      */
     public function exportPUAAuthorized($requestParams = [])
     {
-        info("exportPUAAuthorized");
+        LoggerService::info("exportPUAAuthorized started");
 
 
 
@@ -1089,9 +1086,7 @@ class HomeQuoteRepository extends BaseRepository
      */
         public function exportPUAUpdates($requestParams = [])
     {
-        info("exportPUAUpdates");
-
-
+        LoggerService::info("exportPUAUpdates started");
 
         // Create request object for filtering
         if (! empty($requestParams)) {

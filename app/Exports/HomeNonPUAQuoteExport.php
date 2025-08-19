@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Repositories\HomeQuoteRepository;
+use App\Services\Logger\LoggerService;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -18,7 +19,7 @@ class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
     public function __construct($requestParams = [])
     {
-        info("2. HomeNonPUAQuoteExport");
+        LoggerService::info("HomeNonPUAQuoteExport initialized");
         $this->nonPUALeads = app(HomeQuoteRepository::class)->exportnonPUAAuthorized($requestParams);
         $this->puaLeads = app(HomeQuoteRepository::class)->exportPUAAuthorized($requestParams);
     }

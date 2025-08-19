@@ -1911,9 +1911,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        logger()->debug("\n\nexportPUAAuthorized: " . print_r([
-                $request->all()
-            ], 1));
+        LoggerService::debug("exportnonPUAAuthorized", ['request_params' => $request->all()]);
 
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
@@ -2016,9 +2014,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        logger()->debug("\n\nexportPUAAuthorized: " . print_r([
-                $request->all()
-            ], 1));
+        LoggerService::debug("exportPUAAuthorized", ['request_params' => $request->all()]);
 
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
@@ -2111,9 +2107,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        logger()->debug("\n\nexportPUAAuthorized: " . print_r([
-                $request->all()
-            ], 1));
+        LoggerService::debug("exportPUAUpdates", ['request_params' => $request->all()]);
 
         $startDate = Carbon::now()->subDay()->startOfDay();
         $endDate = Carbon::now()->subDay()->endOfDay();
