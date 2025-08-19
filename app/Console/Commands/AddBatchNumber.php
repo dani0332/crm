@@ -6,7 +6,6 @@ use App\Models\QuoteBatches;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class AddBatchNumber extends Command
 {
@@ -44,7 +43,7 @@ class AddBatchNumber extends Command
         LoggerService::info('Add Batch Command Started');
         try {
             $lastBatch = QuoteBatches::orderBy('id', 'desc')->first();
-            LoggerService::info('last batch : ',json_encode($lastBatch));
+            LoggerService::info('last batch : ', json_encode($lastBatch));
             if ($lastBatch == null) {
                 LoggerService::info('inside creating batches from scratch');
                 $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-06'));

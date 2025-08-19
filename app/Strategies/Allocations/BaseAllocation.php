@@ -19,7 +19,6 @@ use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {

@@ -185,7 +185,7 @@ class HomeAllocation extends BaseAllocation
      */
     protected function getAdvisorEmailsBasedOnLeadType(): array
     {
-        LoggerService::info('HomeAllocation: Getting advisor emails based on lead type'); 
+        LoggerService::info('HomeAllocation: Getting advisor emails based on lead type');
 
         $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
         if (! $homeQuote) {
