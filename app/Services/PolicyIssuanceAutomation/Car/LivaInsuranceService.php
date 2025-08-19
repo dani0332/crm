@@ -488,6 +488,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'commmission_percentage' => $issuePolicyResult?->CommissionPercentage,
             'insurer_commmission_invoice_number' => $issuePolicyResult?->InsurerCommissionTaxInvoice ?? null,
             'insurer_tax_number' => $issuePolicyResult?->InsurerPremiumTaxInvoice ?? null,
+            'insurer_invoice_date' => $issuePolicyResult?->InsurerInvoicedate ?? null,
         ]);
 
         $response['status'] = true;
