@@ -1033,8 +1033,7 @@ class HomeQuoteRepository extends BaseRepository
             ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->where('personal_quotes.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
             ->where('personal_quotes.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
-            // For home insurance, we can identify PUA by checking if premium_authorized was updated after payment
-            ->whereRaw('personal_quotes.payment_status_date < personal_quotes.updated_at')
+
             // Filter by quotes that have APUA plans
             ->whereIn('personal_quotes.uuid', $apuaQuoteUuids)
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
@@ -1049,7 +1048,7 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->orderBy('personal_quotes.paid_at', 'desc')
             ;
-        LoggerService::sql("Home PUA Authorized Updates", $puaAuthUpdate);
+        LoggerService::sql("Home PUA Authorized Leads", $puaAuthUpdate);
         $puaAuthUpdate = $puaAuthUpdate->get();
 
         $puaAuthTeamUpdate = collect($puaAuthUpdate)
@@ -1127,7 +1126,7 @@ class HomeQuoteRepository extends BaseRepository
             ])
             ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
             // Filter by quotes that have APUA plans
-            ->whereIn('personal_quotes.uuid', $apuaQuoteUuids) // ->whereNotNull('personal_quotes.premium_authorized')
+            ->whereIn('personal_quotes.uuid', $apuaQuoteUuids)
             ->whereBetween('personal_quotes.payment_status_date', [$startDate, $endDate])
             ->whereIn('personal_quotes.payment_status_id', [
                 PaymentStatusEnum::CREDIT_APPROVED,
@@ -1136,8 +1135,6 @@ class HomeQuoteRepository extends BaseRepository
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::PARTIALLY_PAID
             ])
-            // For home insurance, identify recent premium updates
-            ->whereRaw('personal_quotes.payment_status_date < personal_quotes.updated_at')
             ->when($request->filled('captured_date'), function ($query) use ($request) {
                 $capturedDate = $request->input('captured_date');
                 if (is_array($capturedDate) && count($capturedDate) >= 2) {
