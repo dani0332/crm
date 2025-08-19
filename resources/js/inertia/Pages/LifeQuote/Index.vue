@@ -600,6 +600,12 @@ watch(
 
 const quoteStatuses = computed(() => page.props.leadStatuses || []);
 
+const yesterday = computed(() => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date;
+});
+
 const insurerAMLStatusOption = computed(() =>
   (page.props.insurerAMLStatus || []).map(item => ({
     value: item.id || item.value,
@@ -869,6 +875,7 @@ const insurerAMLStatusOption = computed(() =>
           range
           multi-calendars
           multi-calendars-solo
+          :min-date="yesterday"
         />
         <DatePicker
           v-model="filters.captured_date"
@@ -877,6 +884,7 @@ const insurerAMLStatusOption = computed(() =>
           range
           multi-calendars
           multi-calendars-solo
+          :min-date="yesterday"
         />
         <DatePicker
           v-model="filters.last_modified_date"

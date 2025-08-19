@@ -732,6 +732,12 @@ watch(() => {
   }
 });
 
+const yesterday = computed(() => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date;
+});
+
 const insurerAMLStatusOption = computed(() => {
   return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
     value: key,
@@ -1058,6 +1064,7 @@ const insurerAMLStatusOption = computed(() => {
           range
           multi-calendars
           multi-calendars-solo
+          :min-date="yesterday"
         />
         <DatePicker
           v-model="filters.captured_date"
@@ -1066,6 +1073,7 @@ const insurerAMLStatusOption = computed(() => {
           range
           multi-calendars
           multi-calendars-solo
+          :min-date="yesterday"
         />
         <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
