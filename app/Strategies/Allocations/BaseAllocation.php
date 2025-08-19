@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
+use App\Services\RuleService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
@@ -29,6 +31,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected bool $hasNationalityConfig = false;
     protected array $advisorIDs = [];
     protected array $excludedAdvisorIds = [];
+    protected bool $skipRuleUsers = false;
 
     public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
@@ -103,6 +106,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 $q->where('quote_type_id', $this->quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($this->quoteType === QuoteTypes::CORPLINE, function ($q) {
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
             ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }
 
@@ -143,9 +152,11 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 },
             )
             ->activeUser()
+            ->when($this->skipRuleUsers, function ($q) {
+                $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->quoteType);
+                $q->whereNotIn('users.id', $ruleUserIds);
+            })
             ->orderBy('la.last_allocated', 'asc');
-
-        LoggerService::sql('BaseAllocation: getAdvisorBaseQuery', $query);
 
         return $query;
     }
