@@ -27,7 +27,7 @@ class MulkiyaDataProcessor
     public function processMulkiyaData(): bool
     {
         try {
-            $processedData = $this->mulkiyaExtractor->extractSingleMulkiya()->getProcessedData();
+            $processedData = $this->mulkiyaExtractor->extractMulkiyaData()->getProcessedData();
 
             LoggerService::info('Mulkiya data processor started - Quote UUID: '.$this->quote->uuid);
 

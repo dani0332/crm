@@ -89,11 +89,6 @@ class DrivingLicenseExtractor
         ]));
     }
 
-    public function extractSingleDrivingLicense(): self
-    {
-        return $this->extractDrivingLicenseData();
-    }
-
     public function getCarQuoteDetailFields(): array
     {
         return OcrUtils::getCleanData([

@@ -34,7 +34,7 @@ class EmiratesIdDataProcessor
         try {
             DB::beginTransaction();
 
-            $this->extractedData = $this->emiratesIdExtractor->extractSingleEmiratesId()->getExtractedData();
+            $this->extractedData = $this->emiratesIdExtractor->extractEmiratesIdData()->getExtractedData();
 
             LoggerService::info('Emirates ID data processor started - Quote UUID: '.$this->quote->uuid);
 

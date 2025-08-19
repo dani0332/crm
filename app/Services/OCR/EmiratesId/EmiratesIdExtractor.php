@@ -68,11 +68,6 @@ class EmiratesIdExtractor
         return $this;
     }
 
-    public function extractSingleEmiratesId(): self
-    {
-        return $this->extractEmiratesIdData();
-    }
-
     public function getExtractedData(): array
     {
         return $this->extractedData;

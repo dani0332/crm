@@ -106,11 +106,6 @@ class MulkiyaExtractor
         return $this;
     }
 
-    public function extractSingleMulkiya(): self
-    {
-        return $this->extractMulkiyaData();
-    }
-
     public function getCarQuoteDetailFields(): array
     {
         return OcrUtils::getCleanData([

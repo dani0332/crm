@@ -25,7 +25,7 @@ class DrivingLicenseDataProcessor
     public function processDrivingLicenseData(): bool
     {
         try {
-            $processedData = $this->drivingLicenseExtractor->extractSingleDrivingLicense()->getProcessedData();
+            $processedData = $this->drivingLicenseExtractor->extractDrivingLicenseData()->getProcessedData();
 
             LoggerService::info('Driving License data processor started - Quote UUID: '.$this->quote->uuid);
 
