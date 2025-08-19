@@ -119,7 +119,7 @@ class BorController extends Controller
             $borLog = $this->borService->updateBorLog($payload, $id);
 
             return redirect()->back()->with([
-                'success' => 'BOR request update successfully' . ($borLog['emailSent'] ? ' and email sent to customer.' : ', but email failed to send.'),
+                'success' => 'BOR request update successfully',
                 'updatedBorLog' => $borLog['borLog']->fresh(['insuranceProvider'])
             ]);
 

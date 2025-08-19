@@ -59,22 +59,22 @@ class BorFormRequest extends FormRequest
                 // Chassis number validation for Sukoon insurance (OIC code)
                 $insuranceProviderId = $this->input('insurance_provider_id');
                 if ($insuranceProviderId !== null && $this->isSukoonInsurance($insuranceProviderId)) {
-                    $rules['chassis_number'] = ['required', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
+                    $rules['chassis_number'] = ['required', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
                 } else {
                     $rules['insurance_provider_id'] = ['integer', 'exists:insurance_provider,id'];
-                    $rules['chassis_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
+                    $rules['chassis_number'] = ['nullable', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
                 }
             } else {
                 // Non-motor LOBs for Individual insurers - these fields are optional
                 $rules['policy_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
                 $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
-                $rules['chassis_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
+                $rules['chassis_number'] = ['nullable', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
             }
         } else {
             // Entity insurers don't need policy fields
             $rules['policy_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
             $rules['policy_expiry'] = ['nullable', 'date', 'after:today'];
-            $rules['chassis_number'] = ['nullable', 'string', 'max:40', 'regex:/^(?!\s*$).+/'];
+            $rules['chassis_number'] = ['nullable', 'string', 'min:8', 'max:17', 'regex:/^(?!\s*$).+/'];
         }
 
         return $rules;

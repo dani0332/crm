@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\BorStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -92,7 +93,7 @@ class BorLog extends Model
         if (empty($table) || $table == null) {
             return null;
         }
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
     /**
@@ -103,7 +104,7 @@ class BorLog extends Model
         if (empty($table) || $table == null) {
             return null;
         }
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
     /**
@@ -114,7 +115,7 @@ class BorLog extends Model
         if (empty($table) || $table == null) {
             return null;
         }
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
     /**
@@ -132,6 +133,15 @@ class BorLog extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(QuoteDocument::class, 'quote_document_id');
+    }
+
+    /**
+     * Get signed documents related to this BOR request.
+     * Uses the polymorphic relationship from quote_documents table.
+     */
+    public function signedDocument(): HasMany
+    {
+        return $this->hasMany(QuoteDocument::class, 'document_category', 'bor_reference')->latest('created_at')->first();
     }
 
     /**
