@@ -21,6 +21,7 @@ use App\Exports\RenewalFailedValidationExport;
 use App\Exports\RenewalHealthUpdateFailedValidationExport;
 use App\Jobs\SendFailedCarRenewalsJob;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\EmbeddedTransaction;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
@@ -40,7 +41,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\CarQuoteRequestDetail;
 
 class CarCQFRenewalService
 {
@@ -119,7 +119,7 @@ class CarCQFRenewalService
                 });
         }
         if ($this->errorQuotes > 0) {
-            SendFailedCarRenewalsJob::dispatch($this->failedPolicyNumbers,$renewalsUploadLeads->id);
+            SendFailedCarRenewalsJob::dispatch($this->failedPolicyNumbers, $renewalsUploadLeads->id);
             LoggerService::info(self::class." - Car CQF Renewal Leads processing completed with errors: {$this->errorQuotes}");
         } else {
             LoggerService::info(self::class.' - Car CQF Renewal Leads processing completed');
@@ -378,7 +378,7 @@ class CarCQFRenewalService
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
             $this->epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
             $this->storeCarDetails($newQuote);
-      
+
             LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully', self::class), [
                 'previous_quote_uuid' => $quote->uuid,
                 'new_quote_uuid' => $newQuote->uuid,
@@ -389,7 +389,8 @@ class CarCQFRenewalService
 
         return $newQuote;
     }
-    public function storeCarDetails($quote){
+    public function storeCarDetails($quote)
+    {
         $carDetails = CarQuoteRequestDetail::create([
             'car_quote_request_id' => $quote->id,
             'chassis_number' => $quote->carQuoteRequestDetail->chassis_number,

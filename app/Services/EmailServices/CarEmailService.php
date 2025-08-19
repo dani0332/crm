@@ -21,8 +21,6 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\QuoteFlowDetails;
-use App\Models\RenewalQuoteProcess;
-use App\Models\RenewalsUploadLeads;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
@@ -790,6 +788,7 @@ class CarEmailService extends BaseService
 
         // Get all failed renewal processes for the given policy numbers
         $failedPolicyNumbers = collect($failedQuotes)->unique()->values()->all();
+
         return (object) [
             'failedQuotes' => implode(', ', $failedPolicyNumbers),
             'quoteUID' => '', // Not used, reserved for future
