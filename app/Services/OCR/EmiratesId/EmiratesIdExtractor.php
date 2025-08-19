@@ -48,20 +48,20 @@ class EmiratesIdExtractor
             $data = OcrUtils::ensureArray($ocrData);
 
             $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
-                'eid_number' => $data['idNumber'] ?? $this->extractedData['eid_number'],
-                'name' => $data['name'] ?? $this->extractedData['name'],
-                'date_of_birth' => OcrUtils::formatDate($data['dateOfBirth'] ?? null) ?: $this->extractedData['date_of_birth'],
-                'nationality' => $data['nationality'] ?? $this->extractedData['nationality'],
-                'sex' => OcrUtils::formatGender($data['sex'] ?? null) ?: $this->extractedData['sex'],
-                'issuing_date' => OcrUtils::formatDate($data['issuingDate'] ?? null) ?: $this->extractedData['issuing_date'],
-                'expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null) ?: $this->extractedData['expiry_date'],
-                'issuing_place' => $data['issuingPlace'] ?? $this->extractedData['issuing_place'],
-                'occupation' => $data['occupation'] ?? $this->extractedData['occupation'],
-                'sponsor' => $data['sponsor'] ?? $this->extractedData['sponsor'],
-                'country' => $data['country'] ?? $this->extractedData['country'],
-                'card_type' => $data['cardType'] ?? $this->extractedData['card_type'],
-                'ocr_model' => $data['model'] ?? $this->extractedData['ocr_model'],
-                'ocr_provider' => $data['provider'] ?? $this->extractedData['ocr_provider'],
+                'eid_number' => $data['idNumber'] ?? null,
+                'name' => $data['name'] ?? null,
+                'date_of_birth' => OcrUtils::formatDate($data['dateOfBirth'] ?? null),
+                'nationality' => $data['nationality'] ?? null,
+                'sex' => OcrUtils::formatGender($data['sex'] ?? null),
+                'issuing_date' => OcrUtils::formatDate($data['issuingDate'] ?? null),
+                'expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null),
+                'issuing_place' => $data['issuingPlace'] ?? null,
+                'occupation' => $data['occupation'] ?? null,
+                'sponsor' => $data['sponsor'] ?? null,
+                'country' => $data['country'] ?? null,
+                'card_type' => $data['cardType'] ?? null,
+                'ocr_model' => $data['model'] ?? null,
+                'ocr_provider' => $data['provider'] ?? null,
             ]));
         }
 

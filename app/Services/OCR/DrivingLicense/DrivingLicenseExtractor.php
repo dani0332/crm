@@ -69,22 +69,22 @@ class DrivingLicenseExtractor
     {
         $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
             // Car Quote Request Detail fields
-            'driver_license_number' => $data['licenseNumber'] ?? $this->extractedData['driver_license_number'],
-            'driver_license_issue_date' => OcrUtils::formatDate($data['issueDate'] ?? null) ?: $this->extractedData['driver_license_issue_date'],
-            'driver_license_expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null) ?: $this->extractedData['driver_license_expiry_date'],
-            'driver_license_issue_place' => $data['placeOfIssue'] ?? $this->extractedData['driver_license_issue_place'],
-            'traffic_code_number' => $data['trafficCodeNumber'] ?? $this->extractedData['traffic_code_number'],
+            'driver_license_number' => $data['licenseNumber'] ?? null,
+            'driver_license_issue_date' => OcrUtils::formatDate($data['issueDate'] ?? null),
+            'driver_license_expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null),
+            'driver_license_issue_place' => $data['placeOfIssue'] ?? null,
+            'traffic_code_number' => $data['trafficCodeNumber'] ?? null,
 
             // Personal information fields - split full name into first and last name
-            'driver_first_name' => OcrUtils::extractFirstName($personalInfo['fullName'] ?? null) ?: $this->extractedData['driver_first_name'],
-            'driver_last_name' => OcrUtils::extractLastName($personalInfo['fullName'] ?? null) ?: $this->extractedData['driver_last_name'],
-            'driver_dob' => OcrUtils::formatDate($personalInfo['dateOfBirth'] ?? null) ?: $this->extractedData['driver_dob'],
-            'driver_gender' => OcrUtils::formatGender($personalInfo['sex'] ?? null) ?: $this->extractedData['driver_gender'],
-            'driver_nationality_string' => $personalInfo['nationality'] ?? $this->extractedData['driver_nationality_string'],
+            'driver_first_name' => OcrUtils::extractFirstName($personalInfo['fullName'] ?? null),
+            'driver_last_name' => OcrUtils::extractLastName($personalInfo['fullName'] ?? null),
+            'driver_dob' => OcrUtils::formatDate($personalInfo['dateOfBirth'] ?? null),
+            'driver_gender' => OcrUtils::formatGender($personalInfo['sex'] ?? null),
+            'driver_nationality_string' => $personalInfo['nationality'] ?? null,
 
             // Metadata
-            'ocr_model' => $data['model'] ?? $this->extractedData['ocr_model'],
-            'ocr_provider' => $data['provider'] ?? $this->extractedData['ocr_provider'],
+            'ocr_model' => $data['model'] ?? null,
+            'ocr_provider' => $data['provider'] ?? null,
         ]));
     }
 

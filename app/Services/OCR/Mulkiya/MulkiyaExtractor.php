@@ -66,40 +66,40 @@ class MulkiyaExtractor
 
             $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
                 // Car Quote Detail fields
-                'plate_number' => $data['trafficPlateNumber'] ?? $this->extractedData['plate_number'],
-                'traffic_code_number' => $data['trafficCodeNumber'] ?? $this->extractedData['traffic_code_number'],
-                'first_registration_date' => OcrUtils::formatDate($data['registrationDate'] ?? null) ?: $this->extractedData['first_registration_date'],
-                'vehicle_color' => $data['vehicalColor'] ?? $this->extractedData['vehicle_color'],
-                'engine_number' => $data['engineNumber'] ?? $this->extractedData['engine_number'],
-                'chassis_number' => $data['chassisNumber'] ?? $this->extractedData['chassis_number'],
-                'rta_plate_category' => $data['plateType'] ?? $this->extractedData['rta_plate_category'],
+                'plate_number' => $data['trafficPlateNumber'] ?? null,
+                'traffic_code_number' => $data['trafficCodeNumber'] ?? null,
+                'first_registration_date' => OcrUtils::formatDate($data['registrationDate'] ?? null),
+                'vehicle_color' => $data['vehicalColor'] ?? null,
+                'engine_number' => $data['engineNumber'] ?? null,
+                'chassis_number' => $data['chassisNumber'] ?? null,
+                'rta_plate_category' => $data['plateType'] ?? null,
 
                 // Car Quote fields
-                'policy_expiry_date' => OcrUtils::formatDate($data['insuranceExpiryDate'] ?? null) ?: $this->extractedData['policy_expiry_date'],
+                'policy_expiry_date' => OcrUtils::formatDate($data['insuranceExpiryDate'] ?? null),
 
                 // Registration Certificate fields
-                'place_of_issue' => $data['placeOfIssue'] ?? $this->extractedData['place_of_issue'],
-                'expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null) ?: $this->extractedData['expiry_date'],
-                'owner' => $data['owner'] ?? $this->extractedData['owner'],
-                'nationality_string' => $data['nationality'] ?? $this->extractedData['nationality_string'],
-                'mortgage_by' => $data['mortageBy'] ?? $this->extractedData['mortgage_by'],
-                'notes' => $data['notes'] ?? $this->extractedData['notes'],
-                'insured_with' => $data['insuredWith'] ?? $this->extractedData['insured_with'],
-                'insurance_type' => $data['insuranceType'] ?? $this->extractedData['insurance_type'],
-                'model' => $data['vehicalModel'] ?? $this->extractedData['model'],
-                'vehicle_class' => $data['vehicalClass'] ?? $this->extractedData['vehicle_class'],
-                'vehicle_type' => $data['vehicalType'] ?? $this->extractedData['vehicle_type'],
-                'origin' => $data['origin'] ?? $this->extractedData['origin'],
-                'number_of_passengers' => isset($data['numberOfPassengers']) ? (int) $data['numberOfPassengers'] : $this->extractedData['number_of_passengers'],
-                'gross_vehicle_weight' => $data['grossVehicleWeight'] ?? $this->extractedData['gross_vehicle_weight'],
-                'empty_weight' => $data['emptyWeight'] ?? $this->extractedData['empty_weight'],
-                'ocr_done_by' => $data['ocr_done_by'] ?? $this->extractedData['ocr_done_by'],
-                'doc_type' => $data['doc_type'] ?? $this->extractedData['doc_type'],
-                'provider_id' => $data['provider'] ?? $this->extractedData['provider_id'],
+                'place_of_issue' => $data['placeOfIssue'] ?? null,
+                'expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null),
+                'owner' => $data['owner'] ?? null,
+                'nationality_string' => $data['nationality'] ?? null,
+                'mortgage_by' => $data['mortageBy'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'insured_with' => $data['insuredWith'] ?? null,
+                'insurance_type' => $data['insuranceType'] ?? null,
+                'model' => $data['vehicalModel'] ?? null,
+                'vehicle_class' => $data['vehicalClass'] ?? null,
+                'vehicle_type' => $data['vehicalType'] ?? null,
+                'origin' => $data['origin'] ?? null,
+                'number_of_passengers' => isset($data['numberOfPassengers']) ? (int) $data['numberOfPassengers'] : null,
+                'gross_vehicle_weight' => $data['grossVehicleWeight'] ?? null,
+                'empty_weight' => $data['emptyWeight'] ?? null,
+                'ocr_done_by' => $data['ocr_done_by'] ?? null,
+                'doc_type' => $data['doc_type'] ?? null,
+                'provider_id' => $data['provider'] ?? null,
 
                 // Metadata
-                'ocr_model' => $data['vehicalModel'] ?? $this->extractedData['ocr_model'],
-                'ocr_provider' => $data['provider'] ?? $this->extractedData['ocr_provider'],
+                'ocr_model' => $data['vehicalModel'] ?? null,
+                'ocr_provider' => $data['provider'] ?? null,
             ]));
         }
 
