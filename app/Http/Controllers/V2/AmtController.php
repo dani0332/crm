@@ -523,6 +523,19 @@ class AmtController extends Controller
 
         return inertia('GroupMedicalQuote/Cards', [
             'quotes' => array_values($leadStatuses),
+            // 'quotes' => $quotes,
+            'quoteStatusEnum' => [],
+            'lostReasons' => [],
+            'leadStatuses' => $leadStatuses,
+            'advisors' => [],
+            'teams' => [],
+            'insuranceTypeOptions' => [],
+            'quoteTypeId' => QuoteTypes::BUSINESS->id(),
+            'quoteType' => QuoteTypes::BUSINESS->value,
+            'totalCount' => 0,
+            'areBothTeamsPresent' => false,
+            'is_renewal' => null,
+            'business_type_of_insurance_id' => \App\Enums\BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
         ]);
     }
 }
