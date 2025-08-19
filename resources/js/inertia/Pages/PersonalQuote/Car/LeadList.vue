@@ -731,12 +731,6 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     });
 };
 
-const yesterday = computed(() => {
-  const date = new Date();
-  date.setDate(date.getDate() - 1);
-  return date;
-});
-
 const insurerAMLStatusOption = computed(() => {
   return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
     value: key,
@@ -1174,7 +1168,6 @@ const insurerAMLStatusOption = computed(() => {
           range
           multi-calendars
           multi-calendars-solo
-          :min-date="yesterday"
         />
         <DatePicker
           v-model="filters.captured_date"
@@ -1183,7 +1176,6 @@ const insurerAMLStatusOption = computed(() => {
           range
           multi-calendars
           multi-calendars-solo
-          :min-date="yesterday"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
