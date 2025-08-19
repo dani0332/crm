@@ -125,14 +125,14 @@ class PaymentService extends BaseService
                 }
                 LoggerService::info("Sage AR Receipt ID created: {$paymentSplit->sage_reciept_id} for payment code : {$paymentCode} and sr no : {$srNo}");
 
-                $request->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+                /*$request->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
 
                 $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($request, $quoteModel, $payment, $paymentSplit, $paymentSplit->collection_amount);
 
                 if (! $sageAPPrepaymentResponse['status']) {
                     vAbort($sageAPPrepaymentResponse['message']);
 
-                }
+                }*/
 
                 LoggerService::info("Sage AP Receipt ID created: {$paymentSplit->sage_ap_payment_receipt_id} for payment code : {$paymentCode} and sr no : {$srNo}");
 
