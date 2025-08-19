@@ -576,16 +576,7 @@ class SukoonMedexService
             throw new Exception('KYC is not found');
         }
 
-        $idType = $insuredKyc?->id_type;
-
         $missingFields = [];
-        if ($idType != 'emiratesId' || empty($insuredKyc?->id_number)) {
-            $missingFields[] = 'emirates-id-number';
-        }
-
-        if (empty($insuredKyc?->id_expiry_date)) {
-            $missingFields[] = 'emirates-id-expiry-date';
-        }
 
         if (empty($insuredKyc?->residential_address)) {
             $missingFields[] = 'residential-address';
@@ -594,27 +585,12 @@ class SukoonMedexService
         if (! empty($missingFields)) {
             throw new Exception('Missing: '.implode(', ', $missingFields));
         }
-
-        if (! $this->validateEmiratesIdAndExpiryDate(
-            $insuredKyc?->id_number,
-            $insuredKyc?->id_expiry_date
-        )) {
-            throw new Exception('Invalid emirates-id or emirates-id-expiry-date');
-        }
-    }
-
-    private function validateEmiratesIdAndExpiryDate($idNumber, $IdExpiryDate)
-    {
-        $patternOfEID = '/^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$/';
-
-        return preg_match($patternOfEID, $idNumber) && $IdExpiryDate >= Carbon::now();
     }
 
     /**
      * Prepares the user details array for the given quote and transaction.
      *
      * @param  mixed  $quote  The quote object.
-     * @param  mixed  $transaction  The transaction object.
      * @return array The prepared user details.
      */
     private function prepareUserDetails($quote)
@@ -632,6 +608,12 @@ class SukoonMedexService
 
         $quoteType = $quote->quote_type_id ?? null;
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
+        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
+
+        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
+            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
+                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
+        }
 
         return [
             'form_name' => 'personal_details',
@@ -642,7 +624,7 @@ class SukoonMedexService
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
             'emirate' => $emirate->text ?? '',
-            'emirates_id_number' => $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '',
+            'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',
             'address' => $insuredKyc?->residential_address ?? '',
@@ -652,7 +634,6 @@ class SukoonMedexService
     /**
      * Generates a unique UUID for the given document.
      *
-     * @param  string  $documentType  The type of document.
      * @return string The generated UUID.
      */
     private function generateUniqueUuid()
@@ -696,11 +677,9 @@ class SukoonMedexService
     }
 
     /**
-     * Submits a form to the Democrance system.
+     * Submits a form to the SukoonMedex system.
      *
      * @param  array  $data  The data to submit with the form.
-     * @param  mixed  $transaction  The transaction object.
-     * @param  bool  $isInitial  Indicates if this is the initial form submission.
      * @return void
      *
      * @throws Exception If form submission fails.
@@ -893,7 +872,7 @@ class SukoonMedexService
     }
 
     /**
-     * Initiates the payment process in the Democrance system.
+     * Initiates the payment process in the SukoonMedex system.
      *
      * @return void
      *
@@ -926,7 +905,7 @@ class SukoonMedexService
     }
 
     /**
-     * Completes the payment process in the Democrance system.
+     * Completes the payment process in the SukoonMedex system.
      *
      * @return void
      *

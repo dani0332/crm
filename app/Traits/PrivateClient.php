@@ -8,8 +8,8 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
-use App\Models\PrivateClientConfig;
 use App\Services\Logger\LoggerService;
+use App\Services\PrivateClientConfigService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -25,15 +25,24 @@ trait PrivateClient
     private const OPERATOR_IS_NULL = 'is null';
     private const OPERATOR_IS_NOT_NULL = 'is not null';
 
+    private function isLOBEligibleForPCP(int $quoteTypeId)
+    {
+        return in_array($quoteTypeId, [
+            QuoteTypeId::Car,
+            QuoteTypeId::Home,
+            QuoteTypeId::Health,
+            QuoteTypeId::Life,
+            QuoteTypeId::Yacht,
+        ]);
+    }
+
     /**
      * Apply PCP conditions and update pcp_tag on customer profile.
      */
     public function applyPcpTag(string $leadUuid, int $quoteTypeId): bool
     {
-        // Early validation
-        $configs = $this->getActivePcpConfigs($quoteTypeId);
-        if ($configs->isEmpty()) {
-            LoggerService::warning('No active PCP configurations found.', extra: [
+        if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
+            LoggerService::warning('LOB not eligible for PCP yet.', extra: [
                 'quoteTypeId' => $quoteTypeId,
             ]);
 
@@ -54,6 +63,20 @@ trait PrivateClient
         if (! $model) {
             return false;
         }
+        $configs = null;
+
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if ($quoteType && $quoteType instanceof QuoteTypes) {
+            $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $model->nationality_id);
+        }
+
+        if (empty($configs)) {
+            LoggerService::warning('no configration found for this quoteType.', extra: [
+                'quoteType' => $quoteType,
+            ]);
+
+            return false;
+        }
 
         // Check if lead matches PCP criteria
         if (! $this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
@@ -64,8 +87,10 @@ trait PrivateClient
             return false;
         }
 
+        $version = $configs->first()->version;
+
         // Apply PCP tags
-        return $this->applyPcpTagsToLeadAndCustomer($model, $configs);
+        return $this->applyPcpTagsToLeadAndCustomer($model, $version);
     }
 
     private function findLeadModel(string $modelClass, string $leadUuid, int $quoteTypeId)
@@ -181,15 +206,14 @@ trait PrivateClient
             });
     }
 
-    private function applyPcpTagsToLeadAndCustomer($model, $configs): bool
+    private function applyPcpTagsToLeadAndCustomer($model, $pcpTagVersion): bool
     {
         try {
-            return DB::transaction(function () use ($configs, $model) {
-                $pcpTagVersion = $configs->first()->version;
+            return DB::transaction(function () use ($pcpTagVersion, $model) {
                 $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
                 $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
 
-                $this->logUpdateResults($updateResults, $customerUpdateResult, $configs);
+                $this->logUpdateResults($updateResults, $customerUpdateResult);
 
                 return true;
             });
@@ -244,7 +268,7 @@ trait PrivateClient
         ];
     }
 
-    private function logUpdateResults(array $leadResult, array $customerResult, $configs): void
+    private function logUpdateResults(array $leadResult, array $customerResult): void
     {
         if (! $leadResult['wasUpdated']) {
             LoggerService::warning('PC qualified tag already applied on lead.', extra: [
@@ -261,15 +285,6 @@ trait PrivateClient
                 'applied_tag_version' => $customerResult['version'],
             ]);
         }
-    }
-
-    private function getActivePcpConfigs(int $quoteTypeId)
-    {
-        return PrivateClientConfig::where([
-            'status' => true,
-            'quote_type_id' => $quoteTypeId,
-            'active_version' => true,
-        ])->whereNotNull('value')->get();
     }
 
     private function getCachedTableColumns(string $modelClass, string $table): array
@@ -327,13 +342,13 @@ trait PrivateClient
         $value = trim($config->value);
         $currency_type_id = trim($config->currency_type_id);
         $values = array_map('trim', explode(',', $value));
-        $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
+        $hasSumInsuredCurrency = in_array('policy_sum_assured_currency_id', $tableColumns);
 
         $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $currency_type_id, $model, $hasSumInsuredCurrency) {
             $this->applyOperatorCondition($q, $field, $operator, $values, $value);
 
-            if ($hasSumInsuredCurrency && ! is_null($model->sum_insured_currency_id) && ! empty($model->sum_insured_currency_id)) {
-                $q->where('sum_insured_currency_id', $currency_type_id);
+            if ($hasSumInsuredCurrency && ! is_null($model->policy_sum_assured_currency_id) && ! empty($model->policy_sum_assured_currency_id)) {
+                $q->where('policy_sum_assured_currency_id', $currency_type_id);
             }
         });
     }

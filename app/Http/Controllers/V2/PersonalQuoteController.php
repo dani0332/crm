@@ -30,7 +30,7 @@ class PersonalQuoteController extends Controller
         $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
-        app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
+        app(CentralService::class)->updatePaymentAllocation($quoteType, $request->quote_uuid);
 
         if (! $response['activity_created']) {
             return back()->with('message', 'Status updated successfully');

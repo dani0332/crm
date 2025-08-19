@@ -33,6 +33,10 @@ const tableHeader = reactive([
     tooltip: 'The insurer of the expiring policy',
   },
   {
+    text: 'Currently Insured With',
+    value: 'currently_insured_with_text',
+  },
+  {
     text: 'Line Of Business',
     value: 'line_of_business',
     tooltip: 'The line of business of the expiring policy',

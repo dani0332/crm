@@ -20,16 +20,16 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
     public $tries = 2;
     public $timeout = 1200;
     public $backoff = 10;
-    protected $renewalsUploadLead;
+    private $renewalsUploadLeadId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(RenewalsUploadLeads $renewalsUploadLead)
+    public function __construct($renewalsUploadLeadId)
     {
-        $this->renewalsUploadLead = $renewalsUploadLead;
+        $this->renewalsUploadLeadId = $renewalsUploadLeadId;
         $this->onQueue('renewals');
     }
 
@@ -40,7 +40,9 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);
+        $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
+
+        return $renewalsUploadService->processUploadCreate($renewalsUploadLead);
     }
 
     /**
@@ -48,7 +50,7 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalsUploadLead->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalsUploadLeadId))->dontRelease()];
     }
 
     /**
@@ -57,6 +59,7 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
     public function failed(Throwable $exception)
     {
         info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
-        $this->renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+        $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
+        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

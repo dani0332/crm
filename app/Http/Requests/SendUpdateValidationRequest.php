@@ -42,6 +42,11 @@ class SendUpdateValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
 
+            $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+            if ($isEndorsementActionDisabled) {
+                $validator->errors()->add('error', 'Abu Dhabi policy financials will be recorded manually and not entered in Sage');
+            }
+
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
             }
@@ -139,6 +144,12 @@ class SendUpdateValidationRequest extends FormRequest
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
+
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD && ! $checkTransactionApprovedInSUStatusLogs &&
+                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
+                    ! in_array($sendUpdateLog->status, $bypassStatuses)) {
+                    $validator->errors()->add('error', 'Transaction approval is required');
+                }
 
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedInSUStatusLogs &&
                     ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&

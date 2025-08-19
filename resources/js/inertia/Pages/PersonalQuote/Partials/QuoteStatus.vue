@@ -42,6 +42,7 @@ const quoteStatusForm = useForm({
   quote_status_id: props.quote.quote_status_id,
   notes: props.quote.notes || null,
   lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
+  current_quote_status_id: props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {

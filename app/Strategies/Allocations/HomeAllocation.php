@@ -8,6 +8,8 @@ use App\Enums\TeamNameEnum;
 use App\Models\HomeQuote;
 use App\Models\RangeLookup;
 use App\Models\Team;
+use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -35,9 +37,9 @@ class HomeAllocation extends BaseAllocation
                 'uuid' => $this->lead->uuid ?? null,
             ]);
             // return $this->fetchCorpLineAdvisor($onlineStatus);
-            Log::info('HomeAllocation: Corp advisors logic not implemented, returning empty array');
+            Log::info('HomeAllocation: Corp advisors logic not implemented, returning null');
 
-            return []; // Corp advisors logic is not implemented yet so returning empty array and lead should be unassigned in this case
+            return null; // Corp advisors logic is not implemented yet so returning null and lead should be unassigned in this case
         }
 
         // Default behavior: Fetch value or volume advisors (Home Advisors)
@@ -184,12 +186,19 @@ class HomeAllocation extends BaseAllocation
         Log::info('HomeAllocation: Getting advisor emails based on lead type', ['leadId' => $this->lead->id ?? null]);
 
         $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
-
         if (! $homeQuote) {
             Log::warning('HomeAllocation: No home quote data found');
 
             return [];
         }
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
+        if (count($emails) > 0) {
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
+
+            return $emails;
+        }
+
+        $this->skipRuleUsers = true;
 
         if ($this->isValueLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a value lead, fetching value advisors');
@@ -225,6 +234,7 @@ class HomeAllocation extends BaseAllocation
         Log::info('HomeAllocation: Getting advisor from base query', ['emailsCount' => count($emails), 'roleId' => RolesEnum::HomeAdvisor]);
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::HomeAdvisor])
             ->whereIn('users.email', $emails)
+            ->logRawSql()
             ->first();
 
         Log::info('HomeAllocation: Home Advisor fetch result', [

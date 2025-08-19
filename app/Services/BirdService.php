@@ -6,7 +6,9 @@ use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteFlowDetails;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class BirdService extends BaseService
 {
@@ -94,6 +96,21 @@ class BirdService extends BaseService
 
             LoggerService::error(" - createQuoteWorkFlowDetails-Error: {$th->getMessage()} ");
 
+        }
+    }
+    public function createQuoteWhatsAppFlowDetails($lead, $flowType = null, $quoteTypeId = null)
+    {
+        try {
+            DB::table('ocb_whatsapp_msg_logs')->insert([
+                'uuid' => $lead->uuid,
+                'quote_type_id' => $quoteTypeId,
+                'mobile_no' => formatMobileNoWithoutPlus($lead->mobile_no),
+                'log_message' => Str::camel($flowType),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $th) {
+            LoggerService::error(" - createQuoteWhatsAppFlowDetails-Error: {$th->getMessage()}  Line: {$th->getLine()}  Trace: {$th->getTraceAsString()} ");
         }
     }
 }

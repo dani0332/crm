@@ -97,10 +97,13 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
+        $this->seedLifeOCAEmail();
         $this->savingsLOB();
 
         $this->seedOcrEnabled();
         $this->seedSukoonMedexProductSlug();
+        $this->seedLOBCutOffDates();
+        $this->seedTravelEnquiryEmail();
     }
 
     private function seedBirdWorkflowUrls()
@@ -418,6 +421,29 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedLifeOCAEmail()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/bb88d699-342a-47d5-b618-6997ab2fe7f1/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::FIC_LIFE_EMAIL_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function savingsLOB()
     {
         ApplicationStorage::firstOrCreate(
@@ -474,6 +500,41 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
                 'is_active' => 1,
             ],
+        );
+    }
+
+    private function seedLOBCutOffDates()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_CUT_OFF_DATE],
+            [
+                'value' => '2025-04-10 21:30:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LIFE_CUT_OFF_DATE],
+            [
+                'value' => '2025-07-25 12:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTravelEnquiryEmail()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL],
+            [
+                'value' => 'travel-enquiries@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
         );
     }
 }
