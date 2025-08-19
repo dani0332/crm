@@ -108,7 +108,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
                     unset($leadData['renewal_batch_id']);
                 }
                 $leadData['errors'] = $lead->validation_errors ?? 'No errors';
-        
+
                 $exportLeads->push($leadData);
             }
         }

@@ -14,11 +14,9 @@ use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Exports\RenewalFailedValidationExport;
-use App\Exports\RenewalHealthUpdateFailedValidationExport;
 use App\Jobs\SendFailedCarRenewalsJob;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -550,7 +548,6 @@ class CarCQFRenewalService
     public function downloadValidationFailedFile($id)
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
-
 
         return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }
