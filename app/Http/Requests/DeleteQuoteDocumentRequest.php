@@ -47,7 +47,7 @@ class DeleteQuoteDocumentRequest extends FormRequest
             }
 
             // validate if payment is authorized
-            if (! isset($quote->payment) ||
+            if (empty($quote->payment) ||
                 ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
                 $quote->payment->payment_gateway_id != PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK)) {
                 $validator->errors()->add('type', 'Documents can be deleted once payment is authorized.');
