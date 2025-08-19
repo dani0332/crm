@@ -484,6 +484,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         Payment::where('code', $quote->code)->update([
             'commission_vat_applicable' => $issuePolicyResult?->Commission,
             'commission' => $issuePolicyResult?->Commissionincldvat,
+            'commission_vat' => $issuePolicyResult?->VatonCommission,
+            'commmission_percentage' => $issuePolicyResult?->CommissionPercentage,
+            'insurer_commmission_invoice_number' => $issuePolicyResult?->InsurerCommissionTaxInvoice ?? null,
+            'insurer_tax_number' => $issuePolicyResult?->InsurerPremiumTaxInvoice ?? null,
         ]);
 
         $response['status'] = true;
