@@ -239,6 +239,8 @@ trait OcrFillable
 
     private function fillEmiratesId(Model $quote, object $data)
     {
+        LoggerService::startQuoteLogging($quote);
+
         try {
             $success = (new EmiratesIdDataProcessor($quote, $data))->processEmiratesIdData();
 
@@ -264,6 +266,8 @@ trait OcrFillable
 
     private function fillMulkiya(Model $quote, object $data)
     {
+        LoggerService::startQuoteLogging($quote);
+        
         try {
             $success = (new MulkiyaDataProcessor($quote, $data))->processMulkiyaData();
 
@@ -289,6 +293,8 @@ trait OcrFillable
 
     private function fillDrivingLicense(Model $quote, object $data)
     {
+        LoggerService::startQuoteLogging($quote);
+
         try {
             $success = (new DrivingLicenseDataProcessor($quote, $data))->processDrivingLicenseData();
 

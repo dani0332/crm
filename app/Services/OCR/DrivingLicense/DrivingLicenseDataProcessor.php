@@ -27,10 +27,10 @@ class DrivingLicenseDataProcessor
         try {
             $processedData = $this->drivingLicenseExtractor->extractDrivingLicenseData()->getProcessedData();
 
-            LoggerService::info('Driving License data processor started - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Driving License data processor started');
 
             if (empty($processedData['driving_license_detail_fields'])) {
-                LoggerService::warning('Driving License data processor - No valid data to process - Quote UUID: '.$this->quote->uuid);
+                LoggerService::warning('Driving License data processor - No valid data to process');
 
                 return false;
             }
@@ -45,14 +45,14 @@ class DrivingLicenseDataProcessor
 
             DB::commit();
 
-            LoggerService::info('Driving License data processing completed successfully - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Driving License data processing completed successfully');
 
             return $drivingLicenseDetailUpdated;
 
         } catch (Exception $e) {
             DB::rollback();
 
-            LoggerService::error('Driving License data processor - Exception occurred - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('Driving License data processor - Exception occurred', exception: $e);
 
             return false;
         }
@@ -69,7 +69,7 @@ class DrivingLicenseDataProcessor
                     // Remove the nationality string since we only want to store the ID
                     unset($fieldsToUpdate['nationality_string']);
                 } else {
-                    LoggerService::warning('Driver nationality could not be matched - Quote UUID: '.$quote->uuid);
+                    LoggerService::warning('Driver nationality could not be matched');
                     // Remove the nationality field since we can't match it
                     unset($fieldsToUpdate['nationality_string']);
                 }
@@ -87,18 +87,18 @@ class DrivingLicenseDataProcessor
                 if (! empty($dataToUpdate)) {
                     $drivingLicenseDetail->update($dataToUpdate);
 
-                    LoggerService::info('DrivingLicenseDetail updated successfully - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('DrivingLicenseDetail updated successfully');
                 } else {
-                    LoggerService::info('DrivingLicenseDetail - No OCR data to update - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('DrivingLicenseDetail - No OCR data to update');
                 }
             } else {
-                LoggerService::info('DrivingLicenseDetail created successfully - Quote UUID: '.$quote->uuid);
+                LoggerService::info('DrivingLicenseDetail created successfully');
             }
 
             return true;
 
         } catch (Exception $e) {
-            LoggerService::error('DrivingLicenseDetail update failed - Quote UUID: '.$quote->uuid, exception: $e);
+            LoggerService::error('DrivingLicenseDetail update failed', exception: $e);
 
             return false;
         }

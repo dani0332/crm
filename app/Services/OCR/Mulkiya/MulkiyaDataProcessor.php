@@ -29,10 +29,10 @@ class MulkiyaDataProcessor
         try {
             $processedData = $this->mulkiyaExtractor->extractMulkiyaData()->getProcessedData();
 
-            LoggerService::info('Mulkiya data processor started - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Mulkiya data processor started');
 
             if (empty($processedData['car_quote_detail_fields']) && empty($processedData['car_quote_fields']) && empty($processedData['registration_certificate_fields'])) {
-                LoggerService::warning('Mulkiya data processor - No valid data to process - Quote UUID: '.$this->quote->uuid);
+                LoggerService::warning('Mulkiya data processor - No valid data to process');
 
                 return false;
             }
@@ -42,34 +42,34 @@ class MulkiyaDataProcessor
             // Update CarQuoteRequestDetail fields
             $carQuoteDetailUpdated = false;
             if (! empty($processedData['car_quote_detail_fields'])) {
-                LoggerService::info('Processing car quote detail fields - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('Processing car quote detail fields');
                 $carQuoteDetailUpdated = $this->updateCarQuoteRequestDetail($this->quote, $processedData['car_quote_detail_fields']);
             }
 
             // Update CarQuote fields
             $carQuoteUpdated = false;
             if (! empty($processedData['car_quote_fields'])) {
-                LoggerService::info('Processing car quote fields - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('Processing car quote fields');
                 $carQuoteUpdated = $this->updateCarQuote($this->quote, $processedData['car_quote_fields']);
             }
 
             // Update RegistrationCertificate (morphic relation)
             $registrationCertificateUpdated = false;
             if (! empty($processedData['registration_certificate_fields'])) {
-                LoggerService::info('Processing registration certificate fields - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('Processing registration certificate fields');
                 $registrationCertificateUpdated = $this->updateRegistrationCertificate($this->quote, $processedData['registration_certificate_fields']);
             }
 
             DB::commit();
 
-            LoggerService::info('Mulkiya data processing completed successfully - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('Mulkiya data processing completed successfully');
 
             return $carQuoteDetailUpdated || $carQuoteUpdated || $registrationCertificateUpdated;
 
         } catch (Exception $e) {
             DB::rollback();
 
-            LoggerService::error('Mulkiya data processor - Exception occurred - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('Mulkiya data processor - Exception occurred', exception: $e);
 
             return false;
         }
@@ -81,7 +81,7 @@ class MulkiyaDataProcessor
             $carQuoteDetail = $quote->carQuoteRequestDetail;
 
             if (! $carQuoteDetail) {
-                LoggerService::warning('CarQuoteRequestDetail not found for quote - Quote UUID: '.$this->quote->uuid);
+                LoggerService::warning('CarQuoteRequestDetail not found for quote');
 
                 return false;
             }
@@ -92,17 +92,17 @@ class MulkiyaDataProcessor
             if (! empty($dataToUpdate)) {
                 $carQuoteDetail->update($dataToUpdate);
 
-                LoggerService::info('CarQuoteRequestDetail updated successfully - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('CarQuoteRequestDetail updated successfully');
 
                 return true;
             }
 
-            LoggerService::info('CarQuoteRequestDetail - No OCR data to update - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('CarQuoteRequestDetail - No OCR data to update');
 
             return false;
 
         } catch (Exception $e) {
-            LoggerService::error('CarQuoteRequestDetail update failed - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('CarQuoteRequestDetail update failed', exception: $e);
 
             return false;
         }
@@ -114,21 +114,21 @@ class MulkiyaDataProcessor
             $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
 
             if (! empty($dataToUpdate)) {
-                LoggerService::info('CarQuote update - Data to be updated - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('CarQuote update - Data to be updated');
 
                 $quote->update($dataToUpdate);
 
-                LoggerService::info('CarQuote updated successfully - Quote UUID: '.$this->quote->uuid);
+                LoggerService::info('CarQuote updated successfully');
 
                 return true;
             }
 
-            LoggerService::info('CarQuote - No OCR data to update - Quote UUID: '.$this->quote->uuid);
+            LoggerService::info('CarQuote - No OCR data to update');
 
             return false;
 
         } catch (Exception $e) {
-            LoggerService::error('CarQuote update failed - Quote UUID: '.$this->quote->uuid, exception: $e);
+            LoggerService::error('CarQuote update failed', exception: $e);
 
             return false;
         }
@@ -145,7 +145,7 @@ class MulkiyaDataProcessor
                     // Remove the nationality string since we only want to store the ID
                     unset($fieldsToUpdate['nationality_string']);
                 } else {
-                    LoggerService::warning('Nationality could not be matched - Quote UUID: '.$quote->uuid);
+                    LoggerService::warning('Nationality could not be matched');
                     // Remove the nationality field since we can't match it
                     unset($fieldsToUpdate['nationality_string']);
                 }
@@ -163,18 +163,18 @@ class MulkiyaDataProcessor
                 if (! empty($dataToUpdate)) {
                     $registrationCertificate->update($dataToUpdate);
 
-                    LoggerService::info('RegistrationCertificate updated successfully - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('RegistrationCertificate updated successfully');
                 } else {
-                    LoggerService::info('RegistrationCertificate - No OCR data to update - Quote UUID: '.$this->quote->uuid);
+                    LoggerService::info('RegistrationCertificate - No OCR data to update');
                 }
             } else {
-                LoggerService::info('RegistrationCertificate created successfully - Quote UUID: '.$quote->uuid);
+                LoggerService::info('RegistrationCertificate created successfully');
             }
 
             return true;
 
         } catch (Exception $e) {
-            LoggerService::error('RegistrationCertificate update failed - Quote UUID: '.$quote->uuid, exception: $e);
+            LoggerService::error('RegistrationCertificate update failed', exception: $e);
 
             return false;
         }
