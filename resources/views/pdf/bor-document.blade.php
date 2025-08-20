@@ -28,6 +28,15 @@
             line-height: 1.8;
             margin-bottom: 20px;
         }
+
+        .document-header-entity {
+            font-size: 14px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
         
         .document-header strong {
             font-weight: bold;
@@ -51,18 +60,25 @@
         }
         
         .signature-section {
-            margin-top: 40px;
+            margin-top: 20px;
         }
         
         .signature-section p {
             margin-bottom: 10px;
         }
+
+
+        .signature-wrapper {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
         
         .signature-box {
             border: 1px solid #ccc;
-            height: 100px;
+            height: 80px;
             width: 300px;
-            margin: 15px 0;
+            margin: 0px 0 0 4px;
             background-color: #f9f9f9;
             display: flex;
             align-items: center;
@@ -108,11 +124,22 @@
 </head>
 <body>
     <div class="header">
+        @if($customer_type === 'Entity')
+        <div class="document-header-entity">
+            <p>
+                <strong>To:</strong> {{ $insurance_company ?? '' }}<br>
+            </p>
+            <p>
+                <strong>Date:</strong> {{ $current_date ?? now()->format('d/m/Y') }}
+            </p>
+        </div>
+        @else
         <div class="document-header">
             <strong>Date:</strong> {{ $current_date ?? now()->format('d/m/Y') }}<br>
             <strong>To:</strong> {{ $insurance_company ?? '' }}<br>
             <strong>Policy Number:</strong> {{ $policy_number ?? '[IMCRM or client updated]' }}
         </div>
+        @endif
         
         <div class="document-title">
             Letter of Appointment/Authorisation/EBOR
@@ -121,7 +148,7 @@
 
     <div class="letter-content">
         <p>
-            This letter serves as a formal appointment of InsuranceMarket.ae (a registered trademark of AFIA Insurance Brokerage Services L.L.C.) as my exclusive broker.
+            This letter serves as a formal appointment of InsuranceMarket.ae (a registered trademark of AFIA Insurance Brokerage Services L.L.C.) as my exclusive period.
         </p>
         
         <p>
@@ -143,16 +170,18 @@
 
     @if($include_signature && $signature_path)
         <div class="signature-section">
-            <div class="accept-button">Signed and Accepted</div>
-            
-            <p><strong>Name:</strong> {{ $customer_type === 'Entity' ? $company_name : $customer_name }}</p>
-            <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
-            
-            <div class="signature-box">
-                <img src="{{ $signature_path }}" 
-                     alt="Customer Signature" 
-                     class="signature-image">
+            <!-- <div class="accept-button">Signed and Accepted</div> -->
+            <p><strong>Signed by:</strong> {{ $customer_type === 'Entity' ? $company_name : $customer_name }}</p>
+            <div class="signature-wrapper">
+                <p><strong>Signed: </strong>
+                    <div class="signature-box">
+                        <img src="{{ $signature_path }}" 
+                            alt="Customer Signature" 
+                            class="signature-image">
+                    </div>
+                </p>
             </div>
+            <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
         </div>
     @else
         <div class="signature-section">

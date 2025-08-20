@@ -130,7 +130,7 @@ class BorRequestMail extends Mailable
     private function getSubjectLine($personalQuote, $quoteType)
     {
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
-        $name = $this->borLog->customer_type == 'Entity' ? $this->customerData['company_name'] : $this->customerData['first_name'];
+        $name = $this->getCustomerName();
         if($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
             $subjectLine = 'BOR '. $this->borLog->chassis_number . ' - ' . $name;
             return $subjectLine;

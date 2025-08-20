@@ -86,28 +86,29 @@ class BorEmailService
     /**
      * Send BOR notification email to insurer
      */
-    public function sendBorInsurerNotification(BorLog $borLog, string $insurerEmail): bool
+    public function sendBorInsurerNotification(BorLog $borLog): bool
     {
         try {
-            $customerData = $this->getCustomerData($borLog);
-            
-            if (!$customerData) {
-                LoggerService::error('BOR Insurer Notification: Customer data not found', [
+            $insurerContact = $borLog->insuranceContact;
+            $advisorData = $this->getAdvisorData($borLog);
+
+
+            if(!$insurerContact) {
+                LoggerService::info('BOR Insurer Notification: Insurer contact not found', [
                     'bor_log_id' => $borLog->id,
                     'lead_id' => $borLog->lead_id,
-                    'insurer_email' => $insurerEmail
                 ]);
+
                 return false;
             }
 
-            $mail = new BorInsurerNotificationMail($borLog, $customerData, $insurerEmail);
+            $mail = new BorInsurerNotificationMail($borLog, $insurerContact, $advisorData);
             return $mail->sendViaBird();
 
         } catch (\Exception $e) {
             LoggerService::error('BOR Insurer Notification Service failed', [
                 'bor_log_id' => $borLog->id,
                 'lead_id' => $borLog->lead_id,
-                'insurer_email' => $insurerEmail,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -238,11 +239,6 @@ class BorEmailService
 
         // Send completion email to customer
         $results['customer_completion'] = $this->sendBorCompletionEmail($borLog);
-
-        // Send notification to insurer if email provided
-        if ($insurerEmail) {
-            $results['insurer_notification'] = $this->sendBorInsurerNotification($borLog, $insurerEmail);
-        }
 
         LoggerService::info('BOR Completion Notifications sent', [
             'bor_log_id' => $borLog->id,

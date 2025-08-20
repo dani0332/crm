@@ -242,7 +242,7 @@ class QuoteDocumentService extends BaseService
             ]);
 
             // update the Bor log reference with uploaded document time and status
-            ( isset($data['document_category']) && $data['document_category'] !== null ) && $this->updateBorLogReference($data['document_category'], $quoteDocument);
+            ( isset($data['document_category']) && !isset($data['bor_signature']) && $data['document_category'] !== null ) && $this->updateBorLogReference($data['document_category'], $quoteDocument);
 
             if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);

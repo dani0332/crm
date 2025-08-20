@@ -65,6 +65,7 @@ const form = useForm({
   insurer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
+  insurance_contact_id: null,
   policy_number: '',
   policy_expiry: '',
   chassis_number: '',
@@ -80,6 +81,7 @@ const selectedInsurer = ref(null);
 const uploadedDocuments = ref([]);
 const signedPdf = ref(null);
 const downloadLoader = ref(false);
+const insuranceProviderRepresentor = ref([]);
 
 // Options data for reason dropdown
 const reasonOptions = ref([
@@ -118,6 +120,25 @@ const isSukoonInsurance = computed(() => {
   return selectedInsurer.value.code?.toLowerCase() === 'oic' || 
          selectedInsurer.value.text?.toLowerCase().includes('sukoon');
 });
+
+// Function to fetch provider representors
+const fetchProviderRepresentor = async (insuranceProviderId) => {
+  if (!insuranceProviderId) {
+    insuranceProviderRepresentor.value = [];
+    return;
+  }
+  
+  try {
+    const response = await axios.get(route('bor.get-representor', {
+      insurance_provider_id: insuranceProviderId,
+      quote_type: props.lob
+    }));
+    insuranceProviderRepresentor.value = response.data.providerRepresentor ?? [];
+  } catch (error) {
+    console.error('Error fetching provider representor:', error);
+    insuranceProviderRepresentor.value = [];
+  }
+};
 
 const modalTitle = computed(() => {
   if (isEditMode.value) {
@@ -220,6 +241,12 @@ watch(() => form.customer_type, (newValue) => {
 // Watch for insurer selection changes
 watch(() => form.insurance_provider_id, (newProviderId) => {
   selectedInsurer.value = props.insuranceProviders.find(p => p.id == newProviderId) || null;
+  
+  // Reset insurance_contact_id when provider changes
+  form.insurance_contact_id = null;
+  
+  // Fetch representors for the new provider
+  fetchProviderRepresentor(newProviderId);
 });
 
 // Methods
@@ -232,6 +259,7 @@ const resetForm = () => {
   selectedInsurer.value = null;
   uploadedDocuments.value = [];
   signedPdf.value = null;
+  insuranceProviderRepresentor.value = [];
   
   // Set default customer type based on LOB
   if (isBusinessLob.value) {
@@ -257,10 +285,13 @@ const prefillFormFromBorLog = () => {
   form.chassis_number = borLog.chassis_number || '';
   form.additional_notes = borLog.additional_notes || '';
   form.reason = borLog.reason || '';
+  form.insurance_contact_id = borLog.insurance_contact_id || null;
   
   // Set the selected insurer
   if (borLog.insurance_provider_id) {
     selectedInsurer.value = props.insuranceProviders.find(p => p.id == borLog.insurance_provider_id) || null;
+    // Fetch representors for the selected provider
+    fetchProviderRepresentor(borLog.insurance_provider_id);
   }
 };
 
@@ -346,6 +377,7 @@ const submitForm = () => {
     insurer_name: form.insurer_name,
     company_name: form.company_name,
     insurance_provider_id: form.insurance_provider_id,
+    insurance_contact_id: form.insurance_contact_id,
     policy_number: form.policy_number,
     policy_expiry: form.policy_expiry,
     chassis_number: form.chassis_number,
@@ -650,6 +682,18 @@ onMounted(() => {
                 :options="availableInsurers"
                 placeholder="Select insurance provider"
                 :error="form.errors.insurance_provider_id"
+                :disabled="isSubmitting"
+                filterable
+                clearable
+              />
+
+              <x-select
+                v-if="insuranceProviderRepresentor.length > 0"
+                label="SELECT REPRESENTOR TO SEND BOR EMAIL"
+                v-model="form.insurance_contact_id"
+                :options="insuranceProviderRepresentor" 
+                placeholder="Select representor"
+                :error="form.errors.insurance_contact_id"
                 :disabled="isSubmitting"
                 filterable
                 clearable

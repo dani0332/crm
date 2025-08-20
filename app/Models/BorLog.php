@@ -6,6 +6,7 @@ use App\Enums\BorStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -139,9 +140,17 @@ class BorLog extends Model
      * Get signed documents related to this BOR request.
      * Uses the polymorphic relationship from quote_documents table.
      */
-    public function signedDocument(): HasMany
+    public function signedDocument(): HasOne
     {
-        return $this->hasMany(QuoteDocument::class, 'document_category', 'bor_reference')->latest('created_at')->first();
+        return $this->hasOne(QuoteDocument::class, 'document_category', 'bor_reference');
+    }
+
+    /**
+     * Get the insurance contact associated with this BOR request.
+     */
+    public function insuranceContact(): BelongsTo
+    {
+        return $this->belongsTo(InsuranceProviderContact::class, 'insurance_contact_id');
     }
 
     /**

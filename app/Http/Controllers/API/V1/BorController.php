@@ -7,6 +7,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\QuoteDocumentResource;
 use App\Models\BorLog;
 use App\Models\DocumentType;
 use App\Services\Bor\BorEmailService;
@@ -95,6 +96,7 @@ class BorController extends Controller
             $quote = $borLog->personalQuote;
             $request->merge(['quote_uuid' => $quote->code]);
             $request->merge(['document_category' => $request->input('bor_ref_id')]);
+            $request->merge(['bor_signature' => true]);
             $previousDoc = $borLog->document;
 
             if($previousDoc && $previousDoc->doc_url) {
@@ -107,6 +109,9 @@ class BorController extends Controller
             $borLog->update([
                 'quote_document_id' => $document->id,
                 'document_id' => $document->doc_uuid,
+                'user_agent' => $request->userAgent(),
+                'insurer_name' => $request->insurer_name,
+                'policy_number' => $request->policy_number,
                 'status' => BorStatusEnum::DOCUMENT_SIGNED,
                 'date_signed' => now(),
             ]);
@@ -141,10 +146,28 @@ class BorController extends Controller
         return response()->json(['data' => $documentTypes]);
     }
 
+    public function uploadDocument(Request $request)
+    {
+        $quote = $this->getQuoteObject($request->quoteType, $request->quote_uuid);
+
+        $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
+
+        return new QuoteDocumentResource($document);
+    }
+
     public function borCompletionEmailTrigger($borRefId)
     {
+        LoggerService::info('BOR Completion Email Trigger', [
+            'bor_ref_id' => $borRefId,
+        ]);
         $borLog = BorLog::where('bor_reference', $borRefId)->first();
         $result = $this->borEmailService->sendBorCompletionEmail($borLog);
-        return response()->json(['message' => 'success', 'result' => $result]);
+        if($borLog->insurance_contact_id != null) {
+            LoggerService::info('Sending BOR Insurer Notification', [
+                'bor_ref_id' => $borRefId,
+            ]);
+            $result_insurer = $this->borEmailService->sendBorInsurerNotification($borLog);
+        }
+        return response()->json(['message' => 'success', 'result' => $result, 'result_insurer' => $result_insurer]);
     }
 }

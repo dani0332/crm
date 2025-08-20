@@ -85,7 +85,7 @@ class BorController extends Controller
     public function store(BorFormRequest $request)
     {
         try {
-            $payload = $request->only('lead_id', 'lob', 'customer_type', 'company_name', 'insurer_name', 'insurance_provider_id', 'policy_number', 'policy_expiry', 'chassis_number');
+            $payload = $request->only('lead_id', 'lob', 'customer_type', 'company_name', 'insurer_name', 'insurance_provider_id', 'policy_number', 'policy_expiry', 'chassis_number', 'insurance_contact_id');
             $borLog = $this->borService->createBorLog($payload);
 
             // Return successful response
@@ -150,6 +150,18 @@ class BorController extends Controller
                 },
                 $file[$lastIndex - 1]
             );
+    }
+
+    public function getRepresentor(Request $request)
+    {
+        $insuranceProviderId = $request->insurance_provider_id;
+        $quoteType = $request->quote_type;
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $representor = $this->borService->getRepresentor($insuranceProviderId, $quoteTypeId);
+        return response()->json([
+            'success' => true,
+            'providerRepresentor' => $representor,
+        ]);
     }
 
     /**

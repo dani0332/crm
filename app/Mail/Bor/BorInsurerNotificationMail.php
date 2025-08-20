@@ -5,6 +5,7 @@ namespace App\Mail\Bor;
 use App\Models\BorLog;
 use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\WorkflowTypeEnum;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -16,17 +17,16 @@ class BorInsurerNotificationMail extends Mailable
     use Queueable, SerializesModels;
 
     protected $borLog;
-    protected $customerData;
-    protected $insurerEmail;
-
+    protected $insurerContact;
+    protected $advisorData;
     /**
      * Create a new message instance.
      */
-    public function __construct(BorLog $borLog, array $customerData, string $insurerEmail)
+    public function __construct(BorLog $borLog, $insurerContact, $advisorData)
     {
         $this->borLog = $borLog;
-        $this->customerData = $customerData;
-        $this->insurerEmail = $insurerEmail;
+        $this->advisorData = $advisorData;
+        $this->insurerContact = $insurerContact;
     }
 
     /**
@@ -51,7 +51,7 @@ class BorInsurerNotificationMail extends Mailable
                 LoggerService::error('BOR Insurer Notification Email: Bird workflow URL not configured', [
                     'bor_log_id' => $this->borLog->id,
                     'lead_id' => $this->borLog->lead_id,
-                    'insurer_email' => $this->insurerEmail
+                    'insurer_email' => $this->insurerContact->emails
                 ]);
                 return false;
             }
@@ -62,7 +62,7 @@ class BorInsurerNotificationMail extends Mailable
             LoggerService::info('BOR Insurer Notification Email sent via Bird', [
                 'bor_log_id' => $this->borLog->id,
                 'lead_id' => $this->borLog->lead_id,
-                'insurer_email' => $this->insurerEmail,
+                'insurer_email' => $this->insurerContact->emails,
                 'response_status' => $response->status_code
             ]);
 
@@ -72,7 +72,7 @@ class BorInsurerNotificationMail extends Mailable
             LoggerService::error('BOR Insurer Notification Email failed', [
                 'bor_log_id' => $this->borLog->id,
                 'lead_id' => $this->borLog->lead_id,
-                'insurer_email' => $this->insurerEmail,
+                'insurer_email' => $this->insurerContact->emails,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
@@ -86,39 +86,28 @@ class BorInsurerNotificationMail extends Mailable
      */
     private function buildBirdEmailData()
     {
-        $documentUrl = $this->borLog->document_path ? 
-            asset('storage/' . $this->borLog->document_path) : null;
-
+        $this->borLog->load('personalQuote', 'insuranceProvider');
+        $personalQuote = $this->borLog->personalQuote;
+        $insurerEmails = str_replace(';', ', ', $this->insurerContact->emails);
         return [
-            'uuid' => $this->borLog->lead_id,
-            'workflow_type' => 'bor_insurer_notification',
-            'insurer' => [
-                'email' => $this->insurerEmail,
-                'company_name' => $this->borLog->insurer_name,
-            ],
-            'customer' => [
-                'email' => $this->customerData['email'],
-                'first_name' => $this->customerData['first_name'] ?? '',
-                'last_name' => $this->customerData['last_name'] ?? '',
-                'company_name' => $this->customerData['company_name'] ?? '',
-                'mobile' => $this->customerData['mobile'] ?? '',
+            'uuid' => $personalQuote->uuid ?? '',
+            'ref_id' => $personalQuote->code ?? '',
+            'workflow_type' => WorkflowTypeEnum::BOR_INSURER_NOTIFICATION ?? 'bor_insurer_notification',
+            'customer_name' => $this->getCustomerName() ?? '',
+            'subject_line' => 'Broker on Record - Approval '. $personalQuote->code,
+            'insurance' => [
+                'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
+                'insurance_representative' => $insurerEmails,
             ],
             'bor_data' => [
-                'policy_number' => $this->borLog->policy_number,
-                'insurer_name' => $this->borLog->insurer_name,
-                'customer_type' => $this->borLog->customer_type,
-                'completion_date' => now()->format('Y-m-d H:i:s'),
-                'document_url' => $documentUrl,
-                'document_id' => $this->borLog->document_id,
+                'policy_number' => $this->borLog->policy_number ?? '',
+                'insurer_name' => $this->borLog->insurer_name ?? '',
+                'customer_type' => $this->borLog->customer_type == "Entity" ? "company" : "individual",
+                'bor_ref_id' => $this->borLog->bor_reference ?? '',
+                'document_id' => $this->borLog->document_id ?? '',
+                'date_created' => $this->borLog->date_created ?? '',
             ],
-            'template_variables' => [
-                'customer_name' => $this->getCustomerName(),
-                'policy_number' => $this->borLog->policy_number,
-                'insurer_name' => $this->borLog->insurer_name,
-                'completion_date' => now()->format('F j, Y'),
-                'document_download_url' => $documentUrl,
-                'broker_company' => config('app.name', 'InsuranceMarket.ae'),
-            ]
+            'advisor' => $this->advisorData,
         ];
     }
 
@@ -128,13 +117,10 @@ class BorInsurerNotificationMail extends Mailable
     private function getCustomerName()
     {
         if ($this->borLog->customer_type === 'Entity') {
-            return $this->customerData['company_name'] ?? 'Customer';
+            return $this->borLog->company_name ?? 'Customer';
         }
         
-        $firstName = $this->customerData['first_name'] ?? '';
-        $lastName = $this->customerData['last_name'] ?? '';
-        
-        return trim($firstName . ' ' . $lastName) ?: 'Customer';
+        return $this->borLog->insurer_name;
     }
 
     /**

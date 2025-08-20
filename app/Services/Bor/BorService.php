@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\BorLog;
 use App\Models\DocumentType;
+use App\Models\InsuranceProviderContact;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
@@ -395,5 +396,26 @@ class BorService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Get the representor for a given insurance provider
+     *
+     * @param int $insuranceProviderId
+     * @return array
+     */
+    public function getRepresentor($insuranceProviderId, $quoteTypeId)
+    {
+        $representor = InsuranceProviderContact::where([
+            ['insurance_provider_id', $insuranceProviderId], ['quote_type_id', $quoteTypeId]
+        ])->get()->map(function ($contact) {
+            return [
+                'value' => $contact->id,
+                'text' => "{$contact->department} - {$contact->emails}",
+                'label' => "{$contact->department} - {$contact->emails}",
+            ];
+        });
+
+        return $representor;
     }
 } 

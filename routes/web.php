@@ -93,7 +93,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
+use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -905,6 +907,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         // BOR Request Management
         Route::get('requests/{id}/generate-link', [BorController::class, 'generateLink'])->name('bor.requests.generate-link');
         Route::resource('requests', BorController::class)->names('bor.requests')->only(['index', 'store', 'update']);
+        Route::get('/get-representor', [BorController::class, 'getRepresentor'])->name('bor.get-representor');
         
         // BOR Status and Action Management (CRM Interface)
         Route::post('logs/{id}/cancel', [BorController::class, 'cancelBor'])->name('bor.logs.cancel');
@@ -914,5 +917,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         
         // Document Management
         Route::post('logs/{id}/documents', [BorController::class, 'uploadDocument'])->name('bor.documents.upload');
+    });
+
+    // This route is only for testing purposes to preview the BOR PDF
+    Route::get('bor-pdf-preview', function () {
+        $borLog = BorLog::where('bor_reference', 'IM-BOR-200825175545-4')->first();
+        $borPdfService = new BorPdfService();
+        $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
+        return view('pdf.bor-document', $pdfData);
     });
 });

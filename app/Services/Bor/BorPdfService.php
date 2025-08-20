@@ -102,10 +102,9 @@ class BorPdfService
     /**
      * Prepare data for PDF template
      */
-    private function preparePdfData(BorLog $borLog, PersonalQuote $lead, bool $includeSignature = true): array
+    public function preparePdfData(BorLog $borLog, PersonalQuote $lead, bool $includeSignature = true): array
     {
-        $document = $borLog->document;
-        $includeSignature = isset($document) && $document != null ? true : false;
+        $document = $borLog->signedDocument;
         $temporaryUrl = null;
         
         if ($includeSignature && $document) {
@@ -158,7 +157,7 @@ class BorPdfService
             // Insurance Information
             'insurance_company' => $borLog->insuranceProvider->text ?? null,
             'policy_number' => $borLog->policy_number,
-            'policy_expiry' => $borLog->policy_expiry ? $borLog->policy_expiry->format('Y-m-d') : null,
+            'policy_expiry' => $borLog->policy_expiry ? $borLog->policy_expiry : null,
             'chassis_number' => $borLog->chasis_number,
             
             // Signature Information
