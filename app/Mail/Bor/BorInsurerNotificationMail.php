@@ -88,16 +88,22 @@ class BorInsurerNotificationMail extends Mailable
     {
         $this->borLog->load('personalQuote', 'insuranceProvider');
         $personalQuote = $this->borLog->personalQuote;
-        $insurerEmails = str_replace(';', ', ', $this->insurerContact->emails);
+        $insurerEmails = explode(';', $this->insurerContact->emails);
+
+        // First email is the recipient, rest are CC emails
+        $recipientEmail = $insurerEmails[0] ?? '';
+        $ccEmails = array_slice($insurerEmails, 1);
+
         return [
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_INSURER_NOTIFICATION ?? 'bor_insurer_notification',
             'customer_name' => $this->getCustomerName() ?? '',
-            'subject_line' => 'Broker on Record - Approval '. $personalQuote->code,
+            'subject_line' => 'Broker on Record - Approval ' . $personalQuote->code,
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
-                'insurance_representative' => $insurerEmails,
+                'insurance_representative' => $recipientEmail,
+                'cc_emails' => $ccEmails,
             ],
             'bor_data' => [
                 'policy_number' => $this->borLog->policy_number ?? '',
