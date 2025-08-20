@@ -557,6 +557,26 @@ watch(
     }
   }
 );
+
+const isRenewal = computed(() => {
+  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD;
+});
+
+watch(
+  () => additionalVehicleTransactionDetailsForm.certificate_start_date,
+  (newVal) => {
+  if (isLIVA.value && newVal && isRenewal.value) {
+    // Add 13 months to policy_effective_date for policy_expiry_date
+    const effectiveDate = new Date(newVal);
+    const expiryDate = new Date(effectiveDate);
+    expiryDate.setMonth(expiryDate.getMonth() + 13);
+
+    // Format date as YYYY-MM-DD for the form
+    const formattedExpiryDate = expiryDate.toISOString().split('T')[0];
+    additionalVehicleTransactionDetailsForm.certificate_end_date = formattedExpiryDate;
+    additionalVehicleTransactionDetailsForm.policy_expiry_date = formattedExpiryDate;
+  }
+});
 </script>
 
 <template>
@@ -773,7 +793,7 @@ watch(
             :rules="getFieldRules('policy_effective_date')"
             :required="isFieldRequired('policy_effective_date')"
             placeholder="Policy Effective Date"
-            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission"
+            :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission || (isLIVA && isRenewal)"
             :readonly="fieldConfig.policy_effective_date?.readonly"
             label="Policy Effective Date"
             :tooltip="`Start date of the insurance policy coverage`"
@@ -797,7 +817,7 @@ watch(
             :rules="getFieldRules('certificate_start_date')"
             :required="isFieldRequired('certificate_start_date')"
             placeholder="Certificate Start Date"
-            disabled
+            :disabled="! (isLIVA && isRenewal)"
             :readonly="fieldConfig.certificate_start_date?.readonly"
             label="Certificate Start Date"
             :tooltip="`Start date for the insurance certificate validity period`"
