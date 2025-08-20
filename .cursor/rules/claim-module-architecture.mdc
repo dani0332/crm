@@ -38,9 +38,9 @@ Follow these established patterns from the claim module analysis:
 - Use `whereHas()` for relationship-based filtering
 - Maintain separation of concerns between controllers and business logic
 
-### 3. Request Validation Architecture (`ClaimStoreRequest`, `ClaimDetailsUpdateRequest`)
+### 3. Request Validation Architecture (`ClaimStoreRequest` , `ClaimUpdateRequest`, `ClaimDetailsUpdateRequest`)
 
-**Reference Classes**: `ClaimStoreRequest`, `ClaimUpdateRequest`, `ClaimDetailsUpdateRequest`, `ClaimStatusUpdateRequest`
+**Reference Classes**: `ClaimStoreRequest`, `ClaimUpdateRequest` `ClaimDetailsUpdateRequest`, `ClaimStatusUpdateRequest`
 
 **Required Patterns**:
 - Use `declare(strict_types=1)` and extend `FormRequest`
@@ -51,7 +51,7 @@ Follow these established patterns from the claim module analysis:
 - Use comprehensive regex patterns for field validation
 - Implement `validatedForUpdate()` method when needed
 
-### 4. Model Architecture (`Claim`, `ClaimRequest`, `ClaimRequestDetail`)
+### 4. Model Architecture (`ClaimRequest`, `ClaimRequestDetail`)
 
 **Reference Classes**: `ClaimRequest`, `ClaimRequestDetail`
 
@@ -153,13 +153,13 @@ Follow these established patterns from the claim module analysis:
 
 1. **Review Current Patterns** - Ensure new code follows established patterns
 2. **Update Rule Documentation** - Add new patterns or modify existing ones
-3. **Validate Security** - Ensure all security requirements are met
+3. **Update Claims Documentation** - Update `docs/Claims-Module-Documentation.md` with new features and changes
+4. **Validate Security** - Ensure all security requirements are met 
 5. **Update Frontend** - Ensure Vue.js patterns align with backend changes
 6. **Verify Permissions** - Test all permission-based access controls
 7. **Check Enums** - Ensure constants are properly organized and used
 8. **Validate Logging** - Ensure all actions are logged for audit with proper context
-9. **Performance Review** - Check new patterns don't impact performance
-10. **Documentation Update** - Keep inline docs and README current
+9. **Performance Review** - Check new patterns don't impact performance 
 
 Follow these patterns religiously to maintain consistency across the entire codebase.
 
@@ -167,7 +167,7 @@ Follow these patterns religiously to maintain consistency across the entire code
 
 - Controllers: `app/Http/Controllers/ClaimsController.php`
 - Services: `app/Services/ClaimsService.php`
-- Models: `app/Models/Claim.php`, `app/Models/ClaimRequest.php`, `app/Models/ClaimRequestDetail.php`
+- Models: `app/Models/ClaimRequest.php`, `app/Models/ClaimRequestDetail.php`
 - Requests: `app/Http/Requests/ClaimStoreRequest.php`, `app/Http/Requests/ClaimDetailsUpdateRequest.php`
 - Observers: `app/Observers/ClaimRequestObserver.php`
 - Vue Components: `resources/js/inertia/Pages/Claims/Components/ClaimDetails.vue`
