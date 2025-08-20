@@ -167,6 +167,11 @@ class BorController extends Controller
                 'bor_ref_id' => $borRefId,
             ]);
             $result_insurer = $this->borEmailService->sendBorInsurerNotification($borLog);
+            if($result_insurer) {
+                $borLog->update([
+                    'email_sent' => 1,
+                ]);
+            }
         }
         return response()->json(['message' => 'success', 'result' => $result, 'result_insurer' => $result_insurer]);
     }

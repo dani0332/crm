@@ -165,8 +165,11 @@ class BorService
         $borLog = BorLog::create($data);
 
         // Send BOR request email
+        $emailSent = false;
 
-        $quoteObject->advisor_id !== null && $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
+        if($quoteObject->advisor_id !== null) {
+            $emailSent = $this->borEmailService->sendBorRequestEmail($borLog);
+        }
 
         // Update email sent status
         // $borLog->update(['email_sent' => $emailSent]);
