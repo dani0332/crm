@@ -1503,7 +1503,7 @@ const isDocTypeLoading = docType => {
                   <label class="uppercase">Branch</label>
                 </dt>
                 <dd>
-                  {{ page.props.branchOptions.find(item => item.name === props.quote.emirate_of_your_visa_id)?.branch }}</dd>
+                  {{ page.props.branchOptions?.find(item => item.name === props.quote.emirate_of_your_visa_id)?.branch }}</dd>
               </div>
             </dl>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
