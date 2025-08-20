@@ -553,6 +553,7 @@ const validateForm = () => {
 - Apply typed properties and method signatures
 - Use PHP 8.2+ features (readonly properties, match expressions)
 - Implement proper nullable and union types
+- name each route on creation and use route by name.
 
 ### Testing Strategy
 - Write Feature tests for controller endpoints
