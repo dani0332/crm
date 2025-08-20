@@ -453,12 +453,14 @@ SAGE_RETRY_ATTEMPTS=3
 3. **Validate all inputs** before processing
 4. **Use HTTPS** for all API communications
 5. **Log security events** for audit purposes
- 
+
 ### Policy Booking Operations
 
 #### Standard Policy Booking
+
 **Trigger**: "Book Policy" button click
 **Process Flow**:
+
 1. **Policy Validation**: Validate policy details and customer information
 2. **Payment Status Assessment**: Identify which payments have been completed/paid
 3. **Receipt Creation** (First Financial Step): Generate payment receipts ONLY for paid payments
@@ -466,7 +468,7 @@ SAGE_RETRY_ATTEMPTS=3
    - Generate receipts for received bank transfers
    - Create receipts for cash payments already collected
    - Skip receipt generation for pending or unpaid amounts
-4. **Invoice Generation** (Second Financial Step): 
+4. **Invoice Generation** (Second Financial Step):
    - Create AR Premium invoices for customer billing
    - Generate AR Commission invoices for insurer payments
    - Create AP invoices for vendor payments (if applicable)
@@ -476,8 +478,10 @@ SAGE_RETRY_ATTEMPTS=3
 8. **Confirmation**: Send confirmation to user and relevant parties
 
 #### Send Update Booking (Endorsements)
+
 **Trigger**: "Send Update" or "Book Endorsement" button click
 **Process Flow**:
+
 1. **Change Analysis**: Identify policy changes and calculate financial impact
 2. **Endorsement Processing**:
    - Create endorsement records with change details
@@ -497,24 +501,29 @@ SAGE_RETRY_ATTEMPTS=3
 #### Booking Process Variations
 
 ##### Upfront Payment Booking
+
 - **Scenario**: Customer pays full premium upfront
 - **Process**: Payment receipt created first (for paid amount), then premium invoice generated, then mapped
 - **Sage Operations**: Receipt creation → AR invoice creation → immediate payment application
 
-##### Split Payment Booking  
+##### Split Payment Booking
+
 - **Scenario**: Customer chooses installment payment plan
 - **Process**: Receipts created only for paid installments, then invoices generated with payment schedules, then mapping
 - **Sage Operations**: Paid installment receipts → AR invoices with full payment schedules → progressive receipt mapping
 
 ##### Insurer Direct Payment Booking
+
 - **Scenario**: Insurer pays premium directly
 - **Process**: AP prepayment processing with customer invoice generation
 - **Sage Operations**: AP payment receipts and AR invoice generation with automatic mapping
 
 ##### Embedded Product Booking
+
 - **Scenario**: Policy includes embedded products (extended warranties, etc.)
 - **Process**: Additional product invoicing and payment allocation
 - **Sage Operations**: Separate EP invoices integrated with main policy booking
+
 ### Troubleshooting Guide
 
 #### Common Issues
