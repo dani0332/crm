@@ -322,18 +322,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Update booking details process started');
         $response = ['status' => true, 'error' => null, 'message' => null];
 
-        // TODO:: this should be move in the service class
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Updating commission details');
-        $updateCommission = app(ManualCommissionUpdateService::class)->updateCommissionForLeads([$quote->code]);
-        if (! $updateCommission['status']) {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Failed to update commission details');
-            $response['status'] = false;
-            $response['error'] = $updateCommission['error'];
-            $response['message'] = $updateCommission['message'];
-
-            // return $response;
-        }
-
         $payment = $quote->payments()->mainLeadPayment()->first();
         $bookPolicyPayload = $this->bookPolicyPayload($quote, QuoteTypes::CAR->value, $quote->payments, $quote->quoteDocuments);
 
