@@ -101,7 +101,7 @@ class GroupMedicalActivityScheduleSeeder extends Seeder
                         ['name' => '1st Call Follow-up', 'due_days' => 1],
                         ['name' => '2nd Call Follow-up', 'due_days' => 1],
                     ],
-                    QuoteStatusEnum::RenewalTermsSent => [
+                    QuoteStatusEnum::RenewalTermsReceived => [
                         // ['name' => 'Email renewal terms', 'due_days' => 2],
 
                         // for testing purpose
