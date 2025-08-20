@@ -38,7 +38,6 @@ class BorPdfService
                 ->setPaper('a4', 'portrait')
                 ->setOption('isHtml5ParserEnabled', true)
                 ->setOption('isRemoteEnabled', true);
-
             // Generate filename
             $filename = $this->generatePdfFilename($borLog);
             

@@ -54,7 +54,6 @@
         
         .clearfix::after {
             content: "";
-            display: table;
             clear: both;
         }
         
@@ -107,7 +106,7 @@
         }
 
         .stamp-box {
-            display: flex;
+            display: block;
         }
         
         .signature-box {
@@ -116,9 +115,8 @@
             width: 300px;
             margin: 0px 0 0 4px;
             background-color: #f9f9f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            line-height: 80px;
             position: relative;
         }
         
@@ -150,17 +148,16 @@
             background-color: white;
             text-align: center;
             position: relative;
-            display: table;
+            margin: 10px 0;
         }
         
         .signature-placeholder-text {
             color: #333333;
             font-size: 14px;
             font-weight: bold;
-            display: table-cell;
-            vertical-align: middle;
             text-align: center;
-            height: 10px;
+            line-height: 160px;
+            height: 160px;
         }
         
         .accept-button {
