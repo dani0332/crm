@@ -125,10 +125,14 @@ class BorInsurerNotificationMail extends Mailable
     private function getCustomerName()
     {
         if ($this->borLog->customer_type === 'Entity') {
-            return $this->borLog->company_name ?? 'Customer';
+            return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
         }
-        
-        return $this->borLog->insurer_name;
+
+        $firstName = $this->customerData['first_name'] ?? '';
+        $lastName = $this->customerData['last_name'] ?? '';
+        $name = trim($firstName . ' ' . $lastName);
+
+        return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
     }
 
     /**

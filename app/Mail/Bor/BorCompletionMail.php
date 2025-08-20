@@ -125,12 +125,12 @@ class BorCompletionMail extends Mailable
     private function getSubjectLine($personalQuote, $quoteType)
     {
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
-        $name = $this->borLog->customer_type == 'Entity' ? $this->customerData['company_name'] : $this->customerData['first_name'];
+        $name = $this->getCustomerName();
         if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
             $subjectLine = 'BOR ' . $this->borLog->chassis_number . ' - ' . $name;
             return $subjectLine;
         }
-        $subjectLine = $name . "'s " . $quoteType . ' Insurance with Alfred ' . $personalQuote->code;
+        $subjectLine = $name . ' For signature - Broker Appointment Letter ' . $personalQuote->code;
         return $subjectLine;
     }
 
@@ -140,13 +140,14 @@ class BorCompletionMail extends Mailable
     private function getCustomerName()
     {
         if ($this->borLog->customer_type === 'Entity') {
-            return $this->customerData['company_name'] ?? 'Valued Customer';
+            return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
         }
-        
+
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
-        
-        return trim($firstName . ' ' . $lastName) ?: 'Valued Customer';
+        $name = trim($firstName . ' ' . $lastName);
+
+        return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
     }
 
     /**
