@@ -533,4 +533,9 @@ class CarQuote extends BaseModel
     {
         return $this->morphOne(RegistrationCertificate::class, 'certificatable');
     }
+
+    public function drivingLicenseDetail()
+    {
+        return $this->morphOne(DrivingLicenseDetail::class, 'licensable');
+    }
 }
