@@ -824,7 +824,7 @@ class AMLService
                     'expiryDate' => ($insuredPersonDetails?->customer?->emirates_id_expiry_date ?? $request['id_expiry_date']) ?? null,
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
-                'chassisNumber' => $request['chassis_number'] ?? '',
+                'chassisNumber' => $request['chassis_number'] ?? '', // TODO: need to remove this.
                 'gender' => $this->formatGender($insuredDetails?->gender),
                 'dateOfBirth' => $insuredDetails?->dob,
                 'getQuoteEmail' => $isLIVA ? 'hitesh.motwani@afia.ae' : $request['get_quote_email_gig'],
@@ -880,6 +880,7 @@ class AMLService
                     $insurerScreeningPayload['plateCodeNumber'] = $carQuoteRequestDetails->plate_code.$carQuoteRequestDetails->plate_number ?? null;
                 }
 
+                $insurerScreeningPayload['chassisNumber'] = $carQuoteRequestDetails->chassis_number ?? null;
                 $insurerScreeningPayload['trafficCodeNumber'] = $carQuoteRequestDetails->traffic_code_number ?? null;
                 $insurerScreeningPayload['engineNumber'] = $carQuoteRequestDetails->engine_number ?? null;
                 $insurerScreeningPayload['rtaPlateCategory'] = $rtaPlateCategory?->text ?? null;
