@@ -173,6 +173,6 @@ class BorController extends Controller
                 ]);
             }
         }
-        return response()->json(['message' => 'success', 'result' => $result, 'result_insurer' => $result_insurer]);
+        return response()->json(['message' => 'success', 'result' => $result]);
     }
 }

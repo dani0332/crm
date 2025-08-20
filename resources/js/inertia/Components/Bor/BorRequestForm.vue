@@ -65,7 +65,7 @@ const form = useForm({
   insurer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
-  insurance_contact_id: null,
+  insurance_contact_id: props.borLog.insurance_contact_id || null,
   policy_number: '',
   policy_expiry: '',
   chassis_number: '',
@@ -239,14 +239,14 @@ watch(() => form.customer_type, (newValue) => {
 });
 
 // Watch for insurer selection changes
-watch(() => form.insurance_provider_id, (newProviderId) => {
+watch(() => form.insurance_provider_id, async (newProviderId) => {
   selectedInsurer.value = props.insuranceProviders.find(p => p.id == newProviderId) || null;
   
   // Reset insurance_contact_id when provider changes
-  form.insurance_contact_id = null;
+  form.insurance_contact_id = props.borLog.insurance_contact_id || null;
   
   // Fetch representors for the new provider
-  fetchProviderRepresentor(newProviderId);
+  await fetchProviderRepresentor(newProviderId);
 });
 
 // Methods
@@ -270,7 +270,7 @@ const resetForm = () => {
 };
 
 // Prefill form with BorLog data for edit mode
-const prefillFormFromBorLog = () => {
+const prefillFormFromBorLog = async () => {
   if (!props.borLog) return;
   
   const borLog = props.borLog;
@@ -291,7 +291,7 @@ const prefillFormFromBorLog = () => {
   if (borLog.insurance_provider_id) {
     selectedInsurer.value = props.insuranceProviders.find(p => p.id == borLog.insurance_provider_id) || null;
     // Fetch representors for the selected provider
-    fetchProviderRepresentor(borLog.insurance_provider_id);
+    await fetchProviderRepresentor(borLog.insurance_provider_id);
   }
 };
 
@@ -688,7 +688,7 @@ onMounted(() => {
               />
 
               <x-select
-                v-if="insuranceProviderRepresentor.length > 0"
+                v-if="form.insurance_provider_id != null"
                 label="SELECT REPRESENTOR TO SEND BOR EMAIL"
                 v-model="form.insurance_contact_id"
                 :options="insuranceProviderRepresentor" 

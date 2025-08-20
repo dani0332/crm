@@ -921,7 +921,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // This route is only for testing purposes to preview the BOR PDF
     Route::get('bor-pdf-preview', function () {
-        $borLog = BorLog::where('bor_reference', 'IM-BOR-200825175545-4')->first();
+        // entity bor log
+        // $borLog = BorLog::where('bor_reference', 'IM-BOR-200825175545-4')->first();
+
+        $borLog = BorLog::where('bor_reference', 'IM-BOR-200825165142-2')->first();
         $borPdfService = new BorPdfService();
         $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
         return view('pdf.bor-document', $pdfData);

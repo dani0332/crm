@@ -9,6 +9,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\BirdService;
+use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -117,6 +118,7 @@ class BorCompletionMail extends Mailable
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
                 'insurance_representative' => 'insurance_representative@email.com',
             ],
+            'attachPdf' => app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog),
         ];
     }
 

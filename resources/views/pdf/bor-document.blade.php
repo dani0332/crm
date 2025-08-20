@@ -31,11 +31,31 @@
 
         .document-header-entity {
             font-size: 14px;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
             line-height: 1.8;
             margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .header-row {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .header-left {
+            float: left;
+            width: 60%;
+        }
+        
+        .header-right {
+            float: right;
+            width: 35%;
+            text-align: right;
+        }
+        
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
         }
         
         .document-header strong {
@@ -69,9 +89,25 @@
 
 
         .signature-wrapper {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .signature-label {
+            float: left;
+            width: 2%;
+            margin-top: 30px;
+            font-weight: bold;
+        }
+        
+        .signature-box-container {
+            float: left;
+            width: 75%;
+            margin-left: 3%;
+        }
+
+        .stamp-box {
             display: flex;
-            flex-direction: row;
-            align-items: center;
         }
         
         .signature-box {
@@ -95,6 +131,36 @@
         .signature-placeholder {
             color: #aaa;
             font-style: italic;
+        }
+
+         .stamp-box {
+            display: block;
+            width: 300px;
+            padding: 5px;
+            border-radius: 6px;
+            border: 2px solid #cfabab;
+            background-color: white;
+        }
+        
+        .signature-placeholder-box {
+            border: 2px dashed #CBCBCB;
+            border-radius: 6px;
+            height: 160px;
+            width: 290px;
+            background-color: white;
+            text-align: center;
+            position: relative;
+            display: table;
+        }
+        
+        .signature-placeholder-text {
+            color: #333333;
+            font-size: 14px;
+            font-weight: bold;
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+            height: 10px;
         }
         
         .accept-button {
@@ -126,12 +192,14 @@
     <div class="header">
         @if($customer_type === 'Entity')
         <div class="document-header-entity">
-            <p>
-                <strong>To:</strong> {{ $insurance_company ?? '' }}<br>
-            </p>
-            <p>
-                <strong>Date:</strong> {{ $current_date ?? now()->format('d/m/Y') }}
-            </p>
+            <div class="header-row clearfix">
+                <div class="header-left">
+                    <strong>To:</strong> {{ $insurance_company ?? '' }}
+                </div>
+                <div class="header-right">
+                    <strong>Date:</strong> {{ $current_date ?? now()->format('d/m/Y') }}
+                </div>
+            </div>
         </div>
         @else
         <div class="document-header">
@@ -146,50 +214,82 @@
         </div>
     </div>
 
+    @if($customer_type === 'Entity')
     <div class="letter-content">
-        <p>
-            This letter serves as a formal appointment of InsuranceMarket.ae (a registered trademark of AFIA Insurance Brokerage Services L.L.C.) as my exclusive period.
-        </p>
-        
-        <p>
-            InsuranceMarket.ae is authorised to act on my behalf in all matters related to my insurance policy, including servicing, placement, implementation, and negotiation of terms, effective immediately.
-        </p>
-        
-        <p>
-            By proceeding, I confirm my understanding that all premium payments must be made directly to the Insurance Company. I authorise my broker to retain this acknowledgment for regulatory compliance.
-        </p>
-        
-        <p>
-            This appointment supersedes any previous authorisations and is made without obligation or liability on our part. All decisions regarding acceptance of terms will be at our discretion.
-        </p>
-        
-        <p>
-            Yours sincerely,
-        </p>
-    </div>
+        <p>This letter confirms the exclusive appointment of InsuranceMarket.ae (a registered trademark of AFIA Insurance Brokerage Services L.L.C, with registration number 85) as our duly authorised insurance broker, effective immediately. This appointment nullifies any previous authorisations.</p>
 
+        <p>InsuranceMarket.ae is empowered to manage all aspects of our insurance portfolio, including arranging coverage upon our approval and obtaining information about past policies, They are authorised to disclose relevant insurance details to insurers and other necessary entities.</p>
+
+        <p>By proceeding, I confirm my understanding that all premium payments must be made directly to the Insurance Company. I authorise my broker to retain this acknowledgment for regulatory compliance.</p>
+        
+        <p>
+            Furthermore, they are authorised to engage in discussions and negotiations concerning potential claims.
+        </p>
+        
+    </div>
+    @else
+        <div class="letter-content">
+            <p>
+                This letter serves as a formal appointment of InsuranceMarket.ae (a registered trademark of AFIA Insurance Brokerage Services L.L.C.) as my exclusive period.
+            </p>
+            
+            <p>
+                InsuranceMarket.ae is authorised to act on my behalf in all matters related to my insurance policy, including servicing, placement, implementation, and negotiation of terms, effective immediately.
+            </p>
+            
+            <p>
+                By proceeding, I confirm my understanding that all premium payments must be made directly to the Insurance Company. I authorise my broker to retain this acknowledgment for regulatory compliance.
+            </p>
+            
+            <p>
+                This appointment supersedes any previous authorisations and is made without obligation or liability on our part. All decisions regarding acceptance of terms will be at our discretion.
+            </p>
+            
+            <p>
+                Yours sincerely,
+            </p>
+        </div>
+    @endif
     @if($include_signature && $signature_path)
         <div class="signature-section">
             <!-- <div class="accept-button">Signed and Accepted</div> -->
             <p><strong>Signed by:</strong> {{ $customer_type === 'Entity' ? $company_name : $customer_name }}</p>
-            <div class="signature-wrapper">
-                <p><strong>Signed: </strong>
+            <div class="signature-wrapper clearfix">
+                <div class="signature-label">
+                    Signed:
+                </div>
+                <div class="signature-box-container">
                     <div class="signature-box">
                         <img src="{{ $signature_path }}" 
                             alt="Customer Signature" 
                             class="signature-image">
                     </div>
-                </p>
+                </div>
             </div>
             <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
         </div>
     @else
-        <div class="signature-section">
-            <div class="accept-button">Sign and accept</div>
-            
-            <p><strong>Name:</strong> {{ $customer_name ?? ' ' }}</p>
-            <p><strong>Date signed:</strong> _____________________</p>
-        </div>
+        @if($customer_type === 'Entity')
+            <div class="signature-section">
+                <p><strong>Company Name:</strong> {{ $company_name }}</p>
+                <p><strong>Authorized Signatory:</strong> </p>
+                <p><strong>Designation:</strong> </p>
+                <!-- Signature placeholder box -->
+                <div class="stamp-box">
+                    <div class="signature-placeholder-text">Sign and stamp here</div>
+                    <div class="signature-placeholder-box">
+                    </div>
+                </div>
+                <p><strong>Date signed:</strong> _____________________</p>
+            </div>
+        @else
+            <div class="signature-section">
+                <div class="accept-button">{{ $customer_type === 'Entity' ? "Upload BOR letter": "Sign and accept" }}</div>
+                
+                <p><strong>Name:</strong> {{ $customer_name ?? ' ' }}</p>
+                <p><strong>Date signed:</strong> _____________________</p>
+            </div>
+        @endif
     @endif
 
     <div class="footer">

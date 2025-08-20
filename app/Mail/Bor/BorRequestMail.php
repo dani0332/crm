@@ -9,6 +9,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\BirdService;
+use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -123,6 +124,7 @@ class BorRequestMail extends Mailable
                 'document_id' => $this->borLog->document_id ?? '',
                 'date_created' => $this->borLog->date_created ?? '',
             ],
+            'attachPdf' => $this->borLog->customer_type == "Entity" ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : null,
             'advisor' => $this->advisorData,
         ];
     }

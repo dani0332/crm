@@ -115,7 +115,7 @@ class BorController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $payload = $request->only('lead_id', 'lob', 'customer_type', 'company_name', 'insurer_name', 'insurance_provider_id', 'policy_number', 'policy_expiry', 'chassis_number');
+            $payload = $request->only('lead_id', 'lob', 'customer_type', 'company_name', 'insurer_name', 'insurance_provider_id', 'policy_number', 'policy_expiry', 'chassis_number', 'insurance_contact_id');
             $borLog = $this->borService->updateBorLog($payload, $id);
 
             return redirect()->back()->with([

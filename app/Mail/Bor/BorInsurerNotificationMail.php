@@ -7,6 +7,7 @@ use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\BirdService;
+use App\Services\Bor\BorPdfService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -114,6 +115,7 @@ class BorInsurerNotificationMail extends Mailable
                 'date_created' => $this->borLog->date_created ?? '',
             ],
             'advisor' => $this->advisorData,
+            'attachPdf' => app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog),
         ];
     }
 
