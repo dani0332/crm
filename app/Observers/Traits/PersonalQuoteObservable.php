@@ -11,6 +11,7 @@ use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendAutomatedHomeRenewalFollowup;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
@@ -57,6 +58,19 @@ trait PersonalQuoteObservable
                 return;
             }
             SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+        }
+
+        if ($personalQuote->quote_status_id == QuoteStatusEnum::Quoted && $personalQuote->isHome() && $personalQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+            $isFollowupExecuted = app(BirdService::class)
+                ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::HOME->id(), QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value);
+
+            if ($isFollowupExecuted) {
+                LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Followup already executed for renewal quote {$personalQuote->uuid}");
+
+                return;
+            }
+            SendAutomatedHomeRenewalFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Dispatched for Home renewal quote: {$personalQuote->uuid}");
         } else {
             LoggerService::info(self::class." - Quote status is {$personalQuote->quote_status_id} for quote: {$personalQuote->uuid}");
         }

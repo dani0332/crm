@@ -359,4 +359,31 @@ class HomeEmailService extends BaseService
         // Return timestamp for the OCB date
         return (string) $ocbDate->timestamp;
     }
+
+    public function sendAutomatedHomeRenewalFollowup(PersonalQuote $personalQuote)
+    {
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_AUTOMATED_FOLLOWUPS)->first();
+
+        LoggerService::info('| sendAutomatedHomeFollowup - Initiating process for Home renewal quote');
+
+        if ($workflowUrl && ! empty($workflowUrl->value)) {
+            // Fetch the advisor
+            $advisor = User::find($personalQuote->advisor_id);
+            if (! $advisor) {
+                LoggerService::info("sendAutomatedHomeFollowup - Advisor not found for renewal quote: {$personalQuote->uuid}");
+            }
+            $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, $personalQuote->homeQuote);
+
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+
+            if ($response && $response->status_code === 200) {
+                LoggerService::info("sendAutomatedHomeFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
+                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::HOME->id());
+            } else {
+                LoggerService::info("sendAutomatedHomeFollowup - Error triggering event having response status code: {$response?->status_code}");
+            }
+        } else {
+            LoggerService::info(self::class." - Automated Home Renewal Followup is not set workflow url not found for quote: {$personalQuote->uuid}");
+        }
+    }
 }
