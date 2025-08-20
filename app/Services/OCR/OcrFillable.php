@@ -324,6 +324,8 @@ trait OcrFillable
             return false;
         }
 
+        LoggerService::startQuoteLogging($quote);
+
         try {
 
             return match ($documentType) {
