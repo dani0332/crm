@@ -84,7 +84,7 @@ class CarCQFRenewalService
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
             ])
-            ->with(['plan', 'plan.insuranceProvider'])
+            ->with(['plan', 'plan.insuranceProvider','carQuoteRequestDetail:id,car_quote_request_id,chassis_number'])
             ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
@@ -276,7 +276,6 @@ class CarCQFRenewalService
     }
     public function isDuplicateQuote($quote)
     {
-
         return CarQuote::where('previous_quote_id', $quote->id)
             ->where('previous_quote_policy_number', $quote->policy_number)
             ->where('previous_policy_expiry_date', $quote->policy_expiry_date)
@@ -320,21 +319,22 @@ class CarCQFRenewalService
             'mobile_no' => $quote->mobile_no,
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
             'insurer' => $insuranceProvider?->text ?? null,
-            'product' => $quote->product ?? null,
-            'product_type' => $quote->car_type_insurance_id()->text ?? null,
-            'advisor' => $quote->advisor()->email ?? null,
+            'product' => $quote->plan?->name ?? null,
+            'product_type' => $quote->plan?->productType?->name ?? null,
+            'advisor' => $quote->advisor?->email ?? null,
             'policy_number' => $quote->policy_number,
             'start_date' => $quote->policy_start_date,
             'end_date' => $quote->policy_expiry_date,
             'batch' => null,
-            'make' => $quote->carMake()->text ?? null,
-            'model' => $quote->carModel()->text ?? null,
+            'make' => $quote->carMake?->text ?? null,
+            'model' => $quote->carModel?->text ?? null,
             'year' => $quote->year_of_manufacture ?? null,
-            'previous_advisor' => $quote->previousAdvisor()->email ?? null,
-            'premium' => $quote->premium ?? null,
+            'previous_advisor' => $quote->advisor?->email ?? null,
+            'previous_quote_policy_premium' => $quote->premium ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->additional_notes ?? null,
-            'plan_name' => $quote->plan()->name ?? null,
+            'plan_name' => $quote->plan?->name ?? null,
+            'errors' => $quote->validation_errors ?? null,
         ];
     }
 
@@ -375,7 +375,7 @@ class CarCQFRenewalService
             $this->getCustomerEntity($newQuote, $quote);
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
             $this->epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
-            $this->storeCarDetails($newQuote);
+            $this->storeCarDetails($newQuote,$quote);
 
             LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully', self::class), [
                 'previous_quote_uuid' => $quote->uuid,
@@ -387,21 +387,21 @@ class CarCQFRenewalService
 
         return $newQuote;
     }
-    public function storeCarDetails($quote)
+    public function storeCarDetails($newQuote,$quote)
     {
-        $carDetails = CarQuoteRequestDetail::create([
-            'car_quote_request_id' => $quote->id,
+       
+        if($quote->carQuoteRequestDetail){
+            LoggerService::info(self::class.' - Car Quote Request Detail found for quote');
+        return CarQuoteRequestDetail::create([
+            'car_quote_request_id' => $newQuote->id,
             'chassis_number' => $quote->carQuoteRequestDetail->chassis_number,
 
         ]);
+        }
+        
+        LoggerService::info(self::class.' - Car Quote Request Detail not found for quote');
     }
-    public function getRenewalBatch($newPolicyExpiryDate)
-    {
-        return RenewalBatch::where('start_date', '<=', $newPolicyExpiryDate)
-            ->where('end_date', '>=', $newPolicyExpiryDate)
-            ->where('quote_type_id', QuoteTypeId::Car)
-            ->first();
-    }
+   
     public function generateUUID()
     {
 
@@ -461,6 +461,7 @@ class CarCQFRenewalService
             'vehicle_use' => $quote->vehicle_use,
             'emirate_of_registration_id' => $quote->emirate_of_registration_id,
             'car_value' => $quote->car_value,
+            'uae_license_held_for_id' => $quote->uae_license_held_for_id,
         ];
 
         $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)->first();
@@ -547,7 +548,7 @@ class CarCQFRenewalService
     }
     public function downloadValidationFailedFile($id)
     {
-        $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
+        $renewaUploadLead = RenewalsUploadLeads::where('id', $id)->first();
 
         return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }

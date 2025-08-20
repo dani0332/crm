@@ -1147,7 +1147,6 @@ class RenewalsUploadService
 
             if ($isQuoteTypeCar) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
-                $quoteData['car_type_insurance_id'] = $carTypeOfInsurance->id ?? null;
                 $quoteData['claim_history_id'] = $claimHistory->id ?? null;
                 $quoteData['nationality_id'] = $nationality->id ?? null;
                 $quoteData['emirate_of_registration_id'] = $emirate->id ?? null;
@@ -1187,7 +1186,6 @@ class RenewalsUploadService
                     ->first())) {
                     $quoteData['cylinder'] = $carModelDetail->cylinder;
                     $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
-                    $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
                 }
 
                 if ($renewalUploadLead->skip_plans == 2 && $data['make'] == GenericRequestEnum::MOTOR_BIKE) {
