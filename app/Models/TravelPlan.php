@@ -15,4 +15,9 @@ class TravelPlan extends Model
     {
         return $this->belongsTo(InsuranceProvider::class, 'provider_id');
     }
+
+    public function insuranceProviderQuoteType()
+    {
+        return $this->hasOne(InsuranceProviderQuoteType::class, 'insurance_provider_id', 'provider_id');
+    }
 }
