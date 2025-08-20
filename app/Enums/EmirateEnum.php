@@ -40,13 +40,13 @@ final class EmirateEnum extends Enum
     public static function getBranchMapping(): array
     {
         return [
-            ['name' => self::AJMAN, 'branch' => self::getBranch(self::AJMAN)],
-            ['name' => self::DUBAI, 'branch' => self::getBranch(self::DUBAI)],
-            ['name' => self::FUJAIRAH, 'branch' => self::getBranch(self::FUJAIRAH)],
-            ['name' => self::RAS_AL_KHAIMAH, 'branch' => self::getBranch(self::RAS_AL_KHAIMAH)],
-            ['name' => self::SHARJAH, 'branch' => self::getBranch(self::SHARJAH)],
-            ['name' => self::UMM_AL_QUWAIN, 'branch' => self::getBranch(self::UMM_AL_QUWAIN)],
-            ['name' => self::ABU_DHABI, 'branch' => self::getBranch(self::ABU_DHABI)],
+            ['id' => self::AJMAN, 'branch' => self::getBranch(self::AJMAN)],
+            ['id' => self::DUBAI, 'branch' => self::getBranch(self::DUBAI)],
+            ['id' => self::FUJAIRAH, 'branch' => self::getBranch(self::FUJAIRAH)],
+            ['id' => self::RAS_AL_KHAIMAH, 'branch' => self::getBranch(self::RAS_AL_KHAIMAH)],
+            ['id' => self::SHARJAH, 'branch' => self::getBranch(self::SHARJAH)],
+            ['id' => self::UMM_AL_QUWAIN, 'branch' => self::getBranch(self::UMM_AL_QUWAIN)],
+            ['id' => self::ABU_DHABI, 'branch' => self::getBranch(self::ABU_DHABI)],
         ];
     }
 }
