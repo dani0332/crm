@@ -450,6 +450,26 @@
                     batch processing workflow with comprehensive error handling and recovery mechanisms.
                 </p>
             </div>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🔧 Function Types in This Documentation</h4>
+                    <ul>
+                        <li><strong style="color: #e74c3c;">Sage API Service Methods:</strong> Handle actual API calls to Sage 300</li>
+                        <li><strong style="color: #27ae60;">Payload Factory Methods:</strong> Generate API request structures</li>
+                        <li><strong>Location:</strong> SageApiService.php & SagePayloadFactory.php</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h4>🗄️ Database Storage</h4>
+                    <ul>
+                        <li><strong>AR Receipt IDs:</strong> payment_splits.sage_reciept_id</li>
+                        <li><strong>AP Payment IDs:</strong> payment_splits.sage_ap_payment_receipt_id</li>
+                        <li><strong>Purpose:</strong> Track and reference Sage receipt batches</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         
         <div class="content-section">
@@ -530,9 +550,10 @@
         
         <div class="content-section">
             <h2>🛠️ Core Receipt Creation Functions</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #e74c3c; font-weight: bold;">Sage API Service Methods</span> that orchestrate multiple receipt creation calls.</p>
             
-            <h3>💳 createARPrepaymentPremiumReceipts()</h3>
-            <p>Main orchestrator function for creating AR prepayment receipts for multiple paid payment splits.</p>
+            <h3>💳 createARPrepaymentPremiumReceipts() - API Service Method</h3>
+            <p>Main orchestrator function in <strong>SageApiService</strong> for creating AR prepayment receipts for multiple paid payment splits.</p>
             
             <div class="code-block">
                 <pre>private function createARPrepaymentPremiumReceipts($sageRequestDataArray, $splitAmount = null)
@@ -570,8 +591,8 @@
 }</pre>
             </div>
             
-            <h3>🏦 createAPPrepaymentPremiumReceipts()</h3>
-            <p>Main orchestrator function for creating AP prepayment receipts for vendor payments to insurance providers.</p>
+            <h3>🏦 createAPPrepaymentPremiumReceipts() - API Service Method</h3>
+            <p>Main orchestrator function in <strong>SageApiService</strong> for creating AP prepayment receipts for vendor payments to insurance providers.</p>
             
             <div class="code-block">
                 <pre>private function createAPPrepaymentPremiumReceipts($sageRequestDataArray, $splitAmount = null)
@@ -611,9 +632,10 @@
         
         <div class="content-section">
             <h2>🔧 Individual Receipt Creation Methods</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #e74c3c; font-weight: bold;">Sage API Service Methods</span> that handle individual receipt creation with API calls.</p>
             
-            <h3>💳 createARPrepaymentPremiumReceipt() - 4 Step Process</h3>
-            <p>Creates individual AR prepayment receipt through complete Open → Ready to Post → Posted lifecycle.</p>
+            <h3>💳 createARPrepaymentPremiumReceipt() - API Service Method (4 Steps)</h3>
+            <p>Creates individual AR prepayment receipt in <strong>SageApiService</strong> through complete Open → Ready to Post → Posted lifecycle.</p>
             
             <div class="process-flow">
                 <div class="process-step">
@@ -674,8 +696,8 @@
 }</pre>
             </div>
             
-            <h3>🏦 createAPPrepaymentPremiumReceipt() - 3 Step Process</h3>
-            <p>Creates individual AP prepayment receipt for vendor payments through complete lifecycle.</p>
+            <h3>🏦 createAPPrepaymentPremiumReceipt() - API Service Method (3 Steps)</h3>
+            <p>Creates individual AP prepayment receipt in <strong>SageApiService</strong> for vendor payments through complete lifecycle.</p>
             
             <div class="process-flow">
                 <div class="process-step">
@@ -728,10 +750,11 @@
         </div>
         
         <div class="content-section">
-            <h2>🏭 Inner Payload Factory Methods</h2>
+            <h2>🏭 Payload Factory Methods</h2>
+            <p><strong>📍 Function Type:</strong> These are <span style="color: #27ae60; font-weight: bold;">Payload Factory Methods</span> that generate Sage 300 API request structures.</p>
             
-            <h3>🔧 globalSagePrepaymentReceiptPayloadData()</h3>
-            <p>Prepares and normalizes all data required for receipt creation from quote, payment, and split information.</p>
+            <h3>🔧 globalSagePrepaymentReceiptPayloadData() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that prepares and normalizes all data required for receipt creation from quote, payment, and split information.</p>
             
             <div class="code-block">
                 <pre>public static function globalSagePrepaymentReceiptPayloadData($sageRequestData)
@@ -762,8 +785,8 @@
 }</pre>
             </div>
             
-            <h3>💳 createPrepaymentReceiptPayload() - AR Receipt Payload</h3>
-            <p>Creates the Sage 300 AR prepayment receipt payload structure.</p>
+            <h3>💳 createPrepaymentReceiptPayload() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that creates the Sage 300 AR prepayment receipt payload structure.</p>
             
             <div class="code-block">
                 <pre>public static function createPrepaymentReceiptPayload($sageRequest, $isCommissionReceipt = false)
@@ -806,8 +829,8 @@
 }</pre>
             </div>
             
-            <h3>🏦 createAPPrepaymentReceiptPayload() - AP Payment Payload</h3>
-            <p>Creates the Sage 300 AP prepayment payment payload structure for vendor payments.</p>
+            <h3>🏦 createAPPrepaymentReceiptPayload() - Payload Factory Method</h3>
+            <p>Static method in <strong>SagePayloadFactory</strong> that creates the Sage 300 AP prepayment payment payload structure for vendor payments.</p>
             
             <div class="code-block">
                 <pre>public static function createAPPrepaymentReceiptPayload($sageRequest)
@@ -1009,6 +1032,58 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+        
+        <div class="content-section">
+            <h2>🗄️ Database Storage - Receipt ID Columns</h2>
+            <p>After successful receipt creation, the system stores Sage receipt IDs in specific database columns for tracking and reference.</p>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 AR Receipt ID Storage</h4>
+                    <ul>
+                        <li><strong>Table:</strong> payment_splits</li>
+                        <li><strong>Column:</strong> sage_reciept_id</li>
+                        <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
+                        <li><strong>Stores:</strong> AR receipt batch document number</li>
+                        <li><strong>Updated By:</strong> createARPrepaymentPremiumReceipt()</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h4>🏦 AP Payment ID Storage</h4>
+                    <ul>
+                        <li><strong>Table:</strong> payment_splits</li>
+                        <li><strong>Column:</strong> sage_ap_payment_receipt_id</li>
+                        <li><strong>Type:</strong> VARCHAR(100) NULLABLE</li>
+                        <li><strong>Stores:</strong> AP payment batch document number</li>
+                        <li><strong>Updated By:</strong> createAPPrepaymentPremiumReceipt()</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <pre>// AR Receipt ID Storage Example
+if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+    $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+    $paymentSplit->update(['sage_reciept_id' => $documentNumberForReceipt]);
+}
+
+// AP Payment ID Storage Example  
+if (isset($sageResponse['PaymentsAdjustments'][0]['DocumentNumber'])) {
+    $documentNumberForReceipt = $sageResponse['PaymentsAdjustments'][0]['DocumentNumber'];
+    $paymentSplit->update(['sage_ap_payment_receipt_id' => $documentNumberForReceipt]);
+}</pre>
+            </div>
+            
+            <div class="highlight">
+                <h4>🔍 Usage of Stored Receipt IDs</h4>
+                <p>
+                    These stored receipt IDs are used for payment status tracking, reconciliation processes, 
+                    error recovery, and linking payment splits to their corresponding Sage 300 receipt batches 
+                    for audit trails and financial reporting.
+                </p>
             </div>
         </div>
         
