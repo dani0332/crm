@@ -242,7 +242,7 @@ class QuoteDocumentService extends BaseService
             ]);
 
             // update the Bor log reference with uploaded document time and status
-            $data['document_category'] !== null && $this->updateBorLogReference($data['document_category']);
+            ( isset($data['document_category']) && $data['document_category'] !== null ) && $this->updateBorLogReference($data['document_category'], $quoteDocument);
 
             if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
@@ -1027,13 +1027,16 @@ class QuoteDocumentService extends BaseService
      * @param string $borReference
      * @return void
      */
-    private function updateBorLogReference($borReference)
+    private function updateBorLogReference($borReference, $quoteDocument)
     {
         $borLog = BorLog::where('bor_reference', $borReference)->first();
         if($borLog) {
-            $borLog->date_uploaded = now();
-            $borLog->status = BorStatusEnum::DOCUMENT_UPLOADED;
-            $borLog->save();
+            $borLog->update([
+                'date_uploaded' => now(),
+                'document_id' => $quoteDocument->doc_uuid,
+                'quote_document_id' => $quoteDocument->id,
+                'status' => BorStatusEnum::DOCUMENT_UPLOADED,
+            ]);
         }
     }
 

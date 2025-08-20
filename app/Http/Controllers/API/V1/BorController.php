@@ -106,6 +106,7 @@ class BorController extends Controller
 
             $borLog->update([
                 'quote_document_id' => $document->id,
+                'document_id' => $document->doc_uuid,
                 'status' => BorStatusEnum::DOCUMENT_SIGNED,
                 'date_signed' => now(),
             ]);
