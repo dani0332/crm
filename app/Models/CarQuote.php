@@ -566,4 +566,9 @@ class CarQuote extends BaseModel
             ->whereNotNull('created_by_id')
             ->latest('updated_at');
     }
+
+    public function registrationCertificate()
+    {
+        return $this->morphOne(RegistrationCertificate::class, 'certificatable');
+    }
 }
