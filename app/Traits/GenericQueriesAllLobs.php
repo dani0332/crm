@@ -340,9 +340,7 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['text'] = 'Book Policy';
         }
         // Check if this is an Abu Dhabi health quote lead
-        $bookPolicyDetails['isHealthAUHLead'] = strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
-                                            isset($record->emirate_of_your_visa_id) &&
-                                            $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
+        $bookPolicyDetails['isHealthAUHLead'] = $this->isAHisHealthAUHLead($quoteType, $record);
 
         return $bookPolicyDetails;
     }
@@ -802,5 +800,12 @@ trait GenericQueriesAllLobs
     public function getRenewalBaches()
     {
         return app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+    }
+
+    public function isAHisHealthAUHLead($quoteType, $record)
+    {
+        return strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
+                                            isset($record->emirate_of_your_visa_id) &&
+                                            $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
     }
 }
