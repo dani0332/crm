@@ -168,11 +168,11 @@ Policy Ready → Book Policy Button Click → Comprehensive Sage Integration →
 **Process Steps**:
 1. **Policy Preparation**: User completes policy details and payment information
 2. **Book Policy Action**: User clicks "Book and send policy/book policy" button
-3. **Integrated Processing**: System simultaneously handles:
+3. **Integrated Processing**: System processes in sequence:
    - Policy booking in Sage 300
+   - Payment receipt generation (for paid payments only)
    - Invoice creation (AR Premium & Commission invoices)
-   - Payment receipt generation and processing
-   - Invoice-to-payment mapping
+   - Invoice-to-payment receipt mapping
    - Embedded product booking (if applicable)
    - All financial transactions synchronization
 4. **Queue Processing**: `BookPolicyOnSageJob` orchestrates all Sage operations
@@ -182,20 +182,21 @@ Policy Ready → Book Policy Button Click → Comprehensive Sage Integration →
 ### 2. Comprehensive Financial Processing (Triggered by Policy Booking)
 
 ```
-Book Policy Click → Invoice Generation → Payment Processing → Receipt Mapping → Financial Synchronization
+Book Policy Click → Payment Receipt Generation → Invoice Creation → Receipt-to-Invoice Mapping → Financial Synchronization
 ```
 
 **Integrated Process Steps**:
-1. **Invoice Creation**: 
-   - AR Premium invoices generated automatically
+1. **Payment Receipt Processing** (First Step):
+   - Payment receipts created ONLY for paid payments
+   - Split payment receipts for installment plans (paid installments only)
+   - Prepayment receipts for advance payments that are already processed
+   - No receipts generated for pending or unpaid amounts
+2. **Invoice Creation** (Second Step): 
+   - AR Premium invoices generated after receipt creation
    - AR Commission invoices created for insurers
    - AP invoices for vendor payments (if applicable)
-2. **Payment Receipt Processing**:
-   - Payment receipts created for all payment methods
-   - Split payment handling for installment plans
-   - Prepayment receipts for advance payments
-3. **Financial Mapping**:
-   - Automatic mapping of receipts to invoices
+3. **Financial Mapping** (Third Step):
+   - Automatic mapping of existing payment receipts to newly created invoices
    - Payment application to outstanding balances
    - Discount application and adjustment processing
 4. **Sage Synchronization**:
@@ -419,6 +420,68 @@ SAGE_RETRY_ATTEMPTS=3
 4. **Use HTTPS** for all API communications
 5. **Log security events** for audit purposes
  
+### Policy Booking Operations
+
+#### Standard Policy Booking
+**Trigger**: "Book Policy" button click
+**Process Flow**:
+1. **Policy Validation**: Validate policy details and customer information
+2. **Payment Status Assessment**: Identify which payments have been completed/paid
+3. **Receipt Creation** (First Financial Step): Generate payment receipts ONLY for paid payments
+   - Create receipts for completed credit card transactions
+   - Generate receipts for received bank transfers
+   - Create receipts for cash payments already collected
+   - Skip receipt generation for pending or unpaid amounts
+4. **Invoice Generation** (Second Financial Step): 
+   - Create AR Premium invoices for customer billing
+   - Generate AR Commission invoices for insurer payments
+   - Create AP invoices for vendor payments (if applicable)
+5. **Financial Mapping** (Third Financial Step): Map existing payment receipts to newly created invoices
+6. **Sage Integration**: Synchronize all financial data with Sage 300 system
+7. **Status Updates**: Update policy status to "Policy Booked"
+8. **Confirmation**: Send confirmation to user and relevant parties
+
+#### Send Update Booking (Endorsements)
+**Trigger**: "Send Update" or "Book Endorsement" button click
+**Process Flow**:
+1. **Change Analysis**: Identify policy changes and calculate financial impact
+2. **Endorsement Processing**:
+   - Create endorsement records with change details
+   - Calculate premium adjustments (increases/decreases)
+   - Determine commission adjustments
+3. **Financial Transaction Handling**:
+   - Generate adjustment invoices (Credit/Debit notes)
+   - Create correction entries for original transactions
+   - Process additional payments or refunds as needed
+4. **Sage Synchronization**:
+   - Send reversal entries for original transactions (if required)
+   - Create new corrected transactions
+   - Update customer and vendor accounts
+5. **Status Management**: Update policy and endorsement status
+6. **Documentation**: Generate endorsement certificates and updated policy documents
+
+#### Booking Process Variations
+
+##### Upfront Payment Booking
+- **Scenario**: Customer pays full premium upfront
+- **Process**: Payment receipt created first (for paid amount), then premium invoice generated, then mapped
+- **Sage Operations**: Receipt creation → AR invoice creation → immediate payment application
+
+##### Split Payment Booking  
+- **Scenario**: Customer chooses installment payment plan
+- **Process**: Receipts created only for paid installments, then invoices generated with payment schedules, then mapping
+- **Sage Operations**: Paid installment receipts → AR invoices with full payment schedules → progressive receipt mapping
+
+##### Insurer Direct Payment Booking
+- **Scenario**: Insurer pays premium directly
+- **Process**: AP prepayment processing with customer invoice generation
+- **Sage Operations**: AP payment receipts and AR invoice generation with automatic mapping
+
+##### Embedded Product Booking
+- **Scenario**: Policy includes embedded products (extended warranties, etc.)
+- **Process**: Additional product invoicing and payment allocation
+- **Sage Operations**: Separate EP invoices integrated with main policy booking
+
 ### Troubleshooting Guide
 
 #### Common Issues
