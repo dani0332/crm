@@ -60,23 +60,22 @@ trait PersonalQuoteObservable
             }
             SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
         }
-
-        // ✅ Updated: Trigger on multiple statuses for Home renewal follow-ups
-        $allowedRenewalStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::FollowedUp];
         
-        if (in_array($personalQuote->quote_status_id, $allowedRenewalStatuses) && 
+        if ($personalQuote->quote_status_id == QuoteStatusEnum::Quoted && 
             $personalQuote->isHome() && 
             $personalQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-            
-            // Check if we should send follow-up based on frequency and status
-            if ($this->shouldSendRenewalFollowup($personalQuote)) {
-                SendAutomatedHomeRenewalFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
-                LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Dispatched for Home renewal quote: {$personalQuote->uuid} with status: {$personalQuote->quote_status_id}");
-            } else {
-                LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Follow-up not needed for renewal quote {$personalQuote->uuid} (frequency/duplicate check)");
+
+            $isFollowupExecuted = app(BirdService::class)
+                ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::HOME->id(), QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value);
+
+            if ($isFollowupExecuted) {
+                LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Followup already executed {$personalQuote->uuid}");
+
+                return;
             }
-        } else {
-            LoggerService::info(self::class." - Quote status is {$personalQuote->quote_status_id} for quote: {$personalQuote->uuid}");
+            SendAutomatedHomeRenewalFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+
+            LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Dispatched for Home renewal quote: {$personalQuote->uuid}");
         }
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
@@ -216,93 +215,6 @@ trait PersonalQuoteObservable
             app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
             info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
         }
-    }
-
-    /**
-     * Check if renewal follow-up should be sent based on OCB condition, frequency and duplicate prevention
-     */
-    private function shouldSendRenewalFollowup($personalQuote): bool
-    {
-        // ✅ Status-specific logic with different rules
-        if ($personalQuote->quote_status_id == QuoteStatusEnum::Quoted) {
-            // First follow-up for "Quoted" status - check OCB condition
-            return $this->shouldSendFirstFollowup($personalQuote);
-        }
-
-        if ($personalQuote->quote_status_id == QuoteStatusEnum::FollowedUp) {
-            // Continuous follow-ups for "FollowedUp" status
-            return $this->shouldSendContinuousFollowup($personalQuote);
-        }
-
-        LoggerService::info(self::class." - shouldSendRenewalFollowup - Follow-up not approved for status {$personalQuote->quote_status_id}: {$personalQuote->uuid}");
-        return false;
-    }
-
-    /**
-     * Check if first follow-up should be sent (48 hours after OCB)
-     */
-    private function shouldSendFirstFollowup($personalQuote): bool
-    {
-        // 1. ✅ Check if OCB was executed on HomeQuote model
-        $homeQuote = $personalQuote->homeQuote;
-        
-        if (!$homeQuote || empty($homeQuote->automated_flow_executed_at)) {
-            LoggerService::info(self::class." - shouldSendFirstFollowup - OCB not executed yet for renewal quote: {$personalQuote->uuid}");
-            return false;
-        }
-
-        // 2. ✅ Check if 48 hours have passed since OCB execution
-        $hoursSinceOCB = now()->diffInHours($homeQuote->automated_flow_executed_at);
-        if ($hoursSinceOCB < 48) {
-            LoggerService::info(self::class." - shouldSendFirstFollowup - Only {$hoursSinceOCB} hours since OCB execution. Need 48 hours for renewal quote: {$personalQuote->uuid}");
-            return false;
-        }
-
-        // 3. ✅ Check if first follow-up already sent (duplicate prevention)
-        $isFollowupExecuted = app(BirdService::class)
-            ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::HOME->id(), QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value);
-
-        if ($isFollowupExecuted) {
-            LoggerService::info(self::class." - shouldSendFirstFollowup - First follow-up already executed for renewal quote: {$personalQuote->uuid}");
-            return false;
-        }
-
-        LoggerService::info(self::class." - shouldSendFirstFollowup - All conditions met for first follow-up. Hours since OCB: {$hoursSinceOCB} for renewal quote: {$personalQuote->uuid}");
-        return true;
-    }
-
-    /**
-     * Check if continuous follow-up should be sent (for FollowedUp status)
-     */
-    private function shouldSendContinuousFollowup($personalQuote): bool
-    {
-        // 1. ✅ Check frequency control (48 hours between follow-ups)
-        $lastFollowup = QuoteFlowDetails::where('quote_uuid', $personalQuote->uuid)
-            ->where('flow_type', QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value)
-            ->latest('created_at')
-            ->first();
-
-        if ($lastFollowup) {
-            $hoursSinceLastFollowup = now()->diffInHours($lastFollowup->created_at);
-            if ($hoursSinceLastFollowup < 48) {
-                LoggerService::info(self::class." - shouldSendContinuousFollowup - Too soon for next follow-up. Hours since last: {$hoursSinceLastFollowup} for renewal quote: {$personalQuote->uuid}");
-                return false;
-            }
-        }
-
-        // 2. ✅ Additional check: Ensure we don't exceed maximum follow-ups (optional)
-        $followupCount = QuoteFlowDetails::where('quote_uuid', $personalQuote->uuid)
-            ->where('flow_type', QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value)
-            ->count();
-
-        // Limit to maximum 5 follow-ups (configurable)
-        if ($followupCount >= 5) {
-            LoggerService::info(self::class." - shouldSendContinuousFollowup - Maximum follow-ups reached ({$followupCount}) for renewal quote: {$personalQuote->uuid}");
-            return false;
-        }
-
-        LoggerService::info(self::class." - shouldSendContinuousFollowup - Continuous follow-up approved. Count: {$followupCount}, Hours since last: " . ($lastFollowup ? now()->diffInHours($lastFollowup->created_at) : 'N/A') . " for renewal quote: {$personalQuote->uuid}");
-        return true;
     }
 
 }

@@ -368,10 +368,6 @@ class HomeEmailService extends BaseService
     {
         LoggerService::info('buildRenewalEmailData - Building renewal-specific email data');
 
-        // ✅ Always fetch FRESH data for renewals
-        $latestQuotePlans = app(HomeQuoteService::class)->getQuotePlans($personalQuote->uuid);
-        $currentPremium = $this->getCurrentRenewalPremium($latestQuotePlans);
-
         $data = [
             // Base quote data
             'quoteUID' => $personalQuote->uuid,
@@ -382,20 +378,10 @@ class HomeEmailService extends BaseService
             'refID' => $personalQuote->code,
             'customerMobile' => $personalQuote->mobile_no ?? '',
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, $personalQuote->uuid),
-            'flowExecutedAt' => $personalQuote->automated_flow_executed_at ?? null, // Needs to be discussed with team
+            'flowExecutedAt' => $personalQuote->automated_flow_executed_at ?? null,
 
-            // ✅ RENEWAL-SPECIFIC data
-            'isRenewal' => true,
-            'currentPremium' => $currentPremium,
-            'premiumLastUpdated' => now()->toDateTimeString(),
-            'renewalType' => 'automated_followup',
-            'leadSource' => $personalQuote->source, // Should be 'renewal_upload'
-
-            // Previous policy data (if available)
-            'previousPolicyExpiry' => $personalQuote->previous_policy_expiry ?? null,
-
-            // Home quote-related data (fresh)
-            'automatedFlowExecuted' => !empty($homeQuote?->automated_flow_executed_at),
+             // Home quote-related data
+             'automatedFlowExecuted' => ! empty($homeQuote?->automated_flow_executed_at),
 
             // Advisor-related data
             'advisorId' => $advisor?->id,
@@ -412,7 +398,7 @@ class HomeEmailService extends BaseService
         ];
 
         // ✅ Attach fresh PDF with current premium for renewals
-        $tempUrlPDF = $this->attachHomeRenewalPDFToEmail($personalQuote->uuid); // Needs to be discussed with team
+        $tempUrlPDF = $this->attachHomeRenewalPDFToEmail($personalQuote->uuid); // Needs to be discussed with team either we need to use the same logic as OCB or we need to use the new logic
         if (!empty($tempUrlPDF)) {
             $data['tempUrlPDF'] = $tempUrlPDF;
         }
@@ -420,29 +406,6 @@ class HomeEmailService extends BaseService
         LoggerService::info('buildRenewalEmailData - Renewal email data built successfully with fresh premium data');
 
         return (object) $data;
-    }
-
-    /**
-     * Get current premium specifically for renewals
-     * This ensures we always use the most up-to-date premium
-     */
-    private function getCurrentRenewalPremium($quotePlans)
-    {
-        LoggerService::info('getCurrentRenewalPremium - Fetching current premium for renewal');
-
-        if (!$quotePlans || $quotePlans->isEmpty()) {
-            LoggerService::info('getCurrentRenewalPremium - No quote plans found');
-            return null;
-        }
-
-        // Get the first available plan's premium (or implement your specific logic)
-        // This could be enhanced to get selected plan, recommended plan, etc.
-        $selectedPlan = $quotePlans->first();
-        $premium = $selectedPlan->premium ?? null;
-
-        LoggerService::info("getCurrentRenewalPremium - Current renewal premium: {$premium}");
-
-        return $premium;
     }
 
     /**
