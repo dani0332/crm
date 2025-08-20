@@ -1,0 +1,578 @@
+---
+description: Comprehensive Laravel-Vue claim module architecture patterns and implementation guidelines
+globs:
+alwaysApply: false
+---
+
+# Comprehensive Laravel-Vue Claim Module Architecture Patterns
+
+You are an expert in Laravel, Vue.js, and modern full-stack web development technologies following the patterns established in this codebase's claim module.
+
+## Core Architecture Principles
+
+Follow these established patterns from the claim module analysis:
+
+### 1. Controller Structure
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Enums\PermissionsEnum;
+use App\Services\ClaimsService;
+use App\Services\Logger\LoggerService;
+use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ExampleController extends Controller
+{
+    protected ExampleService $exampleService;
+
+    public function __construct(ExampleService $exampleService)
+    {
+        $this->exampleService = $exampleService;
+        $this->middleware(['permission:'.PermissionsEnum::EXAMPLE_LIST], ['only' => ['index']]);
+        $this->middleware(['permission:'.PermissionsEnum::EXAMPLE_CREATE], ['only' => ['create', 'store']]);
+        $this->middleware(['permission:'.PermissionsEnum::EXAMPLE_EDIT], ['only' => ['edit', 'update']]);
+        $this->middleware(['permission:'.PermissionsEnum::EXAMPLE_SHOW], ['only' => ['show']]);
+    }
+
+    public function index(Request $request): Response
+    {
+        try {
+            $data = $this->exampleService->getData($request);
+            $dropdownOptions = $this->exampleService->getDropdownData();
+
+            return Inertia::render('Example/Index', [
+                'data' => $data,
+                'dropdownOptions' => $dropdownOptions,
+            ]);
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error loading data', extra: [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id(),
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to load data.');
+        }
+    }
+
+    public function store(ExampleStoreRequest $request): RedirectResponse
+    {
+        try {
+            $result = $this->exampleService->create($request->validated());
+
+            if (!empty($result->errors)) {
+                vAbort($result->errors);
+            }
+
+            return redirect()->route('example.show', $result->uuid)
+                ->with('success', "Record {$result->code} has been created successfully.");
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error creating record', extra: [
+                'error' => $e->getMessage(),
+                'data' => $request->validated(),
+                'user_id' => auth()->id(),
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to create record.');
+        }
+    }
+}
+```
+
+### 2. Service Layer Implementation
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Traits\CentralTrait;
+use Illuminate\Http\Request;
+
+class ExampleService extends BaseService
+{
+    use CentralTrait;
+
+    protected string $searchPrefix = 'examples.';
+    protected $query;
+    protected int $perPage = 15;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->query = ExampleModel::select([
+            'id',
+            'uuid',
+            'name',
+            'status_id',
+            'created_at',
+        ])->with([
+            'status:id,text',
+            'createdBy:id,name',
+        ]);
+    }
+
+    public function getData(Request $request)
+    {
+        $filters = $this->getFilters($request);
+        $query = $this->applyFilters($this->query, $filters);
+
+        return $query->simplePaginate($this->perPage)->withQueryString();
+    }
+
+    public function applyFilters($query, $filters)
+    {
+        if (!empty($filters['name'])) {
+            $query->where('name', 'like', '%'.$filters['name'].'%');
+        }
+
+        if (!empty($filters['status_id'])) {
+            $query->where('status_id', $filters['status_id']);
+        }
+
+        return $query;
+    }
+
+    public function getFilters(Request $request): array
+    {
+        return $request->only([
+            'name',
+            'status_id',
+            'created_at_start',
+            'created_at_end',
+        ]);
+    }
+}
+```
+
+### 3. Request Validation Patterns
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+
+class ExampleStoreRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z\s\'-\.]+$/',
+            ],
+            'email' => [
+                'required',
+                'email:rfc,dns',
+                'max:255',
+            ],
+            'status_id' => [
+                'required',
+                'integer',
+                'exists:statuses,id',
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Name is required.',
+            'name.regex' => 'Name contains invalid characters.',
+            'email.required' => 'Email address is required.',
+            'email.email' => 'Email address must be in a valid format.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => 'name',
+            'email' => 'email address',
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => $this->name ? trim($this->name) : null,
+            'email' => $this->email ? trim(strtolower($this->email)) : null,
+        ]);
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            // Custom validation logic
+            if ($this->someCondition()) {
+                $validator->errors()->add('field', 'Custom validation message.');
+            }
+        });
+    }
+
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        $errors = $validator->errors();
+
+        \App\Services\Logger\LoggerService::info('Validation failed', extra: [
+            'errors' => $errors->toArray(),
+            'input' => $this->except(['password']),
+            'user_id' => Auth::id(),
+        ]);
+
+        parent::failedValidation($validator);
+    }
+}
+```
+
+### 4. Model Security & Features
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+
+class ExampleModel extends Model implements AuditableContract
+{
+    use Auditable, FilterCriteria, HasFactory, SoftDeletes;
+
+    protected $table = 'examples';
+
+    protected $fillable = [
+        'name',
+        'email',
+        'status_id',
+        'created_by_id',
+        'updated_by_id',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    public $filterables = [
+        'name' => FilterTypes::LIKE,
+        'email' => FilterTypes::EXACT,
+        'status_id' => FilterTypes::IN,
+        'created_at' => FilterTypes::DATE_BETWEEN,
+    ];
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->created_by_id = Auth::id();
+        });
+
+        static::updating(function ($model) {
+            $model->updated_by_id = Auth::id();
+        });
+    }
+
+    // Relationships
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_id');
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(Status::class, 'status_id');
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->whereHas('status', function ($q) {
+            $q->where('is_active', true);
+        });
+    }
+
+    public function scopeByUser($query, $userId)
+    {
+        return $query->where('created_by_id', $userId);
+    }
+}
+```
+
+### 5. Observer Pattern Implementation
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Observers;
+
+use App\Models\ExampleModel;
+use App\Services\Logger\LoggerService;
+
+class ExampleModelObserver
+{
+    public function updating(ExampleModel $model): void
+    {
+        if ($model->isDirty('status_id')) {
+            $originalStatus = $model->getOriginal('status_id');
+            $newStatus = $model->status_id;
+
+            LoggerService::info('Status change detected', extra: [
+                'model_id' => $model->id,
+                'original_status' => $originalStatus,
+                'new_status' => $newStatus,
+                'user_id' => auth()->id(),
+            ]);
+        }
+    }
+
+    public function updated(ExampleModel $model): void
+    {
+        if ($model->isDirty('status_id')) {
+            // Trigger business logic based on status change
+            $this->handleStatusChange($model);
+        }
+    }
+
+    private function handleStatusChange(ExampleModel $model): void
+    {
+        // Implement status-specific business logic
+        // Use job queues for time-consuming operations
+    }
+}
+```
+
+### 6. Vue.js Component Patterns
+
+```vue
+<script setup>
+const props = defineProps({
+  data: Object,
+  dropdowns: Object,
+});
+
+const emit = defineEmits(['update']);
+
+const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const notification = useToast();
+const { isRequired, maxCharacters, isValidEmail } = useRules();
+
+const form = useForm({
+  name: props.data?.name || '',
+  email: props.data?.email || '',
+  status_id: props.data?.status_id || '',
+});
+
+const statusOptions = computed(() => {
+  return props.dropdowns?.statuses?.map(status => ({
+    value: status.id,
+    label: status.text,
+  })) || [];
+});
+
+const updateData = (isValid) => {
+  if (!isValid) return;
+
+  form
+    .transform(data => ({
+      ...data,
+      name: data.name ? data.name.trim() : null,
+      email: data.email ? data.email.trim().toLowerCase() : null,
+    }))
+    .post(route('example.update', props.data?.uuid), {
+      preserveScroll: true,
+      onSuccess: response => {
+        emit('update', response);
+        notification.success({
+          title: 'Updated successfully',
+          position: 'top',
+        });
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(key => {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+    });
+};
+
+// Custom validation that mirrors backend
+const validateForm = () => {
+  const errors = {};
+
+  if (!form.name?.trim()) {
+    errors.name = 'Name is required.';
+  } else if (!/^[a-zA-Z\s\'-\.]+$/.test(form.name)) {
+    errors.name = 'Name contains invalid characters.';
+  }
+
+  if (!form.email?.trim()) {
+    errors.email = 'Email is required.';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    errors.email = 'Email format is invalid.';
+  }
+
+  // Set errors on form
+  Object.keys(errors).forEach(key => {
+    form.errors[key] = errors[key];
+  });
+
+  return Object.keys(errors).length === 0;
+};
+</script>
+
+<template>
+  <div class="p-4 rounded shadow my-6 bg-white">
+    <Collapsible :expanded="true">
+      <template #header>
+        <h3 class="font-semibold text-primary-800 text-lg">Details</h3>
+      </template>
+      <template #body>
+        <x-form :form="form" @submit="updateData">
+          <div class="grid md:grid-cols-2 gap-4">
+            <x-input
+              v-model="form.name"
+              label="Name"
+              :error="form.errors.name"
+              :rules="[isRequired, maxCharacters(255)]"
+              required
+            />
+
+            <x-input
+              v-model="form.email"
+              label="Email"
+              type="email"
+              :error="form.errors.email"
+              :rules="[isRequired, isValidEmail]"
+              required
+            />
+
+            <x-select
+              v-model="form.status_id"
+              label="Status"
+              :options="statusOptions"
+              :error="form.errors.status_id"
+              :rules="[isRequired]"
+              required
+            />
+          </div>
+
+          <div class="flex justify-end mt-4">
+            <x-button
+              v-if="can(permissionsEnum.EXAMPLE_EDIT)"
+              type="submit"
+              color="emerald"
+              :loading="form.processing"
+            >
+              Update
+            </x-button>
+          </div>
+        </x-form>
+      </template>
+    </Collapsible>
+  </div>
+</template>
+```
+
+## Key Requirements
+
+### Security Implementation
+- Always use `PermissionsEnum` constants for middleware
+- Implement `useCan()` permission checks in Vue components
+- Sanitize all inputs in `prepareForValidation()`
+- Use UUID-based routing for enhanced security
+- Log all validation failures and user actions
+
+### Error Handling & Logging
+- Use `LoggerService` for structured logging with context
+- Implement try-catch blocks in all controller methods
+- Provide user-friendly error messages
+- Log user ID and relevant entity IDs in all entries
+
+### Performance Optimization
+- Use eager loading with specific field selection
+- Implement pagination with `simplePaginate()`
+- Apply proper database indexing
+- Use caching strategies for dropdown data
+
+### Laravel 12 Compatibility
+- Use strict typing: `declare(strict_types=1)` in all files
+- Apply typed properties and method signatures
+- Use PHP 8.2+ features (readonly properties, match expressions)
+- Implement proper nullable and union types
+
+### Testing Strategy
+- Write Feature tests for controller endpoints
+- Test permission-based access control
+- Use Unit tests for service layer methods
+- Mock external dependencies and APIs
+
+## Update Protocol
+
+**CRITICAL**: Update this rule file after each significant module change:
+
+1. **Review Current Patterns** - Ensure new code follows established patterns
+2. **Update Rule Documentation** - Add new patterns or modify existing ones
+3. **Validate Security** - Ensure all security requirements are met
+4. **Test Consistency** - Verify patterns work across different modules
+5. **Update Frontend** - Ensure Vue.js patterns align with backend changes
+6. **Verify Permissions** - Test all permission-based access controls
+7. **Check Enums** - Ensure constants are properly organized
+8. **Validate Logging** - Ensure all actions are logged for audit
+9. **Performance Review** - Check new patterns don't impact performance
+10. **Documentation Update** - Keep inline docs and README current
+
+Follow these patterns religiously to maintain consistency across the entire codebase.
