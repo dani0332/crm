@@ -245,4 +245,5 @@ final class ApplicationStorageEnums extends Enum
     public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
 
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
+    public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 }
