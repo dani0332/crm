@@ -2,6 +2,7 @@
 
 namespace App\Services\OCR;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Client\Response;
 
 trait Ocrable
@@ -11,11 +12,7 @@ trait Ocrable
         $responseBody = $response->object();
         $status = $response->status();
 
-        info(self::class.'::handleResponse', [
-            'endpoint' => $endpoint,
-            'status' => $status,
-            'response' => $response->body(),
-        ]);
+        LoggerService::info(self::class.'::handleResponse');
 
         $result = [
             'ok' => false,
@@ -25,8 +22,12 @@ trait Ocrable
 
         if ($response->successful()) {
             $result['ok'] = true;
+        } elseif ($response->clientError()) {
+            $result['message'] = "Client error occurred while calling OCR API (Status: {$status}): {$response->body()}";
         } elseif ($response->serverError()) {
-            $result['message'] = "Server error occurred while calling OCR API: {$response->body()}";
+            $result['message'] = "Server error occurred while calling OCR API (Status: {$status}): {$response->body()}";
+        } else {
+            $result['message'] = "Unexpected response from OCR API (Status: {$status}): {$response->body()}";
         }
 
         return $result;

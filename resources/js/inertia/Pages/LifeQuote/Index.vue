@@ -576,7 +576,7 @@ const insurerAMLStatusOption = computed(() =>
           @selected-filters="handleSelectedFilters"
           @toggleFilters="showFilters = !showFilters"
         />
-        <Link href="/personal-quotes/life/cards">
+        <Link :href="route('life-quotes-card')">
           <x-button
             size="sm"
             color="#1d83bc"

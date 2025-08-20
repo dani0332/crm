@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -62,5 +63,12 @@ class QuoteDocument extends Model implements AuditableContract
     public function paymentDocuments()
     {
         return $this->belongsTo(PaymentSplits::class, 'payment_split_id', 'id');
+    }
+
+    public function documentUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => storageUrl().$this->doc_url,
+        );
     }
 }

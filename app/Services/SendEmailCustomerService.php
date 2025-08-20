@@ -869,6 +869,10 @@ class SendEmailCustomerService extends BaseService
                 $bodyData['bcc'][] = ['email' => $newLeadPool->value];
             }
 
+            if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
+                $bodyData['bcc'][] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL)];
+            }
+
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
@@ -1166,6 +1170,10 @@ class SendEmailCustomerService extends BaseService
                     'email' => 'life@insurancemarket.ae',
                     'name' => 'life@insurancemarket.ae',
                 ];
+            }
+
+            if ($this->appEnv == EnvEnum::PRODUCTION && $quoteTypeId == QuoteTypeId::Travel) {
+                $body['bcc'][] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL)];
             }
 
             LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
