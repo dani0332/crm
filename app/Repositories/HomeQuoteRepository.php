@@ -1062,7 +1062,7 @@ class HomeQuoteRepository extends BaseRepository
                         ?->name;
 
                     if (empty($homeTeamName)) {
-                        logger()->warning('unknown team', ['advisor' => $quote->advisor->toArray()]);
+                        LoggerService::warning('Unknown team found', ['advisor' => $quote->advisor->toArray()]);
                     }
                     return $homeTeamName ?: 'Unknown Team';
 
