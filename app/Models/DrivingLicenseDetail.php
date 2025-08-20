@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class DrivingLicenseDetail extends Model
 {
     protected $table = 'driving_license_details';
-    
     protected $fillable = [
         'first_name',
         'last_name',
@@ -25,7 +24,6 @@ class DrivingLicenseDetail extends Model
         'uae_driving_experience',
         'nationality_id',
     ];
-    
     protected $casts = [
         'dob' => 'date',
         'license_issue_date' => 'date',
