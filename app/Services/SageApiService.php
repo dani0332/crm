@@ -674,6 +674,38 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment Code: '.$payment->code.' - Capture payment process skip & proceeding with Policy Book process - Unpaid payment count: '.$unpaidPaymentCount.' - Is Insurer Payment: '.$isInsurerPayment);
         }
 
+        $isHealthAUHLead = $this->isAHisHealthAUHLead($quoteType, $quote); 
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Is Health AUH Lead Check ', extra : [
+            'isHealthAUHLead' => $isHealthAUHLead
+        ]);
+        if ($isHealthAUHLead) { 
+            
+            if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
+                // dispath job to send email
+                SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
+            }
+    
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
+    
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, auth()->id());
+    
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : Status updated to: '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
+    
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' ##################################');
+            (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' done ##################################');
+    
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' ##################################');
+            $this->updatePaymentAllocationStatus($quote);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' done ##################################');
+    
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ########## End of Policy Booked for : '.$quote->code.' ##########');
+    
+            return ['status' => true, 'message' => 'Policy is Booked'];
+        
+        }
+
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;

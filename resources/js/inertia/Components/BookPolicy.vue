@@ -666,8 +666,7 @@ const disableBookPolicyButton = computed(() => {
     !props.bookPolicyDetails?.bookButton ||
     bp.isEditing ||
     disableIfPolicyFailedAndNoBookingFailedEditPermission.value ||
-    !can(permissionsEnum.BOOK_POLICY_BUTTON) ||
-    isHealthAUHLead.value
+    !can(permissionsEnum.BOOK_POLICY_BUTTON)
   );
 });
 
@@ -1758,8 +1757,7 @@ const isDocTypeLoading = docType => {
                         bp.isEditing ||
                         is_lacking_payment ||
                         disableIfPolicyFailedAndNoBookingFailedEditPermission ||
-                        isDisabledSendPCB ||
-                        (isHealthAUHLead && isSendTypeSage)
+                        isDisabledSendPCB
                       "
                       v-if="showSendAndBookPolicyButton"
                     >
@@ -1786,8 +1784,7 @@ const isDocTypeLoading = docType => {
                       bp.isEditing ||
                       is_lacking_payment ||
                       isAMLNotClearedForTravelQuote ||
-                      disableIfPolicyFailedAndNoBookingFailedEditPermission ||
-                      (isHealthAUHLead && isSendTypeSage)
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission
                     "
                     v-if="showSendAndBookPolicyButton"
                   >
