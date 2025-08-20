@@ -186,13 +186,13 @@ class SageApiEmbeddedProductService
             $sageRequestEmbeddedProduct->epSageReceiptId = $arReceiptCreationResponse['documentNumber'];
 
             // Execute AP Prepayment Receipt Post Call
-            $apReceiptCreationResponse = $this->createAPPrepaymentReceipt([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
+            /*$apReceiptCreationResponse = $this->createAPPrepaymentReceipt([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $apReceiptCreationResponse['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
                 return $apReceiptCreationResponse;
             }
-            $sageRequestEmbeddedProduct->epSageAPReceiptId = $apReceiptCreationResponse['documentNumber'];
+            $sageRequestEmbeddedProduct->epSageAPReceiptId = $apReceiptCreationResponse['documentNumber'];*/
 
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
@@ -219,12 +219,12 @@ class SageApiEmbeddedProductService
             }
 
             // Apply Prepayments AP Invoice
-            $applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
+            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $applyPaymentAPInvoices['status']) {
                 $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
                 return $applyPaymentAPInvoices;
-            }
+            }*/
 
             $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
