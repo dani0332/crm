@@ -62,6 +62,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
 ### 1. Services
 
 #### `SageApiService`
+
 - **Location**: `app/Services/SageApiService.php`
 - **Purpose**: Main service orchestrating comprehensive Sage 300 integration
 - **Key Features**:
@@ -74,6 +75,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
   - Multi-step process coordination triggered by single policy booking action
 
 #### `SageCustomApiService`
+
 - **Location**: `app/Services/SageCustomApiService.php`
 - **Purpose**: Custom Sage API operations and authentication
 - **Key Features**:
@@ -83,6 +85,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
   - Redis caching for tokens
 
 #### `SageApiEmbeddedProductService`
+
 - **Location**: `app/Services/SageApiEmbeddedProductService.php`
 - **Purpose**: Handles embedded product integration with Sage
 - **Key Features**:
@@ -93,6 +96,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
 ### 2. Models
 
 #### `SageProcess`
+
 - **Location**: `app/Models/SageProcess.php`
 - **Purpose**: Tracks Sage integration processes and their status
 - **Key Features**:
@@ -102,6 +106,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
   - Request/response logging
 
 #### `SageApiLog`
+
 - **Location**: `app/Models/SageApiLog.php`
 - **Purpose**: Comprehensive logging of all Sage API interactions
 - **Key Features**:
@@ -113,6 +118,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
 ### 3. Controllers
 
 #### `SageApi`
+
 - **Location**: `app/Http/Controllers/SageApi.php`
 - **Purpose**: HTTP controller for Sage API operations
 - **Key Features**:
@@ -124,6 +130,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
 ### 4. Factory Classes
 
 #### `SagePayloadFactory`
+
 - **Location**: `app/Factories/SagePayloadFactory.php`
 - **Purpose**: Generates Sage-compatible payloads for various operations
 - **Key Features**:
@@ -137,6 +144,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
 ### 5. Enums
 
 #### `SageEnum`
+
 - **Location**: `app/Enums/SageEnum.php`
 - **Purpose**: Constants and enums for Sage integration
 - **Key Features**:
@@ -149,6 +157,7 @@ The Sage Integration follows a layered architecture pattern with asynchronous pr
 ### 6. Traits
 
 #### `SageLoggable`
+
 - **Location**: `app/Traits/SageLoggable.php`
 - **Purpose**: Provides logging functionality for Sage operations
 - **Key Features**:
@@ -166,6 +175,7 @@ Policy Ready → Book Policy Button Click → Comprehensive Sage Integration →
 ```
 
 **Process Steps**:
+
 1. **Policy Preparation**: User completes policy details and payment information
 2. **Book Policy Action**: User clicks "Book and send policy/book policy" button
 3. **Integrated Processing**: System processes in sequence:
@@ -186,12 +196,13 @@ Book Policy Click → Payment Receipt Generation → Invoice Creation → Receip
 ```
 
 **Integrated Process Steps**:
+
 1. **Payment Receipt Processing** (First Step):
    - Payment receipts created ONLY for paid payments
    - Split payment receipts for installment plans (paid installments only)
    - Prepayment receipts for advance payments that are already processed
    - No receipts generated for pending or unpaid amounts
-2. **Invoice Creation** (Second Step): 
+2. **Invoice Creation** (Second Step):
    - AR Premium invoices generated after receipt creation
    - AR Commission invoices created for insurers
    - AP invoices for vendor payments (if applicable)
@@ -211,6 +222,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 ```
 
 **Process Steps**:
+
 1. **Product Selection**: User selects embedded products during policy creation
 2. **Integrated Booking**: When "Book Policy" is clicked, embedded products are processed alongside policy
 3. **EP Processing**: `BookEmbeddedProductOnSageJob` handles:
@@ -225,6 +237,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 ### Primary Sage 300 Endpoints
 
 #### AR (Accounts Receivable) Endpoints
+
 - **`AR/ARCustomers`** - Customer management
 - **`AR/ARInvoiceBatches`** - Invoice batch processing
 - **`AR/ARReceiptAndAdjustmentBatches`** - Receipt and adjustment processing
@@ -232,6 +245,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 - **`AR/ARPostReceiptsAndAdjustments`** - Receipt posting
 
 #### AP (Accounts Payable) Endpoints
+
 - **`AP/APInvoiceBatches`** - Vendor invoice processing
 - **`AP/APPaymentAndAdjustmentBatches`** - Payment batch processing
 - **`AP/APPostInvoices`** - Invoice posting
@@ -240,6 +254,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 ### Custom API Endpoints
 
 #### Authentication & Management
+
 - **`/api/User/Login`** - Authentication token generation
 - **`/api/APBatch/GetInvoiceBatchWise/`** - Payment schedule retrieval
 - **`/api/APBatch/`** - Payment schedule updates
@@ -249,6 +264,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 ### Primary Tables
 
 #### `sage_processes` Table
+
 - **Purpose**: Tracks Sage integration processes
 - **Key Fields**:
   - `user_id` - User initiating the process
@@ -260,6 +276,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
   - `status` - Process status (pending, processing, completed, failed)
 
 #### `sage_api_logs` Table
+
 - **Purpose**: Comprehensive API interaction logging
 - **Key Fields**:
   - `user_id` - User performing the action
@@ -279,6 +296,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 ### Relationships
 
 #### Process Relationships
+
 - `SageProcess` → `morphTo()` relationship with various models
 - `SageProcess` → `belongsTo(InsuranceProvider::class)`
 - `SageApiLog` → `morphTo()` relationships for section and model
@@ -289,6 +307,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 ### Background Jobs
 
 #### `BookPolicyOnSageJob`
+
 - **Purpose**: Orchestrates complete policy booking and financial integration with Sage 300
 - **Features**:
   - Comprehensive processing triggered by single "Book Policy" action
@@ -300,6 +319,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
   - Multi-step error handling and recovery
 
 #### `BookEmbeddedProductOnSageJob`
+
 - **Purpose**: Books embedded products as part of integrated policy booking process
 - **Features**:
   - Triggered during main policy booking flow
@@ -308,6 +328,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
   - Status synchronization with policy booking status
 
 #### `PostPrepaymentToSageJob`
+
 - **Purpose**: Processes prepayments as part of comprehensive booking flow
 - **Features**:
   - Integrated with policy booking process
@@ -316,6 +337,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
   - Financial synchronization with Sage 300
 
 #### `SendUpdateSageJob`
+
 - **Purpose**: Handles policy endorsements and updates with complete financial processing
 - **Features**:
   - Endorsement processing with automatic invoice adjustments
@@ -324,6 +346,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
   - Change tracking and audit trail
 
 ### Queue Configuration
+
 - **Queue Name**: Default Laravel queue
 - **Retry Logic**: Configurable per job type
 - **Timeout**: Job-specific timeouts (80s for policy booking)
@@ -334,6 +357,7 @@ Product Selection → Policy Booking Click → Integrated EP Processing → Stat
 ### Environment Variables
 
 #### Sage 300 Configuration
+
 ```env
 SAGE_300_BASE_URL=https://sage-api.company.com
 SAGE_300_API_DATE_FORMAT=Y-m-d
@@ -344,6 +368,7 @@ SAGE_300_CUSTOM_API_DB_NAME=company_db
 ```
 
 #### Integration Settings
+
 ```env
 SAGE_ENABLED=true
 SAGE_PROCESS_TIMEOUT=300
@@ -351,6 +376,7 @@ SAGE_RETRY_ATTEMPTS=3
 ```
 
 ### Configuration Files
+
 - **Sage Settings**: Managed through application storage
 - **Payment Gateway Config**: Insurance provider specific
 - **API Timeouts**: Configurable per operation type
@@ -360,12 +386,14 @@ SAGE_RETRY_ATTEMPTS=3
 ### Error Handling Strategy
 
 #### API Error Handling
+
 - **Connection Errors**: Retry with exponential backoff
 - **Authentication Errors**: Token refresh and retry
 - **Validation Errors**: Log and notify user
 - **Timeout Errors**: Queue for retry with increased timeout
 
 #### Business Logic Errors
+
 - **Duplicate Records**: Handle with appropriate messaging
 - **Invalid Data**: Comprehensive validation before API calls
 - **Status Conflicts**: Check current status before processing
@@ -373,12 +401,14 @@ SAGE_RETRY_ATTEMPTS=3
 ### Logging Implementation
 
 #### Comprehensive Logging
+
 - **Request/Response Logging**: All API interactions logged
 - **Step-by-Step Tracking**: Multi-step processes tracked individually
 - **User Action Logging**: All user-initiated actions logged
 - **Error Context**: Detailed error context and stack traces
 
 #### Log Categories
+
 - **API Calls**: `SageApiLog` model for structured logging
 - **Process Tracking**: `SageProcess` model for workflow status
 - **Application Logs**: Laravel log files for system events
@@ -387,6 +417,7 @@ SAGE_RETRY_ATTEMPTS=3
 ### Monitoring & Alerts
 
 #### Process Monitoring
+
 - **Queue Health**: Monitor job queue performance
 - **API Availability**: Check Sage 300 system availability
 - **Error Rates**: Track error rates and patterns
@@ -397,6 +428,7 @@ SAGE_RETRY_ATTEMPTS=3
 ### Integration Best Practices
 
 #### Comprehensive Policy Booking Integration
+
 1. **Single Action Triggers All Processing** - Policy booking button initiates complete financial integration
 2. **Atomic Transaction Handling** - All invoices, receipts, and mappings processed together
 3. **Always use payload factory** for request generation across all financial transactions
@@ -407,6 +439,7 @@ SAGE_RETRY_ATTEMPTS=3
 8. **Handle complex timeout scenarios** - Manage timeouts across multiple integrated operations
 
 #### Data Management
+
 1. **Use polymorphic relationships** for flexible model associations
 2. **Implement proper status tracking** throughout the process
 3. **Store original payloads** for debugging and reprocessing
@@ -414,6 +447,7 @@ SAGE_RETRY_ATTEMPTS=3
 5. **Maintain data integrity** across all operations
 
 #### Security Considerations
+
 1. **Secure API credentials** using environment variables
 2. **Implement proper authentication** with token management
 3. **Validate all inputs** before processing
@@ -481,27 +515,30 @@ SAGE_RETRY_ATTEMPTS=3
 - **Scenario**: Policy includes embedded products (extended warranties, etc.)
 - **Process**: Additional product invoicing and payment allocation
 - **Sage Operations**: Separate EP invoices integrated with main policy booking
-
 ### Troubleshooting Guide
 
 #### Common Issues
 
 #### API Connection Issues
+
 - **Symptom**: Connection timeout or refused
 - **Solution**: Check network connectivity and API endpoint configuration
 - **Debug**: Review API logs and network configuration
 
 #### Authentication Failures
+
 - **Symptom**: Invalid token errors
 - **Solution**: Refresh authentication token and retry
 - **Debug**: Check credentials and token expiration
 
 #### Data Validation Errors
+
 - **Symptom**: Sage returns validation errors
 - **Solution**: Review payload structure and required fields
 - **Debug**: Compare payload with Sage documentation
 
 #### Queue Processing Issues
+
 - **Symptom**: Jobs stuck in queue or failing
 - **Solution**: Check queue worker status and job configuration
 - **Debug**: Review job logs and error messages
@@ -509,6 +546,7 @@ SAGE_RETRY_ATTEMPTS=3
 ### Update Protocol
 
 #### System Updates
+
 1. **Review Integration Points** - Check all Sage API endpoints
 2. **Update Documentation** - Keep API documentation current
 3. **Test Thoroughly** - Test all integration scenarios
@@ -523,6 +561,7 @@ SAGE_RETRY_ATTEMPTS=3
 ### Quick Reference
 
 #### Key Files
+
 - **Main Service**: `app/Services/SageApiService.php`
 - **Custom API**: `app/Services/SageCustomApiService.php`
 - **Payload Factory**: `app/Factories/SagePayloadFactory.php`
@@ -533,6 +572,7 @@ SAGE_RETRY_ATTEMPTS=3
 - **Command**: `app/Console/Commands/SageProcessesCommand.php`
 
 #### Key Concepts
+
 - **Asynchronous Processing**: All Sage operations use job queues
 - **Comprehensive Logging**: Every API interaction is logged
 - **Status Tracking**: Process status tracked throughout workflow
