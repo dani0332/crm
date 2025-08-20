@@ -21,9 +21,6 @@ final class EmirateEnum extends Enum
 
     /**
      * Get the branch based on the emirate
-     *
-     * @param int $emirate
-     * @return string
      */
     public static function getBranch(int $emirate): string
     {
@@ -34,8 +31,6 @@ final class EmirateEnum extends Enum
 
     /**
      * Get emirate mapping with branches for frontend
-     *
-     * @return array
      */
     public static function getBranchMapping(): array
     {

@@ -14,6 +14,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -119,7 +120,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Enums\EmirateEnum;
 
 class CRUDController extends Controller
 {
