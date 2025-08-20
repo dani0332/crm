@@ -119,6 +119,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Enums\EmirateEnum;
 
 class CRUDController extends Controller
 {
@@ -432,6 +433,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         }
 
@@ -1235,6 +1237,7 @@ class CRUDController extends Controller
                 'paymentDocument' => $paymentDocument,
                 'paymentGatewayEnum' => $paymentGatewayEnum,
                 'isFuncsEnabled' => $isFuncsEnabled,
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         } else {
             return view('shared.show', compact([
@@ -1309,6 +1312,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         }
 
