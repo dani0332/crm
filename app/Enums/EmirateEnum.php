@@ -18,4 +18,35 @@ final class EmirateEnum extends Enum
     const SHARJAH = 5;
     const UMM_AL_QUWAIN = 6;
     const ABU_DHABI = 7;
+
+    /**
+     * Get the branch based on the emirate
+     *
+     * @param int $emirate
+     * @return string
+     */
+    public static function getBranch(int $emirate): string
+    {
+        return $emirate === self::ABU_DHABI
+            ? 'Abu Dhabi'
+            : 'Dubai & Northern Emirates';
+    }
+
+    /**
+     * Get emirate mapping with branches for frontend
+     *
+     * @return array
+     */
+    public static function getBranchMapping(): array
+    {
+        return [
+            ['name' => self::AJMAN, 'branch' => self::getBranch(self::AJMAN)],
+            ['name' => self::DUBAI, 'branch' => self::getBranch(self::DUBAI)],
+            ['name' => self::FUJAIRAH, 'branch' => self::getBranch(self::FUJAIRAH)],
+            ['name' => self::RAS_AL_KHAIMAH, 'branch' => self::getBranch(self::RAS_AL_KHAIMAH)],
+            ['name' => self::SHARJAH, 'branch' => self::getBranch(self::SHARJAH)],
+            ['name' => self::UMM_AL_QUWAIN, 'branch' => self::getBranch(self::UMM_AL_QUWAIN)],
+            ['name' => self::ABU_DHABI, 'branch' => self::getBranch(self::ABU_DHABI)],
+        ];
+    }
 }
