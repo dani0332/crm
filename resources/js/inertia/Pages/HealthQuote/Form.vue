@@ -38,7 +38,7 @@ const branchName = computed(() => {
   }
 
   const branchMapping = props.branchOptions.find(
-    item => item.id === quoteForm.emirate_of_your_visa_id
+    item => item.id === quoteForm.emirate_of_your_visa_id,
   );
 
   return branchMapping ? branchMapping.branch : '';
