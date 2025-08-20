@@ -65,7 +65,6 @@ const confirmDeleteDoc = async () => {
   }
 };
 
-
 const readOnlyMode = computed(() => {
   return {
     isDisable: can(permissionsEnum.CLAIM_DOCUMENT_UPLOAD), // Adjust based on your permissions
@@ -90,18 +89,17 @@ const permissions = computed(() => {
             <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
           </h3>
         </div>
-
       </template>
       <template #body>
         <x-divider class="my-4" />
         <div class="flex justify-end items-center mb-4">
           <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="primary"
-            >
-              Upload Documents
-            </x-button>
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="primary"
+          >
+            Upload Documents
+          </x-button>
         </div>
         <DataTable
           table-class-name="compact"
@@ -137,7 +135,6 @@ const permissions = computed(() => {
         </DataTable>
 
         <!-- Document Upload Modal -->
-
       </template>
     </Collapsible>
 

@@ -23,7 +23,6 @@ const claimSubStatusAndCustomerForm = useForm({
   claim_sub_status_id: props.claim?.claim_sub_status_id || '',
 });
 
-
 const subStatusOptions = computed(() => {
   return (
     props.dropdowns.claimSubStatuses
@@ -39,32 +38,33 @@ const subStatusOptions = computed(() => {
 
 const updateClaimSubStatusAndCustomer = isValid => {
   console.log('updateClaimStatus');
-  claimSubStatusAndCustomerForm.post(route('claims.send-notification', props.claim?.uuid), {
-    preserveScroll: true,
-    onSuccess: response => {
-      console.log('response', response);
-      router.visit(route('claims.show', props.claim?.uuid), {
-        preserveScroll: true,
-      });
-      emit('update', response);
-    },
-    onError: errors => {
-      Object.keys(errors).forEach(function (key) {
-        notification.error({
-          title: errors[key],
-          position: 'top',
+  claimSubStatusAndCustomerForm.post(
+    route('claims.send-notification', props.claim?.uuid),
+    {
+      preserveScroll: true,
+      onSuccess: response => {
+        console.log('response', response);
+        router.visit(route('claims.show', props.claim?.uuid), {
+          preserveScroll: true,
         });
-      });
+        emit('update', response);
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
     },
-  });
+  );
 };
 
 const disableClaimSubStatusAndCustomerUpdate = computed(() => {
   return (
     !props.requiredFieldsFilled ||
-    !canAny([
-      permissionsEnum.CLAIMS_SUB_STATUS_UPDATE,
-    ])
+    !canAny([permissionsEnum.CLAIMS_SUB_STATUS_UPDATE])
   );
 });
 
@@ -84,7 +84,10 @@ const enableSendMessageButton = computed(() => {
 });
 
 const optimizeMessage = async () => {
-  if (!claimSubStatusAndCustomerForm.customer_message || !claimSubStatusAndCustomerForm.claim_sub_status_id) {
+  if (
+    !claimSubStatusAndCustomerForm.customer_message ||
+    !claimSubStatusAndCustomerForm.claim_sub_status_id
+  ) {
     notification.error({
       title: 'Please provide both message and sub status before optimizing',
       position: 'top',
@@ -95,13 +98,20 @@ const optimizeMessage = async () => {
   try {
     NProgress.start();
     processing.value = true;
-    
-    const response = await axios.post(route('claims.optimize-message', claimSubStatusAndCustomerForm.claim_sub_status_id), {
-      message: claimSubStatusAndCustomerForm.customer_message, 
-    });
+
+    const response = await axios.post(
+      route(
+        'claims.optimize-message',
+        claimSubStatusAndCustomerForm.claim_sub_status_id,
+      ),
+      {
+        message: claimSubStatusAndCustomerForm.customer_message,
+      },
+    );
 
     if (response.data.status) {
-      claimSubStatusAndCustomerForm.ai_optimized_message = response.data.optimized_message;
+      claimSubStatusAndCustomerForm.ai_optimized_message =
+        response.data.optimized_message;
       notification.success({
         title: 'Message optimized successfully',
         position: 'top',
@@ -115,7 +125,9 @@ const optimizeMessage = async () => {
   } catch (error) {
     console.error('Error optimizing message:', error);
     notification.error({
-      title: error.response?.data?.message || 'An error occurred while optimizing the message',
+      title:
+        error.response?.data?.message ||
+        'An error occurred while optimizing the message',
       position: 'top',
     });
   } finally {
@@ -127,11 +139,7 @@ const optimizeMessage = async () => {
 
 <template>
   <div
-    v-if="
-      canAny([
-        permissionsEnum.CLAIMS_SUB_STATUS_UPDATE,
-      ])
-    "
+    v-if="canAny([permissionsEnum.CLAIMS_SUB_STATUS_UPDATE])"
     class="p-4 rounded shadow mb-6 bg-white"
   >
     <Collapsible :expanded="true">
@@ -142,14 +150,19 @@ const optimizeMessage = async () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <x-form :form="claimSubStatusAndCustomerForm" @submit="updateClaimSubStatusAndCustomer">
+        <x-form
+          :form="claimSubStatusAndCustomerForm"
+          @submit="updateClaimSubStatusAndCustomer"
+        >
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
                 <x-select
                   v-model="claimSubStatusAndCustomerForm.claim_sub_status_id"
                   label="Claim Sub Status"
-                  :error="claimSubStatusAndCustomerForm.errors.claim_sub_status_id"
+                  :error="
+                    claimSubStatusAndCustomerForm.errors.claim_sub_status_id
+                  "
                   :options="subStatusOptions"
                   :disabled="disableClaimSubStatusAndCustomerUpdate"
                   placeholder="Claim Sub Status"
@@ -174,14 +187,14 @@ const optimizeMessage = async () => {
                 />
               </div>
             </div>
-            <div
-              class="w-full md:w-1/2"
-            >
+            <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
                 <x-textarea
                   v-model="claimSubStatusAndCustomerForm.ai_optimized_message"
                   label="AI Optimized Message"
-                  :error="claimSubStatusAndCustomerForm.errors.ai_optimized_message"
+                  :error="
+                    claimSubStatusAndCustomerForm.errors.ai_optimized_message
+                  "
                   :disabled="disableClaimSubStatusAndCustomerUpdate"
                   placeholder="AI Optimized Message"
                   class="w-full"
@@ -194,7 +207,9 @@ const optimizeMessage = async () => {
           <x-divider class="mt-4" />
           <div class="flex justify-end">
             <x-button
-              :disabled="disableClaimSubStatusAndCustomerUpdate || !enableOptimizeButton"
+              :disabled="
+                disableClaimSubStatusAndCustomerUpdate || !enableOptimizeButton
+              "
               class="mt-4 mr-2"
               color="primary"
               size="sm"
@@ -204,7 +219,10 @@ const optimizeMessage = async () => {
               Optimize
             </x-button>
             <x-button
-              :disabled="disableClaimSubStatusAndCustomerUpdate || !enableSendMessageButton"
+              :disabled="
+                disableClaimSubStatusAndCustomerUpdate ||
+                !enableSendMessageButton
+              "
               class="mt-4"
               color="success"
               size="sm"

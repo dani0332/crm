@@ -45,6 +45,7 @@ The Claims Module follows a layered architecture pattern:
 ### 1. Models
 
 #### `ClaimRequest` Model
+
 - **Location**: `app/Models/ClaimRequest.php`
 - **Purpose**: New FRD-compliant claim request model
 - **Key Features**:
@@ -54,6 +55,7 @@ The Claims Module follows a layered architecture pattern:
   - Auto-UUID generation
 
 #### `ClaimRequestDetail` Model
+
 - **Location**: `app/Models/ClaimRequestDetail.php`
 - **Purpose**: Detailed information for claim requests
 - **Key Features**:
@@ -64,6 +66,7 @@ The Claims Module follows a layered architecture pattern:
 ### 2. Controllers
 
 #### `ClaimsController`
+
 - **Location**: `app/Http/Controllers/ClaimsController.php`
 - **Purpose**: Main controller handling claim operations
 - **Key Methods**:
@@ -80,6 +83,7 @@ The Claims Module follows a layered architecture pattern:
 ### 3. Services
 
 #### `ClaimsService`
+
 - **Location**: `app/Services/ClaimsService.php`
 - **Purpose**: Business logic layer for claim operations
 - **Key Features**:
@@ -92,12 +96,14 @@ The Claims Module follows a layered architecture pattern:
 ### 4. Request Validation
 
 #### Form Request Classes
+
 - **`ClaimStoreRequest`**: Validation for creating new claim requests
 - **`ClaimDetailsUpdateRequest`**: Validation for updating specific claim details
 - **`ClaimStatusUpdateRequest`**: Validation for status updates
 - **`SearchPoliciesRequest`**: Validation for policy searches
 
 **Key Validation Features**:
+
 - Line of Business (LOB) specific validation
 - Comprehensive regex patterns for names, emails, phone numbers
 - Data normalization in `prepareForValidation()`
@@ -107,6 +113,7 @@ The Claims Module follows a layered architecture pattern:
 ### 5. Observers
 
 #### `ClaimRequestObserver`
+
 - **Location**: `app/Observers/ClaimRequestObserver.php`
 - **Purpose**: Handle business logic on model events
 - **Key Features**:
@@ -119,6 +126,7 @@ The Claims Module follows a layered architecture pattern:
 ### Claim Types
 
 #### Motor/Car Claims
+
 - **Own Damage Claim** (`own-damage-claim`)
 - **Recoverable Claim** (`recoverable-claim`)
 - **Unknown Damage Claim** (`unknown-damage-claim`)
@@ -128,23 +136,27 @@ The Claims Module follows a layered architecture pattern:
 - **Windscreen Only** (`windscreen-only`)
 
 #### Health Claims
+
 - **Reimbursement** (`reimbursement`)
 - **Pending Approvals** (`pending-approvals`)
 - **Ask a Question** (`ask-a-question`)
 
 #### Service Types (Health)
+
 - **In-Patient Request** (`in-patient-request`)
 - **Out-Patient Request** (`out-patient-request`)
 
 ### Claim Statuses
 
 #### Main Statuses
+
 - **Open** - Active claims requiring attention
 - **Closed** - Resolved claims
 
 #### Sub-Statuses Workflow
 
 ##### General Workflow
+
 1. **New Claim** - Initial status when claim is created
 2. **Claim Initiated** - Claim processing has begun
 3. **Claim Registered** - Claim officially registered in system
@@ -153,6 +165,7 @@ The Claims Module follows a layered architecture pattern:
 6. **Claim Paid** - Settlement completed
 
 ##### Motor-Specific Workflow
+
 1. **Claim Registered and Awaiting Inspection**
 2. **Estimate Under Review**
 3. **Survey in Progress**
@@ -161,6 +174,7 @@ The Claims Module follows a layered architecture pattern:
 6. **Cash Loss Paid and Claim Settled**
 
 ##### Health-Specific Workflow
+
 - **Pending Approvals**: New Request → Under Evaluation → Request Approved/Denied
 - **Ask a Question**: Under Review → Answered & Closed
 
@@ -195,12 +209,14 @@ The system automatically updates claim statuses based on:
 ### Business Rules
 
 #### Status Transition Rules
+
 - Claims automatically close when reaching terminal sub-statuses
 - Complaint status affects main claim status
 - Manager assignment triggers date tracking
 - Follow-up dates enable overdue tracking
 
 #### LOB-Specific Rules
+
 - **Car Claims**: Require vehicle details (make, model, year, plate number)
 - **Health Claims**: Require service type for pending approvals
 - **All Claims**: Require incident date and claim type
@@ -209,18 +225,18 @@ The system automatically updates claim statuses based on:
 
 ### Web Routes
 
-| Method | Endpoint | Name | Purpose |
-|--------|----------|------|---------|
-| GET | `/claims` | `claims.index` | List claims |
-| GET | `/claim/create` | `claims.create` | Show create form |
-| POST | `/claim` | `claims.store` | Create claim |
-| GET | `/claim/{uuid}` | `claims.show` | Show claim details |
-| GET | `/claim/{uuid}/edit` | `claims.edit` | Show edit form |
-| PUT | `/claim/{uuid}` | `claims.update` | Update claim |
-| POST | `/claim/search-policies` | `claims.search-policies` | Search policies |
-| POST | `/claim/update-details/{uuid}` | `claims.update.details` | Update details |
-| POST | `/claim/update-statuses/{uuid}` | `claims.update.status` | Update status |
-| POST | `/claims/{claim:uuid}/send-notification` | `claims.send-notification` | Send notification |
+| Method | Endpoint                                 | Name                       | Purpose            |
+| ------ | ---------------------------------------- | -------------------------- | ------------------ |
+| GET    | `/claims`                                | `claims.index`             | List claims        |
+| GET    | `/claim/create`                          | `claims.create`            | Show create form   |
+| POST   | `/claim`                                 | `claims.store`             | Create claim       |
+| GET    | `/claim/{uuid}`                          | `claims.show`              | Show claim details |
+| GET    | `/claim/{uuid}/edit`                     | `claims.edit`              | Show edit form     |
+| PUT    | `/claim/{uuid}`                          | `claims.update`            | Update claim       |
+| POST   | `/claim/search-policies`                 | `claims.search-policies`   | Search policies    |
+| POST   | `/claim/update-details/{uuid}`           | `claims.update.details`    | Update details     |
+| POST   | `/claim/update-statuses/{uuid}`          | `claims.update.status`     | Update status      |
+| POST   | `/claims/{claim:uuid}/send-notification` | `claims.send-notification` | Send notification  |
 
 ### API Response Format
 
@@ -251,6 +267,7 @@ The system automatically updates claim statuses based on:
 ### Primary Tables
 
 #### `claim_requests` Table
+
 - Primary key: `id`
 - UUID: `uuid` for routing
 - Code: `code` for reference
@@ -259,6 +276,7 @@ The system automatically updates claim statuses based on:
 - Financial fields: `approved_repair_amount`, `approved_total_loss_amount`
 
 #### `claim_request_details` Table
+
 - Primary key: `id`
 - Foreign key: `claim_request_id`
 - Car details: `car_make`, `car_model`, `model_year`, `plat_number`
@@ -282,17 +300,20 @@ ClaimRequest (1) --> (*) Documents (polymorphic)
 ### Vue.js Components
 
 #### Main Pages
+
 - **`Claims/Index.vue`** - Claims listing with filters
 - **`Claims/Show.vue`** - Claim details view
 - **`Claims/Create.vue`** - Claim creation form
 - **`Claims/Edit.vue`** - Claim editing form
 
 #### Component Structure
+
 - **`Claims/Components/ClaimDetails.vue`** - Claim details component
 - **`Claims/Components/ClaimStatus.vue`** - Status management component
 - **`Claims/Components/ClaimDocuments.vue`** - Document management
 
 #### Key Frontend Features
+
 - **Permission-based UI**: Uses `useCan()` composable
 - **Real-time Validation**: Mirrors backend validation
 - **Reactive Dropdowns**: Based on LOB selection
@@ -326,6 +347,7 @@ const notification = useToast();
 ### Permission Constants
 
 From `PermissionsEnum`:
+
 - `CLAIM_LIST` - View claims list
 - `CLAIM_CREATE` - Create new claims
 - `CLAIM_EDIT` - Edit existing claims
@@ -352,11 +374,13 @@ From `PermissionsEnum`:
 ### External Services
 
 #### CAPI Integration
+
 - **Endpoint**: `/api/v2-save-claim`
 - **Purpose**: External claim creation
 - **Data Flow**: Frontend → ClaimsService → CAPI → Database
 
 #### Bird Service Integration
+
 - **Purpose**: Email notifications and workflows
 - **Configuration**: `ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW`
 - **Data**: Customer details, advisor information, workflow triggers
@@ -364,11 +388,13 @@ From `PermissionsEnum`:
 ### Internal Integrations
 
 #### Quote System Integration
+
 - **Policy Search**: Active policy lookup for claim creation
 - **Customer Data**: Pre-populate claim forms from policy data
 - **Advisor Assignment**: Automatic advisor linking
 
 #### Document Management
+
 - **Polymorphic Relations**: Claims can have multiple document types
 - **Document Categories**: Claim-specific document categorization
 - **Upload Tracking**: Complete audit trail for documents
@@ -378,18 +404,21 @@ From `PermissionsEnum`:
 ### Code Standards
 
 #### PHP Standards
+
 - Use `declare(strict_types=1)` in all files
 - Follow PSR-12 coding standards
 - Implement comprehensive error handling
 - Use typed properties and return types
 
 #### Laravel Patterns
+
 - Extend `BaseService` for service classes
 - Use `CentralTrait` for common functionality
 - Implement `FormRequest` for validation
 - Use observers for business logic triggers
 
 #### Vue.js Patterns
+
 - Use Composition API with `<script setup>`
 - Implement permission checks with `useCan()`
 - Mirror backend validation in frontend
@@ -398,12 +427,14 @@ From `PermissionsEnum`:
 ### Testing Strategy
 
 #### Feature Tests
+
 - Test all controller endpoints
 - Verify permission-based access
 - Test complete user workflows
 - Mock external dependencies
 
 #### Unit Tests
+
 - Test service layer methods
 - Test model relationships and scopes
 - Test validation logic
@@ -412,11 +443,13 @@ From `PermissionsEnum`:
 ### Performance Considerations
 
 1. **Query Optimization**
+
    - Use eager loading with specific field selection
    - Implement proper database indexing
    - Use `simplePaginate()` for large datasets
 
 2. **Caching Strategy**
+
    - Cache dropdown data
    - Cache frequently accessed lookups
    - Implement query result caching
@@ -429,6 +462,7 @@ From `PermissionsEnum`:
 ### Maintenance & Updates
 
 #### Update Protocol
+
 1. Review current patterns before making changes
 2. Update documentation with new features
 3. Update cursor rules (`.cursor/rules/claim-module-architecture.mdc`) with new patterns
@@ -441,6 +475,7 @@ From `PermissionsEnum`:
 10. Update inline documentation
 
 #### Monitoring & Logging
+
 - All actions logged with `LoggerService`
 - Structured logging with context data
 - User ID tracking in all operations
@@ -452,6 +487,7 @@ From `PermissionsEnum`:
 ## Quick Reference
 
 ### Key Files
+
 - **Controller**: `app/Http/Controllers/ClaimsController.php`
 - **Service**: `app/Services/ClaimsService.php`
 - **Models**: `app/Models/ClaimRequest.php`, `app/Models/ClaimRequestDetail.php`
@@ -460,6 +496,7 @@ From `PermissionsEnum`:
 - **Frontend**: `resources/js/inertia/Pages/Claims/`
 
 ### Common Commands
+
 ```bash
 # Run claim-related tests
 php artisan test --filter=Claims
@@ -472,11 +509,12 @@ php artisan cache:forget claims.*
 ```
 
 ### Support Contacts
+
 - **Development Team**: [Your team contact]
 - **Business Analyst**: [BA contact]
 - **System Administrator**: [Admin contact]
 
 ---
 
-*Last Updated: [Current Date]*
-*Version: 1.0*
+_Last Updated: [Current Date]_
+_Version: 1.0_

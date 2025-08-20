@@ -28,7 +28,6 @@ const statusOptions = computed(() => {
   );
 });
 
-
 const updateClaimStatus = isValid => {
   console.log('updateClaimStatus');
   claimStatusForm.post(route('claims.update.status', props.claim?.uuid), {
@@ -54,20 +53,14 @@ const updateClaimStatus = isValid => {
 const disableClaimStatusUpdate = computed(() => {
   return (
     !props.requiredFieldsFilled ||
-    !canAny([
-      permissionsEnum.CLAIMS_STATUS_UPDATE,
-    ])
+    !canAny([permissionsEnum.CLAIMS_STATUS_UPDATE])
   );
 });
 </script>
 
 <template>
   <div
-    v-if="
-      canAny([
-        permissionsEnum.CLAIMS_STATUS_UPDATE,
-      ])
-    "
+    v-if="canAny([permissionsEnum.CLAIMS_STATUS_UPDATE])"
     class="p-4 rounded shadow mb-6 bg-white"
   >
     <Collapsible :expanded="true">
@@ -97,7 +90,6 @@ const disableClaimStatusUpdate = computed(() => {
                 />
               </div>
             </div>
-
           </div>
 
           <x-divider class="mt-4" />
