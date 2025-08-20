@@ -296,16 +296,16 @@ class ClaimsController extends Controller
     public function optimizeMessage(Request $request, ClaimStatus $claimStatus): JsonResponse
     {
         $request->validate([
-            'message' => 'required|string|max:1000', 
+            'message' => 'required|string|max:1000',
         ]);
 
-        try { 
+        try {
             $optimizedMessage = $this->optimizeMessageWithAI($request->message);
 
             return response()->json([
                 'status' => true,
                 'optimized_message' => $optimizedMessage,
-            ], 200 );
+            ], 200);
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', extra: [
                 'error' => $e->getMessage(),
@@ -328,7 +328,7 @@ class ClaimsController extends Controller
 
         $request->validate([
             'customer_message' => 'required|string',
-            'ai_optimized_message' => 'required|string', 
+            'ai_optimized_message' => 'required|string',
             'claim_sub_status_id' => 'required|exists:claim_sub_statuses,id',
         ]);
 

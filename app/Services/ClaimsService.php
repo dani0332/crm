@@ -2,17 +2,17 @@
 
 namespace App\Services;
 
-use App\Enums\DocumentTypeCode;
 use App\Enums\ClaimsEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\CarMake;
-use App\Models\DocumentType;
 use App\Models\Claim;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
+use App\Models\DocumentType;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
@@ -843,10 +843,10 @@ class ClaimsService extends BaseService
     public function getClaimDocumentTypes($quoteTypeId)
     {
         $claimDocumentTypes = DocumentType::active()
-        ->whereIn('category', [DocumentTypeCode::CLAIM])
-        ->where('quote_type_id', $quoteTypeId)
-        ->sortDocumentType()
-        ->get();
+            ->whereIn('category', [DocumentTypeCode::CLAIM])
+            ->where('quote_type_id', $quoteTypeId)
+            ->sortDocumentType()
+            ->get();
 
         $documentTypesByCategory = $claimDocumentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();
@@ -858,9 +858,6 @@ class ClaimsService extends BaseService
         return $orderedDocumentTypesByCategory;
     }
 
-    public function sendNotification(Claim $claim, array $data): void
-    {
-        
-    }
+    public function sendNotification(Claim $claim, array $data): void {}
 
 }
