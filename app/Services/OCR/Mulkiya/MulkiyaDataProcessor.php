@@ -206,7 +206,6 @@ class MulkiyaDataProcessor
             ],
             'car_quote_detail_data' => $carQuoteDetail ? [
                 'plate_number' => $carQuoteDetail->plate_number,
-                'traffic_code_number' => $carQuoteDetail->traffic_code_number,
                 'first_registration_date' => $carQuoteDetail->first_registration_date,
                 'vehicle_color' => $carQuoteDetail->vehicle_color,
                 'engine_number' => $carQuoteDetail->engine_number,
@@ -233,6 +232,7 @@ class MulkiyaDataProcessor
                 'ocr_done_by' => $registrationCertificate->ocr_done_by,
                 'doc_type' => $registrationCertificate->doc_type,
                 'provider_id' => $registrationCertificate->provider_id,
+                'traffic_code_number' => $registrationCertificate->traffic_code_number,
             ] : null,
         ];
     }
