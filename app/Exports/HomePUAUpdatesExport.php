@@ -74,7 +74,7 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
                 return (object) [
                     'source' => $quote->source,
                     'payment_status_id' => $quote->payment_status_id,
-                    'premium' => $quote->premium,
+                    'premium' => $quote->premiumcaptured,
                 ];
             });
     }
@@ -128,7 +128,7 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
     private function getQuotesData()
     {
         $results = app(HomeQuoteRepository::class)->exportPUAUpdates($this->requestParams)->get();
-        
+
         return $results->map(function ($quote) {
             return (object) [
                 'RefId' => $quote->RefID,
@@ -143,18 +143,17 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
                 'PlanName' => 'Home Property Plan',
                 'PlanType' => 'Comprehensive',
                 'Insurer' => $quote->insuranceProvider->text ?? 'N/A',
-                'PremiumAuth' => $quote->premium,
-                'PremiumCaptured' => $quote->premiumauthorized,
-                'first_name' => $quote->first_name,
-                'last_name' => $quote->last_name,
-                'mobile_no' => $quote->mobile_no,
-                'email' => $quote->email,
+                'PremiumAuth' => $quote->premiumauthorized,
+                'PremiumCaptured' => $quote->premiumcaptured,
+                'dob' => $quote->dob,
                 'paidAt' => $quote->paymentauthdate,
                 'PUAType' => 'Premium Update',
                 'createdAt' => $quote->created_at,
             ];
         });
     }
+
+
 
     private function prepareSummary(): Collection
     {
@@ -195,6 +194,7 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
 
     public function headings(): array
     {
+
         return [[
             "HOME PUA (Payment Status Date : $this->formatDate)",
         ], [
@@ -211,10 +211,7 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
             'Insurer',
             'Premium Auth',
             'Premium Captured',
-            'First Name',
-            'Last Name',
-            'Mobile No',
-            'Email',
+            'Date of Birth',
             'Paid At',
             'PUA Type',
             'Created At',
@@ -236,7 +233,7 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
     {
         return array_merge(
             ['Payment Status' => $row->PaymentStatus, 'Count' => $row->Count],
-            array_fill(0, 20, '') // Fill remaining columns with empty strings
+            array_fill(0, 17, '') // Fill remaining columns with empty strings
         );
     }
 
@@ -256,10 +253,7 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
             $row->Insurer ?? self::NA_VALUE,
             $row->PremiumAuth ?? self::NA_VALUE,
             $row->PremiumCaptured ?? self::NA_VALUE,
-            $row->first_name ?? self::NA_VALUE,
-            $row->last_name ?? self::NA_VALUE,
-            $row->mobile_no ?? self::NA_VALUE,
-            $row->email ?? self::NA_VALUE,
+            $this->formatDate($row->dob),
             $this->formatDate($row->paidAt),
             $row->PUAType ?? self::NA_VALUE,
             $this->formatDate($row->createdAt),

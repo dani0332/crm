@@ -1102,6 +1102,7 @@ class HomeQuoteRepository extends BaseRepository
         $puaUpdatesQuery = PersonalQuote::select([
                 'personal_quotes.code as RefID',
                 'personal_quotes.premium_authorized as premiumauthorized',
+                'personal_quotes.premium_captured as premiumcaptured',
                 'personal_quotes.payment_status_date as paymentauthdate',
                 DB::raw("'AUTHORIZED' as paymentstatus"),
                 'personal_quotes.source as source',
@@ -1115,7 +1116,8 @@ class HomeQuoteRepository extends BaseRepository
                 'personal_quotes.quote_status_id',
                 'personal_quotes.nationality_id',
                 'personal_quotes.payment_status_id',
-                'personal_quotes.insurance_provider_id'
+                'personal_quotes.insurance_provider_id',
+                'personal_quotes.dob'
             ])
             ->with([
                 'payments',
