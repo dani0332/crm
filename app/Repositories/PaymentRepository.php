@@ -698,13 +698,21 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;
 
             /* Handle NRA case where payment is approved after policy/send update is booked */
-            $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
+            $sageARPrepaymentResponse = (new SageApiService)->createARPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
 
-            if (! $sageResponse['status']) {
-                vAbort($sageResponse['message']);
+            if (! $sageARPrepaymentResponse['status']) {
+                vAbort($sageARPrepaymentResponse['message']);
+
             }
 
-            $sageResponseStatus = $sageResponse['status'];
+            /* $sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+
+            $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
+
+            if (! $sageAPPrepaymentResponse['status']) {
+                vAbort($sageAPPrepaymentResponse['message']);
+
+            }*/
         }
 
         // Now handle database operations within transaction

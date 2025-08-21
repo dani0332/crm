@@ -11,18 +11,23 @@ enum OCRDocumentTypeEnum: string
     case TAX_INVOICE_RAISED_BY_BUYER = 'TIB';
     case CERTIFICATE_OF_ISSUANCE = 'PC';
     case MOTOR_INSURANCE_POLICY_SCHEDULE = 'MPS';
-    case ID_CARD = 'IDC';
+    case ID_CARD = 'IDC'; // Emirates ID
     case VISA = 'VI';
     case PASSPORT = 'PP';
+    case REGISTRATION_CERTIFICATE = 'RC'; // Car Registration Certificate - Mulkiya
 
     public static function getDocumentType(DocumentType $documentType): ?self
     {
         return match ($documentType->code) {
             'DL_CAR' => self::DRIVING_LICENSE,
+            'DL' => self::DRIVING_LICENSE,
             'TI' => self::TAX_INVOICE,
             'CPC' => self::CERTIFICATE_OF_ISSUANCE,
             'CTIRBB' => self::TAX_INVOICE_RAISED_BY_BUYER,
             'CPS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+            'CEID' => self::ID_CARD,
+            'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
+            'EID_CAR' => self::ID_CARD,
             default => null,
         };
     }
@@ -42,6 +47,9 @@ enum OCRDocumentTypeEnum: string
                 self::TAX_INVOICE_RAISED_BY_BUYER,
                 self::CERTIFICATE_OF_ISSUANCE,
                 self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+                self::ID_CARD,
+                self::REGISTRATION_CERTIFICATE,
+                self::DRIVING_LICENSE,
             ],
             default => [],
         };

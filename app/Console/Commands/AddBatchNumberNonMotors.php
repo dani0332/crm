@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Console\Commands\Common\Batchable;
 use App\Models\RenewalBatch;
+use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
 class AddBatchNumberNonMotors extends Command
@@ -47,19 +48,19 @@ class AddBatchNumberNonMotors extends Command
             $type = 'non motor';
             $this->logTodayDate($type);
             $lastBatch = RenewalBatch::whereNull('quote_type_id')->orderBy('id', 'desc')->first();
-            info('last batch : '.json_encode($lastBatch));
+            LoggerService::info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
                 $this->processBatchesFromScratch('2024-07-29', $type);
             } elseif (! $this->isBatchCurrent($lastBatch)) {
                 $this->processBatchesFromLastEndDate(type: $type);
             } else {
-                info('non motor batches are update to date');
+                LoggerService::info('non motor batches are update to date');
 
                 return true;
             }
         } catch (\Exception $e) {
-            info('Add Non Motor Batch Number Failed');
-            info('message: '.$e->getMessage());
+            LoggerService::info('Add Non Motor Batch Number Failed');
+            LoggerService::info('message: '.$e->getMessage());
         }
     }
 }
