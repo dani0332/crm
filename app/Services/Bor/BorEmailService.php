@@ -30,15 +30,18 @@ class BorEmailService
                 return false;
             }
 
+            if($advisorData == null) {
+                LoggerService::error('BOR Request Email: Advisor data not found', [
+                    'bor_log_id' => $borLog->id,
+                    'lead_id' => $borLog->lead_id
+                ]);
+                return false;
+            }
+
             $mail = new BorRequestMail($borLog, $customerData, $portalUrl, $advisorData);
             $success = $mail->sendViaBird();
 
-            if ($success) {
-                // $borLog->update(['email_sent' => true]);
-            }
-
             return $success;
-
         } catch (\Exception $e) {
             LoggerService::error('BOR Request Email Service failed', [
                 'bor_log_id' => $borLog->id,
