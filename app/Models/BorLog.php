@@ -303,10 +303,11 @@ class BorLog extends Model
     /**
      * Transition the BOR to "Completed" status.
      */
-    public function markAsCompleted(): bool
+    public function markAsCompleted(?string $additional_notes = null): bool
     {
         if ($this->isUploaded() || $this->isSigned()) {
             $this->status = BorStatusEnum::COMPLETED;
+            $this->additional_notes = $additional_notes;
             return $this->save();
         }
         return false;

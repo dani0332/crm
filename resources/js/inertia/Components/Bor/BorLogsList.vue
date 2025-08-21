@@ -174,11 +174,7 @@ const onCancelSuccess = (updatedBorLog) => {
 
 const onDoneSuccess = (updatedBorLog) => {
   // Update the specific BOR log in the list
-  const index = props.logs.findIndex(log => log.id === updatedBorLog.id);
-  if (index !== -1) {
-    // Update the log in the parent component
-    emit('update-log', index, updatedBorLog);
-  }
+  emit('refresh');
   onDoneModalClose();
 }
 

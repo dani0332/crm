@@ -120,19 +120,19 @@ const handleClose = () => {
         <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
           <h4 class="text-sm font-medium text-blue-900 mb-3">Completion Checklist</h4>
           <div class="space-y-2">
-            <div class="flex items-center text-sm">
+            <div class="flex items-center text-sm" v-if="borLog.status === 'Document Signed'">
               <svg class="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
               <span class="text-blue-700">Document has been signed by the customer</span>
             </div>
-            <div class="flex items-center text-sm">
+            <div class="flex items-center text-sm" v-if="borLog.status === 'Document Uploaded'">
               <svg class="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
               <span class="text-blue-700">Signed document has been uploaded to the system</span>
             </div>
-            <div class="flex items-center text-sm">
+          <div class="flex items-center text-sm" v-if="borLog.email === 1">
               <svg class="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>

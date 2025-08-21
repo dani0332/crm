@@ -287,29 +287,17 @@ class BorService
         DB::beginTransaction();
 
         try {
-            $oldStatus = $borLog->status;
-            $success = $borLog->markAsCompleted();
+            $success = $borLog->markAsCompleted($data['notes']);
 
             if (!$success) {
                 throw new \Exception('Failed to mark BOR as completed. Please try again.');
             }
 
-            // Save optional completion notes if provided
-            if (!empty($data['notes'])) {
-                $borLog->completion_notes = $data['notes'];
-                $borLog->save();
-            }
-
-            // Send completion notifications
-            $this->borEmailService->sendBorCompletionNotifications($borLog);
-
             DB::commit();
-
             // Enrich the updated BOR log with document data
             $enrichedBorLog = $this->enrichBorLogWithDocuments($borLog->fresh(['insuranceProvider', 'personalQuote']));
             
             return ['borLog' => $enrichedBorLog];
-
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
