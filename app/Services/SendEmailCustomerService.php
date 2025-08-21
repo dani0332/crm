@@ -869,13 +869,6 @@ class SendEmailCustomerService extends BaseService
                 $bodyData['bcc'][] = ['email' => $newLeadPool->value];
             }
 
-            if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
-                $bodyData['bcc'][] = [
-                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
-                    'name' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
-                ];
-            }
-
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
@@ -949,6 +942,12 @@ class SendEmailCustomerService extends BaseService
                         ];
                     }
                 }
+            }
+
+            if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
+                $bodyData['bcc'][] = [
+                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
+                ];
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
@@ -1178,7 +1177,6 @@ class SendEmailCustomerService extends BaseService
             if ($this->appEnv == EnvEnum::PRODUCTION && $quoteTypeId == QuoteTypeId::Travel) {
                 $body['bcc'][] = [
                     'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
-                    'name' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
                 ];
             }
 
