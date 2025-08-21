@@ -5,6 +5,8 @@ namespace App\Mail\Bor;
 use App\Models\BorLog;
 use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
@@ -90,6 +92,7 @@ class BorInsurerNotificationMail extends Mailable
         $this->borLog->load('personalQuote', 'insuranceProvider');
         $personalQuote = $this->borLog->personalQuote;
         $insurerEmails = explode(';', $this->insurerContact->emails);
+        $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value) . '-insurance';
 
         // First email is the recipient, rest are CC emails
         $recipientEmail = $insurerEmails[0] ?? '';
@@ -100,7 +103,7 @@ class BorInsurerNotificationMail extends Mailable
             'ref_id' => $personalQuote->code ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_INSURER_NOTIFICATION ?? 'bor_insurer_notification',
             'customer_name' => $this->getCustomerName() ?? '',
-            'subject_line' => 'Broker on Record - Approval ' . $personalQuote->code,
+            'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
                 'insurance_representative' => $recipientEmail,
@@ -133,6 +136,17 @@ class BorInsurerNotificationMail extends Mailable
         $name = trim($firstName . ' ' . $lastName);
 
         return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
+    }
+    private function getSubjectLine($personalQuote, $quoteType)
+    {
+        $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
+        $name = $this->getCustomerName();
+        if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
+            $subjectLine = 'Request for BOR ' . $this->borLog->chassis_number . ' - ' . $name . ' ' . $personalQuote->code;
+            return $subjectLine;
+        }
+        $subjectLine = 'Request for BOR ' . $name . ' ' . $personalQuote->code;
+        return $subjectLine;
     }
 
     /**

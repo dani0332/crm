@@ -96,7 +96,7 @@ class BorRequestMail extends Mailable
         $personalQuote = $this->borLog->personalQuote;
         $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value) .'-insurance';
         $quoteUuid = $personalQuote->uuid;
-        $quoteLink = $this->portalUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor';
+        $quoteLink = $this->portalUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor/'.$this->borLog->bor_reference;
         
         return [
             'uuid' => $personalQuote->uuid ?? '',
