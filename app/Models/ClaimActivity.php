@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use OwenIt\Auditing\Auditable;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Traits\FilterCriteria;
 use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class ClaimActivity extends Model implements AuditableContract
 {
-    use HasFactory, Auditable, FilterCriteria;
+    use Auditable, FilterCriteria, HasFactory;
 
     /**
      * The table associated with the model.
@@ -62,7 +62,7 @@ class ClaimActivity extends Model implements AuditableContract
         parent::boot();
 
         static::creating(function ($claimActivity) {
-            if (!$claimActivity->created_by_id && Auth::check()) {
+            if (! $claimActivity->created_by_id && Auth::check()) {
                 $claimActivity->created_by_id = Auth::id();
             }
         });
@@ -123,7 +123,6 @@ class ClaimActivity extends Model implements AuditableContract
     {
         return $query->where('created_by_id', $userId);
     }
-       
 
     /**
      * Create a new activity for a claim request.
