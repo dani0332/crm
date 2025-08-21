@@ -151,7 +151,14 @@ class BorController extends Controller
 
     public function uploadDocument(Request $request)
     {
-        $quote = $this->getQuoteObject($request->quoteType, $request->quote_uuid);
+        $quoteType = $request->quote_type;
+
+        if (
+            ! $request->hasFile('file') ||
+            ! ($quote = $this->getQuoteObject($quoteType, $request->quote_uuid))
+        ) {
+            return response()->json(['error' => 'Quote not found'], 404);
+        }
 
         $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
 
