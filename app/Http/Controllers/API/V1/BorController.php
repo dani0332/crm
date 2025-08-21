@@ -97,7 +97,10 @@ class BorController extends Controller
         try {
             $borLog = BorLog::where('bor_reference', $request->input('bor_ref_id'))->first();
             $quote = $borLog->personalQuote;
-            $request->merge(['quote_uuid' => $quote->code]);
+            $quoteType = QuoteTypes::getName($quote->quote_type_id)->value;
+            $quote = checkPersonalQuotes($quoteType) ? $quote : $this->getQuoteObject($quoteType, $quote->quote_id);
+
+            $request->merge(['quote_uuid' => $quote->uuid]);
             $request->merge(['document_category' => $request->input('bor_ref_id')]);
             $request->merge(['bor_signature' => true]);
             $previousDoc = $borLog->document;
