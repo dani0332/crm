@@ -133,6 +133,9 @@ const fetchProviderRepresentor = async (insuranceProviderId) => {
       insurance_provider_id: insuranceProviderId,
       quote_type: props.lob
     }));
+    if(response.data.providerRepresentor.length == 1 && !isEditMode.value) {
+      form.insurance_contact_id = response.data.providerRepresentor[0].value;
+    }
     insuranceProviderRepresentor.value = response.data.providerRepresentor ?? [];
   } catch (error) {
     console.error('Error fetching provider representor:', error);
@@ -243,7 +246,7 @@ watch(() => form.insurance_provider_id, async (newProviderId) => {
   selectedInsurer.value = props.insuranceProviders.find(p => p.id == newProviderId) || null;
   
   // Reset insurance_contact_id when provider changes
-  form.insurance_contact_id = props.borLog.insurance_contact_id || null;
+  form.insurance_contact_id = props.borLog?.insurance_contact_id ?? null;
   
   // Fetch representors for the new provider
   await fetchProviderRepresentor(newProviderId);
@@ -512,6 +515,7 @@ const viewSignedPdf = async () => {
 // Initialize form on mount
 onMounted(() => {
   resetForm();
+  props.customerData.currentlyInsuredWith != null && fetchProviderRepresentor(props.customerData.currentlyInsuredWith);
   if (isEditMode.value && props.visible) {
     prefillFormFromBorLog();
     loadEmbeddedDocuments();
@@ -689,10 +693,10 @@ onMounted(() => {
 
               <x-select
                 v-if="form.insurance_provider_id != null"
-                label="SELECT REPRESENTOR TO SEND BOR EMAIL"
+                label="DEPARTMENT"
                 v-model="form.insurance_contact_id"
                 :options="insuranceProviderRepresentor" 
-                placeholder="Select representor"
+                placeholder="Select department"
                 :error="form.errors.insurance_contact_id"
                 :disabled="isSubmitting"
                 filterable
