@@ -178,7 +178,7 @@ class BorController extends Controller
         $quoteType = strtolower(QuoteTypes::getName($quote->quote_type_id)->value) .'-insurance';
         $quoteUuid = $quote->uuid;
         $ecomUrl = config('constants.AFIA_WEBSITE_DOMAIN') ?? '';
-        $requestLink = $ecomUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor';
+        $requestLink = $ecomUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor/'. $borLog->bor_reference;
         return response()->json([
             'success' => true,
             'data' => $requestLink,
