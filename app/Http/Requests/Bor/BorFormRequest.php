@@ -34,15 +34,15 @@ class BorFormRequest extends FormRequest
         
         // Customer type specific validation
         if ($customerType === 'Individual') {
-            $rules['insurer_name'] = ['required', 'string', 'max:150'];
-            $rules['company_name'] = ['nullable'];
+            $rules['insurer_name'] = ['required', 'string', 'max:100'];
+            $rules['company_name'] = ['nullable', 'max:100', 'regex:/^[a-zA-Z\s]+$/'];
         } elseif ($customerType === 'Entity') {
-            $rules['company_name'] = ['required', 'string', 'max:150'];
+            $rules['company_name'] = ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s]+$/'];
             $rules['insurer_name'] = ['nullable'];
         } else {
             // If customer_type is not set yet, make both optional for now
-            $rules['insurer_name'] = ['nullable', 'string', 'max:150'];
-            $rules['company_name'] = ['nullable', 'string', 'max:150'];
+            $rules['insurer_name'] = ['nullable', 'string', 'max:100'];
+            $rules['company_name'] = ['nullable', 'string', 'max:100', 'regex:/^[a-zA-Z\s]+$/'];
         }
 
         // LOB-specific validation rules
@@ -97,6 +97,7 @@ class BorFormRequest extends FormRequest
             'policy_expiry.required' => 'Policy expiry date is required for this type of insurance.',
             'policy_expiry.after' => 'Policy expiry date must be in the future.',
             'chassis_number.required' => 'Chassis number is required for Sukoon insurance.',
+            'company_name.regex' => 'Company name can only contain alphabetic characters and spaces.',
         ];
     }
 
