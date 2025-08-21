@@ -1,174 +1,194 @@
 ---
-description: Comprehensive Laravel-Vue claim module architecture patterns and implementation guidelines
+description: Claim module specific patterns and business rules
 globs:
+  - "app/Http/Controllers/*Claims*"
+  - "app/Services/*Claims*"
+  - "app/Models/ClaimRequest*"
+  - "app/Http/Requests/Claim*"
+  - "app/Observers/ClaimRequest*"
+  - "app/Enums/ClaimsEnum.php"
+  - "resources/js/inertia/Pages/Claims/**"
 alwaysApply: false
 ---
 
-# Comprehensive Laravel-Vue Claim Module Architecture Patterns
+# Claim Module Specific Rules
 
-You are an expert in Laravel, Vue.js, and modern full-stack web development technologies following the patterns established in this codebase's claim module.
+## LOB-Based Validation Rules
 
-## Core Architecture Principles
+### Car Claims (QuoteTypes::CAR->id() == 1)
+- Required fields: `plat_number`, `car_make`, `car_model`, `model_year`
+- Plate number validation: `/^[A-Za-z0-9\-\s]+$/`
+- Model year range: 1900 to current year + 1
+- Conditional validation in `validateCarFields()` method
 
-Follow these established patterns from the claim module analysis:
+### Health Claims (QuoteTypes::HEALTH->id() == 3)
+- Required fields: `claim_request_type_id`, `service_type_id`
+- Service type required when claim request type is `pending-approvals`
+- Conditional validation in `validateHealthFields()` method
+- Uses lookup validation against `lookups` table
 
-### 1. Controller Architecture (`ClaimsController`)
+### Status Transitions
+- Claims start with auto-set `sub_status` = `REGISTERED` on creation
+- Observer monitors `sub_status` changes for closure triggers
+- Auto-closure when `sub_status` reaches predefined closure states
 
-**Reference Classes**: `ClaimsController`,
+## Claim-Specific Method Requirements
 
-**Required Patterns**:
-- Use `declare(strict_types=1)` for Laravel 12 compatibility
-- Inject services via constructor with typed properties (e.g., `ClaimsService $claimsService`)
-- Apply permission-based middleware using `PermissionsEnum` constants for all CRUD operations
-- Implement comprehensive try-catch blocks with `LoggerService::error()` for structured logging
-- Return `Inertia::Response` for web routes, `JsonResponse` for AJAX endpoints
-- Use `self::class.'::'.__FUNCTION__` pattern for consistent error logging
-- Include user context (`auth()->id()`) in all log entries
+### ClaimsController
+- `searchPolicies(Request $request): JsonResponse` - CAPI integration for claim creation only
+- `updateDetails(ClaimDetailsUpdateRequest $request, ClaimRequest $claim): JsonResponse` - internal system
+- `updateStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): JsonResponse` - internal system
+- `optimizeMessage(Request $request): JsonResponse` - internal AI message optimization
 
-### 2. Service Layer Architecture (`ClaimsService`)
+### ClaimsService
+- `searchActivePolicies(array $criteria): array` - CAPI method for claim creation only
+- `checkSubStatusForClaimClosure(ClaimRequest $claim): bool` - internal closure logic
+- `markClaimAsClosed(ClaimRequest $claim): ClaimRequest` - internal closure processing
+- `updateClaimSubStatusToClaimRegistered(ClaimRequest $claim): void` - internal status setting
 
-**Reference Classes**: `ClaimsService`
+### ClaimRequest Model
+- `scopeAssignedTo(Builder $query, int $userId): Builder`
+- `scopeByLineOfBusiness(Builder $query, string $lob): Builder`
+- `scopeOpenClaims(Builder $query): Builder`
+- `canBeClosed(): bool` - business rule validation
+- `assignTo(int $userId): self` - assignment with validation
 
-**Required Patterns**:
-- Extend `BaseService`
-- Define protected properties: `$searchPrefix`, `$query`, `$perPage` with proper typing
-- Use Eloquent query builder with eager loading and specific field selection
-- Implement dedicated `getFilters()` and `applyFilters()` methods for filtering
-- Apply `simplePaginate()` with `withQueryString()` for performance
-- Use `whereHas()` for relationship-based filtering
-- Maintain separation of concerns between controllers and business logic
+## Claim-Specific Validation Rules
 
-### 3. Request Validation Architecture (`ClaimStoreRequest` , `ClaimUpdateRequest`, `ClaimDetailsUpdateRequest`)
+### Request Validation Classes
+- `ClaimStoreRequest` - Initial claim creation validation
+- `ClaimDetailsUpdateRequest` - Claim information updates with LOB-specific rules
+- `ClaimStatusUpdateRequest` - Status transition validation
 
-**Reference Classes**: `ClaimStoreRequest`, `ClaimUpdateRequest` `ClaimDetailsUpdateRequest`, `ClaimStatusUpdateRequest`
+### Validation Implementation
+- Car LOB check: `$quoteTypeId == QuoteTypes::CAR->id()`
+- Health LOB check: `$quoteTypeId == QuoteTypes::HEALTH->id()`
+- Conditional field validation using `withValidator()` method
+- Uses `filled()` method to check field presence
 
-**Required Patterns**:
-- Use `declare(strict_types=1)` and extend `FormRequest`
-- Implement `prepareForValidation()` for data normalization (trim, uppercase, strtolower)
-- Use `withValidator()` for complex conditional validation logic based on Line of Business (LOB)
-- Provide comprehensive `messages()` and `attributes()` methods
-- Log validation failures with `LoggerService::info()` in `failedValidation()`
-- Use comprehensive regex patterns for field validation
-- Implement `validatedForUpdate()` method when needed
+### Validation Patterns
+- Plate number: `/^[A-Za-z0-9\-\s]+$/` (actual pattern from implementation)
+- Standard field trimming in `prepareForValidation()`
+- Uppercase transformation for plate numbers
 
-### 4. Model Architecture (`ClaimRequest`, `ClaimRequestDetail`)
+## Observer-Specific Business Logic
 
-**Reference Classes**: `ClaimRequest`, `ClaimRequestDetail`
+### ClaimRequestObserver Requirements
+- Auto-set `sub_status` to `REGISTERED` on creation
+- Monitor `sub_status` changes for auto-closure triggers
+- Update `is_closed` flag when status reaches closure states
+- Log all status transitions with user context
 
-**Required Patterns**:
-- Use `declare(strict_types=1)` and implement `AuditableContract`
-- Apply traits: `Auditable`, `FilterCriteria`, `HasFactory`
-- Define `$filterables` array using `FilterTypes` enum
-- Auto-populate creator/updater fields in `boot()` method using `Auth::facade`
-- Use proper casting for dates, decimals, booleans with appropriate precision
-- Implement UUID-based routing for security
-- Define relationships with proper return type hints (`BelongsTo`, `HasMany`, `MorphMany`)
-- Create business-specific scopes (e.g., `scopeAssignedTo`, `scopeByLineOfBusiness`)
+### Monitored Fields for Business Rules
+- `status`, `sub_status`, `assigned_to`, `line_of_business`
 
-### 5. Observer Architecture (`ClaimRequestObserver`)
+## CAPI Integration Requirements
 
-**Reference Classes**: `ClaimRequestObserver`
+### Policy Search for Claim Creation Only
+- `ClaimsService::searchActivePolicies()` method for claim creation workflow
+- CAPI integration only used during initial claim creation process
+- Handle CAPI timeout/error scenarios gracefully during claim creation
+- All other claim operations (updates, status changes, details) handled within current system
 
-**Required Patterns**:
-- Use `declare(strict_types=1)` for type safety
-- Implement `updating()` and `updated()` methods for state transitions
-- Use `isDirty()` checks for field change detection
-- Log all state changes with `LoggerService` and structured context
-- Implement business logic triggers based on status changes
-- Use job queues for time-consuming operations
-- Apply proper error handling with try-catch blocks
+### Controller Integration
+- `searchPolicies()` endpoint for AJAX policy lookup during claim creation
+- JSON response format for frontend claim creation forms
 
-### 6. Vue.js Component Architecture (`ClaimDetails.vue`)
+## Frontend Claim-Specific Patterns
 
-**Reference Classes**: `ClaimDetails.vue`, Vue components in `Claims/Components/`
+### Component Organization
+- `ClaimDetails.vue` - Claim information display and editing
+- `ClaimStatus.vue` - Status management component
+- `ClaimDocuments.vue` - Document upload and management
+- `ClaimFilters.vue` - Claims listing filters
 
-**Required Patterns**:
-- Use Composition API with `<script setup>` syntax
-- Implement permission checks using `useCan()` and `useCanAny()` composables
-- Structure components with clear separation (Details, Status, Documents)
-- Use event emitters for parent-child communication (`@update`, `@documentUploaded`)
-- Apply consistent prop validation with `defineProps`
-- Implement comprehensive error handling with `useToast()` notifications
-- Use computed properties for reactive dropdown options
-- Mirror backend validation rules in frontend validation functions
-- Apply data transformation with `form.transform()` before submission
+### Permission-Based Rendering
+- `claims.view`, `claims.create`, `claims.update`, `claims.delete`
+- Conditional display of actions based on user permissions
+- CAPI policy search only available during claim creation process
 
-### 7. Enum Architecture (`ClaimsEnum`, `PermissionsEnum`)
+### Event Communication
+- `updateClaimDetails`, `updateClaimStatus`, `documentUploaded` events
+- Parent-child component communication patterns
+- Policy search events only during claim creation workflow
 
-**Reference Classes**: `ClaimsEnum`, `PermissionsEnum`, `FilterTypes`
+## Required Routes and Permissions
 
-**Required Patterns**:
-- Use `Enumable` trait for consistent enum behavior
-- Consolidate constants in dedicated enum classes
-- Implement enum-based configuration for dropdowns and business logic
-- Create comprehensive enum methods for grouped constants
-- Apply enum values in validation rules for data consistency
+### Claim Routes (by name)
+- `claims.index` - Claims listing page
+- `claims.create` - Claim creation form
+- `claims.store` - Store new claim
+- `claims.show` - Individual claim view
+- `claims.edit` - Claim editing form
+- `claims.update` - Update claim
+- `claims.search-policies` - CAPI policy search for creation
+- `claims.update.details` - Update claim details
+- `claims.update.status` - Update claim status
+- `claims.optimize-message` - AI message optimization
+- `claims.send-notification` - Send claim notifications
 
-## Key Requirements
+### Required Permissions (PermissionsEnum)
+- `CLAIM_LIST` - View claims listing
+- `CLAIM_CREATE` - Create new claims
+- `CLAIM_EDIT` - Edit existing claims
+- `CLAIM_SHOW` - View individual claims
+- `CLAIMS_EXPORT_DATA` - Export claim data
+- `CLAIMS_STATUS_UPDATE` - Update claim status
+- `CLAIMS_SUB_STATUS_UPDATE` - Update claim sub-status
+- `CLAIM_DOCUMENT_UPLOAD` - Upload claim documents
+- `CLAIM_DOCUMENT_DELETE` - Delete claim documents
 
-### Security Implementation
-- Always use `PermissionsEnum` constants for middleware
-- Implement `useCan()` permission checks in Vue components
-- Sanitize all inputs in `prepareForValidation()`
-- Use UUID-based routing for enhanced security
-- Log all validation failures and user actions with structured context
+### ClaimsEnum Constants
+- Status constants: `CLAIM_STATUS_OPEN`, `CLAIM_STATUS_CLOSED`
+- Sub-status constants: `CLAIM_SUB_STATUS_NEW_CLAIM`
+- Claim type codes: `CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE`, `CLAIM_TYPE_THEFT_CODE`
+- Request type codes: `CLAIM_REQUEST_TYPE_REIMBURSEMENT_CODE`, `CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE`
 
-### Error Handling & Logging
-- Use `LoggerService` for structured logging with context data
-- Implement try-catch blocks in all controller methods
-- Provide user-friendly error messages
-- Log user ID and relevant entity IDs in all entries
-- Use consistent logging patterns: `self::class.'::'.__FUNCTION__`
+## Automated Update Protocol
 
-### Performance Optimization
-- Use eager loading with specific field selection to prevent N+1 queries
-- Implement pagination with `simplePaginate()` and `withQueryString()`
-- Apply proper database indexing for frequently queried fields
-- Optimize query performance with `whereHas()` for relationship filtering
+**SYSTEM**: This rule file and documentation auto-update when significant claim module changes are detected.
 
-### Laravel 12 Compatibility
-- Use strict typing: `declare(strict_types=1)` in all files
-- Apply typed properties and method signatures throughout
-- Use PHP 8.2+ features (readonly properties, match expressions, union types)
-- Implement proper nullable types and union types where appropriate
-- Name each route on creation and use route by name for consistency
+### Auto-Detection Triggers
+1. **File Modifications** - Changes to claim-related files trigger analysis:
+   - `app/Http/Controllers/ClaimsController.php`
+   - `app/Services/ClaimsService.php`
+   - `app/Models/ClaimRequest*.php`
+   - `app/Http/Requests/Claim*.php`
+   - `app/Observers/ClaimRequestObserver.php`
+   - `app/Enums/ClaimsEnum.php`
+   - `resources/js/inertia/Pages/Claims/**`
+   - `routes/web.php` (claim routes section)
 
-### Frontend-Backend Integration
-- Mirror PHP validation rules in Vue.js components for consistent UX
-- Use Inertia.js for seamless data flow between Laravel and Vue
-- Implement proper error handling and user feedback on both sides
-- Apply consistent data transformation patterns (`prepareFormData`)
-- Use computed properties for reactive business logic and dropdown options
+2. **Pattern Analysis** - System detects:
+   - New public methods in claim classes
+   - Route additions/modifications with 'claim' prefix
+   - New permission constants containing 'CLAIM'
+   - Enum constant additions in ClaimsEnum
+   - Validation rule changes in claim requests
+   - Observer method modifications
+   - Vue component structural changes
 
-### Advanced Validation Patterns
-- Use conditional validation based on Line of Business (LOB) in `withValidator()`
-- Implement client-side validation that mirrors server-side validation rules
-- Apply custom validation rules for complex business logic
-- Use `failedValidation()` for comprehensive error logging with context
-- Implement field-specific validation messages and attributes for better UX
+3. **Semantic Changes** - AI identifies:
+   - New business logic patterns
+   - Modified validation workflows
+   - Changed status transition rules
+   - Updated integration patterns
+   - New component relationships
 
-## Update Protocol
+### Auto-Update Process
+1. **Change Detection** - Monitor claim module files for modifications
+2. **Pattern Extraction** - Analyze changes for architectural significance
+3. **Rule Generation** - Update `.cursor/rules/claim-module-architecture.mdc`:
+   - Add new method signatures and patterns
+   - Update route names and permission lists
+   - Modify validation rules and LOB requirements
+   - Refresh enum constants and business rules
 
-**CRITICAL**: Update this rule file after each significant module change:
+4. **Documentation Sync** - Update `docs/Claims-Module-Documentation.md`:
+   - Generate new architecture diagrams
+   - Update component relationship descriptions
+   - Refresh API endpoint documentation
+   - Sync business rule explanations
 
-1. **Review Current Patterns** - Ensure new code follows established patterns
-2. **Update Rule Documentation** - Add new patterns or modify existing ones
-3. **Update Claims Documentation** - Update `docs/Claims-Module-Documentation.md` with new features and changes
-4. **Validate Security** - Ensure all security requirements are met 
-5. **Update Frontend** - Ensure Vue.js patterns align with backend changes
-6. **Verify Permissions** - Test all permission-based access controls
-7. **Check Enums** - Ensure constants are properly organized and used
-8. **Validate Logging** - Ensure all actions are logged for audit with proper context
-9. **Performance Review** - Check new patterns don't impact performance 
-
-Follow these patterns religiously to maintain consistency across the entire codebase.
-
-## Reference Implementation Files
-
-- Controllers: `app/Http/Controllers/ClaimsController.php`
-- Services: `app/Services/ClaimsService.php`
-- Models: `app/Models/ClaimRequest.php`, `app/Models/ClaimRequestDetail.php`
-- Requests: `app/Http/Requests/ClaimStoreRequest.php`, `app/Http/Requests/ClaimDetailsUpdateRequest.php`
-- Observers: `app/Observers/ClaimRequestObserver.php`
-- Vue Components: `resources/js/inertia/Pages/Claims/Components/ClaimDetails.vue`
-- Enums: `app/Enums/ClaimsEnum.php`, `app/Enums/PermissionsEnum.php`
+5. **Consistency Check** - Validate cross-references between files
+6. **Version Control** - Commit updates with descriptive change messages
