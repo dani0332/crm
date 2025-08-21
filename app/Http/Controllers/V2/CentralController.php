@@ -926,15 +926,16 @@ class CentralController extends Controller
 
     public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
     {
-        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
+        LoggerService::startQuoteLogging($quoteCcode);
+        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids);
         try {
             $result = app(CentralService::class)->getPlansPaymentGateway($request, $quoteType);
 
-            LoggerService::info('getPlansPaymentGateway response: ', extra: $result, context: ['ref_id' => $quoteCcode]);
+            LoggerService::info('getPlansPaymentGateway response: ', extra: $result);
 
             return response()->json(['plans' => $result]);
         } catch (\Throwable $th) {
-            LoggerService::error('getPlansPaymentGateway error: ', exception: $th, context: ['ref_id' => $quoteCcode]);
+            LoggerService::error('getPlansPaymentGateway error: ', exception: $th);
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
