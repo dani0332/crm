@@ -329,7 +329,7 @@ trait OcrFillable
         bool $isSendUpdateEligibleForOCR = false,
         QuoteTypes $quoteType
     ) {
-        $this->providerCode = OcrUtils::getProvider($quote);
+        $this->providerCode = $this->getProvider($quote);
         $this->isSendUpdateEligibleForOCR = $isSendUpdateEligibleForOCR;
 
         // if (! $this->isSupportedProvider($quote) && $documentCategory != DocumentTypeCategory::QUOTE) {

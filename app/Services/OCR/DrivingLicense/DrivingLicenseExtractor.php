@@ -8,6 +8,7 @@ use App\Services\OCR\OcrUtils;
 
 class DrivingLicenseExtractor
 {
+    use OcrUtils;
     private array $extractedData = [];
 
     public function __construct(
@@ -53,7 +54,7 @@ class DrivingLicenseExtractor
                 continue;
             }
 
-            $data = OcrUtils::ensureArray($ocrData);
+            $data = $this->ensureArray($ocrData);
             $personalInfo = $this->getPersonalInfo($data);
             $this->updateExtractedData($data, $personalInfo);
         }
@@ -63,24 +64,24 @@ class DrivingLicenseExtractor
     {
         $personalInfo = $data['personalInformation'] ?? [];
 
-        return OcrUtils::ensureArray($personalInfo);
+        return $this->ensureArray($personalInfo);
     }
 
     private function updateExtractedData(array $data, array $personalInfo): void
     {
-        $this->extractedData = array_merge($this->extractedData, OcrUtils::getCleanData([
+        $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
             // Driving License Detail fields
             'license_number' => $data['licenseNumber'] ?? null,
-            'license_issue_date' => OcrUtils::formatDate($data['issueDate'] ?? null),
-            'license_expiry_date' => OcrUtils::formatDate($data['expiryDate'] ?? null),
+            'license_issue_date' => $this->formatDate($data['issueDate'] ?? null),
+            'license_expiry_date' => $this->formatDate($data['expiryDate'] ?? null),
             'license_issue_place' => $data['placeOfIssue'] ?? null,
             'traffic_code_number' => $data['trafficCodeNumber'] ?? null,
 
             // Personal information fields - split full name into first and last name
-            'first_name' => OcrUtils::extractFirstName($personalInfo['fullName'] ?? null),
-            'last_name' => OcrUtils::extractLastName($personalInfo['fullName'] ?? null),
-            'dob' => OcrUtils::formatDate($personalInfo['dateOfBirth'] ?? null),
-            'gender' => OcrUtils::formatGender($personalInfo['sex'] ?? null),
+            'first_name' => $this->extractFirstName($personalInfo['fullName'] ?? null),
+            'last_name' => $this->extractLastName($personalInfo['fullName'] ?? null),
+            'dob' => $this->formatDate($personalInfo['dateOfBirth'] ?? null),
+            'gender' => $this->formatGender($personalInfo['sex'] ?? null),
             'nationality_string' => $personalInfo['nationality'] ?? null,
 
             // Metadata
@@ -91,7 +92,7 @@ class DrivingLicenseExtractor
 
     public function getDrivingLicenseDetailFields(): array
     {
-        return OcrUtils::getCleanData([
+        return $this->getCleanData([
             'license_number' => $this->extractedData['license_number'] ?? null,
             'license_issue_date' => $this->extractedData['license_issue_date'] ?? null,
             'license_expiry_date' => $this->extractedData['license_expiry_date'] ?? null,

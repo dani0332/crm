@@ -11,10 +11,12 @@ use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
+
 use Illuminate\Support\Facades\DB;
 
 class MulkiyaDataProcessor
 {
+    use OcrUtils;
     private MulkiyaExtractor $mulkiyaExtractor;
 
     public function __construct(
@@ -87,7 +89,7 @@ class MulkiyaDataProcessor
             }
 
             // Update all fields with OCR data
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
+            $dataToUpdate = $this->getFieldsToUpdate($fieldsToUpdate);
 
             if (! empty($dataToUpdate)) {
                 $carQuoteDetail->update($dataToUpdate);
@@ -111,7 +113,7 @@ class MulkiyaDataProcessor
     private function updateCarQuote(CarQuote $quote, array $fieldsToUpdate): bool
     {
         try {
-            $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
+            $dataToUpdate = $this->getFieldsToUpdate($fieldsToUpdate);
 
             if (! empty($dataToUpdate)) {
                 LoggerService::info('CarQuote update - Data to be updated');
@@ -158,7 +160,7 @@ class MulkiyaDataProcessor
 
             // If record already existed, update with OCR data
             if (! $registrationCertificate->wasRecentlyCreated) {
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
+                $dataToUpdate = $this->getFieldsToUpdate($fieldsToUpdate);
 
                 if (! empty($dataToUpdate)) {
                     $registrationCertificate->update($dataToUpdate);

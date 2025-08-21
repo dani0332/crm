@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, OcrUtils;
 
     public function model()
     {
@@ -193,7 +193,7 @@ class PersonalQuoteRepository extends BaseRepository
                     )->afterCommit();
                 }
 
-                $isSendUpdateEligibleForOCR = OcrUtils::isSendUpdateEligibleForOCR($quote, $isSendUpdate);
+                $isSendUpdateEligibleForOCR = $this->isSendUpdateEligibleForOCR($quote, $isSendUpdate);
 
                 LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
                 $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);

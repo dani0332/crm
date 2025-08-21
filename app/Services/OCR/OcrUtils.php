@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\OCR;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixCacheService;
@@ -14,16 +16,16 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
-class OcrUtils
+trait OcrUtils
 {
-    public static function getCleanData(array $data): array
+    public function getCleanData(array $data): array
     {
         return array_filter($data, function ($value) {
             return $value !== null && $value !== '';
         });
     }
 
-    public static function getFieldsToUpdate(array $fieldsToUpdate): array
+    public function getFieldsToUpdate(array $fieldsToUpdate): array
     {
         $dataToUpdate = [];
         foreach ($fieldsToUpdate as $field => $value) {
@@ -35,7 +37,7 @@ class OcrUtils
         return $dataToUpdate;
     }
 
-    public static function formatDate(?string $date): ?string
+    public function formatDate(?string $date): ?string
     {
         if (empty($date)) {
             return null;
@@ -48,7 +50,7 @@ class OcrUtils
         }
     }
 
-    public static function extractFirstName(?string $fullName): ?string
+    public function extractFirstName(?string $fullName): ?string
     {
         if (empty($fullName)) {
             return null;
@@ -59,7 +61,7 @@ class OcrUtils
         return $nameParts[0] ?? null;
     }
 
-    public static function extractLastName(?string $fullName): ?string
+    public function extractLastName(?string $fullName): ?string
     {
         if (empty($fullName)) {
             return null;
@@ -74,7 +76,7 @@ class OcrUtils
         return null;
     }
 
-    public static function formatGender(?string $gender): ?string
+    public function formatGender(?string $gender): ?string
     {
         if (empty($gender)) {
             return null;
@@ -87,7 +89,7 @@ class OcrUtils
         };
     }
 
-    public static function ensureArray($data): array
+    public function ensureArray($data): array
     {
         if (is_object($data)) {
             return (array) $data;
@@ -96,7 +98,7 @@ class OcrUtils
         return is_array($data) ? $data : [];
     }
 
-    public static function resolveProp($object, $prop)
+    public function resolveProp($object, $prop)
     {
         if (is_object($object) && property_exists($object, $prop)) {
             return $object->$prop;
@@ -105,7 +107,7 @@ class OcrUtils
         return null;
     }
 
-    public static function parseDate($date, $default = null, $format = 'Y-m-d')
+    public function parseDate($date, $default = null, $format = 'Y-m-d')
     {
         try {
             return $date ? Carbon::parse($date)->format($format) : $default;
@@ -116,7 +118,7 @@ class OcrUtils
         }
     }
 
-    public static function getProvider(Model $quote)
+    public function getProvider(Model $quote)
     {
         if ($quote instanceof SendUpdateLog) {
             return $quote->insuranceProvider?->code ?? null;
@@ -140,7 +142,7 @@ class OcrUtils
     /**
      * Update Accuracy Matrix cache after successful OCR processing
      */
-    public static function updateAccuracyMatrix(
+    public function updateAccuracyMatrix(
         QuoteTypes $quoteType,
         Model $quote,
         OCRDocumentTypeEnum $docType,
@@ -153,12 +155,12 @@ class OcrUtils
             return;
         }
 
-        if (!self::requiresOcrNotifications($docType)) {
+        if (!$this->requiresOcrNotifications($docType)) {
             return;
         }
 
         $policyNumber = $accuracyMatrixService->extractPolicyNumberFromOcrData($data, $docType);
-        $docId = self::generateDocumentId($quote, $documentType);
+        $docId = $this->generateDocumentId($quote, $documentType);
 
         $accuracyMatrixService->updateDocumentData(
             $quote->id,
@@ -193,12 +195,12 @@ class OcrUtils
         return in_array($docType->value, $allEnabledTypes);
     }
 
-    private static function generateDocumentId(Model $quote, DocumentType $documentType): string
+    private function generateDocumentId(Model $quote, DocumentType $documentType): string
     {
         return "{$documentType->code}_{$quote->uuid}_" . uniqid();
     }
 
-    public static function checkIfQuoteTypeIsGroupMedical(QuoteTypes $quoteType): QuoteTypes
+    public function checkIfQuoteTypeIsGroupMedical(QuoteTypes $quoteType): QuoteTypes
     {
         if ($quoteType == QuoteTypes::GROUP_MEDICAL) {
             return QuoteTypes::BUSINESS; 
@@ -207,7 +209,7 @@ class OcrUtils
         return $quoteType;
     }
 
-    public static function isSendUpdateEligibleForOCR($quote, $isSendUpdate)
+    public function isSendUpdateEligibleForOCR($quote, $isSendUpdate)
     {
         // Home & Group Medical only for Send Update, not allowed for other LOBs
         $allowedLOBs = [
@@ -216,7 +218,7 @@ class OcrUtils
         ];
         
         // Check if this is a Business quote (ID 5) that's actually Group Medical
-        $isGroupMedicalBusiness = app(OCRService::class)->isGroupMedicalBusiness($quote);
+        $isGroupMedicalBusiness = $this->isGroupMedicalBusiness($quote);
         
         $isEligible = $isSendUpdate && $quote instanceof \App\Models\SendUpdateLog && 
                      (in_array($quote->quote_type_id, $allowedLOBs) || $isGroupMedicalBusiness);
@@ -231,13 +233,13 @@ class OcrUtils
             'is_lob_allowed' => $quote instanceof \App\Models\SendUpdateLog ? in_array($quote->quote_type_id, $allowedLOBs) : false,
             'is_group_medical_business' => $isGroupMedicalBusiness,
             'final_eligibility' => $isEligible,
-            'eligibility_reason' => $isEligible ? 'Eligible for OCR' : self::getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs),
+            'eligibility_reason' => $isEligible ? 'Eligible for OCR' : $this->getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs),
         ]);
         
         return $isEligible;
     }
     
-    private static function getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs)
+    private function getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs)
     {
         if (!$isSendUpdate) {
             return 'Not a Send Update';
@@ -252,5 +254,31 @@ class OcrUtils
         }
         
         return 'Unknown reason';
+    }
+    
+    public function isGroupMedicalBusiness($quote)
+    {
+        try {
+            // Handle direct BusinessQuote instances
+            if ($quote instanceof BusinessQuote) {
+                return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            }
+            
+            // Handle SendUpdateLog instances
+            if ($quote instanceof SendUpdateLog && $quote->quote_type_id == QuoteTypes::getId(QuoteTypes::BUSINESS)) {
+                $actualQuote = BusinessQuote::where('uuid', $quote->quote_uuid)->first();
+                return $actualQuote && $actualQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            LoggerService::error('Error checking Group Medical business type', [
+                'error' => $e->getMessage(),
+                'quote_type' => get_class($quote),
+                'quote_id' => $quote->id ?? 'N/A',
+                'quote_uuid' => $quote->uuid ?? 'N/A',
+            ]);
+            return false;
+        }
     }
 }

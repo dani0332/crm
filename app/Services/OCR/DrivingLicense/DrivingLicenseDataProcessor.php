@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
 {
+    use OcrUtils;
     private DrivingLicenseExtractor $drivingLicenseExtractor;
 
     public function __construct(
@@ -82,7 +83,7 @@ class DrivingLicenseDataProcessor
 
             // If record already existed, update with OCR data
             if (! $drivingLicenseDetail->wasRecentlyCreated) {
-                $dataToUpdate = OcrUtils::getFieldsToUpdate($fieldsToUpdate);
+                $dataToUpdate = $this->getFieldsToUpdate($fieldsToUpdate);
 
                 if (! empty($dataToUpdate)) {
                     $drivingLicenseDetail->update($dataToUpdate);

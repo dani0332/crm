@@ -13,6 +13,7 @@ use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OcrUtils;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 
 class OCRService
 {
-    use Ocrable, OcrFillable;
+    use Ocrable, OcrFillable, OcrUtils;
 
     public const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
@@ -219,20 +220,20 @@ class OCRService
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         if ($isQuoteStatusTransectionApproved) {
-            $quoteType = OcrUtils::checkIfQuoteTypeIsGroupMedical($quoteType);
+            $quoteType = $this->checkIfQuoteTypeIsGroupMedical($quoteType);
             (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
         } elseif (! $isEcom) {
             event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
         }
 
         // Send end notification for successful processing (skip for ecom)
-        if (! $isEcom && OcrUtils::requiresOcrNotifications($docType) && $dataFilledResponse) {
+        if (! $isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
             event(new OcrNotifications($quote, 'end', 'OCR processing completed successfully', null, $docType?->value, $userId));
         }
 
         // Update Accuracy Matrix cache after successful OCR processing
         try {
-            OcrUtils::updateAccuracyMatrix($quoteType, $quote, $docType, $data, $documentType);
+            $this->updateAccuracyMatrix($quoteType, $quote, $docType, $data, $documentType);
         } catch (\Exception $e) {
             // Log error but don't interrupt OCR flow
             LoggerService::error('Accuracy Matrix update failed but OCR completed successfully - ', exception: $e);
@@ -356,7 +357,7 @@ class OCRService
         }
 
         // Send start notification (skip for ecom)
-        if (! $isEcom && OcrUtils::requiresOcrNotifications($docType)) {
+        if (! $isEcom && $this->requiresOcrNotifications($docType)) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
         }
 
