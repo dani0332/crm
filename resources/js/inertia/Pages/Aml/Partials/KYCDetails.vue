@@ -561,13 +561,11 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = 
         />
       </x-field>
       <template v-if="isScreeningIndividual">
-        <x-field label="Date of Birth">
-          <DatePicker
-            v-model="kycFormDetails.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-          />
-        </x-field>
+        <DatePicker
+          v-model="kycFormDetails.dob"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Nationality">
           <ComboBox
             v-model="kycFormDetails.nationality_id"
@@ -720,25 +718,17 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] = 
           :disabled="isScreeningIndividual"
         />
       </x-field>
-      <x-field
-        :label="
-          isScreeningIndividual ? 'ID Issue Date' : 'ID / Document Issue Date'
-        "
-      >
-        <DatePicker v-model="kycFormDetails.id_issue_date" />
-      </x-field>
-      <x-field
-        :label="
-          isScreeningIndividual ? 'ID Expiry Date' : 'ID / Document Expiry Date'
-        "
-      >
-        <DatePicker
-          v-model="kycFormDetails.id_expiry_date"
-          :rules="[isRequired]"
-          :error="idExpiryDateError"
-          :min-date="new Date()"
-        />
-      </x-field>
+      <DatePicker
+          v-model="kycFormDetails.id_issue_date"
+          :label="isScreeningIndividual ? 'ID Issue Date' : 'ID / Document Issue Date'"
+      />
+      <DatePicker
+        v-model="kycFormDetails.id_expiry_date"
+        :rules="[isRequired]"
+        :error="idExpiryDateError"
+        :min-date="new Date()"
+        :label="isScreeningIndividual ? 'ID Expiry Date' : 'ID / Document Expiry Date'"
+      />
     </dl>
     <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
       <x-field v-if="!isScreeningIndividual" label="Place of issue">

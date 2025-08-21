@@ -867,15 +867,13 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] = crea
             :hasError="validateNationality"
           />
         </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="screeningFormDetails.dob"
-            :rules="[isRequired]"
-            placeholder="Date of Birth"
-            class="w-full"
-            :error="screeningFormDetails.errors.dob"
-          />
-        </x-field>
+        <DatePicker
+          v-model="screeningFormDetails.dob"
+          :rules="[isRequired]"
+          :required="true"
+          placeholder="Date of Birth"
+          label="Date of Birth"
+        />
         <x-field label="Gender" required>
           <x-select
             v-model="screeningFormDetails.screening_gender"
