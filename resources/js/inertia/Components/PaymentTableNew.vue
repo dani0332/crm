@@ -1169,6 +1169,7 @@ watch(
                       :paymentMethodsForm="paymentMethodsFormReplicated"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       :quoteType="quoteType"
+                      :isHealthAUHLead="page.props?.bookPolicyDetails?.isHealthAUHLead"
                       @view-payment="
                         (payment, splitId, splitNo, action) =>
                           editPaymentModal(payment, splitId, splitNo, action)

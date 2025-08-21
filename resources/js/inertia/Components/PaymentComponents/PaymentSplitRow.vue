@@ -29,6 +29,10 @@ const props = defineProps({
   quoteRequest: Object,
   paymentMethodsForm: Object,
   quoteType: String,
+  isHealthAUHLead: {
+    type: Boolean,
+    default: false,
+  },
   sendUpdate: {
     type: Object,
     default: null,
@@ -186,6 +190,9 @@ const enablePostPrepaymentButton = computed(() => {
 });
 
 const showRetryButton = computed(() => {
+  if (props.isHealthAUHLead) {
+    return false;
+  }
   return (
     !enablePostPrepaymentButton.value &&
     can(permissionEnum.RETRY_PREPAYMENT_BUTTON) &&
