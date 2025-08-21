@@ -165,6 +165,22 @@ class BorController extends Controller
         return new QuoteDocumentResource($document);
     }
 
+    public function deleteDocument(Request $request)
+    {
+        $borLog = BorLog::with('personalQuote', 'personalQuote.documents')->where('bor_reference', $request->bor_ref_id)->first();
+        $quote = $borLog->personalQuote;
+        if(!$quote) {
+            return response()->json(['message' => 'Personal quote not found'], 404);
+        }
+
+        $data = [
+            'doc_name' => $request->doc_name,
+            'doc_uuid' => $request->doc_uuid,
+            'document_category' => $request->bor_ref_id,
+        ];
+        return $this->quoteDocumentService->deleteBorDocument($quote, $data);
+    }
+
     public function borCompletionEmailTrigger($borRefId)
     {
         LoggerService::info('BOR Completion Email Trigger', [

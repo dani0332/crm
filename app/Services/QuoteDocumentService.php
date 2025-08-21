@@ -117,6 +117,7 @@ class QuoteDocumentService extends BaseService
                 'doc_uuid' => $data['doc_uuid'],
             ]);
         }]);
+        dd($quote->documents);
 
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
@@ -130,6 +131,33 @@ class QuoteDocumentService extends BaseService
         }
 
         vAbort('Invalid document detail provided.');
+    }
+
+    /**
+     * @param  $data  doc_name, doc_uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteBorDocument($quote, $data)
+    {
+        // load quote document with provided detail
+        $quote->load(['documents' => function ($q) use ($data) {
+            $q->where([
+                'doc_name' => $data['doc_name'],
+                'doc_uuid' => $data['doc_uuid'],
+                'document_category' => $data['document_category'],
+            ]);
+        }]);
+        // check for document and delete if found
+        if (($document = $quote->documents->first())) {
+            $document->delete();
+            // LoggerService::info('Document deleted', [
+            //     'quote_uuid' => $data['quote_uuid'],
+            //     'doc_name' => $data['doc_name']
+            // ]);
+
+            return response()->json(['message' => 'document deleted successfully']);
+        }
+        return response()->json(['message' => 'document not found'], 404);
     }
 
     /**

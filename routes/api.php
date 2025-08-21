@@ -94,6 +94,7 @@ Route::prefix('v1')->group(function () {
         Route::get('completion-email-trigger/{bor_ref_id}', [BorController::class, 'borCompletionEmailTrigger'])->name('bor.completion-email-trigger');
         Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
         Route::post('upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
+        Route::delete('delete-document', [BorController::class, 'deleteDocument'])->name('bor.delete-document');
 
         Route::get('document-types', [BorController::class, 'getDocumentTypes'])->name('bor.get-document-types');
         // Signature routes
