@@ -23,7 +23,7 @@ class PopulateDocumentData implements ShouldQueue
     public $timeout = 100;
     public $backoff = 300;
 
-    protected bool $isEcom;
+    protected bool $isEcom = false;
 
     /**
      * Create a new job instance.
