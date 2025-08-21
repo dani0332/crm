@@ -88,6 +88,8 @@ class HomePUAQuoteExport implements FromCollection, WithHeadings, WithMapping, W
             'Lead Status',
             'Payment Status',
             'Source',
+            'Ownership Status',
+            'Type of Property',
             'Assigned Advisor Email',
         ];
     }
@@ -102,6 +104,8 @@ class HomePUAQuoteExport implements FromCollection, WithHeadings, WithMapping, W
                 $quote->quoteStatus->text ?? '',
                 $quote->paymentstatus,
                 $quote->source,
+                $quote->homeQuote->lookupPossessionType->text ?? 'N/A',
+                $quote->homeQuote->lookupAccommodationType->text ?? 'N/A',
                 $quote->advisor->email ?? '',
             ];
         } elseif (isset($quote->Team)) {

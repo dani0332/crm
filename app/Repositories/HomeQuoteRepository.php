@@ -941,7 +941,14 @@ class HomeQuoteRepository extends BaseRepository
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_status_id'
             ])
-            ->with(['payments', 'advisor:id,email', 'advisor.teams:id,name,parent_team_id', 'quoteStatus:id,text'])
+            ->with([
+                'payments',
+                'advisor:id,email',
+                'advisor.teams:id,name,parent_team_id',
+                'quoteStatus:id,text',
+                'homeQuote.lookupPossessionType:id,text',
+                'homeQuote.lookupAccommodationType:id,text'
+            ])
             ->whereHas('advisor')
             ->whereHas('advisor.teams', function ($query) use ($homeTeam) {
                 $query->where('teams.parent_team_id', '=', $homeTeam->id);
@@ -955,11 +962,9 @@ class HomeQuoteRepository extends BaseRepository
             ->whereNotIn('personal_quotes.uuid', $apuaQuoteUuids)
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
-                        $paymentQuery->whereBetween('authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $query->whereHas('payments', function ($paymentQuery) use ($authorizeDate) {
+                        $paymentQuery->whereDate('authorized_at', Carbon::parse($authorizeDate)->toDateString());
                     });
                 }
             })
@@ -1023,7 +1028,14 @@ class HomeQuoteRepository extends BaseRepository
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_status_id'
             ])
-            ->with(['payments', 'advisor:id,email', 'advisor.teams:id,name,parent_team_id', 'quoteStatus:id,text'])
+            ->with([
+                'payments',
+                'advisor:id,email',
+                'advisor.teams:id,name,parent_team_id',
+                'quoteStatus:id,text',
+                'homeQuote.lookupPossessionType:id,text',
+                'homeQuote.lookupAccommodationType:id,text'
+            ])
             ->whereHas('advisor')
             ->whereHas('advisor.teams', function ($query) use ($homeTeam) {
                 $query->where('teams.parent_team_id', '=', $homeTeam->id);
@@ -1038,11 +1050,9 @@ class HomeQuoteRepository extends BaseRepository
             ->whereIn('personal_quotes.uuid', $apuaQuoteUuids)
             ->when($request->filled('authorize_date'), function ($query) use ($request) {
                 $authorizeDate = $request->input('authorize_date');
-                if (is_array($authorizeDate) && count($authorizeDate) >= 2) {
-                    $startDate = Carbon::parse($authorizeDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($authorizeDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
-                        $paymentQuery->whereBetween('authorized_at', [$startDate, $endDate]);
+                if ($authorizeDate) {
+                    $query->whereHas('payments', function ($paymentQuery) use ($authorizeDate) {
+                        $paymentQuery->whereDate('authorized_at', Carbon::parse($authorizeDate)->toDateString());
                     });
                 }
             })
@@ -1114,17 +1124,19 @@ class HomeQuoteRepository extends BaseRepository
                 'personal_quotes.premium',
                 'personal_quotes.id',
                 'personal_quotes.quote_status_id',
-                'personal_quotes.nationality_id',
                 'personal_quotes.payment_status_id',
                 'personal_quotes.insurance_provider_id',
-                'personal_quotes.dob'
+                'personal_quotes.plan_id'
             ])
             ->with([
                 'payments',
-                'nationality:id,text',
                 'paymentStatus:id,text',
                 'quoteStatus:id,text',
-                'insuranceProvider:id,text'
+                'insuranceProvider:id,text',
+                'insuranceProviderPlan:id,text,sub_type_id',
+                'insuranceProviderPlan.subType:id,text',
+                'homeQuote.lookupPossessionType:id,text',
+                'homeQuote.lookupAccommodationType:id,text'
             ])
             ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
             // Filter by quotes that have APUA plans
@@ -1139,11 +1151,9 @@ class HomeQuoteRepository extends BaseRepository
             ])
             ->when($request->filled('captured_date'), function ($query) use ($request) {
                 $capturedDate = $request->input('captured_date');
-                if (is_array($capturedDate) && count($capturedDate) >= 2) {
-                    $startDate = Carbon::parse($capturedDate[0])->startOfDay()->toDateTimeString();
-                    $endDate = Carbon::parse($capturedDate[1])->endOfDay()->toDateTimeString();
-                    $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
-                        $paymentQuery->whereBetween('captured_at', [$startDate, $endDate]);
+                if ($capturedDate) {
+                    $query->whereHas('payments', function ($paymentQuery) use ($capturedDate) {
+                        $paymentQuery->whereDate('captured_at', Carbon::parse($capturedDate)->toDateString());
                     });
                 }
             })

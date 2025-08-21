@@ -126,8 +126,7 @@ const filters = reactive({
 const puaExportModal = reactive({
   show: false,
   exportType: 'all',
-  authorize_date: '',
-  captured_date: '',
+  payment_date: '',
 });
 
 const canExport = ref(false);
@@ -256,19 +255,11 @@ const onPUAExport = () => {
 };
 
 const onConfirmPUAExport = () => {
-  // Use the date filters from the modal
+  // Use the single date for both authorize and capture date filters
   const filtersForExport = {
-    authorize_date: puaExportModal.authorize_date,
-    captured_date: puaExportModal.captured_date,
+    authorize_date: puaExportModal.payment_date,
+    captured_date: puaExportModal.payment_date,
   };
-
-  // Ensure date filters are properly formatted as arrays
-  if (filtersForExport.authorize_date && Array.isArray(filtersForExport.authorize_date)) {
-    filtersForExport.authorize_date = filtersForExport.authorize_date.slice(0, 2);
-  }
-  if (filtersForExport.captured_date && Array.isArray(filtersForExport.captured_date)) {
-    filtersForExport.captured_date = filtersForExport.captured_date.slice(0, 2);
-  }
 
   const data = useObjToUrl(filtersForExport);
   const url = `/Home/pua-leads-export?${data}`;
@@ -602,7 +593,7 @@ const yesterday = computed(() => {
 });
 
 const canExportPUA = computed(() => {
-  return puaExportModal.authorize_date || puaExportModal.captured_date;
+  return puaExportModal.payment_date;
 });
 
 const insurerAMLStatusOption = computed(() => {
@@ -1092,23 +1083,11 @@ const formatDate = dateString =>
       backdrop
       persistent
     >
-      <div class="grid md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4">
         <DatePicker
-          v-model="puaExportModal.authorize_date"
-          label="Payment Authorised Date"
+          v-model="puaExportModal.payment_date"
+          label="Payment Date"
           class="w-full"
-          range
-          multi-calendars
-          multi-calendars-solo
-          :max-date="yesterday"
-        />
-        <DatePicker
-          v-model="puaExportModal.captured_date"
-          label="Payment Captured Date"
-          class="w-full"
-          range
-          multi-calendars
-          multi-calendars-solo
           :max-date="yesterday"
         />
       </div>
