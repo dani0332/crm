@@ -1164,6 +1164,10 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
+        if (!$quote) {
+            info("Quote not found for type: {$type}, id: {$id}");
+            return;
+        }
         $quoteCode = $quote->code;
         $currentQuoteStatus = $quote->quote_status_id;
         // Check if quote status is locked - if so, don't change status due to document uploads

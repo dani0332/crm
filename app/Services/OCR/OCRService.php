@@ -2,11 +2,13 @@
 
 namespace App\Services\OCR;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Jobs\OCR\PopulateDocumentData;
+use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
@@ -202,26 +204,38 @@ class OCRService
         string $documentCategory,
         float $startTime,
         float $apiCallStartTime,
-        object $data
+        object $data,
+        bool $isSendUpdateEligibleForOCR = false
     ): ?bool {
         $apiCallEndTime = microtime(true);
         $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
 
         LoggerService::info('OCR API call completed - Quote UUID: '.$quote->uuid);
-        LoggerService::info(self::class.'::process - Data received from getData - Quote UUID: '.$quote->uuid.' - apiCallEndTime: '.$apiCallEndTime.' - apiCallExecutionTime: '.$apiCallExecutionTime);
+        LoggerService::info(self::class.'::process - Data received from getData - Quote UUID: '.$quote->uuid.' - apiCallEndTime: '.$apiCallEndTime.' - apiCallExecutionTime: '.$apiCallExecutionTime, [
+            'is_send_update_eligible_for_ocr' => $isSendUpdateEligibleForOCR,
+        ]);
 
-        $dataFilledResponse = $this->fill($quote, $docType, $data, $documentCategory);
+        $dataFilledResponse = $this->fill($quote, $docType, $data, $documentCategory, $isSendUpdateEligibleForOCR, $quoteType);
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
         if ($isQuoteStatusTransectionApproved) {
+            $quoteType = OcrUtils::checkIfQuoteTypeIsGroupMedical($quoteType);
             (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
         } elseif (! $isEcom) {
             event(new OcrNotifications($quote, 'end', 'Lead is not Transaction Approved.', null, $docType?->value, $userId));
         }
 
         // Send end notification for successful processing (skip for ecom)
-        if (! $isEcom && $this->requiresOcrNotifications($docType) && $dataFilledResponse) {
+        if (! $isEcom && OcrUtils::requiresOcrNotifications($docType) && $dataFilledResponse) {
             event(new OcrNotifications($quote, 'end', 'OCR processing completed successfully', null, $docType?->value, $userId));
+        }
+
+        // Update Accuracy Matrix cache after successful OCR processing
+        try {
+            OcrUtils::updateAccuracyMatrix($quoteType, $quote, $docType, $data, $documentType);
+        } catch (\Exception $e) {
+            // Log error but don't interrupt OCR flow
+            LoggerService::error('Accuracy Matrix update failed but OCR completed successfully - ', exception: $e);
         }
 
         // Calculate execution time and log success
@@ -318,6 +332,7 @@ class OCRService
         string $fileMimeType,
         int $userId,
         bool $isEcom,
+        bool $isSendUpdateEligibleForOCR
     ): ?bool {
         // Record start time for OCR processing
         $startTime = microtime(true);
@@ -341,7 +356,7 @@ class OCRService
         }
 
         // Send start notification (skip for ecom)
-        if (! $isEcom && $this->requiresOcrNotifications($docType)) {
+        if (! $isEcom && OcrUtils::requiresOcrNotifications($docType)) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
         }
 
@@ -367,7 +382,8 @@ class OCRService
                     $documentCategory,
                     $startTime,
                     $apiCallStartTime,
-                    $data
+                    $data,
+                    $isSendUpdateEligibleForOCR
                 );
             } else {
                 $result = $this->handleProcessingFailure(
@@ -403,11 +419,19 @@ class OCRService
         $quote,
         string $filePathAzure,
         string $fileMimeType,
-        ?string $quoteTypeParam = null
+        ?string $quoteTypeParam = null,
+        bool $isSendUpdateEligibleForOCR = false
     ): void {
 
-        if ($quote instanceof SendUpdateLog) {
-            LoggerService::info('OCR Dispatch - Skipping for SendUpdateLog - Quote UUID: '.$quote->uuid);
+        // Skip OCR only for SendUpdate logs that are NOT eligible (e.g., Car SendUpdate)
+        if ($quote instanceof SendUpdateLog && !$isSendUpdateEligibleForOCR) {
+            LoggerService::info(self::class."::populateDocumentData - Send Update Log found but not eligible for OCR, skipping document data population", [
+                'quote_uuid' => $quote->uuid,
+                'quote_type' => ucfirst(request('quote_type')),
+                'document_type' => $documentType->code,
+                'reason' => 'Send Update not eligible for OCR for this LOB',
+                'eligible_lobs' => 'HOME, GROUP_MEDICAL only',
+            ]);
 
             return;
         }
@@ -418,6 +442,38 @@ class OCRService
 
             return;
         }
+
+        // If quote type is not available from request and this is a Send Update Log, get it from the model
+        if (!$quoteType && $quote instanceof SendUpdateLog) {
+            $quoteType = $this->getCorrectQuoteTypeForOCR($quote);
+            LoggerService::info('PopulateDocumentData - Quote type derived from Send Update Log', [
+                'quote_type_id' => $quote->quote_type_id,
+                'derived_quote_type' => $quoteType?->value,
+                'quote_uuid' => $quote->uuid,
+                'is_group_medical_override' => $this->isGroupMedicalBusiness($quote),
+            ]);
+        }
+        
+        // For regular Business quotes, check if they are Group Medical and adjust quote type accordingly
+        if ($quoteType === QuoteTypes::BUSINESS && $this->isGroupMedicalBusiness($quote)) {
+            $quoteType = QuoteTypes::GROUP_MEDICAL;
+            LoggerService::info('PopulateDocumentData - Business quote type overridden to Group Medical', [
+                'original_quote_type' => 'Business',
+                'new_quote_type' => $quoteType->value,
+                'quote_uuid' => $quote->uuid,
+                'quote_model' => get_class($quote),
+            ]);
+        }
+        
+        LoggerService::info('PopulateDocumentData - About to dispatch OCR job', [
+            'parsed_quote_type' => $quoteType?->value,
+            'quote_uuid' => $quote->uuid ?? 'N/A',
+            'quote_code' => $quote->code ?? 'N/A',
+            'is_send_update_eligible_for_ocr' => $isSendUpdateEligibleForOCR,
+            'will_dispatch_ocr_job' => !is_null($quoteType) && !is_null($quote) && !is_null($filePathAzure),
+            'document_type' => $documentType->code,
+            'user_id' => Auth::user()->id ?? 'Not authenticated',
+        ]);
 
         $userId = Auth::id();
 
@@ -435,6 +491,7 @@ class OCRService
                 $fileMimeType,
                 $userId ?? 0,
                 $isEcom,
+                $isSendUpdateEligibleForOCR
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters - Quote UUID: '.$quote->uuid);
@@ -459,18 +516,40 @@ class OCRService
         return null;
     }
 
-    /**
-     * Check if the document type requires OCR notifications
-     */
-    public function requiresOcrNotifications(OCRDocumentTypeEnum $docType): bool
+    private function getCorrectQuoteTypeForOCR($quote)
     {
-        return in_array($docType, [
-            OCRDocumentTypeEnum::TAX_INVOICE,
-            OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
-            OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE,
-            OCRDocumentTypeEnum::ID_CARD,
-            OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
-            OCRDocumentTypeEnum::DRIVING_LICENSE,
-        ]);
+        // For Group Medical business quotes, return GROUP_MEDICAL instead of BUSINESS
+        if ($this->isGroupMedicalBusiness($quote)) {
+            return QuoteTypes::GROUP_MEDICAL;
+        }
+        
+        // For all other cases, use the normal mapping
+        return QuoteTypes::getName($quote->quote_type_id);
+    }
+    
+    public function isGroupMedicalBusiness($quote)
+    {
+        try {
+            // Handle direct BusinessQuote instances
+            if ($quote instanceof BusinessQuote) {
+                return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            }
+            
+            // Handle SendUpdateLog instances
+            if ($quote instanceof SendUpdateLog && $quote->quote_type_id == QuoteTypes::getId(QuoteTypes::BUSINESS)) {
+                $actualQuote = BusinessQuote::where('uuid', $quote->quote_uuid)->first();
+                return $actualQuote && $actualQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            LoggerService::error('Error checking Group Medical business type', [
+                'error' => $e->getMessage(),
+                'quote_type' => get_class($quote),
+                'quote_id' => $quote->id ?? 'N/A',
+                'quote_uuid' => $quote->uuid ?? 'N/A',
+            ]);
+            return false;
+        }
     }
 }

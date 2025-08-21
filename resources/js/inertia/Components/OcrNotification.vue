@@ -18,11 +18,15 @@ const listen = () => {
     const currentUrl = page.props.location || '';
     const isCurrentUser = e.data.userId === page.props.auth.user.id;
 
-    // Only show notifications to the user who uploaded the document
+    const allowedPages = ['/quotes/car/', '/personal-quotes/home/', '/medical/amt/'];
+    const isAllowedPage = allowedPages.some(p => currentUrl.includes(p));
+
+    // Only show notifications to the user who uploaded the document, same quote, and only on allowed pages
     if (
       e.data.uuid === page.props?.quote?.uuid &&
       currentUrl.includes('/quotes/car/') &&
-      isCurrentUser
+      isCurrentUser &&
+      isAllowedPage
     ) {
       // Only show toast notification for 'start' status and CERTIFICATE_OF_ISSUANCE document type
       // Still show 'fail' status notifications for all supported document types
@@ -54,19 +58,7 @@ const listen = () => {
       );
 
       // The completion notification for 'end' status is removed as per requirements
-      // Field checking is still kept for updating UI if needed
-      if (e.data.status === 'end' && !e.data.error) {
-        // Check if we need to update lead status to "Policy Issued"
-        const allFieldsFilled = checkRequiredPolicyFields();
-
-        // Only show notification if fields are missing
-        if (!allFieldsFilled) {
-          notification.info({
-            title: 'Some required fields are still missing in Policy details',
-            position: 'top',
-          });
-        }
-      }
+      // Field checking is moved to page-level handlers to avoid duplicate notifications
     }
   });
   worker.onerror = function (error) {
@@ -82,30 +74,7 @@ const listen = () => {
   });
 };
 
-const checkRequiredPolicyFields = () => {
-  // Check if all required policy fields with FieldLoader overlays are filled
-  const quote = page.props?.quote;
-  if (!quote) {
-    return false;
-  }
-
-  // Only check the 4 fields that have FieldLoader overlays
-  const requiredFields = [
-    { field: 'policy_number', property: 'quote_policy_number' },
-    { field: 'policy_start_date', property: 'quote_policy_start_date' },
-    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
-    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
-  ];
-
-  // Make sure all required fields have values
-  const result = requiredFields.every(item => {
-    // Check both the direct quote property and the form property
-    const value = quote[item.field] || quote[item.property];
-    return value !== null && value !== undefined && String(value).trim() !== '';
-  });
-
-  return result;
-};
+// checkRequiredPolicyFields function moved to individual LOB pages to avoid duplicate notifications
 
 onMounted(() => {
   listen();

@@ -7,6 +7,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
 use App\Jobs\WatermarkDocumentsJob;
@@ -91,6 +92,7 @@ class PersonalQuoteRepository extends BaseRepository
     {
         try {
             $fileName = $file->getClientOriginalName();
+            $isSendUpdate = request()->is_send_update;
             LoggerService::info(self::class.' - fn: fetchUploadDocument called - Quote UUID: '.$data['quote_uuid']);
             $quoteType = '';
             $insuranceProviderId = null;
@@ -105,11 +107,20 @@ class PersonalQuoteRepository extends BaseRepository
 
             $documentType = $query->first();
 
-            if (request()->is_send_update) {
+            if ($isSendUpdate) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
                 LoggerService::startQuoteLogging($quote);
                 LoggerService::info('fn: fetchUploadDocument start for Send Update Log');
                 [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
+                
+                // Update Send Update log with insurance provider if not set
+                if ($insuranceProviderId && !$quote->insurance_provider_id) {
+                    $quote->update(['insurance_provider_id' => $insuranceProviderId]);
+                    LoggerService::info('Updated Send Update Log with insurance provider', [
+                        'send_update_uuid' => $quote->uuid,
+                        'insurance_provider_id' => $insuranceProviderId,
+                    ]);
+                }
             } else {
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
             }
@@ -150,12 +161,12 @@ class PersonalQuoteRepository extends BaseRepository
             try {
                 $quoteDocument = null;
 
-                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, &$quoteDocument) {
+                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, &$quoteDocument, $isSendUpdate) {
 
                     $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
-                    if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
+                    if ($isSendUpdate && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
                         LoggerService::info('Tax Invoice and Tax Invoice Raised Buyer documents found for Send Update Log');
                         if ($insuranceProviderId) {
                             LoggerService::info('insuranceProviderId: '.$insuranceProviderId.' found for Send Update Log');
@@ -181,10 +192,12 @@ class PersonalQuoteRepository extends BaseRepository
                     )->afterCommit();
                 }
 
-                LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
-                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType);
+                $isSendUpdateEligibleForOCR = $this->isSendUpdateEligibleForOCR($quote, $isSendUpdate);
 
-                if (! $insuranceProviderId && request()->is_send_update) {
+                LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
+                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);
+
+                if (! $insuranceProviderId && $isSendUpdate) {
                     LoggerService::info('File Uploaded - Insurance Provider is required to generate broker invoice number');
 
                     return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
@@ -203,13 +216,14 @@ class PersonalQuoteRepository extends BaseRepository
         }
     }
 
-    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType)
+    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR)
     {
         app(OCRService::class)->dispatchJobIfEligible(
             $documentType,
             $quote,
             $filePathAzure,
-            $fileMimeType
+            $fileMimeType,
+            $isSendUpdateEligibleForOCR
         );
     }
 
@@ -320,4 +334,52 @@ class PersonalQuoteRepository extends BaseRepository
     {
         return $this->where($column, $value)->with(['payments'])->first();
     }
+
+    private function isSendUpdateEligibleForOCR($quote, $isSendUpdate)
+    {
+        // Home & Group Medical only for Send Update, not allowed for other LOBs
+        $allowedLOBs = [
+            QuoteTypes::getId(QuoteTypes::HOME),
+            QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)
+        ];
+        
+        // Check if this is a Business quote (ID 5) that's actually Group Medical
+        $isGroupMedicalBusiness = app(OCRService::class)->isGroupMedicalBusiness($quote);
+        
+        $isEligible = $isSendUpdate && $quote instanceof SendUpdateLog && 
+                     (in_array($quote->quote_type_id, $allowedLOBs) || $isGroupMedicalBusiness);
+        
+        LoggerService::info('isSendUpdateEligibleForOCR - Eligibility Check', [
+            'is_send_update' => $isSendUpdate,
+            'is_send_update_log_instance' => $quote instanceof SendUpdateLog,
+            'quote_type_id' => $quote->quote_type_id ?? 'N/A',
+            'quote_uuid' => $quote->uuid ?? 'N/A',
+            'quote_code' => $quote->code ?? 'N/A',
+            'allowed_lob_ids' => $allowedLOBs,
+            'is_lob_allowed' => $quote instanceof SendUpdateLog ? in_array($quote->quote_type_id, $allowedLOBs) : false,
+            'is_group_medical_business' => $isGroupMedicalBusiness,
+            'final_eligibility' => $isEligible,
+            'eligibility_reason' => $isEligible ? 'Eligible for OCR' : $this->getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs),
+        ]);
+        
+        return $isEligible;
+    }
+    
+    private function getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs)
+    {
+        if (!$isSendUpdate) {
+            return 'Not a Send Update';
+        }
+        
+        if (!($quote instanceof SendUpdateLog)) {
+            return 'Quote is not a SendUpdateLog instance';
+        }
+        
+        if (!in_array($quote->quote_type_id, $allowedLOBs)) {
+            return 'LOB not allowed for Send Update OCR (only HOME and GROUP_MEDICAL allowed)';
+        }
+        
+        return 'Unknown reason';
+    }
+
 }

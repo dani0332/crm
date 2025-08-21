@@ -180,6 +180,14 @@ const confirmDeleteDoc = () => {
           title: 'File Deleted',
           position: 'top',
         });
+
+        // Emit custom event for accuracy matrix updates
+        window.dispatchEvent(new CustomEvent('document-deleted', {
+          detail: {
+            docId: confirmDeleteData.doc_id,
+            docUuid: confirmDeleteData.doc_uuid,
+          }
+        }));
       },
     },
   );
