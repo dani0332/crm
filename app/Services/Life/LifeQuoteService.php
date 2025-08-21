@@ -711,7 +711,7 @@ class LifeQuoteService extends BaseService
             'plans' => [$data],
         ];
 
-        LoggerService::info('fn: lifePlanCreateQuote', context: [
+        LoggerService::info('fn: lifePlanCreateQuote', extra: [
             'data' => $reqData,
             'url' => '/save-manual-life-quote-plan',
         ]);
@@ -885,7 +885,7 @@ class LifeQuoteService extends BaseService
 
     public function toggleLifePlanVisibility(array $data)
     {
-        LoggerService::info('fn: toggleLifePlanVisibility', context: [
+        LoggerService::info('fn: toggleLifePlanVisibility', extra: [
             'data' => $data,
         ]);
 
