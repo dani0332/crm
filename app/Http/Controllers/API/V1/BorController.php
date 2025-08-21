@@ -169,8 +169,11 @@ class BorController extends Controller
     {
         $borLog = BorLog::with('personalQuote', 'personalQuote.documents')->where('bor_reference', $request->bor_ref_id)->first();
         $quote = $borLog->personalQuote;
+        $quoteName = QuoteTypes::getName($quote->quote_type_id);
+        $isPersonalQuote = checkPersonalQuotes($quoteName->value);
+        $quote = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $quote->id) : $this->getQuoteObject($quoteName->value, $quote->quote_id);
         if(!$quote) {
-            return response()->json(['message' => 'Personal quote not found'], 404);
+            return response()->json(['message' => 'Quote not found'], 404);
         }
 
         $data = [
