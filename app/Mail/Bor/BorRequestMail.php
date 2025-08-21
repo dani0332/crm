@@ -124,7 +124,7 @@ class BorRequestMail extends Mailable
                 'document_id' => $this->borLog->document_id ?? '',
                 'date_created' => $this->borLog->date_created ?? '',
             ],
-            'attachPdf' => $this->borLog->customer_type == "Entity" ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : null,
+            'attachPdf' => $this->borLog->customer_type == "Entity" ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : "",
             'advisor' => $this->advisorData,
         ];
     }
