@@ -117,7 +117,6 @@ class QuoteDocumentService extends BaseService
                 'doc_uuid' => $data['doc_uuid'],
             ]);
         }]);
-        dd($quote->documents);
 
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
