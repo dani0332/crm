@@ -30,6 +30,7 @@ class RegistrationCertificate extends Model
         'ocr_done_by',
         'doc_type',
         'provider_id',
+        'traffic_code_number',
     ];
     protected $casts = [
         'expiry_date' => 'date',
