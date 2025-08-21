@@ -38,7 +38,8 @@ alwaysApply: false
 - `searchPolicies(Request $request): JsonResponse` - CAPI integration for claim creation only
 - `updateDetails(ClaimDetailsUpdateRequest $request, ClaimRequest $claim): JsonResponse` - internal system
 - `updateStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): JsonResponse` - internal system
-- `optimizeMessage(Request $request): JsonResponse` - internal AI message optimization
+- `optimizeMessage(ClaimSendNotificationRequest $request): JsonResponse` - AI message optimization with validation
+- `sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claim): JsonResponse` - send notifications with validation
 
 ### ClaimsService
 - `searchActivePolicies(array $criteria): array` - CAPI method for claim creation only
@@ -53,12 +54,24 @@ alwaysApply: false
 - `canBeClosed(): bool` - business rule validation
 - `assignTo(int $userId): self` - assignment with validation
 
+### ClaimActivity Model
+- `scopeForClaimRequest(Builder $query, int $claimRequestId): Builder`
+- `scopeForClaimUuid(Builder $query, string $claimUuid): Builder`
+- `scopeByStatus(Builder $query, int $statusId): Builder`
+- `scopeCreatedBy(Builder $query, int $userId): Builder`
+- `scopeWithAiComments(Builder $query): Builder`
+- `scopeRecent(Builder $query, int $days): Builder`
+- `hasAiComment(): bool` - check for AI-generated comments
+- `getDisplayComment(): ?string` - get appropriate comment for display
+- `createForClaim()` - static method for creating claim activities
+
 ## Claim-Specific Validation Rules
 
 ### Request Validation Classes
 - `ClaimStoreRequest` - Initial claim creation validation
 - `ClaimDetailsUpdateRequest` - Claim information updates with LOB-specific rules
 - `ClaimStatusUpdateRequest` - Status transition validation
+- `ClaimSendNotificationRequest` - Notification sending with AI message optimization validation
 
 ### Validation Implementation
 - Car LOB check: `$quoteTypeId == QuoteTypes::CAR->id()`
@@ -70,6 +83,12 @@ alwaysApply: false
 - Plate number: `/^[A-Za-z0-9\-\s]+$/` (actual pattern from implementation)
 - Standard field trimming in `prepareForValidation()`
 - Uppercase transformation for plate numbers
+
+### Notification Validation (`ClaimSendNotificationRequest`)
+- Required fields: `customer_message`, `ai_optimized_message`, `claim_sub_status_id`
+- Message validation: both customer and AI optimized messages required as strings
+- Sub-status validation: must exist in `claim_sub_statuses` table
+- Handles AI message optimization and notification sending validation
 
 ## Observer-Specific Business Logic
 

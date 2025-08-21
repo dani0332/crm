@@ -36,29 +36,66 @@ const subStatusOptions = computed(() => {
   );
 });
 
-const updateClaimSubStatusAndCustomer = isValid => {
+const updateClaimSubStatusAndCustomer = async (isValid) => {
   console.log('updateClaimStatus');
-  claimSubStatusAndCustomerForm.post(
-    route('claims.send-notification', props.claim?.uuid),
-    {
+  
+  try {
+    NProgress.start();
+    claimSubStatusAndCustomerForm.processing = true;
+
+    const response = await axios.post(
+      route('claims.send-notification', props.claim?.uuid),
+      claimSubStatusAndCustomerForm.data()
+    );
+    
+    console.log('response', response.data);
+    
+    // Show success notification
+    if (response.data.success) {
+      claimSubStatusAndCustomerForm.reset();
+      notification.success({
+        title: response.data.message || 'Notification sent successfully',
+        position: 'top',
+      });
+    }
+    
+    // Partial reload of just the claim data while preserving scroll
+    router.reload({
+      only: ['claim', 'dropdowns'],
       preserveScroll: true,
-      onSuccess: response => {
-        console.log('response', response);
-        router.visit(route('claims.show', props.claim?.uuid), {
-          preserveScroll: true,
-        });
-        emit('update', response);
-      },
-      onError: errors => {
-        Object.keys(errors).forEach(function (key) {
+      preserveState: true,
+    });
+    
+    // Emit update event
+    emit('update', response.data);
+    
+  } catch (error) {
+    console.error('Error sending notification:', error);
+    
+    // Handle validation errors
+    if (error.response && error.response.status === 422) {
+      const errors = error.response.data.errors || {};
+      Object.keys(errors).forEach(function (key) {
+        const errorMessages = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+        errorMessages.forEach(message => {
           notification.error({
-            title: errors[key],
+            title: message,
             position: 'top',
           });
         });
-      },
-    },
-  );
+      });
+    } else {
+      // Handle other errors
+      const errorMessage = error.response?.data?.message || 'Failed to send notification';
+      notification.error({
+        title: errorMessage,
+        position: 'top',
+      });
+    }
+  } finally {
+    NProgress.done();
+    claimSubStatusAndCustomerForm.processing = false;
+  }
 };
 
 const disableClaimSubStatusAndCustomerUpdate = computed(() => {
@@ -195,7 +232,7 @@ const optimizeMessage = async () => {
                   :error="
                     claimSubStatusAndCustomerForm.errors.ai_optimized_message
                   "
-                  :disabled="disableClaimSubStatusAndCustomerUpdate"
+                  :disabled="disableClaimSubStatusAndCustomerUpdate || !claimSubStatusAndCustomerForm.ai_optimized_message"
                   placeholder="AI Optimized Message"
                   class="w-full"
                   rows="5"
@@ -229,7 +266,7 @@ const optimizeMessage = async () => {
               :loading="claimSubStatusAndCustomerForm.processing"
               type="submit"
             >
-              Update
+              Send Notification
             </x-button>
           </div>
         </x-form>

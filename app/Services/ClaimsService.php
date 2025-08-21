@@ -9,7 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\CarMake;
-use App\Models\Claim;
+use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
 use App\Models\DocumentType;
@@ -858,6 +858,17 @@ class ClaimsService extends BaseService
         return $orderedDocumentTypesByCategory;
     }
 
-    public function sendNotification(Claim $claim, array $data): void {}
+    public function sendNotification(ClaimRequest $claimRequest, $request)
+    {
+        $claimActivity = ClaimActivity::createForClaim(
+            $claimRequest->id,
+            $claimRequest->uuid,
+            $request->claim_sub_status_id,
+            $request->customer_message,
+            $request->ai_optimized_message,
+        );
+
+        return $claimActivity;
+    }
 
 }

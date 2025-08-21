@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
+use App\Http\Requests\ClaimSendNotificationRequest;
 use App\Http\Requests\ClaimStatusUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
-use App\Models\Claim;
+use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
 use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
@@ -323,17 +324,10 @@ class ClaimsController extends Controller
     /**
      * Send notification to customer (AJAX endpoint)
      */
-    public function sendNotification(Request $request, Claim $claim): JsonResponse
+    public function sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claimRequest): JsonResponse
     {
-
-        $request->validate([
-            'customer_message' => 'required|string',
-            'ai_optimized_message' => 'required|string',
-            'claim_sub_status_id' => 'required|exists:claim_sub_statuses,id',
-        ]);
-
         try {
-            $this->claimsService->sendNotification($claim, $request->validated());
+            $this->claimsService->sendNotification($claimRequest, $request->safe());
 
             return response()->json([
                 'success' => true,
@@ -342,7 +336,7 @@ class ClaimsController extends Controller
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error sending notification', extra: [
                 'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
+                'claim_uuid' => $claimRequest->uuid,
                 'user_id' => auth()->id(),
             ]);
 
