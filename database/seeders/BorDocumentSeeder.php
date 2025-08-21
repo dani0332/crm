@@ -23,6 +23,7 @@ class BorDocumentSeeder extends Seeder
             if ($existingDocumentType) {
                 $existingDocumentType->update([
                     'text' => "Broker on Record Letter",
+                    'description' => "Please upload the BOR letter with the signature and stamp on your official company letterhead.",
                     'is_active' => 1,
                 ]);
             } 

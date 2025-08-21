@@ -320,7 +320,7 @@ const canPerformAction = (log, action) => {
               @click="handleUploadDocument(actions)"
               title="Upload signed document"
             >
-              Uploads
+              Upload
             </x-button>
 
             <!-- Cancel Button -->
@@ -345,7 +345,7 @@ const canPerformAction = (log, action) => {
               title="View documents"
             >
               <span class="px-2">
-                Views
+                View
               </span>
             </x-button>
 
