@@ -2,22 +2,23 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\LeadSourceEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\TeamNameEnum;
-use App\Enums\TiersIdEnum;
+use App\Models\User;
 use App\Models\CarQuote;
+use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeId;
+use App\Enums\TiersIdEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\HealthQuote;
-use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
-use App\Services\ApplicationStorageService;
-use App\Services\Logger\LoggerService;
+use App\Enums\LeadSourceEnum;
+use App\Models\PersonalQuote;
+use App\Enums\QuoteStatusEnum;
 use Illuminate\Console\Command;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\ApplicationStorageEnums;
+use App\Services\Logger\LoggerService;
+use App\Enums\Logger\LoggerFeatureEnum;
+use App\Services\ApplicationStorageService;
 
 class QuoteAllocation extends Command
 {
@@ -95,7 +96,13 @@ class QuoteAllocation extends Command
         }
 
         $leads = CarQuote::query()
-            ->whereNull('advisor_id')
+            ->where(function($q) {
+                $q->whereNull('advisor_id');
+                $q->orWhere(function($sq) {
+                    $sq->where('advisor_id', User::getAiAdvisor()->id);
+                    $sq->where('ai_advisor_required', false);
+                });
+            })
             ->select([
                 'uuid',
                 'payment_status_id',
