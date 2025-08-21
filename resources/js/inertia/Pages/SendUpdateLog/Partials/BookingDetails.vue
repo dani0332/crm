@@ -782,19 +782,6 @@ const modals = reactive({
 const confirmationCheck = ref(false);
 const isStating = ref(false);
 
-const isAUHEnable = computed(() => {
-  if (
-    props.isEndorsementBookingActionDisabled &&
-    [sendUpdateStatusEnum.SNBU, sendUpdateStatusEnum.SU].includes(
-      props.updateBtn,
-    )
-  ) {
-    return true;
-  }
-
-  return false;
-});
-
 const sendUpdatePermissionCheck = computed(() => {
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
     return !can(permissionsEnum.BOOK_UPDATE_BUTTON);
@@ -2481,8 +2468,7 @@ watch(
                   props.updateBtn &&
                   (isLackingPayment ||
                     disableMainBtn ||
-                    isTapCaptureProcessStart ||
-                    isAUHEnable)
+                    isTapCaptureProcessStart)
                 "
               >
                 <div>
@@ -2496,8 +2482,7 @@ watch(
                       :disabled="
                         isLackingPayment ||
                         disableMainBtn ||
-                        isTapCaptureProcessStart ||
-                        isAUHEnable
+                        isTapCaptureProcessStart
                       "
                     >
                       {{ props.updateBtn }}
@@ -2509,9 +2494,7 @@ watch(
                             ? disableMainBtn
                             : isTapCaptureProcessStart
                               ? 'Update booking already in queued.'
-                              : isAUHEnable
-                                ? 'Abu Dhabi policy financials will be recorded manually and not entered in Sage'
-                                : 'Action Needed: Please revise payment details to reflect plan changes.'
+                              : 'Action Needed: Please revise payment details to reflect plan changes.'
                         }}
                       </span>
                     </template>
