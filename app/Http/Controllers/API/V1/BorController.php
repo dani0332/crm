@@ -153,7 +153,7 @@ class BorController extends Controller
     {
         $quote = $this->getQuoteObject($request->quoteType, $request->quote_uuid);
 
-        $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
+        $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
 
         return new QuoteDocumentResource($document);
     }
