@@ -65,7 +65,7 @@ const form = useForm({
   insurer_name: props.customerData.firstName + ' ' + props.customerData.lastName,
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
-  insurance_contact_id: props.borLog.insurance_contact_id || null,
+  insurance_contact_id: props.borLog?.insurance_contact_id ?? null,
   policy_number: '',
   policy_expiry: '',
   chassis_number: '',
