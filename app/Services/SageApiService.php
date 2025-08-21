@@ -248,32 +248,38 @@ class SageApiService
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
-        // create AR Prepayment Premium Receipt
-        if (! empty($preparedData['payment']?->send_update_log_id)) {
-            $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']]);
-            if (! $createPrepayment['status']) {
-                return $createPrepayment;
-            }
-        }
+        $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+        if (! $isEndorsementActionDisabled) {
 
-        // create AP Prepayment Premium Receipt
-        /*$createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
-        if (! $createPremiumPrepayment['status']) {
-            return $createPremiumPrepayment;
-        }*/
-
-        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
-            if (empty($reversalInvoiceLogs)) {
-                return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+            // create AR Prepayment Premium Receipt
+            if (! empty($preparedData['payment']?->send_update_log_id)) {
+                $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']]);
+                if (! $createPrepayment['status']) {
+                    return $createPrepayment;
+                }
             }
 
-            $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
+            // create AP Prepayment Premium Receipt
+            /*$createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
+            if (! $createPremiumPrepayment['status']) {
+                return $createPremiumPrepayment;
+            }*/
+
+            if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
+                if (empty($reversalInvoiceLogs)) {
+                    return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+                }
+
+                $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
+            } else {
+                $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray, $request);
+            }
+
+            if (! $response['status']) {
+                return $response;
+            }
         } else {
-            $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray, $request);
-        }
-
-        if (! $response['status']) {
-            return $response;
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Endorsement booking invoice creation on Sage is disabled - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
         }
 
         $response = app(SendUpdateLogService::class)->updatesMoveToLead([$request, $sendUpdateLog, $preparedData]);
