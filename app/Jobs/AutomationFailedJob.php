@@ -30,8 +30,8 @@ class AutomationFailedJob implements ShouldQueue
 
     private $quoteTypeId;
     private $actionRequired;
-    private $advisorEmail;
-    private $advisorName;
+    private $recipientEmail;
+    private $recipientName;
     private $statusAPIFailed;
     private $processInvolved;
     private $workflowType;
@@ -57,17 +57,29 @@ class AutomationFailedJob implements ShouldQueue
         LoggerService::info('job:AutomationFailedJob - Job started');
         // $providerName = InsuranceProvidersEnum::getTextByCode($this->quote?->insuranceProvider?->code);
         if ($this->userToSendEmail == UserNameEnum::PA_USER) {
-            $this->advisorEmail = $this->quote?->kycDocumentUser?->createdBy?->email;
-            $this->advisorName = $this->quote?->kycDocumentUser?->createdBy?->name;
+            $this->recipientEmail = $this->quote?->kycDocumentUser?->createdBy?->email;
+            $this->recipientName = $this->quote?->kycDocumentUser?->createdBy?->name;
         } else {
-            $this->advisorEmail = $this->quote->advisor->email;
-            $this->advisorName = $this->quote->advisor->name;
+            if ($this->quote?->advisor) {
+                $this->recipientEmail = $this->quote->advisor->email;
+                $this->recipientName = $this->quote->advisor->name;
+            } else {
+                LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Quote Code: '.$this->quote->code);
+
+                return;
+            }
+        }
+
+        if (! $this->recipientEmail || ! $this->recipientName) {
+            LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Quote Code: '.$this->quote->code);
+
+            return;
         }
 
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
-            'advisorEmail' => $this->quote->advisor->email,
-            'advisorName' => $this->quote->advisor->name,
+            'recipientEmail' => $this->recipientEmail,
+            'recipientName' => $this->recipientName,
             'imcrmReferenceNumber' => $this->quote->code,
             'insurerApiStatus' => $this->statusAPIFailed,
             'insurerName' => $this->quote->first_name.' '.$this->quote->last_name,
