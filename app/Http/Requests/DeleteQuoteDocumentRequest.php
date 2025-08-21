@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
