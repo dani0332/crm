@@ -234,6 +234,16 @@ watch(() => props.visible, (newVisible) => {
               <label class="text-sm font-medium text-gray-600">Total Documents</label>
               <p class="text-sm text-gray-900">{{ borLog.total_documents || 0 }}</p>
             </div>
+
+            <div v-if="borLog.cancellation_reason">
+              <label class="text-sm font-medium text-gray-600">Cancellation Reason</label>
+              <p class="text-sm text-gray-900">{{ borLog.cancellation_reason }}</p>
+            </div>
+
+            <div v-if="borLog.additional_notes">
+              <label class="text-sm font-medium text-gray-600">Additional Notes</label>
+              <p class="text-sm text-gray-900">{{ borLog.additional_notes }}</p>
+            </div>
           </div>
         </div>
 

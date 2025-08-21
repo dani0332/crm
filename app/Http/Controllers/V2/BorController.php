@@ -275,7 +275,8 @@ class BorController extends Controller
     public function cancelBor(Request $request, $id)
     {
         $validated = $request->validate([
-            'reason' => 'required|string|max:500',
+            'reason' => 'required|string|max:100',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         try {

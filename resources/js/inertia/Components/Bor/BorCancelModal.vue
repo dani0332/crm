@@ -20,17 +20,14 @@ const notification = useNotifications('toast');
 // Form handling
 const form = useForm({
   reason: '',
+  notes: '',
 });
 
 // Cancellation reasons
 const cancellationReasons = [
-  'Customer request',
-  'Policy cancelled',
-  'Incorrect information provided',
-  'Duplicate request',
-  'Insurer rejection',
-  'Technical issues',
-  'Other',
+  'Customer requested to cancel',
+  'Rejected by UW',
+  'Other reasons',
 ];
 
 const isSubmitting = ref(false);
@@ -40,6 +37,12 @@ const submitCancellation = () => {
   if (!form.reason.trim()) {
     form.setError('reason', 'Please select a cancellation reason');
     return;
+  }
+  if(form.reason === 'Other reasons' || form.reason === 'Rejected by UW') {
+    if(!form.notes.trim()) {
+      form.setError('notes', 'Please provide details about the cancellation reason');
+      return;
+    }
   }
 
   form.post(route('bor.logs.cancel', props.borLog.id), {
@@ -159,13 +162,13 @@ const handleClose = () => {
             </div>
 
             <!-- Custom Reason Input (if Other is selected) -->
-            <div v-if="form.reason === 'Other'" class="mt-3">
+            <div v-if="form.reason === 'Other reasons' || form.reason === 'Rejected by UW'" class="mt-3">
               <label for="custom-reason" class="block text-sm font-medium text-gray-700 mb-2">
                 Please specify the reason:
               </label>
               <textarea
                 id="custom-reason"
-                v-model="form.custom_reason"
+                v-model="form.notes"
                 rows="3"
                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 placeholder="Please provide details about the cancellation reason..."
@@ -187,7 +190,7 @@ const handleClose = () => {
             <x-button
               color="error"
               @click="submitCancellation"
-              :disabled="!form.reason.trim() || isSubmitting"
+              :disabled="!form.reason.trim() || ((form.reason === 'Other reasons' || form.reason === 'Rejected by UW') && !form.notes.trim()) || isSubmitting"
               :loading="isSubmitting"
             >
               {{ isSubmitting ? 'Cancelling...' : 'Cancel BOR Request' }}

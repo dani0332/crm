@@ -112,7 +112,7 @@ class BorController extends Controller
             $borLog->update([
                 'quote_document_id' => $document->id,
                 'document_id' => $document->doc_uuid,
-                'user_agent' => $request->userAgent(),
+                'user_agent' => $request->ip(),
                 'insurer_name' => $request->insurer_name,
                 'policy_number' => $request->policy_number,
                 'status' => BorStatusEnum::DOCUMENT_SIGNED,

@@ -251,7 +251,7 @@ class BorService
 
         try {
             $oldStatus = $borLog->status;
-            $success = $borLog->markAsCancelled($data['reason']);
+            $success = $borLog->markAsCancelled($data['reason'], $data['notes']);
             
             if (!$success) {
                 throw new \Exception('Failed to cancel BOR request. Please try again.');
