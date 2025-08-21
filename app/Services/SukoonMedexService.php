@@ -533,7 +533,12 @@ class SukoonMedexService
         }
 
         $stepNumber = SukoonMedexEnum::getStepNumber($parentFunction);
-        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", context: ['ref_id' => $this->currentQuote->code, 'message' => $message, 'endPoint' => Str::limit($endPoint ?? '', 50), ...$logData]);
+        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$stepNumber} {$parentFunction}", extra: [
+            'ref_id' => $this->currentQuote->code,
+            'message' => $message,
+            'endPoint' => Str::limit($endPoint ?? '', 50),
+            ...$logData,
+        ]);
     }
 
     /**
@@ -546,7 +551,7 @@ class SukoonMedexService
      */
     private function logFailure($operation, $message, $data = [])
     {
-        LoggerService::info($this->logPrefix.' Failure', context: [
+        LoggerService::info($this->logPrefix.' Failure', extra: [
             'ref_id' => $this->currentQuote->code,
             'operation' => $operation,
             'message' => $message,
