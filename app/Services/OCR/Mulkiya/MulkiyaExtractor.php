@@ -110,7 +110,6 @@ class MulkiyaExtractor
     {
         return OcrUtils::getCleanData([
             'plate_number' => $this->extractedData['plate_number'] ?? null,
-            'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
             'first_registration_date' => $this->extractedData['first_registration_date'] ?? null,
             'vehicle_color' => $this->extractedData['vehicle_color'] ?? null,
             'engine_number' => $this->extractedData['engine_number'] ?? null,
@@ -147,6 +146,7 @@ class MulkiyaExtractor
             'ocr_done_by' => $this->extractedData['ocr_done_by'] ?? null,
             'doc_type' => $this->extractedData['doc_type'] ?? null,
             'provider_id' => $this->extractedData['provider_id'] ?? null,
+            'traffic_code_number' => $this->extractedData['traffic_code_number'] ?? null,
         ]);
     }
 
