@@ -155,9 +155,7 @@
             color: #333333;
             font-size: 14px;
             font-weight: bold;
-            text-align: center;
-            line-height: 160px;
-            height: 160px;
+            height: 10px;
         }
         
         .accept-button {
