@@ -6,6 +6,7 @@ use App\Models\BorLog;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -164,7 +165,9 @@ class BorPdfService
             'include_signature' => $includeSignature && $temporaryUrl,
             'signature_path' => $includeSignature ? $temporaryUrl : null,
             'signature_name' => $borLog->customer_signature_name ?? $borLog->insurer_name ?? $borLog->company_name,
-            'date_signed' => $borLog->date_signed, // Already formatted as string by model accessor
+            'date_signed' => Carbon::parse($borLog->date_signed)->format('d/m/Y'), // Already formatted as string by model accessor
+            'date_signed_time' => Carbon::parse($borLog->date_signed)->format('H:i:s'),
+            'document_id' => $borLog->document_id,
             
             // Additional Information
             'current_date' => now()->format('Y-m-d'),

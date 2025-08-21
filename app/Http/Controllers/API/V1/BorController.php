@@ -173,7 +173,7 @@ class BorController extends Controller
         $isPersonalQuote = checkPersonalQuotes($quoteName->value);
         $quote = $isPersonalQuote ? $this->getQuoteObject($quoteName->value, $quote->id) : $this->getQuoteObject($quoteName->value, $quote->quote_id);
         if(!$quote) {
-            return response()->json(['message' => 'Quote not found'], 404);
+            return response()->json(['message' => 'Quote not found'],200);
         }
 
         $data = [

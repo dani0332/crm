@@ -94,7 +94,7 @@
         
         .signature-label {
             float: left;
-            width: 2%;
+            width: 6%;
             margin-top: 30px;
             font-weight: bold;
         }
@@ -171,10 +171,10 @@
         }
         
         .footer {
-            position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
+            margin-top: 200px;
             text-align: center;
             font-size: 10px;
             color: #777;
@@ -251,7 +251,7 @@
             <p><strong>Signed by:</strong> {{ $customer_type === 'Entity' ? $company_name : $customer_name }}</p>
             <div class="signature-wrapper clearfix">
                 <div class="signature-label">
-                    Signed:
+                    Sign here:
                 </div>
                 <div class="signature-box-container">
                     <div class="signature-box">
@@ -261,7 +261,9 @@
                     </div>
                 </div>
             </div>
-            <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
+            <div style="clear: both; margin-top: 15px;">
+                <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
+            </div>
         </div>
     @else
         @if($customer_type === 'Entity')
@@ -288,7 +290,13 @@
     @endif
 
     <div class="footer">
-        
+        @if($include_signature && $signature_path)
+        <div style="text-align: center; font-size: 10px; color: #777; line-height: 1.4;">
+            This document is digitally signed by {{ $customer_type === 'Entity' ? $company_name : $customer_name }} on {{ $date_signed ?? now()->format('d/m/Y') }} at {{ $date_signed_time ?? now()->format('H:i:s') }}, no manual signature required<br>
+            Document Hash: {{ $document_id ?? '[Unique Hash]' }}<br>
+            Accessed By: {{ $access_ip ?? request()->ip() }}
+        </div>
+        @endif
     </div>
 </body>
 </html> 
