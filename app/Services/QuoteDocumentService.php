@@ -1061,6 +1061,7 @@ class QuoteDocumentService extends BaseService
             $borLog->update([
                 'date_uploaded' => now(),
                 'document_id' => $quoteDocument->doc_uuid,
+                'user_agent' => request()->ip(),
                 'quote_document_id' => $quoteDocument->id,
                 'status' => BorStatusEnum::DOCUMENT_UPLOADED,
             ]);
