@@ -133,10 +133,24 @@ trait QuoteAllocatable
         });
     }
 
+    public function scopeHasOneOfDeclinedOrFailedStatus($q)
+    {
+        $q->where(function ($sq) {
+            $sq->whereIn('payment_status_id', [PaymentStatusEnum::DECLINED, PaymentStatusEnum::FAILED]);
+        });
+    }
+
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
     {
         $q->where(function ($sq) {
             $sq->where('sic_advisor_requested', 1)->orWhere->hasOneOfPaidStatus();
+        });
+    }
+
+    public function scopeRequestedOrPaymentAuthorizedOrDeclined($q)
+    {
+        $q->where(function ($sq) {
+            $sq->where('sic_advisor_requested', 1)->orWhere->hasOneOfPaidStatus()->orWhere->hasOneOfDeclinedOrFailedStatus();
         });
     }
 
@@ -148,6 +162,11 @@ trait QuoteAllocatable
     public function isRequestedAdvisorOrPaymentAuthorized()
     {
         return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    public function isRequestedOrPaymentAuthorizedOrDeclined()
+    {
+        return $this->isRequestedAdvisorOrPaymentAuthorized() || in_array($this->payment_status_id, [PaymentStatusEnum::DECLINED, PaymentStatusEnum::FAILED]);
     }
 
     public function isRenewalUpload()
@@ -187,7 +206,7 @@ trait QuoteAllocatable
                 // AIG leads with advisor requested or payment authorized
                 ->where(function ($aigQuery) use ($quoteType) {
                     $aigQuery->isAIG($quoteType)
-                        ->requestedAdvisorOrPaymentAuthorized();
+                        ->requestedOrPaymentAuthorizedOrDeclined();
                 })
 
                 // OR Other lead types
@@ -197,7 +216,7 @@ trait QuoteAllocatable
                         $sq->where(function ($q) {
                             $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                                 ->sicFlowEnabled()
-                                ->requestedAdvisorOrPaymentAuthorized();
+                                ->requestedOrPaymentAuthorizedOrDeclined();
                         })
                         // Non-renewal leads with SIC logic
                             ->orWhere(function ($q) {
@@ -205,7 +224,7 @@ trait QuoteAllocatable
                                     ->where(function ($inner) {
                                         $inner
                                             ->where(fn ($x) => $x->sicFlowDisabled())
-                                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
+                                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedOrPaymentAuthorizedOrDeclined());
                                     });
                             });
                     });
