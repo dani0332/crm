@@ -97,6 +97,7 @@ class BorRequestMail extends Mailable
         $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value) .'-insurance';
         $quoteUuid = $personalQuote->uuid;
         $quoteLink = $this->portalUrl .'/'. $quoteType .'/quote/'. $quoteUuid .'/bor';
+        
         return [
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
@@ -124,7 +125,7 @@ class BorRequestMail extends Mailable
                 'document_id' => $this->borLog->document_id ?? '',
                 'date_created' => $this->borLog->date_created ?? '',
             ],
-            'attachPdf' => $this->borLog->customer_type == "Entity" ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : "",
+            'attachPdf' => $this->borLog->customer_type == "Entity" ? app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog) : null,
             'advisor' => $this->advisorData,
         ];
     }
