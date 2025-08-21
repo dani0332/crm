@@ -262,10 +262,11 @@ class AMLController extends Controller
                 LookupsEnum::BANK_NAME,
                 LookupsEnum::ANNUAL_MILEAGE_ESTIMATE,
                 LookupsEnum::PLATE_CODE,
+                LookupsEnum::NATIONALITY_LIST,
+                LookupsEnum::DRIVING_EXPERIENCE,
             ]);
 
-            $nationalities['nationalityList'] = app(LivaInsurancePayloadMapping::class)->nationalityList();
-            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray(), $nationalities);
+            $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);

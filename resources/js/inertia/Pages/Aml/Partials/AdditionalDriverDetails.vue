@@ -22,19 +22,6 @@ const driverGenderOptions = computed(() => [
   { value: 'female', label: 'Female' },
 ])
 
-const drivingExperienceOptions = computed(() => {
-  const options = [{ value: '0', label: 'No Experience' }]
-
-  for (let i = 1; i <= 50; i++) {
-    options.push({
-      value: i.toString(),
-      label: i === 1 ? '1 Year' : `${i} Years`
-    })
-  }
-
-  return options
-});
-
 const carDetail = computed(() => {
   return page.props.quoteRequest?.car_quote_request_detail;
 });
@@ -49,12 +36,12 @@ const additionalDriverDetailsForm = useForm({
   driver_dob: carDetail.value?.driver_dob ?? '',
   driver_gender: carDetail.value?.driver_gender ?? '',
   driver_license_number: carDetail.value?.driver_license_number ?? '',
-  license_issue_place: carDetail.value?.driver_license_issue_place?.toString() ?? '',
+  license_issue_place: carDetail.value?.driver_license_issue_place ?? null,
   license_issue_date: carDetail.value?.driver_license_issue_date ?? '',
   license_expiry_date: carDetail.value?.driver_license_expiry_date ?? '',
-  uae_driving_experience: carDetail.value?.driver_uae_driving_experience ?? '',
+  uae_driving_experience: carDetail.value?.driver_uae_driving_experience.toString() ?? null,
   home_country_license_issuance: carDetail.value?.home_country_license_issuance ?? '',
-  home_country_driving_experience: carDetail.value?.home_country_driving_experience ?? '',
+  home_country_driving_experience: carDetail.value?.home_country_driving_experience.toString() ?? null,
 });
 
 const hasNotEditPermission = computed(() => {
@@ -125,7 +112,7 @@ const isSUKOON = computed(() => {
 
 const licenseIssuePlaceOptions = computed(() => {
   if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationalityList ?? [], 'id', 'text');
+    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
   } else {
     return useGenerateOptions(lookups?.issuance_place ?? [], 'code', 'text');
   }
@@ -133,10 +120,26 @@ const licenseIssuePlaceOptions = computed(() => {
 
 const nationalitiesOptions = computed(() => {
   if (isLIVA.value) {
-    return useGenerateOptions(lookups?.nationalityList ?? [], 'id', 'text');
+    return useGenerateOptions(lookups?.nationality_list ?? [], 'code', 'text');
   } else {
     return useGenerateOptions(page.props.nationalities ?? [], 'code', 'text');
   }
+});
+
+const drivingExperienceOptions = computed(() => {
+  if (isLIVA.value) {
+    return useGenerateOptions(lookups?.driving_experience ?? [], 'code', 'text');
+  }
+  const options = [{ value: '0', label: 'No Experience' }]
+
+  for (let i = 1; i <= 50; i++) {
+    options.push({
+      value: i.toString(),
+      label: i === 1 ? '1 Year' : `${i} Years`
+    })
+  }
+
+  return options;
 });
 
 // Computed property to check if driver name fields should be disabled
