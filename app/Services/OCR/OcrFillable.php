@@ -35,26 +35,6 @@ trait OcrFillable
         return false;
     }
 
-    private function resolveProp($object, $prop)
-    {
-        if (is_object($object) && property_exists($object, $prop)) {
-            return $object->$prop;
-        }
-
-        return null;
-    }
-
-    private function parseDate($date, $default = null, $format = 'Y-m-d')
-    {
-        try {
-            return $date ? Carbon::parse($date)->format($format) : $default;
-        } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred during date parsing: ', exception: $e);
-
-            return $default;
-        }
-    }
-
     private function fillTaxInvoice(Model $quote, object $data)
     {
         $dataToUpdate = [];
