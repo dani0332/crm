@@ -260,14 +260,14 @@ onUnmounted(() => {
           class="flex gap-2 mb-4 justify-end"
           v-if="readOnlyMode.isDisable === true"
         >
-          <x-tag
+          <!-- <x-tag
             v-if="quoteType == quoteTypeCodeEnum.Car"
             :color="documentVerificationStatus ? 'success' : 'amber'"
           >
             {{
               documentVerificationStatus ? 'Verified' : 'Verification Pending'
             }}
-          </x-tag>
+          </x-tag> -->
           <DownloadDocuments
             v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
             :quote="page.props.quote"
