@@ -315,17 +315,17 @@ const canPerformAction = (log, action) => {
 
         <!-- Actions Column -->
         <template #item-actions="{ actions }">
-          <div class="flex items-center space-x-1 space-y-1 flex-wrap">
+          <div class="flex items-center space-x-1  space-y-1 flex-wrap">
             <!-- Upload Document Button -->
             <x-button
               v-if="canPerformAction(actions, 'upload')"
               color="orange"
-              class="mt-1"
+              class="mt-1 w-25 space-x-2"
               size="sm"
               @click="handleUploadDocument(actions)"
               title="Upload signed document"
             >
-              Upload
+              Uploads
             </x-button>
 
             <!-- Cancel Button -->
@@ -336,7 +336,9 @@ const canPerformAction = (log, action) => {
               @click="handleCancelBor(actions)"
               title="Cancel BOR request"
             >
-              Cancel
+              <span class="px-1">
+                Cancel
+              </span>
             </x-button>
 
             <!-- View Document Button -->
@@ -347,7 +349,9 @@ const canPerformAction = (log, action) => {
               @click="handleViewDocument(actions)"
               title="View documents"
             >
-              View
+              <span class="px-2">
+                Views
+              </span>
             </x-button>
 
             <x-button
@@ -357,7 +361,9 @@ const canPerformAction = (log, action) => {
               @click="handleMarkDone(actions)"
               title="Done"
             >
-              Done
+              <span class="px-2">
+                Done
+              </span>
             </x-button>
 
             <x-button
@@ -367,7 +373,9 @@ const canPerformAction = (log, action) => {
               @click="handleEditBor(actions)"
               title="Edit BOR request"
             >
-              Edit
+              <span class="px-3">
+                Edit
+              </span>
             </x-button>
 
             <x-button
@@ -377,7 +385,9 @@ const canPerformAction = (log, action) => {
               @click="handleCopyLink(actions)"
               title="Copy link"
             >
-              Copy
+              <span class="px-2">
+                Copy
+              </span>
             </x-button>
           </div>
         </template>

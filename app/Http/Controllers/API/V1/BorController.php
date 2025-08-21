@@ -15,12 +15,15 @@ use App\Services\Bor\BorPdfService;
 use App\Services\Bor\BorService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BorController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @var BorPdfService
      */
