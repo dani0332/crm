@@ -1,11 +1,19 @@
 {
   "resources/js/inertia/inertia.js": {
+<<<<<<< HEAD
     "file": "assets/inertia-C0jS6VFo.js",
+=======
+    "file": "assets/inertia-CW4du5TT.js",
+>>>>>>> 227e91737b (Remove un used variables and fresh build)
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
     "css": [
+<<<<<<< HEAD
       "assets/inertia-B0GzQRCr.css"
+=======
+      "assets/inertia-CQA6t_3h.css"
+>>>>>>> 227e91737b (Remove un used variables and fresh build)
     ]
   }
 }

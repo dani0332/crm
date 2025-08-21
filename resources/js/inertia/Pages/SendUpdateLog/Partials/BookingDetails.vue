@@ -59,7 +59,6 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
-  isEndorsementBookingActionDisabled: Boolean,
 });
 
 const state = reactive({
