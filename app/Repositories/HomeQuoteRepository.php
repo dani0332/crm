@@ -116,7 +116,7 @@ class HomeQuoteRepository extends BaseRepository
             ->tap(fn ($query) => $this->applyFilters($query, $requestParams))
             ->when(! $shouldExcludeCreatedAtFilters, function ($query) use ($requestParams) {
                 if ($this->hasFilterValue('created_at_start', $requestParams) && $this->hasFilterValue('created_at_end', $requestParams)) {
-                    $adjustedDates = $this->getDateRange(   
+                    $adjustedDates = $this->getDateRange(
                         $this->getFilterValue('created_at_start', $requestParams),
                         $this->getFilterValue('created_at_end', $requestParams)
                     );
@@ -606,12 +606,12 @@ class HomeQuoteRepository extends BaseRepository
     public function getDateRange(?string $startDate = null, ?string $endDate = null): array
     {
         // If no start date provided, use current date
-        $from = $startDate 
+        $from = $startDate
             ? \Carbon\Carbon::parse($startDate)->startOfDay()->toDateTimeString()
             : now()->startOfDay()->toDateTimeString();
 
         // If no end date provided, use current date
-        $to = $endDate 
+        $to = $endDate
             ? \Carbon\Carbon::parse($endDate)->endOfDay()->toDateTimeString()
             : now()->endOfDay()->toDateTimeString();
 
