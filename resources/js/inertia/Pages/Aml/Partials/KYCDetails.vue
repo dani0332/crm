@@ -319,7 +319,7 @@ const submitInsuredKycForm = isValid => {
               title: response.data.insurer_screening.message || 'GIG server connection issue. Please check API logs for details of the error',
               position: 'top',
             });
-          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED' || response.data.insurer_screening.isRenewalLead) {
+          } else if(response.data.insurer_screening.status == 'AML_SCREENING_CLEARED') {
             if(response.data.insurer_screening.autoCaptureStatus == 'success') {
               notification.success({
                 title: response.data.insurer_screening.autoCaptureMessage,

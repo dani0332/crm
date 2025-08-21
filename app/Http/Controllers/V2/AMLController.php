@@ -907,14 +907,13 @@ class AMLController extends Controller
                     'status' => $insurerAMLScreeningResponse['status'],
                     'message' => $insurerAMLScreeningResponse['message'],
                     'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched'] ?? false,
-                    'isRenewalLead' => $insurerAMLScreeningResponse['isRenewalLead'] ?? false,
                     'autoCaptureStatus' => $insurerAMLScreeningResponse['autoCaptureStatus'] ?? null,
                     'autoCaptureMessage' => $insurerAMLScreeningResponse['autoCaptureMessage'] ?? null,
                 ];
             }
         }
 
-        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['isRenewalLead']) {
+        if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
         }
@@ -1088,23 +1087,8 @@ class AMLController extends Controller
 
     public function getQuoteDetailsFromInsurer(Request $request)
     {
-        $quoteType = QuoteTypes::getName($request->quoteTypeId)->value;
-        $quoteDetails = $this->getQuoteObjectBy($quoteType, $request->quoteUID, 'uuid');
-        $insurerCode = getInsuranceProvider($quoteDetails->payments()->mainLeadPayment()->first(), $quoteType);
-
-        return match (ucfirst($quoteType)) {
-            QuoteTypes::CAR->value => match ($insurerCode->code) {
-                InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $quoteDetails),
-
-                default => response()->json([
-                    'success' => false,
-                    'message' => 'Quote type not supported',
-                ]),
-            },
-            default => response()->json([
-                'success' => false,
-                'message' => 'Quote type not supported',
-            ]),
-        };
+        $result = app(AMLService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
+        
+        return response()->json($result);
     }
 }

@@ -60,6 +60,7 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -777,7 +778,14 @@ class AMLService
             'paymentable_type' => $quoteDetails->getMorphClass(),
             'paymentable_id' => $quoteDetails->id,
         ])->first();
+        
+        // $rtaTransactionType = null;
+        // if ($quoteTypeId == QuoteTypes::CAR->id()) {
+        //     $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
+        //     $rtaTransactionType = $carQuoteRequestDetails->rta_transaction_type ?? null;
+        // }
 
+        // $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && ($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD || $rtaTransactionType == 'RTT04');
         $isRenewalUpload = $quoteTypeId == QuoteTypes::CAR->id() && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::AXA && $quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
         if ($isRenewalUpload) {
@@ -807,15 +815,38 @@ class AMLService
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
         
-        // Handle renewal upload cases - skip KEN API call but proceed with auto capture
+        // Handle renewal upload cases - By pass UpdateQuote API and call GetQuote API to filled data and proceed with auto capture
         if ($isRenewalUpload) {
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload - Bypassing Update Quote API call and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
-            $screeningResponse = [
-                'status' => AMLStatusCode::AMLPending,
-                'message' => 'Renewal upload - bypassed Insurer AML screening',
-                'screening_type' => $screeningType,
-                'isRenewalLead' => true
-            ];
+            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload - Bypassing Update Quote API call and calling GetQuote API to filled data and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
+            
+            try {
+                $getQuoteResponse = $this->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
+                
+                if ($getQuoteResponse['success']) {
+                    LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Successfully retrieved and updated quote details from insurer - Ref-ID: '.$quoteDetails->code);
+                    $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y' ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
+                    $screeningResponse = [
+                        'status' => $insurerAMLStatusForRenewalUpload,
+                        'message' => 'Renewal upload - check insurer AML status after GetQuote API call',
+                        'screening_type' => $screeningType,
+                    ];
+                } else {
+                    LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Failed to retrieve quote details from insurer - Ref-ID: '.$quoteDetails->code.' - Error: '.($getQuoteResponse['message'] ?? 'Unknown error'));
+                    $screeningResponse = [
+                        'status' => AMLStatusCode::AMLPending,
+                        'message' => 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
+                        'screening_type' => $screeningType,
+                    ];
+                }
+            } catch (\Exception $e) {
+                LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception while calling getQuote API for renewal upload - Ref-ID: '.$quoteDetails->code.' - Error: '.$e->getMessage());
+                $screeningResponse = [
+                    'status' => AMLStatusCode::AMLPending,
+                    'message' => 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API exception: '.$e->getMessage().')',
+                    'screening_type' => $screeningType,
+                ];
+            }
+
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
             
             return true;
@@ -935,31 +966,7 @@ class AMLService
     private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $quoteObject, $customerType, $insuredPersonDetails, $screeningResponse): void
     {
         session()->push('insurerAMLScreeningResponse', $screeningResponse);
-        $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
-        
-        // For renewal uploads, skip KYC logging and status updates but proceed with auto capture
-        if (isset($screeningResponse['isRenewalLead']) && $screeningResponse['isRenewalLead']) {
-            LoggerService::info('fn:amlScreeningGIG - Renewal upload - Skipping KYC logging and status updates - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
-            
-            // Execute auto capture process for renewal uploads (without changing insurer_aml_status)
-            if ($quoteTypeId == QuoteTypes::CAR->id()) {
-                $insurerAMLScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                $insurerAMLScreeningResponse['autoCaptureStatus'] = GenericRequestEnum::FAILED;
-
-                LoggerService::info(__FUNCTION__.' - Auto Capture Payment Process Triggered for Renewal Upload - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
-                if (app(PolicyIssuanceService::class)->checkAllowedAutomations(QuoteTypes::getName($quoteTypeId)->value, $quoteDetails)) {
-                    $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($quoteTypeId, $quoteDetails);
-
-                    $insurerAMLScreeningResponse['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
-                    $insurerAMLScreeningResponse['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
-                }
-
-                session()->put('insurerAMLScreeningResponse', [$insurerAMLScreeningResponse]);
-            }
-            
-            return;
-        }
-        
+        $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;       
         $insurePersonName = $insuredPersonDetails?->insured?->first_name.($insuredPersonDetails?->insured?->last_name == 'NULL' || $insuredPersonDetails?->insured?->last_name == null ? '' : ' '.$insuredPersonDetails?->insured?->last_name);
         $kycLogDetails = [
             'quote_request_id' => $quoteDetails->id,
@@ -2176,5 +2183,39 @@ class AMLService
 
         return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO
             && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUOTE_STATUS;
+    }
+
+    public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteUID)
+    {
+        try {
+            $quoteType = QuoteTypes::getName($quoteTypeId)->value;
+            $quoteDetails = $this->getQuoteObjectBy($quoteType, $quoteUID, 'uuid');
+            $insurerCode = getInsuranceProvider($quoteDetails->payments()->mainLeadPayment()->first(), $quoteType);
+
+            return match (ucfirst($quoteType)) {
+                QuoteTypes::CAR->value => match ($insurerCode->code) {
+                    InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
+
+                    default => [
+                        'success' => false,
+                        'message' => 'Insurer not supported for quote type: ' . $quoteType,
+                        'data' => null
+                    ],
+                },
+                default => [
+                    'success' => false,
+                    'message' => 'Quote type not supported: ' . $quoteType,
+                    'data' => null
+                ],
+            };
+        } catch (\Exception $e) {
+            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception: '.$e->getMessage().' - QuoteUID: '.$quoteUID);
+            
+            return [
+                'success' => false,
+                'message' => 'Exception occurred: ' . $e->getMessage(),
+                'data' => null
+            ];
+        }
     }
 }
