@@ -7,6 +7,7 @@ namespace App\Services\OCR;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
+use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixCacheService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -117,7 +118,7 @@ class OcrUtils
 
     public static function getProvider(Model $quote)
     {
-        if ($quote instanceof \App\Models\SendUpdateLog) {
+        if ($quote instanceof SendUpdateLog) {
             return $quote->insuranceProvider?->code ?? null;
         }
 
@@ -204,5 +205,52 @@ class OcrUtils
         }
 
         return $quoteType;
+    }
+
+    public static function isSendUpdateEligibleForOCR($quote, $isSendUpdate)
+    {
+        // Home & Group Medical only for Send Update, not allowed for other LOBs
+        $allowedLOBs = [
+            QuoteTypes::getId(QuoteTypes::HOME),
+            QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)
+        ];
+        
+        // Check if this is a Business quote (ID 5) that's actually Group Medical
+        $isGroupMedicalBusiness = app(OCRService::class)->isGroupMedicalBusiness($quote);
+        
+        $isEligible = $isSendUpdate && $quote instanceof \App\Models\SendUpdateLog && 
+                     (in_array($quote->quote_type_id, $allowedLOBs) || $isGroupMedicalBusiness);
+        
+        LoggerService::info('isSendUpdateEligibleForOCR - Eligibility Check', [
+            'is_send_update' => $isSendUpdate,
+            'is_send_update_log_instance' => $quote instanceof \App\Models\SendUpdateLog,
+            'quote_type_id' => $quote->quote_type_id ?? 'N/A',
+            'quote_uuid' => $quote->uuid ?? 'N/A',
+            'quote_code' => $quote->code ?? 'N/A',
+            'allowed_lob_ids' => $allowedLOBs,
+            'is_lob_allowed' => $quote instanceof \App\Models\SendUpdateLog ? in_array($quote->quote_type_id, $allowedLOBs) : false,
+            'is_group_medical_business' => $isGroupMedicalBusiness,
+            'final_eligibility' => $isEligible,
+            'eligibility_reason' => $isEligible ? 'Eligible for OCR' : self::getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs),
+        ]);
+        
+        return $isEligible;
+    }
+    
+    private static function getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs)
+    {
+        if (!$isSendUpdate) {
+            return 'Not a Send Update';
+        }
+        
+        if (!($quote instanceof SendUpdateLog)) {
+            return 'Quote is not a SendUpdateLog instance';
+        }
+        
+        if (!in_array($quote->quote_type_id, $allowedLOBs)) {
+            return 'LOB not allowed for Send Update OCR (only HOME and GROUP_MEDICAL allowed)';
+        }
+        
+        return 'Unknown reason';
     }
 }

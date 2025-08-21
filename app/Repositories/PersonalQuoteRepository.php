@@ -20,6 +20,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
+use App\Services\OCR\OcrUtils;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -154,7 +155,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentTypeText,
                 'doc_uuid' => $docUuid,
-                'created_by_id' => auth()->id(),
+                'created_by_id' => Auth::id(),
             ];
             // info('Document array prepared for creation', $document);
 
@@ -192,7 +193,7 @@ class PersonalQuoteRepository extends BaseRepository
                     )->afterCommit();
                 }
 
-                $isSendUpdateEligibleForOCR = $this->isSendUpdateEligibleForOCR($quote, $isSendUpdate);
+                $isSendUpdateEligibleForOCR = OcrUtils::isSendUpdateEligibleForOCR($quote, $isSendUpdate);
 
                 LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
                 $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);
@@ -335,51 +336,6 @@ class PersonalQuoteRepository extends BaseRepository
         return $this->where($column, $value)->with(['payments'])->first();
     }
 
-    private function isSendUpdateEligibleForOCR($quote, $isSendUpdate)
-    {
-        // Home & Group Medical only for Send Update, not allowed for other LOBs
-        $allowedLOBs = [
-            QuoteTypes::getId(QuoteTypes::HOME),
-            QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)
-        ];
-        
-        // Check if this is a Business quote (ID 5) that's actually Group Medical
-        $isGroupMedicalBusiness = app(OCRService::class)->isGroupMedicalBusiness($quote);
-        
-        $isEligible = $isSendUpdate && $quote instanceof SendUpdateLog && 
-                     (in_array($quote->quote_type_id, $allowedLOBs) || $isGroupMedicalBusiness);
-        
-        LoggerService::info('isSendUpdateEligibleForOCR - Eligibility Check', [
-            'is_send_update' => $isSendUpdate,
-            'is_send_update_log_instance' => $quote instanceof SendUpdateLog,
-            'quote_type_id' => $quote->quote_type_id ?? 'N/A',
-            'quote_uuid' => $quote->uuid ?? 'N/A',
-            'quote_code' => $quote->code ?? 'N/A',
-            'allowed_lob_ids' => $allowedLOBs,
-            'is_lob_allowed' => $quote instanceof SendUpdateLog ? in_array($quote->quote_type_id, $allowedLOBs) : false,
-            'is_group_medical_business' => $isGroupMedicalBusiness,
-            'final_eligibility' => $isEligible,
-            'eligibility_reason' => $isEligible ? 'Eligible for OCR' : $this->getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs),
-        ]);
-        
-        return $isEligible;
-    }
-    
-    private function getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs)
-    {
-        if (!$isSendUpdate) {
-            return 'Not a Send Update';
-        }
-        
-        if (!($quote instanceof SendUpdateLog)) {
-            return 'Quote is not a SendUpdateLog instance';
-        }
-        
-        if (!in_array($quote->quote_type_id, $allowedLOBs)) {
-            return 'LOB not allowed for Send Update OCR (only HOME and GROUP_MEDICAL allowed)';
-        }
-        
-        return 'Unknown reason';
-    }
+
 
 }
