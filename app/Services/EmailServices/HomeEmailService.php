@@ -397,73 +397,11 @@ class HomeEmailService extends BaseService
             'workflowType' => $workflowType,
         ];
 
-        // ✅ Attach fresh PDF with current premium for renewals
-        $tempUrlPDF = $this->attachHomeRenewalPDFToEmail($personalQuote->uuid); // Needs to be discussed with team either we need to use the same logic as OCB or we need to use the new logic
-        if (!empty($tempUrlPDF)) {
-            $data['tempUrlPDF'] = $tempUrlPDF;
-        }
-
         LoggerService::info('buildRenewalEmailData - Renewal email data built successfully with fresh premium data');
 
         return (object) $data;
     }
 
-    /**
-     * Attach PDF specifically for renewals with fresh data
-     */
-    private function attachHomeRenewalPDFToEmail($quoteUuid, int $pdfExpiry = 120)
-    {
-        try {
-            LoggerService::info('attachHomeRenewalPDFToEmail - Generating fresh PDF for renewal');
-
-            // Use the same logic as OCB but ensure fresh data
-            $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUuid);
-
-            if (!$quotePlans || $quotePlans->isEmpty()) {
-                LoggerService::info('attachHomeRenewalPDFToEmail - No quote plans found for renewal PDF');
-                return null;
-            }
-
-            // Generate the PDF with fresh renewal data
-            $planIds = [];
-            foreach ($quotePlans as $plan) {
-                $planIds[] = $plan->id;
-            }
-
-            if (empty($planIds)) {
-                LoggerService::info('attachHomeRenewalPDFToEmail - No plan IDs found for renewal PDF');
-                return null;
-            }
-
-            // Generate PDF using the same service but with fresh data
-            $pdfContent = app(HomeQuoteService::class)->generateQuotePDF($quoteUuid, $planIds);
-
-            if ($pdfContent) {
-                // Store temporarily with renewal-specific naming
-                $fileName = "home_renewal_quote_{$quoteUuid}_" . time() . '.pdf';
-                $filePath = "temp/renewal_pdfs/{$fileName}";
-                
-                Storage::put($filePath, $pdfContent);
-                
-                // Generate temporary URL
-                $tempUrl = Storage::temporaryUrl($filePath, now()->addMinutes($pdfExpiry));
-                
-                // Schedule file deletion
-                $this->scheduleFileDeletion($filePath);
-                
-                LoggerService::info('attachHomeRenewalPDFToEmail - Renewal PDF generated successfully');
-                
-                return $tempUrl;
-            }
-
-            LoggerService::info('attachHomeRenewalPDFToEmail - Failed to generate renewal PDF content');
-            return null;
-
-        } catch (\Exception $e) {
-            LoggerService::info("attachHomeRenewalPDFToEmail - Error generating renewal PDF: {$e->getMessage()}");
-            return null;
-        }
-    }
 
     public function sendAutomatedHomeRenewalFollowup(PersonalQuote $personalQuote)
     {
