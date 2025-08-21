@@ -61,7 +61,7 @@ trait PersonalQuoteObservable
             SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
         }
         
-        if ($personalQuote->quote_status_id == QuoteStatusEnum::Quoted && 
+        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::Quoted, QuoteStatusEnum::ApplicationPending, QuoteStatusEnum::PaymentPending]) && 
             $personalQuote->isHome() && 
             $personalQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
 
