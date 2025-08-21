@@ -262,7 +262,7 @@ class ClaimsService extends BaseService
                 'email' => $email,
                 'policy_number' => $policyNumber,
                 'results_count' => count($policies),
-                'user_id' => Auth::id(),
+                'user_id' => auth()->id(),
             ]);
 
             // Return pagination data structure
@@ -869,6 +869,173 @@ class ClaimsService extends BaseService
         );
 
         return $claimActivity;
+    }
+
+    /**
+     * Upload multiple documents for a claim
+     */
+    public function uploadClaimDocuments(ClaimRequest $claim, array $files, array $documentData): array
+    {
+        $uploadedDocuments = [];
+        $errors = [];
+
+        foreach ($files as $file) {
+            try {
+                $document = app(QuoteDocumentService::class)->uploadQuoteDocument(
+                    $file,
+                    array_merge($documentData, [
+                        'claim_id' => $claim->id,
+                        'quote_id' => $claim->id,
+                        'claim_uuid' => $claim->uuid,
+                        'quote_uuid' => $claim->uuid, 
+                    ]),
+                    $claim
+                );
+
+                if ($document) {
+                    $uploadedDocuments[] = $document;
+                    
+                    LoggerService::info(self::class.'::'.__FUNCTION__.' - Document uploaded successfully', extra: [
+                        'claim_uuid' => $claim->uuid,
+                        'document_id' => $document->id ?? null,
+                        'document_name' => $document->original_name ?? 'Unknown',
+                        'document_type' => $documentData['document_type_code'],
+                        'user_id' => auth()->id(),
+                    ]);
+                } else {
+                    $errors[] = "Failed to upload document: {$file->getClientOriginalName()}";
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Error uploading {$file->getClientOriginalName()}: {$e->getMessage()}";
+                
+                LoggerService::error(self::class.'::'.__FUNCTION__.' - Document upload failed', extra: [
+                    'claim_uuid' => $claim->uuid,
+                    'file_name' => $file->getClientOriginalName(),
+                    'error' => $e->getMessage(),
+                    'user_id' => auth()->id(),
+                ], exception: $e);
+            }
+        }
+
+        // Update claim status if needed based on document uploads
+        $this->updateClaimStatusOnDocumentUpload($claim, $uploadedDocuments, $documentData);
+
+        return [
+            'uploaded_documents' => $uploadedDocuments,
+            'errors' => $errors,
+            'success_count' => count($uploadedDocuments),
+            'error_count' => count($errors),
+        ];
+    }
+
+    /**
+     * Update claim status based on document upload
+     */
+    protected function updateClaimStatusOnDocumentUpload(ClaimRequest $claim, array $uploadedDocuments, array $documentData): void
+    {
+        if (empty($uploadedDocuments)) {
+            return;
+        }
+
+        // Check if this is a critical document type that affects claim processing
+        $criticalDocumentTypes = $this->getCriticalDocumentTypes();
+        
+        if (in_array($documentData['document_type_code'], $criticalDocumentTypes)) {
+            // Log the critical document upload for business logic
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Critical document uploaded', extra: [
+                'claim_uuid' => $claim->uuid,
+                'document_type' => $documentData['document_type_code'],
+                'user_id' => auth()->id(),
+            ]);
+        }
+    }
+
+    /**
+     * Get critical document types that affect claim processing
+     */
+    protected function getCriticalDocumentTypes(): array
+    {
+        // Define document types that are critical for claim processing
+        return [
+            'POLICE_REPORT',
+            'MEDICAL_REPORT', 
+            'REPAIR_ESTIMATE',
+            'INVOICE',
+            'PROOF_OF_LOSS',
+            'CLAIM_FORM',
+        ];
+    }
+
+    /**
+     * Delete a claim document with validation
+     */
+    public function deleteClaimDocument(ClaimRequest $claim, $documentId): bool
+    {
+        try {
+            $document = $claim->documents()->where('id', $documentId)->first();
+            
+            if (!$document) {
+                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document not found', extra: [
+                    'claim_uuid' => $claim->uuid,
+                    'document_id' => $documentId,
+                    'user_id' => auth()->id(),
+                ]);
+                return false;
+            }
+
+            // Check if document can be deleted (e.g., claim not finalized)
+            if (!$this->canDeleteDocument($claim, $document)) {
+                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document deletion not allowed', extra: [
+                    'claim_uuid' => $claim->uuid,
+                    'document_id' => $documentId,
+                    'claim_status' => $claim->claim_status_id,
+                    'user_id' => auth()->id(),
+                ]);
+                return false;
+            }
+
+            $document->delete();
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Document deleted successfully', extra: [
+                'claim_uuid' => $claim->uuid,
+                'document_id' => $documentId,
+                'document_name' => $document->original_name,
+                'user_id' => auth()->id(),
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error deleting document', extra: [
+                'claim_uuid' => $claim->uuid,
+                'document_id' => $documentId,
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id(),
+            ], exception: $e);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Check if a document can be deleted
+     */
+    protected function canDeleteDocument(ClaimRequest $claim, $document): bool
+    {
+        // Define rules for when documents can be deleted
+        $nonDeletableStatuses = [
+            // Add actual status IDs when available
+            // ClaimStatusEnum::CLOSED,
+            // ClaimStatusEnum::SETTLED,
+            // ClaimStatusEnum::REJECTED,
+        ];
+
+        // Can't delete documents from finalized claims
+        if (in_array($claim->claim_status_id, $nonDeletableStatuses)) {
+            return false;
+        }
+
+        // Add more business rules as needed
+        return true;
     }
 
 }

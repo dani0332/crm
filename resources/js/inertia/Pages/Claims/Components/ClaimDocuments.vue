@@ -1,8 +1,11 @@
 <script setup>
+import NProgress from 'nprogress';
+
 const props = defineProps({
   claim: Object,
   documents: Object,
   documentTypes: Object,
+  storageUrl: String,
 });
 
 const emit = defineEmits(['update', 'documentUploaded', 'documentDeleted']);
@@ -10,8 +13,18 @@ const emit = defineEmits(['update', 'documentUploaded', 'documentDeleted']);
 const page = usePage();
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
+const permissionEnum = page.props.permissionsEnum;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+const rolesEnum = page.props.rolesEnum;
 const notification = useToast();
+
+// Missing reactive variables
+const selectedTab = ref(0);
+const uploadingStatus = ref({});
+const errorMsg = ref({});
+const successStatus = ref({});
 
 // Document-related reactive data
 const modals = ref({
@@ -19,14 +32,21 @@ const modals = ref({
   docConfirm: false,
 });
 
+const docForm = reactive({
+  claim_id: props.claim?.id || null,
+  claim_uuid: props.claim?.uuid || null,
+  claim_type_id: null,
+  document_type_code: null,
+  file: null,
+});
+
 const documentToDelete = ref(null);
 
-// Mock data - you'll need to implement these based on your actual document structure
+const claimDocuments = computed(() => props.documents || []);
 const quoteDocuments = computed(() => props.documents || []);
-const documentTypes = ref([]); // You'll need to get this from props or API
-const cdnPath = ref(''); // You'll need to get this from config
+const cdnPath = ref(props.storageUrl || '');
 
-const quoteDocumentsTable = ref({
+const claimDocumentsTable = ref({
   columns: [
     { text: 'Document Name', value: 'original_name' },
     { text: 'Type', value: 'type' },
@@ -36,32 +56,153 @@ const quoteDocumentsTable = ref({
   isLoading: false,
 });
 
-// Document management functions
-const onDocDelete = docName => {
-  documentToDelete.value = docName;
+const uploadFile = async (doc, filesWithInfo) => {
+  successStatus.value[doc.id] = false;
+  errorMsg.value[doc.id] = '';
+  const { files, rejectReason } = filesWithInfo;
+  
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    errorMsg.value[doc.id] = useFileUploadErrorMessage(doc, rejectReason);
+    return false;
+  }
+
+  // Correct URL for claim documents
+  const url = route('claims.documents.store', props.claim?.uuid);
+  const formData = new FormData();
+  formData.append('claim_id', docForm.claim_id);
+  formData.append('claim_uuid', docForm.claim_uuid);
+  formData.append('document_type_code', doc.code);
+  formData.append('folder_path', doc.folder_path);
+  
+  files.forEach(file => {
+    formData.append('files[]', file.file);
+  });
+
+  uploadingStatus.value[doc.id] = true;
+  
+  try {
+    NProgress.start();
+    const response = await axios.post(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    successStatus.value[doc.id] = true;
+    notification.success({
+      title: 'Document uploaded successfully',
+      position: 'top',
+    });
+    
+    // Partial reload to update documents
+    router.reload({
+      only: ['claim', 'documents'],
+      preserveScroll: true,
+      preserveState: true,
+    });
+    
+    emit('documentUploaded', response.data);
+    
+  } catch (error) {
+    console.error('Upload error:', error);
+    errorMsg.value[doc.id] = error.response?.data?.message || 'File upload failed';
+    
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    
+    // Handle validation errors
+    if (error.response?.data?.errors) {
+      const errorMessages = error.response.data.errors;
+      Object.keys(errorMessages).forEach(key => {
+        notification.error({
+          title: errorMessages[key][0] ?? errorMessages[key],
+          position: 'top',
+        });
+      });
+    }
+  } finally {
+    uploadingStatus.value[doc.id] = false;
+    NProgress.done();
+  }
+};
+
+
+const getS3TempUrl = async docURL => {
+  try {
+    NProgress.start();
+    const response = await axios.post(route('claims.documents.get-s3-temp-url'), {
+      docURL,
+    });
+    NProgress.done();
+    
+    if (response.status === 200 && response.data.url) {
+      window.open(response.data.url, '_blank');
+    } else {
+      notification.error({
+        title: response.data.error || 'Failed to get document URL',
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    NProgress.done();
+    notification.error({
+      title: 'Failed to access document',
+      position: 'top',
+    });
+    console.error('S3 URL error:', error);
+  }
+};
+
+
+
+const onDocDelete = (docId, docUuid, docName) => {
+  documentToDelete.value = {
+    id: docId,
+    uuid: docUuid,
+    name: docName
+  };
   modals.value.docConfirm = true;
 };
 
 const confirmDeleteDoc = async () => {
   try {
-    quoteDocumentsTable.value.isLoading = true;
-
-    modals.value.docConfirm = false;
-    documentToDelete.value = null;
-
+    claimDocumentsTable.value.isLoading = true;
+    
+    const response = await axios.delete(route('claims.documents.destroy', {
+      claim: props.claim?.uuid,
+      document: documentToDelete.value.id
+    }));
+    
     notification.success({
       title: 'Document deleted successfully',
       position: 'top',
     });
-
+    
+    // Partial reload to update documents
+    router.reload({
+      only: ['claim', 'documents'],
+      preserveScroll: true,
+      preserveState: true,
+    });
+    
     emit('documentDeleted', documentToDelete.value);
+    
   } catch (error) {
+    console.error('Delete error:', error);
     notification.error({
-      title: 'Failed to delete document',
+      title: error.response?.data?.message || 'Failed to delete document',
       position: 'top',
     });
   } finally {
-    quoteDocumentsTable.value.isLoading = false;
+    claimDocumentsTable.value.isLoading = false;
+    modals.value.docConfirm = false;
+    documentToDelete.value = null;
   }
 };
 
@@ -86,7 +227,7 @@ const permissions = computed(() => {
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">
             Documents
-            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+            <x-tag size="sm">{{ claimDocuments.length || 0 }}</x-tag>
           </h3>
         </div>
       </template>
@@ -103,12 +244,12 @@ const permissions = computed(() => {
         </div>
         <DataTable
           table-class-name="compact"
-          :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments || []"
+          :headers="claimDocumentsTable.columns"
+          :items="claimDocuments || []"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
-          :hide-footer="quoteDocuments.length < 15"
+          :hide-footer="claimDocuments.length < 15"
         >
           <template #item-original_name="item">
             <a
@@ -119,14 +260,14 @@ const permissions = computed(() => {
               {{ item.original_name }}
             </a>
           </template>
-          <template #item-action="{ doc_name }">
+          <template #item-action="{ id, doc_uuid, original_name }">
             <div>
               <x-button
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(doc_name)"
-                v-if="readOnlyMode.isDisable === true"
+                @click.prevent="onDocDelete(id, doc_uuid, original_name)"
+                v-if="can(permissionsEnum.CLAIM_DOCUMENT_DELETE)"
               >
                 Delete
               </x-button>
@@ -134,10 +275,11 @@ const permissions = computed(() => {
           </template>
         </DataTable>
 
-        <!-- Document Upload Modal -->
+                <!-- Document Upload Modal -->
       </template>
     </Collapsible>
 
+    <!-- Document Upload Modal -->
     <x-modal
       v-model="modals.doc"
       size="xl"
@@ -150,12 +292,7 @@ const permissions = computed(() => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
-          :key="index"
-          :disabled="
-            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
-            !quote.insurance_provider_id &&
-            !quote.plan_id
-          "
+          :key="index" 
         >
           <div
             v-for="documentType in docType"
@@ -204,8 +341,8 @@ const permissions = computed(() => {
                 :loading="uploadingStatus[documentType.id]"
                 :document-type-code="documentType.code"
                 :isDisabled="
-                  documentType.code == documentTypeCodeEnum.AUDIT &&
-                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                  documentType.code == documentTypeCodeEnum.CLAIM_DOCUMENTS &&
+                  !can(permissionEnum.CLAIM_DOCUMENT_UPLOAD)
                 "
                 :multiple="true"
                 @change="uploadFile(documentType, $event)"
@@ -241,13 +378,15 @@ const permissions = computed(() => {
         </x-tab>
       </x-tab-group>
     </x-modal>
+    
+    <!-- Delete Confirmation Modal -->
     <x-modal
       v-model="modals.docConfirm"
       title="Delete Document"
       show-close
       backdrop
     >
-      <p>Are you sure you want to delete this document?</p>
+      <p>Are you sure you want to delete "{{ documentToDelete?.name }}"?</p>
       <template #actions>
         <div class="text-right space-x-4">
           <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
@@ -257,7 +396,7 @@ const permissions = computed(() => {
             size="sm"
             color="error"
             @click.prevent="confirmDeleteDoc"
-            :loading="quoteDocumentsTable.isLoading"
+            :loading="claimDocumentsTable.isLoading"
           >
             Delete
           </x-button>

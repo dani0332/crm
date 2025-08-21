@@ -108,7 +108,7 @@ const handleDocumentDeleted = documentName => {
       @update="handleClaimUpdate"
       @documentUploaded="handleDocumentUploaded"
       @documentDeleted="handleDocumentDeleted"
-      :cdn="cdnPath"
+      :storageUrl="storageUrl"
       :document-types="claimDocumentTypes"
     />
 

@@ -242,6 +242,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('claim/update-statuses/{uuid}', [ClaimsController::class, 'updateClaimStatuses'])->name('claims.update.status');
         Route::post('claims/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
         Route::post('claims/{claim_request:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
+        
+        // Claim Document Routes
+        Route::post('claims/{claim:uuid}/documents', [ClaimsController::class, 'storeDocument'])->name('claims.documents.store');
+        Route::delete('claims/{claim:uuid}/documents/{document}', [ClaimsController::class, 'destroyDocument'])->name('claims.documents.destroy');
+        Route::post('claims/documents/get-s3-temp-url', [ClaimsController::class, 'getS3TempUrl'])->name('claims.documents.get-s3-temp-url');
         /*
                     // Claims AJAX routes
             Route::post('claims/{claim}/assign-manager', [ClaimsController::class, 'assignManager'])->name('claims.assign-manager');
