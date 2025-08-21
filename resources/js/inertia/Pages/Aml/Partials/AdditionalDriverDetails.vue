@@ -39,9 +39,9 @@ const additionalDriverDetailsForm = useForm({
   license_issue_place: carDetail.value?.driver_license_issue_place ?? null,
   license_issue_date: carDetail.value?.driver_license_issue_date ?? '',
   license_expiry_date: carDetail.value?.driver_license_expiry_date ?? '',
-  uae_driving_experience: carDetail.value?.driver_uae_driving_experience.toString() ?? null,
+  uae_driving_experience: carDetail.value?.driver_uae_driving_experience?.toString() ?? null,
   home_country_license_issuance: carDetail.value?.home_country_license_issuance ?? '',
-  home_country_driving_experience: carDetail.value?.home_country_driving_experience.toString() ?? null,
+  home_country_driving_experience: carDetail.value?.home_country_driving_experience?.toString() ?? null,
 });
 
 const hasNotEditPermission = computed(() => {
