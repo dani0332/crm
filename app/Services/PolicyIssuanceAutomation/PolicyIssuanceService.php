@@ -373,21 +373,21 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
         ]); */
 
-        if ($advisorId) {
-            if ($quoteType === QuoteTypes::CAR->value) {
-                // For other quote types, we need to dispatch respective failure email job
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob');
-                AutomationFailedJob::dispatch(
-                    $quote,
-                    QuoteTypeId::Car,
-                    'Please coordinate with the IT Department to address and rectify the issue.',
-                    $statusAPIFailed,
-                    $processInvolved,
-                    WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
-                    UserNameEnum::PA_USER
-                )->onQueue('policy-issuance-automation');
-            }
+        if ($quoteType === QuoteTypes::CAR->value) {
+            // For other quote types, we need to dispatch respective failure email job
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob');
+            AutomationFailedJob::dispatch(
+                $quote,
+                QuoteTypeId::Car,
+                'Please coordinate with the IT Department to address and rectify the issue.',
+                $statusAPIFailed,
+                $processInvolved,
+                WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
+                UserNameEnum::PA_USER
+            )->onQueue('policy-issuance-automation');
+        }
 
+        if ($advisorId) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Quote Document Customer Email Checks', extra: [
                 'advisorId' => $advisorId,
                 'quote status id' => QuoteStatusEnum::PolicyBooked,
