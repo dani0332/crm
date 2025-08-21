@@ -38,11 +38,9 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
         }
 
         // ADD BlANK LINE
-        if ($teamCounts->isNotEmpty()) {
             $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) [' ' => ' ']);
-        }
 
         $exportData->push((object) [
             'NonPUA' => 'PUA: ',
