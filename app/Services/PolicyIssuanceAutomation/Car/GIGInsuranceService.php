@@ -1221,10 +1221,13 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     )
                     : null,
                 'driver_gender' => isset($responseData['policyHolder']['isPolicyHolderDriver'])
-                    ? strtolower(
-                        $responseData['policyHolder']['isPolicyHolderDriver']
+                    ? (
+                        ($getDriverGender = $responseData['policyHolder']['isPolicyHolderDriver']
                             ? ($responseData['policyHolder']['person']['gender']['value'] ?? null)
                             : ($responseData['driver']['gender'] ?? null)
+                        ) !== null
+                            ? strtolower($getDriverGender)
+                            : null
                     )
                     : null,
                 'driver_license_number' => isset($responseData['policyHolder']['documents']) && is_array($responseData['policyHolder']['documents'])
@@ -1247,6 +1250,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             if (isset($response['data'])) {
                 $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
                 if ($carQuoteRequestDetails) {
+                    LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' - Updating quote details');
                     $carQuoteRequestDetails->update($getQuoteResponseMapping);
                 }
 
