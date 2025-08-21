@@ -2,23 +2,24 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
-use App\Models\CarQuote;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeId;
-use App\Enums\TiersIdEnum;
-use App\Enums\TeamNameEnum;
-use App\Models\HealthQuote;
-use App\Models\TravelQuote;
-use App\Enums\LeadSourceEnum;
-use App\Models\PersonalQuote;
-use App\Enums\QuoteStatusEnum;
-use Illuminate\Console\Command;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\ApplicationStorageEnums;
-use App\Services\Logger\LoggerService;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
+use App\Enums\TiersIdEnum;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
+use Illuminate\Console\Command;
 
 class QuoteAllocation extends Command
 {
@@ -96,9 +97,9 @@ class QuoteAllocation extends Command
         }
 
         $leads = CarQuote::query()
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('advisor_id');
-                $q->orWhere(function($sq) {
+                $q->orWhere(function ($sq) {
                     $sq->where('advisor_id', User::getAiAdvisor()->id);
                     $sq->where('ai_advisor_required', false);
                 });
@@ -295,6 +296,12 @@ class QuoteAllocation extends Command
                 $q->where('quote_type_id', $quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when($quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($quoteType === QuoteTypes::CORPLINE, function ($q) {
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {

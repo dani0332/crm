@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
             AiAdvisorSeeder::class,
+            CPARulesSeeder::class,
         ]);
     }
 }

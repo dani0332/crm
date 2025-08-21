@@ -528,4 +528,14 @@ class CarQuote extends BaseModel
         return $this->hasMany(QuoteTag::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Car);
     }
+
+    public function registrationCertificate()
+    {
+        return $this->morphOne(RegistrationCertificate::class, 'certificatable');
+    }
+
+    public function drivingLicenseDetail()
+    {
+        return $this->morphOne(DrivingLicenseDetail::class, 'licensable');
+    }
 }

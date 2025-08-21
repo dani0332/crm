@@ -270,7 +270,7 @@ abstract class BaseAllocationPipe extends AllocationService
         $this->lead->advisor_id = $advisor->id;
         $this->lead->assignment_type = $assignmentType;
 
-        if($advisor->isAi()){
+        if ($advisor->isAi()) {
             $this->lead->ai_advisor_assigned_at = now();
         }
 

@@ -63,12 +63,11 @@ class AIGWorkflowJob implements ShouldQueue
             if ($quote->isAIAdvisorAssigned()) {
                 // Send AI Advisor Email
                 SendAIAdvisorOCBJob::dispatch(QuoteTypes::CAR, $quote->uuid)->delay(Carbon::now()->addMinute());
-                LoggerService::info("AIGWorkflowJob - AI Advisor Email sent ");
-            }
-            else {
+                LoggerService::info('AIGWorkflowJob - AI Advisor Email sent ');
+            } else {
                 // Use the CarEmailService to send the AIG workflow
                 $carEmailService->sendAIGWorkflow($quote);
-                LoggerService::info("AIGWorkflowJob - AIG workflow sent ");
+                LoggerService::info('AIGWorkflowJob - AIG workflow sent ');
             }
 
             info("AIGWorkflowJob - Completed successfully for Ref ID: {$this->quoteUuid} | Time: ".now());
