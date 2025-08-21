@@ -947,7 +947,6 @@ class SendEmailCustomerService extends BaseService
             if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
                 $bodyData['bcc'][] = [
                     'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
-                    'name' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
                 ];
             }
 
@@ -1178,7 +1177,6 @@ class SendEmailCustomerService extends BaseService
             if ($this->appEnv == EnvEnum::PRODUCTION && $quoteTypeId == QuoteTypeId::Travel) {
                 $body['bcc'][] = [
                     'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
-                    'name' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
                 ];
             }
 
