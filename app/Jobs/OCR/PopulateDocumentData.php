@@ -23,6 +23,8 @@ class PopulateDocumentData implements ShouldQueue
     public $timeout = 100;
     public $backoff = 300;
 
+    protected bool $isEcom;
+
     /**
      * Create a new job instance.
      */
@@ -33,8 +35,9 @@ class PopulateDocumentData implements ShouldQueue
         protected string $documentPath,
         protected string $fileMimeType,
         protected int $userId,
-        protected bool $isEcom = false,
+        bool $isEcom = false,
     ) {
+        $this->isEcom = $isEcom;
         $this->onQueue('shared');
     }
 
