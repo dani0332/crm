@@ -170,8 +170,8 @@ class BorPdfService
             'document_id' => $borLog->document_id,
             
             // Additional Information
-            'current_date' => now()->format('Y-m-d'),
-            'current_time' => now()->format('H:i:s'),
+            'current_date' => now()->format('d F Y'),
+            'current_time' => now()->format('h:i A'),
         ];
 
         return $data;
