@@ -404,7 +404,7 @@ trait GenericQueriesAllLobs
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
         $updateRequired = in_array($quote->quote_status_id, $statusesTriggeringUpdate) && is_null($payment->transaction_payment_status);
-        if ($updateRequired && !$isHealthAUHLead) {
+        if ($updateRequired && ! $isHealthAUHLead) {
             $this->updatePaymentAllocationStatus($quote);
         }
 
