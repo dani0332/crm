@@ -360,6 +360,9 @@ class BorService
             // Update BOR log status
             $borLog->update([
                 'status' => BorStatusEnum::DOCUMENT_UPLOADED,
+                'quote_document_id' => $uploadedDocument->id,
+                'document_id' => $uploadedDocument->doc_uuid,
+                'user_agent' => getUserIpAddress(request()),
                 'date_uploaded' => now(),
             ]);
 

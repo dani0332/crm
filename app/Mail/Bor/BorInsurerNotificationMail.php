@@ -107,7 +107,7 @@ class BorInsurerNotificationMail extends Mailable
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
                 'insurance_representative' => $recipientEmail,
-                'cc_emails' => $ccEmails,
+                'cc_emails' => count($ccEmails) > 0 ? $ccEmails : [],
             ],
             'bor_data' => [
                 'policy_number' => $this->borLog->policy_number ?? '',

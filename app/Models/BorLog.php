@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BorStatusEnum;
+use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -133,7 +134,18 @@ class BorLog extends Model
      */
     public function document(): BelongsTo
     {
-        return $this->belongsTo(QuoteDocument::class, 'quote_document_id');
+        return $this->belongsTo(QuoteDocument::class, 'quote_document_id')->whereIn('document_type_code', [
+            DocumentTypeCode::BAL,
+            DocumentTypeCode::BAL_BS,
+            DocumentTypeCode::BAL_BIKE,
+            DocumentTypeCode::BAL_TRVL,
+            DocumentTypeCode::BAL_HOME,
+            DocumentTypeCode::BAL_HLTH,
+            DocumentTypeCode::BAL_PET,
+            DocumentTypeCode::BAL_YACHT,
+            DocumentTypeCode::BAL_CYCLE,
+            DocumentTypeCode::BAL_LIFE,
+        ]);
     }
 
     /**
@@ -142,7 +154,7 @@ class BorLog extends Model
      */
     public function signedDocument(): HasOne
     {
-        return $this->hasOne(QuoteDocument::class, 'document_category', 'bor_reference');
+        return $this->hasOne(QuoteDocument::class, 'quote_document_id')->where('document_type_code', DocumentTypeCode::BOR_SIGN);
     }
 
     /**
