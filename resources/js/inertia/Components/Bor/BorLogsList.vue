@@ -331,7 +331,7 @@ const canPerformAction = (log, action) => {
               @click="handleCancelBor(actions)"
               title="Cancel BOR request"
             >
-              <span class="px-1">
+              <span class="pr-1">
                 Cancel
               </span>
             </x-button>

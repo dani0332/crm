@@ -53,6 +53,7 @@ class BorController extends Controller
         $this->borEmailService = $borEmailService;
     }
 
+
     public function getBorLog($borRefId){
         try {
             $borLog = BorLog::where('bor_reference', $borRefId)->first();
@@ -115,7 +116,7 @@ class BorController extends Controller
             $borLog->update([
                 'quote_document_id' => $document->id,
                 'document_id' => $document->doc_uuid,
-                'user_agent' => $request->ip(),
+                'user_agent' => getUserIpAddress($request),
                 'insurer_name' => $request->insurer_name,
                 'policy_number' => $request->policy_number,
                 'status' => BorStatusEnum::DOCUMENT_SIGNED,

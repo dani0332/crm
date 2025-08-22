@@ -94,7 +94,7 @@
         
         .signature-label {
             float: left;
-            width: 6%;
+            width: 10%;
             margin-top: 30px;
             font-weight: bold;
         }
