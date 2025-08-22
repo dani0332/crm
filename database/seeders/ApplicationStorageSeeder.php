@@ -288,6 +288,43 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS],
+            [
+                'value' => 'moinuddin.lakdawala@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CPA_AUSTRALIA_SAVINGS_BCC_EMAILS],
+            [
+                'value' => 'moinuddin.lakdawala@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_LEAD_POOL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_LEAD_POOL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedUnavailableTimeThreshold()
