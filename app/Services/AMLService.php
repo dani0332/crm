@@ -932,7 +932,7 @@ class AMLService
                 ];
                 $insurerScreeningPayload['firstRegistrationDate'] = $carQuoteRequestDetails->first_registration_date ?? null;
                 $insurerScreeningPayload['policyEffectiveDate'] = $carQuoteRequestDetails->policy_effective_date ?? null;
-                $insurerScreeningPayload['policyExpiryDate'] = $quoteDetails->policy_expiry_date ?? null; // TODO:: Need to confirm with Denber
+                $insurerScreeningPayload['policyExpiryDate'] = $carQuoteRequestDetails->policy_expiry_date ?? null;
                 $insurerScreeningPayload['certificateStartDate'] = $carQuoteRequestDetails->certificate_start_date ?? null;
                 $insurerScreeningPayload['certificateEndDate'] = $carQuoteRequestDetails->certificate_end_date ?? null;
                 $insurerScreeningPayload['annualMilageEstimation'] = $carQuoteRequestDetails->annual_mileage_estimate ?? null;
