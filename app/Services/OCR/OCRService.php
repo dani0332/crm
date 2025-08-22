@@ -98,7 +98,10 @@ class OCRService
             return $response['object'];
         }
 
-        LoggerService::error('OCR API Response Failed - Quote UUID: '.$quote->uuid);
+        LoggerService::warning('OCR API Response Failed - Quote UUID: '.$quote->uuid, [
+            'document_type' => $docType?->value,
+            'response_message' => $response['message'] ?? 'Unknown error',
+        ]);
 
         return null;
     }
@@ -275,7 +278,11 @@ class OCRService
         $endTime = microtime(true);
         $executionTime = round(($endTime - $startTime) * 1000, 2);
 
-        LoggerService::warning('OCR processing failed - no data received - Quote UUID: '.$quote->uuid);
+        LoggerService::warning('OCR processing failed - no data received - Quote UUID: '.$quote->uuid, [
+            'document_type' => $docType?->value,
+            'quote_type' => $quoteType?->value,
+            'execution_time_ms' => $executionTime,
+        ]);
 
         $providerId = $this->getProviderId($quote);
 
@@ -307,7 +314,11 @@ class OCRService
         $endTime = microtime(true);
         $executionTime = round(($endTime - $startTime) * 1000, 2);
 
-        LoggerService::error('OCR processing failed with exception - Quote UUID: '.$quote->uuid, exception: $e);
+        LoggerService::error('OCR processing failed with exception - Quote UUID: '.$quote->uuid, [
+            'document_type' => $docType?->value,
+            'quote_type' => $quoteType?->value,
+            'execution_time_ms' => $executionTime,
+        ], exception: $e);
 
         $providerId = $this->getProviderId($quote);
 
