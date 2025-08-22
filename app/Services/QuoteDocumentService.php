@@ -232,6 +232,7 @@ class QuoteDocumentService extends BaseService
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
+                'document_category' => $documentType->category,
                 'doc_uuid' => $docUuid,
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,

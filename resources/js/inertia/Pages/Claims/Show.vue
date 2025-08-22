@@ -12,6 +12,8 @@ const props = defineProps({
   documents: Object,
   claimDocumentTypes: Object,
   requiredFieldsFilled: Boolean,
+  storageUrl: String,
+  cdnPath: String,
 });
 
 const modelClass = 'App\\Models\\ClaimRequest';
@@ -108,8 +110,9 @@ const handleDocumentDeleted = documentName => {
       @update="handleClaimUpdate"
       @documentUploaded="handleDocumentUploaded"
       @documentDeleted="handleDocumentDeleted"
-      :storageUrl="storageUrl"
+      :storage-url="storageUrl"
       :document-types="claimDocumentTypes"
+      :cdnPath="cdnPath"
     />
 
     <!-- Audit Logs -->

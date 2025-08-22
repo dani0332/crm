@@ -60,7 +60,7 @@ const uploadFile = async (doc, filesWithInfo) => {
   successStatus.value[doc.id] = false;
   errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
-  
+
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
@@ -77,13 +77,13 @@ const uploadFile = async (doc, filesWithInfo) => {
   formData.append('claim_uuid', docForm.claim_uuid);
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
-  
+
   files.forEach(file => {
     formData.append('files[]', file.file);
   });
 
   uploadingStatus.value[doc.id] = true;
-  
+
   try {
     NProgress.start();
     const response = await axios.post(url, formData, {
@@ -91,31 +91,31 @@ const uploadFile = async (doc, filesWithInfo) => {
         'Content-Type': 'multipart/form-data',
       },
     });
-    
+
     successStatus.value[doc.id] = true;
     notification.success({
       title: 'Document uploaded successfully',
       position: 'top',
     });
-    
+
     // Partial reload to update documents
     router.reload({
       only: ['claim', 'documents'],
       preserveScroll: true,
       preserveState: true,
     });
-    
+
     emit('documentUploaded', response.data);
-    
+
   } catch (error) {
     console.error('Upload error:', error);
     errorMsg.value[doc.id] = error.response?.data?.message || 'File upload failed';
-    
+
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    
+
     // Handle validation errors
     if (error.response?.data?.errors) {
       const errorMessages = error.response.data.errors;
@@ -139,8 +139,7 @@ const getS3TempUrl = async docURL => {
     const response = await axios.post(route('claims.documents.get-s3-temp-url'), {
       docURL,
     });
-    NProgress.done();
-    
+
     if (response.status === 200 && response.data.url) {
       window.open(response.data.url, '_blank');
     } else {
@@ -149,13 +148,14 @@ const getS3TempUrl = async docURL => {
         position: 'top',
       });
     }
-  } catch (error) {
-    NProgress.done();
+  } catch (error) { 
     notification.error({
       title: 'Failed to access document',
       position: 'top',
     });
     console.error('S3 URL error:', error);
+  } finally {
+    NProgress.done();
   }
 };
 
@@ -173,26 +173,26 @@ const onDocDelete = (docId, docUuid, docName) => {
 const confirmDeleteDoc = async () => {
   try {
     claimDocumentsTable.value.isLoading = true;
-    
+
     const response = await axios.delete(route('claims.documents.destroy', {
       claim: props.claim?.uuid,
       document: documentToDelete.value.id
     }));
-    
+
     notification.success({
       title: 'Document deleted successfully',
       position: 'top',
     });
-    
+
     // Partial reload to update documents
     router.reload({
       only: ['claim', 'documents'],
       preserveScroll: true,
       preserveState: true,
     });
-    
+
     emit('documentDeleted', documentToDelete.value);
-    
+
   } catch (error) {
     console.error('Delete error:', error);
     notification.error({
@@ -292,7 +292,7 @@ const permissions = computed(() => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
-          :key="index" 
+          :key="index"
         >
           <div
             v-for="documentType in docType"
@@ -378,7 +378,7 @@ const permissions = computed(() => {
         </x-tab>
       </x-tab-group>
     </x-modal>
-    
+
     <!-- Delete Confirmation Modal -->
     <x-modal
       v-model="modals.docConfirm"

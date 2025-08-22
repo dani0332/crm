@@ -176,6 +176,7 @@ class ClaimsController extends Controller
             $dropdownData = $this->claimsService->getDropdownData();
             $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
+            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
             return Inertia::render('Claims/Show', [
                 'claim' => $claimRequest,
@@ -183,7 +184,7 @@ class ClaimsController extends Controller
                 'dropdowns' => $dropdownData,
                 'requiredFieldsFilled' => $requiredFieldsFilled,
                 'claimDocumentTypes' => $claimDocumentTypes,
-                'cdnPath' => config('app.cdn_path'),
+                'cdnPath' => $cdnPath,
                 'storageUrl' => storageUrl(),
             ]);
 
@@ -405,8 +406,8 @@ class ClaimsController extends Controller
             // All succeeded
             return response()->json([
                 'success' => true,
-                'message' => count($files) === 1 
-                    ? 'Document uploaded successfully.' 
+                'message' => count($files) === 1
+                    ? 'Document uploaded successfully.'
                     : "{$result['success_count']} documents uploaded successfully.",
                 'documents' => $result['uploaded_documents'],
             ]);
@@ -433,9 +434,9 @@ class ClaimsController extends Controller
     {
         try {
             // Verify the document belongs to this claim
-            if ($document->quote_documentable_id !== $claim->id || 
+            if ($document->quote_documentable_id !== $claim->id ||
                 $document->quote_documentable_type !== ClaimRequest::class) {
-                
+
                 LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document ownership verification failed', extra: [
                     'claim_uuid' => $claim->uuid,
                     'document_id' => $document->id,

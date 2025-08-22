@@ -18,7 +18,7 @@ class QuoteDocument extends Model implements AuditableContract
     protected $casts = [
         'deleted_at' => 'datetime',
     ];
-    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id', 'payment_split_type', 'payment_split_id', 'watermarked_doc_name', 'watermarked_doc_url'];
+    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id', 'payment_split_type', 'payment_split_id', 'watermarked_doc_name', 'watermarked_doc_url', 'document_category'];
     protected $hidden = [''];
 
     public function getCreatedAtAttribute($table)
