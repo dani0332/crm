@@ -924,7 +924,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         // entity bor log
         // $borLog = BorLog::where('bor_reference', 'IM-BOR-200825175545-4')->first();
 
-        $borLog = BorLog::where('bor_reference', 'IM-BOR-200825165142-2')->first();
+        $borLog = BorLog::where('bor_reference', 'IM-BOR-210825153043-1')->first();
         $borPdfService = new BorPdfService();
         $pdfData = $borPdfService->preparePdfData($borLog, $borLog->personalQuote, true);
         return view('pdf.bor-document', $pdfData);
