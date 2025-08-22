@@ -621,6 +621,13 @@ const allowStatusUpdate = computed(() => {
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">OE/AE</dt>
+                <dd>
+                  {{ quote?.support_user?.name }}
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>
                   {{ quote?.business_quote_request_detail?.lost_reason?.text }}
