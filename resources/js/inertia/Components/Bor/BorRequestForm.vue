@@ -739,48 +739,6 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Edit Mode Additional Fields -->
-          <div v-if="isEditMode" class="bg-orange-50 border border-orange-200 p-6 rounded-lg">
-            <h4 class="text-lg font-semibold text-orange-900 mb-4 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Additional Information
-              <span class="ml-2 text-sm font-normal text-orange-700">(For reference only - not updated)</span>
-            </h4>
-            <div class="grid grid-cols-1 gap-4">
-              <!-- Additional Notes -->
-              <div>
-                <label class="block text-sm font-medium text-orange-900 mb-2">
-                  Additional Notes
-                </label>
-                <textarea
-                  v-model="form.additional_notes"
-                  rows="3"
-                  disabled
-                  class="w-full border border-orange-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="Enter any additional notes or comments about this BOR request..."
-                ></textarea>
-              </div>
-
-              <!-- Reason -->
-              <x-select
-                label="REASON"
-                v-model="form.reason"
-                :options="reasonOptions"
-                disabled
-                placeholder="Select a reason"
-                clearable
-              />
-            </div>
-            <div class="mt-3 p-3 bg-orange-100 border border-orange-200 rounded">
-              <p class="text-sm text-orange-800">
-                <strong>Note:</strong> The fields in this section are for informational purposes only and will not be saved to the BOR request. 
-                To update the status, additional notes, or reason, please use the appropriate action buttons in the BOR logs list.
-              </p>
-            </div>
-          </div>
-
           <!-- LOB-specific Information -->
           <div v-if="isMotorLob" class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
             <div class="flex items-start">
