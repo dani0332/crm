@@ -702,10 +702,6 @@ class SageApiService
             (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' done ##################################');
 
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' ##################################');
-            $this->updatePaymentAllocationStatus($quote);
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' done ##################################');
-
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ########## End of Policy Booked for : '.$quote->code.' ##########');
 
             return ['status' => true, 'message' => 'Policy is Booked'];
