@@ -95,10 +95,10 @@ class OCRService
             return $response['object'];
         }
 
-            LoggerService::warning('OCR API Response Failed - Quote UUID: '.$quote->uuid, [
-                'document_type' => $docType?->value,
-                'response_message' => $response['message'] ?? 'Unknown error'
-            ]);
+        LoggerService::warning('OCR API Response Failed - Quote UUID: '.$quote->uuid, [
+            'document_type' => $docType?->value,
+            'response_message' => $response['message'] ?? 'Unknown error',
+        ]);
 
         return null;
     }
@@ -266,7 +266,7 @@ class OCRService
         LoggerService::warning('OCR processing failed - no data received - Quote UUID: '.$quote->uuid, [
             'document_type' => $docType?->value,
             'quote_type' => $quoteType?->value,
-            'execution_time_ms' => $executionTime
+            'execution_time_ms' => $executionTime,
         ]);
 
         $providerId = $this->getProviderId($quote);

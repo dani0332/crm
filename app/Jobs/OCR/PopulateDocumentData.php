@@ -100,7 +100,7 @@ class PopulateDocumentData implements ShouldQueue
         LoggerService::warning(self::class.'::failed - OCR processing failed - Quote UUID: '.$this->quote->uuid, [
             'document_type' => $this->documentType?->code,
             'quote_type' => $this->quoteType?->value,
-            'exception' => $exception->getMessage()
+            'exception' => $exception->getMessage(),
         ]);
 
         // Send OCR fail notification for supported document types (skip for ecom)
