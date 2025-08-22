@@ -172,10 +172,10 @@ watch(() => props.visible, (newVisible) => {
                 <strong>Created:</strong> {{ formatDate(borLog.created_at) }}
               </div>
               <div v-if="borLog.date_uploaded" class="text-sm text-blue-600">
-                <strong>Uploaded:</strong> {{ borLog.date_uploaded }}
+                <strong>Uploaded:</strong> {{ formatDate(borLog.date_uploaded) }}
               </div>
               <div v-if="borLog.date_signed" class="text-sm text-blue-600">
-                <strong>Signed:</strong> {{ borLog.date_signed }}
+                <strong>Signed:</strong> {{ formatDate(borLog.date_signed) }}
               </div>
             </div>
           </div>

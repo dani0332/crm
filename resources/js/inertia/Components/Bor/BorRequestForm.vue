@@ -692,7 +692,7 @@ onMounted(() => {
               />
 
               <x-select
-                v-if="form.insurance_provider_id != null"
+                v-if="form.insurance_provider_id != null && insuranceProviderRepresentor.length > 1"
                 label="DEPARTMENT"
                 v-model="form.insurance_contact_id"
                 :options="insuranceProviderRepresentor" 
