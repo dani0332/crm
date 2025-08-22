@@ -1696,6 +1696,7 @@ class SendEmailCustomerService extends BaseService
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'businessTypeInsurance' => $shortenedBusinessType ?? null,
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails,
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
