@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Models\BorLog;
 use App\Models\DocumentType;
 use App\Models\InsuranceProviderContact;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
@@ -364,13 +365,18 @@ class BorService
 
             // Send completion notifications
             $this->borEmailService->sendBorCompletionEmail($borLog);
-            
+
             // Send insurer notification if insurer email is available
-            if ($borLog->insurer_name) {
-                $this->borEmailService->sendBorInsurerNotification(
-                    $borLog,
-                    'insurer@example.com' // This should be configurable or retrieved from insurer data
-                );
+            if ($borLog->insurance_contact_id != null) {
+                LoggerService::info('Sending BOR Insurer Notification', [
+                    'bor_ref_id' => $borLog->bor_reference,
+                ]);
+                $result_insurer = $this->borEmailService->sendBorInsurerNotification($borLog);
+                if ($result_insurer) {
+                    $borLog->update([
+                        'email_sent' => 1,
+                    ]);
+                }
             }
 
             DB::commit();
