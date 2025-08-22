@@ -1054,7 +1054,7 @@ const isDocTypeLoading = docType => {
                 <template v-if="isShowingTransactionPaymentStatus">
                   <x-tooltip placement="left">
                     <dd class="border-b border-dotted border-black inline">
-                      {{ bpForm.transaction_payment_status }}
+                      {{ bpForm.transaction_payment_status ?? 'N/A' }}
                     </dd>
                     <template #tooltip>
                       {{ bpForm.transaction_payment_status_tool_tip }}
