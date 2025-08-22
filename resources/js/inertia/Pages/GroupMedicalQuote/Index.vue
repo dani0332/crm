@@ -97,15 +97,17 @@ const supportUserOptions = computed(() => {
 });
 
 const assignableSupportUserOptions = computed(() => {
-
   // Check if user has only OE_AE_CLIENT_SUPPORT role and not OE_AE_CLIENT_SUPPORT_LEAD
   const userRoles = page.props.auth.roles;
-  const hasOnlyClientSupport = userRoles.includes('OE_AE_CLIENT_SUPPORT') &&
-                               !userRoles.includes('OE_AE_CLIENT_SUPPORT_LEAD');
+  const hasOnlyClientSupport =
+    userRoles.includes('OE_AE_CLIENT_SUPPORT') &&
+    !userRoles.includes('OE_AE_CLIENT_SUPPORT_LEAD');
 
   // Filter support users based on user's role
   const filteredSupportUsers = hasOnlyClientSupport
-    ? page.props.supportUsers.filter(advisor => advisor.id === page.props.auth.user.id)
+    ? page.props.supportUsers.filter(
+        advisor => advisor.id === page.props.auth.user.id,
+      )
     : page.props.supportUsers;
 
   return filteredSupportUsers.map(advisor => ({
@@ -685,7 +687,9 @@ const insurerAMLStatusOption = computed(() => {
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.support_user_id = supportUserOptions.map(item => item.value)
+                filters.support_user_id = supportUserOptions.map(
+                  item => item.value,
+                )
               "
               @clear="filters.support_user_id = []"
             />
@@ -804,7 +808,7 @@ const insurerAMLStatusOption = computed(() => {
             :canAssignLeadAdvisor="canAssignLeadAdvisor"
             quoteType="business"
             @success="manualAssignmentSuccess"
-              />
+          />
         </div>
       </div>
     </Transition>

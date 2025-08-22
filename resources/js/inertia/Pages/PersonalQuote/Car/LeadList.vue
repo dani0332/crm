@@ -1310,7 +1310,10 @@ const insurerAMLStatusOption = computed(() => {
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
-          :canAssignLeadAdvisor="(!hasRole(rolesEnum.CarAdvisor) && !can(permissionsEnum.VIEW_ALL_LEADS))"
+          :canAssignLeadAdvisor="
+            !hasRole(rolesEnum.CarAdvisor) &&
+            !can(permissionsEnum.VIEW_ALL_LEADS)
+          "
           quoteType="Car"
           @success="onLeadAssigned"
         />

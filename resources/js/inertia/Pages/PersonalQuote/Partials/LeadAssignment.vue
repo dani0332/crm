@@ -63,12 +63,13 @@ function onAssignLead(isValid) {
   //     ? `/quotes/car/manualLeadAssign`
   //     : `/quotes/${props.quoteType}/leadAssign`;
 
-  const postUrl =
-     Array('car','business').includes(props.quoteType.toLowerCase())
-      ? `/quotes/${props.quoteType}/manualLeadAssign`
-      : props.quoteType === 'tmlead'
-        ? '/telemarketing/tmLeadsAssign'
-        : `/quotes/${props.quoteType}/leadAssign`;
+  const postUrl = Array('car', 'business').includes(
+    props.quoteType.toLowerCase(),
+  )
+    ? `/quotes/${props.quoteType}/manualLeadAssign`
+    : props.quoteType === 'tmlead'
+      ? '/telemarketing/tmLeadsAssign'
+      : `/quotes/${props.quoteType}/leadAssign`;
 
   if (isValid) {
     assignForm
@@ -130,11 +131,17 @@ onMounted(() => {
     <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
       <h3 class="font-semibold text-primary-800">Assign Leads</h3>
       <x-divider class="mb-4 mt-1" />
-      <x-form @submit="onAssignLead" :auto-focus="false" v-if="props.canAssignLeadAdvisor">
+      <x-form
+        @submit="onAssignLead"
+        :auto-focus="false"
+        v-if="props.canAssignLeadAdvisor"
+      >
         <div class="w-full flex flex-col md:flex-row gap-4">
           <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
             <x-tooltip position="top">
-              <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block"
+              >
                 Assign Advisor
               </label>
               <template #tooltip>
@@ -165,12 +172,21 @@ onMounted(() => {
       </x-form>
 
       <!-- Support User Assignment Section -->
-      <div v-if="(props.supportUsers && props.supportUsers.length > 0) && props.canAssignClientSupport" class="" >
-        <x-form @submit="onAssignSupportUser" :auto-focus="false" >
+      <div
+        v-if="
+          props.supportUsers &&
+          props.supportUsers.length > 0 &&
+          props.canAssignClientSupport
+        "
+        class=""
+      >
+        <x-form @submit="onAssignSupportUser" :auto-focus="false">
           <div class="w-full flex flex-col md:flex-row gap-4">
             <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
               <x-tooltip position="top">
-                <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block"
+                >
                   Assign OE/AE
                 </label>
                 <template #tooltip>

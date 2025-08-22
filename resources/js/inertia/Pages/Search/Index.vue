@@ -998,7 +998,9 @@ onMounted(() => {
             <template #content-footer>
               <ui-select-actions
                 @select-all="
-                  availableFilters.support_users = supportUsers.map(item => item.id)
+                  availableFilters.support_users = supportUsers.map(
+                    item => item.id,
+                  )
                 "
                 @clear="availableFilters.support_users = []"
               />
