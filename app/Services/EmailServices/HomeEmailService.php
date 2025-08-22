@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\LeadSourceEnum;
 
 class HomeEmailService extends BaseService
 {
@@ -139,6 +140,11 @@ class HomeEmailService extends BaseService
 
     public function buildEmailData($lead, $advisor, $workflowType, $homeQuote)
     {
+        $bccEmails = [];
+        $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::HOME_LEAD_POOL_BCC);
+        if ($lead->source === LeadSourceEnum::CPA_AUSTRALIA_HOME) {
+            $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS)));
+        }
         $data = [
             // Lead-related data
             'quoteUID' => $lead->uuid,
@@ -166,6 +172,7 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails ?? [],
         ];
 
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);
