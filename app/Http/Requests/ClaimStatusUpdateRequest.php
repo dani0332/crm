@@ -23,14 +23,14 @@ class ClaimStatusUpdateRequest extends FormRequest
     {
         return [
             'claim_status_id' => [
-                'nullable',
+                'required',
                 'integer',
                 'exists:claim_statuses,id,is_active,1,parent,1',
             ],
-            'claim_sub_status_id' => [
-                'required',
-                'integer',
-                'exists:claim_statuses,id,is_active,1,parent,0',
+            'notes' => [
+                'nullable',
+                'string',
+                'max:255',
             ],
         ];
     }
@@ -42,8 +42,7 @@ class ClaimStatusUpdateRequest extends FormRequest
     {
         return [
             'claim_status_id.exists' => 'The selected claim status is invalid or inactive.',
-            'claim_sub_status_id.required' => 'The claim sub status is required.',
-            'claim_sub_status_id.exists' => 'The selected claim sub status is invalid or inactive.',
+            'notes.max' => 'The notes must be less than 255 characters.',
         ];
     }
 
@@ -54,7 +53,7 @@ class ClaimStatusUpdateRequest extends FormRequest
     {
         return [
             'claim_status_id' => 'claim status',
-            'claim_sub_status_id' => 'claim sub status',
+            'notes' => 'notes',
         ];
     }
 }

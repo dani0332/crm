@@ -266,7 +266,7 @@ const optimizeMessage = async () => {
               :loading="claimSubStatusAndCustomerForm.processing"
               type="submit"
             >
-              Send Notification
+            Update and Notify to Customer
             </x-button>
           </div>
         </x-form>

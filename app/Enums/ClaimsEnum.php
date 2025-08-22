@@ -163,7 +163,7 @@ enum ClaimsEnum: string
             self::CLAIM_SUB_STATUS_NEW_CLAIM->value,
             self::CLAIM_SUB_STATUS_CLAIM_INITIATED->value,
             self::CLAIM_SUB_STATUS_CLAIM_REGISTERED->value,
-            self::CLAIM_SUB_STATUS_CLAIMS_REGISTERED->value,
+            self::CLAIM_SUB_STATUS_CLAIM_REGISTERED->value,
             self::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION->value,
             self::CLAIM_SUB_STATUS_ESTIMATE_UNDER_REVIEW->value,
             self::CLAIM_SUB_STATUS_SURVEY_IN_PROGRESS->value,

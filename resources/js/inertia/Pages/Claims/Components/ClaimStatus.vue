@@ -17,6 +17,7 @@ const notification = useToast();
 
 const claimStatusForm = useForm({
   claim_status_id: props.claim?.claim_status_id || '',
+  notes: props.claim?.notes || '',
 });
 
 const statusOptions = computed(() => {
@@ -89,6 +90,16 @@ const disableClaimStatusUpdate = computed(() => {
                   filterable
                 />
               </div>
+            </div>
+            <div class="w-full md:w-1/2">
+              <x-input
+                v-model="claimStatusForm.notes"
+                label="Notes"
+                :disabled="disableClaimStatusUpdate"
+                :error="claimStatusForm.errors.notes"
+                placeholder="Notes"
+                class="w-full"
+              />
             </div>
           </div>
 

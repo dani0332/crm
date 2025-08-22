@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
-use App\Enums\ClaimsEnum;
-use App\Jobs\SendGoogleReviewEmailJob;
-use App\Models\ClaimRequest;
-use App\Models\ClaimStatus;
-use App\Services\ClaimsService;
-use App\Services\Logger\LoggerService;
+use App\Models\ClaimRequest; 
+use App\Services\ClaimsService; 
 
 class ClaimRequestObserver
 {
@@ -35,6 +31,55 @@ class ClaimRequestObserver
             }
 
         }
+
+         $isCarOrBikeLOB = $claimRequest->isCarOrBikeLOB();
+
+        if($isCarOrBikeLOB){
+            if ($claimRequest->isDirty('approved_repair_amount')) {
+                $originalApprovedRepairAmount = $claimRequest->getOriginal('approved_repair_amount');
+                $newApprovedRepairAmount = $claimRequest->approved_repair_amount;
+    
+                if (empty($originalApprovedRepairAmount) && ! empty($newApprovedRepairAmount)) {
+                    $claimService->updateClaimSubStatusToRepairApprovedAndWIP($claimRequest);
+                }
+            }
+            if ($claimRequest->isDirty('approved_total_loss_amount')) {
+                $originalApprovedTotalLossAmount = $claimRequest->getOriginal('approved_total_loss_amount');
+                $newApprovedTotalLossAmount = $claimRequest->approved_total_loss_amount;
+    
+                if (empty($originalApprovedTotalLossAmount) && ! empty($newApprovedTotalLossAmount)) {
+                    $claimService->updateClaimSubStatusToTotalLossOfferLetterShared($claimRequest);
+                }
+            }
+            if ($claimRequest->isDirty('approved_cash_loss_amount')) {
+                $originalApprovedCashLossAmount = $claimRequest->getOriginal('approved_cash_loss_amount');
+                $newApprovedCashLossAmount = $claimRequest->approved_cash_loss_amount;
+    
+                if (empty($originalApprovedCashLossAmount) && ! empty($newApprovedCashLossAmount)) {
+                    $claimService->updateClaimSubStatusToCashLossApproved($claimRequest);
+                }
+            }
+        }
+        
+        if ($claimRequest->isDirty('claim_decline_reason')) {
+            $originalClaimDeclineReason = $claimRequest->getOriginal('claim_decline_reason');
+            $newClaimDeclineReason = $claimRequest->claim_decline_reason;
+
+            if (empty($originalClaimDeclineReason) && ! empty($newClaimDeclineReason)) {
+                $claimService->markClaimAsClosed($claimRequest);
+            }
+        }
+
+        // Check if claim status has changed to closed and send Google review email
+        if ($claimRequest->isDirty('claim_status_id')) {
+            $originalClaimStatusId = $claimRequest->getOriginal('claim_status_id');
+            $newClaimStatusId = $claimRequest->claim_status_id;
+
+            // Check if the claim is now closed
+          /*   if ($claimService->isClaimStatusClosed($newClaimStatusId) && !$claimService->isClaimStatusClosed($originalClaimStatusId)) {
+                $claimService->dispatchGoogleReviewEmail($claimRequest);
+            } */
+        }
     }
 
     /**
@@ -48,62 +93,5 @@ class ClaimRequestObserver
             $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
         }
     }
-
-    /**
-     * Handle the ClaimRequest "created" event.
-     */
-    public function created(ClaimRequest $claimRequest): void {}
-
-    public function updated(ClaimRequest $claimRequest): void
-    {
-        // Check if claim status has changed to closed and send Google review email
-        if ($claimRequest->isDirty('claim_status_id')) {
-            $originalClaimStatusId = $claimRequest->getOriginal('claim_status_id');
-            $newClaimStatusId = $claimRequest->claim_status_id;
-
-            // Check if the claim is now closed
-            /* if ($this->isClaimStatusClosed($newClaimStatusId) && !$this->isClaimStatusClosed($originalClaimStatusId)) {
-                $this->dispatchGoogleReviewEmail($claimRequest);
-            } */
-        }
-    }
-
-    /**
-     * Check if the given claim status ID represents a closed status
-     */
-    private function isClaimStatusClosed(?int $statusId): bool
-    {
-        if (! $statusId) {
-            return false;
-        }
-
-        $closedStatus = ClaimStatus::where('id', $statusId)->where('is_active', 1)->first();
-
-        return $closedStatus !== null && $closedStatus->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
-    }
-
-    /**
-     * Dispatch Google review email job for the claim request
-     */
-    private function dispatchGoogleReviewEmail(ClaimRequest $claimRequest): void
-    {
-        try {
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'customer_email' => $claimRequest->email,
-            ]);
-
-            // Dispatch the job to send Google review email
-            SendGoogleReviewEmailJob::dispatch($claimRequest->uuid);
-
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-    }
+    
 }

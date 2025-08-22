@@ -23,6 +23,7 @@ use App\Traits\CentralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\SendGoogleReviewEmailJob;
 
 class ClaimsService extends BaseService
 {
@@ -328,7 +329,11 @@ class ClaimsService extends BaseService
             }
 
             // Make API call to create claim
-            $response = Capi::request('/api/v2-save-claim', 'post', $apiData);
+            $response = Capi::request('/api/v2-claims', 'post', $apiData);
+
+            if(isset($response->claimUID) && $response->claimUID){
+                // Send Claim Intimation Email
+            }
 
             return $response;
 
@@ -784,7 +789,7 @@ class ClaimsService extends BaseService
     /**
      * Update claim status and sub status
      */
-    public function updateClaimStatus(string $uuid, array $data): ClaimRequest
+    public function updateClaimStatus(string $uuid, $request): ClaimRequest
     {
         $claimRequest = $this->getClaimById($uuid);
 
@@ -794,36 +799,27 @@ class ClaimsService extends BaseService
 
         try {
             // Prepare the status update data
-            $statusUpdateData = [];
+            $statusUpdateData['claim_status_id'] = $request->claim_status_id;
+            $notes = $request->notes;
 
-            if (isset($data['claim_sub_status_id'])) {
-                $statusUpdateData['claim_sub_status_id'] = $data['claim_sub_status_id'];
-            }
-
-            $subStatus = ClaimStatus::find($data['claim_sub_status_id']);
-            $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
-            if ($targetStatus) {
-                $statusUpdateData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('parent', true)->where('is_active', 1)->first()?->id;
-            } elseif (isset($data['claim_status_id'])) {
-                $statusUpdateData['claim_status_id'] = $data['claim_status_id'];
-            }
+            ClaimActivity::createForClaim(
+                $claimRequest->id, $claimRequest->uuid, $request->claim_status_id,  $notes
+            );
 
             // Update the claim request
-            if (! empty($statusUpdateData)) {
-                $claimRequest->update($statusUpdateData);
+            $claimRequest->update($statusUpdateData);
 
-                LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, [
-                    'claim_request_id' => $claimRequest->id,
-                    'claim_uuid' => $claimRequest->uuid,
-                    'code' => $claimRequest->code,
-                    'updated_fields' => array_keys($statusUpdateData),
-                    'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
-                    'new_claim_status_id' => $claimRequest->claim_status_id,
-                    'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
-                    'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
-                    'updated_by' => auth()->id(),
-                ]);
-            }
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'code' => $claimRequest->code,
+                'updated_fields' => array_keys($statusUpdateData),
+                'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
+                'new_claim_status_id' => $claimRequest->claim_status_id,
+                'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
+                'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
+                'updated_by' => auth()->id(),
+            ]);
 
             return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
 
@@ -860,12 +856,18 @@ class ClaimsService extends BaseService
 
     public function sendNotification(ClaimRequest $claimRequest, $request)
     {
+        $updateClaimData['claim_sub_status_id'] = $request->claim_sub_status_id;
+        $subStatus = ClaimStatus::find($request->claim_sub_status_id);
+        $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
+        if ($targetStatus) {
+            $updateClaimData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('parent', true)->where('is_active', 1)->first()?->id;
+        }
+
+        $claimRequest->update($updateClaimData);
+
         $claimActivity = ClaimActivity::createForClaim(
-            $claimRequest->id,
-            $claimRequest->uuid,
-            $request->claim_sub_status_id,
-            $request->customer_message,
-            $request->ai_optimized_message,
+            $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
+             $request->customer_message, $request->ai_optimized_message
         );
 
         return $claimActivity;
@@ -887,14 +889,14 @@ class ClaimsService extends BaseService
                         'claim_id' => $claim->id,
                         'quote_id' => $claim->id,
                         'claim_uuid' => $claim->uuid,
-                        'quote_uuid' => $claim->uuid, 
+                        'quote_uuid' => $claim->uuid,
                     ]),
                     $claim
                 );
 
                 if ($document) {
                     $uploadedDocuments[] = $document;
-                    
+
                     LoggerService::info(self::class.'::'.__FUNCTION__.' - Document uploaded successfully', extra: [
                         'claim_uuid' => $claim->uuid,
                         'document_id' => $document->id ?? null,
@@ -907,7 +909,7 @@ class ClaimsService extends BaseService
                 }
             } catch (\Exception $e) {
                 $errors[] = "Error uploading {$file->getClientOriginalName()}: {$e->getMessage()}";
-                
+
                 LoggerService::error(self::class.'::'.__FUNCTION__.' - Document upload failed', extra: [
                     'claim_uuid' => $claim->uuid,
                     'file_name' => $file->getClientOriginalName(),
@@ -939,7 +941,7 @@ class ClaimsService extends BaseService
 
         // Check if this is a critical document type that affects claim processing
         $criticalDocumentTypes = $this->getCriticalDocumentTypes();
-        
+
         if (in_array($documentData['document_type_code'], $criticalDocumentTypes)) {
             // Log the critical document upload for business logic
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Critical document uploaded', extra: [
@@ -958,7 +960,7 @@ class ClaimsService extends BaseService
         // Define document types that are critical for claim processing
         return [
             'POLICE_REPORT',
-            'MEDICAL_REPORT', 
+            'MEDICAL_REPORT',
             'REPAIR_ESTIMATE',
             'INVOICE',
             'PROOF_OF_LOSS',
@@ -973,7 +975,7 @@ class ClaimsService extends BaseService
     {
         try {
             $document = $claim->documents()->where('id', $documentId)->first();
-            
+
             if (!$document) {
                 LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document not found', extra: [
                     'claim_uuid' => $claim->uuid,
@@ -981,18 +983,7 @@ class ClaimsService extends BaseService
                     'user_id' => auth()->id(),
                 ]);
                 return false;
-            }
-
-            // Check if document can be deleted (e.g., claim not finalized)
-            if (!$this->canDeleteDocument($claim, $document)) {
-                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document deletion not allowed', extra: [
-                    'claim_uuid' => $claim->uuid,
-                    'document_id' => $documentId,
-                    'claim_status' => $claim->claim_status_id,
-                    'user_id' => auth()->id(),
-                ]);
-                return false;
-            }
+            } 
 
             $document->delete();
 
@@ -1011,31 +1002,90 @@ class ClaimsService extends BaseService
                 'error' => $e->getMessage(),
                 'user_id' => auth()->id(),
             ], exception: $e);
-            
+
             return false;
+        }
+    } 
+
+    public function updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claimRequest): void
+    {
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS)->where('is_active', 1)->first();
+        if ($claimStatusClosed) {
+            $claimRequest->update(['claim_sub_status_id' => $claimStatusClosed->id]);
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_sub_status_id' => $claimStatusClosed->id,
+                'updated_by' => Auth::id(),
+            ]);
+        }
+    }
+
+    public function updateClaimSubStatusToTotalLossOfferLetterShared(ClaimRequest $claimRequest): void
+    {
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED)->where('is_active', 1)->first();
+        if ($claimStatusClosed) {
+            $claimRequest->update(['claim_sub_status_id' => $claimStatusClosed->id]);
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_sub_status_id' => $claimStatusClosed->id,
+                'updated_by' => Auth::id(),
+            ]);
+        }
+    }
+
+    public function updateClaimSubStatusToCashLossApproved(ClaimRequest $claimRequest): void
+    {
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED)->where('is_active', 1)->first();
+        if ($claimStatusClosed) {
+            $claimRequest->update(['claim_sub_status_id' => $claimStatusClosed->id]);
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_sub_status_id' => $claimStatusClosed->id,
+                'updated_by' => Auth::id(),
+            ]);
         }
     }
 
     /**
-     * Check if a document can be deleted
+     * Check if the given claim status ID represents a closed status
      */
-    protected function canDeleteDocument(ClaimRequest $claim, $document): bool
+    public function isClaimStatusClosed(?int $statusId): bool
     {
-        // Define rules for when documents can be deleted
-        $nonDeletableStatuses = [
-            // Add actual status IDs when available
-            // ClaimStatusEnum::CLOSED,
-            // ClaimStatusEnum::SETTLED,
-            // ClaimStatusEnum::REJECTED,
-        ];
-
-        // Can't delete documents from finalized claims
-        if (in_array($claim->claim_status_id, $nonDeletableStatuses)) {
+        if (! $statusId) {
             return false;
         }
 
-        // Add more business rules as needed
-        return true;
+        $closedStatus = ClaimStatus::where('id', $statusId)->where('is_active', 1)->first();
+
+        return $closedStatus !== null && $closedStatus->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
+    }
+
+    /**
+     * Dispatch Google review email job for the claim request
+     */
+    public function dispatchGoogleReviewEmail(ClaimRequest $claimRequest): void
+    {
+        try {
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'customer_email' => $claimRequest->email,
+            ]);
+
+            // Dispatch the job to send Google review email
+            SendGoogleReviewEmailJob::dispatch($claimRequest->uuid);
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 
 }

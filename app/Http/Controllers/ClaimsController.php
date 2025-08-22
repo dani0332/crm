@@ -280,7 +280,7 @@ class ClaimsController extends Controller
     public function updateClaimStatuses(ClaimStatusUpdateRequest $request, $uuid): RedirectResponse
     {
         try {
-            $updatedClaimRequest = $this->claimsService->updateClaimStatus($uuid, $request->validated());
+            $updatedClaimRequest = $this->claimsService->updateClaimStatus($uuid, $request->safe());
 
             return redirect()->back()->with('success', 'Claim status updated successfully.');
 

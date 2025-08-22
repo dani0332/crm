@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -285,5 +286,10 @@ class ClaimRequest extends Model implements AuditableContract
         $date_time_format = Config::get('constants.datetime_format');
 
         return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+
+    public function isCarOrBikeLOB(): bool
+    {
+        return in_array($this->quote_type_id, [QuoteTypeId::Car, QuoteTypeId::Bike]);
     }
 }
