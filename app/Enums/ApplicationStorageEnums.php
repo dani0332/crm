@@ -250,6 +250,5 @@ final class ApplicationStorageEnums extends Enum
     public const CPA_AUSTRALIA_SAVINGS_BCC_EMAILS = 'CPA_AUSTRALIA_SAVINGS_BCC_EMAILS';
     public const HOME_LEAD_POOL_BCC = 'HOME_LEAD_POOL_BCC';
     public const SAVINGS_LEAD_POOL_BCC = 'SAVINGS_LEAD_POOL_BCC';
-
     public const BIRD_OE_ASSIGNMENT_WORKFLOW = 'BIRD_OE_ASSIGNMENT_WORKFLOW';
 }
