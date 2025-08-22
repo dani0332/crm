@@ -2097,7 +2097,7 @@ class AMLService
                     'bank_name' => $request->bank_name,
                     'first_registration_date' => $request->first_registration_date,
                     'policy_effective_date' => $request->policy_effective_date,
-                    // 'policy_expiry_date' => $request->policy_expiry_date, // TODO:: Need to check with Mirza, why it's commented
+                    'policy_expiry_date' => $request->policy_expiry_date,
                     'certificate_start_date' => $request->certificate_start_date,
                     'certificate_end_date' => $request->certificate_end_date,
                     'annual_mileage_estimate' => $request->annual_mileage_estimate,
