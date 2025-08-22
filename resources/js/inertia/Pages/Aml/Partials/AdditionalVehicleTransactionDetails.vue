@@ -37,7 +37,8 @@ const RTA_CONSTANTS = {
   VEHICLE_RENEWAL_WITH_CHANGE_NUMBER: 'RTT10',
   POLICY_DURATION_MONTHS: 13,
   POLICY_EFFECTIVE_DATE_MAX_DAYS: 30,
-  GIG_PROVIDER_CODE: 'AXA'
+  PREVIOUS_GIG_PROVIDER: 'Gulf Insurance Group (Gulf) B.S.C. (C)',
+  RENEWALS_UPLOADS: 'renewals_uploads'
 };
 
 // Field configuration state
@@ -82,6 +83,60 @@ const rules = {
   bankLoanRequired: v => {
     return (v === '0' || v === '1') || 'Please select Yes or No for Bank Loan';
   },
+  policyEffectiveDateValidation: v => {
+    // Get current RTA type each time validation is called
+    const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
+    
+    // Only validate for New Vehicle or Change Vehicle Ownership
+    if (rtaType !== RTA_CONSTANTS.NEW_VEHICLE_REGISTRATION && rtaType !== RTA_CONSTANTS.CHANGE_VEHICLE_OWNERSHIP && (rtaType == RTA_CONSTANTS.VEHICLE_RENEWAL && isGigRenewal.value)) {
+      return true;
+    }
+
+    if (!v) {
+      return true; // Let required validation handle empty values
+    }
+
+    const selectedDate = new Date(v);
+    const currentDate = new Date();
+    const maxDate = new Date();
+    maxDate.setDate(currentDate.getDate() + RTA_CONSTANTS.POLICY_EFFECTIVE_DATE_MAX_DAYS);
+
+    if (selectedDate > maxDate) {
+      // Use validation message from rta_validation_summaries prop
+      const validationKey = 'policy_effective_date_max_days_validation';
+      const errorMessage = props.rta_validation_summaries[validationKey] || 
+             `Policy effective date should not be more than ${RTA_CONSTANTS.POLICY_EFFECTIVE_DATE_MAX_DAYS} days from current date`;
+      console.log('Policy effective date validation failed:', errorMessage);
+      return errorMessage;
+    }
+
+    return true;
+  },
+  certificateStartDateValidation: v => {
+    // Only validate for GIG renewals
+    if (!isGigRenewal.value) {
+      return true;
+    }
+
+    if (!v) {
+      return true; // Let required validation handle empty values
+    }
+
+    const selectedDate = new Date(v);
+    const currentDate = new Date();
+    // Set currentDate to start of day for fair comparison
+    currentDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate < currentDate) {
+      // Use validation message from rta_validation_summaries prop
+      const validationKey = 'certificate_start_date_back_date_validation';
+      const errorMessage = props.rta_validation_summaries[validationKey] || 
+             'Certificate start date cannot be back dated';
+      return errorMessage;
+    }
+
+    return true;
+  },
 };
 
 const plateCodeOptions = computed(() => {
@@ -114,7 +169,8 @@ const additionalVehicleTransactionDetailsForm = useForm({
   certificate_start_date: carDetail.value?.certificate_start_date ?? '',
   certificate_end_date: carDetail.value?.certificate_end_date ?? '',
   annual_mileage_estimate: carDetail.value?.annual_mileage_estimate?.toString() ?? '',
-  previous_policy_provider: '', // For GIG renewal detection
+  previous_policy_provider: page.props.quoteRequest?.currently_insured_with?.toString() ?? '',
+  lead_source: page.props.quoteRequest?.source?.toString() ?? '',
 });
 
 const hasNotEditPermission = computed(() => {
@@ -168,12 +224,14 @@ const isSUKOON = computed(() => {
 // RTA Transaction Type specific computed properties
 const isGigRenewal = computed(() => {
   return additionalVehicleTransactionDetailsForm.rta_transaction_type === RTA_CONSTANTS.VEHICLE_RENEWAL &&
-         additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
+        (additionalVehicleTransactionDetailsForm.lead_source == RTA_CONSTANTS.RENEWALS_UPLOADS && additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.PREVIOUS_GIG_PROVIDER);
 });
+
+console.log(isGigRenewal.value);
 
 // Check if current quote source is NOT renewals_uploads
 const isNonRenewalsUploadSource = computed(() => {
-  return page.props.quoteRequest?.source !== 'renewals_uploads';
+  return page.props.quoteRequest?.source !== RTA_CONSTANTS.RENEWALS_UPLOADS;
 });
 
 // Check if this is Vehicle Renewal with non-renewals_uploads source
@@ -184,30 +242,14 @@ const isVehicleRenewalNonUpload = computed(() => {
 
 // Field configuration computed properties
 const isFieldDisabled = (fieldName) => {
-  // // Special handling for Vehicle Renewal with non-renewals_uploads source
-  // // Enable Policy Effective Date, Policy Expiry Date, and Certificate Start Date
-  if (isVehicleRenewalNonUpload.value && 
-      ['policy_effective_date', 'policy_expiry_date', 'certificate_start_date'].includes(fieldName)) {
+  // Special handling for Vehicle Renewal with non-renewals_uploads source
+  if (isVehicleRenewalNonUpload.value &&
+      ['policy_expiry_date', 'certificate_start_date'].includes(fieldName)) {
     return false;
   }
-  
+
   return fieldConfig.value[fieldName]?.disabled || fieldConfig.value[fieldName]?.readonly || fieldConfig.value[fieldName]?.hidden || false;
 };
-
-// const isFieldReadonly = (fieldName) => {
-//   // Special handling for Vehicle Renewal with non-renewals_uploads source
-//   if (isVehicleRenewalNonUpload.value) {
-//     if (fieldName === 'certificate_end_date') {
-//       return true;
-//     }
-//     // Ensure Policy Effective Date, Policy Expiry Date, and Certificate Start Date are not readonly
-//     if (['policy_effective_date', 'policy_expiry_date', 'certificate_start_date'].includes(fieldName)) {
-//       return false;
-//     }
-//   }
-  
-//   return fieldConfig.value[fieldName]?.readonly || false;
-// };
 
 const isFieldRequired = (fieldName) => {
   // Hidden fields are never required
@@ -251,6 +293,7 @@ const formatDate = (date) => {
 
 // Calculate dates for New Vehicle Registration and Change Vehicle Ownership
 const calculateDatesForNewVehicleOrOwnershipChange = () => {
+  console.log('calculateDatesForNewVehicleOrOwnershipChange', additionalVehicleTransactionDetailsForm.policy_effective_date);
   if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
     const policyEffectiveDate = new Date(additionalVehicleTransactionDetailsForm.policy_effective_date);
 
@@ -296,18 +339,18 @@ const calculateDatesForGigRenewal = () => {
   }
 };
 
-// // Calculate dates for Vehicle Renewal with non-renewals_uploads source
-// const calculateDatesForVehicleRenewalNonUpload = () => {
-//   if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
-//     const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
+// Calculate dates for Vehicle Renewal with non-renewals_uploads source
+const calculateDatesForVehicleRenewalNonUpload = () => {
+  if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
+    const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
 
-//     // Certificate End Date = Certificate Start Date + 13 months
-//     const certificateEndDate = new Date(certificateStartDate);
-//     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+    // Certificate End Date = Certificate Start Date + 13 months
+    const certificateEndDate = new Date(certificateStartDate);
+    certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
 
-//     additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
-//   }
-// };
+    additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+  }
+};
 
 // Apply auto-calculations based on current form data
 const applyAutoCalculations = () => {
@@ -322,7 +365,10 @@ const applyAutoCalculations = () => {
       break;
 
     case RTA_CONSTANTS.VEHICLE_RENEWAL:
-      if (isGigRenewal.value) {
+      if (isVehicleRenewalNonUpload.value) {
+        calculateDatesForVehicleRenewalNonUpload();
+      } else if (isGigRenewal.value) {
+        console.log('isGigRenewal');
         calculateDatesForGigRenewal();
       } else {
         calculateDatesForNonGigRenewal();
@@ -339,7 +385,7 @@ const loadFieldConfigurationFromProps = () => {
   }
 
   const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
-  const isGigRenewal = additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
+  const isGigRenewal = (additionalVehicleTransactionDetailsForm.lead_source == RTA_CONSTANTS.RENEWALS_UPLOADS && additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.PREVIOUS_GIG_PROVIDER);
   const configKey = rtaType + (isGigRenewal ? '_GIG' : '');
 
   // Load configuration from props
@@ -357,6 +403,26 @@ const loadFieldConfigurationFromProps = () => {
 watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRtaType) => {
   if (newRtaType) {
     loadFieldConfigurationFromProps();
+    
+    // Re-validate policy effective date when RTA type changes
+    if (additionalVehicleTransactionDetailsForm.policy_effective_date) {
+      const validationResult = rules.policyEffectiveDateValidation(additionalVehicleTransactionDetailsForm.policy_effective_date);
+      if (validationResult !== true) {
+        additionalVehicleTransactionDetailsForm.setError('policy_effective_date', validationResult);
+      } else {
+        additionalVehicleTransactionDetailsForm.clearErrors('policy_effective_date');
+      }
+    }
+    
+    // Re-validate certificate start date when RTA type changes (for GIG renewals)
+    if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
+      const validationResult = rules.certificateStartDateValidation(additionalVehicleTransactionDetailsForm.certificate_start_date);
+      if (validationResult !== true && isGigRenewal.value) {
+        additionalVehicleTransactionDetailsForm.setError('certificate_start_date', validationResult);
+      } else {
+        additionalVehicleTransactionDetailsForm.clearErrors('certificate_start_date');
+      }
+    }
   }
 }, { immediate: true });
 
@@ -364,22 +430,51 @@ watch(() => additionalVehicleTransactionDetailsForm.rta_transaction_type, (newRt
 watch(() => additionalVehicleTransactionDetailsForm.previous_policy_provider, () => {
   if (additionalVehicleTransactionDetailsForm.rta_transaction_type) {
     loadFieldConfigurationFromProps();
+    
+    // Re-validate certificate start date when previous policy provider changes (affects GIG renewal status)
+    if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
+      const validationResult = rules.certificateStartDateValidation(additionalVehicleTransactionDetailsForm.certificate_start_date);
+      if (validationResult !== true && isGigRenewal.value) {
+        additionalVehicleTransactionDetailsForm.setError('certificate_start_date', validationResult);
+      } else {
+        additionalVehicleTransactionDetailsForm.clearErrors('certificate_start_date');
+      }
+    }
   }
 });
 
-// Watch for policy effective date changes to trigger auto-calculations
-watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, () => {
+// Watch for policy effective date changes to trigger auto-calculations and validation
+watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, (newValue) => {
+  console.log('policy_effective_date watcher triggered', newValue);
   applyAutoCalculations();
+  
+  // Manually trigger validation for policy effective date
+  if (newValue) {
+    const validationResult = rules.policyEffectiveDateValidation(newValue);
+    if (validationResult !== true) {
+      additionalVehicleTransactionDetailsForm.setError('policy_effective_date', validationResult);
+    } else {
+      additionalVehicleTransactionDetailsForm.clearErrors('policy_effective_date');
+    }
+  }
 });
 
 // Watch for certificate start date changes (for GIG renewals and Vehicle Renewal with non-renewals_uploads source)
-watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, () => {
+watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, (newValue) => {
   if (isGigRenewal.value || isVehicleRenewalNonUpload.value) {
     applyAutoCalculations();
   }
+  
+  // Manually trigger validation for certificate start date in GIG renewals
+  if (isGigRenewal.value && newValue) {
+    const validationResult = rules.certificateStartDateValidation(newValue);
+    if (validationResult !== true) {
+      additionalVehicleTransactionDetailsForm.setError('certificate_start_date', validationResult);
+    } else {
+      additionalVehicleTransactionDetailsForm.clearErrors('certificate_start_date');
+    }
+  }
 });
-
-
 
 // Get validation rules for a field
 const getFieldRules = (fieldName) => {
@@ -395,6 +490,16 @@ const getFieldRules = (fieldName) => {
     fieldRules.push(rules.chassisNumberCheck);
   } else if (fieldName === 'bank_loan') {
     fieldRules.push(rules.bankLoanRequired);
+  } else if (fieldName === 'policy_effective_date') {
+    fieldRules.push(rules.policyEffectiveDateValidation);
+    if (isFieldRequired(fieldName)) {
+      fieldRules.push(isRequired);
+    }
+  } else if (fieldName === 'certificate_start_date') {
+    fieldRules.push(rules.certificateStartDateValidation);
+    if (isFieldRequired(fieldName)) {
+      fieldRules.push(isRequired);
+    }
   } else if (isFieldRequired(fieldName)) {
     fieldRules.push(isRequired);
   }
@@ -785,6 +890,7 @@ watch(
             v-model="additionalVehicleTransactionDetailsForm.policy_effective_date"
             :rules="getFieldRules('policy_effective_date')"
             :required="isFieldRequired('policy_effective_date')"
+            :error="additionalVehicleTransactionDetailsForm.errors.policy_effective_date"
             placeholder="Policy Effective Date"
             :disabled="isFieldDisabled('policy_effective_date') || hasNotEditPermission"
             :readonly="fieldConfig.policy_effective_date?.readonly"
@@ -809,6 +915,7 @@ watch(
             v-model="additionalVehicleTransactionDetailsForm.certificate_start_date"
             :rules="getFieldRules('certificate_start_date')"
             :required="isFieldRequired('certificate_start_date')"
+            :error="additionalVehicleTransactionDetailsForm.errors.certificate_start_date"
             placeholder="Certificate Start Date"
             :disabled="isFieldDisabled('certificate_start_date') || hasNotEditPermission"
             :readonly="fieldConfig.certificate_start_date?.readonly"
