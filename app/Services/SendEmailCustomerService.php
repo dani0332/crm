@@ -1678,6 +1678,7 @@ class SendEmailCustomerService extends BaseService
             $workflowType = WorkflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER;
         }
 
+        $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
@@ -1695,6 +1696,7 @@ class SendEmailCustomerService extends BaseService
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'businessTypeInsurance' => $shortenedBusinessType ?? null,
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails,
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
@@ -1705,5 +1707,30 @@ class SendEmailCustomerService extends BaseService
             LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
         }
 
+    }
+
+    public function getBCCEmails(string $quoteType, string $source)
+    {
+        $bccEmails = [];
+
+        switch ($quoteType) {
+            case QuoteTypes::HOME->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::HOME_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_HOME) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS)));
+                }
+                break;
+            case QuoteTypes::SAVINGS->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::SAVINGS_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_SAVINGS) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_SAVINGS_BCC_EMAILS)));
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return $bccEmails;
     }
 }
