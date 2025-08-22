@@ -1678,7 +1678,7 @@ class SendEmailCustomerService extends BaseService
             $workflowType = WorkflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER;
         }
 
-        $bccEmails = $this->getBCCEmails($quoteType,$quote->source);
+        $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,

@@ -3,6 +3,7 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -24,7 +25,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use App\Enums\LeadSourceEnum;
 
 class HomeEmailService extends BaseService
 {
