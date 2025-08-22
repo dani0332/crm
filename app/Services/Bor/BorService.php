@@ -112,7 +112,7 @@ class BorService
             });
 
             // Filter signed PDF documents
-            $signedPdf = $personalQuote->documents->filter(function ($doc) use($borRefId) {
+            $signedPdf = $quoteObject->documents->filter(function ($doc) use($borRefId) {
                 $code = $doc->document_type_code;
                 return $code == DocumentTypeCode::BOR_SIGN && $doc->document_category == $borRefId;
             });
