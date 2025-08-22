@@ -171,10 +171,43 @@ const isGigRenewal = computed(() => {
          additionalVehicleTransactionDetailsForm.previous_policy_provider === RTA_CONSTANTS.GIG_PROVIDER_CODE;
 });
 
+// Check if current quote source is NOT renewals_uploads
+const isNonRenewalsUploadSource = computed(() => {
+  return page.props.quoteRequest?.source !== 'renewals_uploads';
+});
+
+// Check if this is Vehicle Renewal with non-renewals_uploads source
+const isVehicleRenewalNonUpload = computed(() => {
+  return additionalVehicleTransactionDetailsForm.rta_transaction_type === RTA_CONSTANTS.VEHICLE_RENEWAL &&
+         isNonRenewalsUploadSource.value;
+});
+
 // Field configuration computed properties
 const isFieldDisabled = (fieldName) => {
+  // // Special handling for Vehicle Renewal with non-renewals_uploads source
+  // // Enable Policy Effective Date, Policy Expiry Date, and Certificate Start Date
+  if (isVehicleRenewalNonUpload.value && 
+      ['policy_effective_date', 'policy_expiry_date', 'certificate_start_date'].includes(fieldName)) {
+    return false;
+  }
+  
   return fieldConfig.value[fieldName]?.disabled || fieldConfig.value[fieldName]?.readonly || fieldConfig.value[fieldName]?.hidden || false;
 };
+
+// const isFieldReadonly = (fieldName) => {
+//   // Special handling for Vehicle Renewal with non-renewals_uploads source
+//   if (isVehicleRenewalNonUpload.value) {
+//     if (fieldName === 'certificate_end_date') {
+//       return true;
+//     }
+//     // Ensure Policy Effective Date, Policy Expiry Date, and Certificate Start Date are not readonly
+//     if (['policy_effective_date', 'policy_expiry_date', 'certificate_start_date'].includes(fieldName)) {
+//       return false;
+//     }
+//   }
+  
+//   return fieldConfig.value[fieldName]?.readonly || false;
+// };
 
 const isFieldRequired = (fieldName) => {
   // Hidden fields are never required
@@ -263,6 +296,19 @@ const calculateDatesForGigRenewal = () => {
   }
 };
 
+// // Calculate dates for Vehicle Renewal with non-renewals_uploads source
+// const calculateDatesForVehicleRenewalNonUpload = () => {
+//   if (additionalVehicleTransactionDetailsForm.certificate_start_date) {
+//     const certificateStartDate = new Date(additionalVehicleTransactionDetailsForm.certificate_start_date);
+
+//     // Certificate End Date = Certificate Start Date + 13 months
+//     const certificateEndDate = new Date(certificateStartDate);
+//     certificateEndDate.setMonth(certificateEndDate.getMonth() + RTA_CONSTANTS.POLICY_DURATION_MONTHS);
+
+//     additionalVehicleTransactionDetailsForm.certificate_end_date = formatDate(certificateEndDate);
+//   }
+// };
+
 // Apply auto-calculations based on current form data
 const applyAutoCalculations = () => {
   const rtaType = additionalVehicleTransactionDetailsForm.rta_transaction_type;
@@ -326,9 +372,9 @@ watch(() => additionalVehicleTransactionDetailsForm.policy_effective_date, () =>
   applyAutoCalculations();
 });
 
-// Watch for certificate start date changes (for GIG renewals)
+// Watch for certificate start date changes (for GIG renewals and Vehicle Renewal with non-renewals_uploads source)
 watch(() => additionalVehicleTransactionDetailsForm.certificate_start_date, () => {
-  if (isGigRenewal.value) {
+  if (isGigRenewal.value || isVehicleRenewalNonUpload.value) {
     applyAutoCalculations();
   }
 });
