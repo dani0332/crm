@@ -26,6 +26,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Pipeline;
+use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 
 class ReAssignHealthLeadsJob implements ShouldQueue
 {
@@ -81,6 +82,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                     VerifyAlreadyInProgressAllocationPipe::class,
                     ValidateNationalityConfigPipe::class,
                     AssignTeamPipe::class,
+                    ApplyRuleExclusionPipe::class,
                     FetchAvailableAdvisorPipe::class,
                     ResetNationalityConfigPipe::class,
                     FetchAvailableAdvisorPipe::class,
