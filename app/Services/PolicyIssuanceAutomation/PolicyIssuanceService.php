@@ -138,7 +138,6 @@ class PolicyIssuanceService
         }
 
         return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
-
     }
 
     private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)
