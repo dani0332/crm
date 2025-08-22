@@ -7,10 +7,8 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
-use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
@@ -20,6 +18,7 @@ use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OCRService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -92,7 +91,7 @@ class PersonalQuoteRepository extends BaseRepository
     {
         try {
             $fileName = $file->getClientOriginalName();
-            info('fn: fetchUploadDocument called');
+            LoggerService::info(self::class.' - fn: fetchUploadDocument called - Quote UUID: '.$data['quote_uuid']);
             $quoteType = '';
             $insuranceProviderId = null;
 
@@ -173,7 +172,7 @@ class PersonalQuoteRepository extends BaseRepository
                     }
 
                     $quoteDocument = $quote->documents()->create($document);
-                    info('Document uploaded - Ref: '.$quote->code);
+                    LoggerService::info('Document uploaded - Ref: '.$quote->code);
                 });
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
@@ -182,6 +181,7 @@ class PersonalQuoteRepository extends BaseRepository
                     )->afterCommit();
                 }
 
+                LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
                 $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType);
 
                 if (! $insuranceProviderId && request()->is_send_update) {
@@ -192,12 +192,12 @@ class PersonalQuoteRepository extends BaseRepository
 
                 return ['status' => true, 'message' => 'File Uploaded'];
             } catch (\Exception $exception) {
-                info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+                LoggerService::error('Error while uploading document - Ref: '.$quote->uuid, exception: $exception);
 
                 return ['status' => false, 'message' => $fileName.' :  '.($exception->getMessage() ?? 'Error uploading file')];
             }
         } catch (\Exception $exception) {
-            info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
+            LoggerService::error('Document Upload Error - UUID: '.$quote->uuid, exception: $exception);
 
             return ['status' => true, 'message' => $fileName.' :  Document upload failed, please try again'];
         }
@@ -205,24 +205,12 @@ class PersonalQuoteRepository extends BaseRepository
 
     private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType)
     {
-        if ($quote instanceof SendUpdateLog) {
-            info(self::class."::populateDocumentData - Send Update Log found, skipping document data population for UUID: {$quote->uuid}");
-
-            return;
-        }
-
-        $quoteType = QuoteTypes::tryFrom(ucfirst(request('quote_type')));
-        $userId = Auth::user()->id;
-        if ($quote && $quoteType && $filePathAzure) {
-            PopulateDocumentData::dispatch(
-                $quoteType,
-                $quote,
-                $documentType,
-                $filePathAzure,
-                $fileMimeType,
-                $userId,
-            );
-        }
+        app(OCRService::class)->dispatchJobIfEligible(
+            $documentType,
+            $quote,
+            $filePathAzure,
+            $fileMimeType
+        );
     }
 
     /**

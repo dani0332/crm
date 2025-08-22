@@ -257,10 +257,10 @@ class SageApiService
         }
 
         // create AP Prepayment Premium Receipt
-        $createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
+        /*$createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
         if (! $createPremiumPrepayment['status']) {
             return $createPremiumPrepayment;
-        }
+        }*/
 
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
             if (empty($reversalInvoiceLogs)) {
@@ -791,10 +791,10 @@ class SageApiService
             }
 
             // create AP Prepayment Premium Receipt
-            $createAPPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
+            /*$createAPPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
             if (! $createAPPremiumPrepayment['status']) {
                 return $createAPPremiumPrepayment;
-            }
+            }*/
 
             $payment = $payment->refresh();
             $paymentSplits = $payment->paymentSplits;
@@ -824,10 +824,10 @@ class SageApiService
             }
 
             // Apply Prepayments for AP Invoice
-            $applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
             if (! $applyPaymentAPInvoices['status']) {
                 return $applyPaymentAPInvoices;
-            }
+            }*/
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,

@@ -785,7 +785,7 @@ class CRUDController extends Controller
             $leadSourceEnum = LeadSourceEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
-            $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
+            $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/documents';
 
             if ($quote->registration_type == CarRegistrationType::COMPANY) {
                 $documentQuoteTypeId = QuoteTypeId::CompanyCar;
