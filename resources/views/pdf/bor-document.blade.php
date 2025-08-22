@@ -294,7 +294,7 @@
         <div style="text-align: center; font-size: 10px; color: #777; line-height: 1.4;">
             This document is digitally signed by {{ $customer_type === 'Entity' ? $company_name : $customer_name }} on {{ $date_signed ?? now()->format('d/m/Y') }} at {{ $date_signed_time ?? now()->format('H:i:s') }}, no manual signature required<br>
             Document Hash: {{ $document_id ?? '[Unique Hash]' }}<br>
-            Accessed By: {{ $access_ip ?? request()->ip() }}
+            Accessed By: {{ $user_agent ?? request()->ip() }}
         </div>
         @endif
     </div>
