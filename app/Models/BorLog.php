@@ -152,9 +152,9 @@ class BorLog extends Model
      * Get signed documents related to this BOR request.
      * Uses the polymorphic relationship from quote_documents table.
      */
-    public function signedDocument(): HasOne
+    public function signedDocument(): BelongsTo
     {
-        return $this->hasOne(QuoteDocument::class, 'quote_document_id')->where('document_type_code', DocumentTypeCode::BOR_SIGN);
+        return $this->belongsTo(QuoteDocument::class, 'quote_document_id')->where('document_type_code', DocumentTypeCode::BOR_SIGN);
     }
 
     /**

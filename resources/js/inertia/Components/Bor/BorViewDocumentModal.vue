@@ -200,9 +200,9 @@ watch(() => props.visible, (newVisible) => {
               <p class="text-sm text-gray-900">{{ borLog.insurer_name || 'N/A' }}</p>
             </div>
             
-            <div v-if="borLog.customer_type === 'Entity'">
-              <label class="text-sm font-medium text-gray-600">Company Name</label>
-              <p class="text-sm text-gray-900">{{ borLog.company_name || 'N/A' }}</p>
+            <div v-if="borLog.customer_type === 'Entity'" class="min-w-0 flex-1">
+              <label class="text-sm font-medium text-gray-600 block">Company Name</label>
+              <p class="text-sm text-gray-900 break-words overflow-hidden">{{ borLog.company_name || 'N/A' }}</p>
             </div>
 
             <div v-if="borLog.insurance_provider">

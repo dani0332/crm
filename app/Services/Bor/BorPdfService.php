@@ -29,7 +29,6 @@ class BorPdfService
                 $document = $borLog->document;
                 return Storage::disk('azureIM')->temporaryUrl($document->doc_url, now()->addMinutes(2));
             }
-
             // Prepare data for PDF template
             $includeSignature = $borLog->date_signed ? true : false;
             $data = $this->preparePdfData($borLog, $lead, $includeSignature);
@@ -136,7 +135,6 @@ class BorPdfService
                 $includeSignature = false;
             }
         }
-
         $data = [
             // BOR Information
             'bor_log' => $borLog,
@@ -168,6 +166,7 @@ class BorPdfService
             'date_signed' => Carbon::parse($borLog->date_signed)->format('d/m/Y'), // Already formatted as string by model accessor
             'date_signed_time' => Carbon::parse($borLog->date_signed)->format('H:i:s'),
             'document_id' => $borLog->document_id,
+            'user_agent' => $borLog->user_agent,
             
             // Additional Information
             'current_date' => now()->format('d F Y'),
