@@ -680,7 +680,7 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment Code: '.$payment->code.' - Capture payment process skip & proceeding with Policy Book process - Unpaid payment count: '.$unpaidPaymentCount.' - Is Insurer Payment: '.$isInsurerPayment);
         }
 
-        $isHealthAUHLead = $this->isAHisHealthAUHLead($quoteType, $quote);
+        $isHealthAUHLead = $this->isHealthAUHLead($quoteType, $quote);
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Is Health AUH Lead Check ', extra : [
             'isHealthAUHLead' => $isHealthAUHLead,
         ]);

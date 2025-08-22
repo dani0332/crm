@@ -268,6 +268,11 @@ trait GenericQueriesAllLobs
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
+        $isHealthAUHLead = $this->isHealthAUHLead($quoteType, $record);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$record->code.' - Is Health AUH Lead Check ', extra : [
+            'isHealthAUHLead' => $isHealthAUHLead,
+        ]);
+
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
         $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
@@ -277,7 +282,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = 'Send and Book Policy';
-        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record);
+        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record, $isHealthAUHLead);
         $bookPolicyDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
         $bookPolicyDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payment);
@@ -340,7 +345,7 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['text'] = 'Book Policy';
         }
         // Check if this is an Abu Dhabi health quote lead
-        $bookPolicyDetails['isHealthAUHLead'] = $this->isAHisHealthAUHLead($quoteType, $record);
+        $bookPolicyDetails['isHealthAUHLead'] = $isHealthAUHLead;
 
         return $bookPolicyDetails;
     }
@@ -384,7 +389,7 @@ trait GenericQueriesAllLobs
      *
      * @return array
      */
-    private function transactionPaymentStatus($payment, $quote)
+    private function transactionPaymentStatus($payment, $quote, $isHealthAUHLead = false)
     {
         // If no payment has been created for the lead, return an unpaid payment status along with the relevant tooltip
         if (! $payment) {
@@ -399,7 +404,7 @@ trait GenericQueriesAllLobs
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
         $updateRequired = in_array($quote->quote_status_id, $statusesTriggeringUpdate) && is_null($payment->transaction_payment_status);
-        if ($updateRequired) {
+        if ($updateRequired && !$isHealthAUHLead) {
             $this->updatePaymentAllocationStatus($quote);
         }
 
@@ -802,7 +807,7 @@ trait GenericQueriesAllLobs
         return app(RenewalBatchReportService::class)->getAllNonMotorBatches();
     }
 
-    public function isAHisHealthAUHLead($quoteType, $record)
+    public function isHealthAUHLead($quoteType, $record)
     {
         return strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
                                             isset($record->emirate_of_your_visa_id) &&
