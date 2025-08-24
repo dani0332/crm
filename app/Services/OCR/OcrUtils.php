@@ -220,17 +220,17 @@ trait OcrUtils
         // Check if this is a Business quote (ID 5) that's actually Group Medical
         $isGroupMedicalBusiness = $this->isGroupMedicalBusiness($quote);
         
-        $isEligible = $isSendUpdate && $quote instanceof \App\Models\SendUpdateLog && 
+        $isEligible = $isSendUpdate && $quote instanceof SendUpdateLog && 
                      (in_array($quote->quote_type_id, $allowedLOBs) || $isGroupMedicalBusiness);
         
         LoggerService::info('isSendUpdateEligibleForOCR - Eligibility Check', [
             'is_send_update' => $isSendUpdate,
-            'is_send_update_log_instance' => $quote instanceof \App\Models\SendUpdateLog,
+            'is_send_update_log_instance' => $quote instanceof SendUpdateLog,
             'quote_type_id' => $quote->quote_type_id ?? 'N/A',
             'quote_uuid' => $quote->uuid ?? 'N/A',
             'quote_code' => $quote->code ?? 'N/A',
             'allowed_lob_ids' => $allowedLOBs,
-            'is_lob_allowed' => $quote instanceof \App\Models\SendUpdateLog ? in_array($quote->quote_type_id, $allowedLOBs) : false,
+            'is_lob_allowed' => $quote instanceof SendUpdateLog ? in_array($quote->quote_type_id, $allowedLOBs) : false,
             'is_group_medical_business' => $isGroupMedicalBusiness,
             'final_eligibility' => $isEligible,
             'eligibility_reason' => $isEligible ? 'Eligible for OCR' : $this->getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs),

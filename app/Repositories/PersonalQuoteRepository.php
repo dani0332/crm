@@ -224,6 +224,7 @@ class PersonalQuoteRepository extends BaseRepository
             $quote,
             $filePathAzure,
             $fileMimeType,
+            null, // quoteTypeParam for send update log flow
             $isSendUpdateEligibleForOCR
         );
     }
