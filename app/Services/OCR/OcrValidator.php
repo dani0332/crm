@@ -87,18 +87,22 @@ trait OcrValidator
             ],
             InsurerProviderEnum::TAKAFUL_EMARAT_INSURANCE => [
                 ...$commonFields,
+                'quote.commission_vat_applicable',
             ],
             InsurerProviderEnum::NATIONAL_GENERAL_INSURANCE => [
                 ...$commonFields,
+                'quote.commission_vat_applicable',
             ],
             InsurerProviderEnum::METLIFE_INSURANCE => [
                 ...$commonFields,
             ],
             InsurerProviderEnum::DUBAI_NATIONAL_INSURANCE => [
                 ...$commonFields,
+                'quote.commission_vat_applicable',
             ],
             InsurerProviderEnum::DUBAI_INSURANCE_COMPANY => [
                 ...$commonFields,
+                'quote.commission_vat_applicable',
             ],
             InsurerProviderEnum::CIGNA_INSURANCE => [
                 ...$commonFields,
