@@ -24,7 +24,7 @@ class AccuracyMatrixCacheService
 
     private const ELIGIBLE_QUOTE_TYPES = [
         QuoteTypes::HOME,
-        QuoteTypes::GROUP_MEDICAL,
+        QuoteTypes::BUSINESS,
     ];
 
     private const ELIGIBLE_PROVIDERS = [
@@ -48,6 +48,15 @@ class AccuracyMatrixCacheService
     {
         if (!in_array($quoteType, self::ELIGIBLE_QUOTE_TYPES)) {
             return false;
+        }
+
+        // Only check for Group Medical if it's a Business quote
+        if ($quoteType === QuoteTypes::BUSINESS) {
+            $isGroupMedical = $quoteType->isGroupMedical($quote);
+            
+            if (!$isGroupMedical) {
+                return false;
+            }
         }
 
         $providerCode = $this->getProviderCode($quote);

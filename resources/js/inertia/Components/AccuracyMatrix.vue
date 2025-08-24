@@ -59,21 +59,20 @@ const fetchMatrixStatus = async () => {
     return;
   }
   
-  const eligibleTypes = ['home', 'group_medical', 'business']; // 'business' for Group Medical quotes
-  const normalizedModelType = props.modelType.toLowerCase().replace(/[_-]/g, '_');
+  const eligibleTypes = ['Home','Business'];
+  const modelType = props.modelType ? props.modelType.charAt(0).toUpperCase() + props.modelType.slice(1).toLowerCase() : '';
+
+  console.log(modelType);
   
-  if (!eligibleTypes.includes(normalizedModelType) && normalizedModelType !== 'groupmedical') {
+  if (!eligibleTypes.includes(modelType)) {
     return;
   }
 
-  // Map business to group_medical for API route
-  const apiQuoteType = normalizedModelType === 'business' ? 'group_medical' : normalizedModelType;
-  
   loading.value = true;
   error.value = null;
 
   try {
-    const response = await axios.get(`/accuracy-matrix/${apiQuoteType}/${props.quote.id}`);
+    const response = await axios.get(`/accuracy-matrix/${modelType}/${props.quote.id}`);
     
     // Validate response structure
     if (response.data && typeof response.data === 'object') {

@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Services\AccuracyMatrixCacheService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class AccuracyMatrixController extends Controller
@@ -20,14 +19,10 @@ class AccuracyMatrixController extends Controller
         private readonly AccuracyMatrixCacheService $accuracyMatrixService
     ) {}
 
-    public function getMatrixStatus(Request $request, string $quoteType, int $quoteId): JsonResponse
+    public function getMatrixStatus(string $quoteType, int $quoteId): JsonResponse
     {
 
         try {
-            $request->validate([
-                'quote_type' => 'sometimes|string|in:home,group_medical',
-            ]);
-
             $quoteTypeEnum = $this->mapQuoteType($quoteType);
             if (!$quoteTypeEnum) {
                 return response()->json([
@@ -78,9 +73,9 @@ class AccuracyMatrixController extends Controller
 
     private function mapQuoteType(string $quoteType): ?QuoteTypes
     {
-        return match (strtolower($quoteType)) {
-            'home' => QuoteTypes::HOME,
-            'group_medical', 'groupmedical', 'medical' => QuoteTypes::GROUP_MEDICAL,
+        return match ($quoteType) {
+            QuoteTypes::HOME->value => QuoteTypes::HOME,
+            QuoteTypes::BUSINESS->value => QuoteTypes::BUSINESS,
             default => null,
         };
     }
