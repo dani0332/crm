@@ -40,6 +40,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
+use App\Http\Requests\AssignSupportUserRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -2373,5 +2374,33 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
+    }
+
+    /**
+     * Get the appropriate service object based on modelType
+     *
+     * @param  string  $modelType
+     * @return mixed
+     */
+    /**
+     * Assign support user to quote (dynamic for all LOBs)
+     */
+    public function assignSupportUser(AssignSupportUserRequest $request)
+    {
+        $leadIds = explode(',', $request->assigned_lead_id);
+        $supportUserId = (int) $request->support_user_id;
+        $modelType = $request->modelType;
+
+        // Use the existing helper function to get service class name
+        $serviceClassName = getServiceObject($modelType);
+        $service = app($serviceClassName);
+
+        $successMessage = $service->assignSupportUser($leadIds, $supportUserId, $modelType);
+
+        if ($successMessage) {
+            return Redirect::back()->with('success', $successMessage);
+        }
+
+        return Redirect::back()->with('error', 'Failed to assign support user to leads. Please try again.');
     }
 }
