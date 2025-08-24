@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 
 class OCRService
 {
-    use Ocrable, OcrFillable, OcrUtils;
+    use Ocrable, OcrFillable, OcrUtils, OcrValidator;
 
     public const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
@@ -67,15 +67,8 @@ class OCRService
         string $docUrl,
         OCRDocumentTypeEnum $docType
     ) {
-        $providerCode = null;
-
-        if ($quote->payments && $quote->payments->isNotEmpty()) {
-            $latestPayment = $quote->payments->first();
-            if ($latestPayment && $latestPayment->insuranceProvider) {
-                $providerCode = $latestPayment->insuranceProvider->code;
-            }
-        }
-
+        $providerCode = $this->extractProviderCode($quote);
+        
         LoggerService::info('Provider Code - Quote UUID: '.$quote->uuid);
 
         $requestData = [
@@ -134,7 +127,7 @@ class OCRService
         }
 
         $latestPayment = $quote->payments->first();
-
+        
         return $latestPayment && $latestPayment->insuranceProvider
             ? $latestPayment->insuranceProvider->id
             : null;
@@ -356,6 +349,17 @@ class OCRService
         // Check if OCR service is available
         $serviceCheck = $this->handleServiceAvailability($quote, $documentType, $userId);
         if (! $serviceCheck) {
+            return false;
+        }
+        
+        // Skip OCR for non-eligible providers
+        if (!$this->isProviderEligibleForOcr($quoteType, $quote)) {
+            $providerCode = $this->extractProviderCode($quote);
+            LoggerService::info('OCR processing skipped - Provider not eligible for OCR - Quote UUID: '.$quote->uuid, [
+                'quote_type' => $quoteType->value,
+                'provider_code' => $providerCode ?? 'null',
+            ]);
+            
             return false;
         }
 

@@ -281,4 +281,18 @@ trait OcrUtils
             return false;
         }
     }
+
+    public function extractProviderCode(Model $quote): ?string
+    {
+        $providerCode = null;
+        
+        if ($quote->payments && $quote->payments->isNotEmpty()) {
+            $latestPayment = $quote->payments->first();
+            if ($latestPayment && $latestPayment->insuranceProvider) {
+                $providerCode = $latestPayment->insuranceProvider->code;
+            }
+        }
+        
+        return $providerCode;
+    }
 }

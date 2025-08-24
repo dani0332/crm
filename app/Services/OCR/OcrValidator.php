@@ -7,7 +7,7 @@ use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Model;
 
 trait OcrValidator
-{
+{   
     private function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
     {
         return match ($provider) {
@@ -110,10 +110,14 @@ trait OcrValidator
         };
     }
 
+    public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
+    {
+        $providerCode = $this->extractProviderCode($quote);
+        
+        if (!$providerCode) {
+            return false;
+        }
+        
+        return $this->isSupportedProvider($quoteType, $providerCode);
+    }
 }
-
-// InsurerProviderEnum::GIG_INSURANCE,
-// InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
-// InsurerProviderEnum::QATAR_INSURANCE,
-// InsurerProviderEnum::LIVANA_INSURANCE,
-// InsurerProviderEnum::TOKIO_MARINE,
