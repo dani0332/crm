@@ -655,9 +655,9 @@ const FieldLoader = defineComponent({
   <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
-        <div class="flex flex-wrap gap-4 justify-between items-center">
+        <div class="flex justify-between items-center w-full">
           <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-          <AccuracyMatrix :quote="quote" :modelType="modelType" />
+          <AccuracyMatrix :quote="quote" :modelType="modelType" class="mr-2" />
         </div>
       </template>
       <template #body>
