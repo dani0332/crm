@@ -4,6 +4,7 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { XInput } from '@indielayer/ui';
 
 const props = defineProps({
@@ -810,6 +811,12 @@ const cancelOptionsList = computed(() => {
       :id="$page.props.sendUpdateLog.id"
       :quoteType="'SendUpdateLog'"
       :expanded="true"
+    />
+    
+    <OcrLogs
+      :type="modelClass"
+      :id="$page.props.sendUpdateLog.id"
+      :expanded="sectionExpanded"
     />
   </div>
 </template>
