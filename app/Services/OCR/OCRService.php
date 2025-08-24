@@ -449,12 +449,7 @@ class OCRService
         }
 
         $quoteType = $this->determineQuoteType($quoteTypeParam);
-        if (! $quoteType) {
-            LoggerService::info('OCR Dispatch - Unable to determine quote type - Quote UUID: '.$quote->uuid);
-
-            return;
-        }
-
+        
         // If quote type is not available from request and this is a Send Update Log, get it from the model
         if (!$quoteType && $quote instanceof SendUpdateLog) {
             $quoteType = $this->getCorrectQuoteTypeForOCR($quote);
@@ -475,6 +470,12 @@ class OCRService
                 'quote_uuid' => $quote->uuid,
                 'quote_model' => get_class($quote),
             ]);
+        }
+        
+        // Final check if we still couldn't determine the quote type
+        if (! $quoteType) {
+            LoggerService::info('OCR Dispatch - Unable to determine quote type after all attempts - Quote UUID: '.$quote->uuid);
+            return;
         }
         
         LoggerService::info('PopulateDocumentData - About to dispatch OCR job', [

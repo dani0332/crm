@@ -219,12 +219,24 @@ class PersonalQuoteRepository extends BaseRepository
 
     private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR)
     {
+        // For SendUpdateLog, get the quote type from the quote_type_id
+        $quoteTypeParam = null;
+        if ($quote instanceof SendUpdateLog) {
+            // Get the quote type name for the SendUpdateLog
+            $quoteTypeParam = QuoteTypes::getName($quote->quote_type_id)?->value;
+            LoggerService::info('Determined quote type for SendUpdateLog', [
+                'quote_uuid' => $quote->uuid,
+                'quote_type_id' => $quote->quote_type_id,
+                'quote_type_param' => $quoteTypeParam
+            ]);
+        }
+        
         app(OCRService::class)->dispatchJobIfEligible(
             $documentType,
             $quote,
             $filePathAzure,
             $fileMimeType,
-            null, // quoteTypeParam for send update log flow
+            $quoteTypeParam, // Pass the determined quote type for send update log flow
             $isSendUpdateEligibleForOCR
         );
     }
