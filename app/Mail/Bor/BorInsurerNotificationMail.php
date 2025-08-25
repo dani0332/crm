@@ -111,7 +111,7 @@ class BorInsurerNotificationMail extends Mailable
             ],
             'bor_data' => [
                 'policy_number' => $this->borLog->policy_number ?? '',
-                'policy_expiry_date' => $this->borLog->policy_expiry_date ?? '',
+                'policy_expiry_date' => $this->borLog->policy_expiry ?? '',
                 'insurer_name' => $this->borLog->insurer_name ?? '',
                 'customer_type' => $this->borLog->customer_type == "Entity" ? "company" : "individual",
                 'bor_ref_id' => $this->borLog->bor_reference ?? '',
