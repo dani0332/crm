@@ -371,6 +371,7 @@ const nbFollowupTemplates = [
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
           :quoteType="quoteType"
+          :canAssignLeadAdvisor="(quotesSelected.length > 0)"
           @success="manualAssignmentSuccess"
           @error="manualAssignmentError"
         />
