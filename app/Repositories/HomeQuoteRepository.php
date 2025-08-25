@@ -136,7 +136,10 @@ class HomeQuoteRepository extends BaseRepository
             ->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
-                fn ($query) => $query->when($forExport, fn ($query) => $query, fn ($query) => $query->simplePaginate()->withQueryString())
+                fn ($query) => $query->when($forExport, fn ($query) => $query, function ($query) {
+                    LoggerService::sql("fetchGetData: ", $query);
+                    return $query->simplePaginate()->withQueryString();
+                })
             );
 
         // logger()->debug("toRawSql: " . $query->toRawSql());
