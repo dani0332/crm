@@ -816,7 +816,7 @@ const cancelOptionsList = computed(() => {
     <OcrLogs
       :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
-      :expanded="sectionExpanded"
+      :expanded="true"
     />
   </div>
 </template>
