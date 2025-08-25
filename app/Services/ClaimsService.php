@@ -810,19 +810,19 @@ class ClaimsService extends BaseService
             );
 
             // Update the claim request
-            $claimRequest->update($statusUpdateData);
+                $claimRequest->update($statusUpdateData);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'code' => $claimRequest->code,
-                'updated_fields' => array_keys($statusUpdateData),
-                'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
-                'new_claim_status_id' => $claimRequest->claim_status_id,
-                'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
-                'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
-                'updated_by' => auth()->id(),
-            ]);
+                LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, [
+                    'claim_request_id' => $claimRequest->id,
+                    'claim_uuid' => $claimRequest->uuid,
+                    'code' => $claimRequest->code,
+                    'updated_fields' => array_keys($statusUpdateData),
+                    'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
+                    'new_claim_status_id' => $claimRequest->claim_status_id,
+                    'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
+                    'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
+                    'updated_by' => auth()->id(),
+                ]);
 
             return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
 
@@ -1319,6 +1319,101 @@ class ClaimsService extends BaseService
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+    }
+
+    /**
+     * Get claim lead history (status changes by team lead) - all data for client-side pagination
+     * 
+     * @param int $claimId
+     * @return array
+     */
+    public function getClaimLeadHistory(int $claimId)
+    {
+        try {
+            // Single optimized query using LAG window function to get previous status
+            $claimLeadHistory = DB::table('claim_activities as ca')
+                ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
+                ->join('users as u', 'ca.created_by_id', '=', 'u.id')
+                ->select(
+                    DB::raw('DATE_FORMAT(ca.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
+                    'ca.comment as Notes',
+                    'u.name as ModifiedBy',
+                    'cs.text as NewStatus',
+                    // Use LAG window function to get the previous status in the same query
+                    DB::raw('LAG(cs.text) OVER (ORDER BY ca.created_at ASC) as oldStatus')
+                )
+                ->where('ca.claim_request_id', $claimId)
+                ->where('cs.parent', true) // Only get parent statuses (main claim statuses)
+                ->orderBy('ca.created_at', 'desc')
+                ->get();
+
+             
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim lead history fetched for client-side pagination', extra: [
+                'claim_id' => $claimId,
+                'total_records' => count($claimLeadHistory),
+                'user_id' => auth()->id(),
+            ]);
+
+            return $claimLeadHistory;
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', [
+                'error' => $e->getMessage(),
+                'claim_id' => $claimId,
+                'user_id' => auth()->id(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Get claim sub-status logs (sub-status changes by claims manager) - all data for client-side pagination
+     * 
+     * @param int $claimId
+     * @return array
+     */
+    public function getClaimSubStatusLogs(int $claimId)
+    {
+        try {
+            // Single optimized query using LAG window function to get previous sub-status
+            $claimSubStatusLogs = DB::table('claim_activities as ca')
+                ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
+                ->join('users as u', 'ca.created_by_id', '=', 'u.id')
+                ->select(
+                    DB::raw('DATE_FORMAT(ca.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
+                    'u.name as ModifiedBy',
+                    'cs.text as NewSubStatus',
+                    'ca.comment as Notes',
+                    // Use LAG window function to get the previous sub-status in the same query
+                    DB::raw('LAG(cs.text) OVER (ORDER BY ca.created_at ASC) as OldSubStatus')
+                )
+                ->where('ca.claim_request_id', $claimId)
+                ->where('cs.parent', false) // Only get sub-statuses (not parent statuses)
+                ->whereNotNull('ca.status_id')
+                ->orderBy('ca.created_at', 'desc')
+                ->get();
+
+             
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim sub-status logs fetched for client-side pagination', extra: [
+                'claim_id' => $claimId,
+                'total_records' => count($claimSubStatusLogs),
+                'user_id' => auth()->id(),
+            ]);
+
+            return $claimSubStatusLogs;
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim sub-status logs', extra: [
+                'error' => $e->getMessage(),
+                'claim_id' => $claimId,
+                'user_id' => auth()->id(),
+            ]);
+
+            throw $e;
         }
     }
 

@@ -248,6 +248,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::delete('claims/{claim:uuid}/documents/{document}', [ClaimsController::class, 'destroyDocument'])->name('claims.documents.destroy');
         Route::post('claims/documents/get-s3-temp-url', [ClaimsController::class, 'getS3TempUrl'])->name('claims.documents.get-s3-temp-url');
         Route::get('claims/{claim:uuid}/documents/download-all', [ClaimsController::class, 'downloadAllDocuments'])->name('claims.documents.download-all');
+        Route::get('claims/{claim:uuid}/lead-history', [ClaimsController::class, 'getClaimLeadHistory'])->name('claims.lead-history');
+        Route::get('claims/{claim:uuid}/sub-status-logs', [ClaimsController::class, 'getClaimSubStatusLogs'])->name('claims.sub-status-logs');
         
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');

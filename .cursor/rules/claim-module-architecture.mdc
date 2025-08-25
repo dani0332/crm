@@ -40,12 +40,16 @@ alwaysApply: false
 - `updateStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): JsonResponse` - internal system
 - `optimizeMessage(ClaimSendNotificationRequest $request): JsonResponse` - AI message optimization with validation
 - `sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claim): JsonResponse` - send notifications with validation
+- `getClaimLeadHistory(Request $request, ClaimRequest $claim): JsonResponse` - fetch all claim status history for client-side pagination
+- `getClaimSubStatusLogs(Request $request, ClaimRequest $claim): JsonResponse` - fetch all sub-status changes for client-side pagination
 
 ### ClaimsService
 - `searchActivePolicies(array $criteria): array` - CAPI method for claim creation only
 - `checkSubStatusForClaimClosure(ClaimRequest $claim): bool` - internal closure logic
 - `markClaimAsClosed(ClaimRequest $claim): ClaimRequest` - internal closure processing
 - `updateClaimSubStatusToClaimRegistered(ClaimRequest $claim): void` - internal status setting
+- `getClaimLeadHistory(int $claimId): array` - optimized single-query fetch of claim_activities for parent status transitions using LAG window function for client-side pagination
+- `getClaimSubStatusLogs(int $claimId): array` - optimized single-query fetch of claim_activities for sub-status transitions using LAG window function for client-side pagination
 
 ### ClaimRequest Model
 - `scopeAssignedTo(Builder $query, int $userId): Builder`
@@ -131,6 +135,15 @@ alwaysApply: false
 - Parent-child component communication patterns
 - Policy search events only during claim creation workflow
 
+### Vue Components Structure
+- `ClaimDetails.vue` - Main claim information display and editing
+- `ClaimStatus.vue` - Status management by team lead
+- `ClaimSubStatusAndCustomerUpdate.vue` - Sub-status updates and customer notifications
+- `ClaimDocuments.vue` - Document upload, view, and management
+- `CustomerDetails.vue` - Customer information display
+- `ClaimLeadHistory.vue` - AuditLogs-style DataTable showing parent status transitions with built-in pagination (15 rows per page)
+- `ClaimSubStatusLogs.vue` - AuditLogs-style DataTable showing sub-status changes with built-in pagination (15 rows per page)
+
 ## Required Routes and Permissions
 
 ### Claim Routes (by name)
@@ -144,6 +157,8 @@ alwaysApply: false
 - `claims.update.details` - Update claim details
 - `claims.update.status` - Update claim status
 - `claims.optimize-message` - AI message optimization
+- `claims.lead-history` - GET claim status history for team lead tracking
+- `claims.sub-status-logs` - GET sub-status changes for manager audit
 - `claims.send-notification` - Send claim notifications
 
 ### Required Permissions (PermissionsEnum)

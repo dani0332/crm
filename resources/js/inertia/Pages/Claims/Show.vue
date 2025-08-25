@@ -4,6 +4,8 @@ import ClaimStatus from './Components/ClaimStatus.vue';
 import ClaimSubStatusAndCustomerUpdate from './Components/ClaimSubStatusAndCustomerUpdate.vue';
 import ClaimDocuments from './Components/ClaimDocuments.vue';
 import CustomerDetails from './Components/CustomerDetails.vue';
+import ClaimLeadHistory from './Components/ClaimLeadHistory.vue';
+import ClaimSubStatusLogs from './Components/ClaimSubStatusLogs.vue';
 
 const props = defineProps({
   claim: Object,
@@ -113,6 +115,18 @@ const handleDocumentDeleted = documentName => {
       :storage-url="storageUrl"
       :document-types="claimDocumentTypes"
       :cdnPath="cdnPath"
+    />
+
+    <!-- Claim Lead History Component -->
+    <ClaimLeadHistory
+      :claim="claim"
+      :expanded="sectionExpanded"
+    />
+
+    <!-- Claim Sub-status Logs Component -->
+    <ClaimSubStatusLogs
+      :claim="claim"
+      :expanded="sectionExpanded"
     />
 
     <!-- Audit Logs -->

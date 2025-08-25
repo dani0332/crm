@@ -47,6 +47,7 @@ class ClaimsController extends Controller
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_DELETE], ['only' => ['destroyDocument']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_S3_URL], ['only' => ['getS3TempUrl']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOWNLOAD_ALL_DOCUMENTS], ['only' => ['downloadAllDocuments']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['getClaimLeadHistory', 'getClaimSubStatusLogs']]);
     }
 
     /**
@@ -543,6 +544,56 @@ class ClaimsController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'An unexpected error occurred while downloading documents.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get claim lead history (AJAX endpoint)
+     */
+    public function getClaimLeadHistory(Request $request, ClaimRequest $claim): JsonResponse
+    {
+        try {
+            $history = $this->claimsService->getClaimLeadHistory($claim->id);
+
+            return response()->json($history);
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'claim_id' => $claim->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load claim lead history.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get claim sub-status logs (AJAX endpoint)
+     */
+    public function getClaimSubStatusLogs(Request $request, ClaimRequest $claim): JsonResponse
+    {
+        try {
+            $logs = $this->claimsService->getClaimSubStatusLogs($claim->id);
+
+            return response()->json($logs);
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim sub-status logs', [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'claim_id' => $claim->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load claim sub-status logs.',
             ], 500);
         }
     }
