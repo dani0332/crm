@@ -500,4 +500,12 @@ class ApiService
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Document notification processing failed!');
         }
     }
+
+    public function processClaimAssignment($request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+    }
 }
