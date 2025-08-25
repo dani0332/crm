@@ -831,7 +831,7 @@ class ClaimsService extends BaseService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'claim_request_id' => $uuid,
-                'data' => $data,
+                'data' => $request,
                 'updated_by' => auth()->id(),
             ]);
 
