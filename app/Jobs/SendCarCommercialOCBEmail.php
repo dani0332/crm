@@ -2,8 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\CarRegistrationType;
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
@@ -48,8 +46,7 @@ class SendCarCommercialOCBEmail implements ShouldQueue
                 $carLead->quote_status_id = QuoteStatusEnum::Quoted;
                 $carLead->save();
             }
-
-          
+            
         } catch (\Exception $exception) {
             LoggerService::error(self::class.' - Exception encountered: ', exception: $exception);
         }
