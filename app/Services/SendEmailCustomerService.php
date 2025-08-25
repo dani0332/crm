@@ -1736,6 +1736,7 @@ class SendEmailCustomerService extends BaseService
             'ccEmails' => $emailData->get('cc') ?? [],
             'quoteTypeName' => $emailData->get('params')['quoteTypeName'] ?? '',
             'quotes' => $quotesHtml,
+            'workflowType' => WorkflowTypeEnum::OE_ASSIGNMENT,
         ];
 
         $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
