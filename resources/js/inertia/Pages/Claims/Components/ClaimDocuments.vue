@@ -49,8 +49,9 @@ const cdnPath = ref(props.storageUrl || '');
 const claimDocumentsTable = ref({
   columns: [
     { text: 'Document Name', value: 'original_name' },
-    { text: 'Type', value: 'type' },
+    { text: 'Type', value: 'document_type_text' },
     { text: 'Uploaded At', value: 'created_at' },
+    { text: 'Uploaded By', value: 'created_by' },
     { text: 'Actions', value: 'action' },
   ],
   isLoading: false,
@@ -148,7 +149,7 @@ const getS3TempUrl = async docURL => {
         position: 'top',
       });
     }
-  } catch (error) { 
+  } catch (error) {
     notification.error({
       title: 'Failed to access document',
       position: 'top',
@@ -206,18 +207,82 @@ const confirmDeleteDoc = async () => {
   }
 };
 
-const readOnlyMode = computed(() => {
-  return {
-    isDisable: can(permissionsEnum.CLAIM_DOCUMENT_UPLOAD), // Adjust based on your permissions
-  };
+const canUploadDocuments = computed(() => {
+  return can(permissionsEnum.CLAIM_DOCUMENT_UPLOAD);
 });
 
-const permissions = computed(() => {
-  return {
-    notProductionApproval: true, // Implement based on your logic
-    isQuoteDocumentEnabled: true, // Implement based on your logic
-  };
+const canDeleteDocuments = computed(() => {
+  return can(permissionsEnum.CLAIM_DOCUMENT_DELETE);
 });
+
+const canGetS3TempUrl = computed(() => {
+  return can(permissionsEnum.CLAIM_DOCUMENT_S3_URL);
+});
+
+const canDownloadAllDocuments = computed(() => {
+  return can(permissionsEnum.CLAIM_DOWNLOAD_ALL_DOCUMENTS) && claimDocuments.value.length > 0;
+});
+
+const downloadAllDocuments = async () => {
+  try {
+    NProgress.start();
+    const response = await axios.get(route('claims.documents.download-all', props.claim?.uuid), {
+      responseType: 'blob',
+    });
+
+    // Extract filename from response headers
+    const contentDisposition = response.headers['content-disposition'];
+    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+    const matches = filenameRegex.exec(contentDisposition);
+    let filename = `Claim_${props.claim?.claim_number || 'Documents'}.zip`;
+
+    if (matches != null && matches[1]) {
+      filename = matches[1].replace(/['"]/g, '');
+    }
+
+    const blob = new Blob([response.data], { type: 'application/zip' });
+    const url = window.URL.createObjectURL(blob);
+
+    // Create anchor link element
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+
+    // Append anchor to body, click it and remove it afterwards
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the object URL
+    window.URL.revokeObjectURL(url);
+
+    notification.success({
+      title: 'Documents downloaded successfully',
+      position: 'top',
+    });
+
+  } catch (error) {
+    console.error('Error downloading ZIP file:', error);
+    
+    let errorMessage = 'Error downloading documents';
+    
+    // Handle different error types
+    if (error.response?.status === 403) {
+      errorMessage = 'You do not have permission to download documents';
+    } else if (error.response?.status === 400) {
+      errorMessage = error.response.data?.message || 'No documents available for download';
+    } else if (error.response?.status === 500) {
+      errorMessage = 'Server error occurred while creating download file';
+    }
+    
+    notification.error({
+      title: errorMessage,
+      position: 'top',
+    });
+  } finally {
+    NProgress.done();
+  }
+};
 </script>
 
 <template>
@@ -234,10 +299,21 @@ const permissions = computed(() => {
       <template #body>
         <x-divider class="my-4" />
         <div class="flex justify-end items-center mb-4">
+          
+          <x-button 
+            size="sm"
+            color="success"
+            v-if="canDownloadAllDocuments"
+            class="mr-2"
+            @click.prevent="downloadAllDocuments"
+          >
+           Download All Documents
+          </x-button>
           <x-button
             @click.prevent="modals.doc = true"
             size="sm"
             color="primary"
+            v-if="canUploadDocuments"
           >
             Upload Documents
           </x-button>
@@ -260,6 +336,9 @@ const permissions = computed(() => {
               {{ item.original_name }}
             </a>
           </template>
+          <template #item-created_by="item">
+            {{ item.created_by.name }}
+          </template>
           <template #item-action="{ id, doc_uuid, original_name }">
             <div>
               <x-button
@@ -267,7 +346,7 @@ const permissions = computed(() => {
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(id, doc_uuid, original_name)"
-                v-if="can(permissionsEnum.CLAIM_DOCUMENT_DELETE)"
+                v-if="canDeleteDocuments"
               >
                 Delete
               </x-button>
@@ -342,7 +421,7 @@ const permissions = computed(() => {
                 :document-type-code="documentType.code"
                 :isDisabled="
                   documentType.code == documentTypeCodeEnum.CLAIM_DOCUMENTS &&
-                  !can(permissionEnum.CLAIM_DOCUMENT_UPLOAD)
+                  !canUploadDocuments
                 "
                 :multiple="true"
                 @change="uploadFile(documentType, $event)"

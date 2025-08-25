@@ -17,12 +17,15 @@ use App\Services\ClaimsService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use ZipArchive;
 
 class ClaimsController extends Controller
 {
@@ -43,6 +46,7 @@ class ClaimsController extends Controller
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_UPLOAD], ['only' => ['storeDocument']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_DELETE], ['only' => ['destroyDocument']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_S3_URL], ['only' => ['getS3TempUrl']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOWNLOAD_ALL_DOCUMENTS], ['only' => ['downloadAllDocuments']]);
     }
 
     /**
@@ -178,9 +182,12 @@ class ClaimsController extends Controller
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
+            $documents = $claimRequest->documents->load('createdBy:id,name');
+            //dd($documents->toArray());
+
             return Inertia::render('Claims/Show', [
                 'claim' => $claimRequest,
-                'documents' => $claimRequest->documents,
+                'documents' => $documents,
                 'dropdowns' => $dropdownData,
                 'requiredFieldsFilled' => $requiredFieldsFilled,
                 'claimDocumentTypes' => $claimDocumentTypes,
@@ -337,10 +344,10 @@ class ClaimsController extends Controller
     /**
      * Send notification to customer (AJAX endpoint)
      */
-    public function sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claimRequest): JsonResponse
+    public function sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claim): JsonResponse
     {
         try {
-            $this->claimsService->sendNotification($claimRequest, $request->safe());
+            $this->claimsService->sendNotification($claim, $request->safe());
 
             return response()->json([
                 'success' => true,
@@ -349,7 +356,7 @@ class ClaimsController extends Controller
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error sending notification', extra: [
                 'error' => $e->getMessage(),
-                'claim_uuid' => $claimRequest->uuid,
+                'claim_uuid' => $claim->uuid,
                 'user_id' => Auth::id(),
             ]);
 
@@ -504,6 +511,38 @@ class ClaimsController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to access document.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Download all claim documents as a ZIP file
+     */
+    public function downloadAllDocuments(Request $request, ClaimRequest $claim)
+    {
+        try { 
+            // Use service to create ZIP
+            $result = $this->claimsService->createDocumentsZip($claim);
+
+            if (!$result['success']) {
+                return response()->json([
+                    'message' => 'Failed to create document archive.',
+                    'details' => $result['errors'] ?? []
+                ], 500);
+            }
+
+            return response()->download($result['file_path'])->deleteFileAfterSend(true);
+
+        }catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Unexpected error', extra: [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'An unexpected error occurred while downloading documents.',
             ], 500);
         }
     }

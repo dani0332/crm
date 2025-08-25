@@ -308,15 +308,7 @@ class RolePermissionSeeder extends Seeder
 
     private function addClaimsPermissions(): void
     {
-        $adminRole = Role::where('name', RolesEnum::Admin)->first();
-
-        if (! $adminRole) {
-            info('Admin role not found. Creating Admin role.');
-            $adminRole = Role::create([
-                'name' => RolesEnum::Admin,
-                'guard_name' => 'web',
-            ]);
-        }
+        $roles = Role::whereIn('name', [RolesEnum::Admin , RolesEnum::Engineering])->get();
 
         $claimsPermissions = PermissionsEnum::getClaimsPermissions();
 
@@ -329,12 +321,16 @@ class RolePermissionSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            if (! $adminRole->hasPermissionTo($permission)) {
-                $adminRole->givePermissionTo($permission);
-                info("Permission {$permission->name} assigned to Admin role");
-            } else {
-                info("Admin role already has permission {$permission->name}");
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    info("Permission {$permission->name} assigned to {$role->name} role");
+                } else {
+                    info("{$role->name} role already has permission {$permission->name}");
+                }
             }
+
+            
         }
     }
 

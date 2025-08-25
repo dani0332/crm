@@ -454,6 +454,7 @@ final class PermissionsEnum extends Enum
     public const CLAIM_DOCUMENT_UPLOAD = 'claim-document-upload';
     public const CLAIM_DOCUMENT_DELETE = 'claim-document-delete';
     public const CLAIM_DOCUMENT_S3_URL = 'claim-document-s3-url';
+    public const CLAIM_DOWNLOAD_ALL_DOCUMENTS = 'claim-download-all-documents';
     // End of Claims Permissions
 
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
@@ -534,7 +535,7 @@ final class PermissionsEnum extends Enum
             self::CLAIM_DOCUMENT_UPLOAD,
             self::CLAIM_DOCUMENT_DELETE,
             self::CLAIM_DOCUMENT_S3_URL,
-
+            self::CLAIM_DOWNLOAD_ALL_DOCUMENTS,
         ];
     }
 }

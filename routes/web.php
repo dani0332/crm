@@ -241,28 +241,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('claim/update-details/{uuid}', [ClaimsController::class, 'updateClaimDetails'])->name('claims.update.details');
         Route::post('claim/update-statuses/{uuid}', [ClaimsController::class, 'updateClaimStatuses'])->name('claims.update.status');
         Route::post('claims/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
-        Route::post('claims/{claim_request:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
+        Route::post('claims/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
         
         // Claim Document Routes
         Route::post('claims/{claim:uuid}/documents', [ClaimsController::class, 'storeDocument'])->name('claims.documents.store');
         Route::delete('claims/{claim:uuid}/documents/{document}', [ClaimsController::class, 'destroyDocument'])->name('claims.documents.destroy');
         Route::post('claims/documents/get-s3-temp-url', [ClaimsController::class, 'getS3TempUrl'])->name('claims.documents.get-s3-temp-url');
-        /*
-                    // Claims AJAX routes
-            Route::post('claims/{claim}/assign-manager', [ClaimsController::class, 'assignManager'])->name('claims.assign-manager');
-            Route::post('claims/{claim}/update-status', [ClaimsController::class, 'updateStatus'])->name('claims.update-status');
-            Route::get('claims/export', [ClaimsController::class, 'export'])->name('claims.export');
-            Route::get('claims/dropdowns', [ClaimsController::class, 'getDropdowns'])->name('claims.dropdowns');
-            Route::get('claims/statistics', [ClaimsController::class, 'getStatistics'])->name('claims.statistics');
-
-            // FRD-specific Claims routes
-            Route::post('claims/{claim}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('claims.update-complaint-status');
-            Route::post('claims/{claim}/set-next-followup', [ClaimsController::class, 'setNextFollowUp'])->name('claims.set-next-followup');
-            Route::post('claims/{claim}/update-sub-status', [ClaimsController::class, 'updateSubStatus'])->name('claims.update-sub-status');
-            Route::post('claims/{claim}/update-insurer-claim-number', [ClaimsController::class, 'updateInsurerClaimNumber'])->name('claims.update-insurer-claim-number');
-            Route::post('claims/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
-            Route::post('claims/{claim}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
-            Route::get('claims/dropdown-data', [ClaimsController::class, 'getDropdownData'])->name('claims.dropdown-data');*/
+        Route::get('claims/{claim:uuid}/documents/download-all', [ClaimsController::class, 'downloadAllDocuments'])->name('claims.documents.download-all');
+        
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
