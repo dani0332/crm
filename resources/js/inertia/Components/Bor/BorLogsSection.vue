@@ -14,6 +14,10 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  isCompanyCar: {
+    type: Boolean,
+    default: false,
+  },
   lob: {
     type: String,
     required: true,
@@ -422,6 +426,7 @@ onMounted(() => {
     <BorRequestForm
       v-if="showBorRequestForm"
       :visible="showBorRequestForm"
+      :isCompanyCar="isCompanyCar"
       :lead-id="leadId"
       :lob="lob"
       :customer-data="customerData"

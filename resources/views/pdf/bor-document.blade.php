@@ -292,9 +292,9 @@
     <div class="footer">
         @if($include_signature && $signature_path)
         <div style="text-align: center; font-size: 10px; color: #777; line-height: 1.4;">
-            This document is digitally signed by {{ $customer_type === 'Entity' ? $company_name : $customer_name }} on {{ $date_signed ?? now()->format('d/m/Y') }} at {{ $date_signed_time ?? now()->format('H:i:s') }}, no manual signature required<br>
-            Document Hash: {{ $document_id ?? '[Unique Hash]' }}<br>
-            Accessed By: {{ $user_agent ?? request()->ip() }}
+            This document is digitally signed by <strong>{{ $customer_type === 'Entity' ? $company_name : $customer_name }}</strong> on <strong>{{ $date_signed ?? now()->format('d/m/Y') }}</strong> at <strong>{{ $date_signed_time ?? now()->format('H:i:s') }}</strong>, no manual signature required<br>
+            Document Hash: <strong>{{ $document_id ?? '[Unique Hash]' }}</strong><br>
+            Accessed By: <strong>{{ $user_agent ?? request()->ip() }}</strong>
         </div>
         @endif
     </div>

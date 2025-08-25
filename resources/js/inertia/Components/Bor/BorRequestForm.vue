@@ -16,6 +16,10 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  isCompanyCar: {
+    type: Boolean,
+    default: false,
+  },
   lob: {
     type: String,
     required: true,
@@ -653,7 +657,7 @@ onMounted(() => {
                 :options="customerTypeOptions"
                 placeholder="Select customer type"
                 :error="form.errors.customer_type"
-                :disabled="isSubmitting"
+                :disabled="isSubmitting || isCompanyCar"
                 required
               />
 
