@@ -12,6 +12,7 @@ class EndingPoliciesReportExport extends BaseReportsExport
             'Customer Name',
             'Policy Number',
             'Insurer',
+            'Currently Insured With',
             'Line Of Business',
             'Policy Start Date',
             'Policy Expiry Date',
@@ -38,6 +39,7 @@ class EndingPoliciesReportExport extends BaseReportsExport
             $quote->customer_name ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->insurer ?? 'N/A',
+            $quote->currently_insured_with_text ?? 'N/A',
             $quote->line_of_business ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',
             $quote->policy_end_date ?? 'N/A',
@@ -60,6 +62,6 @@ class EndingPoliciesReportExport extends BaseReportsExport
 
     public static function afterSheet(AfterSheet $event)
     {
-        self::performSum($event, ['G', 'H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'P']);
+        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q']);
     }
 }

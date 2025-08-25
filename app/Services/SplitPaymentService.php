@@ -16,7 +16,6 @@ use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
 use App\Enums\PaymentTooltip;
-use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -735,11 +734,14 @@ class SplitPaymentService
                 $sageRequest->advisor_id = $quoteModel?->advisor_id;
 
                 /* Handle NRA case where payment is approved after policy/send update is booked */
-                $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
-                if ($sageResponse['status']) {
-                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['message']}");
+                $sageARPrepaymentResponse = (new SageApiService)->createARPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
+                /*$sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+                $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);*/
+
+                if ($sageARPrepaymentResponse['status'] /* && $sageAPPrepaymentResponse['status'] */) {
+                    LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageARPrepaymentResponse['message']}");
                 } else {
-                    $sageMessage = $sageResponse['message'];
+                    $sageMessage = $sageARPrepaymentResponse['message'];
                     LoggerService::info("Sage receipt creation failed for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with error: {$sageMessage}");
 
                     if ($isFromJob) {
@@ -1150,7 +1152,6 @@ class SplitPaymentService
                 ]);
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-                $quoteCode = $quoteModel->code;
                 LoggerService::info('SplitPaymentService - Processing non-ecommLob quote for payment code: '.$paymentCode, extra: [
                     'modelType' => $modelType,
                 ]);
@@ -1357,54 +1358,6 @@ class SplitPaymentService
         }
 
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
-    }
-
-    public function hasAnyAuthorizedPayment($splitPayment)
-    {
-        return $splitPayment->where('payment_method', PaymentMethodsEnum::CreditCard)
-            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
-            ->first();
-    }
-
-    public function validateAuthorizedPayment($validator, $code, $quoteModel = null)
-    {
-
-        $payment = Payment::where('code', $code)->with('paymentSplits')->first();
-
-        // Check if a payment exists for the given code
-        if ($payment) {
-            // Determine if there is any authorized payment split (Credit Card, status: AUTHORIZED, CAPTURED, or PAID)
-            $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
-            if ($hasAnyAuthorizedPayment) {
-                // If the user has permission to edit plan details and a quote model is provided
-                if (auth()->user()->can(PermissionsEnum::PLAN_DETAILS_EDIT) && $quoteModel) {
-                    $request = request()->all();
-                    // Fields that should not be changed if payment is authorized
-                    $fieldsToCheck = [
-                        'insurance_provider_id',
-                        'price_vat_applicable',
-                        'price_vat_not_applicable',
-                        'provider_code',
-                    ];
-                    // Loop through each field and compare request value with the current quote model value
-                    foreach ($fieldsToCheck as $field) {
-                        // If the field exists in both request and model, and values differ, add a validation error
-                        if (isset($request[$field]) && isset($quoteModel->$field) && $request[$field] != $quoteModel->$field) {
-                            $validator->errors()->add(
-                                $field,
-                                "The value of $field cannot be changed as this lead is linked to an authorized payment."
-                            );
-                        }
-                    }
-                } else {
-                    // If user does not have permission or quote model is missing, add a general validation error
-                    $validator->errors()->add(
-                        'authorized',
-                        'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.'
-                    );
-                }
-            }
-        }
     }
 
     private function shouldProcessPayment($paymentSplit, $isFromJob, $modelType)

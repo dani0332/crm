@@ -1032,7 +1032,7 @@ const activityForm = useForm({
   parentType: 'Travel',
   quoteType: 8,
   title: null,
-  description: null,
+  description: '',
   due_date: '',
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -1042,7 +1042,7 @@ const activityForm = useForm({
 
 const addActivity = () => {
   activityForm.title = null;
-  activityForm.description = null;
+  activityForm.description = '';
   activityForm.due_date = null;
   activityForm.assignee_id = null;
   activityForm.status = null;
@@ -1082,11 +1082,10 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+
+  // Handle due_date conversion to preserve exact time
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
+
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -1094,12 +1093,6 @@ const activityEdit = data => {
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
     activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
@@ -1113,12 +1106,6 @@ const onActivitySubmit = isValid => {
       },
     });
   } else {
-    let date = new Date(activityForm.due_date);
-    date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
-    activityForm.due_date = date;
     activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onSuccess: () => {
@@ -3752,6 +3739,8 @@ const fullAddress = computed(() => {
             v-model="activityForm.description"
             :adjust-to-text="false"
             class="w-full"
+            :rules="[isRequired]"
+            required
           />
 
           <x-select
@@ -3765,12 +3754,12 @@ const fullAddress = computed(() => {
           />
 
           <DatePicker
-            :format="format"
             v-model="activityForm.due_date"
             label="Due Date"
             :rules="[isRequired]"
             class="w-full"
             withTime
+            required
           />
         </div>
 

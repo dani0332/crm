@@ -1,4 +1,6 @@
 <script setup>
+import { XTooltip } from '@indielayer/ui';
+
 const props = defineProps({
   selected: {
     type: Array,
@@ -8,8 +10,20 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  supportUsers: {
+    type: Array,
+    default: () => [],
+  },
   quoteType: {
     type: String,
+  },
+  canAssignClientSupport: {
+    type: Boolean,
+    default: false,
+  },
+  canAssignLeadAdvisor: {
+    type: Boolean,
+    default: false,
   },
 });
 const page = usePage();
@@ -37,18 +51,25 @@ const assignForm = useForm({
   modelType: props.quoteType,
 });
 
+const supportAssignForm = useForm({
+  support_user_id: null,
+  assigned_lead_id: '',
+  modelType: props.quoteType,
+});
+
 function onAssignLead(isValid) {
   // const postUrl =
   //   props.quoteType.toLowerCase() == 'car'
   //     ? `/quotes/car/manualLeadAssign`
   //     : `/quotes/${props.quoteType}/leadAssign`;
 
-  const postUrl =
-    props.quoteType.toLowerCase() === 'car'
-      ? '/quotes/car/manualLeadAssign'
-      : props.quoteType === 'tmlead'
-        ? '/telemarketing/tmLeadsAssign'
-        : `/quotes/${props.quoteType}/leadAssign`;
+  const postUrl = Array('car', 'business').includes(
+    props.quoteType.toLowerCase(),
+  )
+    ? `/quotes/${props.quoteType}/manualLeadAssign`
+    : props.quoteType === 'tmlead'
+      ? '/telemarketing/tmLeadsAssign'
+      : `/quotes/${props.quoteType}/leadAssign`;
 
   if (isValid) {
     assignForm
@@ -71,6 +92,31 @@ function onAssignLead(isValid) {
       });
   }
 }
+
+function onAssignSupportUser(isValid) {
+  const postUrl = '/quotes/assignSupportUser';
+
+  if (isValid) {
+    supportAssignForm
+      .transform(data => ({
+        ...data,
+        assigned_lead_id: `${props.selected}`,
+        support_user_id: supportAssignForm.support_user_id,
+        modelType: props.quoteType,
+      }))
+      .post(postUrl, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          emit('success');
+        },
+        onError: () => {
+          emit('error');
+        },
+      });
+  }
+}
+
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -85,18 +131,32 @@ onMounted(() => {
     <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
       <h3 class="font-semibold text-primary-800">Assign Leads</h3>
       <x-divider class="mb-4 mt-1" />
-      <x-form @submit="onAssignLead" :auto-focus="false">
+      <x-form
+        @submit="onAssignLead"
+        :auto-focus="false"
+        v-if="props.canAssignLeadAdvisor"
+      >
         <div class="w-full flex flex-col md:flex-row gap-4">
-          <x-select
-            v-model="assignForm.assigned_advisor_id"
-            label="Assign Advisor"
-            :options="props.advisors"
-            placeholder="Select Advisor"
-            class="flex-1 w-auto"
-            filterable
-            single
-            v-if="readOnlyMode.isDisable === true"
-          />
+          <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
+            <x-tooltip position="top">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block"
+              >
+                Assign Advisor
+              </label>
+              <template #tooltip>
+                <span>Advisor Assignment</span>
+              </template>
+            </x-tooltip>
+            <x-select
+              v-model="assignForm.assigned_advisor_id"
+              :options="props.advisors"
+              placeholder="Select Advisor"
+              class="w-full"
+              filterable
+              single
+            />
+          </div>
           <div class="mb-3 md:pt-6">
             <x-button
               color="orange"
@@ -110,6 +170,53 @@ onMounted(() => {
           </div>
         </div>
       </x-form>
+
+      <!-- Support User Assignment Section -->
+      <div
+        v-if="
+          props.supportUsers &&
+          props.supportUsers.length > 0 &&
+          props.canAssignClientSupport
+        "
+        class=""
+      >
+        <x-form @submit="onAssignSupportUser" :auto-focus="false">
+          <div class="w-full flex flex-col md:flex-row gap-4">
+            <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
+              <x-tooltip position="top">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block"
+                >
+                  Assign OE/AE
+                </label>
+                <template #tooltip>
+                  <span>Support User Assignment</span>
+                </template>
+              </x-tooltip>
+              <x-select
+                v-model="supportAssignForm.support_user_id"
+                :options="props.supportUsers"
+                placeholder="Select Support User"
+                class="w-full"
+                filterable
+                single
+              />
+            </div>
+            <div class="mb-3 md:pt-6">
+              <x-button
+                color="orange"
+                size="sm"
+                type="submit"
+                :loading="supportAssignForm.processing"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Assign
+              </x-button>
+            </div>
+          </div>
+        </x-form>
+      </div>
+
       <x-alert
         v-if="Object.keys($page.props.errors).length > 0"
         color="error"

@@ -883,6 +883,7 @@ const insurerAMLStatusOption = computed(() => {
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
           :quoteType="quoteType"
+          :canAssignLeadAdvisor="isManualAllocationAllowed"
           @success="onLeadAssigned"
         />
       </div>

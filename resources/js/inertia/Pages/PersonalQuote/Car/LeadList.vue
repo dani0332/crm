@@ -1267,43 +1267,6 @@ const insurerAMLStatusOption = computed(() => {
               </span>
             </template>
           </x-tooltip>
-
-          <x-button
-            v-if="
-              canExport &&
-              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            size="sm"
-            color="emerald"
-            @click="
-              onExport(
-                `/car/leads-details-with-email/${
-                  genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
-                }?${objToUrl(filters)}`,
-                true,
-              )
-            "
-            :loading="exportLoader"
-            class="justify-self-start mr-3"
-          >
-            Extract leads detail with email/mobile_no
-          </x-button>
-          <x-tooltip
-            v-if="
-              !canExport &&
-              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            placement="right"
-          >
-            <x-button class="mr-3" tag="div" size="sm" color="emerald"
-              >Extract leads detail with email/mobile_no</x-button
-            >
-            <template #tooltip>
-              <span class="font-medium">
-                Created dates are required to export data.
-              </span>
-            </template>
-          </x-tooltip>
           <x-button
             v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
             size="sm"
@@ -1347,6 +1310,10 @@ const insurerAMLStatusOption = computed(() => {
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
+          :canAssignLeadAdvisor="
+            !hasRole(rolesEnum.CarAdvisor) &&
+            !can(permissionsEnum.VIEW_ALL_LEADS)
+          "
           quoteType="Car"
           @success="onLeadAssigned"
         />

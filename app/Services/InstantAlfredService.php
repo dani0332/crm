@@ -12,6 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\AlfredChat;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -364,7 +365,7 @@ class InstantAlfredService extends BaseService
             }
         } catch (\Exception $e) {
             // Log error but continue processing with default values
-            \Illuminate\Support\Facades\Log::error('MongoDB processing failed for consolidated chunk', [
+            LoggerService::error('MongoDB processing failed for consolidated chunk', extra: [
                 'uuids_count' => count($uuids),
                 'error' => $e->getMessage(),
             ]);
@@ -728,6 +729,7 @@ class InstantAlfredService extends BaseService
             QuoteTypeId::Bike,
             QuoteTypeId::Health,
             QuoteTypeId::Travel,
+            QuoteTypeId::Home,
         ]) && ! empty($request->report);
     }
 

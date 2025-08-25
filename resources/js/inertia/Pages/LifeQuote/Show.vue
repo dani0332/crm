@@ -3,21 +3,23 @@ import {
   applyEmiratesNumberMasking,
   numberFormat,
   preventInvalidInputs,
+  useIsQuoteCreatedAfterCutoff,
 } from '@/inertia/Composables/utilities.js';
+import { watch } from 'vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
-import { watch } from 'vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 
 const page = usePage();
-defineProps({
-  availablePlan: Object,
+const props = defineProps({
   quote: Object,
   quoteStatuses: Object,
   quoteType: String,
@@ -64,6 +66,8 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   emailStatuses: Array,
+  isBetaUser: Boolean,
+  lifeCutOffDate: String,
 });
 
 const { isRequired, emiratesNumber } = useRules();
@@ -104,7 +108,7 @@ const isExchangeRateEditable = ref(false);
 
 const selectedProviderPlan = page.props.quote.plan_id;
 const selectedProviderPlanVersion =
-  page.props?.availablePlan?.quotes?.version ?? 0;
+  page.props?.quote?.quote_customer_plan?.plan?.version ?? 0;
 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
   createReusableTemplate();
@@ -272,7 +276,10 @@ const sendOCAEmail = () => {
   axios
     .post(route('life-quotes-send-oca-email'), {
       quote_uuid: page.props.quote.uuid,
-      plan_ids: selectedPlans.value.map(plan => plan.planId),
+      // Add the version to the plan ID to ensure each selected plan is uniquely identified
+      plan_ids: selectedPlans.value.map(
+        plan => plan.planId + '_v' + plan.version,
+      ),
     })
     .then(res => {
       notification.success({
@@ -327,7 +334,10 @@ const downloadComparisionPdf = () => {
       route('life-quotes-download-comparision-pdf'),
       {
         quote_uuid: page.props.quote.uuid,
-        plan_ids: selectedPlans.value.map(plan => plan.planId),
+        // Add the version to the plan ID to ensure each selected plan is uniquely identified
+        plan_ids: selectedPlans.value.map(
+          plan => plan.planId + '_v' + plan.version,
+        ),
       },
       {
         responseType: 'blob',
@@ -401,8 +411,15 @@ const getTotalAnnualPremiumAED = item => {
       'Semi-Annually': 2,
       Annually: 1,
     };
-    const totalAnnualPremiumAED =
-      item.actualPremium * planExchangeRate.value * mapping[paymentTermTitle];
+
+    const premiumInAED =
+      Math.round(
+        item.isApi
+          ? item.actualPremium * planExchangeRate.value * 100
+          : item.totalPrice * planExchangeRate.value * 100,
+      ) / 100;
+    const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
+
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
     return item.isManualPlan
@@ -594,11 +611,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
   activityForm.quote_id = page.props.quote.id;
@@ -896,8 +909,21 @@ const linkEntity = () => {
 const readOnlyMode = reactive({
   isDisable: true,
 });
+
+const shouldShowPlanDetailsSection = computed(() => {
+  const cutoffDate = props.lifeCutOffDate
+    ? new Date(props.lifeCutOffDate)
+    : new Date('2025-07-25 12:00:00');
+
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
+    return false;
+  }
+
+  return true;
+});
+
 onMounted(() => {
-  if (page.props.quote.is_ecommerce) {
+  if (!shouldShowPlanDetailsSection.value) {
     onLoadAvailablePlansData();
   }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
@@ -972,6 +998,7 @@ const selectPlan = (planId, quoteId, version, planUuid, isUW) => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -1146,6 +1173,19 @@ const updateExchangeRate = item => {
 
 const enableExchangeRateEdit = () => {
   isExchangeRateEditable.value = true;
+};
+
+const getTotalAnnualPriceAED = () => {
+  const priceInAED =
+    Math.round(
+      (ecomDetail.value?.isManualPlan
+        ? ecomDetail.value?.totalPrice * planExchangeRate.value
+        : ecomDetail.value?.actualPremium * planExchangeRate.value) * 100,
+    ) / 100;
+
+  return numberFormat(
+    priceInAED * (page.props.quote?.life_quote?.payment_term ?? 1),
+  );
 };
 </script>
 <template>
@@ -1932,18 +1972,17 @@ const enableExchangeRateEdit = () => {
       :quote-status-enum="page.props.quoteStatusEnum"
     />
 
-    <template v-if="!quote.is_ecommerce">
-      <PlanDetails
-        :insuranceProviders="insuranceProviders"
-        :quote="quote"
-        :quoteType="quoteType"
-        :vatPrice="vatPercentage"
-        :expanded="sectionExpanded"
-        :isAddUpdate="isAddUpdate"
-      />
-    </template>
+    <PlanDetails
+      v-if="shouldShowPlanDetailsSection"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      :expanded="sectionExpanded"
+      :isAddUpdate="isAddUpdate"
+    />
 
-    <template v-if="quote.is_ecommerce">
+    <template v-else>
       <div class="p-4 rounded shadow mb-6 bg-white">
         <Collapsible :expanded="sectionExpanded">
           <template #header>
@@ -2139,7 +2178,15 @@ const enableExchangeRateEdit = () => {
                     class="copay-max"
                   >
                     <div v-if="planExchangeRate != 0 && item.currency != 'AED'">
-                      {{ numberFormat(item.actualPremium * planExchangeRate) }}
+                      {{
+                        numberFormat(
+                          Math.round(
+                            item.isApi
+                              ? item.actualPremium * planExchangeRate * 100
+                              : item.totalPrice * planExchangeRate * 100,
+                          ) / 100,
+                        )
+                      }}
                     </div>
 
                     <div v-else>N/A</div>
@@ -2363,14 +2410,7 @@ const enableExchangeRateEdit = () => {
               >
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
-                  {{
-                    numberFormat(
-                      (ecomDetail?.isManualPlan
-                        ? ecomDetail?.totalPrice * planExchangeRate
-                        : ecomDetail?.actualPremium * planExchangeRate) *
-                        (page.props.quote?.life_quote?.payment_term ?? 1),
-                    )
-                  }}
+                  {{ getTotalAnnualPriceAED() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2684,7 +2724,18 @@ const enableExchangeRateEdit = () => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="false"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
+    />
+
+    <QuotePayments
+      v-else
+      :can="can"
+      :payments="payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
     />
 
     <EmbeddedProducts
@@ -2730,6 +2781,7 @@ const enableExchangeRateEdit = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <SendUpdates
@@ -2749,40 +2801,7 @@ const enableExchangeRateEdit = () => {
       :quote-type="quoteType"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistory :quote="$page.props.quote" />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

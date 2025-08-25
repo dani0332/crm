@@ -116,10 +116,11 @@ class HomeQuoteRepository extends BaseRepository
             ->tap(fn ($query) => $this->applyFilters($query, $requestParams))
             ->when(! $shouldExcludeCreatedAtFilters, function ($query) use ($requestParams) {
                 if ($this->hasFilterValue('created_at_start', $requestParams) && $this->hasFilterValue('created_at_end', $requestParams)) {
-                    $query->whereBetween('personal_quotes.created_at', [
+                    $adjustedDates = $this->getDateRange(
                         $this->getFilterValue('created_at_start', $requestParams),
-                        $this->getFilterValue('created_at_end', $requestParams),
-                    ]);
+                        $this->getFilterValue('created_at_end', $requestParams)
+                    );
+                    $query->whereBetween('personal_quotes.created_at', $adjustedDates);
                 } else {
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
@@ -368,6 +369,7 @@ class HomeQuoteRepository extends BaseRepository
 
         // Check if TAP integration is enabled
         $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
+        $homeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_CUT_OFF_DATE)->first()?->value ?? null;
 
         return [
             'documentTypes' => $documentTypes,
@@ -424,6 +426,7 @@ class HomeQuoteRepository extends BaseRepository
             'lookUpData' => $lookUpData,
             'isFuncsEnabled' => $isFuncsEnabled,
             'homePossessionTypeEnum' => HomePossessionType::asArray(),
+            'homeCutOffDate' => $homeCutOffDate,
         ];
     }
 
@@ -599,10 +602,18 @@ class HomeQuoteRepository extends BaseRepository
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : self::fetchGetData(true, true),
         ]);
     }
-    public function getDateRange()
+
+    public function getDateRange(?string $startDate = null, ?string $endDate = null): array
     {
-        $from = now()->startOfDay()->toDateTimeString(); // default from date
-        $to = now()->endOfDay()->toDateTimeString(); // default to date
+        // If no start date provided, use current date
+        $from = $startDate
+            ? \Carbon\Carbon::parse($startDate)->startOfDay()->toDateTimeString()
+            : now()->startOfDay()->toDateTimeString();
+
+        // If no end date provided, use current date
+        $to = $endDate
+            ? \Carbon\Carbon::parse($endDate)->endOfDay()->toDateTimeString()
+            : now()->endOfDay()->toDateTimeString();
 
         return [$from, $to];
     }
