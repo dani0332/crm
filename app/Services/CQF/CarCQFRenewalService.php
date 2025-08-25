@@ -298,7 +298,7 @@ class CarCQFRenewalService
             $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
             $renewalQuoteProcess->status = RenewalProcessStatuses::BAD_DATA;
             $renewalQuoteProcess->validation_errors = $validationErrors;
-            $this->validationErrors[] = $validationErrors;
+            $this->validationErrorsList[] = $validationErrors;
             $renewalQuoteProcess->data = $this->mapFailedQuoteData($quote);
             $renewalQuoteProcess->save();
             $this->errorQuotes++;
@@ -312,15 +312,14 @@ class CarCQFRenewalService
 
         // Get insurance provider safely to avoid null pointer exception
         $insuranceProvider = app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with);
-
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
             'mobile_no' => $quote->mobile_no,
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
             'insurer' => $insuranceProvider?->text ?? null,
-            'product' => $quote->plan?->name ?? null,
-            'product_type' => $quote->plan?->productType?->name ?? null,
+            'product' => $quote->plan?->text ?? '',
+            'product_type' => $quote->plan?->insuranceProvider?->text ?? null,
             'advisor' => $quote->advisor?->email ?? null,
             'policy_number' => $quote->policy_number,
             'start_date' => $quote->policy_start_date,
@@ -329,11 +328,11 @@ class CarCQFRenewalService
             'make' => $quote->carMake?->text ?? null,
             'model' => $quote->carModel?->text ?? null,
             'year' => $quote->year_of_manufacture ?? null,
-            'previous_advisor' => $quote->advisor?->email ?? null,
+            'previous_advisor' => $quote->previousAdvisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->premium ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->additional_notes ?? null,
-            'plan_name' => $quote->plan?->name ?? null,
+            'plan_name' => $quote->plan?->text ?? null,
             'errors' => $quote->validation_errors ?? null,
         ];
     }
