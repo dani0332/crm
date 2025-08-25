@@ -318,8 +318,8 @@ class CarCQFRenewalService
             'mobile_no' => $quote->mobile_no,
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
             'insurer' => $insuranceProvider?->text ?? null,
-            'product' => $quote->plan?->text ?? '',
-            'product_type' => $quote->plan?->insuranceProvider?->text ?? null,
+            'product' => 'Motor insurance',
+            'product_type' =>  null,
             'advisor' => $quote->advisor?->email ?? null,
             'policy_number' => $quote->policy_number,
             'start_date' => $quote->policy_start_date,
@@ -332,7 +332,7 @@ class CarCQFRenewalService
             'previous_quote_policy_premium' => $quote->premium ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->additional_notes ?? null,
-            'plan_name' => $quote->plan?->text ?? null,
+            'plan_name' => null,
             'errors' => $quote->validation_errors ?? null,
         ];
     }
