@@ -1973,7 +1973,7 @@ const uploadDocument = (doc, files, count) => {
       .post(url, {
         preserveScroll: true,
         preserveState: true,
-        only: props.sendUpdate ? ['quoteDocuments'] : ['quote'],
+        only: ['quoteDocuments', 'quote'],
         onError: errors => {
           documentForm.setError(errors.error);
           notification.error({
