@@ -49,14 +49,7 @@ class SendCarCommercialOCBEmail implements ShouldQueue
                 $carLead->save();
             }
 
-            if (
-                isset($carLead->registration_type)
-                && $carLead->registration_type === CarRegistrationType::COMPANY
-                && $carLead->source === LeadSourceEnum::RENEWAL_UPLOAD
-            ) {
-
-                $carEmailService->sendFollowUpEmailForCQF($carLead);
-            }
+          
         } catch (\Exception $exception) {
             LoggerService::error(self::class.' - Exception encountered: ', exception: $exception);
         }
