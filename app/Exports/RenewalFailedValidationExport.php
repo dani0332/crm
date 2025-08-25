@@ -46,7 +46,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->source = 'Sales channel';
             $firstRow->notes = 'Notes';
             $firstRow->plan_name = 'Plan Name';
-            $firstRow->errors = 'Errors Messages';
+            $firstRow->errors = 'Error Message(s)';
             $exportLeads->push($firstRow);
         } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             $firstRow = (object) [];
@@ -96,7 +96,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->previous_advisor = 'Previous Advisor Email';
             $firstRow->notes = 'Notes';
             $firstRow->is_gcc = 'Is GCC';
-            $firstRow->errors = 'Errors';
+            $firstRow->errors = 'Error Message(s)';
             $exportLeads->push($firstRow);
         }       
         foreach ($failedLeads as $lead) {
