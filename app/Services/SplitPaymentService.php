@@ -759,9 +759,17 @@ class SplitPaymentService
             LoggerService::info("Capturing payment for split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with split payment status id: {$paymentSplit->payment_status_id}");
 
             if (! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])) {
+                $createdBy = null;
+                if ($modelType == quoteTypeCode::Car) {
+                    $mainLeadPayment = $quoteModel->payments()->mainLeadPayment()->first();
+                    $insuranceProvider = getInsuranceProvider($mainLeadPayment, $modelType, $quoteModel);
+                    if (in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])) {
+                        $createdBy = $quoteModel->kycDocumentUser?->createdBy?->email;
+                    }
+                }
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
                 // Calling the Marshall API to capture the payment
-                $capturePaymentResponse = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
+                $capturePaymentResponse = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected, $createdBy);
                 if ($capturePaymentResponse->getStatusCode() != 200) {
                     $data = json_decode($capturePaymentResponse->getContent(), true);
                     $this->handleCapturePaymentError($data[0] ?? '', $isFromJob, $paymentSplit->id, $paymentSplit->code);
