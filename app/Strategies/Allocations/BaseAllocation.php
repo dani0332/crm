@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -18,7 +19,6 @@ use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService implements Allocation
 {
@@ -105,6 +105,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 $q->where('quote_type_id', $this->quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($this->quoteType === QuoteTypes::CORPLINE, function ($q) {
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
             ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }
 
@@ -115,7 +121,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
     {
-        Log::info('BaseAllocation: Starting getAdvisorBaseQuery', [
+        LoggerService::info('BaseAllocation: Starting getAdvisorBaseQuery', extra: [
             'onlineStatus' => $onlineStatus,
             'roles' => $roles,
             'quoteTypeId' => $this->getQuoteTypeId(),

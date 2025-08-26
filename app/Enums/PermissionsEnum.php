@@ -270,6 +270,7 @@ final class PermissionsEnum extends Enum
     public const YACHT_CARD_VIEW = 'yacht-quotes-card';
     public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
     public const CORPLINE_CARD_VIEW = 'business-cards';
+    public const LIFE_CARD_VIEW = 'life-quotes-card';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
     public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
@@ -428,6 +429,8 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
+    public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
+    public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
     // Savings Permissions
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
