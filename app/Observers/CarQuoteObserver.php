@@ -12,6 +12,7 @@ use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendFailedPaymentEmailJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
@@ -53,6 +54,7 @@ class CarQuoteObserver
                 $oldAdvisorId = $changes['advisor_id']['old'];
 
                 LogAllocation::dispatch($lead, QuoteTypes::CAR);
+                SendFailedPaymentEmailJob::dispatch($lead->uuid, QuoteTypes::CAR);
 
                 event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
             } catch (Exception $e) {
