@@ -198,6 +198,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         return [
             'status' => true,
             'message' => 'All policy issuance steps completed successfully',
+            'completed_step' => $nextStepToBeExecuted,
         ];
     }
 
