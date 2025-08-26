@@ -148,6 +148,11 @@ const tableHeader = reactive([
     tooltip: 'Name of the customer',
   },
   {
+    text: 'OE/AE',
+    value: 'support_user',
+    tooltip: 'Name of the Assigned Operation Executive',
+  },
+  {
     text: 'Advisor',
     value: 'advisor',
     tooltip: 'The advisor assigned to the lead',

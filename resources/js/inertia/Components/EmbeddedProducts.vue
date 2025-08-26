@@ -143,6 +143,10 @@ const sendDcoument = id => {
 
 const downloadFile = download => {
   const save = document.createElement('a');
+  const documentPath = download.is_watermarked
+    ? download.watermarked_doc_path
+    : download.path;
+
   if (typeof save.download !== 'undefined') {
     // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
     // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
@@ -151,7 +155,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path;
+      documentPath;
     save.target = '_blank';
     save.download = download.name;
     save.dispatchEvent(new MouseEvent('click'));
@@ -161,7 +165,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path; // so that it opens new tab for IE11
+      documentPath; // so that it opens new tab for IE11
   }
 
   downloadLoader.value = true;
@@ -877,13 +881,24 @@ const onAddDocumentSubmit = event => {
             hide-footer
             :loading="viewDocumentLoader"
           >
+            <template #item-document_type="item">
+              <div
+                class="flex flex-row gap-3"
+                :class="item.is_watermarked ? 'text-primary' : 'text-secondary'"
+              >
+                {{ item.document_type }}
+              </div>
+            </template>
+
             <template #item-actions="item">
               <div class="flex flex-row gap-3">
                 <x-button
                   size="xs"
                   color="primary"
                   outlined
-                  :href="item.url"
+                  :href="
+                    item.is_watermarked ? item.watermarked_doc_url : item.url
+                  "
                   target="_blank"
                 >
                   View
