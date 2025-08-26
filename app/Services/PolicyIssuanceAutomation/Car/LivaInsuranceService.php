@@ -1070,7 +1070,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             return $response;
         }
 
-        if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
+        if (
+            $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
+            ($policyIssuance->completed_step && $policyIssuance?->status == '')
+        ) {
             if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
