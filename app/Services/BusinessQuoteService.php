@@ -394,7 +394,7 @@ class BusinessQuoteService extends BaseService
             $this->query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
 
-        $this->whereBasedOnRole($this->query, 'bqr');
+        $this->whereBasedOnRole($this->query, 'bqr', quoteTypeCode::Business);
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
                 $this->query->whereNotNull('bqr.previous_quote_policy_number');
