@@ -23,7 +23,6 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\EmbeddedTransaction;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\RenewalBatch;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
@@ -84,7 +83,7 @@ class CarCQFRenewalService
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
             ])
-            ->with(['plan', 'plan.insuranceProvider','carQuoteRequestDetail:id,car_quote_request_id,chassis_number'])
+            ->with(['plan', 'plan.insuranceProvider', 'carQuoteRequestDetail:id,car_quote_request_id,chassis_number'])
             ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold) {
                 $quoteCount = $quotes->count();
                 LoggerService::info(self::class." - Total quotes in current chunk: {$quoteCount}");
@@ -312,6 +311,7 @@ class CarCQFRenewalService
 
         // Get insurance provider safely to avoid null pointer exception
         $insuranceProvider = app(InsuranceProviderService::class)->getProviderByCode($quote->currently_insured_with);
+
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
@@ -319,7 +319,7 @@ class CarCQFRenewalService
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
             'insurer' => $insuranceProvider?->text ?? null,
             'product' => 'Motor insurance',
-            'product_type' =>  null,
+            'product_type' => null,
             'advisor' => $quote->advisor?->email ?? null,
             'policy_number' => $quote->policy_number,
             'start_date' => $quote->policy_start_date,
@@ -374,7 +374,7 @@ class CarCQFRenewalService
             $this->getCustomerEntity($newQuote, $quote);
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Car);
             $this->epCodes[] = EmbeddedProductEnum::MDX.'-'.$newQuote->code;
-            $this->storeCarDetails($newQuote,$quote);
+            $this->storeCarDetails($newQuote, $quote);
 
             LoggerService::info(sprintf('%s - Car CQF Renewal Quote created successfully', self::class), [
                 'previous_quote_uuid' => $quote->uuid,
@@ -386,21 +386,22 @@ class CarCQFRenewalService
 
         return $newQuote;
     }
-    public function storeCarDetails($newQuote,$quote)
+    public function storeCarDetails($newQuote, $quote)
     {
-       
-        if($quote->carQuoteRequestDetail){
-            LoggerService::info(self::class.' - Car Quote Request Detail found for quote');
-        return CarQuoteRequestDetail::create([
-            'car_quote_request_id' => $newQuote->id,
-            'chassis_number' => $quote->carQuoteRequestDetail->chassis_number,
 
-        ]);
+        if ($quote->carQuoteRequestDetail) {
+            LoggerService::info(self::class.' - Car Quote Request Detail found for quote');
+
+            return CarQuoteRequestDetail::create([
+                'car_quote_request_id' => $newQuote->id,
+                'chassis_number' => $quote->carQuoteRequestDetail->chassis_number,
+
+            ]);
         }
-        
+
         LoggerService::info(self::class.' - Car Quote Request Detail not found for quote');
     }
-   
+
     public function generateUUID()
     {
 

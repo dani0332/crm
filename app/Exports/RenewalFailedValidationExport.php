@@ -98,7 +98,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->is_gcc = 'Is GCC';
             $firstRow->errors = 'Error Message(s)';
             $exportLeads->push($firstRow);
-        }       
+        }
         foreach ($failedLeads as $lead) {
             if ($lead->data) {
                 $leadData = $lead->data;
@@ -106,7 +106,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
                     unset($leadData['renewal_batch_id']);
                 }
                 $leadData['errors'] = $lead->validation_errors ?? 'No errors';
-            
+
                 $exportLeads->push($leadData);
             }
         }

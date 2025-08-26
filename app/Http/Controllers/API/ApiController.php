@@ -451,7 +451,6 @@ class ApiController extends Controller
         ]);
     }
 
-   
     public function downloadValidationFailedFile($id)
     {
         return app(CarCQFRenewalService::class)->downloadValidationFailedFile($id);
