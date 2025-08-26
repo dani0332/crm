@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\UAELicenseHeldFor;
 
 class CarCQFRenewalService
 {
@@ -317,10 +318,10 @@ class CarCQFRenewalService
             'email' => $quote->email ?? null,
             'mobile_no' => $quote->mobile_no,
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
-            'insurer' => $insuranceProvider?->text ?? null,
+            'insurer' =>  $quote?->plan?->insuranceProvider?->text ?? null,
             'product' => 'Motor insurance',
             'product_type' => null,
-            'advisor' => $quote->advisor?->email ?? null,
+            'advisor' => null,
             'policy_number' => $quote->policy_number,
             'start_date' => $quote->policy_start_date,
             'end_date' => $quote->policy_expiry_date,
@@ -328,7 +329,7 @@ class CarCQFRenewalService
             'make' => $quote->carMake?->text ?? null,
             'model' => $quote->carModel?->text ?? null,
             'year' => $quote->year_of_manufacture ?? null,
-            'previous_advisor' => $quote->previousAdvisor?->email ?? null,
+            'previous_advisor' =>$quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->premium ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->additional_notes ?? null,
@@ -415,6 +416,7 @@ class CarCQFRenewalService
             return $response->uuid;
         }
     }
+    
     public function mapCarCQFRenewalQuote($quote, $renewalsUploadLeads)
     {
 
@@ -462,6 +464,7 @@ class CarCQFRenewalService
             'emirate_of_registration_id' => $quote->emirate_of_registration_id,
             'car_value' => $quote->car_value,
             'uae_license_held_for_id' => $quote->uae_license_held_for_id,
+
         ];
 
         $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)->first();
