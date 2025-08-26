@@ -121,7 +121,7 @@ const handleClose = () => {
                   <dd class="text-gray-900 font-medium">{{ borLog.policy_number || 'N/A' }}</dd>
                 </div>
                 <div>
-                  <dt class="text-gray-500">Insurer:</dt>
+                <dt class="text-gray-500">Insured Name:</dt>
                   <dd class="text-gray-900 font-medium">{{ borLog.insurer_name || 'N/A' }}</dd>
                 </div>
                 <div>

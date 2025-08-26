@@ -227,7 +227,6 @@ watch(() => props.visible, (newValue) => {
 
 // Watch for customer type changes to reset relevant fields
 watch(() => form.customer_type, (newValue) => {
-  
   // Clear policy fields when switching to Entity (since they won't be visible)
   if (newValue === 'Entity') {
     form.policy_number = '';
@@ -240,7 +239,7 @@ watch(() => form.customer_type, (newValue) => {
     form.customer_type = 'Entity';
     form.insurer_name = '';
   } else if ((isMotorLob.value || isHealthLob.value) && newValue === '') {
-    form.customer_type = 'Individual';
+    form.customer_type = 'Entity';
     form.company_name = '';
   }
 });
@@ -272,7 +271,7 @@ const resetForm = () => {
   if (isBusinessLob.value) {
     form.customer_type = 'Entity';
   } else if (isMotorLob.value || isHealthLob.value) {
-    form.customer_type = 'Individual';
+    form.customer_type = props.customerData.customerType;
   }
 };
 
@@ -690,7 +689,7 @@ onMounted(() => {
                 :options="availableInsurers"
                 placeholder="Select insurance provider"
                 :error="form.errors.insurance_provider_id"
-                :disabled="isSubmitting"
+                :disabled="isSubmitting || isMotorLob"
                 filterable
                 clearable
               />

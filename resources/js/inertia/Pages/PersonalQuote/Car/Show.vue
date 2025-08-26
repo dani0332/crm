@@ -3927,7 +3927,7 @@ function handleOcrNotification(event) {
       :lob="quoteType"
       :isCompanyCar="isCompanyCar"
       :customerData="{
-        customerType: record.customer_type,
+        customerType: enabledCustomerType,
         firstName: record.first_name,
         lastName: record.last_name,
         companyName: record.company_name,

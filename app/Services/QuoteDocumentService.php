@@ -354,7 +354,8 @@ class QuoteDocumentService extends BaseService
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+            // Bor Signature document is not show on document section
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with('createdBy:id,name,email')->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
