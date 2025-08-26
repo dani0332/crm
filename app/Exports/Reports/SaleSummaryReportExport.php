@@ -14,11 +14,13 @@ class SaleSummaryReportExport extends BaseReportsExport
 
     public function headings(): array
     {
+        $groupByColumn = $this->groupByColumn == 'support_user' ? 'OE/AE' : $this->groupByColumn;
+
         $headings = [
-            ucwords(str_replace('_', ' ', $this->groupByColumn)),
+            ucwords(str_replace('_', ' ', $groupByColumn)),
         ];
 
-        if (in_array($this->groupByColumn, ['advisor'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $headings[] = 'Department';
         }
 
@@ -53,7 +55,7 @@ class SaleSummaryReportExport extends BaseReportsExport
             $quote->{$groupBy} ?? 'N/A',
         ];
 
-        if (in_array($this->groupByColumn, ['advisor'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $values[] = $quote->department ?? 'N/A';
         }
 
@@ -79,7 +81,7 @@ class SaleSummaryReportExport extends BaseReportsExport
         $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
 
         $sumCoumns = ['B', ...$commonColumns];
-        if (in_array($event->getConcernable()->groupByColumn, ['advisor'])) {
+        if (in_array($event->getConcernable()->groupByColumn, ['advisor', 'support_user'])) {
             $sumCoumns = [...$commonColumns, 'N'];
         }
         self::performSum($event, $sumCoumns);

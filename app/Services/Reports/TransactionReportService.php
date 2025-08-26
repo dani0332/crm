@@ -76,6 +76,7 @@ class TransactionReportService extends ManagementReport
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
                 'u.name as advisor',
+                'support_user.name as support_user',
                 'dp.name as department',
                 'pi.name as policy_issuer',
                 'p.invoice_description as invoice_description',
@@ -100,6 +101,7 @@ class TransactionReportService extends ManagementReport
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
+            ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')

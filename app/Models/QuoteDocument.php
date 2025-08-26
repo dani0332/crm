@@ -35,6 +35,11 @@ class QuoteDocument extends Model implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
+    public function getIsWatermarkedAttribute()
+    {
+        return ! (empty($this->watermarked_doc_name) || empty($this->watermarked_doc_url));
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by_id', 'id');

@@ -247,4 +247,11 @@ final class ApplicationStorageEnums extends Enum
 
     /* Google Review Email */
     public const GOOGLE_REVIEW_EMAIL = 'google_review_email';
+
+    /* CPA Australia Home CC Emails */
+    public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';
+    public const CPA_AUSTRALIA_SAVINGS_BCC_EMAILS = 'CPA_AUSTRALIA_SAVINGS_BCC_EMAILS';
+    public const HOME_LEAD_POOL_BCC = 'HOME_LEAD_POOL_BCC';
+    public const SAVINGS_LEAD_POOL_BCC = 'SAVINGS_LEAD_POOL_BCC';
+    public const BIRD_OE_ASSIGNMENT_WORKFLOW = 'BIRD_OE_ASSIGNMENT_WORKFLOW';
 }

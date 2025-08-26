@@ -429,6 +429,8 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
     public const LEADS_BY_EMAIL = 'leads-by-email';
+    public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
+    public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
     // Savings Permissions
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
