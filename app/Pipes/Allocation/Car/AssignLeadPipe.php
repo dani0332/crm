@@ -34,8 +34,9 @@ class AssignLeadPipe extends BaseAllocationPipe
 
     private function sendWhatsappNotificationToCustomer()
     {
-        if ($this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-            $advisor = $this->allocationRequest->getAdvisor();
+        $advisor = $this->allocationRequest->getAdvisor();
+
+        if ($this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD && ! $advisor->isAi()) {
             app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($this->lead, $advisor->id);
         }
     }
