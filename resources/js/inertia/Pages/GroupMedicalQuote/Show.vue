@@ -1263,7 +1263,6 @@ function handleOcrNotification(event) {
     />
 
     <QuoteDocument
-    :key="bookPolicyReloadKey"
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
@@ -1286,6 +1285,7 @@ function handleOcrNotification(event) {
           permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       quoteType="Business"
       modelType="Group Medical"
