@@ -812,7 +812,7 @@ const cancelOptionsList = computed(() => {
       :quoteType="'SendUpdateLog'"
       :expanded="true"
     />
-    
+
     <OcrLogs
       :type="modelClass"
       :id="$page.props.sendUpdateLog.id"

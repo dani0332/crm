@@ -182,12 +182,14 @@ const confirmDeleteDoc = () => {
         });
 
         // Emit custom event for accuracy matrix updates
-        window.dispatchEvent(new CustomEvent('document-deleted', {
-          detail: {
-            docId: confirmDeleteData.doc_id,
-            docUuid: confirmDeleteData.doc_uuid,
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('document-deleted', {
+            detail: {
+              docId: confirmDeleteData.doc_id,
+              docUuid: confirmDeleteData.doc_uuid,
+            },
+          }),
+        );
       },
     },
   );

@@ -1706,8 +1706,11 @@ function handleOcrNotification(event) {
         bookPolicyReloadKey.value++;
 
         // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
-        if (status === 'end' && !event.detail?.error && 
-            docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) {
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
           const allFieldsFilled = checkRequiredPolicyFields();
           if (!allFieldsFilled) {
             notification.info({

@@ -18,7 +18,11 @@ const listen = () => {
     const currentUrl = page.props.location || '';
     const isCurrentUser = e.data.userId === page.props.auth.user.id;
 
-    const allowedPages = ['/quotes/car/', '/personal-quotes/home/', '/medical/amt/'];
+    const allowedPages = [
+      '/quotes/car/',
+      '/personal-quotes/home/',
+      '/medical/amt/',
+    ];
     const isAllowedPage = allowedPages.some(p => currentUrl.includes(p));
 
     // Only show notifications to the user who uploaded the document, same quote, and only on allowed pages

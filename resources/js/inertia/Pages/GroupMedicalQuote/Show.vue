@@ -473,8 +473,11 @@ function handleOcrNotification(event) {
         policyDetailReloadKey.value++;
         bookPolicyReloadKey.value++;
         // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
-        if (status === 'end' && !event.detail?.error && 
-            docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) {
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
           const allFieldsFilled = checkRequiredPolicyFields();
           if (!allFieldsFilled) {
             notification.info({
@@ -486,12 +489,7 @@ function handleOcrNotification(event) {
       },
       preserveState: true,
       preserveScroll: true,
-      only: [
-        'payments',
-        'bookPolicyDetails',
-        'quote',
-        'quoteDocuments',
-      ],
+      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
     });
   }
 }

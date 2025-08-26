@@ -24,9 +24,10 @@ const shouldShow = computed(() => {
 
 const matrixClass = computed(() => {
   if (!shouldShow.value) return '';
-  
-  const baseClasses = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200';
-  
+
+  const baseClasses =
+    'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200';
+
   switch (matrixStatus.value?.status) {
     case 'green':
       return `${baseClasses} bg-green-100 text-green-800 border border-green-200`;
@@ -39,7 +40,7 @@ const matrixClass = computed(() => {
 
 const statusIcon = computed(() => {
   if (!shouldShow.value) return null;
-  
+
   switch (matrixStatus.value?.status) {
     case 'green':
       return '✓';
@@ -58,9 +59,12 @@ const fetchMatrixStatus = async () => {
   if (!props.quote?.id) {
     return;
   }
-  
-  const eligibleTypes = ['Home','Business'];
-  const modelType = props.modelType ? props.modelType.charAt(0).toUpperCase() + props.modelType.slice(1).toLowerCase() : '';
+
+  const eligibleTypes = ['Home', 'Business'];
+  const modelType = props.modelType
+    ? props.modelType.charAt(0).toUpperCase() +
+      props.modelType.slice(1).toLowerCase()
+    : '';
 
   if (!eligibleTypes.includes(modelType)) {
     return;
@@ -70,8 +74,10 @@ const fetchMatrixStatus = async () => {
   error.value = null;
 
   try {
-    const response = await axios.get(`/accuracy-matrix/${modelType}/${props.quote.id}`);
-    
+    const response = await axios.get(
+      `/accuracy-matrix/${modelType}/${props.quote.id}`,
+    );
+
     // Validate response structure
     if (response.data && typeof response.data === 'object') {
       matrixStatus.value = response.data;
@@ -91,7 +97,7 @@ const fetchMatrixStatus = async () => {
   }
 };
 
-const handleOcrNotification = (event) => {
+const handleOcrNotification = event => {
   const { status, userId } = event.detail || {};
   const currentUserId = usePage().props.auth.user.id;
 
@@ -121,10 +127,13 @@ const handlePageReload = () => {
 onMounted(() => {
   fetchMatrixStatus();
   window.addEventListener('ocr-notification', handleOcrNotification);
-  
+
   // Listen for Inertia page updates (document deletions, etc.)
-  const unsubscribe = usePage().props.app?.router?.on?.('success', handlePageReload);
-  
+  const unsubscribe = usePage().props.app?.router?.on?.(
+    'success',
+    handlePageReload,
+  );
+
   // Also listen for manual document deletion events
   window.addEventListener('document-deleted', handleDocumentDeletion);
 });
@@ -134,9 +143,12 @@ onUnmounted(() => {
   window.removeEventListener('document-deleted', handleDocumentDeletion);
 });
 
-watch(() => props.quote?.id, () => {
-  fetchMatrixStatus();
-});
+watch(
+  () => props.quote?.id,
+  () => {
+    fetchMatrixStatus();
+  },
+);
 </script>
 
 <template>
