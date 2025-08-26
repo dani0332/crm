@@ -272,6 +272,7 @@ const isFieldRequired = (fieldName) => {
     case 'policy_expiry_date':
     case 'certificate_end_date':
     case 'annual_mileage_estimate':
+    case 'policy_effective_date':
       return isLIVA.value;
     default:
       return false;
