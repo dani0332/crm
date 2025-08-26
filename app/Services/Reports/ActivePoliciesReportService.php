@@ -4,7 +4,6 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\ActivePoliciesReportExport;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
@@ -19,7 +18,7 @@ class ActivePoliciesReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ACTIVE_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ACTIVE_POLICIES;
@@ -46,12 +45,19 @@ class ActivePoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request, isSSR: true);
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
         LoggerService::sql(self::class.' - Active Policies Report Query', $query);
 
         if ($request->export == 1) {
-            $data = $query->get();
+            return $query->get();
 
-            return (new ActivePoliciesReportExport($data))->download("Active Policies Report {$this->reportDateRange}.xlsx");
         } else {
             return $query->simplePaginate(100)->withQueryString();
         }
