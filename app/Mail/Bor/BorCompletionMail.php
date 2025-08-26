@@ -96,7 +96,7 @@ class BorCompletionMail extends Mailable
             'quote_type' => $quoteType ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_UPLOAD ?? '',
             'quote_link' => $quoteLink ?? '',
-            'customer_name' => $this->getCustomerName() ?? '',
+            'customer_name' => $this->getCustomerName(true) ?? '',
             'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
             'customer' => [
                 'email' => $this->customerData['email'],
@@ -137,7 +137,7 @@ class BorCompletionMail extends Mailable
     /**
      * Get customer display name based on customer type
      */
-    private function getCustomerName()
+    private function getCustomerName($firstName = false)
     {
         if ($this->borLog->customer_type === 'Entity') {
             return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
@@ -146,6 +146,10 @@ class BorCompletionMail extends Mailable
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
         $name = trim($firstName . ' ' . $lastName);
+
+        if ($firstName) {
+            return $firstName;
+        }
 
         return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
     }

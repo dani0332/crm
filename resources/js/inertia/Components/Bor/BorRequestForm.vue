@@ -750,7 +750,7 @@ onMounted(() => {
               </svg>
               <div>
                 <h5 class="text-sm font-medium text-blue-900 mb-1">
-                  {{ lob }} Insurance BOR Requirements
+                  {{ lob.charAt(0).toUpperCase() + lob.slice(1) }} Insurance BOR Requirements
                 </h5>
                 <p class="text-sm text-blue-700 mb-2">
                   For Individual customers with motor insurance, policy number and expiry date are mandatory fields. Entity customers don't require policy details.
@@ -787,7 +787,7 @@ onMounted(() => {
               </svg>
               <div>
                 <h5 class="text-sm font-medium text-green-900 mb-1">
-                  {{ lob }} Insurance BOR Process
+                  {{ lob.charAt(0).toUpperCase() + lob.slice(1) }} Insurance BOR Process
                 </h5>
                 <p class="text-sm text-green-700">
                   The BOR request will be processed and the customer will be notified via email with the digital signature link.

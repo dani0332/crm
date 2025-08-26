@@ -104,7 +104,7 @@ class BorRequestMail extends Mailable
             'quote_type' => $quoteType ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_REQUEST ?? '',
             'quote_link' => $quoteLink ?? '',
-            'customer_name' => $this->getCustomerName() ?? '',
+            'customer_name' => $this->getCustomerName(true) ??  '',
             'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
@@ -130,7 +130,7 @@ class BorRequestMail extends Mailable
         ];
     }
 
-    private function getSubjectLine($personalQuote, $quoteType)
+    private function getSubjectLine($personalQuote, $quoteType, $isSubjectLine = false)
     {
         $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
         $name = $this->getCustomerName();
@@ -145,7 +145,7 @@ class BorRequestMail extends Mailable
     /**
      * Get customer display name based on customer type
      */
-    private function getCustomerName()
+    private function getCustomerName($firstName = false)
     {
         if ($this->borLog->customer_type === 'Entity') {
             return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
@@ -154,6 +154,10 @@ class BorRequestMail extends Mailable
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
         $name = trim($firstName . ' ' . $lastName);
+
+        if($firstName) {
+            return $firstName;
+        }
         
         return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
     }

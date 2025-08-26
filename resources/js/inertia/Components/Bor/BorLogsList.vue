@@ -311,79 +311,84 @@ const canPerformAction = (log, action) => {
         <!-- Actions Column -->
         <template #item-actions="{ actions }">
           <div class="flex items-center space-x-1  space-y-1 flex-wrap">
-            <!-- Upload Document Button -->
-            <x-button
-              v-if="canPerformAction(actions, 'upload')"
-              color="orange"
-              class="mt-1 w-25 space-x-2"
-              size="sm"
-              @click="handleUploadDocument(actions)"
-              title="Upload signed document"
-            >
-              Upload
-            </x-button>
+              <!-- Hidden button to fixing the alignment issues for all button -->
+              <x-button class="hidden"></x-button>
 
-            <!-- Cancel Button -->
-            <x-button
-              v-if="canPerformAction(actions, 'cancel')"
-              color="error"
-              size="sm"
-              @click="handleCancelBor(actions)"
-              title="Cancel BOR request"
-            >
-              <span class="pr-1">
-                Cancel
-              </span>
-            </x-button>
+              <!-- Upload Document Button -->
+              <x-button
+                v-if="canPerformAction(actions, 'upload')"
+                color="orange"
+                class="mt-1 w-25"
+                size="sm"
+                @click="handleUploadDocument(actions)"
+                title="Upload signed document"
+              >
+                <span class="pr-1">
+                  Upload
+                </span>
+              </x-button>
 
-            <!-- View Document Button -->
-            <x-button
-              v-if="canPerformAction(actions, 'view_document')"
-              color="primary"
-              size="sm"
-              @click="handleViewDocument(actions)"
-              title="View documents"
-            >
-              <span class="px-2">
-                View
-              </span>
-            </x-button>
+              <!-- Cancel Button -->
+              <x-button
+                v-if="canPerformAction(actions, 'cancel')"
+                color="error"
+                size="sm"
+                @click="handleCancelBor(actions)"
+                title="Cancel BOR request"
+              >
+                <span class="pr-1">
+                  Cancel
+                </span>
+              </x-button>
 
-            <x-button
-              v-if="canPerformAction(actions, 'done')"
-              color="emerald"
-              size="sm"
-              @click="handleMarkDone(actions)"
-              title="Done"
-            >
-              <span class="px-2">
-                Done
-              </span>
-            </x-button>
+              <!-- View Document Button -->
+              <x-button
+                v-if="canPerformAction(actions, 'view_document')"
+                color="primary"
+                size="sm"
+                @click="handleViewDocument(actions)"
+                title="View documents"
+              >
+                <span class="px-2">
+                  View
+                </span>
+              </x-button>
 
-            <x-button
-              v-if="canPerformAction(actions, 'edit')"
-              color="primary"
-              size="sm"
-              @click="handleEditBor(actions)"
-              title="Edit BOR request"
-            >
-              <span class="px-3">
-                Edit
-              </span>
-            </x-button>
+              <x-button
+                v-if="canPerformAction(actions, 'done')"
+                color="emerald"
+                size="sm"
+                @click="handleMarkDone(actions)"
+                title="Done"
+              >
+                <span class="px-2">
+                  Done
+                </span>
+              </x-button>
 
-            <x-button
-              v-if="canPerformAction(actions, 'copy_link')"
-              color="primary"
-              size="sm"
-              @click="handleCopyLink(actions)"
-              title="Copy link"
-            >
-              <span class="px-2">
-                Copy
-              </span>
-            </x-button>
+              <x-button
+                v-if="canPerformAction(actions, 'edit')"
+                color="primary"
+                size="sm"
+                @click="handleEditBor(actions)"
+                title="Edit BOR request"
+              >
+                <span class="px-3">
+                  Edit
+                </span>
+              </x-button>
+
+              <x-button
+                v-if="canPerformAction(actions, 'copy_link')"
+                color="primary"
+                size="sm"
+                @click="handleCopyLink(actions)"
+                title="Copy link"
+              >
+                <span class="px-2">
+                  Copy
+                </span>
+              </x-button>
           </div>
         </template>
       </DataTable>
