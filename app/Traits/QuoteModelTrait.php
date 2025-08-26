@@ -17,7 +17,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
-use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
@@ -29,7 +28,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, Logable, Optionable, QuoteAllocatable;
+    use Filterable, Logable, Optionable, QuoteAllocatable, QuotePaymentable;
 
     /**
      * @return mixed|void
