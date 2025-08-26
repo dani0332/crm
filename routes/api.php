@@ -86,7 +86,6 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
-    Route::get('/cqf-renewals-validations', [ApiController::class, 'getCarCQFValidations'])->name('getCarCQFValidations');
     Route::get('/renewals/validation-failed-download/{id}', [ApiController::class, 'downloadValidationFailedFile'])->name('downloadValidationFailedFile');
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

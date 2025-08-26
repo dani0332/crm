@@ -256,7 +256,7 @@ class CarCQFRenewalService
             $errors = $validator->errors()->toArray();
             foreach ($errors as $field => $message) {
                 $errors[$field] = $message[0];
-                $this->validationErrors[] = ['policy_number' => $quote->policy_number, 'message' => $errors[$field].' '.$message[0]];
+                $this->validationErrorsList[] = ['policy_number' => $quote->policy_number, 'message' => $errors[$field].' '.$message[0]];
             }
         }
 
@@ -523,28 +523,6 @@ class CarCQFRenewalService
         ];
     }
 
-    public function getCarCQFValidations()
-    {
-        $quoteFaileds = request('quotePolicyNumbers') ?? [];
-        $policyNumbers = is_array($quoteFaileds) ? $quoteFaileds : explode(',', $quoteFaileds);
-        $failedRenewalProcesses = RenewalQuoteProcess::select('id', 'quote_type', 'policy_number', 'status', 'validation_errors', 'created_at', 'renewals_upload_lead_id')->where('status', RenewalProcessStatuses::BAD_DATA)->whereIn('policy_number', $policyNumbers)->get()->toArray();
-
-        $failedRenewalProcesses = collect($failedRenewalProcesses)->map(function ($process) {
-            return [
-                'id' => $process['id'],
-                'quote_type' => $process['quote_type'],
-                'policy_number' => $process['policy_number'],
-                'status' => $process['status'],
-                'validation_errors' => $process['validation_errors'],
-                'created_at' => $process['created_at'],
-                'file_download_url' => route('downloadValidationFailedFile', ['id' => $process['renewals_upload_lead_id']]),
-            ];
-
-        });
-
-        return $failedRenewalProcesses;
-
-    }
     public function downloadValidationFailedFile($id)
     {
         $renewaUploadLead = RenewalsUploadLeads::where('id', $id)->first();
