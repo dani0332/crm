@@ -112,6 +112,10 @@ trait OcrValidator
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
+            InsurerProviderEnum::ORIENT_INSURANCE => [
+                ...$commonFields,
+                'quote.commission_vat_applicable',
+            ],
         };
     }
 
