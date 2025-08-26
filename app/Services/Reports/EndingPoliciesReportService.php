@@ -83,8 +83,6 @@ class EndingPoliciesReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-
-
         return $query;
     }
 

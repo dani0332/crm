@@ -5,7 +5,6 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
@@ -146,7 +145,6 @@ class SaleSummaryReportService extends ManagementReport
         }
         $this->applyFilters($query, $request, false, true);
 
-
         LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
 
         return $query;
@@ -169,9 +167,6 @@ class SaleSummaryReportService extends ManagementReport
         $processedData = $this->processEndorsementsData($query->get(), $endorsementsData, $request);
 
         $this->formatData($processedData);
-
-
-
 
         return $processedData;
     }

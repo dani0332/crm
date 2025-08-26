@@ -37,7 +37,6 @@ class InstallmentReportExport implements CsvExportableInterface
     {
         $request = request()->merge($requestParams);
 
-
         return $this->installmentReportService->getReportData($request);
     }
 
@@ -150,7 +149,6 @@ class InstallmentReportExport implements CsvExportableInterface
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
-
 
             $sumColumns = [8, 9, 10, 11, 12, 13, 14, 15, 16, 18];
             if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {

@@ -45,8 +45,6 @@ class ActivePoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request, isSSR: true);
 
-
-
         return $query;
     }
 

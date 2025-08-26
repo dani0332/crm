@@ -99,8 +99,6 @@ class ConversionAsAtReportService extends BaseService
 
             $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
 
-
-
             return $query;
 
         }

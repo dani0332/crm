@@ -7,7 +7,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleDetailReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Events\AfterSheet;
 
 class SaleDetailReportExport implements CsvExportableInterface
 {
@@ -20,7 +19,6 @@ class SaleDetailReportExport implements CsvExportableInterface
         private array $requestParams
     ) {
         request()->merge($this->requestParams);
-
 
         $this->columnTotals = collect();
 
@@ -152,8 +150,6 @@ class SaleDetailReportExport implements CsvExportableInterface
 
         return $row->values()->toArray();
     }
-
-
 
     public function processChunkedQuery($query, array $requestParams, $stream): int
     {

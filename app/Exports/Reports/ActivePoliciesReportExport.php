@@ -7,7 +7,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\Reports\ActivePoliciesReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Events\AfterSheet;
 
 class ActivePoliciesReportExport implements CsvExportableInterface
 {
@@ -20,7 +19,6 @@ class ActivePoliciesReportExport implements CsvExportableInterface
         private array $requestParams
     ) {
         request()->merge($this->requestParams);
-
 
         $this->columnTotals = collect();
 
@@ -37,7 +35,6 @@ class ActivePoliciesReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-
 
         return $this->activePoliciesReportService->getReportData($request);
     }
@@ -105,8 +102,6 @@ class ActivePoliciesReportExport implements CsvExportableInterface
 
         return $totalRecords;
     }
-
-
 
     private function postDataRows($stream)
     {

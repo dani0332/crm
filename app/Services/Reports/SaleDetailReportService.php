@@ -5,7 +5,6 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\SaleDetailReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -117,8 +116,6 @@ class SaleDetailReportService extends ManagementReport
         } else {
             $query->groupBy('personal_quotes.code');
         }
-
-
 
         return $query;
     }

@@ -20,7 +20,6 @@ class EndingPoliciesReportExport implements CsvExportableInterface
     ) {
         request()->merge($this->requestParams);
 
-
         $this->columnTotals = collect();
 
         $totalsRow = $this->getEmptyRow();
@@ -36,7 +35,6 @@ class EndingPoliciesReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-
 
         return $this->endingPoliciesReportService->getReportData($request);
     }
@@ -104,7 +102,6 @@ class EndingPoliciesReportExport implements CsvExportableInterface
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
-
 
             if (is_numeric($row->get($index))) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));

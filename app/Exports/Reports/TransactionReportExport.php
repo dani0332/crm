@@ -18,7 +18,6 @@ class TransactionReportExport implements CsvExportableInterface
     ) {
         request()->merge($this->requestParams);
 
-
         $this->columnTotals = collect();
 
         $totalsRow = $this->getEmptyRow();
@@ -81,7 +80,6 @@ class TransactionReportExport implements CsvExportableInterface
     {
         $request = request()->merge($requestParams);
 
-
         return $this->transactionReportService->getReportData($request);
     }
 
@@ -142,7 +140,6 @@ class TransactionReportExport implements CsvExportableInterface
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
-
 
             $sumColumns = [8, 9, 10, 11, 12, 13, 14, 15, 16, 18];
 

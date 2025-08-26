@@ -6,7 +6,6 @@ use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\EndorsementReportExport;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
@@ -279,8 +278,6 @@ class EndorsementReportService extends ManagementReport
 
         $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
-
-
 
         return $query;
     }

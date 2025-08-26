@@ -6,7 +6,6 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\InstallmentReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -108,8 +107,6 @@ class InstallmentReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
-
-
 
         return $query;
     }

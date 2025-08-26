@@ -7,7 +7,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\Reports\EndorsementReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Events\AfterSheet;
 
 class EndorsementReportExport implements CsvExportableInterface
 {
@@ -36,7 +35,6 @@ class EndorsementReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-
 
         return $this->endorsementReportService->getReportData($request);
     }
@@ -156,7 +154,6 @@ class EndorsementReportExport implements CsvExportableInterface
         ]);
         foreach ($this->columnTotals as $index => $field) {
 
-
             $sumColumns = [8, 9, 10, 11, 12, 11, 13, 14, 15, 16, 18];
             if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
                 $this->columnTotals->put($index, ((float) $this->columnTotals->get($index, 0) + (float) ($row->get($index) ?? 0)));
@@ -198,8 +195,6 @@ class EndorsementReportExport implements CsvExportableInterface
 
         fputcsv($stream, $totalsRow);
     }
-
-
 
     private function getEmptyRow(): array
     {

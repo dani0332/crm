@@ -7,7 +7,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleSummaryReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Events\AfterSheet;
 
 class SaleSummaryReportExport implements CsvExportableInterface
 {
@@ -76,8 +75,6 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $endorsementsData = $this->saleSummaryReportService->getEndorsementsData($requestParams);
 
-
-
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $requestParams, $stream, $endorsementsData) {
 
             $processedData = $this->saleSummaryReportService->processEndorsementsData($chunk, $endorsementsData, $requestParams);
@@ -136,8 +133,6 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $groupBy = $groupByColumnMapping[$groupBy] ?? $groupBy;
 
-
-
         $values = [
             $quote->{$groupBy} ?? 'N/A',
         ];
@@ -170,8 +165,6 @@ class SaleSummaryReportExport implements CsvExportableInterface
             ...$numericValues->values()->toArray(),
         ];
     }
-
-
 
     private function postDataRows($stream)
     {
