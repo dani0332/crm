@@ -62,8 +62,6 @@ const fetchMatrixStatus = async () => {
   const eligibleTypes = ['Home','Business'];
   const modelType = props.modelType ? props.modelType.charAt(0).toUpperCase() + props.modelType.slice(1).toLowerCase() : '';
 
-  console.log(modelType);
-  
   if (!eligibleTypes.includes(modelType)) {
     return;
   }
