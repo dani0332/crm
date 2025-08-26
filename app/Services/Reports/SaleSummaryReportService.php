@@ -271,7 +271,6 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request->groupBy == 'insurer') {
-            logger()->debug('groupBy: '.$request->groupBy);
             // Endorsements
             $query
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')

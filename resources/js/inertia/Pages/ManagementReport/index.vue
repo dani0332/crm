@@ -317,9 +317,7 @@ const onDataExport = async (flag, exportType = 'download') => {
       })
       .catch(err => {
         notification.error({
-          title: err.response.data.message
-            ? err.response.data.message
-            : 'Unable to start an export',
+          title: err.response?.data?.message || 'Unable to start an export',
           position: 'top',
         });
         setTimeout(() => {
