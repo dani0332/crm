@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -15,12 +17,10 @@ use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\EmailServices\CarEmailService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Services\EmailServices\CarEmailService;
-use App\Enums\CarRegistrationType;
-use App\Enums\LeadSourceEnum;
 
 class CarQuoteObserver
 {
