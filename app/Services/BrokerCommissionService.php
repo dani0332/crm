@@ -28,7 +28,7 @@ class BrokerCommissionService
         // Check if the insurance provider exists and has a payment gateway ID
         if (! $insuranceProvider || $insuranceProvider->payment_gateway_id == null) {
             // Return default values if the insurance provider is not valid
-            return [false, null, false];
+            return [false, null, false, false];
         }
 
         if ($quoteTypeId == QuoteTypeId::Car && $quote && strtolower($quote->registration_type) == strtolower(CarRegistrationType::COMPANY)) {

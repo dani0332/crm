@@ -147,10 +147,9 @@ class StorePaymentRequest extends FormRequest
         $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
         $planId = request()->input('plan_id') ?? null;
         [, $brokerCommission, , $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
-        // dd($isPaymentLinkEnabled, $brokerCommission);
-
-        // todo: need to confirm from jerin
-        // $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL
-        return $isPaymentLinkEnabled == 1 ;
+        if($isPaymentLinkEnabled) {
+            return true;
+        }
+        return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
 }
