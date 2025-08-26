@@ -242,7 +242,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('claim/update-statuses/{uuid}', [ClaimsController::class, 'updateClaimStatuses'])->name('claims.update.status');
         Route::post('claims/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
         Route::post('claims/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
-        
+
         // Claim Document Routes
         Route::post('claims/{claim:uuid}/documents', [ClaimsController::class, 'storeDocument'])->name('claims.documents.store');
         Route::delete('claims/{claim:uuid}/documents/{document}', [ClaimsController::class, 'destroyDocument'])->name('claims.documents.destroy');
@@ -250,7 +250,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('claims/{claim:uuid}/documents/download-all', [ClaimsController::class, 'downloadAllDocuments'])->name('claims.documents.download-all');
         Route::get('claims/{claim:uuid}/lead-history', [ClaimsController::class, 'getClaimLeadHistory'])->name('claims.lead-history');
         Route::get('claims/{claim:uuid}/sub-status-logs', [ClaimsController::class, 'getClaimSubStatusLogs'])->name('claims.sub-status-logs');
-        
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
