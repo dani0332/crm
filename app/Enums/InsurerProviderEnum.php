@@ -23,4 +23,5 @@ final class InsurerProviderEnum extends Enum
     const DUBAI_NATIONAL_INSURANCE = 'DNIRC';
     const DUBAI_INSURANCE_COMPANY = 'DIC';
     const CIGNA_INSURANCE = 'CIG';
+    const SALAMA_INSURANCE = 'SI';
 }

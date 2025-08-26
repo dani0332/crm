@@ -35,6 +35,7 @@ trait OcrValidator
             InsurerProviderEnum::DUBAI_NATIONAL_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
             InsurerProviderEnum::DUBAI_INSURANCE_COMPANY => $quoteType == QuoteTypes::GROUP_MEDICAL,
             InsurerProviderEnum::CIGNA_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
+            InsurerProviderEnum::SALAMA_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
             default => false,
         };
     }
@@ -106,6 +107,10 @@ trait OcrValidator
             ],
             InsurerProviderEnum::CIGNA_INSURANCE => [
                 ...$commonFields,
+            ],
+            InsurerProviderEnum::SALAMA_INSURANCE => [
+                ...$commonFields,
+                'quote.commission_vat_applicable',
             ],
         };
     }

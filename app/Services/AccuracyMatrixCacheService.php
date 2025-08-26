@@ -37,6 +37,7 @@ class AccuracyMatrixCacheService
         InsurerProviderEnum::DUBAI_NATIONAL_INSURANCE,
         InsurerProviderEnum::DUBAI_INSURANCE_COMPANY,
         InsurerProviderEnum::CIGNA_INSURANCE,
+        InsurerProviderEnum::SALAMA_INSURANCE,
     ];
 
     private function getCacheKey(int $quoteId, string $quoteType): string
