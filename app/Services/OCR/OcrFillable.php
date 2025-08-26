@@ -36,21 +36,19 @@ trait OcrFillable
     private function fillTaxInvoice(Model $quote, object $data)
     {
         try {
-            $success = (new TaxInvoiceDataProcessor(
+            // Create a single instance of the processor to reuse
+            $processor = new TaxInvoiceDataProcessor(
                 $quote,
                 $data,
                 $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
-            ))->processTaxInvoiceData();
+            );
+            
+            $success = $processor->processTaxInvoiceData();
 
             if ($success) {
-                // Get processing summary for logging
-                $summary = (new TaxInvoiceDataProcessor(
-                    $quote,
-                    $data,
-                    $this->isSendUpdateEligibleForOCR,
-                    $this->providerCode
-                ))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Tax Invoice data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -71,21 +69,19 @@ trait OcrFillable
     private function fillTaxInvoiceRaisedByBuyer(Model $quote, object $data)
     {
         try {
-            $success = (new TaxInvoiceRaisedByBuyerDataProcessor(
+            // Create a single instance of the processor to reuse
+            $processor = new TaxInvoiceRaisedByBuyerDataProcessor(
                 $quote,
                 $data,
                 $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
-            ))->processTaxInvoiceRaisedByBuyerData();
+            );
+            
+            $success = $processor->processTaxInvoiceRaisedByBuyerData();
 
             if ($success) {
-                // Get processing summary for logging
-                $summary = (new TaxInvoiceRaisedByBuyerDataProcessor(
-                    $quote,
-                    $data,
-                    $this->isSendUpdateEligibleForOCR,
-                    $this->providerCode
-                ))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Tax Invoice Raised By Buyer data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -147,11 +143,14 @@ trait OcrFillable
     private function fillEmiratesId(Model $quote, object $data)
     {
         try {
-            $success = (new EmiratesIdDataProcessor($quote, $data))->processEmiratesIdData();
+            // Create a single instance of the processor to reuse
+            $processor = new EmiratesIdDataProcessor($quote, $data);
+            
+            $success = $processor->processEmiratesIdData();
 
             if ($success) {
-                // we can remove after testing
-                $summary = (new EmiratesIdDataProcessor($quote, $data))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Emirates ID data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -172,11 +171,14 @@ trait OcrFillable
     private function fillMulkiya(Model $quote, object $data)
     {
         try {
-            $success = (new MulkiyaDataProcessor($quote, $data))->processMulkiyaData();
+            // Create a single instance of the processor to reuse
+            $processor = new MulkiyaDataProcessor($quote, $data);
+            
+            $success = $processor->processMulkiyaData();
 
             if ($success) {
-                // we can remove after testing
-                $summary = (new MulkiyaDataProcessor($quote, $data))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Mulkiya data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -197,11 +199,14 @@ trait OcrFillable
     private function fillDrivingLicense(Model $quote, object $data)
     {
         try {
-            $success = (new DrivingLicenseDataProcessor($quote, $data))->processDrivingLicenseData();
+            // Create a single instance of the processor to reuse
+            $processor = new DrivingLicenseDataProcessor($quote, $data);
+            
+            $success = $processor->processDrivingLicenseData();
 
             if ($success) {
-                // we can remove after testing
-                $summary = (new DrivingLicenseDataProcessor($quote, $data))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Driving License data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
@@ -222,21 +227,19 @@ trait OcrFillable
     private function fillPolicySchedule(Model $quote, object $data)
     {
         try {
-            $success = (new PolicyScheduleDataProcessor(
+            // Create a single instance of the processor to reuse
+            $processor = new PolicyScheduleDataProcessor(
                 $quote,
                 $data,
                 $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
-            ))->processPolicyScheduleData();
+            );
+            
+            $success = $processor->processPolicyScheduleData();
 
             if ($success) {
-                // Get processing summary for logging
-                $summary = (new PolicyScheduleDataProcessor(
-                    $quote,
-                    $data,
-                    $this->isSendUpdateEligibleForOCR,
-                    $this->providerCode
-                ))->getProcessingSummary();
+                // Get processing summary from the same processor instance
+                $summary = $processor->getProcessingSummary();
 
                 LoggerService::info(self::class.' - Policy Schedule data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
