@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 trait OcrValidator
 {
-    private function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
+    public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
     {
         return match ($provider) {
             // Car & Home & Group Medical
