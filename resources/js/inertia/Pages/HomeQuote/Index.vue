@@ -43,6 +43,7 @@ const tableHeader = ref([
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT CAPTURED DATE', value: 'captured_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
   {
@@ -1037,6 +1038,11 @@ const formatDate = dateString =>
       <template #item-authorized_at="item">
         <p v-if="item?.payments[0]?.payment_status_id === 4">
           {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-captured_at="item">
+        <p v-if="item?.payments[0]?.captured_at">
+          {{ item?.payments[0]?.captured_at }}
         </p>
       </template>
       <template #item-expiry_date="item">
