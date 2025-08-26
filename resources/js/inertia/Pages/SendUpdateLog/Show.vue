@@ -800,7 +800,9 @@ const cancelOptionsList = computed(() => {
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
       :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
       :disable-main-btn="props.disableMainBtn"
-      :is-endorsement-booking-action-disabled="props.isEndorsementBookingActionDisabled"
+      :is-endorsement-booking-action-disabled="
+        props.isEndorsementBookingActionDisabled
+      "
     />
 
     <AuditLogs
