@@ -286,13 +286,28 @@ trait OcrUtils
     public function extractProviderCode(Model $quote): ?string
     {
         $providerCode = null;
-
+        
+        // First priority: Check payments for all model types
         if ($quote->payments && $quote->payments->isNotEmpty()) {
             $latestPayment = $quote->payments->first();
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
             }
         }
+        
+        // Second priority: For SendUpdateLog, use insuranceProvider if payments didn't yield a result
+        if ($providerCode === null && $quote instanceof SendUpdateLog && $quote->insuranceProvider) {
+            $providerCode = $quote->insuranceProvider->code;
+        }
+        
+        // Log the result for debugging
+        LoggerService::info('Provider code extraction result - Quote UUID: '.$quote->uuid, [
+            'model_type' => get_class($quote),
+            'provider_code' => $providerCode,
+            'has_insurance_provider' => $quote instanceof SendUpdateLog ? isset($quote->insuranceProvider) : false,
+            'has_payments' => $quote->payments && $quote->payments->isNotEmpty(),
+            'extraction_source' => $providerCode ? ($quote->payments && $quote->payments->isNotEmpty() ? 'payments' : 'insuranceProvider') : 'none',
+        ]);
 
         return $providerCode;
     }

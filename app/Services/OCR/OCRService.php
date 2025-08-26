@@ -80,7 +80,10 @@ class OCRService
             'image' => false,
         ];
 
-        LoggerService::info('OCR API Request - Quote UUID: '.$quote->uuid);
+        // Detailed logging for API debugging
+        LoggerService::info(self::class.'::getData - OCR API Request Details', [
+            'request_data' => $requestData,
+        ]);
 
         $response = $this->sendRequest('/process-document', $requestData);
 
