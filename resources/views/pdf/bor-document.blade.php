@@ -262,7 +262,7 @@
                 </div>
             </div>
             <div style="clear: both; margin-top: 15px;">
-                <p><strong>Date signed:</strong> {{ $date_signed ?? '' }}</p>
+                <p><strong>Date signed:</strong> {{ $date_signed .' '. $date_signed_time ?? '' }}</p>
             </div>
         </div>
     @else
