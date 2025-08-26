@@ -1,8 +1,75 @@
 <script setup>
 import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
+import { h, defineComponent } from 'vue';
 const can = permission => useCan(permission);
 
 const { isRequired } = useRules();
+
+// Field Loader component for OCR loading indicators
+const FieldLoader = defineComponent({
+  props: {
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  setup(props, { slots }) {
+    return () =>
+      h('div', { class: 'relative' }, [
+        slots.default && slots.default(),
+        props.loading &&
+          h(
+            'div',
+            {
+              class:
+                'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10',
+            },
+            [
+              h('div', {
+                class:
+                  'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full',
+              }),
+            ],
+          ),
+      ]);
+  },
+});
+
+// Helper function to check if a document type is currently being processed
+const localIsDocTypeLoading = docType => {
+  let result = false;
+  let source = 'none';
+
+  // Handle both function and string types for backwards compatibility
+  if (typeof props.ocrLoadingDocType === 'function') {
+    result = props.ocrLoadingDocType(docType);
+    source = 'function';
+  }
+  // Check the reactive Set if available
+  else if (
+    props.ocrLoadingDocTypes &&
+    props.ocrLoadingDocTypes.has &&
+    props.ocrLoadingDocTypes.has(docType)
+  ) {
+    result = true;
+    source = 'reactiveSet';
+  }
+  // Check the function prop if available
+  else if (typeof props.isDocTypeLoading === 'function') {
+    result = props.isDocTypeLoading(docType);
+    source = 'functionProp';
+  }
+  // Fall back to old string comparison
+  else {
+    result = props.ocrLoadingDocType === docType;
+    source = 'stringComparison';
+  }
+
+  return result;
+};
+
+const page = usePage();
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 
 const props = defineProps({
   sendUpdateLog: {
@@ -60,6 +127,16 @@ const props = defineProps({
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
   isEndorsementBookingActionDisabled: Boolean,
+  showOcrNotification: {
+    required: false,
+    type: Boolean,
+    default: false,
+  },
+  isDocTypeLoading: {
+    type: Function,
+    required: false,
+  },
+
 });
 
 const state = reactive({
@@ -67,7 +144,6 @@ const state = reactive({
   reversalSectionEdit: false,
 });
 
-const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
@@ -1893,15 +1969,22 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <DatePicker
-                    v-model="bookingDetailsForm.invoice_date"
-                    name="issuance_date"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter Insurer Invoice date"
-                    :rules="[isRequired]"
-                    size="xs"
-                    no-margin
-                  />
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                    "
+                  >
+                    <DatePicker
+                      v-model="bookingDetailsForm.invoice_date"
+                      name="issuance_date"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Insurer Invoice date"
+                      :rules="[isRequired]"
+                      size="xs"
+                      no-margin
+                    />
+                  </FieldLoader>
                   <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </div>
               </div>
@@ -1945,15 +2028,22 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-input
-                    maxlength="60"
-                    v-model="bookingDetailsForm.insurer_tax_invoice_number"
-                    class="!mb-0 w-full"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter insurer Tax Invoice Number"
-                    :rules="[isRequired]"
-                    size="xs"
-                  />
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                    "
+                  >
+                    <x-input
+                      maxlength="60"
+                      v-model="bookingDetailsForm.insurer_tax_invoice_number"
+                      class="!mb-0 w-full"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter insurer Tax Invoice Number"
+                      :rules="[isRequired]"
+                      size="xs"
+                    />
+                  </FieldLoader>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2001,17 +2091,24 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-input
-                    maxlength="60"
-                    v-model="
-                      bookingDetailsForm.insurer_commission_invoice_number
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)
                     "
-                    class="!mb-0 w-full"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter Commission Tax Invoice No"
-                    :rules="[isRequired]"
-                    size="xs"
-                  />
+                  >
+                    <x-input
+                      maxlength="60"
+                      v-model="
+                        bookingDetailsForm.insurer_commission_invoice_number
+                      "
+                      class="!mb-0 w-full"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Commission Tax Invoice No"
+                      :rules="[isRequired]"
+                      size="xs"
+                    />
+                  </FieldLoader>
                 </div>
               </div>
               <div
@@ -2070,21 +2167,28 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="isPriceVatApplicableEditable">
-                  <x-input
-                    type="number"
-                    min="0"
-                    add
-                    step="any"
-                    v-model="bookingDetailsForm.price_vat_applicable"
-                    @change="calculateCommission"
-                    class="!mb-0 w-full"
-                    :class="isNegativeValue ? ' icon-padding' : ''"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter Price"
-                    :rules="[isRequired]"
-                    size="xs"
-                    :icon-left="isNegativeValue ? 'minus' : ''"
-                  />
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                    "
+                  >
+                    <x-input
+                      type="number"
+                      min="0"
+                      add
+                      step="any"
+                      v-model="bookingDetailsForm.price_vat_applicable"
+                      @change="calculateCommission"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Price"
+                      :rules="[isRequired]"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                  </FieldLoader>
                 </div>
                 <div v-else>
                   <span>N/A</span>
@@ -2229,18 +2333,25 @@ watch(
                       bookingDetailsForm.isCommissionDisabled
                     "
                   >
-                    <x-input
-                      v-model="bookingDetailsForm.commission_vat_applicable"
-                      class="!mb-0 w-full"
-                      :class="isNegativeValue ? ' icon-padding' : ''"
-                      :disabled="
-                        !state.isEdit || disableCommissionVatApplicable
+                    <FieldLoader
+                      :loading="
+                        props.showOcrNotification &&
+                        localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)
                       "
-                      placeholder="Enter Commission Amount"
-                      size="xs"
-                      :icon-left="isNegativeValue ? 'minus' : ''"
-                      @change="calculateCommission"
-                    />
+                    >
+                      <x-input
+                        v-model="bookingDetailsForm.commission_vat_applicable"
+                        class="!mb-0 w-full"
+                        :class="isNegativeValue ? ' icon-padding' : ''"
+                        :disabled="
+                          !state.isEdit || disableCommissionVatApplicable
+                        "
+                        placeholder="Enter Commission Amount"
+                        size="xs"
+                        :icon-left="isNegativeValue ? 'minus' : ''"
+                        @change="calculateCommission"
+                      />
+                    </FieldLoader>
                     <template #tooltip>
                       {{
                         bookingDetailsForm.isCommissionDisabled
@@ -2249,23 +2360,30 @@ watch(
                       }}
                     </template>
                   </x-tooltip>
-                  <x-input
+                  <FieldLoader
                     v-else
-                    type="number"
-                    min="0"
-                    add
-                    step="any"
-                    v-model="bookingDetailsForm.commission_vat_applicable"
-                    @change="calculateCommission"
-                    class="!mb-0 w-full"
-                    :class="isNegativeValue ? ' icon-padding' : ''"
-                    :disabled="!state.isEdit || disableCommissionVatApplicable"
-                    placeholder="Enter Commission Amount"
-                    :rules="[isRequired]"
-                    size="xs"
-                    :error="bookingDetailsForm.errors.commission_vat_applicable"
-                    :icon-left="isNegativeValue ? 'minus' : ''"
-                  />
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)
+                    "
+                  >
+                    <x-input
+                      type="number"
+                      min="0"
+                      add
+                      step="any"
+                      v-model="bookingDetailsForm.commission_vat_applicable"
+                      @change="calculateCommission"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="!state.isEdit || disableCommissionVatApplicable"
+                      placeholder="Enter Commission Amount"
+                      :rules="[isRequired]"
+                      size="xs"
+                      :error="bookingDetailsForm.errors.commission_vat_applicable"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                  </FieldLoader>
                 </div>
               </div>
               <div

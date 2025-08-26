@@ -5,7 +5,10 @@ import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { XInput } from '@indielayer/ui';
+import { router } from '@inertiajs/vue3';
+import { reactive } from 'vue';
 
 const props = defineProps({
   quoteType: String,
@@ -47,6 +50,7 @@ const props = defineProps({
   isFuncsEnabled: Array,
   cancelOptions: Array,
   isEndorsementBookingActionDisabled: Boolean,
+  ocrDocumentTypeEnum: Object,
 });
 
 const page = usePage();
@@ -124,11 +128,77 @@ const sendUpdateForm = useForm({
   endorsement_number: props.sendUpdateLog?.endorsement_number || null,
 });
 
+// Track OCR loading state
+const ocrLoadingDocType = ref(null);
+const ocrLoadingDocTypes = reactive(new Set());
+const isDocTypeLoading = docType => ocrLoadingDocTypes.has(docType);
+const hasOcrInProgress = computed(() => ocrLoadingDocTypes.size > 0);
+const bookPolicyReloadKey = ref(0);
+const policyDetailReloadKey = ref(0);
+
+function handleOcrNotification(event) {
+  const { docType, status, userId, uuid } = event.detail || {};
+  const currentUserId = page.props.auth.user.id;
+
+  // Only process notifications for the current user and this quote
+  if (userId !== currentUserId || uuid !== props.sendUpdateLog.uuid) {
+    return;
+  }
+
+  // For 'start' status, add document type to loading set
+  if (status === 'start') {
+    const supportedDocTypes = [
+      props.ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      props.ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      props.ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE?.value,
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
+      ocrLoadingDocType.value = docType;
+    }
+  } else {
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      props.ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      props.ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      props.ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE?.value,
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
+    
+    router.reload({
+      onSuccess: () => {
+        console.log('onSuccess');
+        // Clear both the old ref and the reactive Set for immediate UI update
+        ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+      },
+      preserveState: true,
+      preserveScroll: true,
+      only: ['payments', 'bookPolicyDetails', 'sendUpdateLog', 'quote', 'quoteDocuments'],
+    });
+  }
+}
+
 onMounted(() => {
   const params = new URLSearchParams(
     decodeURIComponent(page.url.split('?')[1]),
   );
   state.redirectURL = params.get('refURL');
+  
+  // Add event listener for OCR notifications
+  window.addEventListener('ocr-notification', handleOcrNotification);
+});
+
+onUnmounted(() => {
+  // Remove event listener when component is unmounted
+  window.removeEventListener('ocr-notification', handleOcrNotification);
 });
 
 const permissionsEnum = page.props.permissionsEnum;
@@ -372,6 +442,7 @@ const cancelOptionsList = computed(() => {
 </script>
 
 <template>
+  <OcrNotification />
   <Head>
     <title>Send Update {{ sendUpdateLog.category.text }}</title>
   </Head>
@@ -763,6 +834,8 @@ const cancelOptionsList = computed(() => {
       :isUpdateBooked="isUpdateBooked"
       :quote-type="props.quoteType"
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :policyDetailReloadKey="policyDetailReloadKey"
     />
 
     <QuoteDocuments
@@ -804,6 +877,11 @@ const cancelOptionsList = computed(() => {
       :is-endorsement-booking-action-disabled="
         props.isEndorsementBookingActionDisabled
       "
+      :key="bookPolicyReloadKey"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <AuditLogs

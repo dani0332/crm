@@ -22,12 +22,17 @@ const listen = () => {
       '/quotes/car/',
       '/personal-quotes/home/',
       '/medical/amt/',
+      '/send-update/',
     ];
     const isAllowedPage = allowedPages.some(p => currentUrl.includes(p));
 
     // Only show notifications to the user who uploaded the document, same quote, and only on allowed pages
+    // For send-update pages, we need to check sendUpdateLog.uuid instead of quote.uuid
+    const isSendUpdatePage = currentUrl.includes('/send-update/');
+    const quoteUuid = isSendUpdatePage ? page.props?.sendUpdateLog?.uuid : page.props?.quote?.uuid;
+    
     if (
-      e.data.uuid === page.props?.quote?.uuid &&
+      e.data.uuid === quoteUuid &&
       isCurrentUser &&
       isAllowedPage
     ) {
