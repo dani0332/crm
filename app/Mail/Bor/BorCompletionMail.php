@@ -139,10 +139,6 @@ class BorCompletionMail extends Mailable
      */
     private function getCustomerName($firstName = false)
     {
-        if ($this->borLog->customer_type === 'Entity') {
-            return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
-        }
-
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
         $name = trim($firstName . ' ' . $lastName);
@@ -150,8 +146,7 @@ class BorCompletionMail extends Mailable
         if ($firstName) {
             return $firstName;
         }
-
-        return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
+        return $name ?? $this->borLog->insurer_name ?: 'Valued Customer';
     }
 
     /**
