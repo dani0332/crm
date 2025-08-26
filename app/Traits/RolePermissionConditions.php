@@ -45,16 +45,13 @@ trait RolePermissionConditions
         if ($isAdvisor) {
             $query->where($prefix.'.'.'advisor_id', $user->id);
         }
-        if ($isSupportUser) {
+        if ($isSupportUser && $restrictedQuoteType === quoteTypeCode::Business) {
             // Only apply support_user_id filter for quote types that have this column
             // Currently only Business quotes have support_user_id column
-            if ($restrictedQuoteType === quoteTypeCode::Business) {
-                $query->where($prefix.'.'.'support_user_id', $user->id);
-            }
+            $query->where($prefix.'.'.'support_user_id', $user->id);
         }
         if ($isNewManager) {
-            $ids = $this->walkTree($user->id, user: $user);
-            //    $query->whereIn($prefix.'.'.'advisor_id', $ids);
+            $this->walkTree($user->id, user: $user);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
         if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health) {
