@@ -209,7 +209,6 @@ class PolicyIssuanceService
 
             return;
         }
-        dd('done');
         $insurerPolicyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
         $updatePolicyIssuanceData['status'] = PolicyIssuanceEnum::FAILED_STATUS;
