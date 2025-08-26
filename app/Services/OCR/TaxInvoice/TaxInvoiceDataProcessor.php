@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\TaxInvoice;
 
+use App\Models\SendUpdateLog;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\OcrValidator;
@@ -182,14 +183,22 @@ class TaxInvoiceDataProcessor
     private function handlePaymentUpdates()
     {
         $paymentDataToUpdate = [];
-
+        
+        // Get the payment record based on model type
+        $payment = null;
+        if ($this->quote instanceof SendUpdateLog) {
+            $payment = $this->quote->payments()->first();
+        } else {
+            $payment = $this->quote->payment ?? null;
+        }
+        
         if ($this->isFieldEnabled($this->providerCode, 'payment.insurer_invoice_date')) {
-            $invoiceDate = $this->parseDate($this->resolveProp($this->data, 'invoiceDate'), $this->quote->payment?->insurer_invoice_date);
+            $invoiceDate = $this->parseDate($this->resolveProp($this->data, 'invoiceDate'), $payment?->insurer_invoice_date);
             $paymentDataToUpdate['insurer_invoice_date'] = $invoiceDate;
 
             $this->ocr_values['insurer_invoice_date'] = [
                 'ocr_value' => $this->resolveProp($this->data, 'invoiceDate'),
-                'previous_value' => $this->quote->payment?->insurer_invoice_date,
+                'previous_value' => $payment?->insurer_invoice_date,
                 'final_value' => $invoiceDate,
             ];
         }
@@ -197,24 +206,24 @@ class TaxInvoiceDataProcessor
         if ($this->isFieldEnabled($this->providerCode, 'payment.insurer_tax_number') && $this->isFieldEnabled($this->providerCode, 'payment.tax_invoice_number')) {
             $taxInvoiceNumber = $this->resolveProp($this->data, 'taxInvoiceNumber');
 
-            $paymentDataToUpdate['insurer_tax_number'] = $taxInvoiceNumber ?? $this->quote->payment?->insurer_tax_number;
-            $paymentDataToUpdate['tax_invoice_number'] = $taxInvoiceNumber ?? $this->quote->payment?->tax_invoice_number;
+            $paymentDataToUpdate['insurer_tax_number'] = $taxInvoiceNumber ?? $payment?->insurer_tax_number;
+            $paymentDataToUpdate['tax_invoice_number'] = $taxInvoiceNumber ?? $payment?->tax_invoice_number;
 
             $this->ocr_values['insurer_tax_number'] = [
                 'ocr_value' => $taxInvoiceNumber,
-                'previous_value' => $this->quote->payment?->insurer_tax_number,
-                'final_value' => $taxInvoiceNumber ?? $this->quote->payment?->insurer_tax_number,
+                'previous_value' => $payment?->insurer_tax_number,
+                'final_value' => $taxInvoiceNumber ?? $payment?->insurer_tax_number,
             ];
 
             $this->ocr_values['tax_invoice_number'] = [
                 'ocr_value' => $taxInvoiceNumber,
-                'previous_value' => $this->quote->payment?->tax_invoice_number,
-                'final_value' => $taxInvoiceNumber ?? $this->quote->payment?->tax_invoice_number,
+                'previous_value' => $payment?->tax_invoice_number,
+                'final_value' => $taxInvoiceNumber ?? $payment?->tax_invoice_number,
             ];
         }
 
-        if (! empty($paymentDataToUpdate) && $this->quote->payment) {
-            $this->quote->payment->update($paymentDataToUpdate);
+        if (! empty($paymentDataToUpdate) && $payment) {
+            $payment->update($paymentDataToUpdate);
             $this->fields_updated['payment'] = array_keys($paymentDataToUpdate);
             LoggerService::info(self::class.': OCR fillTaxInvoice updated payment fields', extra: ['fields_updated' => $this->fields_updated['payment']]);
         }
