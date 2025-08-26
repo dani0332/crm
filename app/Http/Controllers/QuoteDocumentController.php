@@ -443,7 +443,7 @@ class QuoteDocumentController extends Controller
             $ocrDocumentType = match ($documentTypeCode) {
                 'TI' => OCRDocumentTypeEnum::TAX_INVOICE,                    // Tax Invoice
                 'CTIRBB' => OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER, // Tax Invoice Raised by Buyer
-                'CPS' => OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE, // Policy Schedule
+                'CPS', 'GH_PS' => OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE, // Policy Schedule (Home and Group Medical)
                 default => null, // Only these 3 documents matter for Accuracy Matrix
             };
 
