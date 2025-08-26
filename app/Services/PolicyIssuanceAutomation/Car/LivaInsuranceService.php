@@ -216,7 +216,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process->update(['completed_step' => $triggerBookPolicyResponse['completed_step']]);
         $process = $process->refresh();
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$triggerBookPolicyResponse['completed_step']);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$triggerBookPolicyResponse['completed_step']);
 
         return $triggerBookPolicyResponse;
     }
@@ -415,7 +415,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process->update(['completed_step' => $uploadPolicyDocumentsToIMCRMResponse['completed_step']]);
         $process = $process->refresh();
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$uploadPolicyDocumentsToIMCRMResponse['completed_step']);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$uploadPolicyDocumentsToIMCRMResponse['completed_step']);
 
         return $uploadPolicyDocumentsToIMCRMResponse;
     }
@@ -492,7 +492,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $allDocumentsUploaded = $uploadedDocumentsToIMCRM->where('uploaded', false)->count() === 0;
         if (! $allDocumentsUploaded || empty($uploadedDocumentsToIMCRM)) {
             $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('uploaded', false)->pluck('name')->toArray();
-            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - failed to fetch all documents from insurer : ', $docsUploadToIMCRMFailed);
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - failed to fetch all documents from insurer : ', $docsUploadToIMCRMFailed);
 
             $error = 'Policy Issuance is pending as '.implode(',', $docsUploadToIMCRMFailed).' documents are not uploaded';
             $response['error'] = $error;
@@ -502,12 +502,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             return $response;
         }
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - fetched all documents from insurer and Uploaded to IMCRM ');
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - fetched all documents from insurer and Uploaded to IMCRM ');
         $response['status'] = true;
         $response['message'] = 'Fetched all documents from insurer and Uploaded to IMCRM';
         $response['completed_step'] = self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Process completed step updated to : '.$response['completed_step']);
 
         return $response;
     }
@@ -576,7 +576,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
         $process = $process->refresh();
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$policyIssuanceResponse['completed_step']);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Process ID : '.$process->id.' - Completed Step Updated to : '.$policyIssuanceResponse['completed_step']);
 
         return $policyIssuanceResponse;
     }
@@ -685,7 +685,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         $process->update(['completed_step' => $uploadDocumentsResponse['completed_step']]);
         $process = $process->refresh();
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Policy Issuance ID : '.$process->id.' - Completed Step Updated to : '.$uploadDocumentsResponse['completed_step']);
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$process->model->code.' - Policy Issuance ID : '.$process->id.' - Completed Step Updated to : '.$uploadDocumentsResponse['completed_step']);
 
         return $uploadDocumentsResponse;
     }
