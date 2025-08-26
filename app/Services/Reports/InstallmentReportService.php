@@ -109,7 +109,7 @@ class InstallmentReportService extends ManagementReport
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
 
-        // logger()->debug('toRawSql: '.$query->toRawSql());
+
 
         return $query;
     }
@@ -125,7 +125,7 @@ class InstallmentReportService extends ManagementReport
             $this->formatData($data);
 
             return $data;
-            // return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {

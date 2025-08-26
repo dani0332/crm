@@ -3,6 +3,7 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
 use App\Services\Reports\InstallmentReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -36,7 +37,7 @@ class InstallmentReportExport implements CsvExportableInterface
     {
         $request = request()->merge($requestParams);
 
-        //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
+
         return $this->installmentReportService->getReportData($request);
     }
 
@@ -149,15 +150,7 @@ class InstallmentReportExport implements CsvExportableInterface
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
-            //            logger()->debug("index: ".$index);
-            //            logger()->debug("field: ".$field);
-            //            logger()->debug("columnTotals->get(field: ".$this->columnTotals->get($index, 0));
-            //            logger()->debug("numericValues->get('total_policies: ".$numericValues->get('total_policies'));
 
-            //            logger()->debug("field: ".print_r([
-            //                //'$field' => $field,
-            //                'total_policies ' => $numericValues->get('total_policies'),
-            //                ], true));
 
             $sumColumns = [8, 9, 10, 11, 12, 13, 14, 15, 16, 18];
             if (is_numeric($row->get($index)) && in_array($index + 1, $sumColumns)) {
@@ -173,7 +166,7 @@ class InstallmentReportExport implements CsvExportableInterface
         $totalRecords = 0;
         $chunkSize = 1000;
 
-        info(__CLASS__.' processChunkedQuery Start');
+        LoggerService::info(__CLASS__.' processChunkedQuery Start');
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
             $this->installmentReportService->formatData($chunk);

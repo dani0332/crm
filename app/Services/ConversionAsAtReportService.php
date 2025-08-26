@@ -99,7 +99,7 @@ class ConversionAsAtReportService extends BaseService
 
             $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
 
-            // logger()->debug('toRawSql: '.$query->toRawSql());
+
 
             return $query;
 

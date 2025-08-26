@@ -146,7 +146,7 @@ class SaleSummaryReportService extends ManagementReport
         }
         $this->applyFilters($query, $request, false, true);
 
-        // logger()->debug('toRawSql: '.$query->toRawSql());
+
         LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
 
         return $query;
@@ -170,9 +170,9 @@ class SaleSummaryReportService extends ManagementReport
 
         $this->formatData($processedData);
 
-        // logger()->debug("processedData: ".print_r($processedData->toArray(), true));
 
-        //  return (new SaleSummaryReportExport($processedData, $this->groupByColumn))->download("Sale Summary Report {$this->reportDateRange}.xlsx");
+
+
         return $processedData;
     }
 
@@ -183,7 +183,7 @@ class SaleSummaryReportService extends ManagementReport
      */
     public function getEndorsementsData(Request $request)
     {
-        info('getEndorsementsData');
+        LoggerService::info('getEndorsementsData');
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';

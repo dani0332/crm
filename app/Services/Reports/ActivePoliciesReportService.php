@@ -6,7 +6,6 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
-use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -46,7 +45,7 @@ class ActivePoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request, isSSR: true);
 
-        // logger()->debug('toRawSql: '.$query->toRawSql());
+
 
         return $query;
     }
@@ -60,7 +59,7 @@ class ActivePoliciesReportService extends ManagementReport
 
         if ($request->export == 1) {
             return $query->get();
-            // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
+
         } else {
             return $query->simplePaginate(100)->withQueryString();
         }

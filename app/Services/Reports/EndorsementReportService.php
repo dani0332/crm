@@ -280,7 +280,7 @@ class EndorsementReportService extends ManagementReport
         $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
 
-        // logger()->debug('toRawSql: '.$query->toRawSql());
+
 
         return $query;
     }
@@ -297,7 +297,7 @@ class EndorsementReportService extends ManagementReport
             $this->formatData($data);
 
             return $data;
-            // return (new EndorsementReportExport($data))->download("Endorsement Report {$this->reportDateRange}.xlsx");
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {

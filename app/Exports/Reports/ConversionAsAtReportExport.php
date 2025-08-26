@@ -4,6 +4,7 @@ namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
 use App\Services\ConversionAsAtReportService;
+use App\Services\Logger\LoggerService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
 
@@ -99,7 +100,7 @@ class ConversionAsAtReportExport implements CsvExportableInterface
     {
         $totalRecords = 0;
         $chunkSize = 1000;
-        info('processChunkedQuery Start');
+        LoggerService::info('processChunkedQuery Start');
 
         $requestParams = request()->merge($requestParams);
 

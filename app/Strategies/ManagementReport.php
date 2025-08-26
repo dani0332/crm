@@ -104,7 +104,7 @@ class ManagementReport
             unset($request['user']);
             Auth::login($user);
             DB::setDefaultConnection('mysql_read');
-            // request()->merge($request);
+
         }
         $this->applyDateFilters($query, $request, $endorsementsQuery);
 

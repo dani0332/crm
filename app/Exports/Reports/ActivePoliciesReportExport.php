@@ -3,6 +3,7 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
 use App\Services\Reports\ActivePoliciesReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -19,10 +20,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
         private array $requestParams
     ) {
         request()->merge($this->requestParams);
-        //        if(request()->filled('groupBy')){
-        //            $this->groupByColumn = request()->groupBy;
-        //            // Initialize totals for numeric columns
-        //        }
+
 
         $this->columnTotals = collect();
 
@@ -40,7 +38,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
     {
         $request = request()->merge($requestParams);
 
-        //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
+
         return $this->activePoliciesReportService->getReportData($request);
     }
 
@@ -92,7 +90,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
         $totalRecords = 0;
         $chunkSize = 1000;
 
-        info(__CLASS__.' processChunkedQuery Start');
+        LoggerService::info(__CLASS__.' processChunkedQuery Start');
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
 
@@ -108,10 +106,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
         return $totalRecords;
     }
 
-    //    public static function afterSheet(AfterSheet $event)
-    //    {
-    //        self::performSum($event, ['C', 'D', 'E']);
-    //    }
+
 
     private function postDataRows($stream)
     {

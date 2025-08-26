@@ -3,6 +3,7 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleSummaryReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -48,7 +49,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-        //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
+
         $data = $this->saleSummaryReportService->getReportData($request);
 
         return $data;
@@ -69,17 +70,13 @@ class SaleSummaryReportExport implements CsvExportableInterface
         $totalRecords = 0;
         $chunkSize = 1000;
 
-        info('processChunkedQuery Start');
+        LoggerService::info('processChunkedQuery Start');
 
         $requestParams = request()->merge($requestParams);
 
         $endorsementsData = $this->saleSummaryReportService->getEndorsementsData($requestParams);
 
-        //        logger()->debug("processChunkedQuery: " . print_r([
-        //
-        //            '$endorsementsData' => $endorsementsData[0]
-        //
-        //            ], true));
+
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $requestParams, $stream, $endorsementsData) {
 
@@ -139,12 +136,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $groupBy = $groupByColumnMapping[$groupBy] ?? $groupBy;
 
-        //        logger()->debug('groupBy: '.$groupBy);
-        //        //logger()->debug('groupBy: '.$groupBy);
-        //        logger()->debug("groupBy: ".print_r([
-        //            '$quote' => $quote,
-        //            //'quote->{groupBy}' => $quote->{$groupBy},
-        //            ], true));
+
 
         $values = [
             $quote->{$groupBy} ?? 'N/A',
@@ -179,16 +171,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
         ];
     }
 
-    //    public static function afterSheet(AfterSheet $event)
-    //    {
-    //        $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
-    //
-    //        $sumCoumns = ['B', ...$commonColumns];
-    //        if (in_array($event->getConcernable()->groupByColumn, ['advisor'])) {
-    //            $sumCoumns = [...$commonColumns, 'N'];
-    //        }
-    //        self::performSum($event, $sumCoumns);
-    //    }
+
 
     private function postDataRows($stream)
     {

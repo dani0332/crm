@@ -83,7 +83,7 @@ class EndingPoliciesReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        // logger()->debug('toRawSql: '.$query->toRawSql());
+
 
         return $query;
     }
@@ -100,7 +100,7 @@ class EndingPoliciesReportService extends ManagementReport
             $this->formatData($data);
 
             return $data;
-            // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $this->formatData($data);

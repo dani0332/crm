@@ -3,6 +3,7 @@
 namespace App\Exports\Reports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
 use App\Services\Reports\SaleDetailReportService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
@@ -19,10 +20,7 @@ class SaleDetailReportExport implements CsvExportableInterface
         private array $requestParams
     ) {
         request()->merge($this->requestParams);
-        //        if(request()->filled('groupBy')){
-        //            $this->groupByColumn = request()->groupBy;
-        //            // Initialize totals for numeric columns
-        //        }
+
 
         $this->columnTotals = collect();
 
@@ -39,7 +37,7 @@ class SaleDetailReportExport implements CsvExportableInterface
     public function collection(array $requestParams = []): Collection
     {
         $request = request()->merge($requestParams);
-        //        logger()->debug("collection: " . print_r(['request' => $request->all()], true));
+
         $data = $this->saleDetailReportService->getReportData($request);
 
         return $data;
@@ -155,17 +153,14 @@ class SaleDetailReportExport implements CsvExportableInterface
         return $row->values()->toArray();
     }
 
-    //    public static function afterSheet(AfterSheet $event)
-    //    {
-    //        self::performSum($event, ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'X']);
-    //    }
+
 
     public function processChunkedQuery($query, array $requestParams, $stream): int
     {
         $totalRecords = 0;
         $chunkSize = 1000;
 
-        info(__CLASS__.' processChunkedQuery Start');
+        LoggerService::info(__CLASS__.' processChunkedQuery Start');
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
             $this->saleDetailReportService->formatData($chunk);

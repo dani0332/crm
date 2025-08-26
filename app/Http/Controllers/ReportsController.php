@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Services\Logger\LoggerService;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
 use App\Http\Requests\UTMReportRequest;
@@ -537,7 +538,7 @@ class ReportsController extends Controller
 
         // Check if export type is email
         if ($request->exportType == 'email') {
-            info('Email CSV');
+            LoggerService::info('Email CSV');
             $request['exportTitle'] = 'Conversion As At Report';
 
             return $exportClass->emailCSV('Conversion As At Report', $request->all());
@@ -615,7 +616,7 @@ class ReportsController extends Controller
         if ($exportClass) {
             // Check if export type is email
             if ($request->exportType == 'email') {
-                info('Email CSV');
+                LoggerService::info('Email CSV');
                 $request['exportTitle'] = 'Management Report';
 
                 return $exportClass->emailCSV($reportCategory, $request->all());

@@ -305,7 +305,7 @@ const onDataExport = async (flag, exportType = 'download') => {
     const exportResponse = await axios
       .get(finalUrl)
       .then(resp => {
-        // return resp.data;
+
         console.log('resp.data.message', resp.data.message);
         if (resp.data.message) {
           notification.success({
@@ -325,16 +325,7 @@ const onDataExport = async (flag, exportType = 'download') => {
         }, 1000);
         throw err;
       });
-    // router.get(finalUrl, {}, {
-    //   preserveState: false,
-    //   onSuccess: () => {
-    //     alert('Your export is being processed. You will receive an email with the file shortly.');
-    //     notification.success({
-    //       title: result.data.message,
-    //       position: 'top',
-    //     });
-    //   }
-    // });
+
   } else {
     // For direct download, open in new window
     window.open(finalUrl);

@@ -118,7 +118,7 @@ class SaleDetailReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        // logger()->debug('toRawSql: '.$query->toRawSql());
+
 
         return $query;
     }
@@ -135,7 +135,7 @@ class SaleDetailReportService extends ManagementReport
             $this->formatData($data);
 
             return $data;
-            // return (new SaleDetailReportExport($data))->download("Sale Detail Report {$this->reportDateRange}.xlsx");
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
