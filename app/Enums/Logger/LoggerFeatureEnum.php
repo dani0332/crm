@@ -34,4 +34,5 @@ enum LoggerFeatureEnum: string
     case RETRY_PREPAYMENT_POSTING = 'retry-prepayment-posting';
     case SAGE_EP_BOOKING = 'sage-ep-booking';
     case SAGE_EP_BOOKING_REVERSAL = 'sage-ep-booking-reversal';
+    case SEND_FAILED_PAYMENT_EMAIL = 'send-failed-payment-email';
 }
