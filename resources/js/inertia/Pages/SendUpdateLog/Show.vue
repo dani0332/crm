@@ -835,7 +835,10 @@ const cancelOptionsList = computed(() => {
       :quote-type="props.quoteType"
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
       :ocrLoadingDocType="ocrLoadingDocType"
-      :policyDetailReloadKey="policyDetailReloadKey"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
+      :key="policyDetailReloadKey"
     />
 
     <QuoteDocuments
