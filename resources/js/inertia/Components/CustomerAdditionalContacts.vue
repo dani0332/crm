@@ -128,11 +128,24 @@ const customerAlreadyPrimaryCheck = async () => {
 
 function additionalContactPrimaryConfirmed() {
   const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
+
+  // Determine the API endpoint based on quote type
+  let endpoint;
+  let requestData;
+
+  if (props.quoteType === 'Claim') {
+    // For claims, use the claims-specific endpoint
+    endpoint = route('claims.make-additional-contact-primary',props.quoteId );
+    requestData = {
+      key: confirmData.contactPrimary.key,
+      value: confirmData.contactPrimary.value,
+    };
+  } else {
+    // For other quote types, use the existing customer endpoint
+    endpoint = `/customer-additional-contact/${
       isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
-    {
+    }/make-primary`;
+    requestData = {
       isInertia: true,
       quote_id: props.quoteId,
       quote_type: props.quoteType,
@@ -141,7 +154,10 @@ function additionalContactPrimaryConfirmed() {
       quote_customer_id: props.customerId,
       quote_primary_email_address: props.quoteEmail,
       quote_primary_mobile_no: props.quoteMobile,
-    },
+    };
+  }
+
+  router.post(endpoint, requestData,
     {
       preserveScroll: true,
       onBefore: () => {

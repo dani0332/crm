@@ -1324,6 +1324,7 @@ class ClaimsService extends BaseService
 
     /**
      * Get claim lead history (status changes by team lead) - all data for client-side pagination
+     * Frontend will process old status from chronological data
      * 
      * @param int $claimId
      * @return array
@@ -1331,7 +1332,7 @@ class ClaimsService extends BaseService
     public function getClaimLeadHistory(int $claimId)
     {
         try {
-            // Single optimized query using LAG window function to get previous status
+            // Simple query - frontend will process old status from chronological order
             $claimLeadHistory = DB::table('claim_activities as ca')
                 ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
                 ->join('users as u', 'ca.created_by_id', '=', 'u.id')
@@ -1340,15 +1341,12 @@ class ClaimsService extends BaseService
                     'ca.comment as Notes',
                     'u.name as ModifiedBy',
                     'cs.text as NewStatus',
-                    // Use LAG window function to get the previous status in the same query
-                    DB::raw('LAG(cs.text) OVER (ORDER BY ca.created_at ASC) as oldStatus')
+                    'ca.created_at as created_at' // Include for frontend sorting
                 )
                 ->where('ca.claim_request_id', $claimId)
                 ->where('cs.parent', true) // Only get parent statuses (main claim statuses)
-                ->orderBy('ca.created_at', 'desc')
+                ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
                 ->get();
-
-             
 
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim lead history fetched for client-side pagination', extra: [
                 'claim_id' => $claimId,
@@ -1371,6 +1369,7 @@ class ClaimsService extends BaseService
 
     /**
      * Get claim sub-status logs (sub-status changes by claims manager) - all data for client-side pagination
+     * Frontend will process old sub-status from chronological data
      * 
      * @param int $claimId
      * @return array
@@ -1378,7 +1377,7 @@ class ClaimsService extends BaseService
     public function getClaimSubStatusLogs(int $claimId)
     {
         try {
-            // Single optimized query using LAG window function to get previous sub-status
+            // Simple query - frontend will process old sub-status from chronological order
             $claimSubStatusLogs = DB::table('claim_activities as ca')
                 ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
                 ->join('users as u', 'ca.created_by_id', '=', 'u.id')
@@ -1387,16 +1386,13 @@ class ClaimsService extends BaseService
                     'u.name as ModifiedBy',
                     'cs.text as NewSubStatus',
                     'ca.comment as Notes',
-                    // Use LAG window function to get the previous sub-status in the same query
-                    DB::raw('LAG(cs.text) OVER (ORDER BY ca.created_at ASC) as OldSubStatus')
+                    'ca.created_at as created_at' // Include for frontend sorting
                 )
                 ->where('ca.claim_request_id', $claimId)
                 ->where('cs.parent', false) // Only get sub-statuses (not parent statuses)
                 ->whereNotNull('ca.status_id')
-                ->orderBy('ca.created_at', 'desc')
+                ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
                 ->get();
-
-             
 
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim sub-status logs fetched for client-side pagination', extra: [
                 'claim_id' => $claimId,

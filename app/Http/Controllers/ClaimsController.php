@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
 use App\Http\Requests\ClaimDocumentRequest;
+use App\Http\Requests\ClaimMakeAdditionalContactPrimaryRequest;
 use App\Http\Requests\ClaimSendNotificationRequest;
 use App\Http\Requests\ClaimStatusUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
@@ -14,6 +15,7 @@ use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
 use App\Models\QuoteDocument;
 use App\Services\ClaimsService;
+use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
@@ -31,13 +33,16 @@ class ClaimsController extends Controller
 {
     protected ClaimsService $claimsService;
     protected QuoteDocumentService $quoteDocumentService;
+    protected CustomerService $customerService;
 
     public function __construct(
         ClaimsService $claimsService,
         QuoteDocumentService $quoteDocumentService,
+        CustomerService $customerService,
     ) {
         $this->claimsService = $claimsService;
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->customerService = $customerService;
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails']]);
@@ -182,6 +187,7 @@ class ClaimsController extends Controller
             $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $customerAdditionalContacts = $this->customerService->getAdditionalContacts($claimRequest->customer_id, $claimRequest->mobile_no);
 
             $documents = $claimRequest->documents->load('createdBy:id,name');
             //dd($documents->toArray());
@@ -190,6 +196,7 @@ class ClaimsController extends Controller
                 'claim' => $claimRequest,
                 'documents' => $documents,
                 'dropdowns' => $dropdownData,
+                'additionalContacts' => $customerAdditionalContacts,
                 'requiredFieldsFilled' => $requiredFieldsFilled,
                 'claimDocumentTypes' => $claimDocumentTypes,
                 'cdnPath' => $cdnPath,
@@ -521,7 +528,7 @@ class ClaimsController extends Controller
      */
     public function downloadAllDocuments(Request $request, ClaimRequest $claim)
     {
-        try { 
+        try {
             // Use service to create ZIP
             $result = $this->claimsService->createDocumentsZip($claim);
 
@@ -595,6 +602,38 @@ class ClaimsController extends Controller
                 'success' => false,
                 'message' => 'Failed to load claim sub-status logs.',
             ], 500);
+        }
+    }
+
+    /**
+     * Make additional contact primary for claim request
+     */
+    public function makeAdditionalContactPrimary(ClaimMakeAdditionalContactPrimaryRequest $request, ClaimRequest $claim)
+    {
+        try {
+            $validated = $request->safe();
+
+            // Use the CustomerService to make the contact primary
+            $this->customerService->makeAdditionalContactPrimary($claim, $validated->key, $validated->value);
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Additional contact made primary for claim', extra: [
+                'claim_uuid' => $claim->uuid,
+                'key' => $validated->key,
+                'value' => $validated->value,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('claims.show', $claim->uuid)->with('success', "Primary contact updated successfully.");
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error making additional contact primary', extra: [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'request_data' => $request->safe(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('claims.show', $claim->uuid)->with('error', "Failed to update primary contact.");
         }
     }
 

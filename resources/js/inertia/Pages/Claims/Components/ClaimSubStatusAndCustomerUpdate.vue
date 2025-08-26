@@ -38,7 +38,7 @@ const subStatusOptions = computed(() => {
 
 const updateClaimSubStatusAndCustomer = async (isValid) => {
   console.log('updateClaimStatus');
-  
+
   try {
     NProgress.start();
     claimSubStatusAndCustomerForm.processing = true;
@@ -47,9 +47,9 @@ const updateClaimSubStatusAndCustomer = async (isValid) => {
       route('claims.send-notification', props.claim?.uuid),
       claimSubStatusAndCustomerForm.data()
     );
-    
+
     console.log('response', response.data);
-    
+
     // Show success notification
     if (response.data.success) {
       claimSubStatusAndCustomerForm.reset();
@@ -58,20 +58,20 @@ const updateClaimSubStatusAndCustomer = async (isValid) => {
         position: 'top',
       });
     }
-    
+
     // Partial reload of just the claim data while preserving scroll
     router.reload({
       only: ['claim', 'dropdowns'],
       preserveScroll: true,
       preserveState: true,
     });
-    
+
     // Emit update event
     emit('update', response.data);
-    
+
   } catch (error) {
     console.error('Error sending notification:', error);
-    
+
     // Handle validation errors
     if (error.response && error.response.status === 422) {
       const errors = error.response.data.errors || {};
@@ -182,7 +182,7 @@ const optimizeMessage = async () => {
     <Collapsible :expanded="true">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Claim Status</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Claim Sub Status</h3>
         </div>
       </template>
       <template #body>

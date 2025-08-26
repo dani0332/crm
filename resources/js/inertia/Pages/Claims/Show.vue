@@ -6,6 +6,7 @@ import ClaimDocuments from './Components/ClaimDocuments.vue';
 import CustomerDetails from './Components/CustomerDetails.vue';
 import ClaimLeadHistory from './Components/ClaimLeadHistory.vue';
 import ClaimSubStatusLogs from './Components/ClaimSubStatusLogs.vue';
+import CustomerAdditionalContacts from '../../Components/CustomerAdditionalContacts.vue';
 
 const props = defineProps({
   claim: Object,
@@ -89,6 +90,17 @@ const handleDocumentDeleted = documentName => {
 
     <!-- Customer Details Component -->
     <CustomerDetails :claim="claim" />
+
+    <!-- Customer Additional Contacts Component -->
+    <CustomerAdditionalContacts
+      quoteType="Claim"
+      :customerId="claim.customer_id"
+      :quoteId="claim.uuid"
+      :contacts="additionalContacts"
+      :quoteEmail="claim.email"
+      :quoteMobile="claim.mobile_no"
+      :expanded="sectionExpanded"
+    />
 
     <!-- Claim Status Component -->
     <ClaimStatus
