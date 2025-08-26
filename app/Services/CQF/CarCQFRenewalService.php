@@ -38,7 +38,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Sleep;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\UAELicenseHeldFor;
 
 class CarCQFRenewalService
 {
@@ -318,7 +317,7 @@ class CarCQFRenewalService
             'email' => $quote->email ?? null,
             'mobile_no' => $quote->mobile_no,
             'quote_type' => str_replace('-', '', QuoteTypes::CAR->shortCode()),
-            'insurer' =>  $quote?->plan?->insuranceProvider?->text ?? null,
+            'insurer' => $quote?->plan?->insuranceProvider?->text ?? null,
             'product' => 'Motor insurance',
             'product_type' => null,
             'advisor' => null,
@@ -329,7 +328,7 @@ class CarCQFRenewalService
             'make' => $quote->carMake?->text ?? null,
             'model' => $quote->carModel?->text ?? null,
             'year' => $quote->year_of_manufacture ?? null,
-            'previous_advisor' =>$quote->advisor?->email ?? null,
+            'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->premium ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->additional_notes ?? null,
@@ -416,7 +415,7 @@ class CarCQFRenewalService
             return $response->uuid;
         }
     }
-    
+
     public function mapCarCQFRenewalQuote($quote, $renewalsUploadLeads)
     {
 
