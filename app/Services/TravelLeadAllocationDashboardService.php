@@ -46,6 +46,20 @@ class TravelLeadAllocationDashboardService extends BaseService
                     'users.id as userId',
                     'users.name as userName',
                     'la.is_hardstop as isHardStop',
+                    DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
+                    DB::RAW("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
+                    'la.max_capacity as maxCapacity',
+                    'users.status as isAvailable',
+                    DB::RAW("DATE_FORMAT(users.last_login, '%d-%m-%Y %H:%i:%s') as lastLogin"),
+                    'la.id as id',
+                    'la.manual_assignment_count as manualAllocationCount',
+                    'la.auto_assignment_count as autoAllocationCount',
+                    'la.reset_cap',
+                    'la.buy_lead_max_capacity as BLMaxCapacity',
+                    'la.buy_lead_allocation_count as BLAllocationCount',
+                    'la.buy_lead_status as BLStatus',
+                    'la.normal_allocation_enabled as normalAllocationEnabled',
+                    'la.buy_lead_reset_capacity as blResetCap',
                 )
                 ->distinct('users.id');
 
@@ -59,7 +73,8 @@ class TravelLeadAllocationDashboardService extends BaseService
                 $users = $users->whereIn('users.id', $userIds);
             }
 
-            return $users->get();
+            //return $users->get();
+            dd($users->toSql());
         } catch (\Exception $e) {
             // Log the error with relevant context for debugging
             Log::error('Failed to retrieve SIC 2.0 Unassisted users', [

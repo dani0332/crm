@@ -7,6 +7,7 @@ use App\Models\LeadAllocation;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\TravelLeadAllocationDashboardService;
+use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -40,8 +41,9 @@ class TravelLeadAllocationController extends Controller
     {
         if (Gate::allows('view-lead-allocation', auth()->user())) {
             $data = $this->travelLeadAllocationService->getSicUsersGridData();
-
+            
             return inertia('LeadAllocation/Travel', [
+                'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
                 'data' => $data,
             ]);
         } else {
