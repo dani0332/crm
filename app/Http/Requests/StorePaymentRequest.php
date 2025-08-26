@@ -111,7 +111,6 @@ class StorePaymentRequest extends FormRequest
                                 $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
                             }
                             $isPaymentLinkEnabled = $this->checkInsuranceProviderPaymentGateway($quoteModel);
-                            // dd($isPaymentLinkEnabled);
                             if (! $isPaymentLinkEnabled) {
                                 $validator->errors()->add('insurer_payment_link', 'Current insurance provider is not supported for this payment gateway. Please verify that the insurance provider is supported for this payment gateway or broker commission is enabled for this insurance provider and plan.');
                             } else {
