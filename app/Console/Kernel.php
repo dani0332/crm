@@ -9,6 +9,7 @@ use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -98,10 +99,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(5)
             ->onSuccess(function (Stringable $output) {
-                info('----------- QuoteSyncJob Completed -----------'.$output);
+                LoggerService::info('----------- QuoteSyncJob Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- QuoteSyncJob Failed -----------'.$output);
+                LoggerService::info('----------- QuoteSyncJob Failed -----------'.$output);
             });
 
         $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);

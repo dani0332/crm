@@ -1,6 +1,7 @@
 <script setup>
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
@@ -1043,10 +1044,12 @@ const onLeadStatus = () => {
     .post(`/quotes/Car/${page.props.record.id}/update-lead-status`, {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
-        notification.error({
-          title: errors.value,
-          position: 'top',
+        Object.keys(errors).forEach(function (key) {
+          console.log(errors[key]);
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
         });
       },
     });
@@ -4331,6 +4334,13 @@ function handleOcrNotification(event) {
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />
+
+  <!-- <OcrLogs
+    v-if="can(permissionEnum.API_LOG_VIEW)"
+    :type="modelClass"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  /> -->
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"

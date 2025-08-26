@@ -143,6 +143,10 @@ const sendDcoument = id => {
 
 const downloadFile = download => {
   const save = document.createElement('a');
+  const documentPath = download.is_watermarked
+    ? download.watermarked_doc_path
+    : download.path;
+
   if (typeof save.download !== 'undefined') {
     // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
     // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
@@ -151,7 +155,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path;
+      documentPath;
     save.target = '_blank';
     save.download = download.name;
     save.dispatchEvent(new MouseEvent('click'));
@@ -161,7 +165,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path; // so that it opens new tab for IE11
+      documentPath; // so that it opens new tab for IE11
   }
 
   downloadLoader.value = true;
@@ -473,7 +477,7 @@ const onVoidSubmit = isValid => {
       voidPaymentForm.processing = false;
     });
 };
-const hasAnyRole = roles => useHasAnyRole(roles);
+
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
@@ -726,7 +730,10 @@ const onAddDocumentSubmit = event => {
                         embeddedProductTypeEnum.NON_INSURANCE &&
                       getFirstPriceWithTransaction(item.prices)?.transactions[0]
                         ?.payments[0]?.payment_gateway_id ==
-                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                      can(permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE)))
                 "
                 size="xs"
                 color="#ff5e00"
@@ -748,24 +755,16 @@ const onAddDocumentSubmit = event => {
               >
                 Void Payment
               </x-button>
-              <!--              <x-button
-                v-if="
-                  item.can_book_embedded_product &&
-                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
-                    ?.payments[0]?.payment_gateway_id ==
-                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
-                "
-                size="xs"
-                color="emerald"
-                @click.prevent="rescheduleEPBooking(item)"
-              >
-                Book Embedded Product
-              </x-button>-->
             </div>
           </template>
         </DataTable>
         <x-modal
-          v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+          v-if="
+            canAny([
+              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
+              permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
+            ])
+          "
           title="Cancel Payment"
           v-model="modals.cancelPayment"
           size="md"
@@ -882,13 +881,24 @@ const onAddDocumentSubmit = event => {
             hide-footer
             :loading="viewDocumentLoader"
           >
+            <template #item-document_type="item">
+              <div
+                class="flex flex-row gap-3"
+                :class="item.is_watermarked ? 'text-primary' : 'text-secondary'"
+              >
+                {{ item.document_type }}
+              </div>
+            </template>
+
             <template #item-actions="item">
               <div class="flex flex-row gap-3">
                 <x-button
                   size="xs"
                   color="primary"
                   outlined
-                  :href="item.url"
+                  :href="
+                    item.is_watermarked ? item.watermarked_doc_url : item.url
+                  "
                   target="_blank"
                 >
                   View

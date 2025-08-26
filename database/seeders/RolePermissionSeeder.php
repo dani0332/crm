@@ -33,6 +33,11 @@ class RolePermissionSeeder extends Seeder
         $this->addNationalityAllocationConfigPermission();
         $this->addPlanDetailsEditPermission();
         $this->addOverrideCommissionPermission();
+        $this->addAssignClientSupportPermission();
+        $this->addSupportSpecialistRoles();
+        $this->addLeadsByEmailPermission();
+        $this->addEmbeddedProductPaymentCancelAdminPermission();
+
     }
 
     private function addReceiveNotificationsPermission()
@@ -300,5 +305,92 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addAssignClientSupportPermission(): void
+    {
+        // Create ASSIGN_CLIENT_SUPPORT permission
+        $clientSupportPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::ASSIGN_CLIENT_SUPPORT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // Create ASSIGN_LEAD_ADVISOR permission
+        $leadAdvisorPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::ASSIGN_LEAD_ADVISOR,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole) {
+            // Assign ASSIGN_CLIENT_SUPPORT permission to Admin role
+            if (! $adminRole->hasPermissionTo($clientSupportPermission)) {
+                $adminRole->givePermissionTo($clientSupportPermission);
+            }
+
+            // Assign ASSIGN_LEAD_ADVISOR permission to Admin role
+            if (! $adminRole->hasPermissionTo($leadAdvisorPermission)) {
+                $adminRole->givePermissionTo($leadAdvisorPermission);
+            }
+        }
+    }
+
+    private function addSupportSpecialistRoles(): void
+    {
+        $supportRoles = [
+            RolesEnum::CLIENTSUPPORT,
+            RolesEnum::CLIENTSUPPORTLEAD,
+        ];
+
+        foreach ($supportRoles as $roleName) {
+            Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function addLeadsByEmailPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::LEADS_BY_EMAIL,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addEmbeddedProductPaymentCancelAdminPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $engineeringRole = Role::where('name', RolesEnum::Engineering)->first();
+
+        if ($engineeringRole && ! $engineeringRole->hasPermissionTo($permission)) {
+            $engineeringRole->givePermissionTo($permission);
+        }
     }
 }

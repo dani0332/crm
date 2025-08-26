@@ -102,11 +102,13 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
     public function headings(): array
     {
+        $groupByColumn = $this->groupByColumn == 'support_user' ? 'OE/AE' : $this->groupByColumn;
+
         $headings = [
-            ucwords(str_replace('_', ' ', $this->groupByColumn)),
+            ucwords(str_replace('_', ' ', $groupByColumn)),
         ];
 
-        if (in_array($this->groupByColumn, ['advisor'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $headings[] = 'Department';
         }
 
@@ -148,7 +150,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             $quote->{$groupBy} ?? 'N/A',
         ];
 
-        if (in_array($this->groupByColumn, ['advisor'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $values[] = $quote->department ?? 'N/A';
         }
 
@@ -192,7 +194,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
     {
         $totalsRow = array_fill(0, count($this->map((object) [])), '');
         $totalsRow[0] = 'Totals';
-        $offset = in_array($this->groupByColumn, ['advisor']) ? 2 : 1; // Adjust for department column
+        $offset = in_array($this->groupByColumn, ['advisor', 'support_user']) ? 2 : 1; // Adjust for department column
         foreach ($this->columnTotals->keys() as $index => $key) {
             $totalsRow[$index + $offset] = $this->resolveNumberFormat($this->columnTotals->get($key));
         }
