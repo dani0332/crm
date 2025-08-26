@@ -367,7 +367,7 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
+        return $quote ? $quote->documents()->with('createdBy:id,name,email')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
     }
 
     /**
