@@ -1626,6 +1626,16 @@ class CentralService extends BaseService
         LoggerService::info(__FUNCTION__.' - Auto capture payment process started', extra: ['paymentCode' => $payment->code]);
 
         if (! app(AMLService::class)->autoCaptureAMLValidationCheck($quote)) {
+            LoggerService::info('fn:autoCaptureAMLValidationCheck failed - Going to dispatch AutomationFailedJob');
+            AutomationFailedJob::dispatch(
+                $quote,
+                QuoteTypeId::Car,
+                'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
+                'Quote Referred To Insurer UW',
+                'Payment Capture',
+                WorkflowTypeEnum::CAR_AUTOMATION_FAILED
+            )->onQueue('policy-issuance-automation');
+
             return ['status' => false, 'message' => 'Auto capture payment process failed', 'autoCaptureStatus' => GenericRequestEnum::FAILED, 'autoCaptureMessage' => 'Auto capture payment process failed due to AML Screening Failed'];
         }
 
