@@ -197,6 +197,15 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/3260c727-5aef-4806-a869-f24f21ac7317/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
         $this->seedUnavailableTimeThreshold();
     }
 
@@ -298,10 +307,47 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS],
+            [
+                'value' => 'moinuddin.lakdawala@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CAR_CQF_RENEWALS_SWITCH],
             [
                 'value' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CPA_AUSTRALIA_SAVINGS_BCC_EMAILS],
+            [
+                'value' => 'moinuddin.lakdawala@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_LEAD_POOL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_LEAD_POOL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

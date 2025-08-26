@@ -1,6 +1,7 @@
 <script setup>
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
@@ -4336,6 +4337,13 @@ function handleOcrNotification(event) {
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />
+
+  <!-- <OcrLogs
+    v-if="can(permissionEnum.API_LOG_VIEW)"
+    :type="modelClass"
+    :id="$page.props.record.id"
+    :expanded="sectionExpanded"
+  /> -->
 
   <ClientInquiryLogs
     v-if="clientInquiryLogs?.length > 0"

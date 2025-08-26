@@ -571,6 +571,7 @@ class TravelController extends Controller
             'id' => $planId,
             'vat' => $vat,
             'insurerQuoteNo' => $insurerQuoteNo,
+            'per_member_price' => $this->travelQuoteService->getPerMemberPrice($planId),
         ];
 
         return response()->json($data, 200);

@@ -799,7 +799,30 @@ class CarEmailService extends BaseService
             'failedLeadsCount' => count($failedPolicyNumbers) ?? 0,
             'fileDownloadUrl' => route('downloadValidationFailedFile', ['id' => $renewalsUploadLeadsId]),
         ];
+    }
+    public function sendFollowUpEmailForCQF($lead)
+    {
+        try {
 
+            if (app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypeId::Car, QuoteFlowType::CAR_CQF_RENEWAL_FOLLOWUPS)) {
+                LoggerService::info(self::class." - Follow Up Email for CQF already executed for lead: {$lead->uuid}");
+
+                return;
+            }
+
+            LoggerService::info(self::class.' - Sending Follow Up Email for CQF');
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::CAR_CQF_RENEWAL_FOLLOWUPS);
+            $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+            $birdCQFEvent = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW, false, true);
+            if ($birdMotorEventNB) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdCQFEvent, $emailData);
+                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::CAR_CQF_RENEWAL_FOLLOWUPS, QuoteTypeId::Car);
+                LoggerService::info(self::class." - sendFollowUpEmailForCQF - Event triggered successfully for lead: {$lead->uuid} ", ['response_status_code' => $response->status_code, 'lead_status_id' => $lead->quote_status_id]);
+            }
+        } catch (\Exception $exception) {
+            LoggerService::error(self::class.' - sendFollowUpEmailForCQF - Error while sending quote workflow for lead ', exception: $exception);
+        }
     }
 
 }

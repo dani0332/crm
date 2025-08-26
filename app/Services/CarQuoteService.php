@@ -491,6 +491,7 @@ class CarQuoteService extends BaseService
                 'cqr.pc_qualified',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
                 DB::raw(CarQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+                'cqr.documents_verified',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -1590,7 +1591,10 @@ class CarQuoteService extends BaseService
             $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isPhpEnabled' => true])
                 ->loadView($view, compact('quotePlans', 'planIds', 'quote', 'addons', 'ecomInsuranceLink'));
         } catch (\Throwable $e) {
-            logger()->debug('Exception: '.$e->getMessage(), ['line' => $e->getLine(), 'file' => $e->getFile()]);
+            LoggerService::error('Error generating PDF: '.$e->getMessage(), extra: [
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
         }
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf

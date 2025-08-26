@@ -595,6 +595,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('void-payment', [EmbeddedProductController::class, 'voidPayment'])->name('void-payment');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
+        Route::post('assignSupportUser', [CRUDController::class, 'assignSupportUser'])->name('assign-support-user');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
 
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
@@ -763,6 +764,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('sage-api-logs/{sectionId}/latest-error', [SageApi::class, 'getLastSageError'])->name('sage-api-logs-latest-error');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
+    Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/bike-model-by-id', [AjaxController::class, 'bikeModelBasedOnCarMakeId']);

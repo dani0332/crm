@@ -195,6 +195,11 @@ class User extends Authenticatable implements AuditableContract
         return $isAdvisor;
     }
 
+    public function isSupportUser()
+    {
+        return $this->hasRole(RolesEnum::CLIENTSUPPORT);
+    }
+
     public function isSpecificTeamAdvisor($teamType)
     {
         $userRoles = $this->usersroles()->get();
@@ -377,7 +382,19 @@ class User extends Authenticatable implements AuditableContract
 
     public function products()
     {
-        return $this->hasMany(UserProducts::class);
+        return $this->belongsToMany(
+            Team::class,
+            'user_products',
+            'user_id',
+            'product_id',
+            'id',
+            'id'
+        );
+    }
+
+    public function hasProduct(...$products)
+    {
+        return $this->products->whereIn('name', $products)->isNotEmpty();
     }
 
     public function department()
