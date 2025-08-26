@@ -137,13 +137,13 @@ class BorCompletionMail extends Mailable
     /**
      * Get customer display name based on customer type
      */
-    private function getCustomerName($firstName = false)
+    private function getCustomerName($isFirstName = false)
     {
         $firstName = $this->customerData['first_name'] ?? '';
         $lastName = $this->customerData['last_name'] ?? '';
         $name = trim($firstName . ' ' . $lastName);
 
-        if ($firstName) {
+        if ($isFirstName) {
             return $firstName;
         }
         return $name ?? $this->borLog->insurer_name ?: 'Valued Customer';
