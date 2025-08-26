@@ -1666,7 +1666,7 @@ class CentralService extends BaseService
             AutomationFailedJob::dispatch(
                 $quote,
                 QuoteTypeId::Car,
-                `Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.`,
+                'Please liaise with the Insurer UW or Insurar Portal to resolve the rejection.',
                 'Quote Referred To Insurer UW',
                 'Payment Capture',
                 WorkflowTypeEnum::CAR_AUTOMATION_FAILED
@@ -1716,7 +1716,7 @@ class CentralService extends BaseService
                     AutomationFailedJob::dispatch(
                         $quote,
                         QuoteTypeId::Car,
-                        `Please coordinate with the Insurer's Portal for any discrepancies or changes in the premium.`,
+                        'Please coordinate with the Insurer\'s Portal for any discrepancies or changes in the premium.',
                         'Quote Referred To Insurer UW',
                         'Payment Capture',
                         WorkflowTypeEnum::CAR_AUTOMATION_FAILED
