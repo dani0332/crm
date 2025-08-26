@@ -19,15 +19,12 @@ use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use ZipArchive;
 
 class ClaimsController extends Controller
 {
@@ -190,7 +187,7 @@ class ClaimsController extends Controller
             $customerAdditionalContacts = $this->customerService->getAdditionalContacts($claimRequest->customer_id, $claimRequest->mobile_no);
 
             $documents = $claimRequest->documents->load('createdBy:id,name');
-            //dd($documents->toArray());
+            // dd($documents->toArray());
 
             return Inertia::render('Claims/Show', [
                 'claim' => $claimRequest,
@@ -469,7 +466,7 @@ class ClaimsController extends Controller
             // Use service method with business logic validation
             $deleted = $this->claimsService->deleteClaimDocument($claim, $document->id);
 
-            if (!$deleted) {
+            if (! $deleted) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Document could not be deleted. It may be required for claim processing or the claim is in a finalized state.',
@@ -532,16 +529,16 @@ class ClaimsController extends Controller
             // Use service to create ZIP
             $result = $this->claimsService->createDocumentsZip($claim);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return response()->json([
                     'message' => 'Failed to create document archive.',
-                    'details' => $result['errors'] ?? []
+                    'details' => $result['errors'] ?? [],
                 ], 500);
             }
 
             return response()->download($result['file_path'])->deleteFileAfterSend(true);
 
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Unexpected error', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,

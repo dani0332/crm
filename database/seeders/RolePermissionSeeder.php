@@ -310,7 +310,7 @@ class RolePermissionSeeder extends Seeder
 
     private function addClaimsPermissions(): void
     {
-        $roles = Role::whereIn('name', [RolesEnum::Admin , RolesEnum::Engineering])->get();
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
 
         $claimsPermissions = PermissionsEnum::getClaimsPermissions();
 
@@ -331,7 +331,6 @@ class RolePermissionSeeder extends Seeder
                     info("{$role->name} role already has permission {$permission->name}");
                 }
             }
-
 
         }
     }

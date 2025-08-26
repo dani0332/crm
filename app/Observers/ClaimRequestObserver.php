@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
-use App\Models\ClaimRequest; 
-use App\Services\ClaimsService; 
+use App\Models\ClaimRequest;
+use App\Services\ClaimsService;
 
 class ClaimRequestObserver
 {
@@ -32,13 +32,13 @@ class ClaimRequestObserver
 
         }
 
-         $isCarOrBikeLOB = $claimRequest->isCarOrBikeLOB();
+        $isCarOrBikeLOB = $claimRequest->isCarOrBikeLOB();
 
-        if($isCarOrBikeLOB){
+        if ($isCarOrBikeLOB) {
             if ($claimRequest->isDirty('approved_repair_amount')) {
                 $originalApprovedRepairAmount = $claimRequest->getOriginal('approved_repair_amount');
                 $newApprovedRepairAmount = $claimRequest->approved_repair_amount;
-    
+
                 if (empty($originalApprovedRepairAmount) && ! empty($newApprovedRepairAmount)) {
                     $claimService->updateClaimSubStatusToRepairApprovedAndWIP($claimRequest);
                 }
@@ -46,7 +46,7 @@ class ClaimRequestObserver
             if ($claimRequest->isDirty('approved_total_loss_amount')) {
                 $originalApprovedTotalLossAmount = $claimRequest->getOriginal('approved_total_loss_amount');
                 $newApprovedTotalLossAmount = $claimRequest->approved_total_loss_amount;
-    
+
                 if (empty($originalApprovedTotalLossAmount) && ! empty($newApprovedTotalLossAmount)) {
                     $claimService->updateClaimSubStatusToTotalLossOfferLetterShared($claimRequest);
                 }
@@ -54,13 +54,13 @@ class ClaimRequestObserver
             if ($claimRequest->isDirty('approved_cash_loss_amount')) {
                 $originalApprovedCashLossAmount = $claimRequest->getOriginal('approved_cash_loss_amount');
                 $newApprovedCashLossAmount = $claimRequest->approved_cash_loss_amount;
-    
+
                 if (empty($originalApprovedCashLossAmount) && ! empty($newApprovedCashLossAmount)) {
                     $claimService->updateClaimSubStatusToCashLossApproved($claimRequest);
                 }
             }
         }
-        
+
         if ($claimRequest->isDirty('claim_decline_reason')) {
             $originalClaimDeclineReason = $claimRequest->getOriginal('claim_decline_reason');
             $newClaimDeclineReason = $claimRequest->claim_decline_reason;
@@ -76,9 +76,9 @@ class ClaimRequestObserver
             $newClaimStatusId = $claimRequest->claim_status_id;
 
             // Check if the claim is now closed
-          /*   if ($claimService->isClaimStatusClosed($newClaimStatusId) && !$claimService->isClaimStatusClosed($originalClaimStatusId)) {
-                $claimService->dispatchGoogleReviewEmail($claimRequest);
-            } */
+            /*   if ($claimService->isClaimStatusClosed($newClaimStatusId) && !$claimService->isClaimStatusClosed($originalClaimStatusId)) {
+                  $claimService->dispatchGoogleReviewEmail($claimRequest);
+              } */
         }
     }
 
@@ -93,5 +93,5 @@ class ClaimRequestObserver
             $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
         }
     }
-    
+
 }

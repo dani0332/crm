@@ -8,6 +8,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Jobs\SendGoogleReviewEmailJob;
 use App\Models\CarMake;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
@@ -20,13 +21,12 @@ use App\Models\User;
 use App\Models\YearOfManufacture;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\SendGoogleReviewEmailJob;
 use ZipArchive;
-use Exception;
 
 class ClaimsService extends BaseService
 {
@@ -334,7 +334,7 @@ class ClaimsService extends BaseService
             // Make API call to create claim
             $response = Capi::request('/api/v2-claims', 'post', $apiData);
 
-            if(isset($response->claimUID) && $response->claimUID){
+            if (isset($response->claimUID) && $response->claimUID) {
                 // Send Claim Intimation Email
             }
 
@@ -806,23 +806,23 @@ class ClaimsService extends BaseService
             $notes = $request->notes;
 
             ClaimActivity::createForClaim(
-                $claimRequest->id, $claimRequest->uuid, $request->claim_status_id,  $notes
+                $claimRequest->id, $claimRequest->uuid, $request->claim_status_id, $notes
             );
 
             // Update the claim request
-                $claimRequest->update($statusUpdateData);
+            $claimRequest->update($statusUpdateData);
 
-                LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, [
-                    'claim_request_id' => $claimRequest->id,
-                    'claim_uuid' => $claimRequest->uuid,
-                    'code' => $claimRequest->code,
-                    'updated_fields' => array_keys($statusUpdateData),
-                    'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
-                    'new_claim_status_id' => $claimRequest->claim_status_id,
-                    'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
-                    'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
-                    'updated_by' => auth()->id(),
-                ]);
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'code' => $claimRequest->code,
+                'updated_fields' => array_keys($statusUpdateData),
+                'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
+                'new_claim_status_id' => $claimRequest->claim_status_id,
+                'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
+                'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
+                'updated_by' => auth()->id(),
+            ]);
 
             return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
 
@@ -870,7 +870,7 @@ class ClaimsService extends BaseService
 
         $claimActivity = ClaimActivity::createForClaim(
             $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
-             $request->customer_message, $request->ai_optimized_message
+            $request->customer_message, $request->ai_optimized_message
         );
 
         return $claimActivity;
@@ -979,14 +979,15 @@ class ClaimsService extends BaseService
         try {
             $document = $claim->documents()->where('id', $documentId)->first();
 
-            if (!$document) {
+            if (! $document) {
                 LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document not found', extra: [
                     'claim_uuid' => $claim->uuid,
                     'document_id' => $documentId,
                     'user_id' => auth()->id(),
                 ]);
+
                 return false;
-            } 
+            }
 
             $document->delete();
 
@@ -1008,7 +1009,7 @@ class ClaimsService extends BaseService
 
             return false;
         }
-    } 
+    }
 
     public function updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claimRequest): void
     {
@@ -1093,7 +1094,7 @@ class ClaimsService extends BaseService
 
     /**
      * Create and download ZIP file containing all claim documents
-     * @return array
+     *
      * @throws Exception
      */
     public function createDocumentsZip(ClaimRequest $claim): array
@@ -1103,8 +1104,8 @@ class ClaimsService extends BaseService
         $this->validateDocumentsForZip($documents);
 
         $zipFileName = $this->generateZipFileName($claim);
-        $zipFilePath = storage_path('temp/' . $zipFileName);
-        
+        $zipFilePath = storage_path('temp/'.$zipFileName);
+
         $result = [
             'success' => false,
             'file_path' => null,
@@ -1116,9 +1117,9 @@ class ClaimsService extends BaseService
 
         try {
             $zip = new ZipArchive;
-            
+
             if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-                throw new Exception('Could not create ZIP file at: ' . $zipFilePath);
+                throw new Exception('Could not create ZIP file at: '.$zipFilePath);
             }
 
             $processedDocuments = $this->addDocumentsToZip($zip, $documents, $claim);
@@ -1144,7 +1145,7 @@ class ClaimsService extends BaseService
 
         } catch (Exception $e) {
             $this->cleanupZipFile($zipFilePath);
-            
+
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error creating ZIP file', extra: [
                 'claim_uuid' => $claim->uuid,
                 'error' => $e->getMessage(),
@@ -1163,7 +1164,7 @@ class ClaimsService extends BaseService
      */
     private function validateDocumentsForZip($documents): void
     {
-        if (!$documents || (is_countable($documents) && count($documents) === 0)) {
+        if (! $documents || (is_countable($documents) && count($documents) === 0)) {
             throw new Exception('No documents available for this claim');
         }
 
@@ -1176,8 +1177,8 @@ class ClaimsService extends BaseService
         foreach ($documents as $document) {
             $docUrl = is_array($document) ? ($document['doc_url'] ?? null) : $document->doc_url ?? null;
             $originalName = is_array($document) ? ($document['original_name'] ?? null) : $document->original_name ?? null;
-            
-            if (!$docUrl || !$originalName) {
+
+            if (! $docUrl || ! $originalName) {
                 throw new Exception('Invalid document structure: missing required fields (doc_url or original_name)');
             }
         }
@@ -1185,34 +1186,29 @@ class ClaimsService extends BaseService
 
     /**
      * Generate ZIP file name for claim documents
-     *
-     * @return string
      */
     private function generateZipFileName(ClaimRequest $claim): string
     {
         $firstName = $this->sanitizeFileName($claim->first_name ?? 'Customer');
         $lastName = $this->sanitizeFileName($claim->last_name ?? 'Docs');
         $claimCode = $this->sanitizeFileName($claim->uuid);
-        
-        return "Claim_{$claimCode}_{$firstName}_{$lastName}_" . date('Y-m-d_H-i-s') . '.zip';
+
+        return "Claim_{$claimCode}_{$firstName}_{$lastName}_".date('Y-m-d_H-i-s').'.zip';
     }
 
     /**
      * Sanitize filename to remove invalid characters
-     *
-     * @param string $filename
-     * @return string
      */
     private function sanitizeFileName(string $filename): string
     {
         // Remove or replace invalid filename characters
         $filename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $filename);
+
         return substr($filename, 0, 50); // Limit length
     }
 
     /**
      * Add documents to ZIP archive
-     *
      */
     private function addDocumentsToZip(ZipArchive $zip, $documents, ClaimRequest $claim): array
     {
@@ -1232,21 +1228,22 @@ class ClaimsService extends BaseService
                 $originalName = is_array($document) ? $document['original_name'] : $document->original_name;
                 $documentId = is_array($document) ? ($document['id'] ?? null) : $document->id ?? null;
 
-                if (!$disk->exists($docUrl)) {
+                if (! $disk->exists($docUrl)) {
                     LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document does not exist', extra: [
                         'doc_url' => $docUrl,
                         'document_name' => $originalName,
                         'document_id' => $documentId,
                         'claim_uuid' => $claim->uuid,
                     ]);
+
                     continue;
                 }
 
                 // Handle duplicate filenames
                 $finalName = $this->getUniqueFileName($originalName, $documentCounts);
-                
+
                 $contents = $disk->get($docUrl);
-                
+
                 if ($zip->addFromString($finalName, $contents)) {
                     $processedDocuments[] = [
                         'name' => $finalName,
@@ -1283,30 +1280,25 @@ class ClaimsService extends BaseService
 
     /**
      * Get unique filename to handle duplicates
-     *
-     * @param string $originalName
-     * @param array &$documentCounts
-     * @return string
      */
     private function getUniqueFileName(string $originalName, array &$documentCounts): string
     {
-        if (!isset($documentCounts[$originalName])) {
+        if (! isset($documentCounts[$originalName])) {
             $documentCounts[$originalName] = 1;
+
             return $originalName;
         }
 
         $documentCounts[$originalName]++;
         $pathInfo = pathinfo($originalName);
         $name = $pathInfo['filename'] ?? $originalName;
-        $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
-        
-        return $name . '_(' . $documentCounts[$originalName] . ')' . $extension;
+        $extension = isset($pathInfo['extension']) ? '.'.$pathInfo['extension'] : '';
+
+        return $name.'_('.$documentCounts[$originalName].')'.$extension;
     }
 
     /**
      * Clean up ZIP file if it exists
-     *
-     * @param string $zipFilePath
      */
     private function cleanupZipFile(string $zipFilePath): void
     {
@@ -1325,7 +1317,7 @@ class ClaimsService extends BaseService
     /**
      * Get claim lead history (status changes by team lead) - all data for client-side pagination
      * Frontend will process old status from chronological data
-     * 
+     *
      * @param int $claimId
      * @return array
      */
@@ -1370,7 +1362,7 @@ class ClaimsService extends BaseService
     /**
      * Get claim sub-status logs (sub-status changes by claims manager) - all data for client-side pagination
      * Frontend will process old sub-status from chronological data
-     * 
+     *
      * @param int $claimId
      * @return array
      */

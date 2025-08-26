@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
-use App\Models\DocumentType;
 use App\Models\ClaimRequest;
+use App\Models\DocumentType;
 use App\Rules\CustomFileType;
 use App\Rules\ValidateBase64;
 use Illuminate\Foundation\Http\FormRequest;
@@ -35,7 +35,7 @@ class ClaimDocumentRequest extends FormRequest
             'document_type_code' => [
                 'required',
                 'string',
-                Rule::exists('document_types', 'code')->where('is_active', 1)
+                Rule::exists('document_types', 'code')->where('is_active', 1),
             ],
             'folder_path' => ['nullable', 'string', 'max:255'],
         ];
@@ -49,7 +49,7 @@ class ClaimDocumentRequest extends FormRequest
             if ($this->documentType) {
                 // Add file type and size validation based on document type
                 $rules['files.*'][] = new CustomFileType($this->documentType->accepted_files);
-                $rules['files.*'][] = 'max:' . ($this->documentType->max_size * 1024); // Convert MB to KB
+                $rules['files.*'][] = 'max:'.($this->documentType->max_size * 1024); // Convert MB to KB
             }
         }
 
@@ -95,13 +95,14 @@ class ClaimDocumentRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if (!$this->filled('document_type_code') || !$this->documentType) {
+            if (! $this->filled('document_type_code') || ! $this->documentType) {
                 return;
             }
 
             $claim = $this->route('claim');
-            if (!$claim instanceof ClaimRequest) {
+            if (! $claim instanceof ClaimRequest) {
                 $validator->errors()->add('claim', 'Invalid claim provided.');
+
                 return;
             }
 
@@ -117,7 +118,7 @@ class ClaimDocumentRequest extends FormRequest
             if ($totalFiles > $this->documentType->max_files) {
                 $validator->errors()->add(
                     'files',
-                    "You can only upload a maximum of {$this->documentType->max_files} files for ({$this->documentType->text}). " .
+                    "You can only upload a maximum of {$this->documentType->max_files} files for ({$this->documentType->text}). ".
                     "Currently {$existingDocuments} files exist, and you're trying to upload {$newFilesCount} more."
                 );
             }
@@ -134,10 +135,10 @@ class ClaimDocumentRequest extends FormRequest
     {
         // Add any claim-specific document type permission checks here
         // For example, if certain document types require special permissions
-        
+
         // Example: Audit documents require special permission
-        if ($this->document_type_code === 'CLAIM_AUDIT_RECORD' && 
-            (!auth()->user() || !auth()->user()->can(PermissionsEnum::CLAIM_DOCUMENT_UPLOAD))) {
+        if ($this->document_type_code === 'CLAIM_AUDIT_RECORD' &&
+            (! auth()->user() || ! auth()->user()->can(PermissionsEnum::CLAIM_DOCUMENT_UPLOAD))) {
             $validator->errors()->add(
                 'document_type_code',
                 'You do not have permission to upload this type of document.'
