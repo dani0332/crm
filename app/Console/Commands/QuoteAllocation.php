@@ -162,7 +162,7 @@ class QuoteAllocation extends Command
                 $q->leadAllocationFailed()
                     ->orWhere->sicFlowDisabled()
                     ->orWhere(function ($subQuery) {
-                        $subQuery->sicFlowEnabled()->requestedOrPaymentAuthorizedOrDeclined();
+                        $subQuery->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclined();
                     });
             })
             ->take($chunkSize);

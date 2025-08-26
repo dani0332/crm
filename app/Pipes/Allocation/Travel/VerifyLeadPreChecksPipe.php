@@ -45,7 +45,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             ->where(function ($query) {
                 $query->sicFlowDisabled()
                     ->orWhere(function ($subQuery) {
-                        $subQuery->sicFlowEnabled()->requestedOrPaymentAuthorizedOrDeclined();
+                        $subQuery->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclined();
                     });
             })
             ->first();

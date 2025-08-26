@@ -77,7 +77,7 @@ trait QuotePaymentable
         });
     }
 
-    public function scopeRequestedOrPaymentAuthorizedOrDeclined($q)
+    public function scopeAdvisorRequestedOrPaymentAuthorizedOrDeclined($q)
     {
         $q->where(function ($sq) {
             $sq->where('sic_advisor_requested', 1)->orWhere->hasPaidOrDeclinedStatus()->orWhere->paymentLinkRequested();

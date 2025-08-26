@@ -162,7 +162,7 @@ trait QuoteAllocatable
                 // AIG leads with advisor requested or payment authorized
                 ->where(function ($aigQuery) use ($quoteType) {
                     $aigQuery->isAIG($quoteType)
-                        ->requestedOrPaymentAuthorizedOrDeclined();
+                        ->advisorRequestedOrPaymentAuthorizedOrDeclined();
                 })
 
                 // OR Other lead types
@@ -172,7 +172,7 @@ trait QuoteAllocatable
                         $sq->where(function ($q) {
                             $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                                 ->sicFlowEnabled()
-                                ->requestedOrPaymentAuthorizedOrDeclined();
+                                ->advisorRequestedOrPaymentAuthorizedOrDeclined();
                         })
                         // Non-renewal leads with SIC logic
                             ->orWhere(function ($q) {
@@ -180,7 +180,7 @@ trait QuoteAllocatable
                                     ->where(function ($inner) {
                                         $inner
                                             ->where(fn ($x) => $x->sicFlowDisabled())
-                                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedOrPaymentAuthorizedOrDeclined());
+                                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclined());
                                     });
                             });
                     });
