@@ -7,7 +7,7 @@ use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Model;
 
 trait OcrValidator
-{   
+{
     private function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
     {
         return match ($provider) {
@@ -63,9 +63,9 @@ trait OcrValidator
             'quote.policy_start_date',
             'quote.policy_expiry_date',
             'quote.start_date', // this is for send update logs for CPD
-            'quote.expiry_date' // this is for send update logs for CPD
+            'quote.expiry_date', // this is for send update logs for CPD
         ];
-        
+
         return match ($provider) {
             InsurerProviderEnum::GIG_INSURANCE => [
                 ...$commonFields,
@@ -122,11 +122,11 @@ trait OcrValidator
     public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
     {
         $providerCode = $this->extractProviderCode($quote);
-        
-        if (!$providerCode) {
+
+        if (! $providerCode) {
             return false;
         }
-        
+
         return $this->isSupportedProvider($quoteType, $providerCode);
     }
 }

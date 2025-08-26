@@ -11,12 +11,12 @@ use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
-
 use Illuminate\Support\Facades\DB;
 
 class MulkiyaDataProcessor
 {
     use OcrUtils;
+
     private MulkiyaExtractor $mulkiyaExtractor;
 
     public function __construct(

@@ -1164,8 +1164,9 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        if (!$quote) {
+        if (! $quote) {
             info("Quote not found for type: {$type}, id: {$id}");
+
             return;
         }
         $quoteCode = $quote->code;

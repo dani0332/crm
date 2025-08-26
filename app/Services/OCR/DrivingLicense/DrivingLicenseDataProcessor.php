@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class DrivingLicenseDataProcessor
 {
     use OcrUtils;
+
     private DrivingLicenseExtractor $drivingLicenseExtractor;
 
     public function __construct(

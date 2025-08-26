@@ -9,24 +9,20 @@ use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-use App\Services\Logger\LoggerService;
 
 class AccuracyMatrixCacheService
 {
     private const CACHE_PREFIX = 'accuracy_matrix';
     private const TTL_HOURS = 24;
-    
     private const MANDATORY_DOC_TYPES = [
         'tax_invoice' => OCRDocumentTypeEnum::TAX_INVOICE,
         'tax_invoice_buyer' => OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
         'policy_schedule' => OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE,
     ];
-
     private const ELIGIBLE_QUOTE_TYPES = [
         QuoteTypes::HOME,
         QuoteTypes::BUSINESS,
     ];
-
     private const ELIGIBLE_PROVIDERS = [
         InsurerProviderEnum::GIG_INSURANCE,
         InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
@@ -42,27 +38,27 @@ class AccuracyMatrixCacheService
 
     private function getCacheKey(int $quoteId, string $quoteType): string
     {
-        return self::CACHE_PREFIX . ":{$quoteId}:{$quoteType}";
+        return self::CACHE_PREFIX.":{$quoteId}:{$quoteType}";
     }
 
     public function isEligibleQuote(Model $quote, QuoteTypes $quoteType): bool
     {
-        if (!in_array($quoteType, self::ELIGIBLE_QUOTE_TYPES)) {
+        if (! in_array($quoteType, self::ELIGIBLE_QUOTE_TYPES)) {
             return false;
         }
 
         // Only check for Group Medical if it's a Business quote
         if ($quoteType === QuoteTypes::BUSINESS) {
             $isGroupMedical = $quoteType->isGroupMedical($quote);
-            
-            if (!$isGroupMedical) {
+
+            if (! $isGroupMedical) {
                 return false;
             }
         }
 
         $providerCode = $this->getProviderCode($quote);
         $isEligible = $providerCode && in_array($providerCode, self::ELIGIBLE_PROVIDERS);
-        
+
         return $isEligible;
     }
 
@@ -95,16 +91,16 @@ class AccuracyMatrixCacheService
         $data = Cache::get($cacheKey, []);
 
         $docTypeKey = $this->getDocumentTypeKey($documentType);
-        if (!$docTypeKey) {
+        if (! $docTypeKey) {
             return;
         }
 
-        if (!isset($data['quote_id'])) {
+        if (! isset($data['quote_id'])) {
             $data = $this->initializeCacheStructure($quoteId, $quoteType);
         }
 
         // Clean and validate policy number
-        $cleanPolicyNumber = !empty($policyNumber) ? trim($policyNumber) : null;
+        $cleanPolicyNumber = ! empty($policyNumber) ? trim($policyNumber) : null;
 
         $data['mandatory_docs'][$docTypeKey] = [
             'doc_id' => $docId,
@@ -131,7 +127,7 @@ class AccuracyMatrixCacheService
         }
 
         $docTypeKey = $this->getDocumentTypeKey($documentType);
-        if (!$docTypeKey) {
+        if (! $docTypeKey) {
             return;
         }
 
@@ -151,7 +147,7 @@ class AccuracyMatrixCacheService
         $cacheKey = $this->getCacheKey($quoteId, $quoteType);
         $data = Cache::get($cacheKey);
 
-        if (!$data || !isset($data['matrix_status'])) {
+        if (! $data || ! isset($data['matrix_status'])) {
             return null;
         }
 
@@ -188,21 +184,21 @@ class AccuracyMatrixCacheService
         $policyNumbers = [];
 
         foreach ($mandatoryDocs as $docKey => $docData) {
-            if (!$docData['ocr_completed']) {
+            if (! $docData['ocr_completed']) {
                 $allOcrCompleted = false;
                 break;
             }
-            
+
             $policyNumber = trim($docData['policy_number'] ?? '');
             if (empty($policyNumber)) {
                 $allOcrCompleted = false;
                 break;
             }
-            
+
             $policyNumbers[] = $policyNumber;
         }
 
-        if (!$allDocsPresent || !$allOcrCompleted) {
+        if (! $allDocsPresent || ! $allOcrCompleted) {
             $data['matrix_status'] = [
                 'show_matrix' => false,
                 'status' => 'hidden',
@@ -218,7 +214,7 @@ class AccuracyMatrixCacheService
                 'show_matrix' => true,
                 'status' => $policyNumbersMatch ? 'green' : 'red',
                 'is_valid' => $policyNumbersMatch,
-                'tooltip' => $policyNumbersMatch 
+                'tooltip' => $policyNumbersMatch
                     ? 'Policy Number matched on the Uploaded Documents'
                     : 'Policy Number not matched on the Uploaded Documents',
                 'last_validated' => now()->toISOString(),
@@ -241,11 +237,11 @@ class AccuracyMatrixCacheService
     public function extractPolicyNumberFromOcrData(object $data, OCRDocumentTypeEnum $documentType): ?string
     {
         return match ($documentType) {
-            OCRDocumentTypeEnum::TAX_INVOICE => $this->resolveProp($data, 'policyNumber') 
+            OCRDocumentTypeEnum::TAX_INVOICE => $this->resolveProp($data, 'policyNumber')
                 ?? $this->resolveProp($data, 'taxInvoiceNumber')
                 ?? $this->resolveProp($data, 'insurancePolicyNumber'),
             OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->resolveProp($data, 'policyNumber')
-                ?? $this->resolveProp($data, 'taxInvoiceNumber') 
+                ?? $this->resolveProp($data, 'taxInvoiceNumber')
                 ?? $this->resolveProp($data, 'insurancePolicyNumber'),
             OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => $this->resolveProp($data, 'policyNumber')
                 ?? $this->resolveProp($data, 'policy_number')

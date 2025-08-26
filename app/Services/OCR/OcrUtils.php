@@ -151,11 +151,11 @@ trait OcrUtils
     ): void {
         $accuracyMatrixService = app(AccuracyMatrixCacheService::class);
 
-        if (!$accuracyMatrixService->isEligibleQuote($quote, $quoteType)) {
+        if (! $accuracyMatrixService->isEligibleQuote($quote, $quoteType)) {
             return;
         }
 
-        if (!$this->requiresOcrNotifications($docType)) {
+        if (! $this->requiresOcrNotifications($docType)) {
             return;
         }
 
@@ -172,7 +172,6 @@ trait OcrUtils
         );
     }
 
-
     /**
      * Check if the document type requires OCR notifications.
      * Returns true for any document type that is enabled for OCR processing.
@@ -185,7 +184,7 @@ trait OcrUtils
         foreach (QuoteTypes::cases() as $quoteType) {
             $enabledTypes = OCRDocumentTypeEnum::getEnabledTypes($quoteType);
             // Convert enum objects to their string values for comparison
-            $enabledTypeValues = array_map(fn($type) => $type->value, $enabledTypes);
+            $enabledTypeValues = array_map(fn ($type) => $type->value, $enabledTypes);
             $allEnabledTypes = array_merge($allEnabledTypes, $enabledTypeValues);
         }
 
@@ -197,13 +196,13 @@ trait OcrUtils
 
     private function generateDocumentId(Model $quote, DocumentType $documentType): string
     {
-        return "{$documentType->code}_{$quote->uuid}_" . uniqid();
+        return "{$documentType->code}_{$quote->uuid}_".uniqid();
     }
 
     public function checkIfQuoteTypeIsGroupMedical(QuoteTypes $quoteType): QuoteTypes
     {
         if ($quoteType == QuoteTypes::GROUP_MEDICAL) {
-            return QuoteTypes::BUSINESS; 
+            return QuoteTypes::BUSINESS;
         }
 
         return $quoteType;
@@ -214,15 +213,15 @@ trait OcrUtils
         // Home & Group Medical only for Send Update, not allowed for other LOBs
         $allowedLOBs = [
             QuoteTypes::getId(QuoteTypes::HOME),
-            QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)
+            QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL),
         ];
-        
+
         // Check if this is a Business quote (ID 5) that's actually Group Medical
         $isGroupMedicalBusiness = $this->isGroupMedicalBusiness($quote);
-        
-        $isEligible = $isSendUpdate && $quote instanceof SendUpdateLog && 
+
+        $isEligible = $isSendUpdate && $quote instanceof SendUpdateLog &&
                      (in_array($quote->quote_type_id, $allowedLOBs) || $isGroupMedicalBusiness);
-        
+
         LoggerService::info('isSendUpdateEligibleForOCR - Eligibility Check', [
             'is_send_update' => $isSendUpdate,
             'is_send_update_log_instance' => $quote instanceof SendUpdateLog,
@@ -235,27 +234,27 @@ trait OcrUtils
             'final_eligibility' => $isEligible,
             'eligibility_reason' => $isEligible ? 'Eligible for OCR' : $this->getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs),
         ]);
-        
+
         return $isEligible;
     }
-    
+
     private function getIneligibilityReason($quote, $isSendUpdate, $allowedLOBs)
     {
-        if (!$isSendUpdate) {
+        if (! $isSendUpdate) {
             return 'Not a Send Update';
         }
-        
-        if (!($quote instanceof SendUpdateLog)) {
+
+        if (! ($quote instanceof SendUpdateLog)) {
             return 'Quote is not a SendUpdateLog instance';
         }
-        
-        if (!in_array($quote->quote_type_id, $allowedLOBs)) {
+
+        if (! in_array($quote->quote_type_id, $allowedLOBs)) {
             return 'LOB not allowed for Send Update OCR (only HOME and GROUP_MEDICAL allowed)';
         }
-        
+
         return 'Unknown reason';
     }
-    
+
     public function isGroupMedicalBusiness($quote)
     {
         try {
@@ -263,13 +262,14 @@ trait OcrUtils
             if ($quote instanceof BusinessQuote) {
                 return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
             }
-            
+
             // Handle SendUpdateLog instances
             if ($quote instanceof SendUpdateLog && $quote->quote_type_id == QuoteTypes::getId(QuoteTypes::BUSINESS)) {
                 $actualQuote = BusinessQuote::where('uuid', $quote->quote_uuid)->first();
+
                 return $actualQuote && $actualQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
             }
-            
+
             return false;
         } catch (\Exception $e) {
             LoggerService::error('Error checking Group Medical business type', [
@@ -278,6 +278,7 @@ trait OcrUtils
                 'quote_id' => $quote->id ?? 'N/A',
                 'quote_uuid' => $quote->uuid ?? 'N/A',
             ]);
+
             return false;
         }
     }
@@ -285,14 +286,14 @@ trait OcrUtils
     public function extractProviderCode(Model $quote): ?string
     {
         $providerCode = null;
-        
+
         if ($quote->payments && $quote->payments->isNotEmpty()) {
             $latestPayment = $quote->payments->first();
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
             }
         }
-        
+
         return $providerCode;
     }
 }

@@ -9,6 +9,7 @@ use App\Services\OCR\OcrUtils;
 class EmiratesIdExtractor
 {
     use OcrUtils;
+
     private array $extractedData = [];
 
     public function __construct(

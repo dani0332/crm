@@ -9,6 +9,7 @@ use App\Services\OCR\OcrUtils;
 class DrivingLicenseExtractor
 {
     use OcrUtils;
+
     private array $extractedData = [];
 
     public function __construct(

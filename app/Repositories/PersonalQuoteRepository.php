@@ -113,9 +113,9 @@ class PersonalQuoteRepository extends BaseRepository
                 LoggerService::startQuoteLogging($quote);
                 LoggerService::info('fn: fetchUploadDocument start for Send Update Log');
                 [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
-                
+
                 // Update Send Update log with insurance provider if not set
-                if ($insuranceProviderId && !$quote->insurance_provider_id) {
+                if ($insuranceProviderId && ! $quote->insurance_provider_id) {
                     $quote->update(['insurance_provider_id' => $insuranceProviderId]);
                     LoggerService::info('Updated Send Update Log with insurance provider', [
                         'send_update_uuid' => $quote->uuid,
@@ -227,10 +227,10 @@ class PersonalQuoteRepository extends BaseRepository
             LoggerService::info('Determined quote type for SendUpdateLog', [
                 'quote_uuid' => $quote->uuid,
                 'quote_type_id' => $quote->quote_type_id,
-                'quote_type_param' => $quoteTypeParam
+                'quote_type_param' => $quoteTypeParam,
             ]);
         }
-        
+
         app(OCRService::class)->dispatchJobIfEligible(
             $documentType,
             $quote,
@@ -348,7 +348,5 @@ class PersonalQuoteRepository extends BaseRepository
     {
         return $this->where($column, $value)->with(['payments'])->first();
     }
-
-
 
 }

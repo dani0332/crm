@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
-use App\Http\Controllers\Controller;
 use App\Services\AccuracyMatrixCacheService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
@@ -24,20 +23,20 @@ class AccuracyMatrixController extends Controller
 
         try {
             $quoteTypeEnum = $this->mapQuoteType($quoteType);
-            if (!$quoteTypeEnum) {
+            if (! $quoteTypeEnum) {
                 return response()->json([
                     'error' => 'Invalid quote type',
                 ], Response::HTTP_BAD_REQUEST);
             }
 
             $quote = $this->getQuoteObject($quoteType, $quoteId);
-            if (!$quote) {
+            if (! $quote) {
                 return response()->json([
                     'error' => 'Quote not found',
                 ], Response::HTTP_NOT_FOUND);
             }
 
-            if (!$this->accuracyMatrixService->isEligibleQuote($quote, $quoteTypeEnum)) {
+            if (! $this->accuracyMatrixService->isEligibleQuote($quote, $quoteTypeEnum)) {
                 return response()->json([
                     'show_matrix' => false,
                     'status' => 'not_eligible',
@@ -47,7 +46,7 @@ class AccuracyMatrixController extends Controller
 
             $matrixStatus = $this->accuracyMatrixService->getMatrixStatus($quoteId, $quoteTypeEnum->value);
 
-            if (!$matrixStatus) {
+            if (! $matrixStatus) {
                 return response()->json([
                     'show_matrix' => false,
                     'status' => 'no_data',

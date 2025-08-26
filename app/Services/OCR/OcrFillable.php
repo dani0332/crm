@@ -2,21 +2,16 @@
 
 namespace App\Services\OCR;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
-use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
-use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
 use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
 use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
+use App\Services\OCR\PolicySchedule\PolicyScheduleDataProcessor;
 use App\Services\OCR\TaxInvoice\TaxInvoiceDataProcessor;
 use App\Services\OCR\TaxInvoiceRaisedByBuyer\TaxInvoiceRaisedByBuyerDataProcessor;
-use App\Services\OCR\PolicySchedule\PolicyScheduleDataProcessor;
-use App\Services\SplitPaymentService;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
@@ -42,18 +37,18 @@ trait OcrFillable
     {
         try {
             $success = (new TaxInvoiceDataProcessor(
-                $quote, 
-                $data, 
-                $this->isSendUpdateEligibleForOCR, 
+                $quote,
+                $data,
+                $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
             ))->processTaxInvoiceData();
 
             if ($success) {
                 // Get processing summary for logging
                 $summary = (new TaxInvoiceDataProcessor(
-                    $quote, 
-                    $data, 
-                    $this->isSendUpdateEligibleForOCR, 
+                    $quote,
+                    $data,
+                    $this->isSendUpdateEligibleForOCR,
                     $this->providerCode
                 ))->getProcessingSummary();
 
@@ -77,18 +72,18 @@ trait OcrFillable
     {
         try {
             $success = (new TaxInvoiceRaisedByBuyerDataProcessor(
-                $quote, 
-                $data, 
-                $this->isSendUpdateEligibleForOCR, 
+                $quote,
+                $data,
+                $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
             ))->processTaxInvoiceRaisedByBuyerData();
 
             if ($success) {
                 // Get processing summary for logging
                 $summary = (new TaxInvoiceRaisedByBuyerDataProcessor(
-                    $quote, 
-                    $data, 
-                    $this->isSendUpdateEligibleForOCR, 
+                    $quote,
+                    $data,
+                    $this->isSendUpdateEligibleForOCR,
                     $this->providerCode
                 ))->getProcessingSummary();
 
@@ -131,7 +126,6 @@ trait OcrFillable
 
         return true;
     }
-    
 
     private function fillMotorInsurancePolicySchedule(Model $quote, object $data)
     {
@@ -229,18 +223,18 @@ trait OcrFillable
     {
         try {
             $success = (new PolicyScheduleDataProcessor(
-                $quote, 
-                $data, 
-                $this->isSendUpdateEligibleForOCR, 
+                $quote,
+                $data,
+                $this->isSendUpdateEligibleForOCR,
                 $this->providerCode
             ))->processPolicyScheduleData();
 
             if ($success) {
                 // Get processing summary for logging
                 $summary = (new PolicyScheduleDataProcessor(
-                    $quote, 
-                    $data, 
-                    $this->isSendUpdateEligibleForOCR, 
+                    $quote,
+                    $data,
+                    $this->isSendUpdateEligibleForOCR,
                     $this->providerCode
                 ))->getProcessingSummary();
 
@@ -265,7 +259,7 @@ trait OcrFillable
         OCRDocumentTypeEnum $documentType,
         object $data,
         $documentCategory,
-        bool $isSendUpdateEligibleForOCR = false,
+        bool $isSendUpdateEligibleForOCR,
         QuoteTypes $quoteType
     ) {
         $this->providerCode = $this->getProvider($quote);
@@ -292,7 +286,7 @@ trait OcrFillable
                     ? $this->fillPolicySchedule($quote, $data)
                     : $this->fillMotorInsurancePolicySchedule($quote, $data),
                 OCRDocumentTypeEnum::POLICY_SCHEDULE => $this->fillPolicySchedule($quote, $data), // for home and group medical policy schedule
-                    default => false,
+                default => false,
             };
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during data fill: ', exception: $e);

@@ -13,7 +13,6 @@ use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\OCR\OcrUtils;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -68,7 +67,7 @@ class OCRService
         OCRDocumentTypeEnum $docType
     ) {
         $providerCode = $this->extractProviderCode($quote);
-        
+
         LoggerService::info('Provider Code - Quote UUID: '.$quote->uuid);
 
         $requestData = [
@@ -127,7 +126,7 @@ class OCRService
         }
 
         $latestPayment = $quote->payments->first();
-        
+
         return $latestPayment && $latestPayment->insuranceProvider
             ? $latestPayment->insuranceProvider->id
             : null;
@@ -351,15 +350,15 @@ class OCRService
         if (! $serviceCheck) {
             return false;
         }
-        
+
         // Skip OCR for non-eligible providers
-        if (!$this->isProviderEligibleForOcr($quoteType, $quote)) {
+        if (! $this->isProviderEligibleForOcr($quoteType, $quote)) {
             $providerCode = $this->extractProviderCode($quote);
             LoggerService::info('OCR processing skipped - Provider not eligible for OCR - Quote UUID: '.$quote->uuid, [
                 'quote_type' => $quoteType->value,
                 'provider_code' => $providerCode ?? 'null',
             ]);
-            
+
             return false;
         }
 
@@ -440,8 +439,8 @@ class OCRService
     ): void {
 
         // Skip OCR only for SendUpdate logs that are NOT eligible (e.g., Car SendUpdate)
-        if ($quote instanceof SendUpdateLog && !$isSendUpdateEligibleForOCR) {
-            LoggerService::info(self::class."::populateDocumentData - Send Update Log found but not eligible for OCR, skipping document data population", [
+        if ($quote instanceof SendUpdateLog && ! $isSendUpdateEligibleForOCR) {
+            LoggerService::info(self::class.'::populateDocumentData - Send Update Log found but not eligible for OCR, skipping document data population', [
                 'quote_uuid' => $quote->uuid,
                 'quote_type' => ucfirst(request('quote_type')),
                 'document_type' => $documentType->code,
@@ -453,9 +452,9 @@ class OCRService
         }
 
         $quoteType = $this->determineQuoteType($quoteTypeParam);
-        
+
         // If quote type is not available from request and this is a Send Update Log, get it from the model
-        if (!$quoteType && $quote instanceof SendUpdateLog) {
+        if (! $quoteType && $quote instanceof SendUpdateLog) {
             $quoteType = $this->getCorrectQuoteTypeForOCR($quote);
             LoggerService::info('PopulateDocumentData - Quote type derived from Send Update Log', [
                 'quote_type_id' => $quote->quote_type_id,
@@ -464,7 +463,7 @@ class OCRService
                 'is_group_medical_override' => $this->isGroupMedicalBusiness($quote),
             ]);
         }
-        
+
         // For regular Business quotes, check if they are Group Medical and adjust quote type accordingly
         if ($quoteType === QuoteTypes::BUSINESS && $this->isGroupMedicalBusiness($quote)) {
             $quoteType = QuoteTypes::GROUP_MEDICAL;
@@ -475,19 +474,20 @@ class OCRService
                 'quote_model' => get_class($quote),
             ]);
         }
-        
+
         // Final check if we still couldn't determine the quote type
         if (! $quoteType) {
             LoggerService::info('OCR Dispatch - Unable to determine quote type after all attempts - Quote UUID: '.$quote->uuid);
+
             return;
         }
-        
+
         LoggerService::info('PopulateDocumentData - About to dispatch OCR job', [
             'parsed_quote_type' => $quoteType?->value,
             'quote_uuid' => $quote->uuid ?? 'N/A',
             'quote_code' => $quote->code ?? 'N/A',
             'is_send_update_eligible_for_ocr' => $isSendUpdateEligibleForOCR,
-            'will_dispatch_ocr_job' => !is_null($quoteType) && !is_null($quote) && !is_null($filePathAzure),
+            'will_dispatch_ocr_job' => ! is_null($quoteType) && ! is_null($quote) && ! is_null($filePathAzure),
             'document_type' => $documentType->code,
             'user_id' => Auth::user()->id ?? 'Not authenticated',
         ]);
@@ -539,11 +539,11 @@ class OCRService
         if ($this->isGroupMedicalBusiness($quote)) {
             return QuoteTypes::GROUP_MEDICAL;
         }
-        
+
         // For all other cases, use the normal mapping
         return QuoteTypes::getName($quote->quote_type_id);
     }
-    
+
     public function isGroupMedicalBusiness($quote)
     {
         try {
@@ -551,13 +551,14 @@ class OCRService
             if ($quote instanceof BusinessQuote) {
                 return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
             }
-            
+
             // Handle SendUpdateLog instances
             if ($quote instanceof SendUpdateLog && $quote->quote_type_id == QuoteTypes::getId(QuoteTypes::BUSINESS)) {
                 $actualQuote = BusinessQuote::where('uuid', $quote->quote_uuid)->first();
+
                 return $actualQuote && $actualQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
             }
-            
+
             return false;
         } catch (\Exception $e) {
             LoggerService::error('Error checking Group Medical business type', [
@@ -566,6 +567,7 @@ class OCRService
                 'quote_id' => $quote->id ?? 'N/A',
                 'quote_uuid' => $quote->uuid ?? 'N/A',
             ]);
+
             return false;
         }
     }

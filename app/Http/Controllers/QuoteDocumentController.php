@@ -286,7 +286,7 @@ class QuoteDocumentController extends Controller
             'doc_id' => 'required|integer',
             'doc_uuid' => 'required|string',
         ]);
-        
+
         $document = QuoteDocument::where('id', $request->doc_id)->where('doc_uuid', $request->doc_uuid)->first();
         if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
@@ -294,7 +294,7 @@ class QuoteDocumentController extends Controller
 
         // Update Accuracy Matrix cache before deleting document
         $this->updateAccuracyMatrixOnDeletion($document);
-        
+
         $document->delete();
 
         return redirect()->back()->with('message', 'Document deleted successfully');
@@ -419,24 +419,23 @@ class QuoteDocumentController extends Controller
 
         try {
             $accuracyMatrixService = app(AccuracyMatrixCacheService::class);
-            
+
             // Get the quote using the correct relationship and properties
             $quote = $document->quoteDocumentable;
             $documentTypeCode = $document->document_type_code;
-            
-            if (!$documentTypeCode || !$quote) {
+
+            if (! $documentTypeCode || ! $quote) {
                 return;
             }
 
-
             $quoteTypeEnum = $this->mapQuoteTypeFromModel($quote);
-            if (!$quoteTypeEnum) {
+            if (! $quoteTypeEnum) {
                 return;
             }
 
             // ONLY process Home and Group Medical quotes for Accuracy Matrix
             $allowedQuoteTypes = [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL];
-            if (!in_array($quoteTypeEnum, $allowedQuoteTypes)) {
+            if (! in_array($quoteTypeEnum, $allowedQuoteTypes)) {
                 return;
             }
 
@@ -447,12 +446,12 @@ class QuoteDocumentController extends Controller
                 'CPS' => OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE, // Policy Schedule
                 default => null, // Only these 3 documents matter for Accuracy Matrix
             };
-            
-            if (!$ocrDocumentType) {
+
+            if (! $ocrDocumentType) {
                 return;
             }
 
-            if (!$accuracyMatrixService->isEligibleQuote($quote, $quoteTypeEnum)) {
+            if (! $accuracyMatrixService->isEligibleQuote($quote, $quoteTypeEnum)) {
                 return;
             }
 
@@ -470,7 +469,7 @@ class QuoteDocumentController extends Controller
     private function mapQuoteTypeFromModel($quote): ?QuoteTypes
     {
         $className = class_basename($quote);
-        
+
         return match ($className) {
             'PersonalQuote' => QuoteTypes::HOME,         // Home quotes are now PersonalQuote
             'BusinessQuote' => QuoteTypes::GROUP_MEDICAL, // Group Medical quotes use BusinessQuote

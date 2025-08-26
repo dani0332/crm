@@ -14,13 +14,13 @@ use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use Exception;
-
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class EmiratesIdDataProcessor
 {
     use OcrUtils;
+
     private EmiratesIdExtractor $emiratesIdExtractor;
     private array $extractedData = [];
 
