@@ -41,11 +41,11 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
-        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isRequestedOrPaymentAuthorizedOrDeclined()) {
+        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isAdvisorRequestedOrAuthorizedOrRequestedLinkOrDeclined()) {
             if ($isSICFlowEnabled) {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized or declined or failed, continuing assignment');
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized or link requested or declined or failed, continuing assignment');
             } else {
-                LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized or declined or failed, continuing assignment');
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized or link requested or declined or failed, continuing assignment');
             }
             $continueAssignment = true;
         } elseif ($isSICFlowDisabled && ! $isAIG && ! $lead->isRenewalUpload()) {
