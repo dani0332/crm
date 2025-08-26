@@ -18,6 +18,9 @@ use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\EmailServices\CarEmailService;
+use App\Enums\CarRegistrationType;
+use App\Enums\LeadSourceEnum;
 
 class CarQuoteObserver
 {
@@ -64,6 +67,10 @@ class CarQuoteObserver
         }
 
         if (isset($dirty['quote_status_id'])) {
+            if ($lead->quote_status_id === QuoteStatusEnum::Quoted && $lead->registration_type === CarRegistrationType::COMPANY && $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+                app(CarEmailService::class)->sendFollowUpEmailForCQF($lead);
+
+            }
             if ($lead->quote_status_id === QuoteStatusEnum::TransactionApproved) {
                 CarQuote::withoutEvents(function () use ($lead) {
                     $lead->update([
