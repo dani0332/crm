@@ -31,8 +31,7 @@ class BorLog extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'email_sent' => 'boolean',
-        'policy_expiry' => 'date',
+        'email_sent' => 'boolean'
     ];
 
     /**
@@ -84,6 +83,9 @@ class BorLog extends Model
      */
     public function getPolicyExpiryAttribute($table)
     {
+        if (empty($table) || $table == null) {
+            return null;
+        }
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT_ONLY'));
     }
 
