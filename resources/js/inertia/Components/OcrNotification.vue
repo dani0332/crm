@@ -24,7 +24,6 @@ const listen = () => {
     // Only show notifications to the user who uploaded the document, same quote, and only on allowed pages
     if (
       e.data.uuid === page.props?.quote?.uuid &&
-      currentUrl.includes('/quotes/car/') &&
       isCurrentUser &&
       isAllowedPage
     ) {
