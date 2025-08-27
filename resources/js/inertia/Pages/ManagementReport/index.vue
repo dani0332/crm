@@ -15,6 +15,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const notification = useToast();
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : null;
@@ -107,6 +108,7 @@ const filterkeys = () => {
 const loaders = reactive({
   table: false,
   subTeams: false,
+  export: false,
 });
 
 const selectedReport = computed(() => {
@@ -181,6 +183,7 @@ const transactionTypes = ref(props.filterOptions?.transactionTypes);
 
 const groupBy = reactive([
   { label: 'Advisor', value: 'advisor' },
+  { label: 'OE/AE', value: 'support_user' },
   { label: 'Policy Issuer', value: 'policy_issuer' },
   { label: 'Customer Group', value: 'customer_group' },
   { label: 'Insurer', value: 'insurer' },
@@ -283,13 +286,50 @@ const onSubmit = isValid => {
   });
 };
 
-const onDataExport = flag => {
+const onDataExport = async (flag, exportType = 'download') => {
   filterkeys();
   filters.export = flag;
   filters.page = 1;
   const data = useGenerateQueryString(filters);
   const url = route('management-report-export');
-  window.open(url + '?' + useObjToUrl(data));
+
+  // Add exportType to URL parameters
+  const urlParams = useObjToUrl(data);
+  const separator = urlParams ? '&' : '';
+  const exportTypeParam = `exportType=${exportType}`;
+  const finalUrl = `${url}?${urlParams}${separator}${exportTypeParam}`;
+
+  if (exportType === 'email') {
+    // For email exports, show success message instead of opening window
+    loaders.export = true;
+    const exportResponse = await axios
+      .get(finalUrl)
+      .then(resp => {
+
+        console.log('resp.data.message', resp.data.message);
+        if (resp.data.message) {
+          notification.success({
+            title: resp.data.message,
+            position: 'top',
+          });
+        }
+        loaders.export = false;
+      })
+      .catch(err => {
+        notification.error({
+          title: err.response?.data?.message || 'Unable to start an export',
+          position: 'top',
+        });
+        setTimeout(() => {
+          loaders.export = false;
+        }, 1000);
+        throw err;
+      });
+
+  } else {
+    // For direct download, open in new window
+    window.open(finalUrl);
+  }
 };
 
 function onReset() {
@@ -411,8 +451,7 @@ watch(
         <DatePicker
           v-model="filters.policyBookDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -431,8 +470,7 @@ watch(
         <DatePicker
           v-model="filters.paymentDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -451,8 +489,7 @@ watch(
         <DatePicker
           v-model="filters.paymentDueDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -471,8 +508,7 @@ watch(
         <DatePicker
           v-model="filters.policyExpiredDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -759,9 +795,19 @@ watch(
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport(1)"
-        :disabled="loaders.table"
+        :disabled="loaders.export"
       >
         Export to Excel
+      </x-button>
+      <x-button
+        v-if="can(permissionsEnum.EXTRACT_REPORT)"
+        size="sm"
+        color="#48bb78"
+        @click.prevent="onDataExport(1, 'email')"
+        :disabled="loaders.export"
+        :loading="loaders.export"
+      >
+        Export via email
       </x-button>
       <x-button
         size="sm"

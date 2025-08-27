@@ -18,6 +18,7 @@ use App\Models\Team;
 use App\Services\ApplicationStorageService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -98,6 +99,13 @@ class ManagementReport
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
     {
+        if (! Auth::check()) {
+            $user = $request['user'] ?? null;
+            unset($request['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+
+        }
         $this->applyDateFilters($query, $request, $endorsementsQuery);
 
         if (isset($request['transactionType'])) {

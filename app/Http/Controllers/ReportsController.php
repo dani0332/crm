@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\UserManager;
 use App\Services\ConversionAsAtReportService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\Reports\AdvisorConversionReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
@@ -499,6 +500,7 @@ class ReportsController extends Controller
         $reportData = $conversionAsAtReportService->getReportData($request);
         $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
         $totalNetConversion = $conversionAsAtReportService->calculateTotalNetConversion($reportData);
+
         // this is explicitly pdf data, if I set name to 'data' then may be some dev(s) may get confused about it
         // that what this data may refers to, so to avoid confusion I am specifying it as pdfData.
         // Thanks
@@ -522,6 +524,28 @@ class ReportsController extends Controller
         $name = 'InsuranceMarket.ae™ Conversion As At Report - '.Carbon::now()->format($dateTimeFormat).'.pdf';
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $name]);
+    }
+
+    /**
+     * export method for conversion-as-at reports.
+     *
+     * @return void
+     */
+    public function exportConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
+    {
+        // Create the export class
+        $exportClass = new \App\Exports\Reports\ConversionAsAtReportExport($conversionAsAtReportService, $request->all());
+
+        // Check if export type is email
+        if ($request->exportType == 'email') {
+            LoggerService::info('Email CSV');
+            $request['exportTitle'] = 'Conversion As At Report';
+
+            return $exportClass->emailCSV('Conversion As At Report', $request->all());
+        }
+
+        // Default to CSV download using the trait's download method
+        return $exportClass->download('Conversion As At Report');
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
@@ -582,8 +606,27 @@ class ReportsController extends Controller
     public function exportManagementReport(Request $request)
     {
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+
+        // Get the report service instance
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
 
+        // Use the factory to create the appropriate export class
+        $exportClass = ManagementReportServiceFactory::createExport($reportCategory, $request->all());
+
+        if ($exportClass) {
+            // Check if export type is email
+            if ($request->exportType == 'email') {
+                LoggerService::info('Email CSV');
+                $request['exportTitle'] = 'Management Report';
+
+                return $exportClass->emailCSV($reportCategory, $request->all());
+            }
+
+            // Default to CSV download using the trait's download method
+            return $exportClass->download($reportCategory);
+        }
+
+        // Fallback to the report instance if no export class is defined for the category
         return $reportInstance->getReportData($request);
     }
 

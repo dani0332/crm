@@ -18,6 +18,7 @@ use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -42,7 +43,7 @@ class AutomateActivitiesCommand extends Command
      */
     public function handle()
     {
-        info('------------------- Automate Activities Command Started At: '.now().' -------------------');
+        LoggerService::info('------------------- Automate Activities Command Started At: '.now().' -------------------');
 
         $quoteTypeDetails = [
             CarQuote::class => [
@@ -99,7 +100,7 @@ class AutomateActivitiesCommand extends Command
         ];
 
         foreach ($quoteTypeDetails as $quoteClass => $quoteTypeDetail) {
-            info('------------------- ActivitiesAutomate - Updating Cold Activities for : '.$quoteClass.' -------------------');
+            LoggerService::info('------------------- ActivitiesAutomate - Updating Cold Activities for : '.$quoteClass.' -------------------');
             $coldActivitiesCount = 0;
             Activities::where(function ($query) use ($quoteTypeDetail) {
                 if (is_array($quoteTypeDetail['quote_type_id'])) {
@@ -131,10 +132,10 @@ class AutomateActivitiesCommand extends Command
                     }
                 });
 
-            info('------------------- ActivitiesAutomate - Updated Cold Activities for : '.$quoteClass.' - count: '.$coldActivitiesCount.' -------------------');
+            LoggerService::info('------------------- ActivitiesAutomate - Updated Cold Activities for : '.$quoteClass.' - count: '.$coldActivitiesCount.' -------------------');
 
             if ($quoteTypeDetail['eligible_for_automate'] == true) {
-                info('------------------- ActivitiesAutomate - Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
+                LoggerService::info('------------------- ActivitiesAutomate - Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
                 $followupCount = 0;
                 $quoteClass::whereHas('activities', function ($activityQuery) {
                     $activityQuery->where('due_date', '<', Carbon::now());
@@ -235,9 +236,9 @@ class AutomateActivitiesCommand extends Command
                             Activities::insert($activitiesToCreate);
                         }
                     });
-                info('------------------- Follow-up Activities created for : '.$quoteClass.' - count: '.$followupCount.' -------------------');
+                LoggerService::info('------------------- Follow-up Activities created for : '.$quoteClass.' - count: '.$followupCount.' -------------------');
             }
         }
-        info('------------------- Automate Activities Command Finished At: '.now().' -------------------');
+        LoggerService::info('------------------- Automate Activities Command Finished At: '.now().' -------------------');
     }
 }

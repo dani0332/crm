@@ -166,7 +166,7 @@ class ManualCommissionUpdateService extends BaseService
         $failedRefIds = array_filter($results, fn ($r) => ! $r['success']);
         $failedRefIds = array_keys($failedRefIds);
 
-        LoggerService::info('__class: '.self::class.' fn: '.__FUNCTION__.' Commission processing completed', context: [
+        LoggerService::info('__class: '.self::class.' fn: '.__FUNCTION__.' Commission processing completed', extra: [
             'total_processed' => count($carQuoteRefIds),
             'successful' => count($successfullRefIds),
             'failed' => count($failedRefIds),
