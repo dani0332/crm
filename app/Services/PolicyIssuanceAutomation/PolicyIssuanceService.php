@@ -137,11 +137,6 @@ class PolicyIssuanceService
             return $response;
         }
 
-        LoggerService::info('fn:'.__FUNCTION__.' testing response', extra: [
-            'response' => json_encode($response),
-            'insuranceProviderAutomation' => json_encode($insuranceProviderAutomation->getStepsLockingStatus($quote)),
-        ]);
-
         return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
     }
 
@@ -223,9 +218,6 @@ class PolicyIssuanceService
             if (! $policyIssuance->message) {
                 $updatePolicyIssuanceData['message'] = json_encode(['error' => 'Quote not found']);
             }
-            LoggerService::info('fn:'.__FUNCTION__.' testing updatePolicyIssuanceData: ', extra: [
-                'updatePolicyIssuanceData' => json_encode($updatePolicyIssuanceData),
-            ]);
             $policyIssuance->update($updatePolicyIssuanceData);
 
             return;
@@ -237,9 +229,6 @@ class PolicyIssuanceService
         if (! $policyIssuance->message) {
             $updatePolicyIssuanceData['message'] = json_encode(['error' => 'Policy issuance process stuck for more than 15 minutes']);
         }
-        LoggerService::info('fn:'.__FUNCTION__.' testing updatePolicyIssuanceData: ', extra: [
-            'updatePolicyIssuanceData' => json_encode($updatePolicyIssuanceData),
-        ]);
         $policyIssuance->update($updatePolicyIssuanceData);
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Policy issuance marked as failed for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
@@ -305,10 +294,6 @@ class PolicyIssuanceService
         $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
         $insurerApiStatus = $quote?->insurer_api_status;
         $apiIssuanceStatus = $quote?->api_issuance_status;
-        LoggerService::info('fn:'.__FUNCTION__.' testing insurer_api_status: api_issuance_status: ', extra: [
-            'insurerApiStatus' => json_encode($insurerApiStatus),
-            'apiIssuanceStatus' => json_encode($apiIssuanceStatus),
-        ]);
 
         $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Existing Insurer API Status : '.$isInsurerApiStatusAlreadyFailed);
@@ -353,9 +338,6 @@ class PolicyIssuanceService
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$newInsurerApiStatus);
         if ($newInsurerApiStatus) {
-            LoggerService::info('fn:'.__FUNCTION__.' testing insurer_api_status_id: ', extra: [
-                'newInsurerApiStatus' => $newInsurerApiStatus,
-            ]);
             $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
         }
     }
@@ -364,9 +346,6 @@ class PolicyIssuanceService
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$newApiIssuanceStatus);
         if ($newApiIssuanceStatus) {
-            LoggerService::info('fn:'.__FUNCTION__.' testing api_issuance_status_id: ', extra: [
-                'newApiIssuanceStatus' => $newApiIssuanceStatus,
-            ]);
             $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
         }
     }
