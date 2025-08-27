@@ -34,9 +34,12 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     protected $renewalsCounts;
     protected $newBusinessTPC;
     protected $renewalsTPC;
+    protected $requestParams;
+    protected $quotesData;
 
-    public function __construct()
+    public function __construct($requestParams = [])
     {
+        $this->requestParams = $requestParams;
         $this->initializeBoldHeadings();
         $this->processData();
     }
@@ -65,7 +68,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     private function fetchData()
     {
         return app(CarQuoteService::class)
-            ->exportPUAUpdates()
+            ->exportPUAUpdates($this->requestParams)
             ->select('cqr.source', 'cqr.payment_status_id', 'cqr.premium_captured')
             ->get();
     }
@@ -118,7 +121,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
 
     private function getQuotesData()
     {
-        return app(CarQuoteService::class)->exportPUAUpdates()->select(
+        return app(CarQuoteService::class)->exportPUAUpdates($this->requestParams)->select(
             'cqr.code as RefId',
             'cqr.source as source',
             'cmk.text as CarMake',
