@@ -92,6 +92,7 @@ class CsvExportService
                 LoggerService::info('Using custom chunked processing for export');
                 $totalRecords = $exporter->processChunkedQuery($query, $requestParams, $stream);
             } else {
+                LoggerService::info('Using default chunked processing for export');
                 // Default chunked processing
                 $query->chunk($chunkSize, function ($records) use ($stream, $exporter, &$totalRecords, $flushInterval) {
                     $chunkBuffer = [];
