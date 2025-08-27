@@ -279,9 +279,6 @@ class BikeQuoteRepository extends BaseRepository
 
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
-        // Add debug logging
-        LoggerService::sql('BikeQuoteRepository Grid Data', $query);
-
         return $query;
     }
 

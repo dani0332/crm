@@ -457,21 +457,18 @@ class BusinessQuoteService extends BaseService
         }
 
         // Apply authorize_date filter
-        if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+        if (!empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
             $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
             $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
             $this->query->whereBetween('py.authorized_at', [$startDate, $endDate]);
         }
 
         // Apply captured_date filter
-        if (! empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+        if (!empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
             $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
             $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
             $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
-
-        // Add debug logging
-        LoggerService::sql('BusinessQuoteService Grid Data', $this->query);
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
 

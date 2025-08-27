@@ -271,9 +271,6 @@ class AmtController extends Controller
             $data->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
 
-        // Add debug logging
-        LoggerService::sql('AmtController Grid Data', $data);
-
         $this->adjustQueryByDateFilters($data, 'bqr');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';

@@ -103,9 +103,9 @@ class HomePUAQuoteExport implements FromCollection, WithHeadings, WithMapping, W
                 $quote->quoteStatus->text ?? '',
                 $quote->paymentstatus,
                 $quote->source,
-                $quote->homeQuote->lookupPossessionType->text ?? 'N/A',
-                $quote->homeQuote->lookupAccommodationType->text ?? 'N/A',
-                $quote->advisor->email ?? '',
+                $quote->homeQuote?->lookupPossessionType?->text ?? 'N/A',
+                $quote->homeQuote?->lookupAccommodationType?->text ?? 'N/A',
+                $quote->advisor?->email ?? '',
             ];
         } elseif (isset($quote->Team)) {
             return [

@@ -117,9 +117,9 @@ class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
                 $quote->quoteStatus->text ?? '',
                 $quote->paymentstatus,
                 $quote->source,
-                $quote->homeQuote->lookupPossessionType->text ?? 'N/A',
-                $quote->homeQuote->lookupAccommodationType->text ?? 'N/A',
-                $quote->advisor->email ?? '',
+                $quote->homeQuote?->lookupPossessionType?->text ?? 'N/A',
+                $quote->homeQuote?->lookupAccommodationType?->text ?? 'N/A',
+                $quote->advisor?->email ?? '',
             ];
         } elseif (isset($quote->NonPUA)) {
             return [

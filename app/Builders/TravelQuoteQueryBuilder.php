@@ -5,10 +5,8 @@ namespace App\Builders;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\TravelQuote;
-use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {

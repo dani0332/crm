@@ -263,9 +263,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
     {
         $query = $this->buildGrid();
         $this->applyFilters($query, $requestParams);
-
-        LoggerService::sql('HealthQuoteQueryBuilder Grid Data', $query);
-
         return $query;
     }
 }
