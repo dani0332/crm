@@ -2,9 +2,13 @@
 const props = defineProps({
   claim: Object,
   dropdowns: Object,
+  expanded: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(['update']);
+import { formattedDateDmyWithTime } from '@/inertia/Composables/utilities.js';  
 
 const page = usePage();
 const claimsEnum = page.props.claimsEnum;
@@ -121,27 +125,7 @@ const isCarLOB = computed(() => {
 const isHealthLOB = computed(() => {
   return page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
 });
-
-function formatDate(date) {
-  if (!date) return '-';
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-function formatDateTime(date) {
-  console.log('formatDateTime -> date -> ', date);
-  if (!date) return '-';
-  return new Date(date).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+  
 
 function formatCurrency(amount) {
   if (!amount) return '-';
@@ -384,41 +368,6 @@ const validateForm = () => {
   return Object.keys(allErrors).length === 0;
 };
 
-// Helper function to format date for backend
-const formatDateForBackend = dateValue => {
-  if (!dateValue) return null;
-
-  let date;
-  if (dateValue instanceof Date) {
-    date = dateValue;
-  } else if (typeof dateValue === 'string') {
-    // Try parsing the string
-    date = new Date(dateValue);
-
-    // If invalid, try parsing DD/MM/YYYY format
-    if (isNaN(date.getTime()) && dateValue.includes('/')) {
-      const parts = dateValue.split('/');
-      if (parts.length === 3) {
-        // Assuming DD/MM/YYYY format
-        const day = parseInt(parts[0]);
-        const month = parseInt(parts[1]) - 1; // Month is 0-indexed
-        const year = parseInt(parts[2]);
-        date = new Date(year, month, day);
-      }
-    }
-  } else {
-    date = new Date(dateValue);
-  }
-
-  if (isNaN(date.getTime())) {
-    console.error('Invalid date provided to formatDateForBackend:', dateValue);
-    return null;
-  }
-
-  // Return in YYYY-MM-DD format
-  return date.toISOString().split('T')[0];
-};
-
 // Data preparation function that mirrors PHP prepareForValidation
 const prepareFormData = data => {
   return {
@@ -434,9 +383,7 @@ const prepareFormData = data => {
       ? data.claim_decline_reason.trim()
       : null,
     // Format incident date
-    incident_date: data.incident_date
-      ? formatDateForBackend(data.incident_date)
-      : null,
+    incident_date: data.incident_date ? data.incident_date.split('T')[0] : null,
   };
 };
 
@@ -727,13 +674,15 @@ watch(
                     placeholder="Select Incident Date"
                     :error="claimForm.errors.incident_date"
                     :clearable="false"
+                    type="date"
+                    max-date="today"
                     :rules="[validationRules.incidentDate]"
                   />
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ formatDateTime(claim.created_at) }}</dd>
+                <dd>{{ formattedDateDmyWithTime(claim.created_at)  }}</dd>
               </div>
             </dl>
             <x-divider class="mt-4" />

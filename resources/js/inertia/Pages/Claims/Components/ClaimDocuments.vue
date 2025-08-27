@@ -6,9 +6,13 @@ const props = defineProps({
   documents: Object,
   documentTypes: Object,
   storageUrl: String,
+  expanded: {
+    type: Boolean,
+    default: false,
+    required: false,
+  },
 });
-
-const emit = defineEmits(['update', 'documentUploaded', 'documentDeleted']);
+ 
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -287,7 +291,7 @@ const downloadAllDocuments = async () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <Collapsible :expanded="true">
+    <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">

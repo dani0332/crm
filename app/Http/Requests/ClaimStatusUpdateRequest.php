@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\ClaimsEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ClaimStatusUpdateRequest extends FormRequest
@@ -25,7 +26,7 @@ class ClaimStatusUpdateRequest extends FormRequest
             'claim_status_id' => [
                 'required',
                 'integer',
-                'exists:claim_statuses,id,is_active,1,parent,1',
+                'exists:claim_statuses,id,is_active,1,status_type,' . ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value,
             ],
             'notes' => [
                 'nullable',

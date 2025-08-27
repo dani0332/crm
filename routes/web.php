@@ -250,6 +250,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('claims/{claim:uuid}/documents/download-all', [ClaimsController::class, 'downloadAllDocuments'])->name('claims.documents.download-all');
         Route::get('claims/{claim:uuid}/lead-history', [ClaimsController::class, 'getClaimLeadHistory'])->name('claims.lead-history');
         Route::get('claims/{claim:uuid}/sub-status-logs', [ClaimsController::class, 'getClaimSubStatusLogs'])->name('claims.sub-status-logs');
+        Route::post('claims/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('claims.update.complaint-status');
+        Route::post('claims/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('claims.update.next-follow-up');
+        Route::get('claims/{claim:uuid}/complaint-status-logs', [ClaimsController::class, 'getComplaintStatusLogs'])->name('claims.complaint-status-logs');
+        Route::get('claims/{claim:uuid}/next-follow-up-logs', [ClaimsController::class, 'getNextFollowUpLogs'])->name('claims.next-follow-up-logs');
         Route::post('claims/{claim:uuid}/make-additional-contact-primary', [ClaimsController::class, 'makeAdditionalContactPrimary'])->name('claims.make-additional-contact-primary');
 
 

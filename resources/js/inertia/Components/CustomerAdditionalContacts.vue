@@ -25,6 +25,11 @@ const props = defineProps({
     required: false,
     default: true,
   },
+  expanded: {
+    type: Boolean,
+    default: false,
+    required: false,
+  },
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -222,14 +227,11 @@ const additionalContactDeleteConfirmed = () => {
 
 const readOnlyMode = reactive({
   isDisable: true,
-});
-onMounted(() => {
-  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-});
+}); 
 </script>
 
 <template>
-  <x-accordion show-icon class="p-4 rounded shadow mb-6 bg-white">
+  <x-accordion show-icon class="p-4 rounded shadow mb-6 bg-white" :expanded="expanded">
     <x-accordion-item>
       <h3 class="font-semibold text-primary-800 text-lg">
         Customer Additional Contacts

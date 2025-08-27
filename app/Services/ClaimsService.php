@@ -64,6 +64,11 @@ class ClaimsService extends BaseService
             'claim_sub_status_id',
             'claim_type_id',
             'claim_request_type_id',
+            'complaint_status_id',
+            'complaint_datetime',
+            'complaint_notes',
+            'next_followup_datetime',
+            'next_followup_notes',
             'whatsapp_consent',
             'approved_repair_amount',
             'approved_total_loss_amount',
@@ -584,11 +589,11 @@ class ClaimsService extends BaseService
     }
 
     /**
-     * Get claim sub-statuses from lookup
+     * Get claim sub-statuses from ClaimStatus
      */
     public function getClaimSubStatuses(): array
     {
-        return ClaimStatus::where('parent', false)
+        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
             ->where('is_active', 1)
             ->select('id', 'text', 'quote_type_id')
             ->orderBy('sort_order')
@@ -597,11 +602,24 @@ class ClaimsService extends BaseService
     }
 
     /**
-     * Get claim statuses from lookup
+     * Get claim complaint statuses from ClaimStatus
+     */
+    public function getClaimComplaintStatuses(): array
+    {
+        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)
+            ->where('is_active', 1)
+            ->select('id', 'text')
+            ->orderBy('sort_order')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Get claim statuses from ClaimStatus
      */
     public function getClaimStatuses(): array
     {
-        return ClaimStatus::where('parent', true)
+        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
             ->where('is_active', 1)
             ->select('id', 'text', 'quote_type_id')
             ->orderBy('sort_order')
@@ -680,11 +698,11 @@ class ClaimsService extends BaseService
                 $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION;
             }
             // Find the "Claim initiated" status for the specific quote type
-            $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('parent', 0)->first();
+            $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->first();
 
             // If no specific status found for the quote type, try to find a general one
             if (! $claimInitiatedStatus) {
-                $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->whereNull('quote_type_id')->where('is_active', 1)->where('parent', 0)->first();
+                $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->whereNull('quote_type_id')->where('is_active', 1)->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->first();
             }
 
             if ($claimInitiatedStatus) {
@@ -863,7 +881,7 @@ class ClaimsService extends BaseService
         $subStatus = ClaimStatus::find($request->claim_sub_status_id);
         $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
         if ($targetStatus) {
-            $updateClaimData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('parent', true)->where('is_active', 1)->first()?->id;
+            $updateClaimData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)->where('is_active', 1)->first()?->id;
         }
 
         $claimRequest->update($updateClaimData);
@@ -1329,14 +1347,14 @@ class ClaimsService extends BaseService
                 ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
                 ->join('users as u', 'ca.created_by_id', '=', 'u.id')
                 ->select(
-                    DB::raw('DATE_FORMAT(ca.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
+                    'ca.created_at as ModifiedAt',
                     'ca.comment as Notes',
                     'u.name as ModifiedBy',
                     'cs.text as NewStatus',
                     'ca.created_at as created_at' // Include for frontend sorting
                 )
                 ->where('ca.claim_request_id', $claimId)
-                ->where('cs.parent', true) // Only get parent statuses (main claim statuses)
+                ->where('cs.status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value) // Only get status_type statuses (main claim statuses)
                 ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
                 ->get();
 
@@ -1354,7 +1372,7 @@ class ClaimsService extends BaseService
                 'claim_id' => $claimId,
                 'user_id' => auth()->id(),
             ]);
-
+            dd($e);
             throw $e;
         }
     }
@@ -1374,14 +1392,14 @@ class ClaimsService extends BaseService
                 ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
                 ->join('users as u', 'ca.created_by_id', '=', 'u.id')
                 ->select(
-                    DB::raw('DATE_FORMAT(ca.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
+                    'ca.created_at as ModifiedAt',
                     'u.name as ModifiedBy',
                     'cs.text as NewSubStatus',
                     'ca.comment as Notes',
                     'ca.created_at as created_at' // Include for frontend sorting
                 )
                 ->where('ca.claim_request_id', $claimId)
-                ->where('cs.parent', false) // Only get sub-statuses (not parent statuses)
+                ->where('cs.status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value) // Only get sub-statuses (not status_type statuses)
                 ->whereNotNull('ca.status_id')
                 ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
                 ->get();
@@ -1404,5 +1422,159 @@ class ClaimsService extends BaseService
             throw $e;
         }
     }
+
+    /**
+     * Update complaint status for a claim
+     *
+     * @param ClaimRequest $claim
+     * @param int|null $complaintStatusId
+     * @param string|null $complaintDatetime
+     * @param string|null $notes
+     * @return ClaimRequest
+     */
+    public function updateComplaintStatus(ClaimRequest $claim, ?int $complaintStatusId, ?string $complaintDatetime = null, ?string $notes = null): ClaimRequest
+    {
+        try {
+            // Update the claim with complaint status
+            $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
+ 
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status updated successfully', extra: [
+                'claim_id' => $claim->id,
+                'complaint_status_id' => $complaintStatusId,
+                'complaint_datetime' => $complaintDatetime,
+                'user_id' => auth()->id(),
+            ]);
+
+            return $claim->fresh();
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating complaint status', extra: [
+                'error' => $e->getMessage(),
+                'claim_id' => $claim->id,
+                'complaint_status_id' => $complaintStatusId,
+                'user_id' => auth()->id(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Update next follow-up for a claim
+     *
+     * @param ClaimRequest $claim
+     * @param string|null $nextFollowUpDatetime
+     * @param string|null $notes
+     * @return ClaimRequest
+     */
+    public function updateNextFollowUp(ClaimRequest $claim, ?string $nextFollowUpDatetime, ?string $notes = null): ClaimRequest
+    {
+        try {
+            // Update the claim with next follow-up
+            $claim->updateNextFollowUp($nextFollowUpDatetime, $notes);
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Next follow-up updated successfully', extra: [
+                'claim_id' => $claim->id,
+                'next_followup_datetime' => $nextFollowUpDatetime,
+                'user_id' => auth()->id(),
+            ]);
+
+            return $claim->fresh();
+
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating next follow-up', extra: [
+                'error' => $e->getMessage(),
+                'claim_id' => $claim->id,
+                'next_follow_up_datetime' => $nextFollowUpDatetime,
+                'user_id' => auth()->id(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Get complaint status logs for a claim from audit trail
+     *
+     * @param int $claimId
+     * @return array
+     */
+    public function getComplaintStatusLogs(int $claimId) 
+    {
+        $audits = DB::table('audits as a')
+                ->select(
+                'a.created_at as logged_at',
+                DB::raw('(SELECT name from users where id = a.user_id) as logged_by'),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_status_id')) AS old_complaint_status_id"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_status_id')) AS new_complaint_status_id"),
+                DB::raw("(SELECT text FROM claim_statuses WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_status_id'))) AS old_complaint_status"),
+                DB::raw("(SELECT text FROM claim_statuses WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_status_id'))) AS new_complaint_status"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_datetime')) AS old_complaint_datetime"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_datetime')) AS new_complaint_datetime"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_notes')) AS old_complaint_notes"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_notes')) AS new_complaint_notes")
+            )
+            ->where(function ($query) {
+                // Only get records where complaint fields were changed
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_datetime')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_notes')"));
+            })
+            ->where(function ($query) use ($claimId) {
+                $query->where('a.auditable_type', 'App\Models\\ClaimRequest')
+                    ->where('a.auditable_id', $claimId);
+            })
+            ->orderBy('a.created_at', 'DESC')
+            ->get()
+            ->filter(function ($item) {
+                // Filter out records where no complaint fields changed
+                return !is_null($item->new_complaint_status_id) || 
+                       !is_null($item->new_complaint_datetime) || 
+                       !is_null($item->new_complaint_notes);
+            })
+            ->values()
+                ->toArray();
+
+        return $audits;
+    }
+
+        /**
+     * Get next follow-up logs for a claim from audit trail
+     *
+     * @param int $claimId
+     * @return array
+     */
+    public function getNextFollowUpLogs(int $claimId)
+    {
+        $audits = DB::table('audits as a')
+                ->select(
+                DB::raw('(SELECT name from users where id = a.user_id) as logged_by'),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.next_followup_datetime')) AS old_follow_up_date"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.next_followup_datetime')) AS new_follow_up_date"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.next_followup_notes')) AS old_notes"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.next_followup_notes')) AS new_notes"),
+                'a.created_at as logged_at',
+            )
+            ->where(function ($query) {
+                // Only get records where next_followup_datetime or next_followup_notes were changed
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.next_followup_datetime')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.next_followup_notes')"));
+            })
+            ->where(function ($query) use ($claimId) {
+                $query->where('a.auditable_type', 'App\Models\\ClaimRequest')
+                    ->where('a.auditable_id', $claimId);
+            })
+                        ->orderBy('a.created_at', 'DESC')
+            ->get()  
+            ->filter(function ($item) {
+                // Filter out records where both datetime and notes are unchanged
+                return !is_null($item->new_follow_up_date) || !is_null($item->new_notes);
+            })
+            ->values()
+            ->toArray();
+
+        return $audits;
+    }
+
 
 }

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Http\Requests\ClaimComplaintStatusUpdateRequest;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
 use App\Http\Requests\ClaimDocumentRequest;
 use App\Http\Requests\ClaimMakeAdditionalContactPrimaryRequest;
+use App\Http\Requests\ClaimNextFollowUpUpdateRequest;
 use App\Http\Requests\ClaimSendNotificationRequest;
 use App\Http\Requests\ClaimStatusUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
@@ -181,6 +183,8 @@ class ClaimsController extends Controller
 
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
+            $complaintStatuses = $this->claimsService->getClaimComplaintStatuses();
+            //dd($complaintStatuses);
             $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
@@ -193,6 +197,7 @@ class ClaimsController extends Controller
                 'claim' => $claimRequest,
                 'documents' => $documents,
                 'dropdowns' => $dropdownData,
+                'complaintStatuses' => $complaintStatuses,
                 'additionalContacts' => $customerAdditionalContacts,
                 'requiredFieldsFilled' => $requiredFieldsFilled,
                 'claimDocumentTypes' => $claimDocumentTypes,
@@ -598,6 +603,139 @@ class ClaimsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load claim sub-status logs.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Update complaint status for a claim
+     */
+    public function updateComplaintStatus(ClaimComplaintStatusUpdateRequest $request, ClaimRequest $claim)
+    {
+        try {
+            $validated = $request->safe();
+
+            // Update complaint status using service
+            $this->claimsService->updateComplaintStatus(
+                $claim,
+                $validated->complaint_status_id,
+                $validated->complaint_datetime,
+                $validated->notes
+            );
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status updated successfully', extra: [
+                'claim_uuid' => $claim->uuid,
+                'complaint_status_id' => $validated->complaint_status_id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('claims.show', $claim->uuid)->with('success', 'Complaint status updated successfully.');
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating complaint status', extra: [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'request_data' => $request->safe(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('claims.show', $claim->uuid)->with('error', 'Failed to update complaint status.');
+        }
+    }
+
+    /**
+     * Update next follow-up for a claim
+     */
+    public function updateNextFollowUp(ClaimNextFollowUpUpdateRequest $request, ClaimRequest $claim)
+    {
+        try {
+            $validated = $request->safe();
+
+            // Update next follow-up using service
+            $this->claimsService->updateNextFollowUp(
+                $claim,
+                $validated->next_follow_up_date,
+                $validated->notes
+            );
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Next follow-up updated successfully', extra: [
+                'claim_uuid' => $claim->uuid,
+                'next_follow_up_date' => $validated->next_follow_up_date,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('claims.show', $claim->uuid)->with('success', "Next follow-up updated successfully.");
+
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating next follow-up', extra: [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'request_data' => $request->safe(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('claims.show', $claim->uuid)->with('error', "Failed to update next follow-up.");
+        }
+    }
+
+    /**
+     * Get complaint status logs for a claim
+     */
+    public function getComplaintStatusLogs(Request $request, ClaimRequest $claim): JsonResponse
+    {
+        try {
+            $complaintStatusLogs = $this->claimsService->getComplaintStatusLogs($claim->id);
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status logs retrieved successfully', extra: [
+                'claim_uuid' => $claim->uuid,
+                'total_records' => count($complaintStatusLogs),
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json($complaintStatusLogs);
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error retrieving complaint status logs', extra: [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load complaint status logs.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get next follow-up logs for a claim
+     */
+    public function getNextFollowUpLogs(Request $request, ClaimRequest $claim): JsonResponse
+    {
+        try {
+            $nextFollowUpLogs = $this->claimsService->getNextFollowUpLogs($claim->id);
+
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Next follow-up logs retrieved successfully', extra: [
+                'claim_uuid' => $claim->uuid,
+                'total_records' => count($nextFollowUpLogs),
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json($nextFollowUpLogs);
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error retrieving next follow-up logs', extra: [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claim->uuid,
+                'user_id' => Auth::id(),
+            ]);
+
+            dd($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load next follow-up logs.',
             ], 500);
         }
     }

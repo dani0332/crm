@@ -12,6 +12,10 @@ enum ClaimsEnum: string
 {
     use Enumable;
 
+    case CLAIM_STATUSES_STATUS_KEY = 'statuses';
+    case CLAIM_STATUSES_SUB_STATUS_KEY = 'sub-statuses';
+    case CLAIM_STATUSES_COMPLAINT_STATUS_KEY = 'complaint-statuses'; 
+
     case CLAIM_TYPES_KEY = 'claim-types';
     case CLAIM_REQUEST_TYPES_KEY = 'claim-request-types';
     case CLAIM_SERVICE_TYPES_KEY = 'claim-service-types';

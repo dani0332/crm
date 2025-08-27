@@ -21,36 +21,6 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  *
  * Represents a claim request in the new claim management system
  *
- * @property int $id
- * @property string $uuid
- * @property string $code
- * @property string|null $incident
- * @property \Carbon\Carbon|null $incident_date
- * @property string|null $claim_decline_reason
- * @property string $first_name
- * @property string $last_name
- * @property string $email
- * @property string $mobile_no
- * @property int|null $customer_id
- * @property string|null $source
- * @property int|null $manager_id
- * @property \Carbon\Carbon|null $manager_assigned_date
- * @property string|null $quote_uuid
- * @property int|null $quote_type_id
- * @property int|null $personal_quote_id
- * @property int|null $insurance_provider_id
- * @property string|null $policy_number
- * @property string|null $claim_number
- * @property int|null $claim_status_id
- * @property int|null $claim_sub_status_id
- * @property int|null $claim_type_id
- * @property int|null $claim_request_type_id
- * @property bool $whatsapp_consent
- * @property float|null $approved_repair_amount
- * @property float|null $approved_total_loss_amount
- * @property float|null $approved_cash_loss_amount
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
  */
 class ClaimRequest extends Model implements AuditableContract
 {
@@ -79,20 +49,21 @@ class ClaimRequest extends Model implements AuditableContract
         'claim_sub_status_id',
         'claim_type_id',
         'claim_request_type_id',
-        'whatsapp_consent',
+        'complaint_status_id',
+        'complaint_datetime',
+        'complaint_notes',
+        'next_followup_notes',
+        'next_followup_datetime',
         'approved_repair_amount',
         'approved_total_loss_amount',
         'approved_cash_loss_amount',
         'created_at',
         'updated_at',
-    ];
+    ]; 
+
     protected $casts = [
-        'incident_date' => 'datetime',
-        'manager_assigned_date' => 'datetime',
-        'whatsapp_consent' => 'boolean',
-        'approved_repair_amount' => 'decimal:2',
-        'approved_total_loss_amount' => 'decimal:2',
-        'approved_cash_loss_amount' => 'decimal:2',
+/*         'complaint_datetime' => 'datetime',
+        'next_followup_datetime' => 'datetime', */
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -191,6 +162,11 @@ class ClaimRequest extends Model implements AuditableContract
         return $this->belongsTo(Lookup::class, 'claim_request_type_id');
     }
 
+    public function complaintStatus(): BelongsTo
+    {
+        return $this->belongsTo(ClaimStatus::class, 'complaint_status_id');
+    }
+
     public function documents(): MorphMany
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
@@ -271,6 +247,21 @@ class ClaimRequest extends Model implements AuditableContract
     public function setWhatsAppConsent(bool $consent): void
     {
         $this->whatsapp_consent = $consent;
+        $this->save();
+    }
+
+    public function updateComplaintStatus(?int $complaintStatusId, ?string $complaintDatetime = null, ?string $notes = null): void
+    {
+        $this->complaint_status_id = $complaintStatusId;
+        $this->complaint_notes = $notes;
+        $this->complaint_datetime = $complaintDatetime;
+        $this->save();
+    }
+
+    public function updateNextFollowUp( $nextFollowupDatetime, $notes = null): void
+    {
+        $this->next_followup_datetime = $nextFollowupDatetime;
+        $this->next_followup_notes = $notes;
         $this->save();
     }
 

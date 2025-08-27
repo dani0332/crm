@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\ClaimsEnum;
 use App\Services\Logger\LoggerService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,7 @@ class ClaimSendNotificationRequest extends FormRequest
         return [
             'customer_message' => 'required|string',
             'ai_optimized_message' => 'required|string',
-            'claim_sub_status_id' => 'required|exists:claim_statuses,id',
+            'claim_sub_status_id' => 'required|exists:claim_statuses,id,status_type,' . ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value,
         ];
     }
 

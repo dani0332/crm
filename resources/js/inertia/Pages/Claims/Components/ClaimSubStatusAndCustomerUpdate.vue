@@ -6,9 +6,13 @@ const props = defineProps({
   claim: Object,
   dropdowns: Object,
   requiredFieldsFilled: Boolean,
+  expanded: {
+    type: Boolean,
+    default: false,
+    required: false,
+  },
 });
-
-const emit = defineEmits(['update']);
+ 
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -65,9 +69,7 @@ const updateClaimSubStatusAndCustomer = async (isValid) => {
       preserveScroll: true,
       preserveState: true,
     });
-
-    // Emit update event
-    emit('update', response.data);
+ 
 
   } catch (error) {
     console.error('Error sending notification:', error);
@@ -179,7 +181,7 @@ const optimizeMessage = async () => {
     v-if="canAny([permissionsEnum.CLAIMS_SUB_STATUS_UPDATE])"
     class="p-4 rounded shadow mb-6 bg-white"
   >
-    <Collapsible :expanded="true">
+      <Collapsible :expanded="expanded">
       <template #header>
         <div>
           <h3 class="font-semibold text-primary-800 text-lg">Claim Sub Status</h3>

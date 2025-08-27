@@ -538,6 +538,7 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
 };
 
 export const useformatDateTimeForPicker = dateTimeString => {
+
   if (!dateTimeString) return null;
 
   // Handle format: DD-MM-YYYY HH:mm:ss from server
@@ -688,4 +689,24 @@ export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
   );
 
   return createdDate >= cutoffDate;
+};
+
+
+export const formattedDateYmd = dateString => {
+  if (!dateString) return null;
+  return useDateFormat(dateString, 'YYYY-MM-DD').value;
+};
+
+export const formattedDateYmdWithTime = dateString => {
+  if (!dateString) return null;
+  return useDateFormat(dateString, 'YYYY-MM-DD HH:mm:ss').value;
+};
+export const formattedDateDmy = dateString => {
+  if (!dateString) return null;
+  return useDateFormat(dateString, 'DD-MM-YYYY').value;
+};
+
+export const formattedDateDmyWithTime = dateString => {
+  if (!dateString) return null;
+  return useDateFormat(dateString, 'DD-MM-YYYY HH:mm:ss').value;
 };

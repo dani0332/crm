@@ -1,21 +1,14 @@
 <script setup>
 const props = defineProps({
   claim: Object,
+  expanded: {
+    type: Boolean,
+    default: false,
+    required: false,
+  },
 });
-
-const emit = defineEmits(['update']);
-
-function formatDateTime(date) {
-  console.log('formatDateTime -> date -> ', date);
-  if (!date) return '-';
-  return new Date(date).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+ 
+ 
 </script>
 
 <template>

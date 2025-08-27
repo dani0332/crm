@@ -6,6 +6,10 @@ import ClaimDocuments from './Components/ClaimDocuments.vue';
 import CustomerDetails from './Components/CustomerDetails.vue';
 import ClaimLeadHistory from './Components/ClaimLeadHistory.vue';
 import ClaimSubStatusLogs from './Components/ClaimSubStatusLogs.vue';
+import NextFollowUpUpdate from './Components/NextFollowUpUpdate.vue';
+import NextFollowUpLogs from './Components/NextFollowUpLogs.vue';
+import ComplaintStatus from './Components/ComplaintStatus.vue';
+import ComplaintStatusLogs from './Components/ComplaintStatusLogs.vue';
 import CustomerAdditionalContacts from '../../Components/CustomerAdditionalContacts.vue';
 
 const props = defineProps({
@@ -13,6 +17,7 @@ const props = defineProps({
   dropdowns: Object,
   additionalContacts: Object,
   documents: Object,
+  complaintStatuses: Object,
   claimDocumentTypes: Object,
   requiredFieldsFilled: Boolean,
   storageUrl: String,
@@ -25,18 +30,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const sectionExpanded = ref(true);
-
-function formatDateTime(date) {
-  console.log('formatDateTime -> date -> ', date);
-  if (!date) return '-';
-  return new Date(date).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+ 
 
 // Handle component updates
 const handleClaimUpdate = response => {
@@ -86,10 +80,11 @@ const handleDocumentDeleted = documentName => {
       :claim="claim"
       :dropdowns="dropdowns"
       @update="handleClaimUpdate"
+      :expanded="sectionExpanded"
     />
 
     <!-- Customer Details Component -->
-    <CustomerDetails :claim="claim" />
+    <CustomerDetails :claim="claim"  />
 
     <!-- Customer Additional Contacts Component -->
     <CustomerAdditionalContacts
@@ -98,8 +93,7 @@ const handleDocumentDeleted = documentName => {
       :quoteId="claim.uuid"
       :contacts="additionalContacts"
       :quoteEmail="claim.email"
-      :quoteMobile="claim.mobile_no"
-      :expanded="sectionExpanded"
+      :quoteMobile="claim.mobile_no" 
     />
 
     <!-- Claim Status Component -->
@@ -107,15 +101,30 @@ const handleDocumentDeleted = documentName => {
       :claim="claim"
       :required-fields-filled="requiredFieldsFilled"
       :dropdowns="dropdowns"
-      @update="handleStatusUpdate"
+      @update="handleStatusUpdate" 
     />
     <!-- Claim Status Component -->
     <ClaimSubStatusAndCustomerUpdate
       :claim="claim"
       :required-fields-filled="requiredFieldsFilled"
       :dropdowns="dropdowns"
-      @update="handleStatusUpdate"
+      @update="handleStatusUpdate" 
     />
+
+    <!-- Next Follow-Up Update Component -->
+    <NextFollowUpUpdate
+      :claim="claim" 
+      @update="handleClaimUpdate"
+    />
+
+
+    <!-- Complaint Status Component -->
+    <ComplaintStatus
+      :claim="claim" 
+      :complaint-statuses="complaintStatuses"
+      @update="handleClaimUpdate"
+    />
+
 
     <!-- Claim Documents Component -->
     <ClaimDocuments
@@ -129,16 +138,24 @@ const handleDocumentDeleted = documentName => {
       :cdnPath="cdnPath"
     />
 
+    
+    <!-- Next Follow-Up Logs Component -->
+    <NextFollowUpLogs
+      :claim="claim" 
+    />
+    <!-- Complaint Status Logs Component -->
+    <ComplaintStatusLogs
+      :claim="claim" 
+    />
+
     <!-- Claim Lead History Component -->
     <ClaimLeadHistory
       :claim="claim"
-      :expanded="sectionExpanded"
     />
 
     <!-- Claim Sub-status Logs Component -->
     <ClaimSubStatusLogs
       :claim="claim"
-      :expanded="sectionExpanded"
     />
 
     <!-- Audit Logs -->

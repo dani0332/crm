@@ -5,9 +5,12 @@ const props = defineProps({
   claim: Object,
   dropdowns: Object,
   requiredFieldsFilled: Boolean,
-});
-
-const emit = defineEmits(['update']);
+  expanded: {
+    type: Boolean,
+    default: false,
+    required: false,
+  },
+}); 
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -64,7 +67,7 @@ const disableClaimStatusUpdate = computed(() => {
     v-if="canAny([permissionsEnum.CLAIMS_STATUS_UPDATE])"
     class="p-4 rounded shadow mb-6 bg-white"
   >
-    <Collapsible :expanded="true">
+    <Collapsible :expanded="expanded">
       <template #header>
         <div>
           <h3 class="font-semibold text-primary-800 text-lg">Claim Status</h3>
@@ -74,10 +77,7 @@ const disableClaimStatusUpdate = computed(() => {
         <x-divider class="my-4" />
         <x-form :form="claimStatusForm" @submit="updateClaimStatus">
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div
-              v-if="can(permissionsEnum.CLAIMS_STATUS_UPDATE)"
-              class="w-full md:w-1/2"
-            >
+            <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
                 <x-select
                   v-model="claimStatusForm.claim_status_id"
