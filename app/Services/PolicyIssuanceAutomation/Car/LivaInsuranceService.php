@@ -369,6 +369,9 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $bookPolicyRequest->withValidator($validator);
 
             if ($validator->fails()) {
+                LoggerService::info('fn:'.__FUNCTION__.' testing validator fails: ', extra: [
+                    'validator' => json_encode($validator->errors()),
+                ]);
                 $response['status'] = false;
                 $response['error'] = $validator->errors()->first() ?? 'BookPolicyRequest validation failed';
                 $response['message'] = $validator->errors()->first();
@@ -1061,6 +1064,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'message' => 'All steps are locked',
             'insurer_api_status' => $quote->insurer_api_status,
         ];
+
+        info('fn:'.__FUNCTION__.' testing policy issuance status: '.$policyIssuance?->status.', insurer_api_status: '.$quote->insurer_api_status.', completed_step: '.$policyIssuance->completed_step);
 
         if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
             $response['isEditPolicyDetailsDisabled'] = false;

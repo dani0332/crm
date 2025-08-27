@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -54,6 +55,9 @@ class BookPolicyRequest extends FormRequest
             }
 
             $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->model_type);
+            LoggerService::info('fn:'.__FUNCTION__.' testing lockStatusOfPolicyIssuanceSteps: ', extra: [
+                'lockStatusOfPolicyIssuanceSteps' => json_encode($lockStatusOfPolicyIssuanceSteps),
+            ]);
             if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled']) {
                 $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit booking details');
             }
