@@ -2004,7 +2004,7 @@ class CarQuoteService extends BaseService
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
     }
 
-    public function exportPUAAuthorized($requestParams)
+    public function exportPUAAuthorized($requestParams = [])
     {
         if (! empty($requestParams)) {
             $request = new \Illuminate\Http\Request($requestParams);

@@ -124,6 +124,6 @@ class HomePUAQuoteExport implements FromCollection, WithHeadings, WithMapping, W
             ];
         }
 
-        return array_fill(0, 11, '');
+        return array_fill(0, 9, '');
     }
 }

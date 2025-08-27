@@ -138,6 +138,6 @@ class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             ];
         }
 
-        return array_fill(0, 11, '');
+        return array_fill(0, 9, '');
     }
 }
