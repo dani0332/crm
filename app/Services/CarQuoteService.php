@@ -2058,8 +2058,6 @@ class CarQuoteService extends BaseService
             })
             ->orderBy('q.paid_at', 'desc');
 
-        LoggerService::sql('Car PUA Authorized Updates', $puaAuthUpdate);
-
         $puaAuthUpdate = $puaAuthUpdate->get();
 
         $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')

@@ -341,8 +341,6 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
 
         $this->applyFilters($query, $requestParams);
 
-        LoggerService::sql('TravelQuoteQueryBuilder Grid Data', $query);
-
         return $query;
     }
 }
