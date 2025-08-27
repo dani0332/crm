@@ -38,6 +38,7 @@ class RolePermissionSeeder extends Seeder
         $this->addLeadsByEmailPermission();
         $this->addEmbeddedProductPaymentCancelAdminPermission();
 
+        $this->addExportHomePuaUpdatesPermission();
         $this->addClaimsPermissions(); // Add claims permissions
     }
 
@@ -420,5 +421,16 @@ class RolePermissionSeeder extends Seeder
         if ($engineeringRole && ! $engineeringRole->hasPermissionTo($permission)) {
             $engineeringRole->givePermissionTo($permission);
         }
+    }
+
+    private function addExportHomePuaUpdatesPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
