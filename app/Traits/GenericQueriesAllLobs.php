@@ -813,9 +813,9 @@ trait GenericQueriesAllLobs
     /**
      * Check if the insurance provider is supported for this payment gateway
      *
-     * @param int $insuranceProviderId
-     * @param object $quoteModel
-     * @param string $type
+     * @param  int  $insuranceProviderId
+     * @param  object  $quoteModel
+     * @param  string  $type
      * @return bool
      */
     public function checkInsuranceProviderPaymentGateway($insuranceProviderId, $quoteModel, $type)
@@ -828,9 +828,10 @@ trait GenericQueriesAllLobs
         if ($isPaymentLinkEnabled) {
             return true;
         }
+
         return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
-    
+
     public function isHealthAUHLead($quoteType, $record)
     {
         return strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&

@@ -4,12 +4,9 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteTypes;
 use App\Models\FtcEmailLog;
-use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
-use App\Services\BrokerCommissionService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
