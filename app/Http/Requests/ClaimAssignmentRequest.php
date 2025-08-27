@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use App\Enums\QuoteTypeId;
 
 class ClaimAssignmentRequest extends FormRequest
 {
@@ -22,7 +24,12 @@ class ClaimAssignmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'quoteUUID' => ['required'],
+            'quoteTypeId' => ['required', Rule::in(QuoteTypeId::asArray())],
+            'reAssignAdvisor' => ['sometimes', 'boolean'],
+            'triggerOCB' => ['sometimes', 'boolean'],
+            'teamId' => ['sometimes', 'nullable'],
+            'sicAdvisorRequested' => ['sometimes', 'boolean'],
         ];
     }
 }
