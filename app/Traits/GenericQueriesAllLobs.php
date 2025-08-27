@@ -8,6 +8,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
@@ -18,11 +19,13 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
+use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BrokerCommissionService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CustomerService;
@@ -805,6 +808,28 @@ trait GenericQueriesAllLobs
     public function getRenewalBaches()
     {
         return app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+    }
+
+    /**
+     * Check if the insurance provider is supported for this payment gateway
+     *
+     * @param  int  $insuranceProviderId
+     * @param  object  $quoteModel
+     * @param  string  $type
+     * @return bool
+     */
+    public function checkInsuranceProviderPaymentGateway($insuranceProviderId, $quoteModel, $type)
+    {
+        $insurerProvider = InsuranceProvider::where('id', $insuranceProviderId)->first();
+        $quoteTypeId = QuoteTypes::getIdFromValue($type);
+        $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
+        $planId = $quoteModel->plan_id ?? null;
+        [,,, $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        if ($isPaymentLinkEnabled) {
+            return true;
+        }
+
+        return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
 
     public function isHealthAUHLead($quoteType, $record)
