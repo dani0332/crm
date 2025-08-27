@@ -428,4 +428,12 @@ enum QuoteTypes: string
         };
     }
 
+    public function claimAllocation(string $uuid, bool $triggerOCB)
+    {
+        return match ($this) {
+            self::CAR => new CarAllocation($uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),
+            default => null,
+        };
+    }
+
 }
