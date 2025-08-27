@@ -5,7 +5,6 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
@@ -24,6 +23,20 @@ class SaleSummaryReportService extends ManagementReport
     private $reportDateRange;
 
     public function getReportData(Request $request)
+    {
+        $query = $this->getReportQueryBuilder($request);
+
+        // $data = $query->get();
+
+        if ($request->export == 1) {
+
+            return $this->getProcessedReportData($query, $request);
+        } else {
+            return $query->get();
+        }
+    }
+
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
@@ -134,26 +147,28 @@ class SaleSummaryReportService extends ManagementReport
 
         LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
 
-        $data = $query->get();
+        return $query;
+    }
 
-        if ($request->export == 1) {
+    public function getProcessedReportData($query, Request $request)
+    {
+        /*if ($data === null) {
+            $data = $this->getReportData($request);
+        }*/
 
-            /**
-             * Get endorsements data
-             */
-            $endorsementsData = $this->getEndorsementsData($request);
+        /**
+         * Get endorsements data
+         */
+        $endorsementsData = $this->getEndorsementsData($request);
 
-            /**
-             * Process endorsements data for pdf
-             */
-            $processedData = $this->processEndorsementsData($data, $endorsementsData, $request);
+        /**
+         * Process endorsements data for CSV
+         */
+        $processedData = $this->processEndorsementsData($query->get(), $endorsementsData, $request);
 
-            $this->formatData($processedData);
+        $this->formatData($processedData);
 
-            return (new SaleSummaryReportExport($processedData, $this->groupByColumn))->download("Sale Summary Report {$this->reportDateRange}.xlsx");
-        } else {
-            return $data;
-        }
+        return $processedData;
     }
 
     /**
@@ -163,6 +178,7 @@ class SaleSummaryReportService extends ManagementReport
      */
     public function getEndorsementsData(Request $request)
     {
+        LoggerService::info('getEndorsementsData');
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
