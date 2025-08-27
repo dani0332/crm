@@ -254,7 +254,7 @@ class BikeQuoteRepository extends BaseRepository
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         // Apply authorize_date filter
-        $query->when(!empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
+        $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
             $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);
             if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
                 $startDate = Carbon::parse($authorizeDates[0])->startOfDay();
@@ -266,7 +266,7 @@ class BikeQuoteRepository extends BaseRepository
         });
 
         // Apply captured_date filter
-        $query->when(!empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
+        $query->when(! empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
             $capturedDates = $this->getFilterValue('captured_date', $requestParams);
             if (is_array($capturedDates) && count($capturedDates) >= 2) {
                 $startDate = Carbon::parse($capturedDates[0])->startOfDay();
@@ -280,7 +280,7 @@ class BikeQuoteRepository extends BaseRepository
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         // Add debug logging
-        LoggerService::sql("BikeQuoteRepository Grid Data", $query);
+        LoggerService::sql('BikeQuoteRepository Grid Data', $query);
 
         return $query;
     }

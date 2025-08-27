@@ -179,7 +179,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('authorized_at', [
                                 $this->parseDate($startDate, true),
-                                $this->parseDate($endDate, false)
+                                $this->parseDate($endDate, false),
                             ]);
                         });
                     }
@@ -197,7 +197,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('captured_at', [
                                 $this->parseDate($startDate, true),
-                                $this->parseDate($endDate, false)
+                                $this->parseDate($endDate, false),
                             ]);
                         });
                     }

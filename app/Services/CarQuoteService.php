@@ -1911,7 +1911,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        LoggerService::debug("exportnonPUAAuthorized", ['request_params' => $request->all()]);
+        LoggerService::debug('exportnonPUAAuthorized', ['request_params' => $request->all()]);
 
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
@@ -1929,7 +1929,7 @@ class CarQuoteService extends BaseService
             )
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
-                     ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
             })
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
@@ -1966,8 +1966,6 @@ class CarQuoteService extends BaseService
             ->orderBy('q.paid_at', 'desc')
             ->get();
 
-
-
         $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
             ->select(
                 't.name as Team',
@@ -1975,7 +1973,7 @@ class CarQuoteService extends BaseService
             )
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
-                     ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
             })
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
@@ -2014,7 +2012,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        LoggerService::debug("exportPUAAuthorized", ['request_params' => $request->all()]);
+        LoggerService::debug('exportPUAAuthorized', ['request_params' => $request->all()]);
 
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
@@ -2033,7 +2031,7 @@ class CarQuoteService extends BaseService
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
-                     ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
             })
             ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
@@ -2060,8 +2058,7 @@ class CarQuoteService extends BaseService
             })
             ->orderBy('q.paid_at', 'desc');
 
-        LoggerService::sql("Car PUA Authorized Updates", $puaAuthUpdate);
-
+        LoggerService::sql('Car PUA Authorized Updates', $puaAuthUpdate);
 
         $puaAuthUpdate = $puaAuthUpdate->get();
 
@@ -2073,7 +2070,7 @@ class CarQuoteService extends BaseService
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
-                     ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
             })
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
@@ -2107,7 +2104,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        LoggerService::debug("exportPUAUpdates", ['request_params' => $request->all()]);
+        LoggerService::debug('exportPUAUpdates', ['request_params' => $request->all()]);
 
         $startDate = Carbon::now()->subDay()->startOfDay();
         $endDate = Carbon::now()->subDay()->endOfDay();
@@ -2116,7 +2113,7 @@ class CarQuoteService extends BaseService
             ->join('car_quote_request as cqr', 'cqp.quote_uuid', '=', 'cqr.uuid')
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'cqr.id')
-                     ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
             })
             ->join('car_make as cmk', 'cqr.car_make_id', '=', 'cmk.id')
             ->join('car_model as cmd', 'cqr.car_model_id', '=', 'cmd.id')

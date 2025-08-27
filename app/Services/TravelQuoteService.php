@@ -406,7 +406,7 @@ class TravelQuoteService extends BaseService
         $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
         $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams, useJoin: false);
 
-        LoggerService::sql("TravelQuoteService Grid Data", $query);
+        LoggerService::sql('TravelQuoteService Grid Data', $query);
 
         return $query;
 

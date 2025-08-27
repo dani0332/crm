@@ -6,7 +6,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Repositories\HomeQuoteRepository;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -149,8 +148,6 @@ class HomePUAUpdatesExport implements FromCollection, WithHeadings, WithMapping,
             ];
         });
     }
-
-
 
     private function prepareSummary(): Collection
     {

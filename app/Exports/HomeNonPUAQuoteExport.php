@@ -19,7 +19,7 @@ class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
     public function __construct($requestParams = [])
     {
-        LoggerService::info("HomeNonPUAQuoteExport initialized");
+        LoggerService::info('HomeNonPUAQuoteExport initialized');
         $this->nonPUALeads = app(HomeQuoteRepository::class)->exportnonPUAAuthorized($requestParams);
         $this->puaLeads = app(HomeQuoteRepository::class)->exportPUAAuthorized($requestParams);
     }

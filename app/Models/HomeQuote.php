@@ -95,7 +95,7 @@ class HomeQuote extends Model implements AuditableContract
     public function lookupAccommodationType()
     {
         return $this->belongsTo(Lookup::class, 'accommodation_type_id')->where([
-            'key' => "accommodation-type"
+            'key' => 'accommodation-type',
         ]);
 
     }
@@ -103,7 +103,7 @@ class HomeQuote extends Model implements AuditableContract
     public function lookupPossessionType()
     {
         return $this->belongsTo(Lookup::class, 'possession_type_id')->where([
-            'key' => "possession-type"
+            'key' => 'possession-type',
         ]);
 
     }

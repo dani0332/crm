@@ -137,7 +137,8 @@ class HomeQuoteRepository extends BaseRepository
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
                 fn ($query) => $query->when($forExport, fn ($query) => $query, function ($query) {
-                    LoggerService::sql("fetchGetData: ", $query);
+                    LoggerService::sql('fetchGetData: ', $query);
+
                     return $query->simplePaginate()->withQueryString();
                 })
             );
@@ -688,7 +689,7 @@ class HomeQuoteRepository extends BaseRepository
                     if ($startDate && $endDate) {
                         $query->whereBetween('authorized_at', [
                             Carbon::parse($startDate)->startOfDay()->toDateTimeString(),
-                            Carbon::parse($endDate)->endOfDay()->toDateTimeString()
+                            Carbon::parse($endDate)->endOfDay()->toDateTimeString(),
                         ]);
                     }
                 }
@@ -700,7 +701,7 @@ class HomeQuoteRepository extends BaseRepository
                     if ($startDate && $endDate) {
                         $query->whereBetween('captured_at', [
                             Carbon::parse($startDate)->startOfDay()->toDateTimeString(),
-                            Carbon::parse($endDate)->endOfDay()->toDateTimeString()
+                            Carbon::parse($endDate)->endOfDay()->toDateTimeString(),
                         ]);
                     }
                 }
@@ -881,20 +882,19 @@ class HomeQuoteRepository extends BaseRepository
 
     /**
      * Get unique quote UUIDs from HomePlans with puaType 'APUA'
-     * @return array
      */
     private function getAPUAQuoteUuids($request): array
     {
         $query = HomePlan::where('puaType', 'APUA');
 
         // Add date filtering if present in request
-        if (!empty($request['created_at_start']) || !empty($request['created_at_end'])) {
-            if (!empty($request['created_at_start'])) {
+        if (! empty($request['created_at_start']) || ! empty($request['created_at_end'])) {
+            if (! empty($request['created_at_start'])) {
                 $startDate = \Carbon\Carbon::parse(urldecode($request['created_at_start']))->startOfDay();
                 $query->where('createdAt', '>=', $startDate);
             }
 
-            if (!empty($request['created_at_end'])) {
+            if (! empty($request['created_at_end'])) {
                 $endDate = \Carbon\Carbon::parse(urldecode($request['created_at_end']))->endOfDay();
                 $query->where('createdAt', '<=', $endDate);
             }
@@ -904,13 +904,13 @@ class HomeQuoteRepository extends BaseRepository
             ->get();
 
         // Extract unique quoteUuid values
-            $apuaQuoteUuids = $apuaHomePlans->pluck('quoteUuid')
-                ->filter()
-                ->unique()
-                ->values()
-                ->toArray();
+        $apuaQuoteUuids = $apuaHomePlans->pluck('quoteUuid')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
 
-            LoggerService::info("Unique APUA Quote UUIDs", ['count' => count($apuaQuoteUuids)]);
+        LoggerService::info('Unique APUA Quote UUIDs', ['count' => count($apuaQuoteUuids)]);
 
         return $apuaQuoteUuids;
     }
@@ -918,9 +918,9 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Export non-PUA authorized home quotes - quotes that have premium_authorized but don't have it updated via PUA process
      */
-        public function exportnonPUAAuthorized($requestParams = [])
+    public function exportnonPUAAuthorized($requestParams = [])
     {
-        LoggerService::info("exportnonPUAAuthorized started");
+        LoggerService::info('exportnonPUAAuthorized started');
 
         // Create request object for filtering
         if (! empty($requestParams)) {
@@ -932,25 +932,23 @@ class HomeQuoteRepository extends BaseRepository
         $homeTeam = $this->getProductByName(quoteTypeCode::Home);
         $apuaQuoteUuids = $this->getAPUAQuoteUuids($requestParams);
 
-
-
         $nonPUAAuthLead = PersonalQuote::select([
-                'personal_quotes.code as RefID',
-                'personal_quotes.premium_authorized as premiumauthorized',
-                'personal_quotes.payment_status_date as paymentauthdate',
-                DB::raw("'AUTHORIZED' as paymentstatus"),
-                'personal_quotes.source as source',
-                'personal_quotes.id',
-                'personal_quotes.advisor_id',
-                'personal_quotes.quote_status_id'
-            ])
+            'personal_quotes.code as RefID',
+            'personal_quotes.premium_authorized as premiumauthorized',
+            'personal_quotes.payment_status_date as paymentauthdate',
+            DB::raw("'AUTHORIZED' as paymentstatus"),
+            'personal_quotes.source as source',
+            'personal_quotes.id',
+            'personal_quotes.advisor_id',
+            'personal_quotes.quote_status_id',
+        ])
             ->with([
                 'payments',
                 'advisor:id,email',
                 'advisor.teams:id,name,parent_team_id',
                 'quoteStatus:id,text',
                 'homeQuote.lookupPossessionType:id,text',
-                'homeQuote.lookupAccommodationType:id,text'
+                'homeQuote.lookupAccommodationType:id,text',
             ])
             ->whereHas('advisor')
             ->whereHas('advisor.teams', function ($query) use ($homeTeam) {
@@ -971,10 +969,9 @@ class HomeQuoteRepository extends BaseRepository
                     });
                 }
             })
-            ->orderBy('personal_quotes.paid_at', 'desc')
-        ;
+            ->orderBy('personal_quotes.paid_at', 'desc');
 
-        LoggerService::sql("Home Non-PUA Authorized Leads", $nonPUAAuthLead);
+        LoggerService::sql('Home Non-PUA Authorized Leads', $nonPUAAuthLead);
 
         $nonPUAAuthLead = $nonPUAAuthLead->get();
 
@@ -987,14 +984,16 @@ class HomeQuoteRepository extends BaseRepository
                         ->where('parent_team_id', $homeTeam->id)
                         ->first()
                         ?->name;
+
                     return $homeTeamName ?: 'Unknown Team';
                 }
+
                 return 'Unknown Team';
             })
             ->map(function ($group, $teamName) {
                 return (object) [
                     'Team' => $teamName,
-                    'Total' => $group->count()
+                    'Total' => $group->count(),
                 ];
             })
             ->values();
@@ -1007,9 +1006,7 @@ class HomeQuoteRepository extends BaseRepository
      */
     public function exportPUAAuthorized($requestParams = [])
     {
-        LoggerService::info("exportPUAAuthorized started");
-
-
+        LoggerService::info('exportPUAAuthorized started');
 
         // Create request object for filtering
         if (! empty($requestParams)) {
@@ -1022,22 +1019,22 @@ class HomeQuoteRepository extends BaseRepository
         $apuaQuoteUuids = $this->getAPUAQuoteUuids($requestParams);
 
         $puaAuthUpdate = PersonalQuote::select([
-                'personal_quotes.code as RefID',
-                'personal_quotes.premium_authorized as premiumauthorized',
-                'personal_quotes.payment_status_date as paymentauthdate',
-                DB::raw("'AUTHORIZED' as paymentstatus"),
-                'personal_quotes.source as source',
-                'personal_quotes.id',
-                'personal_quotes.advisor_id',
-                'personal_quotes.quote_status_id'
-            ])
+            'personal_quotes.code as RefID',
+            'personal_quotes.premium_authorized as premiumauthorized',
+            'personal_quotes.payment_status_date as paymentauthdate',
+            DB::raw("'AUTHORIZED' as paymentstatus"),
+            'personal_quotes.source as source',
+            'personal_quotes.id',
+            'personal_quotes.advisor_id',
+            'personal_quotes.quote_status_id',
+        ])
             ->with([
                 'payments',
                 'advisor:id,email',
                 'advisor.teams:id,name,parent_team_id',
                 'quoteStatus:id,text',
                 'homeQuote.lookupPossessionType:id,text',
-                'homeQuote.lookupAccommodationType:id,text'
+                'homeQuote.lookupAccommodationType:id,text',
             ])
             ->whereHas('advisor')
             ->whereHas('advisor.teams', function ($query) use ($homeTeam) {
@@ -1059,9 +1056,8 @@ class HomeQuoteRepository extends BaseRepository
                     });
                 }
             })
-            ->orderBy('personal_quotes.paid_at', 'desc')
-            ;
-        LoggerService::sql("Home PUA Authorized Leads", $puaAuthUpdate);
+            ->orderBy('personal_quotes.paid_at', 'desc');
+        LoggerService::sql('Home PUA Authorized Leads', $puaAuthUpdate);
         $puaAuthUpdate = $puaAuthUpdate->get();
 
         $puaAuthTeamUpdate = collect($puaAuthUpdate)
@@ -1077,15 +1073,17 @@ class HomeQuoteRepository extends BaseRepository
                     if (empty($homeTeamName)) {
                         LoggerService::warning('Unknown team found', ['advisor' => $quote->advisor->toArray()]);
                     }
+
                     return $homeTeamName ?: 'Unknown Team';
 
                 }
+
                 return 'Unknown Team';
             })
             ->map(function ($group, $teamName) {
                 return (object) [
                     'Team' => $teamName,
-                    'Total' => $group->count()
+                    'Total' => $group->count(),
                 ];
             })
             ->values();
@@ -1096,9 +1094,9 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Export PUA updates for home quotes - recent premium updates (yesterday's data)
      */
-        public function exportPUAUpdates($requestParams = [])
+    public function exportPUAUpdates($requestParams = [])
     {
-        LoggerService::info("exportPUAUpdates started");
+        LoggerService::info('exportPUAUpdates started');
 
         // Create request object for filtering
         if (! empty($requestParams)) {
@@ -1113,24 +1111,24 @@ class HomeQuoteRepository extends BaseRepository
         $endDate = Carbon::now()->subDay()->endOfDay();
 
         $puaUpdatesQuery = PersonalQuote::select([
-                'personal_quotes.code as RefID',
-                'personal_quotes.premium_authorized as premiumauthorized',
-                'personal_quotes.premium_captured as premiumcaptured',
-                'personal_quotes.payment_status_date as paymentauthdate',
-                DB::raw("'AUTHORIZED' as paymentstatus"),
-                'personal_quotes.source as source',
-                'personal_quotes.uuid',
-                'personal_quotes.first_name',
-                'personal_quotes.last_name',
-                'personal_quotes.mobile_no',
-                'personal_quotes.email',
-                'personal_quotes.premium',
-                'personal_quotes.id',
-                'personal_quotes.quote_status_id',
-                'personal_quotes.payment_status_id',
-                'personal_quotes.insurance_provider_id',
-                'personal_quotes.plan_id'
-            ])
+            'personal_quotes.code as RefID',
+            'personal_quotes.premium_authorized as premiumauthorized',
+            'personal_quotes.premium_captured as premiumcaptured',
+            'personal_quotes.payment_status_date as paymentauthdate',
+            DB::raw("'AUTHORIZED' as paymentstatus"),
+            'personal_quotes.source as source',
+            'personal_quotes.uuid',
+            'personal_quotes.first_name',
+            'personal_quotes.last_name',
+            'personal_quotes.mobile_no',
+            'personal_quotes.email',
+            'personal_quotes.premium',
+            'personal_quotes.id',
+            'personal_quotes.quote_status_id',
+            'personal_quotes.payment_status_id',
+            'personal_quotes.insurance_provider_id',
+            'personal_quotes.plan_id',
+        ])
             ->with([
                 'payments',
                 'paymentStatus:id,text',
@@ -1139,7 +1137,7 @@ class HomeQuoteRepository extends BaseRepository
                 'insuranceProviderPlan:id,text,sub_type_id',
                 'insuranceProviderPlan.subType:id,text',
                 'homeQuote.lookupPossessionType:id,text',
-                'homeQuote.lookupAccommodationType:id,text'
+                'homeQuote.lookupAccommodationType:id,text',
             ])
             ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
             // Filter by quotes that have APUA plans
@@ -1150,7 +1148,7 @@ class HomeQuoteRepository extends BaseRepository
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
-                PaymentStatusEnum::PARTIALLY_PAID
+                PaymentStatusEnum::PARTIALLY_PAID,
             ])
             ->when($request->filled('captured_date'), function ($query) use ($request) {
                 $capturedDate = $request->input('captured_date');
@@ -1160,10 +1158,9 @@ class HomeQuoteRepository extends BaseRepository
                     });
                 }
             })
-            ->orderBy('personal_quotes.payment_status_date', 'desc')
-            ;
+            ->orderBy('personal_quotes.payment_status_date', 'desc');
 
-        LoggerService::sql("Home PUA Updates Query", $puaUpdatesQuery);
+        LoggerService::sql('Home PUA Updates Query', $puaUpdatesQuery);
 
         return $puaUpdatesQuery;
     }

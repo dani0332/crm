@@ -149,7 +149,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('authorized_at', [
                                 $this->parseDate($startDate, true),
-                                $this->parseDate($endDate, false)
+                                $this->parseDate($endDate, false),
                             ]);
                         });
                     }
@@ -167,7 +167,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('captured_at', [
                                 $this->parseDate($startDate, true),
-                                $this->parseDate($endDate, false)
+                                $this->parseDate($endDate, false),
                             ]);
                         });
                     }
@@ -343,7 +343,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
 
         $this->applyFilters($query, $requestParams);
 
-        LoggerService::sql("TravelQuoteQueryBuilder Grid Data", $query);
+        LoggerService::sql('TravelQuoteQueryBuilder Grid Data', $query);
 
         return $query;
     }

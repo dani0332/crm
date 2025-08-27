@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
-use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;

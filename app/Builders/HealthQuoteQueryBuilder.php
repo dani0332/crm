@@ -151,7 +151,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('authorized_at', [
                                 $this->parseDate($startDate, true),
-                                $this->parseDate($endDate, false)
+                                $this->parseDate($endDate, false),
                             ]);
                         });
                     }
@@ -169,7 +169,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('captured_at', [
                                 $this->parseDate($startDate, true),
-                                $this->parseDate($endDate, false)
+                                $this->parseDate($endDate, false),
                             ]);
                         });
                     }
@@ -264,7 +264,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         $query = $this->buildGrid();
         $this->applyFilters($query, $requestParams);
 
-        LoggerService::sql("HealthQuoteQueryBuilder Grid Data", $query);
+        LoggerService::sql('HealthQuoteQueryBuilder Grid Data', $query);
 
         return $query;
     }

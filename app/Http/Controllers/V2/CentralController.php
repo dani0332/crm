@@ -24,15 +24,11 @@ use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
 use App\Exports\LifeQuotesExport;
-use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
-use App\Exports\PUAQuoteExport;
-use App\Exports\PUAUpdatesExport;
 use App\Exports\RetentionReportExport;
-use App\Factories\PUAExportFactory;
-use App\Enums\quoteTypeCode;
 use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
+use App\Factories\PUAExportFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
@@ -753,7 +749,7 @@ class CentralController extends Controller
     public function exportPUAUpdates(Request $request, string $quoteType)
     {
         // Validate quote type using the factory
-        if (!PUAExportFactory::isValidQuoteType($quoteType)) {
+        if (! PUAExportFactory::isValidQuoteType($quoteType)) {
             return response()->json(['message' => "Invalid quote type: {$quoteType}"], 400);
         }
 
@@ -781,8 +777,8 @@ class CentralController extends Controller
 
             $files = [];
 
-            if (!empty($exports)) {
-                LoggerService::info("PUA export starting", ['quote_type' => $quoteType]);
+            if (! empty($exports)) {
+                LoggerService::info('PUA export starting', ['quote_type' => $quoteType]);
                 $puaUpdateExport = $exports['pua_quote']->download("{$quoteType}-PUA-AUTHORIZED.xlsx");
                 $nonPuaUpdateExport = $exports['non_pua_quote']->download("{$quoteType}-NON-PUA-AUTHORIZED.xlsx");
                 $puaUpdatesExport = $exports['pua_updates']->download("{$quoteType}-PUA-UPDATES.xlsx");
@@ -794,6 +790,7 @@ class CentralController extends Controller
                 ];
             } else {
                 $zip->close();
+
                 return response()->json(['message' => "No PUA exports available for {$quoteType} quote type."], 400);
             }
 
@@ -813,9 +810,9 @@ class CentralController extends Controller
                     });
                 })
                 ->values(); // Re-index the array
-            
+
             LoggerService::error('PUA Export Error - App Trace:', $appTrace->toArray());
-            
+
             return response()->json(['message' => 'Error processing exports: '.$e->getMessage().' file:'.$e->getFile().'line:'.$e->getLine()], 500);
         }
 
