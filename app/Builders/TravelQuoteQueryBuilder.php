@@ -80,7 +80,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteRequestEntityMapping.entity:id,code,trade_license_no,company_name,company_address,industry_type_code,emirate_of_registration_id',
             'quotePlan',
             'paymentStatus:id,text',
-            'payment:id,paymentable_id,paymentable_type,authorized_at',
+            'payments:id,paymentable_id,paymentable_type,authorized_at',
             'insuranceProvider:id,text,code',
             'quoteStatus:id,text',
             'plan:id,text',
@@ -144,7 +144,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                     $endDate = $authorizedAtRange[1];
 
                     if ($startDate && $endDate) {
-                        $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('authorized_at', [
                                 $this->parseDate($startDate, true),
                                 $this->parseDate($endDate, false),
@@ -162,7 +162,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                     $endDate = $capturedAtRange[1];
 
                     if ($startDate && $endDate) {
-                        $query->whereHas('payment', function ($paymentQuery) use ($startDate, $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('captured_at', [
                                 $this->parseDate($startDate, true),
                                 $this->parseDate($endDate, false),
