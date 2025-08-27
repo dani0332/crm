@@ -352,11 +352,6 @@ class CentralController extends Controller
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
 
-            $isAUHHealthLead = strtolower($request->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
-            if ($isAUHHealthLead) {
-                return response()->json(['message' => 'This is an Abu Dhabi health quote lead. Please book the policy manually.'], 200);
-            }
-
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
@@ -448,6 +443,11 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_PLAN);
         LoggerService::info("Select plan for Ecom lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
+
+        $errorsMessages = (new CentralService)->validateIsPlanSelectable($quoteType, $request->all());
+        if (! empty($errorsMessages)) {
+            return response()->json(['errors' => $errorsMessages], 422);
+        }
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 

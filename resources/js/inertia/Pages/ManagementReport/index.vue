@@ -305,7 +305,6 @@ const onDataExport = async (flag, exportType = 'download') => {
     const exportResponse = await axios
       .get(finalUrl)
       .then(resp => {
-
         console.log('resp.data.message', resp.data.message);
         if (resp.data.message) {
           notification.success({
@@ -325,7 +324,6 @@ const onDataExport = async (flag, exportType = 'download') => {
         }, 1000);
         throw err;
       });
-
   } else {
     // For direct download, open in new window
     window.open(finalUrl);
