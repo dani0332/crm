@@ -248,32 +248,38 @@ class SageApiService
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
-        // create AR Prepayment Premium Receipt
-        if (! empty($preparedData['payment']?->send_update_log_id)) {
-            $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']]);
-            if (! $createPrepayment['status']) {
-                return $createPrepayment;
-            }
-        }
+        $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+        if (! $isEndorsementActionDisabled) {
 
-        // create AP Prepayment Premium Receipt
-        $createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
-        if (! $createPremiumPrepayment['status']) {
-            return $createPremiumPrepayment;
-        }
-
-        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
-            if (empty($reversalInvoiceLogs)) {
-                return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+            // create AR Prepayment Premium Receipt
+            if (! empty($preparedData['payment']?->send_update_log_id)) {
+                $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']]);
+                if (! $createPrepayment['status']) {
+                    return $createPrepayment;
+                }
             }
 
-            $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
+            // create AP Prepayment Premium Receipt
+            /*$createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
+            if (! $createPremiumPrepayment['status']) {
+                return $createPremiumPrepayment;
+            }*/
+
+            if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
+                if (empty($reversalInvoiceLogs)) {
+                    return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+                }
+
+                $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
+            } else {
+                $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray, $request);
+            }
+
+            if (! $response['status']) {
+                return $response;
+            }
         } else {
-            $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray, $request);
-        }
-
-        if (! $response['status']) {
-            return $response;
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Endorsement booking invoice creation on Sage is disabled - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
         }
 
         $response = app(SendUpdateLogService::class)->updatesMoveToLead([$request, $sendUpdateLog, $preparedData]);
@@ -674,6 +680,34 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment Code: '.$payment->code.' - Capture payment process skip & proceeding with Policy Book process - Unpaid payment count: '.$unpaidPaymentCount.' - Is Insurer Payment: '.$isInsurerPayment);
         }
 
+        $isHealthAUHLead = $this->isHealthAUHLead($quoteType, $quote);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Is Health AUH Lead Check ', extra : [
+            'isHealthAUHLead' => $isHealthAUHLead,
+        ]);
+        if ($isHealthAUHLead) {
+
+            if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
+                // dispath job to send email
+                SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
+            }
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
+
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, auth()->id());
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : Status updated to: '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' ##################################');
+            (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : straightforwardPayments for : '.$quote->code.' done ##################################');
+
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ########## End of Policy Booked for : '.$quote->code.' ##########');
+
+            return ['status' => true, 'message' => 'Policy is Booked'];
+
+        }
+
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
@@ -791,10 +825,10 @@ class SageApiService
             }
 
             // create AP Prepayment Premium Receipt
-            $createAPPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
+            /*$createAPPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
             if (! $createAPPremiumPrepayment['status']) {
                 return $createAPPremiumPrepayment;
-            }
+            }*/
 
             $payment = $payment->refresh();
             $paymentSplits = $payment->paymentSplits;
@@ -824,10 +858,10 @@ class SageApiService
             }
 
             // Apply Prepayments for AP Invoice
-            $applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
             if (! $applyPaymentAPInvoices['status']) {
                 return $applyPaymentAPInvoices;
-            }
+            }*/
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,

@@ -354,11 +354,6 @@ class CentralController extends Controller
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
 
-            $isAUHHealthLead = strtolower($request->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
-            if ($isAUHHealthLead) {
-                return response()->json(['message' => 'This is an Abu Dhabi health quote lead. Please book the policy manually.'], 200);
-            }
-
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
@@ -450,6 +445,11 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_PLAN);
         LoggerService::info("Select plan for Ecom lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
+
+        $errorsMessages = (new CentralService)->validateIsPlanSelectable($quoteType, $request->all());
+        if (! empty($errorsMessages)) {
+            return response()->json(['errors' => $errorsMessages], 422);
+        }
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
@@ -922,15 +922,16 @@ class CentralController extends Controller
 
     public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
     {
-        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
+        LoggerService::startQuoteLogging($quoteCcode);
+        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids);
         try {
             $result = app(CentralService::class)->getPlansPaymentGateway($request, $quoteType);
 
-            LoggerService::info('getPlansPaymentGateway response: ', extra: $result, context: ['ref_id' => $quoteCcode]);
+            LoggerService::info('getPlansPaymentGateway response: ', extra: $result);
 
             return response()->json(['plans' => $result]);
         } catch (\Throwable $th) {
-            LoggerService::error('getPlansPaymentGateway error: ', exception: $th, context: ['ref_id' => $quoteCcode]);
+            LoggerService::error('getPlansPaymentGateway error: ', exception: $th);
 
             return response()->json(['error' => $th->getMessage()], 500);
         }

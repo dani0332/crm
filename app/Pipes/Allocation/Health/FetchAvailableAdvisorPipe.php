@@ -88,7 +88,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     protected function fetchEligibleAdvisors(bool $onlineStatus = true, $teamId = null)
     {
-        $advisors = [];
+        $advisors = collect([]);
 
         if ($this->lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
             $advisors = $this->fetchAdvisorByType('getBLAdvisorsByStatus', $teamId);
