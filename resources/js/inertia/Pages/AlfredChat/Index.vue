@@ -5,6 +5,7 @@ const props = defineProps({
   batches: Array,
   pagination: Object,
   transactionTypes: Array,
+  renewalBatches: Array,
 });
 
 const page = usePage();
@@ -29,6 +30,7 @@ const filters = reactive({
   page: 1,
   transaction_type_id: [],
   quote_batch_id: [],
+  renewal_batch_id: [],
   quote_status_id: [],
   payment_status_id: [],
   sale_leads: null,
@@ -96,6 +98,13 @@ const paymentStatus = computed(() => {
       label: status,
     }),
   );
+});
+
+const renewalBatches = computed(() => {
+  return props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
 });
 
 const quoteSegments = page.props.quoteSegments;
@@ -440,6 +449,29 @@ const exportReport = async (exportType = 'download') => {
               filters.quote_batch_id = leadBatches.map(item => item.value)
             "
             @clear="filters.quote_batch_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.renewal_batch_id"
+        :options="renewalBatches"
+        placeholder="Search by Renewal Batch"
+        class="w-full"
+        label="Renewal Batch"
+        filterable
+        filterPlaceholder="Filter Renewal Batch...."
+        multiple
+        truncate
+        virtual-list
+        :virtual-list-item-height="34"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.renewal_batch_id = renewalBatches.map(item => item.value)
+            "
+            @clear="filters.renewal_batch_id = []"
           />
         </template>
       </x-select>
