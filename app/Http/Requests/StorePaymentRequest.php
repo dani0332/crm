@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Models\BrokerCommission;
 use App\Models\FtcEmailLog;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
