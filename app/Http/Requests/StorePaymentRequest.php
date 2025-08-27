@@ -110,7 +110,7 @@ class StorePaymentRequest extends FormRequest
                             if ($linkUsed) {
                                 $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
                             }
-                            $isPaymentLinkEnabled = $this->checkInsuranceProviderPaymentGateway($quoteModel);
+                            $isPaymentLinkEnabled = checkInsuranceProviderPaymentGateway(request()->input('insurance_provider_id'), $quoteModel, request()->input('modelType'));
                             if (! $isPaymentLinkEnabled) {
                                 $validator->errors()->add('insurer_payment_link', 'Current insurance provider is not supported for this payment gateway. Please verify that the insurance provider is supported for this payment gateway or broker commission is enabled for this insurance provider and plan.');
                             } else {
@@ -135,20 +135,5 @@ class StorePaymentRequest extends FormRequest
                 $validator->errors()->add('value', 'Not Authorized to Add Credit Approval');
             }
         });
-    }
-
-
-    private function checkInsuranceProviderPaymentGateway($quoteModel)
-    {
-        $insuranceProviderId = request()->input('insurance_provider_id');
-        $insurerProvider = InsuranceProvider::where('id', $insuranceProviderId)->first();
-        $quoteTypeId = QuoteTypes::getIdFromValue(request()->input('modelType'));
-        $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
-        $planId = request()->input('plan_id') ?? null;
-        [, $brokerCommission, , $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
-        if($isPaymentLinkEnabled) {
-            return true;
-        }
-        return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
 }

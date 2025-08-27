@@ -7,6 +7,7 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -23,6 +24,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
@@ -30,6 +32,7 @@ use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\BrokerCommissionService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -1686,5 +1689,20 @@ if (! function_exists('userHasProduct')) {
         $productIds = auth()->user()->products->pluck('product_id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
+    }
+}
+
+if (! function_exists('checkInsuranceProviderPaymentGateway')) {
+    function checkInsuranceProviderPaymentGateway($insuranceProviderId, $quoteModel, $type)
+    {
+        $insurerProvider = InsuranceProvider::where('id', $insuranceProviderId)->first();
+        $quoteTypeId = QuoteTypes::getIdFromValue($type);
+        $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
+        $planId = $quoteModel->plan_id ?? null;
+        [, $brokerCommission,, $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        if ($isPaymentLinkEnabled) {
+            return true;
+        }
+        return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
 }
