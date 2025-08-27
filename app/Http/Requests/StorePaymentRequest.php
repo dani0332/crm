@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Models\BrokerCommission;
 use App\Models\FtcEmailLog;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
@@ -137,7 +136,6 @@ class StorePaymentRequest extends FormRequest
         });
     }
 
-
     private function checkInsuranceProviderPaymentGateway($quoteModel)
     {
         $insuranceProviderId = request()->input('insurance_provider_id');
@@ -146,9 +144,10 @@ class StorePaymentRequest extends FormRequest
         $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
         $planId = request()->input('plan_id') ?? null;
         [, $brokerCommission, , $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
-        if($isPaymentLinkEnabled) {
+        if ($isPaymentLinkEnabled) {
             return true;
         }
+
         return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
 }

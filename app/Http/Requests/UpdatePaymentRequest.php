@@ -112,6 +112,7 @@ class UpdatePaymentRequest extends FormRequest
         if ($isPaymentLinkEnabled) {
             return true;
         }
+
         return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
 }

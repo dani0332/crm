@@ -63,7 +63,7 @@ class BrokerCommissionService
         $isCreditCardEnabled = $brokerCommission
                                 ? (! $brokerCommission->enable_payment_link && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL)
                                 : ($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL);
-        
+
         $isPaymentLinkEnabled = $brokerCommission
                                 ? $brokerCommission->enable_payment_link
                                 : false;
