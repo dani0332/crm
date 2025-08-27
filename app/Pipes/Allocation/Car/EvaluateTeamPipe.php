@@ -34,12 +34,18 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         $isSIC = $this->allocationRequest->isSIC();
         $isAIG = $this->allocationRequest->isAIG();
 
-        if ($isSIC && $lead->isPUA()) {
+        if (
+            ($isSIC && $lead->isPUA()) ||
+            ($isAIG && $lead->sic_advisor_requested)
+        ) {
             $teamName = TeamNameEnum::ORGANIC;
-            LoggerService::info('SIC lead detected with PUA. Assigning to Organic team.');
-        } elseif ($isAIG && $lead->sic_advisor_requested) {
-            $teamName = TeamNameEnum::ORGANIC;
-            LoggerService::info('AIG lead detected with SIC advisor requested. Assigning to Organic team.');
+
+            LoggerService::info('Lead is PUA or AIG with SIC advisor requested. Assigning to Organic team.', [
+                'isSIC' => $isSIC,
+                'isAIG' => $isAIG,
+                'isPUA' => $lead->isPUA(),
+                'sicAdvisorRequested' => $lead->sic_advisor_requested,
+            ]);
         } elseif ($isSIC && $lead->isPaymentAuthorizedOnly() && ! $lead->isPaymentLinkRequested()) {
             $teamName = TeamNameEnum::SIC_UNASSISTED;
             LoggerService::info('SIC lead detected with payment authorized only. Assigning to SIC Unassisted team.');
