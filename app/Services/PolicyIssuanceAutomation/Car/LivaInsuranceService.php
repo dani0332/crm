@@ -363,6 +363,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             request()->merge($updateBookingRequest);
 
             $bookPolicyRequest = new BookPolicyRequest;
+            // TODO: need to discusss this with Bilal Saeed, this is issuing while status is processing.
+
             $validator = Validator::make($updateBookingRequest, $bookPolicyRequest->rules());
             $bookPolicyRequest->withValidator($validator);
 
@@ -1102,6 +1104,18 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
+        }
+
+        // TODO: need to discusss this with Bilal Saeed, this is issuing while status is processing.
+        if (
+            $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
+            $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
+        ) {
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = 'All Steps are editable';
+
+            return $response;
         }
 
         LoggerService::info('fn:'.__FUNCTION__.' testing response line#1107', extra: [
