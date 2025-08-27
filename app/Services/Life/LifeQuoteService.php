@@ -161,7 +161,7 @@ class LifeQuoteService extends BaseService
                         $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('authorized_at', [
                                 Carbon::parse($startDate)->startOfDay(),
-                                Carbon::parse($endDate)->endOfDay()
+                                Carbon::parse($endDate)->endOfDay(),
                             ]);
                         });
                     }
@@ -177,7 +177,7 @@ class LifeQuoteService extends BaseService
                         $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('captured_at', [
                                 Carbon::parse($startDate)->startOfDay(),
-                                Carbon::parse($endDate)->endOfDay()
+                                Carbon::parse($endDate)->endOfDay(),
                             ]);
                         });
                     }

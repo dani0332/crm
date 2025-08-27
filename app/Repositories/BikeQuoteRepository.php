@@ -12,7 +12,6 @@ use App\Models\BikeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Services\DropdownSourceService;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
