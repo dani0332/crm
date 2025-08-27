@@ -51,10 +51,10 @@ class UpdateStaleLeads extends Command
 
         // Need to verify status for all quote types which were included or excluded.
         $eligibleQuoteTypes = [
-            HealthQuote::class,
+            // HealthQuote::class,
             BusinessQuote::class,
-            HomeQuote::class,
-            PersonalQuote::class,
+            // HomeQuote::class,
+            // PersonalQuote::class,
         ];
 
         $skipStatus = [
@@ -90,11 +90,11 @@ class UpdateStaleLeads extends Command
             info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->whereNot('source', LeadSourceEnum::INSLY)
-                ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
+                ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-2 days')))->endOfDay())
                 ->where('quote_status_date', '>=', Carbon::parse('2023-05-23')->startOfDay())
-                ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
-                    $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
-                })
+                // ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
+                //     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+                // })
                 ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
@@ -112,7 +112,7 @@ class UpdateStaleLeads extends Command
             $eligibleQuoteType::with('activities')
                 ->whereNotIn('quote_status_id', $skipStatusInLost)
                 ->whereNotNull('stale_at')
-                ->where('stale_at', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->endOfDay())
+                ->where('stale_at', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-3 days')))->endOfDay())
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($staleLeads as $staleLead) {
                         $activityDateCheck = $staleLead->activities->pluck('due_date')->contains(function ($value) {
@@ -129,18 +129,18 @@ class UpdateStaleLeads extends Command
                             info('Quote Found - '.$eligibleQuoteType." - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $staleLead->updated_at");
 
                             switch ($eligibleQuoteType) {
-                                case HomeQuote::class:
-                                    HomeQuoteRequestDetail::updateOrCreate(['home_quote_request_id' => $staleLead->id], ['lost_reason_id' => $lostReasonId]);
-                                    break;
-                                case HealthQuote::class:
-                                    HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $staleLead->id], ['lost_reason_id' => $lostReasonId]);
-                                    break;
+                                // case HomeQuote::class:
+                                //     HomeQuoteRequestDetail::updateOrCreate(['home_quote_request_id' => $staleLead->id], ['lost_reason_id' => $lostReasonId]);
+                                //     break;
+                                // case HealthQuote::class:
+                                //     HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $staleLead->id], ['lost_reason_id' => $lostReasonId]);
+                                //     break;
                                 case BusinessQuote::class:
                                     BusinessQuoteRequestDetail::updateOrCreate(['business_quote_request_id' => $staleLead->id], ['lost_reason_id' => $lostReasonId]);
                                     break;
-                                case PersonalQuote::class:
-                                    PersonalQuoteDetail::updateOrCreate(['personal_quote_id' => $staleLead->id], ['lost_reason_id' => $lostReasonId]);
-                                    break;
+                                // case PersonalQuote::class:
+                                //     PersonalQuoteDetail::updateOrCreate(['personal_quote_id' => $staleLead->id], ['lost_reason_id' => $lostReasonId]);
+                                //     break;
                                 default:
                                     break;
                             }
