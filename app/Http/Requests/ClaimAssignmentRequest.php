@@ -26,10 +26,7 @@ class ClaimAssignmentRequest extends FormRequest
         return [
             'quoteUUID' => ['required'],
             'quoteTypeId' => ['required', Rule::in(QuoteTypeId::asArray())],
-            'reAssignAdvisor' => ['sometimes', 'boolean'],
             'triggerOCB' => ['sometimes', 'boolean'],
-            'teamId' => ['sometimes', 'nullable'],
-            'sicAdvisorRequested' => ['sometimes', 'boolean'],
         ];
     }
 }
