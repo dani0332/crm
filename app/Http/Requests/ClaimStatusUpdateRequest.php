@@ -26,7 +26,7 @@ class ClaimStatusUpdateRequest extends FormRequest
             'claim_status_id' => [
                 'required',
                 'integer',
-                'exists:claim_statuses,id,is_active,1,status_type,' . ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value,
+                'exists:claim_statuses,id,is_active,1,status_type,'.ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value,
             ],
             'notes' => [
                 'nullable',

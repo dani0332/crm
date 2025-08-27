@@ -27,7 +27,7 @@ class ClaimSendNotificationRequest extends FormRequest
         return [
             'customer_message' => 'required|string',
             'ai_optimized_message' => 'required|string',
-            'claim_sub_status_id' => 'required|exists:claim_statuses,id,status_type,' . ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value,
+            'claim_sub_status_id' => 'required|exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value,
         ];
     }
 

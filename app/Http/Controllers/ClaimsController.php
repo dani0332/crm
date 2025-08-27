@@ -184,7 +184,7 @@ class ClaimsController extends Controller
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
             $complaintStatuses = $this->claimsService->getClaimComplaintStatuses();
-            //dd($complaintStatuses);
+            // dd($complaintStatuses);
             $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
@@ -664,8 +664,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.show', $claim->uuid)->with('success', "Next follow-up updated successfully.");
-
+            return redirect()->route('claims.show', $claim->uuid)->with('success', 'Next follow-up updated successfully.');
 
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating next follow-up', extra: [
@@ -675,7 +674,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.show', $claim->uuid)->with('error', "Failed to update next follow-up.");
+            return redirect()->route('claims.show', $claim->uuid)->with('error', 'Failed to update next follow-up.');
         }
     }
 
@@ -733,6 +732,7 @@ class ClaimsController extends Controller
             ]);
 
             dd($e);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load next follow-up logs.',
@@ -758,7 +758,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.show', $claim->uuid)->with('success', "Primary contact updated successfully.");
+            return redirect()->route('claims.show', $claim->uuid)->with('success', 'Primary contact updated successfully.');
 
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error making additional contact primary', extra: [
@@ -768,7 +768,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.show', $claim->uuid)->with('error', "Failed to update primary contact.");
+            return redirect()->route('claims.show', $claim->uuid)->with('error', 'Failed to update primary contact.');
         }
     }
 

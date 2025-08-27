@@ -20,7 +20,6 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * Class ClaimRequest
  *
  * Represents a claim request in the new claim management system
- *
  */
 class ClaimRequest extends Model implements AuditableContract
 {
@@ -59,10 +58,9 @@ class ClaimRequest extends Model implements AuditableContract
         'approved_cash_loss_amount',
         'created_at',
         'updated_at',
-    ]; 
-
+    ];
     protected $casts = [
-/*         'complaint_datetime' => 'datetime',
+        /*         'complaint_datetime' => 'datetime',
         'next_followup_datetime' => 'datetime', */
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -258,7 +256,7 @@ class ClaimRequest extends Model implements AuditableContract
         $this->save();
     }
 
-    public function updateNextFollowUp( $nextFollowupDatetime, $notes = null): void
+    public function updateNextFollowUp($nextFollowupDatetime, $notes = null): void
     {
         $this->next_followup_datetime = $nextFollowupDatetime;
         $this->next_followup_notes = $notes;

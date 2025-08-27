@@ -71,10 +71,10 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has('notes') && !empty($this->input('notes'))) {
+        if ($this->has('notes') && ! empty($this->input('notes'))) {
             $this->merge([
                 'notes' => trim($this->input('notes', '')),
             ]);
-        } 
+        }
     }
 }

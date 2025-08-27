@@ -27,7 +27,7 @@ class ClaimMakeAdditionalContactPrimaryRequest extends FormRequest
             'key' => [
                 'required',
                 'string',
-                Rule::in([GenericRequestEnum::EMAIL, GenericRequestEnum::MOBILE_NO])
+                Rule::in([GenericRequestEnum::EMAIL, GenericRequestEnum::MOBILE_NO]),
             ],
             'value' => [
                 'required',
@@ -80,18 +80,18 @@ class ClaimMakeAdditionalContactPrimaryRequest extends FormRequest
         $key = $this->input('key');
         $value = $this->input('value');
 
-        if (!$key || !$value) {
+        if (! $key || ! $value) {
             return;
         }
 
         if ($key === GenericRequestEnum::EMAIL) {
             // Validate email format
-            if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                 $validator->errors()->add('value', 'The contact value must be a valid email address.');
             }
         } elseif ($key === GenericRequestEnum::MOBILE_NO) {
             // Validate mobile number format
-            if (!preg_match('/^[\+]?[0-9\s\-\(\)]+$/', $value)) {
+            if (! preg_match('/^[\+]?[0-9\s\-\(\)]+$/', $value)) {
                 $validator->errors()->add('value', 'The contact value must be a valid mobile number.');
             }
         }

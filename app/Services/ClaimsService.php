@@ -1336,7 +1336,6 @@ class ClaimsService extends BaseService
      * Get claim lead history (status changes by team lead) - all data for client-side pagination
      * Frontend will process old status from chronological data
      *
-     * @param int $claimId
      * @return array
      */
     public function getClaimLeadHistory(int $claimId)
@@ -1381,7 +1380,6 @@ class ClaimsService extends BaseService
      * Get claim sub-status logs (sub-status changes by claims manager) - all data for client-side pagination
      * Frontend will process old sub-status from chronological data
      *
-     * @param int $claimId
      * @return array
      */
     public function getClaimSubStatusLogs(int $claimId)
@@ -1425,19 +1423,13 @@ class ClaimsService extends BaseService
 
     /**
      * Update complaint status for a claim
-     *
-     * @param ClaimRequest $claim
-     * @param int|null $complaintStatusId
-     * @param string|null $complaintDatetime
-     * @param string|null $notes
-     * @return ClaimRequest
      */
     public function updateComplaintStatus(ClaimRequest $claim, ?int $complaintStatusId, ?string $complaintDatetime = null, ?string $notes = null): ClaimRequest
     {
         try {
             // Update the claim with complaint status
             $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
- 
+
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status updated successfully', extra: [
                 'claim_id' => $claim->id,
                 'complaint_status_id' => $complaintStatusId,
@@ -1461,11 +1453,6 @@ class ClaimsService extends BaseService
 
     /**
      * Update next follow-up for a claim
-     *
-     * @param ClaimRequest $claim
-     * @param string|null $nextFollowUpDatetime
-     * @param string|null $notes
-     * @return ClaimRequest
      */
     public function updateNextFollowUp(ClaimRequest $claim, ?string $nextFollowUpDatetime, ?string $notes = null): ClaimRequest
     {
@@ -1496,13 +1483,12 @@ class ClaimsService extends BaseService
     /**
      * Get complaint status logs for a claim from audit trail
      *
-     * @param int $claimId
      * @return array
      */
-    public function getComplaintStatusLogs(int $claimId) 
+    public function getComplaintStatusLogs(int $claimId)
     {
         $audits = DB::table('audits as a')
-                ->select(
+            ->select(
                 'a.created_at as logged_at',
                 DB::raw('(SELECT name from users where id = a.user_id) as logged_by'),
                 DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_status_id')) AS old_complaint_status_id"),
@@ -1528,26 +1514,25 @@ class ClaimsService extends BaseService
             ->get()
             ->filter(function ($item) {
                 // Filter out records where no complaint fields changed
-                return !is_null($item->new_complaint_status_id) || 
-                       !is_null($item->new_complaint_datetime) || 
-                       !is_null($item->new_complaint_notes);
+                return ! is_null($item->new_complaint_status_id) ||
+                       ! is_null($item->new_complaint_datetime) ||
+                       ! is_null($item->new_complaint_notes);
             })
             ->values()
-                ->toArray();
+            ->toArray();
 
         return $audits;
     }
 
-        /**
+    /**
      * Get next follow-up logs for a claim from audit trail
      *
-     * @param int $claimId
      * @return array
      */
     public function getNextFollowUpLogs(int $claimId)
     {
         $audits = DB::table('audits as a')
-                ->select(
+            ->select(
                 DB::raw('(SELECT name from users where id = a.user_id) as logged_by'),
                 DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.next_followup_datetime')) AS old_follow_up_date"),
                 DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.next_followup_datetime')) AS new_follow_up_date"),
@@ -1564,17 +1549,16 @@ class ClaimsService extends BaseService
                 $query->where('a.auditable_type', 'App\Models\\ClaimRequest')
                     ->where('a.auditable_id', $claimId);
             })
-                        ->orderBy('a.created_at', 'DESC')
-            ->get()  
+            ->orderBy('a.created_at', 'DESC')
+            ->get()
             ->filter(function ($item) {
                 // Filter out records where both datetime and notes are unchanged
-                return !is_null($item->new_follow_up_date) || !is_null($item->new_notes);
+                return ! is_null($item->new_follow_up_date) || ! is_null($item->new_notes);
             })
             ->values()
             ->toArray();
 
         return $audits;
     }
-
 
 }
