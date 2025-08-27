@@ -20,6 +20,7 @@ const props = defineProps({
 
 const page = usePage();
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const leadSourceEnum = page.props.leadSource;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const quote = page.props.quote;
@@ -45,7 +46,7 @@ const isPlanSelectionDisable = computed(() => {
     props.plan?.providerCode == insuranceProviderCodeEnum?.ALNC;
 
   if (
-    quoteType == 'travel' &&
+    quoteType == quoteTypeCodeEnum?.Travel?.toLowerCase() &&
     isSourceIMCRM &&
     isNormalPlan &&
     isALNCProvider
@@ -357,7 +358,7 @@ const updateSelectedPlan = () => {
 watch(() => {
   const quoteType = props.quoteType?.toLowerCase();
 
-  if (quoteType == 'health') {
+  if (quoteType == quoteTypeCodeEnum?.Health?.toLowerCase()) {
     let premiumCalculate =
       props.plan?.actualPremium +
       (props.plan?.policyFee || 0) +
