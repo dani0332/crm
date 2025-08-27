@@ -17,25 +17,27 @@ const claimLeadHistory = reactive({
   table: [
     { text: 'Modified At', value: 'ModifiedAt' },
     { text: 'Modified By', value: 'ModifiedBy' },
-    { text: 'Claim Status From', value: 'oldStatus' }, 
-    { text: 'Claim Status To', value: 'NewStatus' },   
-    { text: 'Notes', value: 'Notes' },   
+    { text: 'Claim Status From', value: 'oldStatus' },
+    { text: 'Claim Status To', value: 'NewStatus' },
+    { text: 'Notes', value: 'Notes' },
   ],
 });
 
 // Process raw data to add old status from previous entry
-const processHistoryData = (rawData) => {
+const processHistoryData = rawData => {
   if (!rawData || rawData.length === 0) return [];
-  
+
   // Sort by created_at ascending to ensure chronological order
-  const sortedData = [...rawData].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  
+  const sortedData = [...rawData].sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at),
+  );
+
   // Process each entry to add old status from previous entry
   const processedData = sortedData.map((item, index) => ({
     ...item,
-    oldStatus: index > 0 ? sortedData[index - 1].NewStatus : null
+    oldStatus: index > 0 ? sortedData[index - 1].NewStatus : null,
   }));
-  
+
   // Return in descending order for display (newest first)
   return processedData.reverse();
 };
@@ -63,12 +65,17 @@ const onLoadHistoryData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Claim Lead History</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Claim Lead History
+          </h3>
         </div>
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <div v-if="claimLeadHistory.processedData === null" class="text-center py-3">
+        <div
+          v-if="claimLeadHistory.processedData === null"
+          class="text-center py-3"
+        >
           <x-button
             size="sm"
             color="primary"

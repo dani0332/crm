@@ -30,7 +30,6 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const sectionExpanded = ref(true);
- 
 
 // Handle component updates
 const handleClaimUpdate = response => {
@@ -84,7 +83,7 @@ const handleDocumentDeleted = documentName => {
     />
 
     <!-- Customer Details Component -->
-    <CustomerDetails :claim="claim"  />
+    <CustomerDetails :claim="claim" />
 
     <!-- Customer Additional Contacts Component -->
     <CustomerAdditionalContacts
@@ -93,7 +92,7 @@ const handleDocumentDeleted = documentName => {
       :quoteId="claim.uuid"
       :contacts="additionalContacts"
       :quoteEmail="claim.email"
-      :quoteMobile="claim.mobile_no" 
+      :quoteMobile="claim.mobile_no"
     />
 
     <!-- Claim Status Component -->
@@ -101,30 +100,25 @@ const handleDocumentDeleted = documentName => {
       :claim="claim"
       :required-fields-filled="requiredFieldsFilled"
       :dropdowns="dropdowns"
-      @update="handleStatusUpdate" 
+      @update="handleStatusUpdate"
     />
     <!-- Claim Status Component -->
     <ClaimSubStatusAndCustomerUpdate
       :claim="claim"
       :required-fields-filled="requiredFieldsFilled"
       :dropdowns="dropdowns"
-      @update="handleStatusUpdate" 
+      @update="handleStatusUpdate"
     />
 
     <!-- Next Follow-Up Update Component -->
-    <NextFollowUpUpdate
-      :claim="claim" 
-      @update="handleClaimUpdate"
-    />
-
+    <NextFollowUpUpdate :claim="claim" @update="handleClaimUpdate" />
 
     <!-- Complaint Status Component -->
     <ComplaintStatus
-      :claim="claim" 
+      :claim="claim"
       :complaint-statuses="complaintStatuses"
       @update="handleClaimUpdate"
     />
-
 
     <!-- Claim Documents Component -->
     <ClaimDocuments
@@ -138,25 +132,16 @@ const handleDocumentDeleted = documentName => {
       :cdnPath="cdnPath"
     />
 
-    
     <!-- Next Follow-Up Logs Component -->
-    <NextFollowUpLogs
-      :claim="claim" 
-    />
+    <NextFollowUpLogs :claim="claim" />
     <!-- Complaint Status Logs Component -->
-    <ComplaintStatusLogs
-      :claim="claim" 
-    />
+    <ComplaintStatusLogs :claim="claim" />
 
     <!-- Claim Lead History Component -->
-    <ClaimLeadHistory
-      :claim="claim"
-    />
+    <ClaimLeadHistory :claim="claim" />
 
     <!-- Claim Sub-status Logs Component -->
-    <ClaimSubStatusLogs
-      :claim="claim"
-    />
+    <ClaimSubStatusLogs :claim="claim" />
 
     <!-- Audit Logs -->
     <AuditLogs

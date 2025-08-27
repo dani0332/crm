@@ -8,7 +8,7 @@ const props = defineProps({
   },
 });
 
-import { formattedDateDmyWithTime } from '@/inertia/Composables/utilities.js';  
+import { formattedDateDmyWithTime } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 const claimsEnum = page.props.claimsEnum;
@@ -125,7 +125,6 @@ const isCarLOB = computed(() => {
 const isHealthLOB = computed(() => {
   return page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
 });
-  
 
 function formatCurrency(amount) {
   if (!amount) return '-';
@@ -682,7 +681,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ formattedDateDmyWithTime(claim.created_at)  }}</dd>
+                <dd>{{ formattedDateDmyWithTime(claim.created_at) }}</dd>
               </div>
             </dl>
             <x-divider class="mt-4" />

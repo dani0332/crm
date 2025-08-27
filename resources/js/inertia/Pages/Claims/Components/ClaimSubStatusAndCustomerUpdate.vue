@@ -12,7 +12,6 @@ const props = defineProps({
     required: false,
   },
 });
- 
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -40,7 +39,7 @@ const subStatusOptions = computed(() => {
   );
 });
 
-const updateClaimSubStatusAndCustomer = async (isValid) => {
+const updateClaimSubStatusAndCustomer = async isValid => {
   console.log('updateClaimStatus');
 
   try {
@@ -49,7 +48,7 @@ const updateClaimSubStatusAndCustomer = async (isValid) => {
 
     const response = await axios.post(
       route('claims.send-notification', props.claim?.uuid),
-      claimSubStatusAndCustomerForm.data()
+      claimSubStatusAndCustomerForm.data(),
     );
 
     console.log('response', response.data);
@@ -69,8 +68,6 @@ const updateClaimSubStatusAndCustomer = async (isValid) => {
       preserveScroll: true,
       preserveState: true,
     });
- 
-
   } catch (error) {
     console.error('Error sending notification:', error);
 
@@ -78,7 +75,9 @@ const updateClaimSubStatusAndCustomer = async (isValid) => {
     if (error.response && error.response.status === 422) {
       const errors = error.response.data.errors || {};
       Object.keys(errors).forEach(function (key) {
-        const errorMessages = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+        const errorMessages = Array.isArray(errors[key])
+          ? errors[key]
+          : [errors[key]];
         errorMessages.forEach(message => {
           notification.error({
             title: message,
@@ -88,7 +87,8 @@ const updateClaimSubStatusAndCustomer = async (isValid) => {
       });
     } else {
       // Handle other errors
-      const errorMessage = error.response?.data?.message || 'Failed to send notification';
+      const errorMessage =
+        error.response?.data?.message || 'Failed to send notification';
       notification.error({
         title: errorMessage,
         position: 'top',
@@ -181,10 +181,12 @@ const optimizeMessage = async () => {
     v-if="canAny([permissionsEnum.CLAIMS_SUB_STATUS_UPDATE])"
     class="p-4 rounded shadow mb-6 bg-white"
   >
-      <Collapsible :expanded="expanded">
+    <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Claim Sub Status</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Claim Sub Status
+          </h3>
         </div>
       </template>
       <template #body>
@@ -234,7 +236,10 @@ const optimizeMessage = async () => {
                   :error="
                     claimSubStatusAndCustomerForm.errors.ai_optimized_message
                   "
-                  :disabled="disableClaimSubStatusAndCustomerUpdate || !claimSubStatusAndCustomerForm.ai_optimized_message"
+                  :disabled="
+                    disableClaimSubStatusAndCustomerUpdate ||
+                    !claimSubStatusAndCustomerForm.ai_optimized_message
+                  "
                   placeholder="AI Optimized Message"
                   class="w-full"
                   rows="5"
@@ -268,7 +273,7 @@ const optimizeMessage = async () => {
               :loading="claimSubStatusAndCustomerForm.processing"
               type="submit"
             >
-            Update and Notify to Customer
+              Update and Notify to Customer
             </x-button>
           </div>
         </x-form>

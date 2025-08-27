@@ -12,7 +12,6 @@ const props = defineProps({
     required: false,
   },
 });
- 
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -111,10 +110,10 @@ const uploadFile = async (doc, filesWithInfo) => {
     });
 
     emit('documentUploaded', response.data);
-
   } catch (error) {
     console.error('Upload error:', error);
-    errorMsg.value[doc.id] = error.response?.data?.message || 'File upload failed';
+    errorMsg.value[doc.id] =
+      error.response?.data?.message || 'File upload failed';
 
     notification.error({
       title: 'File upload failed',
@@ -137,13 +136,15 @@ const uploadFile = async (doc, filesWithInfo) => {
   }
 };
 
-
 const getS3TempUrl = async docURL => {
   try {
     NProgress.start();
-    const response = await axios.post(route('claims.documents.get-s3-temp-url'), {
-      docURL,
-    });
+    const response = await axios.post(
+      route('claims.documents.get-s3-temp-url'),
+      {
+        docURL,
+      },
+    );
 
     if (response.status === 200 && response.data.url) {
       window.open(response.data.url, '_blank');
@@ -164,13 +165,11 @@ const getS3TempUrl = async docURL => {
   }
 };
 
-
-
 const onDocDelete = (docId, docUuid, docName) => {
   documentToDelete.value = {
     id: docId,
     uuid: docUuid,
-    name: docName
+    name: docName,
   };
   modals.value.docConfirm = true;
 };
@@ -179,10 +178,12 @@ const confirmDeleteDoc = async () => {
   try {
     claimDocumentsTable.value.isLoading = true;
 
-    const response = await axios.delete(route('claims.documents.destroy', {
-      claim: props.claim?.uuid,
-      document: documentToDelete.value.id
-    }));
+    const response = await axios.delete(
+      route('claims.documents.destroy', {
+        claim: props.claim?.uuid,
+        document: documentToDelete.value.id,
+      }),
+    );
 
     notification.success({
       title: 'Document deleted successfully',
@@ -197,7 +198,6 @@ const confirmDeleteDoc = async () => {
     });
 
     emit('documentDeleted', documentToDelete.value);
-
   } catch (error) {
     console.error('Delete error:', error);
     notification.error({
@@ -224,15 +224,21 @@ const canGetS3TempUrl = computed(() => {
 });
 
 const canDownloadAllDocuments = computed(() => {
-  return can(permissionsEnum.CLAIM_DOWNLOAD_ALL_DOCUMENTS) && claimDocuments.value.length > 0;
+  return (
+    can(permissionsEnum.CLAIM_DOWNLOAD_ALL_DOCUMENTS) &&
+    claimDocuments.value.length > 0
+  );
 });
 
 const downloadAllDocuments = async () => {
   try {
     NProgress.start();
-    const response = await axios.get(route('claims.documents.download-all', props.claim?.uuid), {
-      responseType: 'blob',
-    });
+    const response = await axios.get(
+      route('claims.documents.download-all', props.claim?.uuid),
+      {
+        responseType: 'blob',
+      },
+    );
 
     // Extract filename from response headers
     const contentDisposition = response.headers['content-disposition'];
@@ -256,7 +262,7 @@ const downloadAllDocuments = async () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     // Clean up the object URL
     window.URL.revokeObjectURL(url);
 
@@ -264,21 +270,21 @@ const downloadAllDocuments = async () => {
       title: 'Documents downloaded successfully',
       position: 'top',
     });
-
   } catch (error) {
     console.error('Error downloading ZIP file:', error);
-    
+
     let errorMessage = 'Error downloading documents';
-    
+
     // Handle different error types
     if (error.response?.status === 403) {
       errorMessage = 'You do not have permission to download documents';
     } else if (error.response?.status === 400) {
-      errorMessage = error.response.data?.message || 'No documents available for download';
+      errorMessage =
+        error.response.data?.message || 'No documents available for download';
     } else if (error.response?.status === 500) {
       errorMessage = 'Server error occurred while creating download file';
     }
-    
+
     notification.error({
       title: errorMessage,
       position: 'top',
@@ -303,15 +309,14 @@ const downloadAllDocuments = async () => {
       <template #body>
         <x-divider class="my-4" />
         <div class="flex justify-end items-center mb-4">
-          
-          <x-button 
+          <x-button
             size="sm"
             color="success"
             v-if="canDownloadAllDocuments"
             class="mr-2"
             @click.prevent="downloadAllDocuments"
           >
-           Download All Documents
+            Download All Documents
           </x-button>
           <x-button
             @click.prevent="modals.doc = true"
@@ -358,7 +363,7 @@ const downloadAllDocuments = async () => {
           </template>
         </DataTable>
 
-                <!-- Document Upload Modal -->
+        <!-- Document Upload Modal -->
       </template>
     </Collapsible>
 
