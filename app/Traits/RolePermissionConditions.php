@@ -25,6 +25,7 @@ trait RolePermissionConditions
         $isCarManager = $user->isCarManager();
         $isCarAdvisor = $user->isCarAdvisor();
         $isAdvisor = $user->isAdvisor();
+        $isSupportUser = $user->isSupportUser();
         $isAdmin = $user->isAdmin();
 
         if ($isRenewalAdvisor) {
@@ -43,6 +44,9 @@ trait RolePermissionConditions
         }
         if ($isAdvisor) {
             $query->where($prefix.'.'.'advisor_id', $user->id);
+        }
+        if ($isSupportUser) {
+            $query->where($prefix.'.'.'support_user_id', $user->id);
         }
         if ($isNewManager) {
             $ids = $this->walkTree($user->id, user: $user);

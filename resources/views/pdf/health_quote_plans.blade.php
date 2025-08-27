@@ -791,27 +791,25 @@
                     @endforeach
                 </tr>
                 {{-- buy now row --}}
-                @if(!$isAUH)
-                    <tr>
-                        <th class="bg-light-blue">
-                            <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name }}
-                                    {{ $quote->last_name }}</b></p>
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name }}
+                                {{ $quote->last_name }}</b></p>
+                    </th>
+                    @foreach ($planIds as $planId)
+                        <th>
+                            <p class="text-center">
+                                @if ($plans[$planId]->discountPremium)
+                                    <a target="_blank" class="btn-buy"
+                                        href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">APPLY
+                                        Now</a>
+                                @else
+                                    N/A
+                                @endif
+                            </p>
                         </th>
-                        @foreach ($planIds as $planId)
-                            <th>
-                                <p class="text-center">
-                                    @if ($plans[$planId]->discountPremium)
-                                        <a target="_blank" class="btn-buy"
-                                            href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">APPLY
-                                            Now</a>
-                                    @else
-                                        N/A
-                                    @endif
-                                </p>
-                            </th>
-                            @endforeach
-                    </tr>
-                @endif
+                        @endforeach
+                </tr>
             </thead>
             <tbody>
                 @foreach ($features as $feature)
@@ -875,12 +873,7 @@
                                         </div>
                                     @endif
 
-                                    @if(!$isAUH)
-                                        <p class="text-left" style="text-decoration: underline; font-style: italic;"><a
-                                                target="_blank"
-                                                href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">See
-                                                full list</a></p>
-                                    @endif
+                                    <p class="text-left" style="text-decoration: underline; font-style: italic;"><a target="_blank" href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">See full list</a></p>
                                 </td>
                             @endforeach
 
@@ -901,14 +894,12 @@
                                     @elseif($feature['type'] == 'prop')
                                         {!! $plans[$planId]->{$feature['code']} !!}
                                     @elseif($feature['type'] == 'buy')
-                                        @if(!$isAUH)
-                                            @if ($plans[$planId]->discountPremium)
-                                                <a target="_blank" class="btn-buy"
-                                                    href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">APPLY
-                                                    Now</a>
-                                            @else
-                                                N/A
-                                            @endif
+                                        @if ($plans[$planId]->discountPremium)
+                                            <a target="_blank" class="btn-buy"
+                                                href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">APPLY
+                                                Now</a>
+                                        @else
+                                            N/A
                                         @endif
                                     @elseif(is_array($feature['type']))
                                         @php $value = "Excluded"; @endphp
@@ -933,15 +924,13 @@
                         @endforeach
                     </tr>
                 @endforeach
-                @if(!$isAUH)
-                    <tr>
-                        <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
-                            <a target="_blank" class="btn-all-quotes"
-                                href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid }}">See all your
-                                quotes</a>
-                        </td>
-                    </tr>
-                @endif
+                <tr>
+                    <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
+                        <a target="_blank" class="btn-all-quotes"
+                            href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid }}">See all your
+                            quotes</a>
+                    </td>
+                </tr>
             </tbody>
         </table>
 

@@ -666,8 +666,7 @@ const disableBookPolicyButton = computed(() => {
     !props.bookPolicyDetails?.bookButton ||
     bp.isEditing ||
     disableIfPolicyFailedAndNoBookingFailedEditPermission.value ||
-    !can(permissionsEnum.BOOK_POLICY_BUTTON) ||
-    isHealthAUHLead.value
+    !can(permissionsEnum.BOOK_POLICY_BUTTON)
   );
 });
 
@@ -1055,7 +1054,7 @@ const isDocTypeLoading = docType => {
                 <template v-if="isShowingTransactionPaymentStatus">
                   <x-tooltip placement="left">
                     <dd class="border-b border-dotted border-black inline">
-                      {{ bpForm.transaction_payment_status }}
+                      {{ bpForm.transaction_payment_status ?? 'N/A' }}
                     </dd>
                     <template #tooltip>
                       {{ bpForm.transaction_payment_status_tool_tip }}
@@ -1773,8 +1772,7 @@ const isDocTypeLoading = docType => {
                         bp.isEditing ||
                         is_lacking_payment ||
                         disableIfPolicyFailedAndNoBookingFailedEditPermission ||
-                        isDisabledSendPCB ||
-                        (isHealthAUHLead && isSendTypeSage)
+                        isDisabledSendPCB
                       "
                       v-if="showSendAndBookPolicyButton"
                     >
@@ -1801,8 +1799,7 @@ const isDocTypeLoading = docType => {
                       bp.isEditing ||
                       is_lacking_payment ||
                       isAMLNotClearedForTravelQuote ||
-                      disableIfPolicyFailedAndNoBookingFailedEditPermission ||
-                      (isHealthAUHLead && isSendTypeSage)
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission
                     "
                     v-if="showSendAndBookPolicyButton"
                   >
