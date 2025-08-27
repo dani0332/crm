@@ -8,6 +8,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
+use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
@@ -81,6 +82,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                     VerifyAlreadyInProgressAllocationPipe::class,
                     ValidateNationalityConfigPipe::class,
                     AssignTeamPipe::class,
+                    ApplyRuleExclusionPipe::class,
                     FetchAvailableAdvisorPipe::class,
                     ResetNationalityConfigPipe::class,
                     FetchAvailableAdvisorPipe::class,

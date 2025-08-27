@@ -202,8 +202,12 @@ class EmbeddedProduct
             })
             ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
-                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null')
+                        ? Carbon::parse($filters['date_of_purchase'][0])->startOfDay()
+                        : today()->startOfDay();
+                    $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null')
+                        ? Carbon::parse($filters['date_of_purchase'][1])->endOfDay()
+                        : today()->endOfDay();
                     $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
             })
@@ -328,6 +332,9 @@ class EmbeddedProduct
             $documentNumber = $document->document_type_code === QuoteDocumentsEnum::EP ? $document->doc_name : $documentNumbers[$document->document_type_code] ?? '';
 
             return [
+                'watermarked_doc_url' => ! empty($document->watermarked_doc_url) ? $websiteURL.$document->watermarked_doc_url : '',
+                'watermarked_doc_path' => $document->watermarked_doc_url,
+                'is_watermarked' => $document->is_watermarked ?? false,
                 'document_type' => $document->document_type_text,
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',

@@ -14,6 +14,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -40,6 +41,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
+use App\Http\Requests\AssignSupportUserRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -58,6 +60,7 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
@@ -289,6 +292,7 @@ class CRUDController extends Controller
             $quote_status = collect($quote_status)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::Lost;
             })->values();
+            $emirates = Emirate::getOptions();
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
             $userMaxCap = $todaysAllocationData['max_capacity'];
@@ -314,6 +318,7 @@ class CRUDController extends Controller
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
                 'insurerAMLStatus' => $insurerAMLStatus,
+                'emirates' => $emirates,
             ]);
         }
 
@@ -377,6 +382,7 @@ class CRUDController extends Controller
                 'yesterdayManualCount' => $yesterdayManualCount,
                 'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
+                'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Car),
                 'teams' => $teams,
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
@@ -428,6 +434,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         }
 
@@ -780,7 +787,7 @@ class CRUDController extends Controller
             $leadSourceEnum = LeadSourceEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
-            $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
+            $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/documents';
 
             if ($quote->registration_type == CarRegistrationType::COMPANY) {
                 $documentQuoteTypeId = QuoteTypeId::CompanyCar;
@@ -1148,11 +1155,13 @@ class CRUDController extends Controller
 
             $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
+            $isAUHLead = $this->healthQuoteService->isAUHLead($record->id);
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'emailStatuses' => $emailStatuses,
                 'quote' => $record,
+                'isAUHLead' => $isAUHLead,
                 'amlStatusName' => $amlStatusName,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
@@ -1229,6 +1238,7 @@ class CRUDController extends Controller
                 'paymentDocument' => $paymentDocument,
                 'paymentGatewayEnum' => $paymentGatewayEnum,
                 'isFuncsEnabled' => $isFuncsEnabled,
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         } else {
             return view('shared.show', compact([
@@ -1303,6 +1313,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         }
 
@@ -2056,6 +2067,7 @@ class CRUDController extends Controller
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
         info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
+
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
             'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
@@ -2069,6 +2081,20 @@ class CRUDController extends Controller
             'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? null,
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
+
+        if ($request->modelType == strtolower(quoteTypeCode::Life)) {
+            $model = $quoteModel;
+            if ($quoteModel instanceof PersonalQuote) {
+                $model = $quoteModel->lifeQuote;
+            }
+
+            if ($model) {
+                $model->update([
+                    'policy_sum_assured_currency_id' => $request->policy_sum_assured_currency_id ?? null,
+                    'policy_sum_assured' => $request->policy_sum_assured ?? null,
+                ]);
+            }
+        }
 
         if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
             $quoteModel->update([
@@ -2352,5 +2378,33 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
+    }
+
+    /**
+     * Get the appropriate service object based on modelType
+     *
+     * @param  string  $modelType
+     * @return mixed
+     */
+    /**
+     * Assign support user to quote (dynamic for all LOBs)
+     */
+    public function assignSupportUser(AssignSupportUserRequest $request)
+    {
+        $leadIds = explode(',', $request->assigned_lead_id);
+        $supportUserId = (int) $request->support_user_id;
+        $modelType = $request->modelType;
+
+        // Use the existing helper function to get service class name
+        $serviceClassName = getServiceObject($modelType);
+        $service = app($serviceClassName);
+
+        $successMessage = $service->assignSupportUser($leadIds, $supportUserId, $modelType);
+
+        if ($successMessage) {
+            return Redirect::back()->with('success', $successMessage);
+        }
+
+        return Redirect::back()->with('error', 'Failed to assign support user to leads. Please try again.');
     }
 }

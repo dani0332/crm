@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Models\FtcEmailLog;
-use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -107,9 +106,9 @@ class StorePaymentRequest extends FormRequest
                             if ($linkUsed) {
                                 $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
                             }
-                            $insurerProvider = InsuranceProvider::where('id', request()->input('insurance_provider_id'))->first();
-                            if ($insurerProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
-                                $validator->errors()->add('insurer_payment_link', 'Current insurance provider is not supported for this payment gateway. Please verify that the insurance provider is supported for this payment gateway.');
+                            $isPaymentLinkEnabled = $this->checkInsuranceProviderPaymentGateway(request()->input('insurance_provider_id'), $quoteModel, request()->input('modelType'));
+                            if (! $isPaymentLinkEnabled) {
+                                $validator->errors()->add('insurer_payment_link', 'Current insurance provider is not supported for this payment gateway. Please verify that the insurance provider is supported for this payment gateway or broker commission is enabled for this insurance provider and plan.');
                             } else {
                                 request()->merge(['payment_gateway_id' => PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL]);
                                 request()->merge(['cc_payment_gateway' => strtoupper(PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL_TEXT)]);

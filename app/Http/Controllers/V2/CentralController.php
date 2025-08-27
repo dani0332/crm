@@ -19,19 +19,16 @@ use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
-use App\Exports\CarQuoteExportWithEmailMobile;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
 use App\Exports\LifeQuotesExport;
-use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
-use App\Exports\PUAQuoteExport;
-use App\Exports\PUAUpdatesExport;
 use App\Exports\RetentionReportExport;
 use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
+use App\Factories\PUAExportFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
@@ -47,6 +44,7 @@ use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
@@ -80,7 +78,9 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
+use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -132,8 +132,6 @@ class CentralController extends Controller
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 return app(CarQuoteExportWithPlans::class)->download(ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL));
-            } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
-                return app(CarQuoteExportWithEmailMobile::class)->download(ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE));
             } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
                 return app(CarQuoteExportWithMakeModelTrims::class)->download(ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS));
             }
@@ -353,6 +351,7 @@ class CentralController extends Controller
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
+
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
@@ -371,19 +370,33 @@ class CentralController extends Controller
                     ['payment_status_id', PaymentStatusEnum::AUTHORISED],
                 ])
                     ->whereHas('product.embeddedProduct', function ($query) {
-                        $query->where('product_category', EpCategoryEnum::BOLT_ON)
-                            ->whereIn('short_code', EmbeddedProductEnum::getSukoonMedexCodes() ?? []);
-                    })->select('code', 'payment_status_id', 'policy_status')->get();
+                        $query->where('product_category', EpCategoryEnum::BOLT_ON);
+                    })
+                    ->with(['product.embeddedProduct:id,short_code'])
+                    ->select('code', 'payment_status_id', 'policy_status', 'product_id')
+                    ->get();
 
                 if ($captureableEmbeddedTransactions->isNotEmpty()) {
                     try {
                         EmbeddedProductRepository::capturePayment($quote->id, strtolower($quoteType->value));
 
-                        LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
-                            extra: $captureableEmbeddedTransactions->toArray()
-                        );
+                        $sukoonMedexCodes = EmbeddedProductEnum::getSukoonMedexCodes();
+                        $hasSukoonMedexProducts = $captureableEmbeddedTransactions
+                            ->filter(function ($transaction) use ($sukoonMedexCodes) {
+                                $epShortCode = $transaction?->product?->embeddedProduct?->short_code;
 
-                        return response()->json(['message' => 'The embedded product payment is being captured, once done, the booking process will begin.'], 200);
+                                return $epShortCode && in_array($epShortCode, $sukoonMedexCodes);
+                            })
+                            ->isNotEmpty();
+
+                        // Return response only if EP has any Sukoon MEDEX Product, otherwise proceed to Sage booking
+                        if ($hasSukoonMedexProducts) {
+                            LoggerService::info('Embedded Product payment is being captured, once done, booking process will begin',
+                                extra: $captureableEmbeddedTransactions->toArray()
+                            );
+
+                            return response()->json(['message' => 'The embedded product payment is being captured, once done, booking process will begin.'], 200);
+                        }
 
                     } catch (Exception $e) {
                         LoggerService::error('Embedded Product payment capture failed', [
@@ -430,6 +443,11 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_PLAN);
         LoggerService::info("Select plan for Ecom lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
+
+        $errorsMessages = (new CentralService)->validateIsPlanSelectable($quoteType, $request->all());
+        if (! empty($errorsMessages)) {
+            return response()->json(['errors' => $errorsMessages], 422);
+        }
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
@@ -728,13 +746,25 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request)
+    public function exportPUAUpdates(Request $request, string $quoteType)
     {
-        if (! auth()->user()->can(PermissionsEnum::EXPORT_CAR_PUA_UPDATES)) {
-            return response()->json(['message' => 'User Has No Permission to Download PUA Updates.'], 403);
+        // Validate quote type using the factory
+        if (! PUAExportFactory::isValidQuoteType($quoteType)) {
+            return response()->json(['message' => "Invalid quote type: {$quoteType}"], 400);
         }
 
-        $zipFileName = 'PUA-UPDATES.zip';
+        // Dynamic permission check based on quote type
+        $permission = match ($quoteType) {
+            'Car' => PermissionsEnum::EXPORT_CAR_PUA_UPDATES,
+            'Home' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
+            default => PermissionsEnum::EXPORT_CAR_PUA_UPDATES, // Fallback to car permission
+        };
+
+        if (! auth()->user()->can($permission)) {
+            return response()->json(['message' => "User Has No Permission to Download {$quoteType} PUA Updates."], 403);
+        }
+
+        $zipFileName = "PUA-UPDATES-{$quoteType}.zip";
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
 
@@ -743,15 +773,26 @@ class CentralController extends Controller
         }
 
         try {
-            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA-AUTHORIZED.xlsx');
-            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('NON-PUA-AUTHORIZED.xlsx');
-            $puaUpdatesExport = app(PUAUpdatesExport::class)->download('PUA-UPDATES.xlsx');
+            $exports = PUAExportFactory::createExports($quoteType, $request->all());
 
-            $files = [
-                ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => 'PUA-AUTHORIZED.xlsx'],
-                ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => 'NON-PUA-AUTHORIZED.xlsx'],
-                ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => 'PUA-UPDATES.xlsx'],
-            ];
+            $files = [];
+
+            if (! empty($exports)) {
+                LoggerService::info('PUA export starting', ['quote_type' => $quoteType]);
+                $puaUpdateExport = $exports['pua_quote']->download("{$quoteType}-PUA-AUTHORIZED.xlsx");
+                $nonPuaUpdateExport = $exports['non_pua_quote']->download("{$quoteType}-NON-PUA-AUTHORIZED.xlsx");
+                $puaUpdatesExport = $exports['pua_updates']->download("{$quoteType}-PUA-UPDATES.xlsx");
+
+                $files = [
+                    ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-NON-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-UPDATES.xlsx"],
+                ];
+            } else {
+                $zip->close();
+
+                return response()->json(['message' => "No PUA exports available for {$quoteType} quote type."], 400);
+            }
 
             foreach ($files as $file) {
                 if (file_exists($file['path'])) {
@@ -761,7 +802,18 @@ class CentralController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error processing exports: '.$e->getMessage()], 500);
+            $appTrace = collect($e->getTrace())
+                ->filter(function ($trace) {
+                    // Check if any value in the trace contains 'App/' or 'app/'
+                    return collect($trace)->contains(function ($value) {
+                        return is_string($value) && (str_contains($value, 'App/') || str_contains($value, 'app/'));
+                    });
+                })
+                ->values(); // Re-index the array
+
+            LoggerService::error('PUA Export Error - App Trace:', $appTrace->toArray());
+
+            return response()->json(['message' => 'Error processing exports: '.$e->getMessage().' file:'.$e->getFile().'line:'.$e->getLine()], 500);
         }
 
         $zip->close();
@@ -840,8 +892,9 @@ class CentralController extends Controller
 
     public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
     {
+        $request = $postPrepaymentToSageRequest->safe();
+
         try {
-            $request = $postPrepaymentToSageRequest->safe();
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
             $sendUpdateLog = null;
@@ -901,17 +954,51 @@ class CentralController extends Controller
 
     public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
     {
-        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
+        LoggerService::startQuoteLogging($quoteCcode);
+        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids);
         try {
             $result = app(CentralService::class)->getPlansPaymentGateway($request, $quoteType);
 
-            LoggerService::info('getPlansPaymentGateway response: ', extra: $result, context: ['ref_id' => $quoteCcode]);
+            LoggerService::info('getPlansPaymentGateway response: ', extra: $result);
 
             return response()->json(['plans' => $result]);
         } catch (\Throwable $th) {
-            LoggerService::error('getPlansPaymentGateway error: ', exception: $th, context: ['ref_id' => $quoteCcode]);
+            LoggerService::error('getPlansPaymentGateway error: ', exception: $th);
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function retryPrepaymentCreation(RetryPrepaymentRequest $request)
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_PREPAYMENT_POSTING);
+        $request = $request->safe();
+        $paymentCode = $request->paymentCode;
+        $srNo = $request->srNo;
+        LoggerService::info("retryPrepaymentCreation called for payment code : {$paymentCode} and sr no : {$srNo}");
+        $data = [
+            'quote_type' => $request->quoteType,
+            'quote_request_id' => $request->quoteRequestId,
+            'payment_split_id' => $request->paymentSplitId,
+            'payment_code' => $paymentCode,
+            'sr_no' => $srNo,
+        ];
+        $result = app(PaymentService::class)->retryCreatePrepayment($data);
+        if ($result['success']) {
+            return redirect()->back()->with([
+                'success' => $result['message'],
+            ]);
+        }
+
+        return redirect()->back()->with([
+            'error' => $result['message'],
+        ]);
+    }
+
+    public function updateCommissionForLeads()
+    {
+        $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
+
+        return $response;
     }
 }

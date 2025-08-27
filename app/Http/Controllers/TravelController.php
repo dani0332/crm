@@ -15,6 +15,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -129,6 +130,7 @@ class TravelController extends Controller
             'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
             'travelPlans' => TravelPlan::all(),
             'insurerAMLStatus' => $insurerAMLStatus,
+            'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Travel),
             'assignmentTypes' => AssignmentTypeEnum::withLabels(),
         ]);
     }
@@ -569,6 +571,7 @@ class TravelController extends Controller
             'id' => $planId,
             'vat' => $vat,
             'insurerQuoteNo' => $insurerQuoteNo,
+            'per_member_price' => $this->travelQuoteService->getPerMemberPrice($planId),
         ];
 
         return response()->json($data, 200);

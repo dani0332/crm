@@ -11,6 +11,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -31,6 +32,7 @@ use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
+use App\Repositories\CurrencyTypeRepository;
 use App\Repositories\UserRepository;
 use App\Services\BaseService;
 use App\Services\CapiRequestService;
@@ -70,8 +72,9 @@ class LifeQuoteService extends BaseService
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
         $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
+        $quoteSegments = QuoteSegmentEnum::withLabels(QuoteTypeId::Life);
 
-        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes');
+        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes', 'quoteSegments');
     }
 
     public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
@@ -146,6 +149,38 @@ class LifeQuoteService extends BaseService
                         });
                     default:
                         break;
+                }
+            })
+            ->when(! empty(request()->authorize_date), function ($query) {
+                $authorizeDates = request()->authorize_date;
+                if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
+                    $startDate = $authorizeDates[0];
+                    $endDate = $authorizeDates[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when(! empty(request()->captured_date), function ($query) {
+                $capturedDates = request()->captured_date;
+                if (is_array($capturedDates) && count($capturedDates) >= 2) {
+                    $startDate = $capturedDates[0];
+                    $endDate = $capturedDates[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
                 }
             })
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
@@ -312,6 +347,9 @@ class LifeQuoteService extends BaseService
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'latestInsured' => function ($q) {
+                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
+                },
             ])
             ->select([
                 'personal_quotes.*',
@@ -390,6 +428,7 @@ class LifeQuoteService extends BaseService
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
         $emailStatuses = app(BaseService::class)->getEmailStatus(QuoteTypeId::Life, $lifeQuote->id);
+        $lifeCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_CUT_OFF_DATE)->first()->value ?? null;
 
         return [
             'documentTypes' => $documentTypes,
@@ -438,9 +477,11 @@ class LifeQuoteService extends BaseService
             'ecomLifeInsuranceQuoteUrl' => $ecomLifeInsuranceQuoteUrl,
             'currencies' => $currencies,
             'lifeRiders' => $lifeRiders,
-            'availablePlan' => $this->getQuotePlans($uuid),
             'paymentTerms' => PaymentTermEnum::asArray(),
             'emailStatuses' => $emailStatuses,
+            'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+            'lifeCutOffDate' => $lifeCutOffDate,
         ];
 
     }
@@ -702,7 +743,7 @@ class LifeQuoteService extends BaseService
             'plans' => [$data],
         ];
 
-        LoggerService::info('fn: lifePlanCreateQuote', context: [
+        LoggerService::info('fn: lifePlanCreateQuote', extra: [
             'data' => $reqData,
             'url' => '/save-manual-life-quote-plan',
         ]);
@@ -876,7 +917,7 @@ class LifeQuoteService extends BaseService
 
     public function toggleLifePlanVisibility(array $data)
     {
-        LoggerService::info('fn: toggleLifePlanVisibility', context: [
+        LoggerService::info('fn: toggleLifePlanVisibility', extra: [
             'data' => $data,
         ]);
 
@@ -900,6 +941,36 @@ class LifeQuoteService extends BaseService
         }
 
         return $quote;
+    }
+
+    public function getLifeRiderInfo($rider, $plan)
+    {
+        if ($rider === null || ! ($rider->active ?? false)) {
+            return 'Optional';
+        }
+        if (! ($rider->inputRequired ?? false)) {
+            if (($rider->coverType ?? '') === 'VALUE') {
+                foreach (($rider->criteria ?? []) as $criteria) {
+                    if (($criteria->currency ?? null) === ($plan->currency ?? null) && isset($criteria->coverValue)) {
+                        return is_string($criteria->coverValue)
+                            ? "Covered {$criteria->coverValue}"
+                            : 'Covered upto '.number_format($criteria->coverValue);
+                    }
+                }
+
+                return 'Covered';
+            } elseif (($rider->coverType ?? '') === 'COVER') {
+                return is_string($plan->sumInsured ?? '')
+                    ? "Covered {$plan->sumInsured}"
+                    : 'Covered upto '.number_format($plan->sumInsured ?? 0);
+            }
+        } else {
+            return is_string($rider->coverValue ?? '')
+                ? "Covered {$rider->coverValue}"
+                : 'Covered upto '.number_format($rider->coverValue ?? 0);
+        }
+
+        return 'Covered';
     }
 
     private function generatePdfFilename($quote): string

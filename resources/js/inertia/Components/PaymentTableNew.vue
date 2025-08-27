@@ -1,27 +1,24 @@
 <script setup>
-import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive, ref, nextTick } from 'vue';
 import NProgress from 'nprogress';
-import { computed } from 'vue';
-import { time } from 'highcharts';
+import { computed, onMounted, ref } from 'vue';
 import {
-  ImageGalleryModal,
   AmlApprovalModal,
-  RetryPaymentModal,
-  DeleteSplitPaymentModal,
   DeleteParentPaymentModal,
+  DeleteSplitPaymentModal,
+  ImageGalleryModal,
+  RetryPaymentModal,
   VoidPaymentModal,
 } from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
-import { usePayment } from '../Composables/usePayment';
 import { useAMLKYC } from '../Composables/useAMLKYC';
+import { usePayment } from '../Composables/usePayment';
 import {
-  PaymentTableHeader,
+  CreatePaymentForm,
   PaymentHeader,
   PaymentRow,
   PaymentSplitRow,
-  CreatePaymentForm,
+  PaymentTableHeader,
 } from './PaymentComponents/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
@@ -144,6 +141,14 @@ const showInsurerReceiptNumberInputField = ref(false);
 const isInsurerReceiptNumberExistsModalOpen = ref(false);
 const insurerReceiptNumberCheckInProcess = ref(false);
 
+// Short: is life plan details enabled
+const isLifePlanDetailsEnabled = computed(() => {
+  return (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.isPlanDetailSectionEnabled
+  );
+});
+
 // for life only
 const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
 
@@ -153,9 +158,16 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
-  quoteTypeCodeEnum.Life,
   quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
+
+if (
+  !isLifePlanDetailsEnabled.value &&
+  props.quoteType === quoteTypeCodeEnum.Life
+) {
+  quoteTypesToCheck.push(quoteTypeCodeEnum.Life);
+}
+
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -166,6 +178,18 @@ const showLackingPayment = () => {
       position: 'top',
       timeout: 5000,
     });
+  }
+};
+
+const getInitalAmountForLifeLOB = () => {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+    const premiumInAED =
+      Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
+    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
+  } else {
+    return (
+      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
+    );
   }
 };
 
@@ -184,16 +208,11 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
-} else if (props.quoteType === quoteTypeCodeEnum.Life) {
-  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-    initialAmount.value =
-      props.quoteRequest.premium *
-      exchangeRate.value *
-      props.quoteRequest?.life_quote?.payment_term;
-  } else {
-    initialAmount.value =
-      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term;
-  }
+} else if (
+  props.quoteType === quoteTypeCodeEnum.Life &&
+  !props.isPlanDetailSectionEnabled
+) {
+  initialAmount.value = getInitalAmountForLifeLOB();
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -253,7 +272,10 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
-} else if (props.quoteType == quoteTypeCodeEnum.Life) {
+} else if (
+  !isLifePlanDetailsEnabled.value &&
+  props.quoteType === quoteTypeCodeEnum.Life
+) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
@@ -387,7 +409,10 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = async () => {
-  if (props.quoteType === quoteTypeCodeEnum.Life) {
+  if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
     if (
       exchangeRate.value == 0 &&
       props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED'
@@ -493,7 +518,7 @@ const addPaymentModal = async () => {
 
   // Special handling for life quotes - map payment term to frequency
   if (
-    props.quoteType === quoteTypeCodeEnum.Life &&
+    !isLifePlanDetailsEnabled.value &&
     props.quoteRequest?.life_quote?.payment_term
   ) {
     const paymentTermToFrequency = {
@@ -653,6 +678,7 @@ const editPaymentModal = async (
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
+    !props.sendUpdate?.id &&
     (props.quoteType === quoteTypeCodeEnum.Bike ||
       props.quoteType === quoteTypeCodeEnum.Car ||
       props.quoteType === quoteTypeCodeEnum.Home ||
@@ -801,17 +827,11 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Home
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
-    } else if (props.quoteType === quoteTypeCodeEnum.Life) {
-      if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-        initialAmount.value =
-          props.quoteRequest.premium *
-          exchangeRate.value *
-          props.quoteRequest?.life_quote?.payment_term;
-      } else {
-        initialAmount.value =
-          props.quoteRequest.premium *
-          props.quoteRequest?.life_quote?.payment_term;
-      }
+    } else if (
+      !isLifePlanDetailsEnabled.value &&
+      props.quoteType === quoteTypeCodeEnum.Life
+    ) {
+      initialAmount.value = getInitalAmountForLifeLOB();
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -828,7 +848,10 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
-  } else if (props.quoteType == quoteTypeCodeEnum.Life) {
+  } else if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
@@ -840,11 +863,6 @@ const setPlanDetail = () => {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan;
-    if (props.sendUpdate) {
-      initalPlanDetails =
-        props.quoteRequest.insurance_provider_details ??
-        props.quoteRequest.insurance_provider;
-    }
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else {
@@ -1011,47 +1029,6 @@ const fetchInsurerAMLStatus = async () => {
   }
 };
 
-const triggerPostPrepayment = async splitPayment => {
-  console.log(' triggerPostPrepayment : ', splitPayment.id);
-  let quoteStatusId = props.quoteRequest.quote_status_id;
-  let isPolicyBooked =
-    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
-  if (!isPolicyBooked) {
-    notification.warning({
-      title:
-        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
-      position: 'top',
-    });
-  }
-  try {
-    NProgress.start();
-    const response = await axios.post(route('can-post-premium-prepayment'), {
-      paymentSplitId: splitPayment.id,
-      quoteRequestId: props.quoteRequest.id,
-      quoteType: page.props.quoteType,
-      sendUpdateId: props.sendUpdate?.id,
-    });
-    NProgress.done();
-    if (response.data.success) {
-      notification.success({
-        title: 'Post Prepayment to Sage Process Started',
-        position: 'top',
-      });
-      router.reload({
-        only: ['payments'],
-      });
-    }
-  } catch (error) {
-    let errorMessages = error.response.data.errors;
-    Object.keys(errorMessages).forEach(function (key) {
-      notification.error({
-        title: errorMessages[key],
-        position: 'top',
-      });
-    });
-  }
-};
-
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
@@ -1192,6 +1169,9 @@ watch(
                       :paymentMethodsForm="paymentMethodsFormReplicated"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       :quoteType="quoteType"
+                      :isHealthAUHLead="
+                        page.props?.bookPolicyDetails?.isHealthAUHLead
+                      "
                       @view-payment="
                         (payment, splitId, splitNo, action) =>
                           editPaymentModal(payment, splitId, splitNo, action)
@@ -1208,7 +1188,6 @@ watch(
                         (jobId, message) =>
                           retrySplitPaymentModal(jobId, message)
                       "
-                      @post-prepayment="triggerPostPrepayment"
                     />
                   </template>
                 </template>
@@ -1233,6 +1212,7 @@ watch(
           "
           show-close
           backdrop
+          persistent
         >
           <CreatePaymentForm
             ref="createPaymentFormRef"
@@ -1278,6 +1258,7 @@ watch(
             :isInsurerReceiptNumberExistsModalOpen="
               isInsurerReceiptNumberExistsModalOpen
             "
+            :isLifePlanDetailsEnabled="isLifePlanDetailsEnabled"
             @cancel-modal="createPaymentModal = !createPaymentModal"
             @aml-verification="openAmlVerificationModal"
             @update-plan-detail="updatePlanDetail"

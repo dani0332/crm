@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -33,6 +35,7 @@ use App\Models\ApplicationStorage;
 use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerMembers;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -62,7 +65,7 @@ use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
 {
@@ -155,12 +158,14 @@ class CentralService extends BaseService
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $lob = quoteTypeCode::Business;
                     $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
-
+                    $dataArr['companyName'] = $parentRecord->company_name ?? '';
+                    $dataArr['numberOfEmployees'] = $parentRecord->number_of_employees ?? '';
+                    $dataArr['healthPlanTypeId'] = $parentRecord->health_plan_type_id ?? '';
                     if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
                         $dataArr['businessTypeOfInsuranceId'] = QuoteTypeId::Business;
                     }
+                    $lob = quoteTypeCode::Business;
                 }
 
                 if (in_array($lob, [
@@ -464,6 +469,87 @@ class CentralService extends BaseService
                 'new_method' => $newPaymentMethod,
             ]);
         }
+    }
+
+    public function validateIsPlanSelectable($quoteType, $data): array
+    {
+        return match (ucfirst($quoteType)) {
+            QuoteTypes::TRAVEL->value => $this->validateIsTravelPlanSelectable($quoteType, $data),
+            default => [],
+        };
+    }
+
+    public function validateIsTravelPlanSelectable($quoteType, $data): array
+    {
+        $validator = Validator::make($data, [
+            'quoteId' => 'required',
+            'quoteSource' => 'required',
+            'planType' => 'required',
+            'provider_code' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors()->toArray();
+        }
+
+        $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
+        $isNormalPlan = $data['planType'] == 'normalPlans';
+        $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
+        $isALNCProvider = $data['provider_code'] == InsuranceProvidersEnum::ALNC;
+
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+            $quoteModelObject = $this->getModelObject(strtolower($quoteType));
+            $customerMembers = CustomerMembers::where([
+                'quote_type' => ltrim($quoteModelObject, '\\'),
+                'quote_id' => $data['quoteId'] ?? null,
+                'customer_type' => CustomerTypeEnum::Individual,
+                'deleted_at' => null,
+            ])
+                ->select('id', 'code', 'first_name', 'last_name', 'passport')
+                ->get();
+
+            $errorsMessages = $this->validateCustomerMembersInfo($customerMembers->toArray());
+
+            return $errorsMessages;
+        }
+
+        return [];
+    }
+
+    public function validateCustomerMembersInfo(array $members): array
+    {
+        $validator = Validator::make(
+            ['members' => $members],
+            [
+                'members' => 'required|array|min:1',
+                'members.*.first_name' => 'required',
+                'members.*.last_name' => 'required',
+                'members.*.passport' => 'required',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            $finalErrors = [];
+
+            if ($errors->has('members')) {
+                $finalErrors['members_count'] = ['At least one customer member is required.'];
+            }
+            if ($errors->has('members.*.first_name')) {
+                $finalErrors['first_name'] = ['Please enter first_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.last_name')) {
+                $finalErrors['last_name'] = ['Please enter last_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.passport')) {
+                $finalErrors['passport'] = ['Please enter passport numbers for all members before selecting a plan.'];
+            }
+
+            return $finalErrors;
+        }
+
+        return [];
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
@@ -1156,57 +1242,99 @@ class CentralService extends BaseService
     public function updateQuoteInformation($type, $id)
     {
         if ($type == 'send-update') {
-            return true;
+            return;
         }
         if (request()->has('quote_type')) {
             $type = request()->quote_type;
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+        $quoteCode = $quote->code;
+        $currentQuoteStatus = $quote->quote_status_id;
+        // Check if quote status is locked - if so, don't change status due to document uploads
+        if ($this->isQuoteStatusLocked($quote)) {
+            LoggerService::info("Quote Code: {$quoteCode} - Status is LOCKED {$currentQuoteStatus}, preventing document uploads from changing status");
 
-        LoggerService::info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
-        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
-            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            LoggerService::info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
-            if ($isPolicyDetailsFilled) {
-                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-                $hasTransactionApprovedStatus = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-                    ->where('quote_request_id', $quote->id)
-                    ->where(function ($query) {
-                        $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
-                            ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
-                    })->exists();
-
-                $isCurrentlyTransactionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
-                $hasRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
-
-                if (($hasTransactionApprovedStatus || $isCurrentlyTransactionApproved) && $hasRequiredDocuments) {
-                    $oldQuoteStatus = $quote->quote_status_id;
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
-                        'policy_issuance_status_other' => '',
-                    ]);
-                    LoggerService::info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
-
-                    // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
-                    // No need to create quote status log
-                    if ($oldQuoteStatus != $quote->quote_status_id) {
-                        QuoteStatusLog::create([
-                            'quote_type_id' => $quoteTypeId,
-                            'quote_request_id' => $quote->id,
-                            'current_quote_status_id' => $quote->quote_status_id,
-                            'previous_quote_status_id' => $oldQuoteStatus,
-                            'created_at' => Carbon::now(),
-                            'updated_at' => Carbon::now(),
-                        ]);
-                        (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
-                    }
-                    LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
-                }
-            }
+            return;
         }
+
+        $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
+        LoggerService::info("Quote Code: {$quoteCode} - Policy details filled: ".($isPolicyDetailsFilled ? 'YES' : 'NO'));
+
+        if ($isPolicyDetailsFilled) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+
+            if ($this->canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId)) {
+                $previousQuoteStatus = $quote->quote_status_id;
+                $updateData = [
+                    'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                    'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+                    'policy_issuance_status_other' => '',
+                ];
+
+                $quote->update($updateData);
+
+                LoggerService::info("Quote Code: {$quoteCode} - Status updated: {$previousQuoteStatus} → {$quote->quote_status_id}");
+
+                // Create status log and trigger journey if status actually changed
+                if ($previousQuoteStatus != $quote->quote_status_id) {
+                    app(QuoteStatusLogService::class)->createQuoteStatusLog($quoteTypeId, $quote, $previousQuoteStatus);
+                    (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
+                    LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
+                } else {
+                    LoggerService::info("Quote Code: {$quoteCode} - No status change, skipping log creation");
+                }
+            } else {
+                LoggerService::info("Quote Code: {$quoteCode} - Cannot update to Policy Issued, requirements not met");
+            }
+        } else {
+            LoggerService::info("Quote Code: {$quoteCode} - Policy details not filled, skipping status update");
+        }
+    }
+
+    /**
+     * Check if quote is in a locked status that prevents document uploads from changing status
+     */
+    private function isQuoteStatusLocked($quote): bool
+    {
+        $statusesThatPreventDocumentUploads = [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+            // These statuses prevent document uploads from changing quote status
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+        ];
+
+        return in_array($quote->quote_status_id, $statusesThatPreventDocumentUploads);
+    }
+
+    /**
+     * Determine if a quote can be updated to Policy Issued status.
+     */
+    private function canUpdateToPolicyIssued($type, $id, $quote, $quoteTypeId): bool
+    {
+        $quoteCode = $quote->code;
+
+        // First, check if all required documents are uploaded (most expensive check first)
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
+        $hasAllRequiredDocuments = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote);
+
+        LoggerService::info("Quote Code: {$quoteCode} - Document check: Required docs uploaded=".($hasAllRequiredDocuments ? 'YES' : 'NO'));
+
+        // If documents are not uploaded, no need to check other conditions
+        if (! $hasAllRequiredDocuments) {
+            return false;
+        }
+
+        // Only check transaction approved status if documents are uploaded
+        $hasTransactionApprovedHistory = app(QuoteStatusLogService::class)->hasTransactionApprovedStatus($quoteTypeId, $quote->id);
+        $isCurrentlyTransactionApproved = $quote->quote_status_id === QuoteStatusEnum::TransactionApproved;
+
+        return $hasTransactionApprovedHistory || $isCurrentlyTransactionApproved;
     }
 
     /**

@@ -1683,40 +1683,8 @@ if (! function_exists('isTapEnabled')) {
 if (! function_exists('userHasProduct')) {
     function userHasProduct($product)
     {
-        $productIds = auth()->user()->products->pluck('product_id');
+        $productIds = auth()->user()->products->pluck('id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
-    }
-}
-
-if (! function_exists('getLifeRiderInfo')) {
-    function getLifeRiderInfo($rider, $plan)
-    {
-        if (! isset($rider) && empty($rider)) {
-            return 'Optional';
-        }
-
-        // if rider options is not active then return (Optional)
-        if (! $rider->active) {
-            return 'Optional';
-        }
-
-        if (! $rider->inputRequired) {
-            if ($rider->coverType == 'VALUE') {
-                foreach ($rider->criteria as $criteria) {
-                    if (isset($criteria->currency) && isset($plan->currency) && $criteria->currency == $plan->currency && isset($criteria->coverValue)) {
-                        return is_string($criteria->coverValue) ? "Covered $criteria->coverValue" : 'Covered upto '.number_format($criteria->coverValue);
-                    }
-                }
-
-                return 'Covered';
-            } elseif ($rider->coverType == 'COVER') {
-                return is_string($plan->sumInsured) ? 'Covered '.$plan->sumInsured : 'Covered upto '.number_format($plan->sumInsured);
-            }
-        } else {
-            return is_string($rider?->coverValue) ? 'Covered '.$rider?->coverValue : 'Covered upto '.number_format($rider?->coverValue);
-        }
-
-        return 'Covered';
     }
 }
