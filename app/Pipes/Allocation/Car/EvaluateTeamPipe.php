@@ -36,7 +36,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             LoggerService::info('AIG lead detected with SIC advisor requested. Assigning to Organic team.');
         }
 
-        if ($this->allocationRequest->isSIC() && $lead->isPaymentAuthorizedOnly() && ! $lead->isPaymentLinkRequested()) {
+        if ($this->allocationRequest->isSIC() && $lead->isPaymentAuthorizedOrDeclined() && ! $lead->isPaymentLinkRequested()) {
             LoggerService::info('SIC lead detected with payment authorized only. Assigning to SIC Unassisted team.');
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
             $this->allocationRequest->setTeamId($teamId);

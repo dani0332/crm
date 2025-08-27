@@ -446,9 +446,4 @@ trait QuoteModelTrait
             ->map(fn ($name) => strtolower($name))
             ->toArray();
     }
-
-    public function isPaymentAuthorizedOnly(): bool
-    {
-        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
-    }
 }

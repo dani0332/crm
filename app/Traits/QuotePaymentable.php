@@ -43,6 +43,11 @@ trait QuotePaymentable
         return $this->isPaymentAuthorizedOrCapturedOrPaid() || $this->isPaymentDeclinedOrFailed() || $this->isPaymentLinkRequested();
     }
 
+    public function isPaymentAuthorizedOrDeclined()
+    {
+        return $this->isPaymentAuthorizedOrCapturedOrPaid() || $this->isPaymentDeclinedOrFailed();
+    }
+
     public function scopePaymentLinkRequested($q)
     {
         $q->where('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
