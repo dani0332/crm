@@ -1305,7 +1305,9 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport(`/Car/pua-leads-export?${objToUrl(filters)}`, true)"
+            @click="
+              onExport(`/Car/pua-leads-export?${objToUrl(filters)}`, true)
+            "
             class="justify-self-start mr-3"
           >
             Export PUA Updates
