@@ -8,7 +8,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -181,7 +180,7 @@ class JetskiQuoteRepository extends BaseRepository
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         // Apply authorize_date filter
-        $query->when(!empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
+        $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
             $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);
             if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
                 $startDate = Carbon::parse($authorizeDates[0])->startOfDay();
@@ -193,7 +192,7 @@ class JetskiQuoteRepository extends BaseRepository
         });
 
         // Apply captured_date filter
-        $query->when(!empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
+        $query->when(! empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
             $capturedDates = $this->getFilterValue('captured_date', $requestParams);
             if (is_array($capturedDates) && count($capturedDates) >= 2) {
                 $startDate = Carbon::parse($capturedDates[0])->startOfDay();

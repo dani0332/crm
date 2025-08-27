@@ -1911,7 +1911,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        LoggerService::info("exportnonPUAAuthorized", ['request_params' => $request->all()]);
+        LoggerService::info('exportnonPUAAuthorized', ['request_params' => $request->all()]);
 
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
@@ -1929,7 +1929,7 @@ class CarQuoteService extends BaseService
             )
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
-                     ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
+                    ->where('p.paymentable_type', '=', 'App\\Models\\CarQuote');
             })
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
@@ -2012,7 +2012,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        LoggerService::info("exportPUAAuthorized", ['request_params' => $request->all()]);
+        LoggerService::info('exportPUAAuthorized', ['request_params' => $request->all()]);
 
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
@@ -2104,7 +2104,7 @@ class CarQuoteService extends BaseService
             $request = request();
         }
 
-        LoggerService::info("exportPUAUpdates", ['request_params' => $request->all()]);
+        LoggerService::info('exportPUAUpdates', ['request_params' => $request->all()]);
 
         $startDate = Carbon::now()->subDay()->startOfDay();
         $endDate = Carbon::now()->subDay()->endOfDay();
