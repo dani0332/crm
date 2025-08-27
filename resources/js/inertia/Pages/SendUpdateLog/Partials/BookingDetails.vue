@@ -2496,8 +2496,7 @@ watch(
                       :disabled="
                         isLackingPayment ||
                         disableMainBtn ||
-                        isTapCaptureProcessStart ||
-                        isAUHEnable
+                        isTapCaptureProcessStart
                       "
                     >
                       {{ props.updateBtn }}
