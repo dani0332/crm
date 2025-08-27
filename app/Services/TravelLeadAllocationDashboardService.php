@@ -2,15 +2,20 @@
 
 namespace App\Services;
 
+use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserManager;
+use App\Models\TravelQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class TravelLeadAllocationDashboardService extends BaseService
 {
@@ -22,7 +27,7 @@ class TravelLeadAllocationDashboardService extends BaseService
         $this->applicationStorageService = $applicationStorageService;
     }
 
-    public function getSicUsersGridData()
+    public function getSicUsersGridData(?string $BlStatus = null)
     {
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
@@ -32,7 +37,7 @@ class TravelLeadAllocationDashboardService extends BaseService
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
                 ->activeUser()
-                ->where('teams.name', 'SIC 2.0 Unassisted')
+                ->where('teams.name', TeamNameEnum::SIC_UNASSISTED)
                 ->where('quote_type_id', QuoteTypes::TRAVEL->id())
                 // subquery to exclude users with any kind of "manager" roles
                 ->whereNotExists(function ($query) use ($managerRoleIds) {
@@ -73,15 +78,48 @@ class TravelLeadAllocationDashboardService extends BaseService
                 $users = $users->whereIn('users.id', $userIds);
             }
 
-            //return $users->get();
-            dd($users->toSql());
+            $data = $users->get();
+
+            // Filters
+            if ($BlStatus) {
+                $userBlStatus = LeadAllocationUserBLStatusFiltersEnum::from($BlStatus);
+                $data = $userBlStatus->applyFilter($data);
+            }
+
+            return $data;
         } catch (\Exception $e) {
             // Log the error with relevant context for debugging
-            Log::error('Failed to retrieve SIC 2.0 Unassisted users', [
+            LoggerService::error('Failed to retrieve SIC 2.0 Unassisted users', [
                 'message' => $e->getMessage(),
                 'user_id' => auth()->user()->id,
                 'trace' => $e->getTraceAsString(),
             ]);
         }
+    }
+
+    public function getTodaysTotalUnAssignedLeadsCount(): int
+    {
+        $count = TravelQuote::whereRaw('DATE(created_at) = CURDATE()')
+            ->whereNull('advisor_id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->count();
+
+        return $count;
+        /*return CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->whereNull('advisor_id')
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+        ->where('tiers.name', '!=', TiersEnum::TIER_R)
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->subMinutes(2)->toDateTimeString()])
+        ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+        ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+            $query->distinct()
+                ->select('quote_uuid')
+                ->from('quote_tags')
+                ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                ->where('quote_tags.name', 'SIC')
+                ->where('quote_type.code', quoteTypeCode::Car);
+        })
+        ->count();*/
     }
 }

@@ -1,12 +1,38 @@
 <script setup>
+import {
+  toggleNormalAllocation,
+  toggleResetCap,
+  toggleBlStatus,
+  toggleBLResetCap,
+  statusSubmit
+} from '../../Services/LeadAllocation/Travel';
+
 const page = usePage();
 
 const refreshGrid = useStorage('refresh-user-counts');
+const { isRequired } = useRules();
 
 const props = defineProps({
+  quoteType: String,
   userBLStatuses: {
     type: Array,
     default: () => []
+  },
+  availableUsers: {
+    type: Number,
+    default: 0,
+  },
+  unAvailableUsers: {
+    type: Number,
+    default: 0,
+  },
+  todayTotalUnAssignedLeadCount: {
+    type: Number,
+    default: 0
+  },
+  totalAssignedLeadCount: {
+    type: Number,
+    default: 0
   },
   data: {
     type: Array,
@@ -26,9 +52,7 @@ const canManage = computed(
     hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]),
 );
 
-const statusText = isHardStop => {
-  return isHardStop ? 'Active' : 'Inactive';
-};
+const statusText = statusId => resolveUserStatusText(statusId);
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', sortable: true },
@@ -64,77 +88,197 @@ const tableHeader = ref([
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
-const onToggleStatus = async (status, userId) => {
-  loading.value = true;
-  try {
-    const response = await axios.post(
-      `/travel-lead-allocation/update-hard-stop`,
-      {
-        userId: userId,
-        status: status,
-      },
-    );
 
-    notification.success({
-      title: response.data.message,
-      position: 'top',
-    });
-
-    router.reload({
-      only: ['data'],
-      preserveScroll: true,
-      preserveState: true,
-    });
-  } catch (error) {
-    console.error('Error updating hard stop:', error);
-
-    notification.error({
-      title: 'Error',
-      description: 'Failed to update hard stop. Please try again later.',
-      position: 'top',
-    });
-  } finally {
-    loading.value = false;
-  }
-};
+const statusModal = getStatusModal();
 
 const filters = reactive({
-  userBLStatuse: null
+  userBLStatus: null
 });
 
 const loaders = reactive({
   submit: false,
   table: false,
   search: false,
+  reset: false,
 });
 
-function onReset() {
+const onReset = () => {
   router.visit('travel-lead-allocation', {
     method: 'get',
     data: {},
     preserveScroll: true,
-    onBefore: () => (loaders.search = true),
-    onSuccess: () => (loaders.search = false)
+    onBefore: () => (loaders.reset = true),
+    onSuccess: () => (loaders.reset = false)
   });
 }
 
-const userData = ref([
+const onSubmit = isValid => {
+  if (isValid) {
+    router.visit('travel-lead-allocation', {
+      method: 'get',
+      data: { ...filters },
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loaders.search = true),
+      onFinish: () => (loaders.search = false),
+    });
+  }
+};
+
+
+const leadData = ref([
   {
+    id: 0,
     userId: 0,
-    isHardStop: false,
+    cap: 0,
+    BlMaxcap: 0,
+    BlCapEdit: false,
+    BlAllocationStatus: false,
+    capEdit: false,
+    status: '1',
+    loading: false,
+    reset: false,
   },
 ]);
+
+const onToggleStatus = (status, id, userId) => {
+  statusModal.data = reactive({
+    ...statusModal.data,
+    id,
+    userId
+  });
+
+  if (status) {
+    statusModal.data.reason = 1;
+    onStatusSubmit();
+  } else {
+    statusModal.data.reason = 3;
+    statusModal.show = true;
+  }
+}
+
+const onStatusModalClose = event => {
+  const item = leadData.value.find(item => item.id === statusModal.data.id);
+
+  if (!event) {
+    item.reset = true;
+
+    setTimeout(() => {
+      item.reset = false;
+    }, 300);
+
+    statusModal.show = false;
+  }
+};
+
+const onToggleNormalAllocation = async (active, userId, laId) => {
+  loaders.table = true;
+
+  try {
+    await toggleNormalAllocation(active, userId, laId);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    });
+  } finally {
+    loaders.table = false;
+  }
+};
+
+const onToggleResetCap = async (active, userId, leadId) => {
+  loaders.table = true;
+
+  try {
+    await toggleResetCap(active, userId, leadId);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    });
+  } finally {
+    loaders.table = false;
+  }
+};
+
+const onToggleBlStatus = async (active, userId, leadId) => {
+  loaders.table = true;
+  
+  try {
+    await toggleBlStatus(active, userId, leadId);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    });
+  } finally {
+    loaders.table = false;
+  }
+};
+
+const onToggleBLResetCap = async (active, userId, laId) => {
+  loaders.table = true;
+
+  try {
+    await toggleBLResetCap(active, userId, laId);
+  } catch(error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    });
+  } finally {
+    loaders.table = false;
+  }
+};
+
+const onStatusSubmit = async () => {
+  statusModal.loader = true;
+  item.loading = true;
+  const item = leadData.value.find(item => item.id === statusModal.data.id);
+
+  try {
+    await statusSubmit(page.props.quoteType, [
+      {
+        userId: statusModal.data.userId,
+        id: statusModal.data.id,
+        reason: statusModal.data.reason,
+      },
+    ]);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    });
+  } finally {
+    router.reload({
+      only: ['data'],
+      preserveScroll: true,
+      preserveState: true,
+    });
+    statusModal.loader = false;
+    item.loading = false;
+    statusModal.show = false;
+  }
+}
 
 onMounted(() => {
   tableHeader.value = tableHeader.value.filter(column => column);
 
   if (props.data && Array.isArray(props.data)) {
-    userData.value = props.data.map(item => ({
+    leadData.value = props.data.map(item => ({
+        id: item.id,
         userId: item.userId,
-        isHardStop: item.isHardStop,
+      cap: item.maxCapacity,
+      capEdit: false,
+      status: item.isAvailable,
     }));
   } else {
-    userData.value = [];
+    leadData.value = [];
 
     notification.error({
       title: 'Error',
@@ -166,15 +310,15 @@ onMounted(() => {
       </div>
       <div class="labox border-primary-500">
         <h3>Assigned Lead Count</h3>
-        <p>3</p>
+        <p>{{ props.totalAssignedLeadCount }}</p>
       </div>
       <div class="labox border-yellow-500">
         <h3>Available / UnAvailable</h3>
-        <p>3</p>
+        <p>{{ props.availableUsers }} / {{ props.unAvailableUsers }}</p>
       </div>
       <div class="labox border-yellow-500">
         <h3>Total UnAssigned Leads</h3>
-        <p>1</p>
+        <p>{{ props.todayTotalUnAssignedLeadCount }}</p>
       </div>
 
       <TransitionGroup name="fade">
@@ -215,12 +359,12 @@ onMounted(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
         <x-select
-          label="Buy Lead Status of Users"
+        label="Buy Lead Status of Users"
           required
           placeholder="Select Status"
           :options="userBLStatuses || []"
-          v-model="filters.userBLStatuse"
           filterable
+          v-model="filters.userBlStatus"
           :rules="[isRequired]"
         ></x-select>
       </div>
@@ -229,6 +373,7 @@ onMounted(() => {
           size="md"
           color="orange"
           type="submit"
+          :loading="loaders.search"
         >
           Search
         </x-button>
@@ -236,6 +381,7 @@ onMounted(() => {
           size="md"
           color="primary"
           type="submit"
+          :loading="loaders.reset"
           @click.prevent="onReset()"
         >
           Reset
@@ -256,11 +402,19 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-isHardStop="{ isHardStop, userId }">
+      <template #item-isAvailable="{ isAvailable, id, userId }">
         <div class="flex flex-col gap-1.5 items-center">
-          <x-tag size="xs" :color="isHardStop ? 'emerald' : 'gray'">
-            {{ statusText(isHardStop) }}
+          <x-tag
+            size="xs"
+            :color="
+              ['emerald', 'red', 'gray', 'yellow', 'yellow', 'gray'][
+                isAvailable - 1
+              ]
+            "
+          >
+            {{ statusText(isAvailable) }}
           </x-tag>
+
 
           <ItemToggler
             v-if="
@@ -270,14 +424,97 @@ onMounted(() => {
                 rolesEnum.Engineering,
               ])
             "
-            :is-active="isHardStop"
+            :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
             :disabled="!canManage"
-            :id="userId"
-            @toggle="onToggleStatus($event.active, userId)"
+            :id="id"
+            :loading="leadData.find(item => item.id === id)?.loading"
+            :refresh="leadData.find(item => item.id === id)?.reset"
+            @toggle="onToggleStatus($event.active, id, userId)"
           />
         </div>
       </template>
+
+      <template
+        #item-normalAllocationEnabled="{ normalAllocationEnabled, userId, id }"
+      >
+        <div class="text-center">
+          <ItemToggler
+            :is-active="normalAllocationEnabled"
+            :id="id"
+            @toggle="onToggleNormalAllocation($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template #item-reset_cap="{ reset_cap, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="reset_cap"
+            :id="id"
+            @toggle="onToggleResetCap($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template #item-blResetCap="{ blResetCap, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="blResetCap"
+            :id="id"
+            @toggle="onToggleBLResetCap($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template #item-BLStatus="{ BLStatus, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="BLStatus"
+            :id="id"
+            @toggle="onToggleBlStatus($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
     </DataTable>
+
+    <!-- Status Modal -->
+    <x-modal
+      v-model="statusModal.show"
+      title="Select Reason of Unavailability"
+      show-close
+      backdrop
+      @update:model-value="onStatusModalClose($event)"
+    >
+      <x-select
+        v-model="statusModal.data.reason"
+        placeholder="Select Reason"
+        :options="[
+          { value: 3, label: 'Temp. Unavailable' },
+          { value: 4, label: 'Sick' },
+          { value: 5, label: 'On Leave' },
+        ]"
+        @update:model-value="statusModal.data.reason = $event"
+        class="w-full mb-28"
+      />
+
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button size="sm" ghost @click.prevent="onStatusModalClose(false)">
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="primary"
+            :loading="statusModal.loader"
+            @click="onStatusSubmit"
+          >
+            Submit
+          </x-button>
+        </div>
+      </template>
+    
+    </x-modal>
   </div>
 </template>
 
