@@ -137,6 +137,11 @@ class PolicyIssuanceService
             return $response;
         }
 
+        LoggerService::info('fn:'.__FUNCTION__.' testing response', extra: [
+            'response' => json_encode($response),
+            'insuranceProviderAutomation' => json_encode($insuranceProviderAutomation->getStepsLockingStatus($quote)),
+        ]);
+
         return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
     }
 

@@ -69,8 +69,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     const BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
     const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID = 4;
     const GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED = 'Get and Upload Policy Documents to IMCRM API Failed';
-    const OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
-    const OCR_PROCESSING_API_FAILED = 'OCR Processing API Failed';
 
     public $currentInsurerApiStatus = null;
     public $headers = [];
@@ -883,7 +881,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
             self::POLICY_ISSUANCE_API_FAILED_STATUS_ID => self::POLICY_ISSUANCE_API_FAILED,
             self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
-            self::OCR_PROCESSING_API_FAILED_STATUS_ID => self::OCR_PROCESSING_API_FAILED,
             self::BOOK_POLICY_API_FAILED_STATUS_ID => self::BOOK_POLICY_API_FAILED,
         ];
     }
@@ -894,7 +891,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
             self::POLICY_ISSUANCE_API_FAILED_STATUS_ID,
             self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
-            self::OCR_PROCESSING_API_FAILED_STATUS_ID,
             self::BOOK_POLICY_API_FAILED_STATUS_ID,
         ];
     }
@@ -1065,7 +1061,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
-        info('fn:'.__FUNCTION__.' testing policy issuance status: '.$policyIssuance?->status.', insurer_api_status: '.$quote->insurer_api_status.', completed_step: '.$policyIssuance->completed_step);
+        LoggerService::info('fn:'.__FUNCTION__.' testing policy issuance', extra: [
+            'policyIssuance' => json_encode($policyIssuance?->status),
+            'insurer_api_status' => json_encode($quote->insurer_api_status),
+            'completed_step' => $policyIssuance->completed_step,
+        ]);
 
         if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
             $response['isEditPolicyDetailsDisabled'] = false;

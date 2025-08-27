@@ -549,6 +549,11 @@ class CarQuote extends BaseModel
         return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this, QuoteTypes::CAR->value) : null;
+    }
+
     public function isBookingFailed()
     {
         return $this->insurer_api_status_id === app(PolicyIssuanceService::class)->getFailedBookingInsurerAPIStatus($this, QuoteTypes::CAR->value);
