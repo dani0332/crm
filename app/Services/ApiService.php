@@ -503,9 +503,30 @@ class ApiService
 
     public function processClaimAssignment($request)
     {
-        $quoteType = QuoteTypes::getName($request->quoteTypeId);
-        if (! $quoteType) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        // Extract request parameters
+        $allocationType = $request->input('quoteTypeId');
+        $allocationId = $request->input('quoteUUID');
+        $triggerOCB = $request->input('triggerOCB', false);
+   
+
+        $lead = QuoteTypes::getName($allocationType)?->model()?->where('uuid', $allocationId)?->first();
+        if ($lead) {
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
         }
+
+        // Handle different scenarios based on request parameters
+        if ($assignAdvisor && ! $triggerOCB) {
+            return $this->assignAdvisorOnly($allocationType, $allocationId);
+        }
+
+        if (! $assignAdvisor && $triggerOCB) {
+            return $this->triggerOCBOnly($allocationId, $allocationType);
+        }
+
+        if (! $assignAdvisor && ! $triggerOCB) {
+            return $this->performLeadAllocation($allocationType, $allocationId, $teamId, $sicAdvisorRequested);
+        }
+
+        return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
     }
 }
