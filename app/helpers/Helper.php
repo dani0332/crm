@@ -1691,18 +1691,3 @@ if (! function_exists('userHasProduct')) {
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
-
-if (! function_exists('checkInsuranceProviderPaymentGateway')) {
-    function checkInsuranceProviderPaymentGateway($insuranceProviderId, $quoteModel, $type)
-    {
-        $insurerProvider = InsuranceProvider::where('id', $insuranceProviderId)->first();
-        $quoteTypeId = QuoteTypes::getIdFromValue($type);
-        $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
-        $planId = $quoteModel->plan_id ?? null;
-        [, $brokerCommission,, $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
-        if ($isPaymentLinkEnabled) {
-            return true;
-        }
-        return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
-    }
-}
