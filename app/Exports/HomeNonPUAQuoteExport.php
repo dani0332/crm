@@ -2,14 +2,15 @@
 
 namespace App\Exports;
 
-use App\Services\CarQuoteService;
+use App\Repositories\HomeQuoteRepository;
+use App\Services\Logger\LoggerService;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
+class HomeNonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
 {
     use Exportable;
 
@@ -18,8 +19,9 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
 
     public function __construct($requestParams = [])
     {
-        $this->nonPUALeads = app(CarQuoteService::class)->exportnonPUAAuthorized($requestParams);
-        $this->puaLeads = app(CarQuoteService::class)->exportPUAAuthorized($requestParams);
+        LoggerService::info('HomeNonPUAQuoteExport initialized');
+        $this->nonPUALeads = app(HomeQuoteRepository::class)->exportnonPUAAuthorized($requestParams);
+        $this->puaLeads = app(HomeQuoteRepository::class)->exportPUAAuthorized($requestParams);
     }
 
     public function collection()
@@ -37,7 +39,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             $exportData->push($lead);
         }
 
-        // ADD BlANK LINE
+        // ADD BLANK LINES
         $exportData->push((object) [' ' => ' ']);
         $exportData->push((object) [' ' => ' ']);
         $exportData->push((object) [' ' => ' ']);
@@ -50,7 +52,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             'NonPUA' => 'Non-PUA: ',
             'Total' => $nonPUALeadCounts ?: '0',
         ]);
-        // ADD BlANK LINE
+        // ADD BLANK LINE
         $exportData->push((object) [' ' => ' ']);
         $exportData->push((object) [' ' => ' ']);
 
@@ -61,7 +63,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             ]);
         }
 
-        // Define all statusses
+        // Define all statuses for home insurance
         $allStatuses = [
             'Payment Link Requested By Customer' => 0,
             'Payment Link In Progress' => 0,
@@ -70,8 +72,9 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
 
         // Count leads by status
         foreach ($leads as $lead) {
-            if (isset($allStatuses[$lead->leadstatus])) {
-                $allStatuses[$lead->leadstatus]++;
+            $leadStatus = $lead->quoteStatus->text ?? '';
+            if (isset($allStatuses[$leadStatus])) {
+                $allStatuses[$leadStatus]++;
             }
         }
 
@@ -98,8 +101,8 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             'Lead Status',
             'Payment Status',
             'Source',
-            'Make',
-            'Model',
+            'Ownership Status',
+            'Type of Property',
             'Assigned Advisor Email',
         ];
     }
@@ -111,12 +114,12 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
                 $quote->RefID,
                 $quote->premiumauthorized,
                 $quote->paymentauthdate ? date(config('constants.datetime_format'), strtotime($quote->paymentauthdate)) : '',
-                $quote->leadstatus,
+                $quote->quoteStatus->text ?? '',
                 $quote->paymentstatus,
                 $quote->source,
-                $quote->make,
-                $quote->model,
-                $quote->assignedadvisoremail,
+                $quote->homeQuote?->lookupPossessionType?->text ?? 'N/A',
+                $quote->homeQuote?->lookupAccommodationType?->text ?? 'N/A',
+                $quote->advisor?->email ?? '',
             ];
         } elseif (isset($quote->NonPUA)) {
             return [
@@ -135,6 +138,6 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             ];
         }
 
-        return array_fill(0, 11, '');
+        return array_fill(0, 9, '');
     }
 }
