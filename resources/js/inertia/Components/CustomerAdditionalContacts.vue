@@ -140,7 +140,7 @@ function additionalContactPrimaryConfirmed() {
 
   if (props.quoteType === 'Claim') {
     // For claims, use the claims-specific endpoint
-    endpoint = route('claims.make-additional-contact-primary',props.quoteId );
+    endpoint = route('claims.make-additional-contact-primary', props.quoteId);
     requestData = {
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
@@ -162,33 +162,31 @@ function additionalContactPrimaryConfirmed() {
     };
   }
 
-  router.post(endpoint, requestData,
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Primary',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        EmailCheckLoader.value = false;
-        modals.contactPrimaryConfirm = false;
-        modals.customerAlreadyPrimaryConfirm = false;
-      },
-      onError: err => {
-        const firstError = Object.values(err)[0];
-        notification.error({
-          title: firstError,
-          position: 'top',
-        });
-      },
+  router.post(endpoint, requestData, {
+    preserveScroll: true,
+    onBefore: () => {
+      contactLoader.value = true;
     },
-  );
+    onSuccess: () => {
+      notification.success({
+        title: 'Additional Contact Primary',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      contactLoader.value = false;
+      EmailCheckLoader.value = false;
+      modals.contactPrimaryConfirm = false;
+      modals.customerAlreadyPrimaryConfirm = false;
+    },
+    onError: err => {
+      const firstError = Object.values(err)[0];
+      notification.error({
+        title: firstError,
+        position: 'top',
+      });
+    },
+  });
 }
 
 const confirmDeleteData = reactive({
@@ -227,11 +225,15 @@ const additionalContactDeleteConfirmed = () => {
 
 const readOnlyMode = reactive({
   isDisable: true,
-}); 
+});
 </script>
 
 <template>
-  <x-accordion show-icon class="p-4 rounded shadow mb-6 bg-white" :expanded="expanded">
+  <x-accordion
+    show-icon
+    class="p-4 rounded shadow mb-6 bg-white"
+    :expanded="expanded"
+  >
     <x-accordion-item>
       <h3 class="font-semibold text-primary-800 text-lg">
         Customer Additional Contacts

@@ -24,18 +24,20 @@ const claimSubStatusLogs = reactive({
 });
 
 // Process raw data to add old sub-status from previous entry
-const processSubStatusData = (rawData) => {
+const processSubStatusData = rawData => {
   if (!rawData || rawData.length === 0) return [];
-  
+
   // Sort by created_at ascending to ensure chronological order
-  const sortedData = [...rawData].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  
+  const sortedData = [...rawData].sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at),
+  );
+
   // Process each entry to add old sub-status from previous entry
   const processedData = sortedData.map((item, index) => ({
     ...item,
-    OldSubStatus: index > 0 ? sortedData[index - 1].NewSubStatus : null
+    OldSubStatus: index > 0 ? sortedData[index - 1].NewSubStatus : null,
   }));
-  
+
   // Return in descending order for display (newest first)
   return processedData.reverse();
 };
@@ -63,12 +65,17 @@ const onLoadLogsData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Claim Sub-status Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Claim Sub-status Logs
+          </h3>
         </div>
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <div v-if="claimSubStatusLogs.processedData === null" class="text-center py-3">
+        <div
+          v-if="claimSubStatusLogs.processedData === null"
+          class="text-center py-3"
+        >
           <x-button
             size="sm"
             color="primary"

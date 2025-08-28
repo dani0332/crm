@@ -8,7 +8,7 @@ const props = defineProps({
   },
 });
 
-import { formattedDateDmyWithTime, formattedDateYmd } from '@/inertia/Composables/utilities.js';  
+import { formattedDateDmyWithTime, formattedDateYmd } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 const claimsEnum = page.props.claimsEnum;
@@ -125,7 +125,6 @@ const isCarLOB = computed(() => {
 const isHealthLOB = computed(() => {
   return page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
 });
-  
 
 function formatCurrency(amount) {
   if (!amount) return '-';
@@ -409,7 +408,7 @@ const updateClaim = isValid => {
     .post(route('claims.update.details', props.claim?.uuid), {
       preserveScroll: true,
       onSuccess: response => {
-        console.log('response', response); 
+        console.log('response', response);
         router.visit(route('claims.show', props.claim?.uuid), {
           preserveScroll: true,
         });
@@ -685,7 +684,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ formattedDateDmyWithTime(claim.created_at)  }}</dd>
+                <dd>{{ formattedDateDmyWithTime(claim.created_at) }}</dd>
               </div>
             </dl>
             <x-divider class="mt-4" />

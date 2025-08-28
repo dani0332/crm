@@ -10,7 +10,7 @@ const props = defineProps({
     default: false,
     required: false,
   },
-}); 
+});
 
 const page = usePage();
 const can = permission => useCan(permission);

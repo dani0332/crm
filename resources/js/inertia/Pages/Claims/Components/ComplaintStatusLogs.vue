@@ -13,7 +13,7 @@ const props = defineProps({
 const complaintStatusLogs = reactive({
   loading: false,
   data: null,
-  table: [ 
+  table: [
     { text: 'OLD STATUS', value: 'old_complaint_status', width: '140px' },
     { text: 'NEW STATUS', value: 'new_complaint_status', width: '140px' },
     { text: 'OLD DATETIME', value: 'old_complaint_datetime', width: '160px' },
@@ -28,7 +28,9 @@ const complaintStatusLogs = reactive({
 const onLoadComplaintStatusLogsData = async () => {
   complaintStatusLogs.loading = true;
   try {
-    const res = await fetch(route('claims.complaint-status-logs', props.claim.uuid));
+    const res = await fetch(
+      route('claims.complaint-status-logs', props.claim.uuid),
+    );
     const finalRes = await res.json();
     complaintStatusLogs.data = finalRes || [];
   } catch (error) {
@@ -46,7 +48,9 @@ const onLoadComplaintStatusLogsData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Complaint Status Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Complaint Status Logs
+          </h3>
         </div>
       </template>
       <template #body>
@@ -62,13 +66,31 @@ const onLoadComplaintStatusLogsData = async () => {
             Load Complaint Status Logs Data
           </x-button>
         </div>
-        <div v-else-if="complaintStatusLogs.data.length === 0" class="text-center py-8">
+        <div
+          v-else-if="complaintStatusLogs.data.length === 0"
+          class="text-center py-8"
+        >
           <div class="text-gray-400">
-            <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              class="mx-auto h-12 w-12 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
-            <p class="text-gray-500 font-medium">No Complaint Status Changes Found</p>
-            <p class="text-gray-400 text-sm mt-1">No complaint status, datetime, or notes modifications have been recorded yet.</p>
+            <p class="text-gray-500 font-medium">
+              No Complaint Status Changes Found
+            </p>
+            <p class="text-gray-400 text-sm mt-1">
+              No complaint status, datetime, or notes modifications have been
+              recorded yet.
+            </p>
           </div>
         </div>
         <DataTable
@@ -80,7 +102,7 @@ const onLoadComplaintStatusLogsData = async () => {
           hide-rows-per-page
           :rows-per-page="15"
           :hide-footer="complaintStatusLogs.data?.length < 15"
-        > 
+        >
           <template #item-old_complaint_status="{ old_complaint_status }">
             {{ old_complaint_status || '-' }}
           </template>
@@ -88,10 +110,18 @@ const onLoadComplaintStatusLogsData = async () => {
             {{ new_complaint_status || '-' }}
           </template>
           <template #item-old_complaint_datetime="{ old_complaint_datetime }">
-           {{ old_complaint_datetime ? formattedDateDmyWithTime(old_complaint_datetime) : '-' }}
+            {{
+              old_complaint_datetime
+                ? formattedDateDmyWithTime(old_complaint_datetime)
+                : '-'
+            }}
           </template>
           <template #item-new_complaint_datetime="{ new_complaint_datetime }">
-            {{ new_complaint_datetime ? formattedDateDmyWithTime(new_complaint_datetime) : '-' }}
+            {{
+              new_complaint_datetime
+                ? formattedDateDmyWithTime(new_complaint_datetime)
+                : '-'
+            }}
           </template>
           <template #item-old_complaint_notes="{ old_complaint_notes }">
             {{ old_complaint_notes || '-' }}

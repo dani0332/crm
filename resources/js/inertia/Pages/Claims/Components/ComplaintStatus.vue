@@ -58,9 +58,10 @@ const validateForm = (showRequiredErrors = true) => {
     }
   } else {
     // DatePicker returns Date object, so handle accordingly
-    const selectedDate = complaintStatusForm.complaint_datetime instanceof Date
-      ? complaintStatusForm.complaint_datetime
-      : new Date(complaintStatusForm.complaint_datetime);
+    const selectedDate =
+      complaintStatusForm.complaint_datetime instanceof Date
+        ? complaintStatusForm.complaint_datetime
+        : new Date(complaintStatusForm.complaint_datetime);
     const now = new Date();
 
     // Validate date format
@@ -92,18 +93,25 @@ const validateFormOnChange = () => {
 };
 
 // Watch for changes and validate
-watch([() => complaintStatusForm.complaint_status_id, () => complaintStatusForm.complaint_datetime, () => complaintStatusForm.notes], () => {
-  // Don't show required errors on initial load, only validate format/range errors
-  isFormValid.value = validateForm(false);
-}, { immediate: true });
+watch(
+  [
+    () => complaintStatusForm.complaint_status_id,
+    () => complaintStatusForm.complaint_datetime,
+    () => complaintStatusForm.notes,
+  ],
+  () => {
+    // Don't show required errors on initial load, only validate format/range errors
+    isFormValid.value = validateForm(false);
+  },
+  { immediate: true },
+);
 
 // Computed property to disable submit button
 const isSubmitDisabled = computed(() => {
-  return complaintStatusForm.processing ||
-         !isFormValid.value;
+  return complaintStatusForm.processing || !isFormValid.value;
 });
 
-const updateComplaintStatus = (isValid) => {
+const updateComplaintStatus = isValid => {
   console.log('updateComplaintStatus');
 
   // Perform client-side validation with all errors including required errors
@@ -121,32 +129,34 @@ const updateComplaintStatus = (isValid) => {
   // Clear any previous client-side errors before submitting
   validationErrors.value = {};
 
-  complaintStatusForm.post(route('claims.update.complaint-status', props.claim?.uuid), {
-    preserveScroll: true,
-    onSuccess: response => {
-      console.log('response', response);  
-    },
-    onError: errors => {
-      Object.keys(errors).forEach(function (key) {
-        notification.error({
-          title: errors[key],
-          position: 'top',
+  complaintStatusForm.post(
+    route('claims.update.complaint-status', props.claim?.uuid),
+    {
+      preserveScroll: true,
+      onSuccess: response => {
+        console.log('response', response);
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
         });
-      });
+      },
     },
-  });
+  );
 };
- 
 </script>
 
 <template>
-  <div 
-    class="p-4 rounded shadow mb-6 bg-white"
-  >
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Complaint Status</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Complaint Status
+          </h3>
         </div>
       </template>
       <template #body>
@@ -154,11 +164,14 @@ const updateComplaintStatus = (isValid) => {
         <x-form :form="complaintStatusForm" @submit="updateComplaintStatus">
           <div class="space-y-4 flex flex-col gap-4">
             <!-- Status Dropdown -->
-            <div class="w-1/2"> 
+            <div class="w-1/2">
               <x-select
                 v-model="complaintStatusForm.complaint_status_id"
-                :error="complaintStatusForm.errors.complaint_status_id || validationErrors.complaint_status_id"
-                :options="complaintStatusOptions" 
+                :error="
+                  complaintStatusForm.errors.complaint_status_id ||
+                  validationErrors.complaint_status_id
+                "
+                :options="complaintStatusOptions"
                 placeholder="N/A"
                 label="Status"
                 class="w-full"
@@ -170,8 +183,11 @@ const updateComplaintStatus = (isValid) => {
             <div class="w-1/2">
               <DatePicker
                 v-model="complaintStatusForm.complaint_datetime"
-                label="Complaint Date" 
-                :error="complaintStatusForm.errors.complaint_datetime || validationErrors.complaint_datetime"
+                label="Complaint Date"
+                :error="
+                  complaintStatusForm.errors.complaint_datetime ||
+                  validationErrors.complaint_datetime
+                "
                 placeholder="Please select complaint date"
                 class="w-full"
                 :max-date="maxDate"
@@ -184,7 +200,9 @@ const updateComplaintStatus = (isValid) => {
 
             <!-- Notes -->
             <div class="w-full">
-              <label class="block text-sm font-medium text-gray-700 mb-2 uppercase text-xs tracking-wide">
+              <label
+                class="block text-sm font-medium text-gray-700 mb-2 uppercase text-xs tracking-wide"
+              >
                 NOTES
                 <span class="text-xs text-gray-500 normal-case ml-2">
                   ({{ complaintStatusForm.notes?.length || 0 }}/250)
@@ -192,7 +210,9 @@ const updateComplaintStatus = (isValid) => {
               </label>
               <x-textarea
                 v-model="complaintStatusForm.notes"
-                :error="complaintStatusForm.errors.notes || validationErrors.notes"
+                :error="
+                  complaintStatusForm.errors.notes || validationErrors.notes
+                "
                 placeholder="null"
                 rows="4"
                 class="w-full"
@@ -204,7 +224,7 @@ const updateComplaintStatus = (isValid) => {
 
           <x-divider class="my-4" />
           <div class="flex justify-end">
-            <x-button 
+            <x-button
               :disabled="isSubmitDisabled"
               :loading="complaintStatusForm.processing"
               type="submit"

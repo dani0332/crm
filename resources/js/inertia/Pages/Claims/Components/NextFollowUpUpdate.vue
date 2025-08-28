@@ -8,7 +8,7 @@ const props = defineProps({
     required: false,
     default: false,
   },
-}); 
+});
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -27,7 +27,7 @@ const hasInteracted = ref(false);
 
 // Computed properties for date constraints
 const minDate = computed(() => new Date());
-const maxDate = computed(() => new Date(Date.now() + (15 * 24 * 60 * 60 * 1000))); // 15 days from now
+const maxDate = computed(() => new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)); // 15 days from now
 
 const validateForm = (showRequiredErrors = true) => {
   const errors = {};
@@ -39,23 +39,27 @@ const validateForm = (showRequiredErrors = true) => {
     }
   } else {
     // DatePicker returns Date object, so handle accordingly
-    const selectedDate = nextFollowUpForm.next_follow_up_date instanceof Date
-      ? nextFollowUpForm.next_follow_up_date
-      : new Date(nextFollowUpForm.next_follow_up_date);
+    const selectedDate =
+      nextFollowUpForm.next_follow_up_date instanceof Date
+        ? nextFollowUpForm.next_follow_up_date
+        : new Date(nextFollowUpForm.next_follow_up_date);
     const now = new Date();
-    const maxDateValue = new Date(now.getTime() + (15 * 24 * 60 * 60 * 1000)); // 15 days from now
+    const maxDateValue = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000); // 15 days from now
 
     // Validate date format
     if (isNaN(selectedDate.getTime())) {
-      errors.next_follow_up_date = 'The next follow-up date must be a valid date.';
+      errors.next_follow_up_date =
+        'The next follow-up date must be a valid date.';
     }
     // Validate future date (after now)
     else if (selectedDate <= now) {
-      errors.next_follow_up_date = 'The next follow-up date must be in the future.';
+      errors.next_follow_up_date =
+        'The next follow-up date must be in the future.';
     }
     // Validate maximum 15 days in future
     else if (selectedDate > maxDateValue) {
-      errors.next_follow_up_date = 'The next follow-up date cannot be more than 15 days in the future.';
+      errors.next_follow_up_date =
+        'The next follow-up date cannot be more than 15 days in the future.';
     }
   }
 
@@ -78,51 +82,60 @@ const validateFormOnChange = () => {
 };
 
 // Watch for changes and validate
-watch([() => nextFollowUpForm.next_follow_up_date, () => nextFollowUpForm.notes], () => {
-  // Don't show required errors on initial load, only validate format/range errors
-  isFormValid.value = validateForm(false);
-}, { immediate: true });
+watch(
+  [() => nextFollowUpForm.next_follow_up_date, () => nextFollowUpForm.notes],
+  () => {
+    // Don't show required errors on initial load, only validate format/range errors
+    isFormValid.value = validateForm(false);
+  },
+  { immediate: true },
+);
 
 // Follow-up reminder logic
-  const checkFollowUpReminder = () => {
-    const followUpDateTime = props.claim?.next_followup_datetime;
-    console.log('follow-up date', followUpDateTime);
-    if (!followUpDateTime) {
-      return; // No follow-up date set
-    }
+const checkFollowUpReminder = () => {
+  const followUpDateTime = props.claim?.next_followup_datetime;
+  console.log('follow-up date', followUpDateTime);
+  if (!followUpDateTime) {
+    return; // No follow-up date set
+  }
 
-    const followUpDate = new Date(followUpDateTime);
-    const now = new Date();
-    // Validate date
-    if (isNaN(followUpDate.getTime())) {
-      console.log('Invalid follow-up date:', followUpDateTime);
-      return;
-    }
+  const followUpDate = new Date(followUpDateTime);
+  const now = new Date();
+  // Validate date
+  if (isNaN(followUpDate.getTime())) {
+    console.log('Invalid follow-up date:', followUpDateTime);
+    return;
+  }
 
+  // Check if it's the follow-up date (same day)
+  const isFollowUpDate = followUpDate.toDateString() === now.toDateString();
 
-    // Check if it's the follow-up date (same day)
-    const isFollowUpDate = followUpDate.toDateString() === now.toDateString();
-
-    // Check if follow-up time has passed
-    const isOverdue = followUpDate < now;
-    console.log('follow-up date', followUpDateTime, 'isOverdue', isOverdue , isFollowUpDate && !isOverdue);
-    if (isFollowUpDate && !isOverdue) {
-      console.log('Follow-up due today', followUpDateTime);
-      // Show reminder toast for follow-up due today
-      const timeString = followUpDate.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false // Use 24-hour format
-      });
-      notification.success({
-        title: `📅 Follow-up Reminder`,
-        message: `Follow-up scheduled for today at ${timeString} for claim ${props.claim?.code || 'N/A'}`,
-        position: 'top',
-        timeout: 8000, // Show for 8 seconds
-      });
-    } else if (isOverdue) {
-      console.log('Overdue follow-up', followUpDateTime);
-    }
+  // Check if follow-up time has passed
+  const isOverdue = followUpDate < now;
+  console.log(
+    'follow-up date',
+    followUpDateTime,
+    'isOverdue',
+    isOverdue,
+    isFollowUpDate && !isOverdue,
+  );
+  if (isFollowUpDate && !isOverdue) {
+    console.log('Follow-up due today', followUpDateTime);
+    // Show reminder toast for follow-up due today
+    const timeString = followUpDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false, // Use 24-hour format
+    });
+    notification.success({
+      title: `📅 Follow-up Reminder`,
+      message: `Follow-up scheduled for today at ${timeString} for claim ${props.claim?.code || 'N/A'}`,
+      position: 'top',
+      timeout: 8000, // Show for 8 seconds
+    });
+  } else if (isOverdue) {
+    console.log('Overdue follow-up', followUpDateTime);
+  }
 };
 
 // Check for follow-up reminder when component mounts
@@ -131,22 +144,24 @@ onMounted(() => {
 });
 
 // Watch for changes to claim follow-up datetime and re-check reminders
-watch(() => props.claim?.next_followup_datetime, (newDateTime) => {
-  if (newDateTime) {
-    // Add a small delay to ensure the UI has updated
-    setTimeout(() => {
-      checkFollowUpReminder();
-    }, 500);
-  }
-});
+watch(
+  () => props.claim?.next_followup_datetime,
+  newDateTime => {
+    if (newDateTime) {
+      // Add a small delay to ensure the UI has updated
+      setTimeout(() => {
+        checkFollowUpReminder();
+      }, 500);
+    }
+  },
+);
 
 // Computed property to disable submit button
 const isSubmitDisabled = computed(() => {
-  return nextFollowUpForm.processing ||
-         !isFormValid.value;
+  return nextFollowUpForm.processing || !isFormValid.value;
 });
 
-const updateNextFollowUp = (isValid) => {
+const updateNextFollowUp = isValid => {
   console.log('updateNextFollowUp');
 
   // Perform client-side validation with all errors including required errors
@@ -164,34 +179,34 @@ const updateNextFollowUp = (isValid) => {
   // Clear any previous client-side errors before submitting
   validationErrors.value = {};
 
-  nextFollowUpForm.post(route('claims.update.next-follow-up', props.claim?.uuid), {
-    preserveScroll: true,
-    onSuccess: response => {
-      console.log('response', response);
-      router.visit(route('claims.show', props.claim?.uuid), {
-        preserveScroll: true,
-      });
-      emit('update', response);
-      // Reset notes after successful update
-      nextFollowUpForm.notes = '';
-    },
-    onError: errors => {
-      Object.keys(errors).forEach(function (key) {
-        notification.error({
-          title: errors[key],
-          position: 'top',
+  nextFollowUpForm.post(
+    route('claims.update.next-follow-up', props.claim?.uuid),
+    {
+      preserveScroll: true,
+      onSuccess: response => {
+        console.log('response', response);
+        router.visit(route('claims.show', props.claim?.uuid), {
+          preserveScroll: true,
         });
-      });
+        emit('update', response);
+        // Reset notes after successful update
+        nextFollowUpForm.notes = '';
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
     },
-  });
+  );
 };
-
 </script>
 
 <template>
-  <div
-    class="p-4 rounded shadow mb-6 bg-white"
-  >
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
@@ -203,14 +218,17 @@ const updateNextFollowUp = (isValid) => {
         <x-form :form="nextFollowUpForm" @submit="updateNextFollowUp">
           <div class="space-y-4">
             <!-- Next Follow-up Date & Time -->
-            <div class="w-1/2"> 
+            <div class="w-1/2">
               <DatePicker
                 v-model="nextFollowUpForm.next_follow_up_date"
                 label="Next Follow-up Date & Time"
                 withTime
                 :min-date="minDate"
                 :max-date="maxDate"
-                :error="nextFollowUpForm.errors.next_follow_up_date || validationErrors.next_follow_up_date"
+                :error="
+                  nextFollowUpForm.errors.next_follow_up_date ||
+                  validationErrors.next_follow_up_date
+                "
                 placeholder="Please select follow-up date & time"
                 class="w-full"
                 required
@@ -222,7 +240,9 @@ const updateNextFollowUp = (isValid) => {
 
             <!-- Notes -->
             <div class="w-full">
-              <label class="block text-sm font-medium text-gray-700 mb-2 uppercase text-xs tracking-wide">
+              <label
+                class="block text-sm font-medium text-gray-700 mb-2 uppercase text-xs tracking-wide"
+              >
                 NOTES
                 <span class="text-xs text-gray-500 normal-case ml-2">
                   ({{ nextFollowUpForm.notes?.length || 0 }}/250)
