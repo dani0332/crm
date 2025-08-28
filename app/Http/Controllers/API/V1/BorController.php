@@ -116,14 +116,16 @@ class BorController extends Controller
                 $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
             }
 
+            $docIsPresent = isset($document) && !is_null($document);
+            
             $borLog->update([
-                'quote_document_id' => isset($document) && !is_null($document) ? $document->id : $borLog->quote_document_id,
-                'document_id' => isset($document) && !is_null($document) ? $document->doc_uuid : $borLog->document_id,
+                'quote_document_id' => $docIsPresent ? $document->id : $borLog->quote_document_id,
+                'document_id' => $docIsPresent ? $document->doc_uuid : $borLog->document_id,
                 'user_agent' => getUserIpAddress($request),
                 'insurer_name' => $request->insurer_name,
                 'policy_number' => $request->policy_number,
-                'status' => isset($document) && !is_null($document) ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
-                'date_signed' => isset($document) && !is_null($document) ? now() : $borLog->date_signed,
+                'status' => $docIsPresent ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
+                'date_signed' => $docIsPresent ? now() : $borLog->date_signed,
             ]);
 
             return response()->json(['message' => 'success', 'data' => $document]);
