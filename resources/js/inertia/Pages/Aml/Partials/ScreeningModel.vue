@@ -241,6 +241,8 @@ const screeningFormDetails = useForm({
   emirate_of_registration_id:
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
   lead_source: quoteRequest.source,
+  insurance_provider_code:
+    page.props.quoteRequest?.plan?.insurance_provider.code,
 });
 const modalHeaderMessage = () => {
   if (

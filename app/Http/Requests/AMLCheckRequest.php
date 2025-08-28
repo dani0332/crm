@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
@@ -54,7 +55,10 @@ class AMLCheckRequest extends FormRequest
 
         if (
             $this->quote_type == QuoteTypes::CAR->value &&
-            $this->lead_source == LeadSourceEnum::RENEWAL_UPLOAD
+            ! (
+                $this->lead_source == LeadSourceEnum::RENEWAL_UPLOAD &&
+                in_array($this->insurance_provider_code, [InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA])
+            )
         ) {
             $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
         }
