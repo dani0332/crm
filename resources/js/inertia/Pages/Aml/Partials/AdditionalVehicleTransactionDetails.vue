@@ -95,6 +95,7 @@ const carDetail = computed(() => {
 const additionalVehicleTransactionDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
+  source: page.props.quoteRequest?.source,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   additional_vehicle_transaction_details: true,
   rta_transaction_type: carDetail.value?.rta_transaction_type?.toString() ?? '',

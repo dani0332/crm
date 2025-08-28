@@ -41,7 +41,9 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['bank_loan'] = 'required';
             $rules['first_registration_date'] = 'required|date';
             if ($this->insurance_provider_code === InsuranceProvidersEnum::RSA) {
-                $rules['policy_effective_date'] = 'required|after_or_equal:today';
+                if($this->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
+                    $rules['policy_effective_date'] = 'required|after_or_equal:today';
+                }
             } else {
                 $rules['plate_color'] = 'required|string';
             }
