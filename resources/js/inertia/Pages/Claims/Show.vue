@@ -28,6 +28,8 @@ const modelClass = 'App\\Models\\ClaimRequest';
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const { copy, copied } = useClipboard();
+const notification = useToast();
 
 const sectionExpanded = ref(true);
 
@@ -46,6 +48,14 @@ const handleDocumentDeleted = documentName => {
   console.log('Document deleted:', documentName);
   // You can add any additional logic here when document is deleted
 };
+const copyToClipboard = item => { 
+  copy(item);
+  if (copied)
+    notification.success({
+      title: 'Copied to clipboard!',
+      position: 'top',
+    });
+};
 </script>
 
 <template>
@@ -57,6 +67,14 @@ const handleDocumentDeleted = documentName => {
       </template>
       <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
         <div class="flex gap-2">
+          <x-button 
+            size="sm"
+            color="gray"
+            tag="button"
+             @click.prevent="copyToClipboard(claim.uuid)"
+          >
+            Copy Link
+          </x-button>
           <Link
             v-if="can(permissionsEnum.CLAIM_LIST)"
             href="/claim"
@@ -70,6 +88,7 @@ const handleDocumentDeleted = documentName => {
           >
             <x-button size="sm" color="emerald" tag="div">Edit</x-button>
           </Link>
+          
         </div>
       </div>
     </StickyHeader>

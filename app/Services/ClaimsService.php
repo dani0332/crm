@@ -84,6 +84,7 @@ class ClaimsService extends BaseService
                 'manager:id,name',
                 'claimStatus:id,text',
                 'claimSubStatus:id,text',
+                'complaintStatus:id,text',
                 'insuranceProvider:id,code,text',
                 'claimRequestType:id,code,text',
                 'claimRequestDetails' => function ($query) {
@@ -223,57 +224,48 @@ class ClaimsService extends BaseService
      * Search active policies by email or policy number
      */
     public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null, int $page = 1)
-    {
-        try {
-            $policies = PersonalQuote::query()
-                ->select([
-                    'personal_quotes.id',
-                    'personal_quotes.uuid',
-                    'personal_quotes.code as ref_id',
-                    'personal_quotes.policy_number',
-                    DB::raw("TRIM(CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name)) as customer_name"),
-                    'personal_quotes.policy_expiry_date',
-                    'personal_quotes.policy_start_date',
-                    'personal_quotes.email',
-                    'personal_quotes.mobile_no',
-                    'personal_quotes.quote_type_id',
-                    'personal_quotes.id as quote_id',
-                    'personal_quotes.customer_id',
-                    'personal_quotes.insurance_provider_id',
-                    'personal_quotes.quote_status_id',
-                    'insurance_provider.text as currently_insured_with',
-                    'quote_type.text as product',
-                ])
-                ->leftJoin('insurance_provider', 'personal_quotes.insurance_provider_id', '=', 'insurance_provider.id')
-                ->leftJoin('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-                ->whereNotNull('personal_quotes.policy_number')
-                ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
-                    $query->where('personal_quotes.quote_type_id', $quoteTypeId);
-                })
-                ->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked]) // Active policy statuses
-                ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
-                    $query->where(function ($subQuery) use ($email, $policyNumber) {
-                        $subQuery->where('personal_quotes.email', $email);
-                        if ($policyNumber) {
-                            $subQuery->orWhere('personal_quotes.policy_number', $policyNumber);
-                        }
-                    });
-                })
-                ->orderBy('personal_quotes.policy_expiry_date', 'desc')
-                ->simplePaginate($this->perPage);
+    { 
+        $policies = PersonalQuote::query()
+            ->select([
+                'personal_quotes.id',
+                'personal_quotes.uuid',
+                'personal_quotes.code as ref_id',
+                'personal_quotes.policy_number',
+                DB::raw("TRIM(CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name)) as customer_name"),
+                'personal_quotes.policy_expiry_date',
+                'personal_quotes.policy_start_date',
+                'personal_quotes.email',
+                'personal_quotes.mobile_no',
+                'personal_quotes.quote_type_id',
+                'personal_quotes.id as quote_id',
+                'personal_quotes.customer_id',
+                'personal_quotes.insurance_provider_id',
+                'personal_quotes.quote_status_id',
+                'insurance_provider.text as currently_insured_with',
+                'quote_type.text as product',
+            ])
+            ->leftJoin('insurance_provider', 'personal_quotes.insurance_provider_id', '=', 'insurance_provider.id')
+            ->leftJoin('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            ->whereNotNull('personal_quotes.policy_number')
+            ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
+                $query->where('personal_quotes.quote_type_id', $quoteTypeId);
+            })
+            ->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked]) // Active policy statuses
+            ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
+                $query->where(function ($subQuery) use ($email, $policyNumber) {
+                    $subQuery->where('personal_quotes.email', $email);
+                    if ($policyNumber) {
+                        $subQuery->orWhere('personal_quotes.policy_number', $policyNumber);
+                    }
+                });
+            })
+            ->orderBy('personal_quotes.policy_expiry_date', 'desc')
+            ->simplePaginate($this->perPage);
 
-            // Return pagination data structure
-            return $policies;
+        // Return pagination data structure
+        return $policies;
 
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error searching active policies', extra: [
-                'error' => $e->getMessage(),
-                'email' => $email,
-                'policy_number' => $policyNumber,
-            ]);
-
-            return [];
-        }
+         
     }
 
     /**
@@ -426,15 +418,8 @@ class ClaimsService extends BaseService
     /**
      * Update specific claim details (focused method for claim details form)
      */
-    public function updateClaimDetails($uuid, array $data): ClaimRequest
-    {
-
-        $claimRequest = $this->getClaimById($uuid);
-
-        if (! $claimRequest) {
-            throw new \Exception("Claim request not found with UUID: {$uuid}");
-        }
-
+    public function updateClaimDetails(ClaimRequest $claimRequest, array $data): ClaimRequest
+    { 
         try {
 
             // Get allowed fields from model fillable arrays (filtered for this specific update method)
@@ -490,14 +475,7 @@ class ClaimsService extends BaseService
                     // Create new detail record if it doesn't exist
                     $detailData['claim_request_id'] = $claimRequest->id;
                     $claimRequestDetail = $claimRequest->claimRequestDetails()->create($detailData);
-                }
-
-                LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim request details updated - Claim UUID: '.$claimRequest->uuid, extra: [
-                    'claim_uuid' => $claimRequest->uuid,
-                    'detail_id' => $claimRequestDetail->id,
-                    'updated_fields' => array_keys($detailData),
-                    'updated_by' => Auth::id(),
-                ]);
+                } 
             }
 
             // Log the overall update
@@ -512,7 +490,7 @@ class ClaimsService extends BaseService
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim details - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim details - Claim UUID: '.$claimRequest->uuid, extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'data' => $data,
@@ -753,14 +731,8 @@ class ClaimsService extends BaseService
     /**
      * Update claim status and sub status
      */
-    public function updateClaimStatus(string $uuid, $request): ClaimRequest
-    {
-        $claimRequest = $this->getClaimById($uuid);
-
-        if (! $claimRequest) {
-            throw new \Exception("Claim request not found with UUID: {$uuid}");
-        }
-
+    public function updateClaimStatus($claimRequest, $request): ClaimRequest
+    {  
         try {
             // Prepare the status update data
             $statusUpdateData['claim_status_id'] = $request->claim_status_id;
@@ -786,10 +758,10 @@ class ClaimsService extends BaseService
             return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim status - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim status - Claim UUID: '.$claimRequest->uuid, extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'claim_request_id' => $uuid,
+                'claim_request_id' => $claimRequest->uuid,
                 'data' => $request,
                 'updated_by' => auth()->id(),
             ]);
@@ -875,10 +847,7 @@ class ClaimsService extends BaseService
                     'user_id' => auth()->id(),
                 ], exception: $e);
             }
-        }
-
-        // Update claim status if needed based on document uploads
-        $this->updateClaimStatusOnDocumentUpload($claim, $uploadedDocuments, $documentData);
+        } 
 
         return [
             'uploaded_documents' => $uploadedDocuments,
@@ -887,52 +856,14 @@ class ClaimsService extends BaseService
             'error_count' => count($errors),
         ];
     }
-
-    /**
-     * Update claim status based on document upload
-     */
-    protected function updateClaimStatusOnDocumentUpload(ClaimRequest $claim, array $uploadedDocuments, array $documentData): void
-    {
-        if (empty($uploadedDocuments)) {
-            return;
-        }
-
-        // Check if this is a critical document type that affects claim processing
-        $criticalDocumentTypes = $this->getCriticalDocumentTypes();
-
-        if (in_array($documentData['document_type_code'], $criticalDocumentTypes)) {
-            // Log the critical document upload for business logic
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Critical document uploaded', extra: [
-                'claim_uuid' => $claim->uuid,
-                'document_type' => $documentData['document_type_code'],
-                'user_id' => auth()->id(),
-            ]);
-        }
-    }
-
-    /**
-     * Get critical document types that affect claim processing
-     */
-    protected function getCriticalDocumentTypes(): array
-    {
-        // Define document types that are critical for claim processing
-        return [
-            'POLICE_REPORT',
-            'MEDICAL_REPORT',
-            'REPAIR_ESTIMATE',
-            'INVOICE',
-            'PROOF_OF_LOSS',
-            'CLAIM_FORM',
-        ];
-    }
+ 
 
     /**
      * Delete a claim document with validation
      */
     public function deleteClaimDocument(ClaimRequest $claim, $documentId): bool
     {
-        try {
-            $document = $claim->documents()->where('id', $documentId)->first();
+        $document = $claim->documents()->where('id', $documentId)->first();
 
             if (! $document) {
                 LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document not found', extra: [
@@ -944,26 +875,7 @@ class ClaimsService extends BaseService
                 return false;
             }
 
-            $document->delete();
-
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Document deleted successfully', extra: [
-                'claim_uuid' => $claim->uuid,
-                'document_id' => $documentId,
-                'document_name' => $document->original_name,
-                'user_id' => Auth::id(),
-            ]);
-
-            return true;
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error deleting document', extra: [
-                'claim_uuid' => $claim->uuid,
-                'document_id' => $documentId,
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-            ], exception: $e);
-
-            return false;
-        }
+            return $document->delete();
     }
 
     public function updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claimRequest): void

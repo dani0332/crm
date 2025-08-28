@@ -683,6 +683,14 @@ watch(
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Complaint Status</dt>
+                <dd>{{ claim.complaint_status?.text || 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Next Follow Up Date</dt>
+                <dd>{{ claim.next_followup_datetime ? formattedDateDmyWithTime(claim.next_followup_datetime) : 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ formattedDateDmyWithTime(claim.created_at) }}</dd>
               </div>

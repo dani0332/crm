@@ -238,8 +238,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/claim/{uuid}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
         Route::put('/claim/{uuid}', [ClaimsController::class, 'update'])->name('claims.update');
         Route::post('claim/search-policies', [ClaimsController::class, 'searchPolicies'])->name('claims.search-policies');
-        Route::post('claim/{uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('claims.update.details');
-        Route::post('claim/{uuid}/update-statuses', [ClaimsController::class, 'updateClaimStatuses'])->name('claims.update.status');
+        Route::post('claim/{claim:uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('claims.update.details');
+        Route::post('claim/{claim:uuid}/update-status', [ClaimsController::class, 'updateClaimStatus'])->name('claims.update.status');
         Route::post('claim/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
         Route::post('claim/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
 

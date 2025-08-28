@@ -258,13 +258,13 @@ class ClaimsController extends Controller
         }
     }
 
-    public function updateClaimDetails(ClaimDetailsUpdateRequest $request, $uuid): RedirectResponse
+    public function updateClaimDetails(ClaimDetailsUpdateRequest $request, ClaimRequest $claim): RedirectResponse
     {
         try {
             // Get only the validated data that should be updated
             $validatedData = $request->validatedForUpdate();
 
-            $updatedClaimRequest = $this->claimsService->updateClaimDetails($uuid, $validatedData);
+            $updatedClaimRequest = $this->claimsService->updateClaimDetails($claim, $validatedData);
 
             return redirect()->back()->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
@@ -280,10 +280,10 @@ class ClaimsController extends Controller
         }
     }
 
-    public function updateClaimStatuses(ClaimStatusUpdateRequest $request, $uuid): RedirectResponse
+    public function updateClaimStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): RedirectResponse
     {
         try {
-            $updatedClaimRequest = $this->claimsService->updateClaimStatus($uuid, $request->safe());
+            $updatedClaimRequest = $this->claimsService->updateClaimStatus($claim, $request->safe());
 
             return redirect()->back()->with('success', 'Claim status updated successfully.');
 
@@ -420,22 +420,7 @@ class ClaimsController extends Controller
      */
     public function destroyDocument(ClaimRequest $claim, QuoteDocument $document): JsonResponse
     {
-        try {
-            // Verify the document belongs to this claim
-            if ($document->quote_documentable_id !== $claim->id ||
-                $document->quote_documentable_type !== ClaimRequest::class) {
-
-                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document ownership verification failed', extra: [
-                    'claim_uuid' => $claim->uuid,
-                    'document_id' => $document->id,
-                    'document_claim_id' => $document->quote_documentable_id,
-                    'document_type' => $document->quote_documentable_type,
-                    'user_id' => Auth::id(),
-                ]);
-
-                return response()->json(['success' => false, 'message' => 'Document not found for this claim.'], 404);
-            }
-
+        try { 
             // Use service method with business logic validation
             $deleted = $this->claimsService->deleteClaimDocument($claim, $document->id);
 
