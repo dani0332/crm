@@ -771,7 +771,7 @@ class ClaimsService extends BaseService
             // Update the claim request
             $claimRequest->update($statusUpdateData);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra:[
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
@@ -1031,7 +1031,7 @@ class ClaimsService extends BaseService
     public function dispatchGoogleReviewEmail(ClaimRequest $claimRequest): void
     {
         try {
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'customer_email' => $claimRequest->email,
@@ -1041,7 +1041,7 @@ class ClaimsService extends BaseService
             SendGoogleReviewEmailJob::dispatch($claimRequest->uuid);
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'error' => $e->getMessage(),
@@ -1300,7 +1300,7 @@ class ClaimsService extends BaseService
             return $claimLeadHistory;
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', extra: [
                 'error' => $e->getMessage(),
                 'claim_id' => $claimId,
                 'user_id' => Auth::id(),

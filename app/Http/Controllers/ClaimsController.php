@@ -521,7 +521,7 @@ class ClaimsController extends Controller
             return response()->json($history);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'claim_id' => $claim->id,
@@ -543,7 +543,7 @@ class ClaimsController extends Controller
             return response()->json($logs);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim sub-status logs', [
+            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim sub-status logs', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'claim_id' => $claim->id,
