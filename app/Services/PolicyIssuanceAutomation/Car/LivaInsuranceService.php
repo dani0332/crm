@@ -7,6 +7,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -31,6 +32,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class LivaInsuranceService implements PolicyIssuanceInterface
 {
@@ -592,12 +594,19 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $endPoint = 'motor/policy/create/v2';
 
         $payment = $quote->payments()->mainLeadPayment()->first();
+        $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
         $payload = [
             'PolicyRequest' => [
                 'QuotationNo' => $quote?->carQuotePlanDetail?->insurer_quote_no,
                 'PremiumPayable' => $payment->total_amount,
+                'IsPaymentProcessed' => 'Success',
                 'PartnerTrnReferenceNumber' => $quote->uuid,
+                'PaymtMode' => 7,
+                'PaymtTransactionDate' => $payment?->authorized_at ? Carbon::parse($payment?->authorized_at)->format('d/m/Y H:i') : '',
+                'PaymtTransactionNumber' => $splitPayment?->payment_receipt_id,
+                'Amount' => $payment?->price_vat_applicable,
+                'AuthCode' => $splitPayment?->payment_auth_code,
                 'Documents' => [
                     'DocsInResponse' => false,
                     'DocsDetails' => [
@@ -607,6 +616,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                         'LetterToBank' => false,
                         'MotorArabicCertificate' => false,
                         'Receipt' => false,
+                        'BreakDownRecovery' => false,
+                        'UPRInvoice' => false,
                     ],
                 ],
                 'PolicyConfirmationSMS' => false,
