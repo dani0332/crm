@@ -4,11 +4,9 @@ namespace App\Pipes\Allocation\Handlers\Claim;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
-use Illuminate\Support\Collection;
-use App\Pipes\Allocation\Handlers\Claim\AllocationRequestable;
-use App\Pipes\Allocation\Handlers\AllocationRequestMarkable;
 use App\Models\ClaimRequest;
-
+use App\Pipes\Allocation\Handlers\AllocationRequestMarkable;
+use Illuminate\Support\Collection;
 
 class AllocationRequest
 {
@@ -24,7 +22,6 @@ class AllocationRequest
     ) {
         $this->collection = new Collection;
 
-       
     }
 
     public function getQuoteType()
@@ -40,7 +37,6 @@ class AllocationRequest
     {
         return $this->isReassignmentJob;
     }
-
 
     public function getAssignmentType()
     {
@@ -58,11 +54,9 @@ class AllocationRequest
     }
     /**
      * Get a new instance of the ClaimRequest model.
-     *
-     * @return \App\Models\ClaimRequest
      */
     public function model(): ClaimRequest
     {
-        return new ClaimRequest();
+        return new ClaimRequest;
     }
 }

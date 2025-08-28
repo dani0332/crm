@@ -2,15 +2,10 @@
 
 namespace App\Pipes\Allocation\Claim;
 
-use App\Models\BuyLeadRequest;
-use App\Models\CarQuote;
-use App\Models\LeadAllocation;
-
+use App\Models\User;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
-use App\Pipes\Allocation\Claim\BaseAllocationPipe;
-use App\Models\User;
 
 class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 {
@@ -22,8 +17,6 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 
         $availableUserIds = collect($eligibleAdvisors)->pluck('user_id')->toArray();
         LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
-
-        
 
         $advisorId = $this->getFinalAdvisorId($availableUserIds);
         $advisor = User::find($advisorId);

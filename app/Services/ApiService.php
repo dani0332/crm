@@ -25,12 +25,12 @@ use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
 use App\Models\TravelQuote;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
-use App\Services\ClaimAllocation\ClaimAllocationService;
 
 class ApiService
 {
@@ -507,7 +507,7 @@ class ApiService
         // Extract request parameters
         $quoteTypeId = $request->input('quoteTypeId');
         $quoteUuid = $request->input('quoteUUID');
- 
+
         try {
             $result = app(ClaimAllocationService::class)->execute($quoteUuid, $quoteTypeId);
 
@@ -521,8 +521,6 @@ class ApiService
                 'An error occurred while processing the claim assignment.'
             );
         }
-
-       
 
         return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
     }

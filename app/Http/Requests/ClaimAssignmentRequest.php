@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Enums\QuoteTypeId;
 
 class ClaimAssignmentRequest extends FormRequest
 {
