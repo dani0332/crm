@@ -420,7 +420,7 @@ class ClaimsController extends Controller
      */
     public function destroyDocument(ClaimRequest $claim, QuoteDocument $document): JsonResponse
     {
-        try { 
+        try {
             // Use service method with business logic validation
             $deleted = $this->claimsService->deleteClaimDocument($claim, $document->id);
 
