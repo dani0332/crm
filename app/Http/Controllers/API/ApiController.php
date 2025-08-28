@@ -90,7 +90,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            LoggerService::info(self::class.": Processing assign leads request", extra: $request->all());
+            LoggerService::info(self::class.': Processing assign leads request', extra: $request->all());
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
@@ -151,19 +151,19 @@ class ApiController extends Controller
         $flowType = $request->flowType;
         $quoteUID = $request->uuid;
         $flowId = $request->flowId ?? null;
-        LoggerService::info(self::class.": Received stopFollowUpEvent request", extra: [
+        LoggerService::info(self::class.': Received stopFollowUpEvent request', extra: [
             'ref_id' => $quoteUID,
             'flow_type' => $flowType,
-            'time' => now()->toDateTimeString()
+            'time' => now()->toDateTimeString(),
         ]);
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
         if (! $workflow) {
-            LoggerService::info(self::class.": Lead not found", extra: [
+            LoggerService::info(self::class.': Lead not found', extra: [
                 'ref_id' => $quoteUID,
                 'flow_type' => $flowType,
-                'time' => now()->toDateTimeString()
+                'time' => now()->toDateTimeString(),
             ]);
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
@@ -282,7 +282,7 @@ class ApiController extends Controller
             'class' => basename(self::class),
             'function' => __FUNCTION__,
             'quote_uuid' => $quoteUuid,
-            'quote_type' => $quoteType
+            'quote_type' => $quoteType,
         ]);
 
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
@@ -301,7 +301,7 @@ class ApiController extends Controller
                 'function' => __FUNCTION__,
                 'quote_uuid' => $quoteUuid,
                 'quote_type' => $quoteType,
-                'insurance_provider' => $insuranceProvider->code
+                'insurance_provider' => $insuranceProvider->code,
             ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
@@ -309,7 +309,7 @@ class ApiController extends Controller
                 'function' => __FUNCTION__,
                 'quote_uuid' => $quoteUuid,
                 'quote_type' => $quoteType,
-                'insurance_provider' => $insuranceProvider->code
+                'insurance_provider' => $insuranceProvider->code,
             ]);
 
             return response()->json(['status' => true, 'message' => 'Insurer and API Issuance statuses updated and Lead allocation is triggered successfully']);
@@ -319,7 +319,7 @@ class ApiController extends Controller
             'function' => __FUNCTION__,
             'quote_uuid' => $quoteUuid,
             'quote_type' => $quoteType,
-            'insurance_provider' => $insuranceProvider?->code
+            'insurance_provider' => $insuranceProvider?->code,
         ]);
 
         return response()->json(['success' => false, 'message' => 'Failed to update Insurer and API Issuance statuses and lead allocation!']);

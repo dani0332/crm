@@ -54,8 +54,8 @@ class QuoteAllocation extends Command
     public function handle(ApplicationStorageService $applicationStorageService)
     {
         $currentIteration = now();
-        LoggerService::info(self::class.": Quote Allocation Command Started", extra: [
-            'timestamp' => $currentIteration
+        LoggerService::info(self::class.': Quote Allocation Command Started', extra: [
+            'timestamp' => $currentIteration,
         ]);
 
         $quoteAllocationSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH);
@@ -66,7 +66,7 @@ class QuoteAllocation extends Command
             $chunkSize = 200;
             LoggerService::info(self::class.': Setting allocation date range', extra: [
                 'start_date' => $allocationStartDate,
-                'end_date' => $to
+                'end_date' => $to,
             ]);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
@@ -87,8 +87,8 @@ class QuoteAllocation extends Command
             LoggerService::info(self::class.': Quote Allocation Command is turned Off');
         }
 
-        LoggerService::info(self::class.": Quote Allocation Command Finished", extra: [
-            'timestamp' => $currentIteration
+        LoggerService::info(self::class.': Quote Allocation Command Finished', extra: [
+            'timestamp' => $currentIteration,
         ]);
     }
 
@@ -217,7 +217,7 @@ class QuoteAllocation extends Command
             if ($lead->isChild() && empty($lead->parent?->advisor_id)) {
                 LoggerService::info(self::class.': Skipping travel quote allocation', extra: [
                     'uuid' => $lead->uuid,
-                    'reason' => 'parent lead does not have an advisor'
+                    'reason' => 'parent lead does not have an advisor',
                 ]);
 
                 continue;
@@ -249,7 +249,7 @@ class QuoteAllocation extends Command
     {
         if ($processedRecords === 0) {
             LoggerService::info(self::class.': No records found', extra: [
-                'quote_type' => $quoteType instanceof QuoteTypes ? $quoteType->value : QuoteTypeId::getDescription($quoteType)
+                'quote_type' => $quoteType instanceof QuoteTypes ? $quoteType->value : QuoteTypeId::getDescription($quoteType),
             ]);
         }
     }
@@ -312,13 +312,13 @@ class QuoteAllocation extends Command
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
-            LoggerService::info(self::class.": Processing quote allocation", extra: [
-                'quote_type' => $quoteType->value
+            LoggerService::info(self::class.': Processing quote allocation', extra: [
+                'quote_type' => $quoteType->value,
             ]);
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;
-            LoggerService::info(self::class.": Processed quote allocation", extra: [
-                'quote_type' => $quoteType->value
+            LoggerService::info(self::class.': Processed quote allocation', extra: [
+                'quote_type' => $quoteType->value,
             ]);
         }
 
