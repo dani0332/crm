@@ -751,6 +751,9 @@ const cancelOptionsList = computed(() => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="props.isFuncsEnabled"
       :realQuote="props.realQuote"
+      :isPlanDetailSectionEnabled="
+        props.quoteType == page.props.quoteTypeCodeEnum.Life
+      "
     />
 
     <LazyPolicyDetails
