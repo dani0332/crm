@@ -228,6 +228,8 @@ class BorService
             'cycle' => DocumentTypeCode::BAL_CYCLE,
             'yacht' => DocumentTypeCode::BAL_YACHT,
             'business' => DocumentTypeCode::BAL_BS,
+            'group_medical' => DocumentTypeCode::GM_BOL,
+            // 'business' => DocumentTypeCode::BUS_BAL, // TODO: This need to mapped with business type of insurance id
         ];
 
         return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';

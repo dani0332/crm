@@ -8,6 +8,7 @@ use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeText;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -31,6 +32,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
@@ -379,6 +381,9 @@ class QuoteDocumentService extends BaseService
      */
     public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
     {
+        $borPermission = PermissionsEnum::BOR_DOCUMENT_UPLOAD;
+        $havePermission = Auth::user()->hasPermissionTo($borPermission);
+        $borDocCodes = [DocumentTypeCode::BAL, DocumentTypeCode::BAL_BIKE, DocumentTypeCode::BAL_TRVL, DocumentTypeCode::BAL_HOME, DocumentTypeCode::BAL_HLTH, DocumentTypeCode::BAL_YACHT, DocumentTypeCode::BAL_CYCLE, DocumentTypeCode::BAL_LIFE, DocumentTypeCode::BAL_PET, DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL, DocumentTypeCode::GM_BOL];
         // Fetch active document types, excluding 'SEND_UPDATE' and 'ENDORSEMENT_DOCUMENTS' categories, and filter by quote type ID.
         $documentTypes = DocumentType::active()
             ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
@@ -386,6 +391,9 @@ class QuoteDocumentService extends BaseService
             // Apply filters for business type of insurance & business type of customer if provided.
             ->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
                 return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
+            })
+            ->when($havePermission == false, function ($query) use($borDocCodes) {
+                return $query->whereNotIn('code', $borDocCodes);
             })
             ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessTypeOfInsurance) {
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
@@ -413,6 +421,7 @@ class QuoteDocumentService extends BaseService
 
         // Filter for payment-related document types.
         $paymentDocumentCodes = $this->paymentDocumentTypesOptions($quoteTypeId);
+
         $paymentDocuments = $documentTypes->filter(function ($type) use ($paymentDocumentCodes) {
             return in_array($type->code, $paymentDocumentCodes);
         })->values()->all();
