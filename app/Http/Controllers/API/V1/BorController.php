@@ -106,21 +106,24 @@ class BorController extends Controller
             $request->merge(['bor_signature' => true]);
             $previousDoc = $borLog->document;
 
-            if($previousDoc && $previousDoc->doc_url) {
+            if($previousDoc && $previousDoc->doc_url && $request->hasFile('file')) {
                 Storage::disk('azureIM')->delete($previousDoc->doc_url);
                 $previousDoc->delete();
             }
 
-            $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
+            $document = null;
+            if($request->hasFile('file')) {
+                $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->all(), $quote);
+            }
 
             $borLog->update([
-                'quote_document_id' => $document->id,
-                'document_id' => $document->doc_uuid,
+                'quote_document_id' => isset($document) && !is_null($document) ? $document->id : $borLog->quote_document_id,
+                'document_id' => isset($document) && !is_null($document) ? $document->doc_uuid : $borLog->document_id,
                 'user_agent' => getUserIpAddress($request),
                 'insurer_name' => $request->insurer_name,
                 'policy_number' => $request->policy_number,
-                'status' => BorStatusEnum::DOCUMENT_SIGNED,
-                'date_signed' => now(),
+                'status' => isset($document) && !is_null($document) ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
+                'date_signed' => isset($document) && !is_null($document) ? now() : $borLog->date_signed,
             ]);
 
             return response()->json(['message' => 'success', 'data' => $document]);
