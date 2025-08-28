@@ -6,8 +6,6 @@ use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\UpdateLeadAllocationRequest;
 use App\Models\LeadAllocation;
-use App\Services\ApplicationStorageService;
-use App\Services\CacheService;
 use App\Services\TravelLeadAllocationDashboardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,22 +14,9 @@ use Illuminate\Support\Facades\Log;
 
 class TravelLeadAllocationController extends Controller
 {
-    protected $travelLeadAllocationService;
-    protected $applicationStorageService;
-    protected $cacheService;
-    protected $teamService;
-    protected $userService;
-    protected $tierService;
-
     public function __construct(
-        TravelLeadAllocationDashboardService $travelLeadAllocationService,
-        ApplicationStorageService $applicationStorageService,
-        CacheService $cacheService
-    ) {
-        $this->travelLeadAllocationService = $travelLeadAllocationService;
-        $this->applicationStorageService = $applicationStorageService;
-        $this->cacheService = $cacheService;
-    }
+        private TravelLeadAllocationDashboardService $travelLeadAllocationService,
+    ) {}
 
     /**
      * Display a listing of the resource.
@@ -41,7 +26,9 @@ class TravelLeadAllocationController extends Controller
     public function index(Request $request)
     {
         if (Gate::allows('view-lead-allocation', auth()->user())) {
-            $availableUsers = 0; $unAvailableUsers = 0; $totalAssignedLeadCount = 0; 
+            $availableUsers = 0;
+            $unAvailableUsers = 0;
+            $totalAssignedLeadCount = 0;
             $todayTotalUnAssignedLeadCount = $this->travelLeadAllocationService->getTodaysTotalUnAssignedLeadsCount();
             $data = $this->travelLeadAllocationService->getSicUsersGridData($request->userBlStatus);
 

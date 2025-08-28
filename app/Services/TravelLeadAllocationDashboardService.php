@@ -3,30 +3,22 @@
 namespace App\Services;
 
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Enums\TeamNameEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\TagNameEnum;
+use App\Models\QuoteTag;
 use App\Models\Role;
+use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\UserManager;
-use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
-use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TravelLeadAllocationDashboardService extends BaseService
 {
-    use TeamHierarchyTrait;
-
-    protected $applicationStorageService;
-    public function __construct(ApplicationStorageService $applicationStorageService)
-    {
-        $this->applicationStorageService = $applicationStorageService;
-    }
-
     public function getSicUsersGridData(?string $BlStatus = null)
     {
         try {
@@ -37,7 +29,6 @@ class TravelLeadAllocationDashboardService extends BaseService
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
                 ->activeUser()
-                ->where('teams.name', TeamNameEnum::SIC_UNASSISTED)
                 ->where('quote_type_id', QuoteTypes::TRAVEL->id())
                 // subquery to exclude users with any kind of "manager" roles
                 ->whereNotExists(function ($query) use ($managerRoleIds) {
@@ -99,27 +90,16 @@ class TravelLeadAllocationDashboardService extends BaseService
 
     public function getTodaysTotalUnAssignedLeadsCount(): int
     {
-        $count = TravelQuote::whereRaw('DATE(created_at) = CURDATE()')
+        // Fetech SIC travel quote separate to apply in beloew query
+        $sicQuoteIds = QuoteTag::where('name', TagNameEnum::SIC)
+            ->where('quote_type_id', QuoteTypes::TRAVEL->id())
+            ->pluck('quote_uuid')->toArray();
+
+        return TravelQuote::whereRaw('DATE(created_at) = CURDATE()')
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('uuid', $sicQuoteIds)
             ->count();
-
-        return $count;
-        /*return CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->whereNull('advisor_id')
-        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->where('tiers.name', '!=', TiersEnum::TIER_R)
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->subMinutes(2)->toDateTimeString()])
-        ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-        ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
-            $query->distinct()
-                ->select('quote_uuid')
-                ->from('quote_tags')
-                ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                ->where('quote_tags.name', 'SIC')
-                ->where('quote_type.code', quoteTypeCode::Car);
-        })
-        ->count();*/
     }
 }
