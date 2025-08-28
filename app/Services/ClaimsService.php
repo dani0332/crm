@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Enums\ClaimsEnum;
-use App\Enums\RolesEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Jobs\SendGoogleReviewEmailJob;
 use App\Models\CarMake;
@@ -155,25 +155,25 @@ class ClaimsService extends BaseService
         }
 
         // Filter by car details stored in claim_request_details table
-        if (! empty($filters['car_make'])) { 
+        if (! empty($filters['car_make'])) {
             $query->whereHas('claimRequestDetails', function ($subQuery) use ($filters) {
                 $subQuery->where('car_make', $filters['car_make']);
             });
         }
 
-        if (! empty($filters['car_model'])) { 
+        if (! empty($filters['car_model'])) {
             $query->whereHas('claimRequestDetails', function ($subQuery) use ($filters) {
                 $subQuery->where('car_model', $filters['car_model']);
             });
         }
 
-        if (! empty($filters['model_year'])) { 
+        if (! empty($filters['model_year'])) {
             $query->whereHas('claimRequestDetails', function ($subQuery) use ($filters) {
                 $subQuery->where('model_year', $filters['model_year']);
             });
         }
 
-        if (! empty($filters['plat_number'])) { 
+        if (! empty($filters['plat_number'])) {
             $query->whereHas('claimRequestDetails', function ($subQuery) use ($filters) {
                 $subQuery->where('plat_number', $filters['plat_number']);
             });
@@ -224,7 +224,7 @@ class ClaimsService extends BaseService
      */
     public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null, int $page = 1)
     {
-        try { 
+        try {
             $policies = PersonalQuote::query()
                 ->select([
                     'personal_quotes.id',
@@ -261,7 +261,7 @@ class ClaimsService extends BaseService
                 })
                 ->orderBy('personal_quotes.policy_expiry_date', 'desc')
                 ->simplePaginate($this->perPage);
-                
+
             // Return pagination data structure
             return $policies;
 
@@ -354,10 +354,10 @@ class ClaimsService extends BaseService
         try {
 
             // Get fillable fields from ClaimRequest model and add form-specific fields
-            $claimRequestFillable = (new ClaimRequest())->getFillable();
+            $claimRequestFillable = (new ClaimRequest)->getFillable();
             $formSpecificFields = ['incident_story', 'whatsapp_consent', 'selected_policy_id', 'policy_not_listed'];
             $allowedFields = array_merge($claimRequestFillable, $formSpecificFields);
-            
+
             // Separate claim request data from detail data
             $claimRequestData = collect($data)->only($allowedFields)->filter()->toArray();
 
@@ -369,7 +369,7 @@ class ClaimsService extends BaseService
             $claimRequest->update($claimRequestData);
 
             // Handle claim request detail updates with quote type logic
-            $claimRequestDetailFillable = (new ClaimRequestDetail())->getFillable();
+            $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
             $detailData = collect($data)->only($claimRequestDetailFillable)->toArray();
 
             // Handle quote type specific field clearing
@@ -438,21 +438,21 @@ class ClaimsService extends BaseService
         try {
 
             // Get allowed fields from model fillable arrays (filtered for this specific update method)
-            $claimRequestFillable = (new ClaimRequest())->getFillable();
+            $claimRequestFillable = (new ClaimRequest)->getFillable();
             $claimRequestFields = array_intersect($claimRequestFillable, [
                 'claim_type_id',
-                'claim_number', 
+                'claim_number',
                 'claim_decline_reason',
                 'claim_request_type_id',
                 'incident_date',
             ]);
 
             // Get allowed detail fields from model fillable array (filtered for this specific update method)
-            $claimRequestDetailFillable = (new ClaimRequestDetail())->getFillable();
+            $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
             $claimRequestDetailFields = array_intersect($claimRequestDetailFillable, [
                 'plat_number',
                 'car_make',
-                'car_model', 
+                'car_model',
                 'model_year',
                 'service_type_id',
             ]);
@@ -485,11 +485,11 @@ class ClaimsService extends BaseService
 
                 if ($claimRequestDetail) {
                     $claimRequestDetail->update($detailData);
-                    
+
                 } else {
                     // Create new detail record if it doesn't exist
                     $detailData['claim_request_id'] = $claimRequest->id;
-                    $claimRequestDetail = $claimRequest->claimRequestDetails()->create($detailData); 
+                    $claimRequestDetail = $claimRequest->claimRequestDetails()->create($detailData);
                 }
 
                 LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim request details updated - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -591,7 +591,7 @@ class ClaimsService extends BaseService
             $query->where('name', RolesEnum::CLAIM_MANAGER);
         })->select('id', 'name', 'email')->where('is_active', 1)->orderBy('name')->get()->toArray();
     }
- 
+
     /**
      * Get claim request types
      */
@@ -1295,7 +1295,7 @@ class ClaimsService extends BaseService
                 ->where('ca.claim_request_id', $claimId)
                 ->where('cs.status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value) // Only get status_type statuses (main claim statuses)
                 ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
-                ->get(); 
+                ->get();
 
             return $claimLeadHistory;
 
@@ -1304,7 +1304,7 @@ class ClaimsService extends BaseService
                 'error' => $e->getMessage(),
                 'claim_id' => $claimId,
                 'user_id' => Auth::id(),
-            ]); 
+            ]);
             throw $e;
         }
     }
@@ -1334,7 +1334,6 @@ class ClaimsService extends BaseService
                 ->whereNotNull('ca.status_id')
                 ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
                 ->get();
- 
 
             return $claimSubStatusLogs;
 
@@ -1358,14 +1357,14 @@ class ClaimsService extends BaseService
             // Update the claim with complaint status
             $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
 
-             // Check if complaint status has changed to open complaint status 
+            // Check if complaint status has changed to open complaint status
             $newComplaintStatus = ClaimStatus::where('id', $complaintStatusId)->where('is_active', 1)->first();
-            
+
             $isNewStatusComplaintOpen = $newComplaintStatus->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 
             if ($isNewStatusComplaintOpen) {
                 $this->markClaimAsOpen($claim);
-            } 
+            }
 
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status updated successfully', extra: [
                 'claim_id' => $claim->id,

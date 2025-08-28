@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\ClaimRequest;
-use App\Models\ClaimStatus;
-use App\Enums\ClaimsEnum;
 use App\Services\ClaimsService;
 
 class ClaimRequestObserver
