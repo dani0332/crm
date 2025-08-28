@@ -78,7 +78,11 @@ The Claims Module follows a layered architecture pattern:
   - `update()` - Update existing claim
   - `updateClaimDetails()` - Update specific claim details
   - `updateClaimStatuses()` - Update claim status
+  - `updateComplaintStatus()` - Update complaint status
+  - `updateNextFollowUp()` - Update next follow-up
   - `searchPolicies()` - Search active policies
+  - `getClaimLeadHistory()` - Get claim status history
+  - `getClaimSubStatusLogs()` - Get sub-status change logs
 
 ### 3. Services
 
@@ -88,10 +92,14 @@ The Claims Module follows a layered architecture pattern:
 - **Purpose**: Business logic layer for claim operations
 - **Key Features**:
   - Extends `BaseService` with `CentralTrait`
+  - Dynamic fillable field handling using model-based arrays
   - Comprehensive filtering and pagination
   - Policy search functionality
   - Status management logic
   - Dropdown data management
+  - Document management with ZIP creation
+  - Audit trail and logging functionality
+  - Complaint and follow-up management
 
 ### 4. Request Validation
 
@@ -221,6 +229,13 @@ The system automatically updates claim statuses based on:
 - **Health Claims**: Require service type for pending approvals
 - **All Claims**: Require incident date and claim type
 
+#### Dynamic Field Management
+
+- **Model-Based Fillable**: Uses `getFillable()` from models for dynamic field handling
+- **Form-Specific Fields**: Additional fields like `incident_story`, `whatsapp_consent` added programmatically
+- **Filtered Updates**: Specific methods use `array_intersect()` to limit fields for targeted updates
+- **Automatic Sync**: Field definitions automatically stay in sync with model changes
+
 ## API Endpoints
 
 ### Web Routes
@@ -237,6 +252,10 @@ The system automatically updates claim statuses based on:
 | POST   | `/claim/update-details/{uuid}`           | `claims.update.details`    | Update details     |
 | POST   | `/claim/update-statuses/{uuid}`          | `claims.update.status`     | Update status      |
 | POST   | `/claims/{claim:uuid}/send-notification` | `claims.send-notification` | Send notification  |
+| POST   | `/claims/{claim:uuid}/complaint-status`  | `claims.complaint-status`  | Update complaint   |
+| POST   | `/claims/{claim:uuid}/next-follow-up`    | `claims.next-follow-up`    | Update follow-up   |
+| GET    | `/claims/{claim:uuid}/lead-history`      | `claims.lead-history`      | Get status history |
+| GET    | `/claims/{claim:uuid}/sub-status-logs`   | `claims.sub-status-logs`   | Get sub-status logs|
 
 ### API Response Format
 
@@ -398,6 +417,9 @@ From `PermissionsEnum`:
 - **Polymorphic Relations**: Claims can have multiple document types
 - **Document Categories**: Claim-specific document categorization
 - **Upload Tracking**: Complete audit trail for documents
+- **ZIP Creation**: Bulk document download functionality
+- **Document Validation**: File existence and structure validation
+- **Azure Storage Integration**: Documents stored on Azure blob storage
 
 ## Development Guidelines
 
@@ -416,6 +438,10 @@ From `PermissionsEnum`:
 - Use `CentralTrait` for common functionality
 - Implement `FormRequest` for validation
 - Use observers for business logic triggers
+- Leverage model `getFillable()` for dynamic field handling
+- Use `array_intersect()` for filtered field updates
+- Implement proper exception handling with structured logging
+- Use `RolesEnum` for role-based access control
 
 #### Vue.js Patterns
 
