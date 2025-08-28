@@ -210,7 +210,7 @@ trait TeamHierarchyTrait
     {
         $user = User::with('products')->where('id', $userId)->first();
 
-        return $user && $user->products->contains('product_id', $productId);
+        return $user && $user->products->contains('id', $productId);
     }
 
     public function getDepartmentsByTeamIds($ids)

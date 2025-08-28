@@ -756,8 +756,8 @@
                         <th>
                             <p class="text-center" style="text-align: center; margin: 0; padding: 2px;">
                                 <a class="btn-buy" href="{{($websitURL . '/life-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $plans[$planId]->planId) . '&version='. $quote->version}}">
-                                    APPLY NOW<br />@php $priceWithVat = $plans[$planId]->isApi ?  number_format($plans[$planId]->actualPremium + $plans[$planId]->vat) : number_format(($plans[$planId]->totalPrice + $plans[$planId]->vat) ?? '0.0'); @endphp
-                                    <span style="font-size: 10px; font-weight: normal">{{ $plans[$planId]->currency }}</span> <strong>{{ $priceWithVat }}</strong>
+                                    APPLY NOW<br />@php $price = $plans[$planId]->isApi ?  number_format($plans[$planId]->actualPremium, 2) : number_format($plans[$planId]->totalPrice ?? 0.0, 2); @endphp
+                                    <span style="font-size: 10px; font-weight: normal">{{ $plans[$planId]->currency }}</span> <strong>{{ $price }}</strong>
                                 </a>
                             </p>
                         </th>

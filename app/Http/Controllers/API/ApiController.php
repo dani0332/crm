@@ -19,6 +19,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -57,6 +58,8 @@ use Illuminate\Validation\ValidationException;
 class ApiController extends Controller
 {
     use GenericQueriesAllLobs, PrivateClient;
+
+    private const REQUIRED_STRING = 'required|string';
 
     public $apiService;
     public $inboundEmailsHookService;
@@ -305,7 +308,7 @@ class ApiController extends Controller
     public function homeSyncSAL(Request $request)
     {
         $request->validate([
-            'quoteUID' => 'required|string', // Ensure quoteUID is present
+            'quoteUID' => self::REQUIRED_STRING, // Ensure quoteUID is present
         ]);
 
         Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
@@ -445,7 +448,7 @@ class ApiController extends Controller
     public function homeRenewalOCBAttachment(Request $request)
     {
         $request->validate([
-            'quoteUID' => 'required|string',
+            'quoteUID' => self::REQUIRED_STRING,
         ]);
 
         $publicUrl = app(HomeEmailService::class)->attachHomeOCBPDFToEmail($request->quoteUID);
@@ -453,5 +456,10 @@ class ApiController extends Controller
         return response()->json([
             'public_url' => $publicUrl,
         ]);
+    }
+
+    public function documentNotification(DocumentNotificationRequest $request)
+    {
+        return $this->apiService->documentNotification($request);
     }
 }

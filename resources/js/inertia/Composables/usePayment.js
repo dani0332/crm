@@ -57,16 +57,11 @@ export const usePayment = () => {
     );
   };
 
-  const hasAnyCCSplitPayment = payments => {
-    // Check if the first payment in the array has any Credit Card split payments
-    if (payments.length > 0) {
-      const paymentSplits = payments[0].payment_splits;
-      return paymentSplits.some(
-        item =>
-          item.payment_method.code === page.props.paymentMethodsEnum.CreditCard,
-      );
-    }
-    return false;
+  const hasAnyCCSplitPayment = payment => {
+    return payment?.payment_splits?.some(
+      item =>
+        item.payment_method.code === page.props.paymentMethodsEnum.CreditCard,
+    );
   };
 
   const getCaptureValidStatuses = paymentSplitRec => {

@@ -328,7 +328,65 @@ const downloadPdf = isValid => {
   }
 };
 
+const onDataExport = async (exportType = 'download') => {
+  if (canExportReport.value === true) {
+    exportLoader.value = true;
+    const payload = cleanFilters(filters);
+
+    try {
+      // Add exportType to payload
+      const data = { ...payload, exportType };
+      console.log('data', data);
+      const url = route('conversion-as-at-export');
+
+      // Add exportType to URL parameters
+      const urlParams = useObjToUrl(data);
+      const finalUrl = `${url}?${urlParams}`;
+
+      if (exportType === 'email') {
+        // For email exports, show success message instead of opening window
+        const exportResponse = await axios
+          .get(finalUrl)
+          .then(resp => {
+            if (resp.data.message) {
+              notification.success({
+                title: resp.data.message,
+                position: 'top',
+              });
+            }
+          })
+          .catch(err => {
+            notification.error({
+              title: err.response.data.message
+                ? err.response.data.message
+                : 'Unable to start an export',
+              position: 'top',
+            });
+            throw err;
+          });
+      } else {
+        // For direct download, open in new window
+        window.open(finalUrl);
+        notification.success({
+          title: 'Export initiated',
+          position: 'top',
+        });
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      exportLoader.value = false;
+    }
+  } else {
+    notification.error({
+      title: 'Please generate report first',
+      position: 'top',
+    });
+  }
+};
+
 const cleanFilters = filters => {
+  console.log('filters', filters);
   Object.keys(filters).forEach(
     key =>
       (filters[key] === '' ||
@@ -448,8 +506,7 @@ onMounted(() => {
           v-model="filters.startEndDate"
           label="Advisor Assigned Date*"
           placeholder="Specify Advisor Assigned Date*"
-          range
-          :max-range="30"
+          :range="{ maxRange: 30 }"
           :maxDate="new Date()"
           :rules="[isRequired]"
           size="sm"
@@ -537,8 +594,7 @@ onMounted(() => {
           v-model="filters.createdAtDate"
           label="Lead Created Date*"
           placeholder="Specify Lead Created Date"
-          range
-          :max-range="30"
+          :range="{ maxRange: 30 }"
           :maxDate="new Date()"
           :rules="[isRequired]"
           size="sm"
@@ -553,6 +609,16 @@ onMounted(() => {
           </p>
         </div>
         <div class="flex gap-3">
+          <x-button
+            v-if="can(permissionsEnum.EXTRACT_REPORT)"
+            size="sm"
+            color="#48bb78"
+            @click.prevent="onDataExport('email')"
+            :disabled="loaders.export"
+            :loading="exportLoader"
+          >
+            Export via email
+          </x-button>
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset

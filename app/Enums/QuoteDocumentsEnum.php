@@ -18,6 +18,7 @@ final class QuoteDocumentsEnum extends Enum
     public const POLICY_HANDBOOK = 'PHB';
     public const EP = 'EP';
     public const RECEIPT = 'RECEIPT';
+    public const CAR_MULKIY = 'CAR_MULKIY';
 
     // Life Quote
     public const LIFE_POLICY_SCHEDULE = 'PS_LIFE';
