@@ -222,6 +222,7 @@ class HomeEmailService extends BaseService
             'customerMobile' => $customerMobile,
             'triggerDate' => $triggerDate,
             'whatsappConsent' => $whatsappConsent,
+            'hasClaimedLosses' => $lead->has_claimed_losses ? 'Yes' : 'No',
         ];
 
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid, 64800);

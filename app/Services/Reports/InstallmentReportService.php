@@ -6,7 +6,6 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\QuoteTypeId;
-use App\Exports\Reports\InstallmentReportExport;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -22,7 +21,7 @@ class InstallmentReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::INSTALLMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
@@ -109,13 +108,21 @@ class InstallmentReportService extends ManagementReport
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+        $query = $this->getReportQueryBuilder($request);
+
         LoggerService::sql(self::class.' - Installment Report Query', $query);
 
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            return (new InstallmentReportExport($data))->download("Installment Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -127,7 +134,7 @@ class InstallmentReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
             $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;

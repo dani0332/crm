@@ -46,9 +46,9 @@ class SendCarCommercialOCBEmail implements ShouldQueue
                 $carLead->quote_status_id = QuoteStatusEnum::Quoted;
                 $carLead->save();
             }
+
         } catch (\Exception $exception) {
             LoggerService::error(self::class.' - Exception encountered: ', exception: $exception);
         }
-
     }
 }

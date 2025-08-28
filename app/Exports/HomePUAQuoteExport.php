@@ -2,34 +2,31 @@
 
 namespace App\Exports;
 
-use App\Services\CarQuoteService;
+use App\Repositories\HomeQuoteRepository;
+use App\Services\Logger\LoggerService;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
+class HomePUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
 {
     use Exportable;
 
-    protected $nonPUALeads;
-    protected $puaLeads;
+    protected $data;
 
     public function __construct($requestParams = [])
     {
-        $this->nonPUALeads = app(CarQuoteService::class)->exportnonPUAAuthorized($requestParams);
-        $this->puaLeads = app(CarQuoteService::class)->exportPUAAuthorized($requestParams);
+        LoggerService::info('HomePUAQuoteExport initialized');
+        $this->data = app(HomeQuoteRepository::class)->exportPUAAuthorized($requestParams);
     }
 
     public function collection()
     {
-        $leads = $this->nonPUALeads[0];
+        $leads = $this->data[0];
 
-        $nonPUALeadCounts = $this->nonPUALeads[0]->count();
-        $puaLeadCounts = $this->puaLeads[0]->count();
-
-        $teamCounts = $this->nonPUALeads[1];
+        $teamCounts = $this->data[1];
 
         $exportData = collect();
 
@@ -37,31 +34,22 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             $exportData->push($lead);
         }
 
-        // ADD BlANK LINE
-        $exportData->push((object) [' ' => ' ']);
-        $exportData->push((object) [' ' => ' ']);
-        $exportData->push((object) [' ' => ' ']);
-
-        $exportData->push((object) [
-            'NonPUA' => 'PUA: ',
-            'Total' => $puaLeadCounts ?: '0',
-        ]);
-        $exportData->push((object) [
-            'NonPUA' => 'Non-PUA: ',
-            'Total' => $nonPUALeadCounts ?: '0',
-        ]);
-        // ADD BlANK LINE
-        $exportData->push((object) [' ' => ' ']);
-        $exportData->push((object) [' ' => ' ']);
+        if ($teamCounts->isNotEmpty()) {
+            $exportData->push((object) [' ' => ' ']);
+            $exportData->push((object) [' ' => ' ']);
+            $exportData->push((object) [' ' => ' ']);
+            $exportData->push((object) ['Teams' => '']);
+            $exportData->push((object) ['Total' => '']);
+        }
 
         foreach ($teamCounts as $team) {
             $exportData->push((object) [
                 'Team' => $team->Team,
-                'Total' => $team->Total ?: '0',
+                'Total' => $team->Total,
             ]);
         }
 
-        // Define all statusses
+        // Define all possible payment statuses for home insurance
         $allStatuses = [
             'Payment Link Requested By Customer' => 0,
             'Payment Link In Progress' => 0,
@@ -70,8 +58,9 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
 
         // Count leads by status
         foreach ($leads as $lead) {
-            if (isset($allStatuses[$lead->leadstatus])) {
-                $allStatuses[$lead->leadstatus]++;
+            $leadStatus = $lead->quoteStatus->text ?? '';
+            if (isset($allStatuses[$leadStatus])) {
+                $allStatuses[$leadStatus]++;
             }
         }
 
@@ -98,8 +87,8 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             'Lead Status',
             'Payment Status',
             'Source',
-            'Make',
-            'Model',
+            'Ownership Status',
+            'Type of Property',
             'Assigned Advisor Email',
         ];
     }
@@ -111,22 +100,22 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
                 $quote->RefID,
                 $quote->premiumauthorized,
                 $quote->paymentauthdate ? date(config('constants.datetime_format'), strtotime($quote->paymentauthdate)) : '',
-                $quote->leadstatus,
+                $quote->quoteStatus->text ?? '',
                 $quote->paymentstatus,
                 $quote->source,
-                $quote->make,
-                $quote->model,
-                $quote->assignedadvisoremail,
-            ];
-        } elseif (isset($quote->NonPUA)) {
-            return [
-                $quote->NonPUA,
-                $quote->Total,
+                $quote->homeQuote?->lookupPossessionType?->text ?? 'N/A',
+                $quote->homeQuote?->lookupAccommodationType?->text ?? 'N/A',
+                $quote->advisor?->email ?? '',
             ];
         } elseif (isset($quote->Team)) {
             return [
                 $quote->Team,
                 $quote->Total ?? number_format(0),
+            ];
+        } elseif (isset($quote->{'Teams'})) {
+            return [
+                'Teams',
+                'Total Count',
             ];
         } elseif (isset($quote->{'Quote Status'})) {
             return [
@@ -135,6 +124,6 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             ];
         }
 
-        return array_fill(0, 11, '');
+        return array_fill(0, 9, '');
     }
 }
