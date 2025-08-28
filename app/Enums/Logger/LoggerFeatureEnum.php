@@ -36,4 +36,5 @@ enum LoggerFeatureEnum: string
     case SAGE_EP_BOOKING_REVERSAL = 'sage-ep-booking-reversal';
     case CAR_CQF_RENEWALS = 'car-cqf-renewals';
     case SUPPORT_USER_ASSIGNMENT = 'support-user-assignment';
+    case CLAIM_ALLOCATION = 'claim-allocation';
 }

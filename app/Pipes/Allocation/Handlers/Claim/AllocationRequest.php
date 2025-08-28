@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Pipes\Allocation\Handlers\Claim;
+
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\QuoteTypes;
+use Illuminate\Support\Collection;
+use App\Pipes\Allocation\Handlers\Claim\AllocationRequestable;
+use App\Pipes\Allocation\Handlers\AllocationRequestMarkable;
+use App\Models\ClaimRequest;
+
+
+class AllocationRequest
+{
+    use AllocationRequestable, AllocationRequestMarkable;
+
+    protected Collection $collection;
+
+    public function __construct(
+        protected QuoteTypes $quoteType,
+        protected $quoteUUID,
+        protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
+    ) {
+        $this->collection = new Collection;
+
+       
+    }
+
+    public function getQuoteType()
+    {
+        return $this->quoteType;
+    }
+
+    public function getQuoteUUID()
+    {
+        return $this->quoteUUID;
+    }
+
+    public function getAssignmentType()
+    {
+        return $this->assignmentType;
+    }
+
+    public function set($key, $value)
+    {
+        $this->collection->put($key, $value);
+    }
+
+    public function get($key, $default = null)
+    {
+        return $this->collection->get($key, $default);
+    }
+    /**
+     * Get a new instance of the ClaimRequest model.
+     *
+     * @return \App\Models\ClaimRequest
+     */
+    public function model(): ClaimRequest
+    {
+        return new ClaimRequest();
+    }
+}

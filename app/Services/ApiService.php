@@ -30,6 +30,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 
 class ApiService
 {
@@ -504,15 +505,22 @@ class ApiService
     public function processClaimAssignment($request)
     {
         // Extract request parameters
-        $allocationTypeId = $request->input('quoteTypeId');
-        $allocationId = $request->input('quoteUUID');
-        $triggerOCB = $request->input('triggerOCB', false);
-   
+        $quoteTypeId = $request->input('quoteTypeId');
+        $quoteUuid = $request->input('quoteUUID');
+ 
+        try {
+            $result = app(ClaimAllocationService::class)->execute($quoteUuid, $quoteTypeId);
 
-        $responsePayload = QuoteTypes::getName($allocationTypeId)->claimAllocation(
-            uuid: $allocationId,
-            triggerOCB: $triggerOCB,
-        );
+            return apiResponse($result, Response::HTTP_OK, 'Claim assignment processed successfully.');
+        } catch (\Throwable $e) {
+            LoggerService::error('Error processing claim assignment', exception: $e);
+
+            return apiResponse(
+                null,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'An error occurred while processing the claim assignment.'
+            );
+        }
 
        
 
