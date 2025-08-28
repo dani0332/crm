@@ -227,9 +227,8 @@ class BorService
             'life' => DocumentTypeCode::BAL_LIFE,
             'cycle' => DocumentTypeCode::BAL_CYCLE,
             'yacht' => DocumentTypeCode::BAL_YACHT,
-            'business' => DocumentTypeCode::BAL_BS,
+            'business' => DocumentTypeCode::BUS_BAL,
             'group_medical' => DocumentTypeCode::GM_BOL,
-            // 'business' => DocumentTypeCode::BUS_BAL, // TODO: This need to mapped with business type of insurance id
         ];
 
         return $lobToDocumentType[strtolower($quoteType)] ?? 'BAL';
@@ -328,7 +327,10 @@ class BorService
         // Get the document type for this LOB  
         $documentType = DocumentType::where('code', $documentTypeCode)
             ->where('is_active', 1)
-            ->whereNull('business_type_of_insurance_id')
+            ->where("quote_type_id", $personalQuote->quote_type_id)
+            ->when(isset($quoteObject->business_type_of_insurance_id), function ($query) use ($quoteObject) {
+                $query->where('business_type_of_insurance_id', $quoteObject->business_type_of_insurance_id);
+            })
             ->first();
         
         if (!$documentType) {
