@@ -151,17 +151,21 @@ class ApiController extends Controller
         $flowType = $request->flowType;
         $quoteUID = $request->uuid;
         $flowId = $request->flowId ?? null;
-        LoggerService::info(self::class.': Received stopFollowUpEvent request', extra: [
-            'ref_id' => $quoteUID,
-            'flow_type' => $flowType,
-            'time' => now()->toDateTimeString(),
-        ]);
+
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
+
+        if ($workflow) {
+            LoggerService::startQuoteLogging(QuoteTypes::getName($workflow->quote_type_id)->refId($quoteUID));
+        }
+
+        LoggerService::info(self::class.': Received stopFollowUpEvent request', extra: [
+            'flow_type' => $flowType,
+            'time' => now()->toDateTimeString(),
+        ]);
         if (! $workflow) {
             LoggerService::info(self::class.': Lead not found', extra: [
-                'ref_id' => $quoteUID,
                 'flow_type' => $flowType,
                 'time' => now()->toDateTimeString(),
             ]);
@@ -278,10 +282,9 @@ class ApiController extends Controller
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
     {
+        LoggerService::startQuoteLogging(QuoteTypes::getName($quoteType)->refId($quoteUuid));
         LoggerService::info(self::class.': Marking auto capture as failed', extra: [
-            'class' => basename(self::class),
             'function' => __FUNCTION__,
-            'quote_uuid' => $quoteUuid,
             'quote_type' => $quoteType,
         ]);
 
@@ -299,7 +302,6 @@ class ApiController extends Controller
         if ($insuranceProvider) {
             LoggerService::info(self::class.': Updating statuses and allocating lead', extra: [
                 'function' => __FUNCTION__,
-                'quote_uuid' => $quoteUuid,
                 'quote_type' => $quoteType,
                 'insurance_provider' => $insuranceProvider->code,
             ]);
@@ -307,7 +309,6 @@ class ApiController extends Controller
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             LoggerService::info(self::class.': Statuses updated and allocation triggered', extra: [
                 'function' => __FUNCTION__,
-                'quote_uuid' => $quoteUuid,
                 'quote_type' => $quoteType,
                 'insurance_provider' => $insuranceProvider->code,
             ]);
@@ -317,7 +318,6 @@ class ApiController extends Controller
 
         LoggerService::info(self::class.': Status update and allocation failed', extra: [
             'function' => __FUNCTION__,
-            'quote_uuid' => $quoteUuid,
             'quote_type' => $quoteType,
             'insurance_provider' => $insuranceProvider?->code,
         ]);
@@ -331,12 +331,13 @@ class ApiController extends Controller
             'quoteUID' => self::REQUIRED_STRING, // Ensure quoteUID is present
         ]);
 
-        LoggerService::info(self::class.': Received request to sync SAL data', extra: ['quoteUID' => $request->quoteUID]);
+        LoggerService::startQuoteLogging(QuoteTypes::getName(QuoteTypes::HOME->id())->refId($request->quoteUID));
+        LoggerService::info(self::class.': Received request to sync SAL data');
 
         try {
             HomeSyncSALJob::dispatch($request->all());
 
-            LoggerService::info(self::class.': SAL sync job dispatched', extra: ['quoteUID' => $request->quoteUID]);
+            LoggerService::info(self::class.': SAL sync job dispatched');
 
             return response()->json([
                 'status' => 'success',
@@ -345,7 +346,6 @@ class ApiController extends Controller
             ], 202);
         } catch (\Exception $e) {
             LoggerService::error(self::class.': SAL sync failed', extra: [
-                'quoteUID' => $request->quoteUID,
                 'request' => $request->all(),
             ], exception: $e);
 
