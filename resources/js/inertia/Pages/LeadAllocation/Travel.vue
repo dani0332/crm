@@ -40,19 +40,21 @@ const props = defineProps({
   },
 });
 
+const statusText = statusId => resolveUserStatusText(statusId);
+const { resume, pause } = useTimeoutPoll(fetchData, 90000);
+
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const notification = useToast();
 const loading = ref(false);
+const autoRefresh = ref(false);
 
 const canManage = computed(
   () =>
     !loading.value &&
     hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]),
 );
-
-const statusText = statusId => resolveUserStatusText(statusId);
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', sortable: true },
@@ -101,6 +103,15 @@ const loaders = reactive({
   search: false,
   reset: false,
 });
+
+async function fetchData() {
+  await router.reload({
+    replace: true,
+    preserveScroll: true,
+    preserveState: true,
+  });
+}
+
 
 const onReset = () => {
   router.visit('travel-lead-allocation', {
@@ -266,6 +277,20 @@ const onStatusSubmit = async () => {
   }
 }
 
+watch(
+  () => autoRefresh.value,
+  () => {
+    if (autoRefresh.value) {
+      resume();
+    } else {
+      pause();
+    }
+  },
+  {
+    immediate: true,
+  },
+);
+
 onMounted(() => {
   tableHeader.value = tableHeader.value.filter(column => column);
 
@@ -298,6 +323,21 @@ onMounted(() => {
         v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
       >
         <h2 class="text-lg font-semibold">Travel Lead Allocation Management</h2>
+      </div>
+
+      <!-- Auto Refresh -->
+      <div
+        class="flex gap-1"
+        v-if="
+          hasAnyRole([
+            rolesEnum.Admin,
+            rolesEnum.LeadPool,
+            rolesEnum.Engineering,
+          ])
+        "
+      >
+        <h2 class="text-lg font-semibold">Auto Refresh :</h2>
+        <x-toggle v-model="autoRefresh" color="emerald" size="lg" />
       </div>
     </div>
     <x-divider class="my-4" />
