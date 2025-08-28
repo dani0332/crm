@@ -743,7 +743,7 @@ class ClaimsService extends BaseService
             // Update the claim request
             $claimRequest->update($statusUpdateData);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra:[
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
