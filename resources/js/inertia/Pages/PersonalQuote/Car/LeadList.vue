@@ -295,6 +295,8 @@ const filters = reactive({
   vehicle_use: '',
   company_name: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const teamUsers =
@@ -1159,6 +1161,22 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           :single="true"
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"
@@ -1287,7 +1305,9 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport('/pua-leads-export', true)"
+            @click="
+              onExport(`/Car/pua-leads-export?${objToUrl(filters)}`, true)
+            "
             class="justify-self-start mr-3"
           >
             Export PUA Updates

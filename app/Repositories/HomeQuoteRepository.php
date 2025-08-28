@@ -9,6 +9,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -24,6 +25,7 @@ use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\Emirate;
+use App\Models\HomePlan;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Models\SubArea;
@@ -40,6 +42,8 @@ use App\Services\SplitPaymentService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -49,7 +53,7 @@ use Illuminate\Support\Facades\URL;
 
 class HomeQuoteRepository extends BaseRepository
 {
-    use AddPremiumAllLobs, CentralTrait, GenericQueriesAllLobs;
+    use AddPremiumAllLobs, CentralTrait, GenericQueriesAllLobs, TeamHierarchyTrait;
 
     public function model()
     {
@@ -86,7 +90,7 @@ class HomeQuoteRepository extends BaseRepository
         // Check if any of the exclude filters are active
         $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters, $requestParams);
 
-        return $this->byQuoteTypeCode(QuoteTypes::HOME)
+        $query = $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
             ->when($this->hasFilterValue('advisors', $requestParams), function ($query) use ($requestParams) {
@@ -132,8 +136,13 @@ class HomeQuoteRepository extends BaseRepository
             ->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
-                fn ($query) => $query->when($forExport, fn ($query) => $query, fn ($query) => $query->simplePaginate()->withQueryString())
+                fn ($query) => $query->when($forExport, fn ($query) => $query, function ($query) {
+                    return $query->simplePaginate()->withQueryString();
+                })
             );
+
+        // logger()->debug("toRawSql: " . $query->toRawSql());
+        return $query;
     }
 
     /**
@@ -671,6 +680,30 @@ class HomeQuoteRepository extends BaseRepository
             'insurer_commission_tax_invoice_number' => fn ($query, $value) => $query->whereHas('payments', function ($query) use ($value) {
                 $query->where('insurer_commmission_invoice_number', $value);
             }),
+            'authorize_date' => fn ($query, $value) => $query->whereHas('payments', function ($query) use ($value) {
+                if (is_array($value) && count($value) >= 2) {
+                    $startDate = $value[0];
+                    $endDate = $value[1];
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('authorized_at', [
+                            Carbon::parse($startDate)->startOfDay()->toDateTimeString(),
+                            Carbon::parse($endDate)->endOfDay()->toDateTimeString(),
+                        ]);
+                    }
+                }
+            }),
+            'captured_date' => fn ($query, $value) => $query->whereHas('payments', function ($query) use ($value) {
+                if (is_array($value) && count($value) >= 2) {
+                    $startDate = $value[0];
+                    $endDate = $value[1];
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('captured_at', [
+                            Carbon::parse($startDate)->startOfDay()->toDateTimeString(),
+                            Carbon::parse($endDate)->endOfDay()->toDateTimeString(),
+                        ]);
+                    }
+                }
+            }),
         ];
     }
 
@@ -843,5 +876,290 @@ class HomeQuoteRepository extends BaseRepository
             LoggerService::error('Error fetching customer address data', exception: $e);
             $quote->customerAddressData = [];
         }
+    }
+
+    /**
+     * Get unique quote UUIDs from HomePlans with puaType 'APUA'
+     */
+    private function getAPUAQuoteUuids($request): array
+    {
+        $query = HomePlan::where('puaType', 'APUA');
+
+        // Add date filtering if present in request
+        if (! empty($request['created_at_start']) || ! empty($request['created_at_end'])) {
+            if (! empty($request['created_at_start'])) {
+                $startDate = \Carbon\Carbon::parse(urldecode($request['created_at_start']))->startOfDay();
+                $query->where('createdAt', '>=', $startDate);
+            }
+
+            if (! empty($request['created_at_end'])) {
+                $endDate = \Carbon\Carbon::parse(urldecode($request['created_at_end']))->endOfDay();
+                $query->where('createdAt', '<=', $endDate);
+            }
+        }
+
+        $apuaHomePlans = $query->select(['puaType', 'quoteUuid', 'createdAt'])
+            ->get();
+
+        // Extract unique quoteUuid values
+        $apuaQuoteUuids = $apuaHomePlans->pluck('quoteUuid')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        LoggerService::info('Unique APUA Quote UUIDs', ['count' => count($apuaQuoteUuids)]);
+
+        return $apuaQuoteUuids;
+    }
+
+    /**
+     * Export non-PUA authorized home quotes - quotes that have premium_authorized but don't have it updated via PUA process
+     */
+    public function exportnonPUAAuthorized($requestParams = [])
+    {
+        LoggerService::info('exportnonPUAAuthorized started');
+
+        // Create request object for filtering
+        if (! empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
+
+        $homeTeam = $this->getProductByName(quoteTypeCode::Home);
+        $apuaQuoteUuids = $this->getAPUAQuoteUuids($requestParams);
+
+        $nonPUAAuthLead = PersonalQuote::select([
+            'personal_quotes.code as RefID',
+            'personal_quotes.premium_authorized as premiumauthorized',
+            'personal_quotes.payment_status_date as paymentauthdate',
+            DB::raw("'AUTHORIZED' as paymentstatus"),
+            'personal_quotes.source as source',
+            'personal_quotes.id',
+            'personal_quotes.advisor_id',
+            'personal_quotes.quote_status_id',
+        ])
+            ->with([
+                'payments',
+                'advisor:id,email',
+                'advisor.teams:id,name,parent_team_id',
+                'quoteStatus:id,text',
+                'homeQuote.lookupPossessionType:id,text',
+                'homeQuote.lookupAccommodationType:id,text',
+            ])
+            ->whereHas('advisor')
+            ->whereHas('advisor.teams', function ($query) use ($homeTeam) {
+                $query->where('teams.parent_team_id', '=', $homeTeam->id);
+            })
+            ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
+            ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('personal_quotes.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('personal_quotes.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            // Non-PUA: Exclude quotes that have APUA plans (inverse of PUA logic)
+            ->whereNotIn('personal_quotes.uuid', $apuaQuoteUuids)
+            ->when($request->filled('authorize_date'), function ($query) use ($request) {
+                $authorizeDate = $request->input('authorize_date');
+                if ($authorizeDate) {
+                    $query->whereHas('payments', function ($paymentQuery) use ($authorizeDate) {
+                        $paymentQuery->whereDate('authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                    });
+                }
+            })
+            ->orderBy('personal_quotes.paid_at', 'desc');
+
+        LoggerService::sql('Home Non-PUA Authorized Leads', $nonPUAAuthLead);
+
+        $nonPUAAuthLead = $nonPUAAuthLead->get();
+
+        $nonPUAAuthTeamCount = collect($nonPUAAuthLead)
+            ->groupBy(function ($quote) use ($homeTeam) {
+                // Check if advisor and teams exist
+                if ($quote->advisor && $quote->advisor->teams && $quote->advisor->teams->count() > 0) {
+                    // Find team belonging to home team
+                    $homeTeamName = $quote->advisor->teams
+                        ->where('parent_team_id', $homeTeam->id)
+                        ->first()
+                        ?->name;
+
+                    return $homeTeamName ?: 'Unknown Team';
+                }
+
+                return 'Unknown Team';
+            })
+            ->map(function ($group, $teamName) {
+                return (object) [
+                    'Team' => $teamName,
+                    'Total' => $group->count(),
+                ];
+            })
+            ->values();
+
+        return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
+    }
+
+    /**
+     * Export PUA authorized home quotes - quotes where premium was updated/authorized through PUA process
+     */
+    public function exportPUAAuthorized($requestParams = [])
+    {
+        LoggerService::info('exportPUAAuthorized started');
+
+        // Create request object for filtering
+        if (! empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
+
+        $homeTeam = $this->getProductByName(quoteTypeCode::Home);
+        $apuaQuoteUuids = $this->getAPUAQuoteUuids($requestParams);
+
+        $puaAuthUpdate = PersonalQuote::select([
+            'personal_quotes.code as RefID',
+            'personal_quotes.premium_authorized as premiumauthorized',
+            'personal_quotes.payment_status_date as paymentauthdate',
+            DB::raw("'AUTHORIZED' as paymentstatus"),
+            'personal_quotes.source as source',
+            'personal_quotes.id',
+            'personal_quotes.advisor_id',
+            'personal_quotes.quote_status_id',
+        ])
+            ->with([
+                'payments',
+                'advisor:id,email',
+                'advisor.teams:id,name,parent_team_id',
+                'quoteStatus:id,text',
+                'homeQuote.lookupPossessionType:id,text',
+                'homeQuote.lookupAccommodationType:id,text',
+            ])
+            ->whereHas('advisor')
+            ->whereHas('advisor.teams', function ($query) use ($homeTeam) {
+                $query->where('teams.parent_team_id', '=', $homeTeam->id);
+            })
+            ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
+            ->where('personal_quotes.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->where('personal_quotes.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+            ->where('personal_quotes.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
+
+            // Filter by quotes that have APUA plans
+            ->whereIn('personal_quotes.uuid', $apuaQuoteUuids)
+            ->when($request->filled('authorize_date'), function ($query) use ($request) {
+                $authorizeDate = $request->input('authorize_date');
+                if ($authorizeDate) {
+                    $query->whereHas('payments', function ($paymentQuery) use ($authorizeDate) {
+                        $paymentQuery->whereDate('authorized_at', Carbon::parse($authorizeDate)->toDateString());
+                    });
+                }
+            })
+            ->orderBy('personal_quotes.paid_at', 'desc');
+        LoggerService::sql('Home PUA Authorized Leads', $puaAuthUpdate);
+        $puaAuthUpdate = $puaAuthUpdate->get();
+
+        $puaAuthTeamUpdate = collect($puaAuthUpdate)
+            ->groupBy(function ($quote) use ($homeTeam) {
+                // Check if advisor and teams exist
+                if ($quote->advisor && $quote->advisor->teams && $quote->advisor->teams->count() > 0) {
+                    // Find team belonging to home team
+                    $homeTeamName = $quote->advisor->teams
+                        ->where('parent_team_id', $homeTeam->id)
+                        ->first()
+                        ?->name;
+
+                    if (empty($homeTeamName)) {
+                        LoggerService::warning('Unknown team found', ['advisor' => $quote->advisor->toArray()]);
+                    }
+
+                    return $homeTeamName ?: 'Unknown Team';
+
+                }
+
+                return 'Unknown Team';
+            })
+            ->map(function ($group, $teamName) {
+                return (object) [
+                    'Team' => $teamName,
+                    'Total' => $group->count(),
+                ];
+            })
+            ->values();
+
+        return [$puaAuthUpdate, $puaAuthTeamUpdate];
+    }
+
+    /**
+     * Export PUA updates for home quotes - recent premium updates (yesterday's data)
+     */
+    public function exportPUAUpdates($requestParams = [])
+    {
+        LoggerService::info('exportPUAUpdates started');
+
+        // Create request object for filtering
+        if (! empty($requestParams)) {
+            $request = new \Illuminate\Http\Request($requestParams);
+        } else {
+            $request = request();
+        }
+
+        $apuaQuoteUuids = $this->getAPUAQuoteUuids($request);
+
+        $startDate = Carbon::now()->subDay()->startOfDay();
+        $endDate = Carbon::now()->subDay()->endOfDay();
+
+        $puaUpdatesQuery = PersonalQuote::select([
+            'personal_quotes.code as RefID',
+            'personal_quotes.premium_authorized as premiumauthorized',
+            'personal_quotes.premium_captured as premiumcaptured',
+            'personal_quotes.payment_status_date as paymentauthdate',
+            DB::raw("'AUTHORIZED' as paymentstatus"),
+            'personal_quotes.source as source',
+            'personal_quotes.uuid',
+            'personal_quotes.first_name',
+            'personal_quotes.last_name',
+            'personal_quotes.mobile_no',
+            'personal_quotes.email',
+            'personal_quotes.premium',
+            'personal_quotes.id',
+            'personal_quotes.quote_status_id',
+            'personal_quotes.payment_status_id',
+            'personal_quotes.insurance_provider_id',
+            'personal_quotes.plan_id',
+        ])
+            ->with([
+                'payments',
+                'paymentStatus:id,text',
+                'quoteStatus:id,text',
+                'insuranceProvider:id,text',
+                'insuranceProviderPlan:id,text,sub_type_id',
+                'insuranceProviderPlan.subType:id,text',
+                'homeQuote.lookupPossessionType:id,text',
+                'homeQuote.lookupAccommodationType:id,text',
+            ])
+            ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
+            // Filter by quotes that have APUA plans
+            ->whereIn('personal_quotes.uuid', $apuaQuoteUuids)
+            ->whereBetween('personal_quotes.payment_status_date', [$startDate, $endDate])
+            ->whereIn('personal_quotes.payment_status_id', [
+                PaymentStatusEnum::CREDIT_APPROVED,
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::PARTIALLY_PAID,
+            ])
+            ->when($request->filled('captured_date'), function ($query) use ($request) {
+                $capturedDate = $request->input('captured_date');
+                if ($capturedDate) {
+                    $query->whereHas('payments', function ($paymentQuery) use ($capturedDate) {
+                        $paymentQuery->whereDate('captured_at', Carbon::parse($capturedDate)->toDateString());
+                    });
+                }
+            })
+            ->orderBy('personal_quotes.payment_status_date', 'desc');
+
+        LoggerService::sql('Home PUA Updates Query', $puaUpdatesQuery);
+
+        return $puaUpdatesQuery;
     }
 }

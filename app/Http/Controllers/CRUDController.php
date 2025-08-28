@@ -14,6 +14,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -433,6 +434,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         }
 
@@ -1236,6 +1238,7 @@ class CRUDController extends Controller
                 'paymentDocument' => $paymentDocument,
                 'paymentGatewayEnum' => $paymentGatewayEnum,
                 'isFuncsEnabled' => $isFuncsEnabled,
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         } else {
             return view('shared.show', compact([
@@ -1310,6 +1313,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
+                'branchOptions' => EmirateEnum::getBranchMapping(),
             ]);
         }
 
