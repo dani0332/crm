@@ -55,3 +55,14 @@ export const statusSubmit = async (quoteType, data) => {
     throw error;
   });
 }
+
+export const toggleHardStop = async (status, userId) => {
+  await axios.post(
+    '/travel-lead-allocation/update-hard-stop', {
+      userId: userId,
+      status: status,
+    })
+    .catch((error) => {
+      throw error;
+    });
+}

@@ -41,7 +41,6 @@ class TravelLeadAllocationDashboardService extends BaseService
                 ->select(
                     'users.id as userId',
                     'users.name as userName',
-                    'la.is_hardstop as isHardStop',
                     DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
                     DB::RAW("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
                     'la.max_capacity as maxCapacity',
@@ -56,6 +55,7 @@ class TravelLeadAllocationDashboardService extends BaseService
                     'la.buy_lead_status as BLStatus',
                     'la.normal_allocation_enabled as normalAllocationEnabled',
                     'la.buy_lead_reset_capacity as blResetCap',
+                    'la.is_hardstop as isHardStop',
                 )
                 ->distinct('users.id');
 

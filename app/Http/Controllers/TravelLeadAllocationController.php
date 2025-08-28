@@ -6,11 +6,11 @@ use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\UpdateLeadAllocationRequest;
 use App\Models\LeadAllocation;
+use App\Services\Logger\LoggerService;
 use App\Services\TravelLeadAllocationDashboardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 
 class TravelLeadAllocationController extends Controller
 {
@@ -65,7 +65,7 @@ class TravelLeadAllocationController extends Controller
                 ->first();
 
             if (! $leadAllocation) {
-                Log::error('Lead allocation record not found for user', [
+                LoggerService::error('Lead allocation record not found for user', [
                     'user_id' => $validated['userId'],
                 ]);
 
@@ -76,7 +76,7 @@ class TravelLeadAllocationController extends Controller
 
             $leadAllocation->update(['is_hardstop' => $validated['status']]);
 
-            Log::info('Successfully updated is_hardstop status', [
+            LoggerService::info('Successfully updated is_hardstop status', [
                 'user_id' => $validated['userId'],
                 'status' => $validated['status'],
             ]);
@@ -85,7 +85,7 @@ class TravelLeadAllocationController extends Controller
                 'message' => 'Hard stop status updated successfully.',
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Failed to update is_hardstop status', [
+            LoggerService::error('Failed to update is_hardstop status', [
                 'user_id' => $request->input('userId'),
                 'status' => $request->input('status'),
                 'error' => $e->getMessage(),

@@ -4,6 +4,7 @@ import {
   toggleResetCap,
   toggleBlStatus,
   toggleBLResetCap,
+  toggleHardStop,
   statusSubmit
 } from '../../Services/LeadAllocation/Travel';
 
@@ -45,17 +46,25 @@ const { resume, pause } = useTimeoutPoll(fetchData, 90000);
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
+const statusModal = getStatusModal();
 const rolesEnum = page.props.rolesEnum;
 const notification = useToast();
 const loading = ref(false);
 const autoRefresh = ref(false);
-
-const canManage = computed(
-  () =>
-    !loading.value &&
-    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]),
-);
-
+const leadData = ref([
+  {
+    id: 0,
+    userId: 0,
+    cap: 0,
+    BlMaxcap: 0,
+    BlCapEdit: false,
+    BlAllocationStatus: false,
+    capEdit: false,
+    status: '1',
+    loading: false,
+    reset: false,
+  },
+]);
 const tableHeader = ref([
   { text: 'Name', value: 'userName', sortable: true },
   { text: 'Team', value: 'team', sortable: true},
@@ -64,34 +73,25 @@ const tableHeader = ref([
   { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
-  {
-    text: 'Norm Allo.',
-    value: 'normalAllocationEnabled',
-    sortable: true,
-    width: '100',
-  },
+  { text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true, width: '100' },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
-  {
-    text: 'BL Cap Limit',
-    value: 'BLMaxCapacity',
-    sortable: true,
-    width: '100',
-  },
+  { text: 'BL Cap Limit', value: 'BLMaxCapacity', sortable: true, width: '100' },
   { text: 'BL Status', value: 'BLStatus', sortable: true, width: '100' },
-  {
-    text: 'BL Assigned',
-    value: 'BLAllocationCount',
-    sortable: true,
-    width: '100',
+  { text: 'BL Assigned', value: 'BLAllocationCount', sortable: true, width: '100',
     tooltip:
       'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
   },
   { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
+  { text: 'Hard Stop', 'value': 'isHardStop', sortable: true},
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
+const canManage = computed(
+  () =>
+    !loading.value &&
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]),
+);
 
-const statusModal = getStatusModal();
 
 const filters = reactive({
   userBLStatus: null
@@ -104,6 +104,7 @@ const loaders = reactive({
   reset: false,
 });
 
+// functions
 async function fetchData() {
   await router.reload({
     replace: true,
@@ -111,7 +112,6 @@ async function fetchData() {
     preserveState: true,
   });
 }
-
 
 const onReset = () => {
   router.visit('travel-lead-allocation', {
@@ -135,22 +135,6 @@ const onSubmit = isValid => {
     });
   }
 };
-
-
-const leadData = ref([
-  {
-    id: 0,
-    userId: 0,
-    cap: 0,
-    BlMaxcap: 0,
-    BlCapEdit: false,
-    BlAllocationStatus: false,
-    capEdit: false,
-    status: '1',
-    loading: false,
-    reset: false,
-  },
-]);
 
 const onToggleStatus = (status, id, userId) => {
   statusModal.data = reactive({
@@ -246,10 +230,26 @@ const onToggleBLResetCap = async (active, userId, laId) => {
   }
 };
 
+const onToggleHardStop = async (status, userId) => {
+  loaders.table = true;
+
+  try {
+    await toggleHardStop(status, userId);
+  } catch (error) {
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong!',
+      position: 'top',
+    })
+  } finally {
+    loaders.table = false;
+  }
+};
+
 const onStatusSubmit = async () => {
   statusModal.loader = true;
-  item.loading = true;
   const item = leadData.value.find(item => item.id === statusModal.data.id);
+  item.loading = true;
 
   try {
     await statusSubmit(page.props.quoteType, [
@@ -512,6 +512,16 @@ onMounted(() => {
             :is-active="BLStatus"
             :id="id"
             @toggle="onToggleBlStatus($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template #item-isHardStop="{ isHardStop, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="isHardStop"
+            :id="id"
+            @toggle="onToggleHardStop($event.active, userId)"
           />
         </div>
       </template>
