@@ -10,6 +10,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -267,6 +268,14 @@ class AMLController extends Controller
             ]);
 
             $lookups = array_merge($lookups->toArray(), $additionalLookups->toArray());
+
+            if ($quoteRequest?->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+                $rtaTransactionType = array_filter($lookups['rta_transaction_type'], function ($item) {
+                    return in_array($item['code'], app(LivaInsurancePayloadMapping::class)->renewalRtaTransactionType());
+                });
+
+                $lookups['rta_transaction_type'] = array_values($rtaTransactionType);
+            }
         }
 
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);

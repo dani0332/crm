@@ -208,4 +208,9 @@ class LivaInsurancePayloadMapping
             default => null
         };
     }
+
+    public function renewalRtaTransactionType(): array
+    {
+        return ['40', '50'];
+    }
 }
