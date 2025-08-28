@@ -121,7 +121,7 @@ class QuoteAllocation extends Command
             ->eligibleForAllocation(QuoteTypes::CAR)
             ->take($chunkSize);
 
-        LoggerService::info(self::class.': Fetching car leads', extra: ['query' => $leads->toRawSql()]);
+        $leads->logRawSql();
 
         // Get the teamId once before the loop
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -174,7 +174,7 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
-        LoggerService::info(self::class.': Fetching health leads', extra: ['query' => $leads->toRawSql()]);
+        $leads->logRawSql();
 
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
@@ -207,7 +207,7 @@ class QuoteAllocation extends Command
             ->eligibleForAllocation(QuoteTypes::TRAVEL)
             ->take($chunkSize);
 
-        LoggerService::info(self::class.': Fetching travel leads', extra: ['query' => $leads->toRawSql()]);
+        $leads->logRawSql();
 
         // Get the teamId once before the loop
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -273,7 +273,7 @@ class QuoteAllocation extends Command
             ->where('quote_type_id', QuoteTypeId::Bike)
             ->take($chunkSize);
 
-        LoggerService::info(self::class.': Fetching bike leads', extra: ['query' => $leads->toRawSql()]);
+        $leads->logRawSql();
 
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
@@ -308,6 +308,8 @@ class QuoteAllocation extends Command
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->take($chunkSize);
+
+        $leads->logRawSql();
 
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
