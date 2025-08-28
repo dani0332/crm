@@ -231,30 +231,30 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         // Claims Management Routes
-        Route::get('/claims', [ClaimsController::class, 'index'])->name('claims.index');
+        Route::get('/claim', [ClaimsController::class, 'index'])->name('claims.index');
         Route::get('/claim/create', [ClaimsController::class, 'create'])->name('claims.create');
         Route::post('/claim', [ClaimsController::class, 'store'])->name('claims.store');
         Route::get('/claim/{uuid}', [ClaimsController::class, 'show'])->name('claims.show');
         Route::get('/claim/{uuid}/edit', [ClaimsController::class, 'edit'])->name('claims.edit');
         Route::put('/claim/{uuid}', [ClaimsController::class, 'update'])->name('claims.update');
         Route::post('claim/search-policies', [ClaimsController::class, 'searchPolicies'])->name('claims.search-policies');
-        Route::post('claim/update-details/{uuid}', [ClaimsController::class, 'updateClaimDetails'])->name('claims.update.details');
-        Route::post('claim/update-statuses/{uuid}', [ClaimsController::class, 'updateClaimStatuses'])->name('claims.update.status');
-        Route::post('claims/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
-        Route::post('claims/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
+        Route::post('claim/{uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('claims.update.details');
+        Route::post('claim/{uuid}/update-statuses', [ClaimsController::class, 'updateClaimStatuses'])->name('claims.update.status');
+        Route::post('claim/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('claims.optimize-message');
+        Route::post('claim/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('claims.send-notification');
 
         // Claim Document Routes
-        Route::post('claims/{claim:uuid}/documents', [ClaimsController::class, 'storeDocument'])->name('claims.documents.store');
-        Route::delete('claims/{claim:uuid}/documents/{document}', [ClaimsController::class, 'destroyDocument'])->name('claims.documents.destroy');
-        Route::post('claims/documents/get-s3-temp-url', [ClaimsController::class, 'getS3TempUrl'])->name('claims.documents.get-s3-temp-url');
-        Route::get('claims/{claim:uuid}/documents/download-all', [ClaimsController::class, 'downloadAllDocuments'])->name('claims.documents.download-all');
-        Route::get('claims/{claim:uuid}/lead-history', [ClaimsController::class, 'getClaimLeadHistory'])->name('claims.lead-history');
-        Route::get('claims/{claim:uuid}/sub-status-logs', [ClaimsController::class, 'getClaimSubStatusLogs'])->name('claims.sub-status-logs');
-        Route::post('claims/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('claims.update.complaint-status');
-        Route::post('claims/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('claims.update.next-follow-up');
-        Route::get('claims/{claim:uuid}/complaint-status-logs', [ClaimsController::class, 'getComplaintStatusLogs'])->name('claims.complaint-status-logs');
-        Route::get('claims/{claim:uuid}/next-follow-up-logs', [ClaimsController::class, 'getNextFollowUpLogs'])->name('claims.next-follow-up-logs');
-        Route::post('claims/{claim:uuid}/make-additional-contact-primary', [ClaimsController::class, 'makeAdditionalContactPrimary'])->name('claims.make-additional-contact-primary');
+        Route::post('claim/{claim:uuid}/documents', [ClaimsController::class, 'storeDocument'])->name('claims.documents.store');
+        Route::delete('claim/{claim:uuid}/documents/{document}', [ClaimsController::class, 'destroyDocument'])->name('claims.documents.destroy');
+        Route::post('claim/documents/get-s3-temp-url', [ClaimsController::class, 'getS3TempUrl'])->name('claims.documents.get-s3-temp-url');
+        Route::get('claim/{claim:uuid}/documents/download-all', [ClaimsController::class, 'downloadAllDocuments'])->name('claims.documents.download-all');
+        Route::get('claim/{claim:uuid}/lead-history', [ClaimsController::class, 'getClaimLeadHistory'])->name('claims.lead-history');
+        Route::get('claim/{claim:uuid}/sub-status-logs', [ClaimsController::class, 'getClaimSubStatusLogs'])->name('claims.sub-status-logs');
+        Route::post('claim/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('claims.update.complaint-status');
+        Route::post('claim/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('claims.update.next-follow-up');
+        Route::get('claim/{claim:uuid}/complaint-status-logs', [ClaimsController::class, 'getComplaintStatusLogs'])->name('claims.complaint-status-logs');
+        Route::get('claim/{claim:uuid}/next-follow-up-logs', [ClaimsController::class, 'getNextFollowUpLogs'])->name('claims.next-follow-up-logs');
+        Route::post('claim/{claim:uuid}/make-additional-contact-primary', [ClaimsController::class, 'makeAdditionalContactPrimary'])->name('claims.make-additional-contact-primary');
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));

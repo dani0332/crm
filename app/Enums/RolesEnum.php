@@ -104,4 +104,6 @@ final class RolesEnum extends Enum
     public const BusinessIntelligenceUnit = 'BUSINESS_INTELLIGENCE_UNIT';
     public const CLIENTSUPPORT = 'OE_AE_CLIENT_SUPPORT';
     public const CLIENTSUPPORTLEAD = 'OE_AE_CLIENT_SUPPORT_LEAD';
+    public const CLAIM_MANAGER = 'CLAIM_MANAGER';
+    public const CLAIM_LEAD = 'CLAIM_LEAD';
 }

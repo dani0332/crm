@@ -41,7 +41,6 @@ const updateClaimStatus = isValid => {
       router.visit(route('claims.show', props.claim?.uuid), {
         preserveScroll: true,
       });
-      emit('update', response);
     },
     onError: errors => {
       Object.keys(errors).forEach(function (key) {

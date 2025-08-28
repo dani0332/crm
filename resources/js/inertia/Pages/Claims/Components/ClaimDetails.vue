@@ -8,7 +8,7 @@ const props = defineProps({
   },
 });
 
-import { formattedDateDmyWithTime } from '@/inertia/Composables/utilities.js';  
+import { formattedDateDmyWithTime, formattedDateYmd } from '@/inertia/Composables/utilities.js';  
 
 const page = usePage();
 const claimsEnum = page.props.claimsEnum;
@@ -383,7 +383,7 @@ const prepareFormData = data => {
       ? data.claim_decline_reason.trim()
       : null,
     // Format incident date
-    incident_date: data.incident_date ? data.incident_date.split('T')[0] : null,
+    incident_date: data.incident_date ? formattedDateYmd(data.incident_date) : null,
   };
 };
 
@@ -409,8 +409,10 @@ const updateClaim = isValid => {
     .post(route('claims.update.details', props.claim?.uuid), {
       preserveScroll: true,
       onSuccess: response => {
-        console.log('response', response);
-        emit('update', response);
+        console.log('response', response); 
+        router.visit(route('claims.show', props.claim?.uuid), {
+          preserveScroll: true,
+        });
       },
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
@@ -676,6 +678,7 @@ watch(
                     :clearable="false"
                     type="date"
                     max-date="today"
+                    :utc="true"
                     :rules="[validationRules.incidentDate]"
                   />
                 </dd>

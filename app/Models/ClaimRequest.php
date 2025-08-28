@@ -65,6 +65,7 @@ class ClaimRequest extends Model implements AuditableContract
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+ 
 
     // Filterable fields for search functionality
     public $filterables = [

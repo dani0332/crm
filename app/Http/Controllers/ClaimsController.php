@@ -106,8 +106,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.index')
-                ->with('error', 'Failed to load create form.');
+            return redirect()->route('claims.index')->with('error', 'Failed to load create form.');
         }
     }
 
@@ -139,10 +138,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to search policies.',
-            ], 500);
+            return response()->json(['success' => false,'message' => 'Failed to search policies.'], 500);
         }
     }
 
@@ -166,9 +162,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->back()
-                ->withInput()
-                ->withErrors($e->getMessage());
+            return redirect()->back()->withInput()->withErrors($e->getMessage());
         }
     }
 
@@ -190,8 +184,7 @@ class ClaimsController extends Controller
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $customerAdditionalContacts = $this->customerService->getAdditionalContacts($claimRequest->customer_id, $claimRequest->mobile_no);
 
-            $documents = $claimRequest->documents->load('createdBy:id,name');
-            // dd($documents->toArray());
+            $documents = $claimRequest->documents->load('createdBy:id,name'); 
 
             return Inertia::render('Claims/Show', [
                 'claim' => $claimRequest,
@@ -212,8 +205,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.index')
-                ->with('error', 'Failed to load claim details.');
+            return redirect()->route('claims.index')->with('error', $e->getMessage());
         }
     }
 
@@ -240,7 +232,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->route('claims.show', $uuid)->with('error', 'Failed to load edit form.');
+            return redirect()->route('claims.show', $uuid)->with('error', $e->getMessage());
         }
     }
 
@@ -252,8 +244,7 @@ class ClaimsController extends Controller
         try {
             $updatedClaimRequest = $this->claimsService->updateClaim($uuid, $request->validated());
 
-            return redirect()->route('claims.show', $updatedClaimRequest->uuid)
-                ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
+            return redirect()->route('claims.show', $updatedClaimRequest->uuid)->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim request - Claim UUID: '.$uuid, extra: [
@@ -263,9 +254,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->back()
-                ->withInput()
-                ->withErrors($e->getMessage());
+            return redirect()->back()->withInput()->withErrors($e->getMessage());
         }
     }
 
@@ -277,8 +266,7 @@ class ClaimsController extends Controller
 
             $updatedClaimRequest = $this->claimsService->updateClaimDetails($uuid, $validatedData);
 
-            return redirect()->route('claims.show', $updatedClaimRequest->uuid)
-                ->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
+            return redirect()->back()->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim details - Claim UUID: '.$uuid, extra: [
@@ -288,9 +276,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return redirect()->back()
-                ->withInput()
-                ->withErrors($e->getMessage());
+            return redirect()->back()->withInput()->withErrors($e->getMessage());
         }
     }
 
@@ -344,10 +330,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to optimize message.',
-            ], 500);
+            return response()->json(['status' => false,'message' => 'Failed to optimize message.'], 500);
         }
     }
 
@@ -359,10 +342,7 @@ class ClaimsController extends Controller
         try {
             $this->claimsService->sendNotification($claim, $request->safe());
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Notification sent successfully.',
-            ]);
+            return response()->json(['success' => true,'message' => 'Notification sent successfully.']);
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Error sending notification', extra: [
                 'error' => $e->getMessage(),
@@ -370,10 +350,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to send notification.',
-            ], 500);
+            return response()->json([ 'success' => false, 'message' => 'Failed to send notification.', ], 500);
         }
     }
 
@@ -384,10 +361,7 @@ class ClaimsController extends Controller
     {
         try {
             $files = $request->file('files', []);
-            $documentData = [
-                'document_type_code' => $request->document_type_code,
-                'folder_path' => $request->folder_path ?? 'claims',
-            ];
+            $documentData = ['document_type_code' => $request->document_type_code,'folder_path' => $request->folder_path ?? 'claims'];
 
             // Use the enhanced service method
             $result = $this->claimsService->uploadClaimDocuments($claim, $files, $documentData);
@@ -437,10 +411,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'An unexpected error occurred during document upload.',
-            ], 500);
+            return response()->json(['success' => false,'message' => 'An unexpected error occurred during document upload.'], 500);
         }
     }
 
@@ -462,26 +433,17 @@ class ClaimsController extends Controller
                     'user_id' => Auth::id(),
                 ]);
 
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Document not found for this claim.',
-                ], 404);
+                return response()->json(['success' => false,'message' => 'Document not found for this claim.'], 404);
             }
 
             // Use service method with business logic validation
             $deleted = $this->claimsService->deleteClaimDocument($claim, $document->id);
 
             if (! $deleted) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Document could not be deleted. It may be required for claim processing or the claim is in a finalized state.',
-                ], 422);
+                return response()->json(['success' => false,'message' => 'Document could not be deleted. It may be required for claim processing or the claim is in a finalized state.',], 422);
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Document deleted successfully.',
-            ]);
+            return response()->json([  'success' => true, 'message' => 'Document deleted successfully.',]);
 
         } catch (Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Unexpected error deleting document', extra: [
@@ -491,10 +453,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'An unexpected error occurred while deleting the document.',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'An unexpected error occurred while deleting the document.'], 500);
         }
     }
 
@@ -518,10 +477,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to access document.',
-            ], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to access document.'], 500);
         }
     }
 
@@ -550,10 +506,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'error' => 'An unexpected error occurred while downloading documents.',
-            ], 500);
+            return response()->json(['success' => false, 'error' => 'An unexpected error occurred while downloading documents.'], 500);
         }
     }
 
@@ -575,10 +528,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load claim lead history.',
-            ], 500);
+            return response()->json(['success' => false,'message' => 'Failed to load claim lead history.'], 500);
         }
     }
 
@@ -600,10 +550,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load claim sub-status logs.',
-            ], 500);
+            return response()->json(['success' => false,'message' => 'Failed to load claim sub-status logs.'], 500);
         }
     }
 
@@ -701,10 +648,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load complaint status logs.',
-            ], 500);
+            return response()->json(['success' => false,'message' => 'Failed to load complaint status logs.'], 500);
         }
     }
 
@@ -731,12 +675,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            dd($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load next follow-up logs.',
-            ], 500);
+            return response()->json(['success' => false,'message' => 'Failed to load next follow-up logs.'], 500);
         }
     }
 

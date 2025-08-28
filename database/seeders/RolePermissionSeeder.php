@@ -311,7 +311,17 @@ class RolePermissionSeeder extends Seeder
 
     private function addClaimsPermissions(): void
     {
-        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+        $roleClaimsManager = Role::firstOrCreate([
+            'name' => RolesEnum::CLAIM_MANAGER,
+            'guard_name' => 'web',
+        ]);
+
+        $roleClaimsLead = Role::firstOrCreate([
+            'name' => RolesEnum::CLAIM_LEAD,
+            'guard_name' => 'web',
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::CLAIM_LEAD])->get();
 
         $claimsPermissions = PermissionsEnum::getClaimsPermissions();
 

@@ -47,6 +47,10 @@ enum ClaimsEnum: string
     case CLAIM_STATUS_OPEN = 'Open';
     case CLAIM_STATUS_CLOSED = 'Close';
 
+    // Complaint Status Codes
+    case CLAIM_STATUS_OPEN_COMPLAINT = 'Complaint Open';
+    case CLAIM_STATUS_CLOSED_COMPLAINT = 'Complaint Closed';
+
     // General Claim Sub Statuses
     case CLAIM_SUB_STATUS_NEW_CLAIM = 'New claim';
     case CLAIM_SUB_STATUS_CLAIM_INITIATED = 'Claim initiated';

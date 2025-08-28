@@ -33,9 +33,9 @@ const claimForm = useForm({
   model_year: props.claim?.claim_request_details?.model_year || '',
 
   // Financial fields (visible when editing)
-  approved_repair_amount: props.claim?.approved_repair_amount || '',
-  approved_total_loss_amount: props.claim?.approved_total_loss_amount || '',
-  approved_cash_loss_amount: props.claim?.approved_cash_loss_amount || '',
+  approved_repair_amount: props.claim?.approved_repair_amount || null,
+  approved_total_loss_amount: props.claim?.approved_total_loss_amount || null,
+  approved_cash_loss_amount: props.claim?.approved_cash_loss_amount || null,
 
   // Claim denial reason (visible when editing)
   claim_decline_reason: props.claim?.claim_decline_reason || '',
@@ -477,6 +477,69 @@ function onSubmit(isValid) {
     });
   }
 }
+
+// Reactive refs for approved amounts - initialize with actual values including 0
+const approvedRepairAmount = ref(props.claim?.approved_repair_amount ?? null);
+const approvedTotalLossAmount = ref(props.claim?.approved_total_loss_amount ?? null);
+const approvedCashLossAmount = ref(props.claim?.approved_cash_loss_amount ?? null);
+
+// Helper function to check if a value is considered "filled" (not null, undefined, empty string, or 0)
+const hasValue = (value) => {
+  return value !== null && value !== undefined && value !== '' && value !== 0;
+};
+
+// Computed properties for disabling fields based on whether other fields have values
+const disableApprovedRepairAmount = computed(() => {
+  return hasValue(approvedTotalLossAmount.value) || hasValue(approvedCashLossAmount.value);
+});
+
+const disableApprovedTotalLossAmount = computed(() => {
+  return hasValue(approvedRepairAmount.value) || hasValue(approvedCashLossAmount.value);
+});
+
+const disableApprovedCashLossAmount = computed(() => {
+  return hasValue(approvedRepairAmount.value) || hasValue(approvedTotalLossAmount.value);
+});
+
+// Watch for changes and sync with form - only clear other fields when a value is entered
+watch(approvedRepairAmount, (newValue, oldValue) => {
+  // Always sync with form
+  claimForm.approved_repair_amount = newValue;
+
+  // Only clear other fields when entering a new value (not when clearing)
+  if (hasValue(newValue) && !hasValue(oldValue)) {
+    approvedTotalLossAmount.value = null;
+    approvedCashLossAmount.value = null;
+    claimForm.approved_total_loss_amount = null;
+    claimForm.approved_cash_loss_amount = null;
+  }
+});
+
+watch(approvedTotalLossAmount, (newValue, oldValue) => {
+  // Always sync with form
+  claimForm.approved_total_loss_amount = newValue;
+
+  // Only clear other fields when entering a new value (not when clearing)
+  if (hasValue(newValue) && !hasValue(oldValue)) {
+    approvedRepairAmount.value = null;
+    approvedCashLossAmount.value = null;
+    claimForm.approved_repair_amount = null;
+    claimForm.approved_cash_loss_amount = null;
+  }
+});
+
+watch(approvedCashLossAmount, (newValue, oldValue) => {
+  // Always sync with form
+  claimForm.approved_cash_loss_amount = newValue;
+
+  // Only clear other fields when entering a new value (not when clearing)
+  if (hasValue(newValue) && !hasValue(oldValue)) {
+    approvedRepairAmount.value = null;
+    approvedTotalLossAmount.value = null;
+    claimForm.approved_repair_amount = null;
+    claimForm.approved_total_loss_amount = null;
+  }
+});
 </script>
 
 <template>
@@ -688,31 +751,34 @@ function onSubmit(isValid) {
           </template>
           <template v-if="isEdit">
             <x-input
-              v-model="claimForm.approved_repair_amount"
+              v-model="approvedRepairAmount"
               type="number"
               step="0.01"
               label="Approved Repair Amount"
               placeholder="Enter Amount"
               class="w-full"
               :error="claimForm.errors.approved_repair_amount"
+              :disabled="disableApprovedRepairAmount"
             />
             <x-input
-              v-model="claimForm.approved_total_loss_amount"
+              v-model="approvedTotalLossAmount"
               type="number"
               step="0.01"
               label="Approved Total Loss Amount"
               placeholder="Enter Amount"
               class="w-full"
               :error="claimForm.errors.approved_total_loss_amount"
+              :disabled="disableApprovedTotalLossAmount"
             />
             <x-input
-              v-model="claimForm.approved_cash_loss_amount"
+              v-model="approvedCashLossAmount"
               type="number"
               step="0.01"
               label="Approved Cash Loss Amount"
               placeholder="Enter Amount"
               class="w-full"
               :error="claimForm.errors.approved_cash_loss_amount"
+              :disabled="disableApprovedCashLossAmount"
             />
           </template>
         </div>
