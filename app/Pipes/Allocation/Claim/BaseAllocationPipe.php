@@ -26,7 +26,7 @@ abstract class BaseAllocationPipe
     public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
     protected AllocationRequest $claimAssignmentRequest;
-    protected ClaimRequest|null $claim = null;
+    protected ClaimRequest|null $lead = null;
 
     protected function setRequest(AllocationRequest $claimAssignmentRequest, bool $startLogging = true)
     {
@@ -41,6 +41,8 @@ abstract class BaseAllocationPipe
         }
     }
 
+
+
     protected function startQuoteLogging()
     {
         LoggerService::startQuoteLogging(
@@ -49,12 +51,12 @@ abstract class BaseAllocationPipe
         );
     }
 
-    protected function setLead(Model $claim)
+    protected function setLead(Model $lead)
     {
-        $this->claim = $claim;
+        $this->lead = $lead;
     }
 
-    protected function resolveClaim()
+    protected function resolveLead()
     {
         $lead = $this->claimAssignmentRequest->model()->where('uuid', $this->claimAssignmentRequest->getQuoteUUID())->first();
 
@@ -121,7 +123,7 @@ abstract class BaseAllocationPipe
             UserStatusEnum::OFFLINE,
         ];
 
-        if (! $this->allocationRequest->isReassignmentJob()) {
+        if (! $this->claimAssignmentRequest->isReassignmentJob()) {
             $statuses[] = UserStatusEnum::UNAVAILABLE;
         }
 
@@ -130,13 +132,13 @@ abstract class BaseAllocationPipe
 
     protected function findAvailableAdvisor($teamId = null)
     {
-        $teamId = $teamId ?? $this->allocationRequest->getTeamId();
+        
 
         $statusOrder = $this->getOnlineStatusesInOrder();
 
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
-            $eligibleUser = $this->getAdvisorByStatus($status, $teamId);
+            $eligibleUser = $this->getAdvisorByStatus($status);
 
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
@@ -148,7 +150,7 @@ abstract class BaseAllocationPipe
         return null;
     }
 
-    protected function getAdvisorByStatus($onlineStatus, $teamId)
+    protected function getAdvisorByStatus($onlineStatus)
     {
         /*
             override this method in child classes to get the advisor by status
@@ -161,7 +163,7 @@ abstract class BaseAllocationPipe
 
     protected function resolveAssignmentType()
     {
-        $assignmentType = $this->allocationRequest->getAssignmentType();
+        $assignmentType = $this->claimAssignmentRequest->getAssignmentType();
 
         if (! empty($this->lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
@@ -172,7 +174,7 @@ abstract class BaseAllocationPipe
 
     protected function assignToAdvisor()
     {
-        $advisor = $this->allocationRequest->getAdvisor();
+        $advisor = $this->claimAssignmentRequest->getAdvisor();
         $assignmentType = $this->resolveAssignmentType();
 
         if (! empty($this->lead->advisor_id)) {
@@ -218,7 +220,7 @@ abstract class BaseAllocationPipe
             ] = $this->assignToAdvisor();
 
          
-            $this->allocationRequest->markAsAllocated();
+            $this->claimAssignmentRequest->markAsAllocated();
 
             DB::commit();
 
@@ -230,7 +232,7 @@ abstract class BaseAllocationPipe
 
             LoggerService::error($e->getMessage(), exception: $e);
 
-            $this->allocationRequest->markAsFailed();
+            $this->claimAssignmentRequest->markAsFailed();
             $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
         }
     }
@@ -246,39 +248,12 @@ abstract class BaseAllocationPipe
         if ($advisor->id == $this->lead->advisor_id) {
             LoggerService::info('Advisor is same as previous advisor. Skipping for now.');
 
-            $this->allocationRequest->markAsSameAdvisor();
+            $this->claimAssignmentRequest->markAsSameAdvisor();
 
             $this->throw('Eligible Advisor is already assigned to this lead', self::OK);
         }
 
     }
 
-    public function resolveExcludedAdvisorIds()
-    {
-        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->allocationRequest->getQuoteType());
-
-        if (empty($excludedAdvisorIds)) {
-            return;
-        }
-
-        $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
-    }
-
-    protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
-    {
-        // Get the lead source users from the first matched rule record.
-        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
-
-        // Check if the lead source users contain a comma (,) indicating multiple users.
-        if (str_contains($leadSourceUsers, ',')) {
-            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
-            $userIds = array_map('intval', explode(',', $leadSourceUsers));
-        } else {
-            // If there's only one user, cast it to an integer and store it in a single-element array.
-            $userIds = [(int) $leadSourceUsers];
-        }
-
-        // Return the array of user IDs.
-        return $userIds;
-    }
+  
 }

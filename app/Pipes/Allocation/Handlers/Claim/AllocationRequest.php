@@ -20,6 +20,7 @@ class AllocationRequest
         protected QuoteTypes $quoteType,
         protected $quoteUUID,
         protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
+        protected $isReassignmentJob = false,
     ) {
         $this->collection = new Collection;
 
@@ -35,6 +36,11 @@ class AllocationRequest
     {
         return $this->quoteUUID;
     }
+    public function isReassignmentJob()
+    {
+        return $this->isReassignmentJob;
+    }
+
 
     public function getAssignmentType()
     {

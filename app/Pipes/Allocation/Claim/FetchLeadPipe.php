@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Pipes\Allocation\Common;
+namespace App\Pipes\Allocation\Claim;
 
-use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use Closure;
 
 class FetchLeadPipe extends BaseAllocationPipe
