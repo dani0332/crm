@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use Illuminate\Foundation\Http\FormRequest;
@@ -51,7 +52,10 @@ class AMLCheckRequest extends FormRequest
 
         $rules['customer_type'] = 'required|string';
 
-        if ($this->quote_type == QuoteTypes::CAR->value) {
+        if (
+            $this->quote_type == QuoteTypes::CAR->value &&
+            $this->lead_source == LeadSourceEnum::RENEWAL_UPLOAD
+        ) {
             $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
         }
 

@@ -240,6 +240,7 @@ const screeningFormDetails = useForm({
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
   emirate_of_registration_id:
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
+  lead_source: quoteRequest.source,
 });
 const modalHeaderMessage = () => {
   if (
