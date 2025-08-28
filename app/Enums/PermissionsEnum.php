@@ -385,6 +385,7 @@ final class PermissionsEnum extends Enum
     public const UPLOAD_HEALTH_COVERAGES = 'upload-health-coverages';
     public const EXPORT_RM_LEADS = 'export-rm-leads';
     public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const EXPORT_HOME_PUA_UPDATES = 'export-home-pua-updates';
     public const CORPLINE_LEAD_ALLOCATION_DASHBOARD = 'corpline-lead-allocation-dashboard';
     public const CYCLE_LEAD_ALLOCATION_DASHBOARD = 'cycle-lead-allocation-dashboard';
     public const YACHT_LEAD_ALLOCATION_DASHBOARD = 'yacht-lead-allocation-dashboard';

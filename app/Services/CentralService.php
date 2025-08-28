@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -35,6 +37,7 @@ use App\Models\ApplicationStorage;
 use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerMembers;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -66,6 +69,7 @@ use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
 {
@@ -469,6 +473,87 @@ class CentralService extends BaseService
                 'new_method' => $newPaymentMethod,
             ]);
         }
+    }
+
+    public function validateIsPlanSelectable($quoteType, $data): array
+    {
+        return match (ucfirst($quoteType)) {
+            QuoteTypes::TRAVEL->value => $this->validateIsTravelPlanSelectable($quoteType, $data),
+            default => [],
+        };
+    }
+
+    public function validateIsTravelPlanSelectable($quoteType, $data): array
+    {
+        $validator = Validator::make($data, [
+            'quoteId' => 'required',
+            'quoteSource' => 'required',
+            'planType' => 'required',
+            'provider_code' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors()->toArray();
+        }
+
+        $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
+        $isNormalPlan = $data['planType'] == 'normalPlans';
+        $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
+        $isALNCProvider = $data['provider_code'] == InsuranceProvidersEnum::ALNC;
+
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+            $quoteModelObject = $this->getModelObject(strtolower($quoteType));
+            $customerMembers = CustomerMembers::where([
+                'quote_type' => ltrim($quoteModelObject, '\\'),
+                'quote_id' => $data['quoteId'] ?? null,
+                'customer_type' => CustomerTypeEnum::Individual,
+                'deleted_at' => null,
+            ])
+                ->select('id', 'code', 'first_name', 'last_name', 'passport')
+                ->get();
+
+            $errorsMessages = $this->validateCustomerMembersInfo($customerMembers->toArray());
+
+            return $errorsMessages;
+        }
+
+        return [];
+    }
+
+    public function validateCustomerMembersInfo(array $members): array
+    {
+        $validator = Validator::make(
+            ['members' => $members],
+            [
+                'members' => 'required|array|min:1',
+                'members.*.first_name' => 'required',
+                'members.*.last_name' => 'required',
+                'members.*.passport' => 'required',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            $finalErrors = [];
+
+            if ($errors->has('members')) {
+                $finalErrors['members_count'] = ['At least one customer member is required.'];
+            }
+            if ($errors->has('members.*.first_name')) {
+                $finalErrors['first_name'] = ['Please enter first_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.last_name')) {
+                $finalErrors['last_name'] = ['Please enter last_name for all members before selecting a plan.'];
+            }
+            if ($errors->has('members.*.passport')) {
+                $finalErrors['passport'] = ['Please enter passport numbers for all members before selecting a plan.'];
+            }
+
+            return $finalErrors;
+        }
+
+        return [];
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
