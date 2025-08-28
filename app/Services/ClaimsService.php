@@ -224,7 +224,7 @@ class ClaimsService extends BaseService
      * Search active policies by email or policy number
      */
     public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null, int $page = 1)
-    { 
+    {
         $policies = PersonalQuote::query()
             ->select([
                 'personal_quotes.id',
@@ -265,7 +265,6 @@ class ClaimsService extends BaseService
         // Return pagination data structure
         return $policies;
 
-         
     }
 
     /**
@@ -419,7 +418,7 @@ class ClaimsService extends BaseService
      * Update specific claim details (focused method for claim details form)
      */
     public function updateClaimDetails(ClaimRequest $claimRequest, array $data): ClaimRequest
-    { 
+    {
         try {
 
             // Get allowed fields from model fillable arrays (filtered for this specific update method)
@@ -475,7 +474,7 @@ class ClaimsService extends BaseService
                     // Create new detail record if it doesn't exist
                     $detailData['claim_request_id'] = $claimRequest->id;
                     $claimRequestDetail = $claimRequest->claimRequestDetails()->create($detailData);
-                } 
+                }
             }
 
             // Log the overall update
@@ -732,7 +731,7 @@ class ClaimsService extends BaseService
      * Update claim status and sub status
      */
     public function updateClaimStatus($claimRequest, $request): ClaimRequest
-    {  
+    {
         try {
             // Prepare the status update data
             $statusUpdateData['claim_status_id'] = $request->claim_status_id;
@@ -847,7 +846,7 @@ class ClaimsService extends BaseService
                     'user_id' => auth()->id(),
                 ], exception: $e);
             }
-        } 
+        }
 
         return [
             'uploaded_documents' => $uploadedDocuments,
@@ -856,7 +855,6 @@ class ClaimsService extends BaseService
             'error_count' => count($errors),
         ];
     }
- 
 
     /**
      * Delete a claim document with validation
@@ -865,17 +863,17 @@ class ClaimsService extends BaseService
     {
         $document = $claim->documents()->where('id', $documentId)->first();
 
-            if (! $document) {
-                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document not found', extra: [
-                    'claim_uuid' => $claim->uuid,
-                    'document_id' => $documentId,
-                    'user_id' => Auth::id(),
-                ]);
+        if (! $document) {
+            LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document not found', extra: [
+                'claim_uuid' => $claim->uuid,
+                'document_id' => $documentId,
+                'user_id' => Auth::id(),
+            ]);
 
-                return false;
-            }
+            return false;
+        }
 
-            return $document->delete();
+        return $document->delete();
     }
 
     public function updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claimRequest): void
