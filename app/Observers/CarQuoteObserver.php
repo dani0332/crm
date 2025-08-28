@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -15,6 +17,7 @@ use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\EmailServices\CarEmailService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -64,6 +67,10 @@ class CarQuoteObserver
         }
 
         if (isset($dirty['quote_status_id'])) {
+            if ($lead->quote_status_id === QuoteStatusEnum::Quoted && $lead->registration_type === CarRegistrationType::COMPANY && $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+                app(CarEmailService::class)->sendFollowUpEmailForCQF($lead);
+
+            }
             if ($lead->quote_status_id === QuoteStatusEnum::TransactionApproved) {
                 CarQuote::withoutEvents(function () use ($lead) {
                     $lead->update([
@@ -113,13 +120,15 @@ class CarQuoteObserver
                 'lead-status-update-myalfred-we'
             );
 
-            try {
-                EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
-            } catch (Exception $e) {
-                Log::error('CarQuoteObserver - capture embedded products failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $lead->uuid,
-                ]);
+            if ($lead->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
+                try {
+                    EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
+                } catch (Exception $e) {
+                    Log::error('CarQuoteObserver - capture embedded products failed', [
+                        'error' => $e->getMessage(),
+                        'uuid' => $lead->uuid,
+                    ]);
+                }
             }
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }

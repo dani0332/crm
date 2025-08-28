@@ -14,6 +14,7 @@ use App\Models\LeadSource;
 use App\Models\Rule;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
 use Closure;
 use Illuminate\Support\Facades\DB;
 
@@ -36,14 +37,23 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
 
         $this->allocationRequest->set('rules', $rules);
         $this->allocationRequest->set('ruleUsers', $this->getRuleUsers());
+        $this->allocationRequest->set('tierUserIds', $tierUserIds);
 
         return $next($request);
+    }
+
+    private function finalizeTierUsers($tierUserIds, $rules)
+    {
+        $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
+
+        $finalEligibleUserIds = array_intersect($tierUserIds, $ruleUserIds);
+
+        return array_values($finalEligibleUserIds);
     }
 
     private function applyRuleExclusions($rules, $tierUserIds, $lead)
     {
         if ($rules->isEmpty()) {
-
             if ($lead->registration_type == CarRegistrationType::PERSONAL) {
                 $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: true);
             } else {
@@ -53,9 +63,9 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
             LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
             return array_diff($tierUserIds, $ruleUserIds);
+        } else {
+            return $this->finalizeTierUsers($tierUserIds, $rules);
         }
-
-        return $tierUserIds;
     }
 
     private function getRulesForLeadSource($lead)
@@ -173,16 +183,6 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
 
     private function getRuleUsers($excludeVehicleUseRule = true): mixed
     {
-        // Join the RuleLeadSource table with the Rules table where the rule is active (is_active = 1).
-        // Select distinct user IDs associated with these rules and convert the result to an array.
-        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
-            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-            ->where('rules.is_active', 1)
-            ->when($excludeVehicleUseRule, function ($query) {
-                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
-            })
-            ->distinct()
-            ->pluck('rule_users.user_id')
-            ->toArray();
+        return app(RuleService::class)->getRuleUserIds($this->allocationRequest->getQuoteType(), $excludeVehicleUseRule);
     }
 }

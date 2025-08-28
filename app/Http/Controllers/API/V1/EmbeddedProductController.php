@@ -39,4 +39,5 @@ class EmbeddedProductController extends Controller
 
         return apiResponse(null, Response::HTTP_OK, '');
     }
+
 }

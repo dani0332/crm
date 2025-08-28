@@ -18,6 +18,7 @@ const props = defineProps({
   approvedDocumentModel: { type: Object, required: true },
   readOnlyPayments: { type: Object, default: () => ({}) },
   rules: { type: Object, required: true },
+  showInsurerReceiptNumberInputField: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -94,6 +95,27 @@ const deleteDocument = (docName, count, docId) => {
               class="w-full"
               v-model="paymentMethodsForm.collection_amount"
               :rules="[rules.isRequired, rules.amount]"
+            />
+          </x-field>
+        </div>
+      </div>
+      <div class="w-1/2 px-2" v-if="showInsurerReceiptNumberInputField">
+        <div>
+          <x-tooltip class="tooltip-display">
+            <span class="border-b-2 border-dotted border-black text-sm"
+              >INSURER RECEIPT NUMBER <sup class="text-red-500">*</sup></span
+            >
+            <template #tooltip>
+              <span>{{
+                paymentTooltipEnum.PAYMENT_VIEW_INSURER_RECEIPT_NUMBER
+              }}</span>
+            </template>
+          </x-tooltip>
+          <x-field class="w-full">
+            <x-input
+              class="w-full"
+              v-model="paymentMethodsForm.insurer_receipt_number"
+              :rules="[rules.isRequired]"
             />
           </x-field>
         </div>

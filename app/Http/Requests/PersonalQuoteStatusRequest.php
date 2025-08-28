@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -31,6 +33,7 @@ class PersonalQuoteStatusRequest extends FormRequest
         $rules = [
             'quote_status_id' => 'required',
             'notes' => 'nullable',
+            'quote_uuid' => 'required',
         ];
 
         if (! empty($data['quote_status_id'])) {
@@ -55,6 +58,13 @@ class PersonalQuoteStatusRequest extends FormRequest
                 'emirates_id_number' => ($quoteObject?->latestInsured?->id_type == 'emiratesId') ? $quoteObject?->latestInsured?->id_number : ($quoteObject?->customer?->emirates_id_number ?? null),
                 'emirates_id_expiry_date' => $quoteObject?->customer?->emirates_id_expiry_date ?? null,
             ];
+
+            if (request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                $quoteTypeIds = [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Home, QuoteTypeId::Jetski];
+                if (in_array($quoteObject->quote_type_id, $quoteTypeIds) && method_exists($quoteObject, 'hasInsurerPaymentLink') && $quoteObject->hasInsurerPaymentLink() && ! $quoteObject->canUpdateToTransactionApproved() && ! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+                    $validator->errors()->add('value', 'Cannot update to Transaction Approved status. Quote must have payment initiated and payment link sent to customer.');
+                }
+            }
 
             if (in_array(null, $customerProfileDetails) && request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {
                 $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');

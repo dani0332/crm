@@ -681,39 +681,62 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $srNo = $splitPayment->sr_no;
         $masterPayment = $splitPayment->payment;
 
-        // Prepare to store Sage receipt ID if successful
-        $sageReceiptId = null;
+        $quote = $masterPayment?->paymentable;
+        $sageResponseStatus = false;
+
+        $isHealthAUH = $this->isHealthAUHLead(ucfirst($request->modelType), $quote);
+        /* Handle NRA case where payment is approved after policy/send update is booked */
+        $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
+        info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
 
         // Process Sage API call outside transaction if needed
-        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled()) {
-            $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isHealthAUH) {
+            $sageRequest = $request->safe();
+            $sageRequest->userId = auth()->id();
+            $sageRequest->quoteType = $request->modelType;
+            $sageRequest->advisor_id = $quote->advisor_id;
+            $sageRequest->collection_amount = $request->collection_amount;
+            $sageRequest->insurerReceiptNumber = $request->insurer_receipt_number;
 
-            if ($sageResponse['status'] != 'success') {
-                vAbort($sageResponse['response']);
+            /* Handle NRA case where payment is approved after policy/send update is booked */
+            $sageARPrepaymentResponse = (new SageApiService)->createARPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
+
+            if (! $sageARPrepaymentResponse['status']) {
+                vAbort($sageARPrepaymentResponse['message']);
+
             }
 
-            $sageReceiptId = $sageResponse['response'];
+            /* $sageRequest->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+
+            $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment, $request->collection_amount);
+
+            if (! $sageAPPrepaymentResponse['status']) {
+                vAbort($sageAPPrepaymentResponse['message']);
+
+            }*/
         }
 
         // Now handle database operations within transaction
-        return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment, $sageReceiptId, $successMessage, $splitPaymentCode, $srNo) {
+        return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment, $successMessage, $splitPaymentCode, $srNo) {
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
+                $paymentStatusId = PaymentStatusEnum::CAPTURED;
+                if ($request->actual_amount && $request->actual_amount > $request->collection_amount) {
+                    $paymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
+                }
                 LoggerService::info("Split payment approval started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
                     'collection_amount' => $request->collection_amount,
                     'bank_reference_number' => $request->bank_reference_number,
-                    'payment_status_id' => PaymentStatusEnum::CAPTURED,
+                    'payment_status_id' => $paymentStatusId,
                     'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                     'updated_by' => $request->user()->id,
                     'verified_at' => now(),
                     'verified_by' => $request->user()->id,
+                    'insurer_receipt_number' => $request->insurer_receipt_number,
                 ];
 
                 // associate approved documents with payment split
-                if (
-                    isset($request->approved_document_model[$splitPayment->sr_no])
-                    && count($request->approved_document_model[$splitPayment->sr_no]) > 0
-                ) {
+                if (isset($request->approved_document_model[$splitPayment->sr_no]) && count($request->approved_document_model[$splitPayment->sr_no]) > 0) {
                     LoggerService::info("Processing approved documents for split payment - code: {$splitPaymentCode}, SR No: {$srNo}, document count: ".count($request->approved_document_model[$splitPayment->sr_no]));
                     foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                         $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
@@ -732,21 +755,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
 
-                // Add sage receipt ID if it exists
-                if ($sageReceiptId) {
-                    $paymentInformation['sage_reciept_id'] = $sageReceiptId;
-                }
-
                 $splitPayment->update($paymentInformation);
-
                 if ($masterPayment) {
-                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
-                    $masterPayment->update(
-                        [
-                            'captured_amount' => $masterCapturedAmount,
-                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                        ],
-                    );
+                    $masterPayment->update([
+                        'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                        'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                    ]);
                 }
 
                 /* Create payment receipt for broker */

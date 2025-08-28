@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
@@ -288,6 +289,12 @@ class QuoteAllocation extends Command
                 $q->where('quote_type_id', $quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when($quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($quoteType === QuoteTypes::CORPLINE, function ($q) {
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {

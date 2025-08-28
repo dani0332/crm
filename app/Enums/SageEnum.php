@@ -4,11 +4,6 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-/**
- * @method static static OptionOne()
- * @method static static OptionTwo()
- * @method static static OptionThree()
- */
 final class SageEnum extends Enum
 {
     /* Sage Processes Locks Enums */
@@ -24,6 +19,7 @@ final class SageEnum extends Enum
 
     /* Sage Process Request Type */
     const SAGE_PROCESS_BOOK_POLICY_REQUEST = 'book_policy';
+    const SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST = 'book_embedded_product';
     const SAGE_PROCESS_SEND_UPDATE_REQUEST = 'send_update';
     const SAGE_PROCESS_POST_PREPAYMENT_REQUEST = 'post_prepayment';
 
@@ -52,11 +48,37 @@ final class SageEnum extends Enum
     const SRT_CREATE_CUSTOMER = 'CREATE_CUSTOMER';
 
     // AR Pre Payments Receipts
-    const SRT_CREATE_PP_REC = 'CREATE_PP_REC';
-    const SRT_RTP_PP_REC = 'RTP_PP_REC';
-    const SRT_POST_PP_REC = 'POST_PP_REC';
+    const SRT_CREATE_PP_REC = 'AR_CREATE_PP_REC';
+    const SRT_RTP_PP_REC = 'AR_RTP_PP_REC';
+    const SRT_POST_PP_REC = 'AR_POST_PP_REC';
+
+    // EP AR Pre Payments Receipts
+    const EP_SRT_CREATE_AR_PP_REC = 'EP_SRT_CREATE_AR_PP_REC';
+    const EP_SRT_RTP_AR_PP_REC = 'EP_SRT_RTP_AR_PP_REC';
+    const EP_SRT_POST_AR_PP_REC = 'EP_SRT_POST_AR_PP_REC';
+
+    // EP AP Pre Payments Receipts
+    const EP_SRT_CREATE_AP_PP_REC = 'EP_SRT_CREATE_AP_PP_REC';
+    const EP_SRT_RTP_AP_PP_REC = 'EP_SRT_RTP_AP_PP_REC';
+    const EP_SRT_POST_AP_PP_REC = 'EP_SRT_POST_AP_PP_REC';
+
+    // AP Pre Payments Receipts
+    const SRT_CREATE_AP_PP_REC = 'CREATE_AP_PP_REC';
+    const SRT_RTP_AP_PP_REC = 'RTP_AP_PP_REC';
+    const SRT_POST_AP_PP_REC = 'POST_AP_PP_REC';
+
+    // AR Commission Pre Payments Receipts
+    const CREATE_AR_COM_PP_REC = 'CREATE_AR_COM_PP_REC';
+    const RTP_AR_COM_PP_REC = 'RTP_AR_COM_PP_REC';
+    const POST_AR_COM_PP_REC = 'POST_AR_COM_PP_REC';
 
     // AR Invoices - Upfront
+    const EP_SRT_CREATE_AR_PREM_COMM_INV = 'EP_SRT_CREATE_AR_PREM_COMM_INV';
+    const EP_SRT_RTP_AR_PREM_COMM_INV = 'EP_RTP_AR_PREM_COMM_INV';
+    const EP_SRT_POST_AR_PREM_COMM_INV = 'EP_POST_AR_PREM_COMM_INV';
+    const EP_SRT_CREATE_AR_PREM_COMM_INV_REV = 'EP_SRT_CREATE_AR_PREM_COMM_INV_REV';
+    const EP_SRT_RTP_AR_PREM_COMM_INV_REV = 'EP_RTP_AR_PREM_COMM_INV_REV';
+    const EP_SRT_POST_AR_PREM_COMM_INV_REV = 'EP_POST_AR_PREM_COMM_INV_REV';
     const SRT_CREATE_AR_PREM_COMM_INV = 'CREATE_AR_PREM_COMM_INV';
     const SRT_RTP_AR_PREM_COMM_INV = 'RTP_AR_PREM_COMM_INV';
     const SRT_POST_AR_PREM_COMM_INV = 'POST_AR_PREM_COMM_INV';
@@ -78,6 +100,12 @@ final class SageEnum extends Enum
     const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
 
     // AP Invoices - Upfront
+    const EP_SRT_CREATE_AP_PREM_INV = 'EP_SRT_CREATE_AP_PREM_INV';
+    const EP_SRT_RTP_AP_PREM_INV = 'EP_RTP_AP_PREM_INV';
+    const EP_SRT_POST_AP_PREM_INV = 'EP_POST_AP_PREM_INV';
+    const EP_SRT_CREATE_AP_PREM_INV_REV = 'EP_SRT_CREATE_AP_PREM_INV_REV';
+    const EP_SRT_RTP_AP_PREM_INV_REV = 'EP_RTP_AP_PREM_INV_REV';
+    const EP_SRT_POST_AP_PREM_INV_REV = 'EP_POST_AP_PREM_INV_REV';
     const SRT_CREATE_AP_PREM_INV = 'CREATE_AP_PREM_INV';
     const SRT_RTP_AP_PREM_INV = 'RTP_AP_PREM_INV';
     const SRT_POST_AP_PREM_INV = 'POST_AP_PREM_INV';
@@ -94,6 +122,12 @@ final class SageEnum extends Enum
     const SRT_POST_AR_DISC_INV = 'POST_AR_DISC_INV';
 
     // Payment Receipt One Invoice - Upfront
+    const EP_SRT_CREATE_APPLY_PAYMENT_RECEIPT = 'EP_SRT_CREATE_APPLY_PAYMENT_RECEIPT';
+    const EP_SRT_READY_TO_POST_APPLY_PAYMENT_RECEIPT = 'EP_SRT_READY_TO_POST_APPLY_PAYMENT_RECEIPT';
+    const EP_SRT_POST_APPLY_PAYMENT_RECEIPT = 'EP_SRT_POST_APPLY_PAYMENT_RECEIPT';
+    const EP_AP_SRT_CREATE_APPLY_PAYMENT_RECEIPT = 'EP_AP_SRT_CREATE_APPLY_PAYMENT_RECEIPT';
+    const EP_AP_SRT_READY_TO_POST_APPLY_PAYMENT_RECEIPT = 'EP_AP_SRT_READY_TO_POST_APPLY_PAYMENT_RECEIPT';
+    const EP_AP_SRT_POST_APPLY_PAYMENT_RECEIPT = 'EP_AP_SRT_POST_APPLY_PAYMENT_RECEIPT';
     const SRT_CREATE_PAY_REC_ONE_INV = 'CREATE_PAY_REC_ONE_INV';
     const SRT_RTP_PAY_REC_ONE_INV = 'RTP_PAY_REC_ONE_INV';
     const SRT_POST_PAY_REC_ONE_INV = 'POST_PAY_REC_ONE_INV';
@@ -155,6 +189,15 @@ final class SageEnum extends Enum
     const SRT_REV_CORR_AP_SPPAY_INV = 'SRT_REV_CORR_AP_SPPAY_INV';
     const SRT_REV_CORR_AR_DIS_INV = 'SRT_REV_CORR_AR_DIS_INV';
 
+    /* AP Appy Prepayment */
+
+    const SRT_CREATE_APPLY_PAYMENT_AP_UPFRONT_INV = 'SRT_CREATE_APPLY_PAYMENT_AP_UPFRONT_INV';
+    const SRT_RTP_APPLY_PAYMENT_AP_UPFRONT_INV = 'SRT_RTP_APPLY_PAYMENT_AP_UPFRONT_INV';
+    const SRT_POST_APPLY_PAYMENT_AP_UPFRONT_INV = 'SRT_POST_APPLY_PAYMENT_AP_UPFRONT_INV';
+    const SRT_CREATE_APPLY_PAYMENT_AP_SPLIT_INV = 'SRT_CREATE_APPLY_PAYMENT_AP_SPLIT_INV';
+    const SRT_RTP_APPLY_PAYMENT_AP_SPLIT_INV = 'SRT_RTP_APPLY_PAYMENT_AP_SPLIT_INV';
+    const SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV = 'SRT_POST_APPLY_PAYMENT_AP_SPLIT_INV';
+
     // -------------------------------------- Sage Request Types End --------------------------------------------
 
     // Process Types
@@ -186,8 +229,11 @@ final class SageEnum extends Enum
     const SAGE_PROCESSING_CONFLICT_MESSAGE = 'Please wait for 1 minute before booking again.';
     const SAGE_TIMEOUT_REQUEST_MESSAGE = 'cURL error 28';
     const SAGE_EMPTY_RESPONSE_MESSAGE = 'empty reply from server';
+    const SAGE_ERROR_OCCURRED_MESSAGE = 'error has occurred';
 
     // Sage Payload
-    const BANK_CODE = 'INSBANK';
-    const PAYMENT_CODE = 'IP';
+    const BANK_CODE_INS = 'INSBANK';
+    const PAYMENT_CODE_IP = 'IP';
+    const BANK_CODE_TAP = 'TAP';
+    const PAYMENT_CODE_CREDIT_CARD = 'CC';
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
+use App\Http\Controllers\API\V1\LifeController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,10 +42,13 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('duplicate-entires', [ApiController::class, 'duplicateEntries']);
     Route::post('/cache/forget', [ApiController::class, 'forgetCache']);
     Route::post('/imcrm/trigger-aig-workflow', [ApiController::class, 'triggerAIGWorkflow'])->name('triggerAIGWorkflow');
+    // life
+    Route::post('life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('lifeSendOCAEmail');
     Route::post('/imcrm/trigger-travel-aig-workflow', [ApiController::class, 'triggerTravelAIGWorkflow'])->name('triggerTravelAIGWorkflow');
 
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
     Route::get('/quotes/{quoteType}/get-plans-pdf-url', [GenericLobController::class, 'getPlansPdfUrl'])->name('getPlansPdfUrl');
+    Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
 
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
@@ -75,12 +79,15 @@ Route::prefix('v1')->group(function () {
     Route::delete('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
     Route::post('quotes/{quoteType}/export-plans-pdf', [GenericLobController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+    Route::get('quotes/{quoteType}/export-plans-pdf-link', [GenericLobController::class, 'exportPlansPdfLink'])->name('exportPlansPdfLink');
+
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
+
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 

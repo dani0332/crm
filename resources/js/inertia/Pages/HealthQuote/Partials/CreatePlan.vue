@@ -209,6 +209,7 @@ watch(
     show-close
     backdrop
     is-form
+    persistent
     @submit="onSubmit"
   >
     <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4">

@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\EmbeddedTransaction;
+use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -201,8 +202,12 @@ class EmbeddedProduct
             })
             ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
-                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null')
+                        ? Carbon::parse($filters['date_of_purchase'][0])->startOfDay()
+                        : today()->startOfDay();
+                    $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null')
+                        ? Carbon::parse($filters['date_of_purchase'][1])->endOfDay()
+                        : today()->endOfDay();
                     $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
             })
@@ -246,16 +251,37 @@ class EmbeddedProduct
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
 
+    public static function checkSukoonMedex($product)
+    {
+        $product = strtoupper(trim($product));
+
+        return in_array($product, EmbeddedProductEnum::getSukoonMedexCodes());
+    }
+
     public function getDocumentList($ep, $transaction)
     {
-        $epDocuments = $this->getPolicyWordings($ep);
+        $isSalama = false;
+        if (! $transaction->isEmpty()) {
+            $paidAt = $transaction->first()->paid_at ?? null;
+            $isSalama = $paidAt && Carbon::parse($paidAt)->lt(Carbon::parse(EmbeddedProductRepository::SALAMA_DATE));
+        }
+
+        $epDocuments = $this->getPolicyWordings($ep, $isSalama);
         $epDocuments = array_merge($epDocuments, $this->getadditionalDocuments($transaction));
 
         return $epDocuments;
     }
 
-    protected function getPolicyWordings($ep)
+    protected function getPolicyWordings($ep, $isSalama)
     {
+        if ($isSalama) {
+            return [[
+                'document_type' => 'Policy Wordings',
+                'document_number' => 'Not Applicable',
+                'url' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+                'path' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+            ]];
+        }
         $epDocuments = [];
 
         // get policy wordings
@@ -306,6 +332,9 @@ class EmbeddedProduct
             $documentNumber = $document->document_type_code === QuoteDocumentsEnum::EP ? $document->doc_name : $documentNumbers[$document->document_type_code] ?? '';
 
             return [
+                'watermarked_doc_url' => ! empty($document->watermarked_doc_url) ? $websiteURL.$document->watermarked_doc_url : '',
+                'watermarked_doc_path' => $document->watermarked_doc_url,
+                'is_watermarked' => $document->is_watermarked ?? false,
                 'document_type' => $document->document_type_text,
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',

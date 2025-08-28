@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OcrLogsRequest;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
+use App\Models\LifeInsurerRequestResponses;
+use App\Models\LifeQuote;
+use App\Models\OcrLog;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class AuditableController extends Controller
@@ -73,16 +79,6 @@ class AuditableController extends Controller
         return $query->orderBy('created_at', 'desc')->get();
     }
 
-    /**
-     * @return mixed
-     */
-    public function getQuoteAudits(Request $request)
-    {
-        $audits = AuditRepository::getQuoteAudits();
-
-        return ($request->jsonData) ? response()->json($audits) : $audits;
-    }
-
     public function loadApiLogs(Request $request)
     {
         try {
@@ -140,10 +136,15 @@ class AuditableController extends Controller
     }
 
     /**
-     * Get the appropriate query builder based on the auditable type.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return mixed
      */
+    public function getQuoteAudits(Request $request)
+    {
+        $audits = AuditRepository::getQuoteAudits();
+
+        return ($request->jsonData) ? response()->json($audits) : $audits;
+    }
+
     protected function getQueryBuilderForAuditableType(string $auditableType)
     {
         switch ($auditableType) {
@@ -153,8 +154,56 @@ class AuditableController extends Controller
             case HomeQuote::class:
                 return HomeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
+            case LifeQuote::class:
+                return LifeInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
+        }
+    }
+
+    public function loadOcrLogs(OcrLogsRequest $request)
+    {
+        try {
+            $auditableType = $request->input('type');
+            $auditableId = $request->input('id');
+
+            LoggerService::info('Loading OCR logs');
+
+            $logs = OcrLog::where('ocr_loggable_type', $auditableType)
+                ->where('ocr_loggable_id', $auditableId)
+                ->with(['provider', 'user'])
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'ref_id' => $log->request_data['ref_id'] ?? 'N/A',
+                        'document_type_name' => $log->document_type_name,
+                        'status' => $log->status,
+                        'formatted_execution_time' => $log->formatted_execution_time,
+                        'provider_name' => $log->provider?->name ?? 'N/A',
+                        'uploaded_through' => $log->uploaded_through,
+                        'user_name' => $log->user?->name ?? null,
+                        'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                        'request_data' => $log->request_data,
+                        'response_data' => $log->response_data,
+                        'error_message' => $log->error_message,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load OCR logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load OCR logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

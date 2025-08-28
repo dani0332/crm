@@ -56,8 +56,12 @@ const props = defineProps({
   isLackingPayment: Boolean,
   planText: String,
   isTransactionCaptureButtonEnabled: Boolean,
+  showInsurerReceiptNumberInputField: Boolean,
+  insurerReceiptNumberCheckInProcess: Boolean,
   capturePaymentValidationErrorMessage: String,
   selectedPaymentForEdit: Object,
+  isInsurerReceiptNumberExistsModalOpen: Boolean,
+  isLifePlanDetailsEnabled: Boolean,
 });
 
 const fileUploadModels = ref([]);
@@ -133,7 +137,11 @@ const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
 const homePlanText = ref();
+const lifePlanText = ref();
+const paymentForm = ref();
+
 const totalPayments = ref([{ value: '1', label: '1' }]);
+const isApproveLowerAmountConfirmed = ref(true);
 const paymentTypes = ref(
   props.paymentMethods.filter(
     item =>
@@ -160,6 +168,9 @@ const emit = defineEmits([
   'aml-verification',
   'update-plan-detail',
 ]);
+
+const isCarQuote = props.quoteType === quoteTypeCodeEnum.Car;
+const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
 
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
@@ -287,7 +298,6 @@ const rules = {
     } else {
       return !!v || 'This field is required';
     }
-    return true;
   },
   reference: v => {
     if (
@@ -451,6 +461,7 @@ const handleCreditApproval = () => {
 };
 
 const addPayment = isValid => {
+  emit('close-insurer-receipt-number-exists-modal');
   if (
     insurerPaymentLinkIndex.value >= 0 &&
     paymentMethodsForm.insurerPaymentLink
@@ -478,6 +489,7 @@ const addPayment = isValid => {
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment(isValid)) return;
+    isApproveLowerAmountConfirmed.value = true;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
     if (props.isPaidEditable === true) {
@@ -619,6 +631,9 @@ const addPayment = isValid => {
       plan_id: props.planDetail?.id || 0,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
+      actual_amount: parseFloat(
+        splitAmountModels.value?.[splitPaymentNo.value],
+      ),
       bank_reference_number: paymentMethodsForm.bank_reference_number,
       splitPaymentId: paymentMethodsForm.splitPaymentId,
       is_declined: isDeclineClicked.value,
@@ -628,7 +643,9 @@ const addPayment = isValid => {
       declined_custom_reason: declinedCustomReason,
       send_update_id: props.sendUpdate?.id || null,
       collection_type: paymentMethodsForm.collection_type,
+      insurer_receipt_number: paymentMethodsForm.insurer_receipt_number,
     };
+
     paymentMethodsForm
       .transform(data => viewData)
       .post('/payments/' + props.quoteType + '/split-payment-approve-decline', {
@@ -1036,6 +1053,7 @@ const resetPaymentForm = () => {
   isApproveNotChecked.value = true;
   // isAmlApprovalRequired.value = false;
   emit('update-is-aml-approval-required', false);
+  isApproveLowerAmountConfirmed.value = true;
 };
 
 const initializePaymentForm = (
@@ -1066,7 +1084,24 @@ const initializePaymentForm = (
   paymentMethodsForm.collection_type = payment.collection_type;
   paymentMethodsForm.payment_no = payment.total_payments;
   oldTotalPayments.value = payment.total_payments;
-  paymentMethodsForm.frequency = payment.frequency;
+  // Special handling for life quotes - map payment term to frequency during edit
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.quoteRequest?.life_quote?.payment_term
+  ) {
+    // Map numeric payment term to frequency enum
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      4: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentMethodsForm.frequency =
+      paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
+  } else {
+    paymentMethodsForm.frequency = payment.frequency;
+  }
   showDiscountOptions.value = true;
   paymentMethodsForm.discount_reason =
     payment.discount_reason !== null ? payment.discount_reason : '';
@@ -1145,8 +1180,7 @@ const handleCollectionTypeChange = () => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
-    let isHealthQuote = props.quoteType === quoteTypeCodeEnum.Health;
-    let checkCondition = !isHealthQuote || !isIPLPermission;
+    let checkCondition = isCarQuote || isTravelQuote || !isIPLPermission;
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
@@ -1939,6 +1973,7 @@ const uploadDocument = (doc, files, count) => {
       .post(url, {
         preserveScroll: true,
         preserveState: true,
+        only: ['quoteDocuments', 'quote'],
         onError: errors => {
           documentForm.setError(errors.error);
           notification.error({
@@ -1949,7 +1984,9 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: data => {
           let quoteTypes = props.quoteTypesToCheck.filter(
-            quoteType => quoteType !== quoteTypeCodeEnum.Home,
+            quoteType =>
+              quoteType !== quoteTypeCodeEnum.Home &&
+              quoteType !== quoteTypeCodeEnum.Life,
           );
           let quoteDocuments =
             quoteTypes.includes(props.quoteType) ||
@@ -2096,16 +2133,48 @@ const validateInsurerPaymentLink = () => {
   }
 };
 
+/**
+ * Determines if the user is allowed to approve a lower payment amount.
+ * Approval is allowed if:
+ * - There is a sendUpdate and its status is UPDATE_BOOKED, or
+ * - There is no sendUpdate and the quote status is PolicyBooked, CancellationPending, PolicyCancelledReissued, or PolicyCancelled.
+ *
+ * @returns {boolean}
+ */
+const isAllowedToApproveLowerAmount = () => {
+  const isUpdateBooked =
+    props.sendUpdate &&
+    props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
+
+  const isPolicyBooked =
+    !props.sendUpdate &&
+    [
+      page.props.quoteStatusEnum?.PolicyBooked,
+      page.props.quoteStatusEnum?.CancellationPending,
+      page.props.quoteStatusEnum?.PolicyCancelledReissued,
+      page.props.quoteStatusEnum?.PolicyCancelled,
+    ].includes(props.quoteRequest?.quote_status_id);
+
+  return isUpdateBooked || isPolicyBooked;
+};
+
 const validateViewPayment = isValid => {
   let amountExceeded = false;
   if (
     parseFloat(splitAmountModels.value[splitPaymentNo.value]) >
     parseFloat(paymentMethodsForm.collection_amount)
   ) {
-    approveErrorMessage.value =
-      'The entered amount is smaller than the total amount.';
-    isApprovePaymentError.value = true;
-    return true;
+    if (
+      isAllowedToApproveLowerAmount() &&
+      can(permissionEnum.PAYMENT_VERIFICATION_LOWER_AMOUNT)
+    ) {
+      isApproveLowerAmountConfirmed.value = false;
+    } else {
+      approveErrorMessage.value =
+        'The entered amount is smaller than the total amount.';
+      isApprovePaymentError.value = true;
+      return true;
+    }
   }
 
   if (
@@ -2280,6 +2349,16 @@ const getPlanName = computed(() => {
     return props.quoteRequest?.insurance_provider_plan?.text || 'Not Available';
   }
 
+  if (
+    !props.isLifePlanDetailsEnabled &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      lifePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return lifePlanText.value || 'Not Available';
+  }
+
   return props.quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
     : 'Not Available';
@@ -2304,6 +2383,10 @@ const isAnyPaid = payment => {
   );
 };
 
+const submitPaymentForm = () => {
+  paymentForm.value?.$el?.requestSubmit();
+};
+
 const isPolicyIssuanceDiscount = computed(() => {
   if (
     can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
@@ -2324,6 +2407,14 @@ const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
   isApproveConfirm.value = false;
+  isApproveLowerAmountConfirmed.value = true;
+};
+
+const closeApprovalLowerAmountModal = () => {
+  isApproveConfirmed.value = false;
+  isApproveNotChecked.value = true;
+  isApproveConfirm.value = false;
+  isApproveLowerAmountConfirmed.value = true;
 };
 
 const updatePaymentForm = (updates = {}) => {
@@ -2468,6 +2559,7 @@ defineExpose({
   updateTotalPayments,
   updatePaymentForm,
   updatePremiumToCapture,
+  submitPaymentForm,
 });
 
 // Watch for changes in paymentMethodsForm.collection_date
@@ -2514,7 +2606,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
 </script>
 
 <template>
-  <x-form @submit="addPayment" :auto-focus="false">
+  <x-form @submit="addPayment" :auto-focus="false" ref="paymentForm">
     <PaymentFormFields
       :isFieldReadonly="isFieldReadonly"
       :paymentMethodsForm="paymentMethodsForm"
@@ -2555,6 +2647,9 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :paymentMethodsModels="paymentMethodsModels"
       :payments="payments"
       :paymentStatusEnum="paymentStatusEnum"
+      :quoteType="quoteType"
+      :quoteTypeCodeEnum="quoteTypeCodeEnum"
+      :isLifePlanDetailsEnabled="isLifePlanDetailsEnabled"
       @handle-collection-type-change="handleCollectionTypeChange"
       @handle-frequency-change="handleFrequencyChange"
       @calculate-payment-breakup="calculatePaymentBreakup"
@@ -2672,6 +2767,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :isApprovedDocumentNotUploaded="isApprovedDocumentNotUploaded"
       :approvedDocumentModel="approvedDocumentModel"
       :readOnlyPayments="readOnlyPayments"
+      :showInsurerReceiptNumberInputField="showInsurerReceiptNumberInputField"
       :rules="rules"
       @upload-document="uploadDocument"
       @open-inner-modal="openInnerModal"
@@ -2703,6 +2799,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :payments="props.payments"
       :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
       :paymentMethodsForm="paymentMethodsForm"
+      :insurerReceiptNumberCheckInProcess="insurerReceiptNumberCheckInProcess"
       @cancel="handleCancelChanges"
       @decline="handleDeclinedChange"
       @approve="isApproveClicked = !isApproveClicked"
@@ -2711,10 +2808,82 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       @update-from-insurer-payment-link="
         (e, f, g) => updateFromInsurerPaymentLink(e, f, g)
       "
+      @check-insurer-receipt-number="emit('check-insurer-receipt-number')"
     />
     <div
       class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-      v-if="isApproveConfirmed"
+      v-if="isApproveConfirmed && !isApproveLowerAmountConfirmed"
+    >
+      <div
+        class="modal-confirm-container bg-white w-[400px] max-w-[60%] md:max-h-[37vh] lg:max-h-[27vh] p-5 rounded-lg shadow-lg"
+      >
+        <div class="modal-confirm-header text-base text-white bg-white">
+          <div
+            class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+          >
+            <div class="flex items-center space-x-2">Confirm Approval</div>
+            <div class="flex items-center space-x-2">
+              <span
+                @click="closeApprovalLowerAmountModal"
+                class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+              >
+                <!-- Cross icon -->
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  tabindex="0"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  class="w-4 h-4 text-gray-800"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full h-full mt-2 flex flex-col items-center">
+          <div
+            class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
+          >
+            <div class="text-left text-sm">
+              <span
+                >The entered amount is less than the total amount. Do you want
+                to proceed with approval?</span
+              >
+            </div>
+          </div>
+          <div class="flex flex-row space-x-4 mt-4">
+            <x-button
+              size="md"
+              type="submit"
+              color="orange"
+              class="px-4 py-2"
+              @click="isApproveLowerAmountConfirmed = true"
+            >
+              <span>Yes</span>
+            </x-button>
+            <x-button
+              size="md"
+              type="submit"
+              color="gray"
+              class="px-4 py-2"
+              @click="closeApprovalLowerAmountModal"
+            >
+              <span>No</span>
+            </x-button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+      v-if="isApproveConfirmed && isApproveLowerAmountConfirmed"
     >
       <div
         class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
@@ -2798,6 +2967,72 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
           >
             <span>Confirm</span></x-button
           >
+        </div>
+      </div>
+    </div>
+    <div
+      class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+      v-if="isInsurerReceiptNumberExistsModalOpen"
+    >
+      <div
+        class="modal-confirm-container receipt-number-exists-modal-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+      >
+        <div class="modal-confirm-header text-base text-white bg-white">
+          <div
+            class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+          >
+            <div class="flex items-center space-x-2">
+              Duplicate Insurer Receipt Number Detected
+            </div>
+            <div class="flex items-center space-x-2">
+              <span
+                @click="emit('close-insurer-receipt-number-exists-modal')"
+                class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  tabindex="0"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  class="w-4 h-4 text-gray-800"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full h-full mt-2 flex flex-col items-center">
+          <div
+            class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
+          >
+            <div class="text-left text-md">
+              <span class="text-sm">
+                The insurer receipt number you entered already exists in the
+                system. Do you want to proceed with using the same receipt
+                number again?
+              </span>
+            </div>
+          </div>
+          <div class="w-full mt-4 flex justify-center gap-4">
+            <x-button
+              size="lg"
+              @click="emit('close-insurer-receipt-number-exists-modal')"
+              class="px-6 py-2 bg-white text-orange-600 border border-orange-500 hover:bg-orange-50"
+            >
+              <span>No</span>
+            </x-button>
+
+            <x-button size="lg" type="submit" color="orange" class="px-6 py-2">
+              <span>Yes</span>
+            </x-button>
+          </div>
         </div>
       </div>
     </div>

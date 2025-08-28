@@ -131,13 +131,26 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
   lostReason: page.props.quoteDetails.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.quoteStatuses.map(status => {
+    var statusDisabled = false;
+    // below status are not editable by advisor
+    if (status.id == quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const onLeadStatus = () => {
@@ -487,6 +500,7 @@ const allowStatusUpdate = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -604,6 +618,13 @@ const allowStatusUpdate = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">OE/AE</dt>
+                <dd>
+                  {{ quote?.support_user?.name }}
+                </dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -1214,6 +1235,13 @@ const allowStatusUpdate = computed(() => {
         </template>
       </Collapsible>
     </div>
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <AuditLogs
       :quoteType="$page.props.modelType"

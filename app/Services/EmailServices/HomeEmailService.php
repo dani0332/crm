@@ -3,6 +3,7 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -139,6 +140,11 @@ class HomeEmailService extends BaseService
 
     public function buildEmailData($lead, $advisor, $workflowType, $homeQuote)
     {
+        $bccEmails = [];
+        $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::HOME_LEAD_POOL_BCC);
+        if ($lead->source === LeadSourceEnum::CPA_AUSTRALIA_HOME) {
+            $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS)));
+        }
         $data = [
             // Lead-related data
             'quoteUID' => $lead->uuid,
@@ -166,6 +172,7 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails ?? [],
         ];
 
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);
@@ -215,6 +222,7 @@ class HomeEmailService extends BaseService
             'customerMobile' => $customerMobile,
             'triggerDate' => $triggerDate,
             'whatsappConsent' => $whatsappConsent,
+            'hasClaimedLosses' => $lead->has_claimed_losses ? 'Yes' : 'No',
         ];
 
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid, 64800);
@@ -323,7 +331,7 @@ class HomeEmailService extends BaseService
      * @param  string|Carbon  $expiryDate  The policy expiry date
      * @return string Timestamp for the OCB trigger date
      */
-    private function getOCBTriggerTimestamp($expiryDate): string
+    public function getOCBTriggerTimestamp($expiryDate): string
     {
         // Ensure Carbon instance
         $expiry = Carbon::parse($expiryDate);
@@ -334,10 +342,10 @@ class HomeEmailService extends BaseService
         // Adjust for weekend rules
         switch ($ocbDate->dayOfWeek) {
             case Carbon::SATURDAY:
-                $ocbDate->subDay(); // Move to Friday
+                $ocbDate->subDay();
                 break;
             case Carbon::SUNDAY:
-                $ocbDate->addDay(); // Move to Monday
+                $ocbDate->addDay();
                 break;
             default:
                 break;

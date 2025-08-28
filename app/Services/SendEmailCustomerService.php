@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -381,8 +382,6 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
-
-            LoggerService::info('fn: attachments count: '.count($attachments));
 
             $ccAdvisor = [];
             if (isset($emailData->advisorEmail) && isset($emailData->advisorName)) {
@@ -814,8 +813,8 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called', extra: [
-            'payload' => json_encode($emailData),
+        LoggerService::info('Policy documents email sending started for quote code: '.$emailData->code, extra: [
+            'template_id' => $emailData->emailTemplateId,
         ]);
 
         $isEmailSent = 0;
@@ -823,7 +822,7 @@ class SendEmailCustomerService extends BaseService
         $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId);
+            LoggerService::info('Processing attachments for policy documents for quote code: '.$emailData->code);
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
@@ -832,7 +831,11 @@ class SendEmailCustomerService extends BaseService
                 foreach ($documents as $document) {
                     $path = ! empty($document->watermarked_doc_url) ? $document->watermarked_doc_url : $document->doc_url;
                     if (empty($path)) {
-                        LoggerService::warning("Main lead document not found for document ID: {$document->id} Quote Code: {$emailData->code} Error Code: 404");
+                        LoggerService::warning('Main lead document not found for quote code: '.$emailData->code, extra: [
+                            'document_id' => $document->id,
+                            'watermarked_url' => $document->watermarked_doc_url ?? null,
+                            'doc_url' => $document->doc_url ?? null,
+                        ]);
 
                         continue;
                     }
@@ -867,8 +870,6 @@ class SendEmailCustomerService extends BaseService
                 $bodyData['bcc'][] = ['email' => $newLeadPool->value];
             }
 
-            LoggerService::info('Quote Code: '.$emailData->code.' Attachments: '.json_encode($attachments));
-
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
@@ -895,6 +896,7 @@ class SendEmailCustomerService extends BaseService
                     'insuranceType' => $emailData->insuranceType,
                     'planName' => $emailData->planName,
                     'refID' => $emailData->code,
+                    'isHealthAUH' => $emailData->isHealthAUH,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
@@ -917,8 +919,6 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalBcc->value,
                 ];
             }
-
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'][] = [
@@ -945,9 +945,14 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+            if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
+                $bodyData['bcc'][] = [
+                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
+                ];
+            }
+
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            // Its a temp log and will be removed iin future
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- body '.$body);
+            LoggerService::info('Policy documents email payload for quote code: '.$emailData->code.' ---- body '.$body);
 
             $client = new \GuzzleHttp\Client;
             $clientResponse = $client->post(
@@ -959,27 +964,27 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
-            // temporarily added.
-            LoggerService::info('email response for '.$emailData->code, extra: [
-                'response' => json_encode($clientResponse),
-                'getStatusCode' => $clientResponse->getStatusCode(),
-                'responseBody' => $clientResponse->getBody(),
-            ]);
-            $message = json_decode($clientResponse->getBody()->getContents());
+            $responseBody = trim($clientResponse->getBody()->getContents());
+            $message = json_decode($responseBody);
             if (isset($message->messageId)) {
                 $messageId = $message->messageId;
             }
             $responseCode = $clientResponse->getStatusCode();
+            $response = "{$responseCode} {$responseBody}";
             $isEmailSent = 1;
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientResponse->getBody()->getContents()));
-            LoggerService::info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
+
+            LoggerService::info('Policy documents email sent successfully for quote code: '.$emailData->code, extra: [
+                'message_id' => $messageId,
+                'response_code' => $responseCode,
+            ]);
         } catch (Exception $ex) {
-            $response = '';
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
-            LoggerService::error($responseDetail);
-            LoggerService::error('Quote Code: '.$emailData->code.' Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
+            $response = "{$responseCode} {$ex->getMessage()}";
+            LoggerService::error('Failed to send policy documents email for quote code: '.$emailData->code, extra: [
+                'error_code' => $responseCode,
+                'error_message' => $ex->getMessage(),
+                'message_id' => $messageId ?? null,
+            ]);
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
@@ -1167,6 +1172,12 @@ class SendEmailCustomerService extends BaseService
                 $body['replyTo'] = [
                     'email' => 'life@insurancemarket.ae',
                     'name' => 'life@insurancemarket.ae',
+                ];
+            }
+
+            if ($this->appEnv == EnvEnum::PRODUCTION && $quoteTypeId == QuoteTypeId::Travel) {
+                $body['bcc'][] = [
+                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
                 ];
             }
 
@@ -1668,6 +1679,7 @@ class SendEmailCustomerService extends BaseService
             $workflowType = WorkflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER;
         }
 
+        $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
@@ -1685,6 +1697,7 @@ class SendEmailCustomerService extends BaseService
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'businessTypeInsurance' => $shortenedBusinessType ?? null,
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails,
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
@@ -1694,7 +1707,71 @@ class SendEmailCustomerService extends BaseService
         } else {
             LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
         }
+    }
 
+    public function sendSupportUserAssignmentEmail($emailData)
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SUPPORT_USER_ASSIGNMENT);
+
+        // Convert leads array to HTML list
+        $leads = collect($emailData->get('params')['leads'] ?? []);
+        $quotesHtml = '';
+
+        if ($leads->isNotEmpty()) {
+            $quotesHtml = $leads->map(function ($lead) {
+                $url = $lead['lead_url'] ?? '#';
+                $refId = $lead['code'] ?? 'Lead';
+
+                return "<li><a href='{$url}' target='_blank'>{$refId}</a></li>";
+            })->pipe(function ($items) {
+                return '<ul>'.$items->implode('').'</ul>';
+            });
+        }
+
+        $birdEmailData = (object) [
+            'supportUserEmail' => $emailData->get('to')['email'] ?? '',
+            'supportUserName' => $emailData->get('to')['name'] ?? '',
+            'assignerName' => $emailData->get('params')['assignerName'] ?? '',
+            'assignerEmail' => $emailData->get('params')['assignerEmail'] ?? '',
+            'ccEmails' => $emailData->get('cc') ?? [],
+            'quoteTypeName' => $emailData->get('params')['quoteTypeName'] ?? '',
+            'quotes' => $quotesHtml,
+            'workflowType' => WorkflowTypeEnum::OE_ASSIGNMENT,
+        ];
+
+        $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
+
+        if ($oeAssignmentEvent) {
+            info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$oeAssignmentEvent->value);
+            $response = app(BirdService::class)->triggerWebHookRequest($oeAssignmentEvent->value, $birdEmailData);
+        } else {
+            LoggerService::error('Support User (OE) Assignment: BIRD_OE_ASSIGNMENT_WORKFLOW not found in ApplicationStorage. Bird request has not been triggered.');
+        }
+    }
+
+    public function getBCCEmails(string $quoteType, string $source)
+    {
+        $bccEmails = [];
+
+        switch ($quoteType) {
+            case QuoteTypes::HOME->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::HOME_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_HOME) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS)));
+                }
+                break;
+            case QuoteTypes::SAVINGS->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::SAVINGS_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_SAVINGS) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_SAVINGS_BCC_EMAILS)));
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return $bccEmails;
     }
 
     public function sendCarIntroEmailWithAdvisor($quote)

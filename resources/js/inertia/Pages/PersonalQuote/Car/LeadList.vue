@@ -295,6 +295,8 @@ const filters = reactive({
   vehicle_use: '',
   company_name: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const teamUsers =
@@ -1159,6 +1161,22 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           :single="true"
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"
@@ -1267,43 +1285,6 @@ const insurerAMLStatusOption = computed(() => {
               </span>
             </template>
           </x-tooltip>
-
-          <x-button
-            v-if="
-              canExport &&
-              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            size="sm"
-            color="emerald"
-            @click="
-              onExport(
-                `/car/leads-details-with-email/${
-                  genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
-                }?${objToUrl(filters)}`,
-                true,
-              )
-            "
-            :loading="exportLoader"
-            class="justify-self-start mr-3"
-          >
-            Extract leads detail with email/mobile_no
-          </x-button>
-          <x-tooltip
-            v-if="
-              !canExport &&
-              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            placement="right"
-          >
-            <x-button class="mr-3" tag="div" size="sm" color="emerald"
-              >Extract leads detail with email/mobile_no</x-button
-            >
-            <template #tooltip>
-              <span class="font-medium">
-                Created dates are required to export data.
-              </span>
-            </template>
-          </x-tooltip>
           <x-button
             v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
             size="sm"
@@ -1324,7 +1305,9 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport('/pua-leads-export', true)"
+            @click="
+              onExport(`/Car/pua-leads-export?${objToUrl(filters)}`, true)
+            "
             class="justify-self-start mr-3"
           >
             Export PUA Updates
@@ -1347,6 +1330,10 @@ const insurerAMLStatusOption = computed(() => {
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
+          :canAssignLeadAdvisor="
+            !hasRole(rolesEnum.CarAdvisor) &&
+            !can(permissionsEnum.VIEW_ALL_LEADS)
+          "
           quoteType="Car"
           @success="onLeadAssigned"
         />

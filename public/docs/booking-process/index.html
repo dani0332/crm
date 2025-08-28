@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sage Integration - Booking Process Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+
+        .breadcrumb span {
+            color: #fff;
+            margin: 0 10px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .documentation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .doc-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .doc-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+        }
+
+        .doc-card h3 {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .doc-card .icon {
+            font-size: 1.3em;
+        }
+
+        .doc-card p {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .doc-card .features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .doc-card .features li {
+            color: #555;
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .doc-card .features li:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .doc-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 1.1em;
+        }
+
+        .doc-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .overview-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .overview-section h2 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .process-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .process-step {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .process-step:not(:last-child):after {
+            content: "→";
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            color: #fff;
+        }
+
+        .tech-specs {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 25px;
+        }
+
+        .tech-specs h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .tech-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .tech-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .documentation-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .process-flow {
+                flex-direction: column;
+            }
+
+            .process-step:not(:last-child):after {
+                content: "↓";
+                right: 50%;
+                top: 100%;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/docs/index.html">📚 Documentation Home</a>
+            <span>></span>
+            <span>Sage Integration - Booking Process</span>
+        </div>
+
+        <div class="header">
+            <h1>🔧 Sage Integration - Booking Process</h1>
+            <p>Customer Verification & Receipt Creation Documentation</p>
+            <span class="status-badge">Active Documentation</span>
+        </div>
+
+        <div class="overview-section">
+            <h2>📋 Booking Process Overview</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+                Complete workflow covering pre-booking validations, Sage 300 ERP integration processes,
+                and the critical components of <strong>Customer Verification</strong> and <strong>Receipt Creation</strong>.
+            </p>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <strong>1. Pre-Booking Checks</strong>
+                    <div>Validate Requirements</div>
+                </div>
+                <div class="process-step">
+                    <strong>2. Verify Customer</strong>
+                    <div>Check/Create in Sage</div>
+                </div>
+                <div class="process-step">
+                    <strong>3. Process AR/AP and Mapping Entries</strong>
+                    <div>Create Receipts and Invoices</div>
+                </div>
+                <div class="process-step">
+                    <strong>4. Book Policy</strong>
+                    <div>Complete & Log</div>
+                </div>
+            </div>
+
+            <div class="tech-specs">
+                <h3>🛠️ Technical Specifications</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Primary Service</strong>
+                        SageApiService.php
+                    </div>
+                    <div class="tech-item">
+                        <strong>Factory Class</strong>
+                        SagePayloadFactory.php
+                    </div>
+                    <div class="tech-item">
+                        <strong>Request Validation</strong>
+                        SendBookPolicyRequest.php
+                    </div>
+                    <div class="tech-item">
+                        <strong>API Endpoints</strong>
+                        AR/ARCustomers, AR/ARReceiptAndAdjustmentBatches
+                    </div>
+                    <div class="tech-item">
+                        <strong>Database Tables</strong>
+                        sage_api_logs, sage_processes
+                    </div>
+                    <div class="tech-item">
+                        <strong>Job Queue</strong>
+                        BookPolicyOnSageJob
+                    </div>
+                    <div class="tech-item">
+                        <strong>Authentication</strong>
+                        Basic Auth + Custom API
+                    </div>
+                    <div class="tech-item">
+                        <strong>UI Components</strong>
+                        BookPolicy.vue
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="overview-section">
+            <h2>🔍 Pre-Booking Validation Checks (postBookPolicyToSage)</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+                Critical validation checks performed inside the <strong>postBookPolicyToSage</strong> function
+                before initiating the actual Sage booking process.
+            </p>
+
+            <div class="tech-specs">
+                <h3>🚦 Core System Checks</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Policy Already Booked</strong>
+                        quote_status_id == QuoteStatusEnum::PolicyBooked
+                    </div>
+                    <div class="tech-item">
+                        <strong>Sage System Status</strong>
+                        isSageEnabled() must return true
+                    </div>
+                    <div class="tech-item">
+                        <strong>Embedded Product Status</strong>
+                        isEmbeddedTransactionStatusReadyForSage() check
+                    </div>
+                    <div class="tech-item">
+                        <strong>Quote Type Resolution</strong>
+                        QuoteTypes::getIdFromValue() validation
+                    </div>
+                </div>
+
+                <h3>💳 Payment Validation Logic</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Payment Record Lookup</strong>
+                        Payment::where('code', $quote->code)->mainLeadPayment()
+                    </div>
+                    <div class="tech-item">
+                        <strong>Duplicate Lead Handling</strong>
+                        Check parent_duplicate_quote_id for payment resolution
+                    </div>
+                    <div class="tech-item">
+                        <strong>Credit Card Payment Check</strong>
+                        Unpaid CC payments with INSURER collection type
+                    </div>
+                    <div class="tech-item">
+                        <strong>Zero Price Validation</strong>
+                        total_price == 0 requires CreditApproval payment method
+                    </div>
+                </div>
+
+                <h3>🏢 Health AUH Lead Processing</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>AUH Lead Detection</strong>
+                        isAHisHealthAUHLead() check for special processing
+                    </div>
+                    <div class="tech-item">
+                        <strong>Document Send Check</strong>
+                        isPolicySentLogExists() for customer documents
+                    </div>
+                    <div class="tech-item">
+                        <strong>Status Update</strong>
+                        Direct PolicyBooked status for AUH leads
+                    </div>
+                    <div class="tech-item">
+                        <strong>Payment Processing</strong>
+                        straightforwardPayments() for AUH leads
+                    </div>
+                </div>
+
+                <h3>🔑 Required Sage IDs (checkRequiredSageIds)</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Customer Sage ID</strong>
+                        sageRequest->customerId must exist
+                    </div>
+                    <div class="tech-item">
+                        <strong>GL Account</strong>
+                        sageRequest->insurerGlLiaiblityAccount required
+                    </div>
+                    <div class="tech-item">
+                        <strong>Sage Vendor ID</strong>
+                        sageRequest->sageVenderId for insurance provider
+                    </div>
+                    <div class="tech-item">
+                        <strong>Insurer Customer ID</strong>
+                        sageRequest->sageInsurerCustomerId required
+                    </div>
+                </div>
+
+                <h3>⚙️ Payment Method & Frequency Validation</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Zero Price Policy</strong>
+                        Only allowed with CreditApproval + UPFRONT frequency
+                    </div>
+                    <div class="tech-item">
+                        <strong>Payment Status Check</strong>
+                        isPaymentPaidOrCreditApproved() validation
+                    </div>
+                    <div class="tech-item">
+                        <strong>Commission Charges</strong>
+                        Extract commission charge IDs from payment splits
+                    </div>
+                    <div class="tech-item">
+                        <strong>Customer Verification</strong>
+                        verifySageCustomer() with 13 total steps
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="overview-section">
+            <h2>🚦 Button State Logic</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+                The booking buttons (Book Policy / Send and Book Policy) are dynamically enabled/disabled based on
+                comprehensive validation checks performed in real-time.
+            </p>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <strong>Send Policy Button</strong>
+                    <div>Documents + Policy Details</div>
+                </div>
+                <div class="process-step">
+                    <strong>Edit Button</strong>
+                    <div>Tax Documents Complete</div>
+                </div>
+                <div class="process-step">
+                    <strong>Book Policy Button</strong>
+                    <div>Booking Details + Main Lead</div>
+                </div>
+            </div>
+
+            <div class="tech-specs">
+                <h3>🔄 Button Enabling Sequence</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>Step 1</strong>
+                        Policy details filled → Send Policy button enabled
+                    </div>
+                    <div class="tech-item">
+                        <strong>Step 2</strong>
+                        All required documents uploaded → Send Policy confirmed
+                    </div>
+                    <div class="tech-item">
+                        <strong>Step 3</strong>
+                        Tax documents complete → Edit button enabled
+                    </div>
+                    <div class="tech-item">
+                        <strong>Step 4</strong>
+                        Booking details filled → Ready for booking
+                    </div>
+                    <div class="tech-item">
+                        <strong>Step 5</strong>
+                        Main lead check passed → Book Policy button enabled
+                    </div>
+                    <div class="tech-item">
+                        <strong>Final</strong>
+                        All validations passed → Booking process initiated
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="documentation-grid">
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">👤</span>
+                    Customer Verification
+                </h3>
+                <p>
+                    Comprehensive guide to the customer verification process including automatic customer creation,
+                    duplicate handling, and polymorphic customer support for both individuals and business entities.
+                </p>
+                <ul class="features">
+                    <li>Automatic customer existence verification</li>
+                    <li>Smart customer numbering system (P/C prefixes)</li>
+                    <li>Individual vs Business entity handling</li>
+                    <li>Error handling & duplicate prevention</li>
+                    <li>Database synchronization</li>
+                    <li>API integration patterns</li>
+                    <li>Logging & audit trail</li>
+                </ul>
+                <a href="/docs/booking-process/customer-verification.html" class="doc-link">View Customer Verification →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🧾</span>
+                    Receipt Creation
+                </h3>
+                <p>
+                    Detailed documentation on receipt creation workflows including payment processing,
+                    split payment handling, prepayment receipts, and automatic invoice-to-payment mapping.
+                </p>
+                <ul class="features">
+                    <li>Payment receipt generation logic</li>
+                    <li>Split payment & installment support</li>
+                    <li>Prepayment receipt handling</li>
+                    <li>Commission receipt processing</li>
+                    <li>Invoice-to-payment mapping</li>
+                    <li>AR/AP receipt coordination</li>
+                    <li>Multi-step process tracking</li>
+                </ul>
+                <a href="/docs/booking-process/receipt-creation.html" class="doc-link">View Receipt Creation →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">📄</span>
+                    AR Invoice Lifecycle
+                </h3>
+                <p>
+                    Complete guide to Accounts Receivable invoice creation, management and posting in Sage 300
+                    including premium invoices, commission billing, discount credit notes, and status workflows.
+                </p>
+                <ul class="features">
+                    <li>Premium & Commission invoice creation</li>
+                    <li>Split payment invoice schedules</li>
+                    <li>Discount credit note processing</li>
+                    <li>Open → Ready to Post → Posted workflow</li>
+                    <li>Database schema and column usage</li>
+                    <li>Error handling and recovery</li>
+                    <li>API endpoint documentation</li>
+                </ul>
+                <a href="/docs/booking-process/ar-invoice-lifecycle.html" class="doc-link">View AR Invoice Lifecycle →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🔗</span>
+                    Embedded Product Booking
+                </h3>
+                <p>
+                    Comprehensive guide to embedded product integration and Sage 300 booking process including
+                    SukoonMedex, Alfred Protect, Roadside Assistance, and Courier services integration.
+                </p>
+                <ul class="features">
+                    <li>Product eligibility validation and LOB support</li>
+                    <li>Automatic booking triggers during policy booking</li>
+                    <li>EP-specific receipt and invoice creation</li>
+                    <li>Status management and workflow tracking</li>
+                    <li>Database schema for EP transactions</li>
+                    <li>Integration with main policy booking</li>
+                    <li>Error handling and recovery processes</li>
+                </ul>
+                <a href="/docs/booking-process/embedded-product-booking.html" class="doc-link">View Embedded Product Booking →</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Sage Integration Documentation</strong> - Booking Process</p>
+            <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+        </div>
+    </div>
+</body>
+</html>
