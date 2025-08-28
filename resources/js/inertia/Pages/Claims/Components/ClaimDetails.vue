@@ -8,7 +8,10 @@ const props = defineProps({
   },
 });
 
-import { formattedDateDmyWithTime, formattedDateYmd } from '@/inertia/Composables/utilities.js';
+import {
+  formattedDateDmyWithTime,
+  formattedDateYmd,
+} from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 const claimsEnum = page.props.claimsEnum;
@@ -382,7 +385,9 @@ const prepareFormData = data => {
       ? data.claim_decline_reason.trim()
       : null,
     // Format incident date
-    incident_date: data.incident_date ? formattedDateYmd(data.incident_date) : null,
+    incident_date: data.incident_date
+      ? formattedDateYmd(data.incident_date)
+      : null,
   };
 };
 
@@ -688,7 +693,13 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Next Follow Up Date</dt>
-                <dd>{{ claim.next_followup_datetime ? formattedDateDmyWithTime(claim.next_followup_datetime) : 'N/A' }}</dd>
+                <dd>
+                  {{
+                    claim.next_followup_datetime
+                      ? formattedDateDmyWithTime(claim.next_followup_datetime)
+                      : 'N/A'
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>

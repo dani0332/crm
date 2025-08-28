@@ -480,25 +480,38 @@ function onSubmit(isValid) {
 
 // Reactive refs for approved amounts - initialize with actual values including 0
 const approvedRepairAmount = ref(props.claim?.approved_repair_amount ?? null);
-const approvedTotalLossAmount = ref(props.claim?.approved_total_loss_amount ?? null);
-const approvedCashLossAmount = ref(props.claim?.approved_cash_loss_amount ?? null);
+const approvedTotalLossAmount = ref(
+  props.claim?.approved_total_loss_amount ?? null,
+);
+const approvedCashLossAmount = ref(
+  props.claim?.approved_cash_loss_amount ?? null,
+);
 
 // Helper function to check if a value is considered "filled" (not null, undefined, empty string, or 0)
-const hasValue = (value) => {
+const hasValue = value => {
   return value !== null && value !== undefined && value !== '' && value !== 0;
 };
 
 // Computed properties for disabling fields based on whether other fields have values
 const disableApprovedRepairAmount = computed(() => {
-  return hasValue(approvedTotalLossAmount.value) || hasValue(approvedCashLossAmount.value);
+  return (
+    hasValue(approvedTotalLossAmount.value) ||
+    hasValue(approvedCashLossAmount.value)
+  );
 });
 
 const disableApprovedTotalLossAmount = computed(() => {
-  return hasValue(approvedRepairAmount.value) || hasValue(approvedCashLossAmount.value);
+  return (
+    hasValue(approvedRepairAmount.value) ||
+    hasValue(approvedCashLossAmount.value)
+  );
 });
 
 const disableApprovedCashLossAmount = computed(() => {
-  return hasValue(approvedRepairAmount.value) || hasValue(approvedTotalLossAmount.value);
+  return (
+    hasValue(approvedRepairAmount.value) ||
+    hasValue(approvedTotalLossAmount.value)
+  );
 });
 
 // Watch for changes and sync with form - only clear other fields when a value is entered

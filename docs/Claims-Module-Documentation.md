@@ -240,22 +240,22 @@ The system automatically updates claim statuses based on:
 
 ### Web Routes
 
-| Method | Endpoint                                 | Name                       | Purpose            |
-| ------ | ---------------------------------------- | -------------------------- | ------------------ |
-| GET    | `/claims`                                | `claims.index`             | List claims        |
-| GET    | `/claim/create`                          | `claims.create`            | Show create form   |
-| POST   | `/claim`                                 | `claims.store`             | Create claim       |
-| GET    | `/claim/{uuid}`                          | `claims.show`              | Show claim details |
-| GET    | `/claim/{uuid}/edit`                     | `claims.edit`              | Show edit form     |
-| PUT    | `/claim/{uuid}`                          | `claims.update`            | Update claim       |
-| POST   | `/claim/search-policies`                 | `claims.search-policies`   | Search policies    |
-| POST   | `/claim/update-details/{uuid}`           | `claims.update.details`    | Update details     |
-| POST   | `/claim/update-statuses/{uuid}`          | `claims.update.status`     | Update status      |
-| POST   | `/claims/{claim:uuid}/send-notification` | `claims.send-notification` | Send notification  |
-| POST   | `/claims/{claim:uuid}/complaint-status`  | `claims.complaint-status`  | Update complaint   |
-| POST   | `/claims/{claim:uuid}/next-follow-up`    | `claims.next-follow-up`    | Update follow-up   |
-| GET    | `/claims/{claim:uuid}/lead-history`      | `claims.lead-history`      | Get status history |
-| GET    | `/claims/{claim:uuid}/sub-status-logs`   | `claims.sub-status-logs`   | Get sub-status logs|
+| Method | Endpoint                                 | Name                       | Purpose             |
+| ------ | ---------------------------------------- | -------------------------- | ------------------- |
+| GET    | `/claims`                                | `claims.index`             | List claims         |
+| GET    | `/claim/create`                          | `claims.create`            | Show create form    |
+| POST   | `/claim`                                 | `claims.store`             | Create claim        |
+| GET    | `/claim/{uuid}`                          | `claims.show`              | Show claim details  |
+| GET    | `/claim/{uuid}/edit`                     | `claims.edit`              | Show edit form      |
+| PUT    | `/claim/{uuid}`                          | `claims.update`            | Update claim        |
+| POST   | `/claim/search-policies`                 | `claims.search-policies`   | Search policies     |
+| POST   | `/claim/update-details/{uuid}`           | `claims.update.details`    | Update details      |
+| POST   | `/claim/update-statuses/{uuid}`          | `claims.update.status`     | Update status       |
+| POST   | `/claims/{claim:uuid}/send-notification` | `claims.send-notification` | Send notification   |
+| POST   | `/claims/{claim:uuid}/complaint-status`  | `claims.complaint-status`  | Update complaint    |
+| POST   | `/claims/{claim:uuid}/next-follow-up`    | `claims.next-follow-up`    | Update follow-up    |
+| GET    | `/claims/{claim:uuid}/lead-history`      | `claims.lead-history`      | Get status history  |
+| GET    | `/claims/{claim:uuid}/sub-status-logs`   | `claims.sub-status-logs`   | Get sub-status logs |
 
 ### API Response Format
 
