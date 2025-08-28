@@ -151,24 +151,12 @@ class ApiController extends Controller
         $flowType = $request->flowType;
         $quoteUID = $request->uuid;
         $flowId = $request->flowId ?? null;
-
+        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
-
-        if ($workflow) {
-            LoggerService::startQuoteLogging(QuoteTypes::getName($workflow->quote_type_id)->refId($quoteUID));
-        }
-
-        LoggerService::info(self::class.': Received stopFollowUpEvent request', extra: [
-            'flow_type' => $flowType,
-            'time' => now()->toDateTimeString(),
-        ]);
         if (! $workflow) {
-            LoggerService::info(self::class.': Lead not found', extra: [
-                'flow_type' => $flowType,
-                'time' => now()->toDateTimeString(),
-            ]);
+            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
