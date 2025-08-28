@@ -313,8 +313,9 @@ class BikeAllocationService extends AllocationService
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
-                // Filter by advisor status.
-                $query->where('status', $status);
+                $query->where('status', $status)->whereDoesntHave('roles', function ($query) {
+                    $query->whereIn('name', [RolesEnum::CLIENTSUPPORT, RolesEnum::CLIENTSUPPORTLEAD]);
+                });
             })
             ->where(function ($query) {
                 // Apply allocation count and max capacity conditions.
