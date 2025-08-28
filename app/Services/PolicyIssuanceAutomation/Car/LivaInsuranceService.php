@@ -363,8 +363,6 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             request()->merge($updateBookingRequest);
 
             $bookPolicyRequest = new BookPolicyRequest;
-            // TODO: need to discusss this with Bilal Saeed, this is issuing while status is processing.
-
             $validator = Validator::make($updateBookingRequest, $bookPolicyRequest->rules());
             $bookPolicyRequest->withValidator($validator);
 
@@ -1065,6 +1063,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         ];
 
         if ($policyIssuance?->status === PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1066', extra: [
+                'policyIssuance_status' => $policyIssuance->status,
+                'completed_step' => $policyIssuance->completed_step,
+            ]);
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
@@ -1076,7 +1078,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS ||
             ($policyIssuance->completed_step && $policyIssuance?->status == '')
         ) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1081', extra: [
+                'policyIssuance_status' => $policyIssuance->status,
+                'completed_step' => $policyIssuance->completed_step,
+            ]);
             if (! $policyIssuance->completed_step || $policyIssuance->completed_step === self::UPLOAD_DOCUMENTS) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1086', extra: [
+                    'policyIssuance_status' => $policyIssuance->status,
+                    'completed_step' => $policyIssuance->completed_step,
+                ]);
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'All Steps are editable';
@@ -1084,6 +1094,10 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 return $response;
             }
             if ($policyIssuance->completed_step === self::ISSUE_POLICY) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1097', extra: [
+                    'policyIssuance_status' => $policyIssuance->status,
+                    'completed_step' => $policyIssuance->completed_step,
+                ]);
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
@@ -1091,23 +1105,35 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 return $response;
             }
             if ($policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1108', extra: [
+                    'policyIssuance_status' => $policyIssuance->status,
+                    'completed_step' => $policyIssuance->completed_step,
+                ]);
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
 
                 return $response;
             }
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1118', extra: [
+                'policyIssuance_status' => $policyIssuance->status,
+                'completed_step' => $policyIssuance->completed_step,
+            ]);
 
             // getting status processing here, that's why it's not editable
             return $response;
         } elseif (! $policyIssuance) {
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1126', extra: [
+                'policyIssuance_status' => $policyIssuance?->status ?? 'null',
+                'completed_step' => $policyIssuance?->completed_step ?? 'null',
+            ]);
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
         }
 
         // TODO: need to discusss this with Bilal Saeed, this is issuing while status is processing.
-        if (
+        /* if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
             $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
         ) {
@@ -1116,11 +1142,11 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $response['message'] = 'All Steps are editable';
 
             return $response;
-        }
+        } */
 
-        LoggerService::info('fn:'.__FUNCTION__.' testing response line#1107', extra: [
-            'completed_step' => $policyIssuance->completed_step,
-            'status' => $policyIssuance?->status,
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1148', extra: [
+            'policyIssuance_status' => $policyIssuance?->status ?? 'null',
+            'completed_step' => $policyIssuance?->completed_step ?? 'null',
         ]);
 
         return $response;
