@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\BuyLeadRequest;
@@ -102,7 +103,9 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $excludedUserIds = $this->allocationRequest->get('excludedUserIds');
 
         return LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
-            $query->where('status', $status);
+            $query->where('status', $status)->whereDoesntHave('roles', function ($query) {
+                $query->whereIn('name', [RolesEnum::CLIENTSUPPORT, RolesEnum::CLIENTSUPPORTLEAD]);
+            });
         })
             ->whereIn('user_id', $userIds)
             ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {

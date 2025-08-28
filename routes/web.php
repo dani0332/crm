@@ -893,7 +893,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     })->name('run-policy-bulk-send');
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
-        // Dispatch job to background queue instead of running synchronously
+        // Dispatch job to background queue instead of running synchronously to check the handbook documents
         \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
 
         return response()->json([
