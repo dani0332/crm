@@ -19,6 +19,8 @@ use App\Pipes\Allocation\Claim\AssignLeadPipe;
 use App\Pipes\Allocation\Claim\MakeResponsePipe;
 use Illuminate\Http\Response;
 use App\Models\ClaimRequest;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class ClaimAllocationService 
 {
@@ -98,6 +100,22 @@ class ClaimAllocationService
             $quote->markLeadAllocationFailed();
         }
         return false;
+    }
+
+    public function syncClaimAllocationConfig(int $userId, object $data)
+    {
+   
+        DB::table('claims_lead_allocation_config')->updateOrInsert(
+            [
+                'user_id' => $userId,
+                'quote_type_id' => $data->quoteTypeId,
+            ],
+            [
+                'max_capacity' => 100,
+                'updated_at' => now(),
+                'created_at' => now(), 
+            ]
+        );
     }
 
 }

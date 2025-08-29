@@ -48,9 +48,10 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
-    Route::post('/imcrm/claims/assign-quote', [ApiController::class, 'assignClaimToQuote'])->name('assignClaimToQuote');
+   
 
 });
+Route::post('/imcrm/claim/assign-quote', [ApiController::class, 'assignClaimToQuote'])->name('assignClaimToQuote');
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);

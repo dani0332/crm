@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 
 class UserController extends Controller
 {
@@ -36,7 +37,7 @@ class UserController extends Controller
         $this->userService = $userService;
         $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:users-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:users-edit', ['only' => ['edit', 'update']]);
+        // $this->middleware('permission:users-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:users-delete', ['only' => ['destroy']]);
     }
 
@@ -180,6 +181,9 @@ class UserController extends Controller
                         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                        }
+                        if($user->hasRole(RolesEnum::ClaimsManager)){
+                            app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
                     }
                 }
@@ -352,6 +356,9 @@ class UserController extends Controller
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
+                        if($user->hasRole(RolesEnum::ClaimsManager)){
+                            app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                        }
                     }
                 }
             }
@@ -407,11 +414,13 @@ class UserController extends Controller
 
         // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
+    
         $user->assignRole($request->input('roles'));
 
-        // if Corpline Advisor exists, then set Business Types otherwise set it as empty
-        $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
 
+        // if Corpline Advisor exists, then set Business Types otherwise set it as empty
+        $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ?  request('businessTypes', []) : []);
+   
         return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
     }
 
