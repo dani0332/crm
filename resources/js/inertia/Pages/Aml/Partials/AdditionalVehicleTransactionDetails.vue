@@ -901,7 +901,15 @@ watch(
   </div>
 </template>
 <style>
-  .x-popover-container {
-    width: max-content !important;
+  .x-popover-container .min-w-\[280px\] {
+    overflow-x: auto;
+  }
+
+  .x-popover-container .x-menu-item {
+    display: block !important;
+  }
+
+  .x-popover-container .x-menu-item:hover {
+    width: max-content;
   }
 </style>
