@@ -70,8 +70,10 @@ class OCRService
 
         LoggerService::info('Provider Code - Quote UUID: '.$quote->uuid);
 
+        $refId = $this->getRefId($quote);
+
         $requestData = [
-            'ref_id' => $quote->code,
+            'ref_id' => $refId,
             'uuid' => $quote->uuid,
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,

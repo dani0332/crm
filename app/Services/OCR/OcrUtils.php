@@ -371,4 +371,14 @@ trait OcrUtils
 
         return $providerCode;
     }
+
+    public function getRefId(Model $quote): string
+    {
+        if ($quote instanceof SendUpdateLog) {
+            $prefix = QuoteTypes::getName($quote->quote_type_id)->shortCode();
+            return $prefix . $quote->code;
+        }
+
+        return $quote->code;
+    }
 }
