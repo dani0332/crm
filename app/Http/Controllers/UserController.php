@@ -12,6 +12,7 @@ use App\Models\BusinessTypeOfInsurance;
 use App\Models\InslyAdvisor;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
@@ -22,7 +23,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use App\Services\ClaimAllocation\ClaimAllocationService;
 
 class UserController extends Controller
 {
@@ -182,7 +182,7 @@ class UserController extends Controller
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
-                        if($user->hasRole(RolesEnum::ClaimsManager)){
+                        if ($user->hasRole(RolesEnum::ClaimsManager)) {
                             app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
                     }
@@ -356,7 +356,7 @@ class UserController extends Controller
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
-                        if($user->hasRole(RolesEnum::ClaimsManager)){
+                        if ($user->hasRole(RolesEnum::ClaimsManager)) {
                             app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
                     }
@@ -414,13 +414,12 @@ class UserController extends Controller
 
         // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
-    
+
         $user->assignRole($request->input('roles'));
 
-
         // if Corpline Advisor exists, then set Business Types otherwise set it as empty
-        $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ?  request('businessTypes', []) : []);
-   
+        $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
+
         return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
     }
 
