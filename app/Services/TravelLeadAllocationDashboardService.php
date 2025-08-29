@@ -38,9 +38,11 @@ class TravelLeadAllocationDashboardService extends BaseService
                         ->whereColumn('mr.model_id', 'users.id')
                         ->whereIn('r.id', $managerRoleIds);
                 })
+                ->groupBy('users.name', 'users.id', 'la.id')
                 ->select(
                     'users.id as userId',
                     'users.name as userName',
+                    DB::RAW('"Travel" as team'),
                     DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
                     DB::RAW("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
                     'la.max_capacity as maxCapacity',
