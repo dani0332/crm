@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentChargesEnum;
 use App\Enums\PaymentFrequency;
@@ -501,10 +502,10 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($quoteTypeCode);
         $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get()->toArray();
 
-        if (count($childRecords) > 0) {
-            $childRecords = array_filter($childRecords, function ($item) use ($quote) {
+        if (! empty($childRecords)) {
+            $childRecords = array_values(array_filter($childRecords, function ($item) use ($quote) {
                 return str_starts_with($item['code'], $quote->code);
-            });
+            }));
         }
 
         $_return = [
@@ -1380,6 +1381,10 @@ class SendUpdateLogService
             'refID' => $sendUpdateLog->code,
         ];
 
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->isHealthAUH = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
+        }
+
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
@@ -1824,5 +1829,22 @@ class SendUpdateLogService
     public function isReversalInvoiceEndorsement($taxInvoiceNumber)
     {
         return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
+    }
+
+    public function isEndorsementBookingActionDisabled($sendUpdateLog)
+    {
+        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health) {
+            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->first();
+            $quoteDetails = HealthQuote::where('code', $personalQuote->code)->first();
+
+            $emirateOfYourVisaId = $quoteDetails?->emirate_of_your_visa_id;
+            if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 }

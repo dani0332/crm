@@ -128,6 +128,10 @@ const tableHeader = reactive([
     tooltip: 'Insurance provider',
   },
   {
+    text: 'Currently Insured With',
+    value: 'currently_insured_with_text',
+  },
+  {
     text: 'Line of Business',
     value: 'line_of_business',
     tooltip: 'Line of business of the lead',

@@ -91,35 +91,12 @@ class PaymentService extends BaseService
         $srNo = $data['sr_no'];
         $paymentCode = $data['payment_code'];
         LoggerService::info("retryCreatePrepayment called for payment code : {$paymentCode} and sr no : {$srNo}");
+
         try {
             $paymentSplit = PaymentSplits::find($data['payment_split_id']);
-            if (! $paymentSplit) {
-                LoggerService::info("Payment Split not found for payment split code : {$paymentCode} and sr no : {$srNo}");
-
-                return [
-                    'success' => false,
-                    'message' => 'Payment split not found.',
-                ];
-            }
             $payment = $paymentSplit->payment;
-            if (! $payment) {
-                LoggerService::info("Payment not found for payment split code : {$paymentCode} and sr no : {$srNo}");
-
-                return [
-                    'success' => false,
-                    'message' => 'Payment not found',
-                ];
-            }
             $sendUpdateId = $payment->send_update_log_id;
             $mainLeadObject = app(CentralController::class)->getQuoteObject($data['quote_type'], $data['quote_request_id']);
-            if (! $mainLeadObject) {
-                LoggerService::info("Main lead object not found for payment split code : {$paymentCode} and sr no : {$srNo}");
-
-                return [
-                    'success' => false,
-                    'message' => 'Main lead object not found.',
-                ];
-            }
             if (! empty($sendUpdateId) && $sendUpdateId > 0) {
                 $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
                 $quoteModel->fill([
@@ -132,6 +109,7 @@ class PaymentService extends BaseService
             $request = new Request;
             $request->merge([
                 'modelType' => $data['quote_type'],
+                'quoteType' => $data['quote_type'],
                 'quote_id' => $data['quote_request_id'],
                 'customer_id' => $quoteModel->customer_id,
                 'advisor_id' => $quoteModel->advisor_id,
@@ -139,13 +117,24 @@ class PaymentService extends BaseService
 
             LoggerService::info("Start Retry Prepayment Posting of Payment split for payment code : {$paymentCode} and sr no : {$srNo}");
             if ((new SageApiService)->isSageEnabled()) {
-                $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($request, $quoteModel, $payment, $paymentSplit, $paymentSplit->collection_amount);
+                $sageARPrepaymentResponse = (new SageApiService)->createARPrepaymentPremiumReceipt($request, $quoteModel, $payment, $paymentSplit, $paymentSplit->collection_amount);
 
-                if (! $sageResponse['status']) {
+                if (! $sageARPrepaymentResponse['status']) {
                     LoggerService::warning("Sage response error for payment code : {$paymentCode} and sr no : {$srNo}");
-                    vAbort($sageResponse['message']);
+                    vAbort($sageARPrepaymentResponse['message']);
                 }
-                LoggerService::info("Sage Receipt ID created: {$paymentSplit->sage_reciept_id} for payment code : {$paymentCode} and sr no : {$srNo}");
+                LoggerService::info("Sage AR Receipt ID created: {$paymentSplit->sage_reciept_id} for payment code : {$paymentCode} and sr no : {$srNo}");
+
+                /*$request->sage_customer_number = $sageARPrepaymentResponse['sageCustomerNumber'];
+
+                $sageAPPrepaymentResponse = (new SageApiService)->createAPPrepaymentPremiumReceipt($request, $quoteModel, $payment, $paymentSplit, $paymentSplit->collection_amount);
+
+                if (! $sageAPPrepaymentResponse['status']) {
+                    vAbort($sageAPPrepaymentResponse['message']);
+
+                }*/
+
+                LoggerService::info("Sage AP Receipt ID created: {$paymentSplit->sage_ap_payment_receipt_id} for payment code : {$paymentCode} and sr no : {$srNo}");
 
                 return [
                     'success' => true,

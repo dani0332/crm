@@ -330,7 +330,7 @@ export function getQuoteType(id, returnType = 'code') {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
     2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
-    4: { code: 'LIF', id: 'life', link: '/quotes' },
+    4: { code: 'LIF', id: 'life', link: '/personal-quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
     6: { code: 'BIK', id: 'bike', link: '/personal-quotes' },
     7: { code: 'YAC', id: 'yacht', link: '/personal-quotes' },
@@ -462,6 +462,7 @@ export const calculateBMI = (heightInCm, weightInKg) => {
 
   return parseFloat(bmi.toFixed(2));
 };
+
 export const resolveUserStatusText = statusId => {
   switch (parseInt(statusId)) {
     case 1:
@@ -536,6 +537,36 @@ export const useGenerateOptions = (items, valueKey, labelKey) => {
   }));
 };
 
+export const useformatDateTimeForPicker = dateTimeString => {
+  if (!dateTimeString) return null;
+
+  // Handle format: DD-MM-YYYY HH:mm:ss from server
+  const [datePart, timePart] = dateTimeString.split(' ');
+  if (!datePart || !timePart) return null;
+
+  const [day, month, year] = datePart.split('-');
+  const [hours, minutes, seconds] = timePart.split(':');
+
+  // Create a date object but compensate for timezone to preserve exact time display
+  // The server sends local time, but DatePicker with utc="preserve" still converts
+  const date = new Date(
+    parseInt(year),
+    parseInt(month) - 1, // Month is 0-indexed
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    parseInt(seconds) || 0,
+  );
+
+  // Get timezone offset and compensate by subtracting it
+  // This ensures the DatePicker displays the exact time from server
+  const timezoneOffsetMinutes = date.getTimezoneOffset();
+  const compensatedDate = new Date(
+    date.getTime() - timezoneOffsetMinutes * 60000,
+  );
+
+  return compensatedDate;
+};
 // prevent charaters, accepts only numbers, comma, and decimal point
 export const preventInvalidInputs = (
   event,

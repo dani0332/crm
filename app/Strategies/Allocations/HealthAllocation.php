@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
+use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
@@ -37,6 +38,7 @@ class HealthAllocation implements Allocation
                 VerifyAlreadyInProgressAllocationPipe::class,
                 ValidateNationalityConfigPipe::class,
                 AssignTeamPipe::class,
+                ApplyRuleExclusionPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 ResetNationalityConfigPipe::class,
                 FetchAvailableAdvisorPipe::class,

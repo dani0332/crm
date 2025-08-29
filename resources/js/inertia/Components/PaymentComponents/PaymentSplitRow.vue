@@ -29,6 +29,10 @@ const props = defineProps({
   quoteRequest: Object,
   paymentMethodsForm: Object,
   quoteType: String,
+  isHealthAUHLead: {
+    type: Boolean,
+    default: false,
+  },
   sendUpdate: {
     type: Object,
     default: null,
@@ -103,7 +107,7 @@ const triggerPostRetryPrepayment = () => {
   retryPrepaymentForm.paymentCode = props.splitPayment.code;
   retryPrepaymentForm.srNo = props.splitPayment.sr_no;
 
-  retryPrepaymentForm.post(route('can-post-premium-prepayment-retry'), {
+  retryPrepaymentForm.post(route('retry-prepayment-button'), {
     preserveScroll: true,
     onSuccess: () => {
       router.reload({
@@ -186,6 +190,9 @@ const enablePostPrepaymentButton = computed(() => {
 });
 
 const showRetryButton = computed(() => {
+  if (props.isHealthAUHLead) {
+    return false;
+  }
   return (
     !enablePostPrepaymentButton.value &&
     can(permissionEnum.RETRY_PREPAYMENT_BUTTON) &&

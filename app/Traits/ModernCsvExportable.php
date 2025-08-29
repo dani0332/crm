@@ -32,6 +32,11 @@ trait ModernCsvExportable
             foreach ($data as $record) {
                 fputcsv($handle, $this->map($record));
             }
+
+            if (method_exists($this, 'postDataRows')) {
+                $this->postDataRows($handle);
+            }
+
             fclose($handle);
         }, 200, [
             'Content-Type' => 'text/csv',
@@ -151,5 +156,18 @@ trait ModernCsvExportable
             $requestParams,
             $ccRecipients
         );
+    }
+
+    public function resolveNumberFormat($value)
+    {
+        if (is_string($value) && strpos($value, ',') !== false) {
+            return floatval(str_replace(',', '', $value));
+        }
+
+        if (is_numeric($value)) {
+            return floatval($value);
+        }
+
+        return $value;
     }
 }

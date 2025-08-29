@@ -240,8 +240,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
         Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
 
-        Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
         Route::get('personal-quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
+        Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
@@ -271,7 +271,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
+        Route::get('{quoteType}/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
         Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
@@ -308,6 +308,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
         Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
+        Route::get('/reports/conversion-as-at/export', [ReportsController::class, 'exportConversionAsAtReport'])->name('conversion-as-at-export');
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
@@ -352,7 +353,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
     Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('can-post-premium-prepayment')->middleware('check_route_access');
-    Route::post('/payment-split/retry-prepayment', [CentralController::class, 'retryPrepaymentCreation'])->name('can-post-premium-prepayment-retry')->middleware('check_route_access');
+    Route::post('/payment-split/retry-prepayment', [CentralController::class, 'retryPrepaymentCreation'])->name('retry-prepayment-button')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     // Child payment approve
@@ -595,6 +596,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('void-payment', [EmbeddedProductController::class, 'voidPayment'])->name('void-payment');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
+        Route::post('assignSupportUser', [CRUDController::class, 'assignSupportUser'])->name('assign-support-user');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
 
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
@@ -763,6 +765,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('sage-api-logs/{sectionId}/latest-error', [SageApi::class, 'getLastSageError'])->name('sage-api-logs-latest-error');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
+    Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/bike-model-by-id', [AjaxController::class, 'bikeModelBasedOnCarMakeId']);
@@ -890,7 +893,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     })->name('run-policy-bulk-send');
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
-        // Dispatch job to background queue instead of running synchronously
+        // Dispatch job to background queue instead of running synchronously to check the handbook documents
         \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
 
         return response()->json([

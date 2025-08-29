@@ -250,6 +250,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
+    public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -269,6 +270,7 @@ final class PermissionsEnum extends Enum
     public const YACHT_CARD_VIEW = 'yacht-quotes-card';
     public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
     public const CORPLINE_CARD_VIEW = 'business-cards';
+    public const LIFE_CARD_VIEW = 'life-quotes-card';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
     public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
@@ -383,6 +385,7 @@ final class PermissionsEnum extends Enum
     public const UPLOAD_HEALTH_COVERAGES = 'upload-health-coverages';
     public const EXPORT_RM_LEADS = 'export-rm-leads';
     public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const EXPORT_HOME_PUA_UPDATES = 'export-home-pua-updates';
     public const CORPLINE_LEAD_ALLOCATION_DASHBOARD = 'corpline-lead-allocation-dashboard';
     public const CYCLE_LEAD_ALLOCATION_DASHBOARD = 'cycle-lead-allocation-dashboard';
     public const YACHT_LEAD_ALLOCATION_DASHBOARD = 'yacht-lead-allocation-dashboard';
@@ -426,6 +429,9 @@ final class PermissionsEnum extends Enum
     public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
     public const PLAN_DETAILS_EDIT = 'plan-details-edit';
     public const OVERRIDE_COMMISSION_LIMIT = 'override-commission-limit';
+    public const LEADS_BY_EMAIL = 'leads-by-email';
+    public const ASSIGN_CLIENT_SUPPORT = 'oe-ae-assign-client-support';
+    public const ASSIGN_LEAD_ADVISOR = 'pe-oe-assign-leads-advisor';
 
     // Savings Permissions
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
