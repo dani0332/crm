@@ -900,8 +900,8 @@ watch(
     </div>
   </div>
 </template>
-<style scoped>
-  .v-popper__wrapper {
-      width: fit-content;
+<style>
+  .x-popover-container {
+    width: max-content !important;
   }
 </style>
