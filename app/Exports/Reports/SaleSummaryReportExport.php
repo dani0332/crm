@@ -2,23 +2,107 @@
 
 namespace App\Exports\Reports;
 
+use App\Contracts\CsvExportableInterface;
+use App\Services\Logger\LoggerService;
+use App\Services\Reports\SaleSummaryReportService;
+use App\Traits\ModernCsvExportable;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Events\AfterSheet;
 
-class SaleSummaryReportExport extends BaseReportsExport
+class SaleSummaryReportExport implements CsvExportableInterface
 {
-    public function __construct(public Collection $data, public string $groupByColumn)
+    use ModernCsvExportable;
+
+    private string $groupByColumn = 'advisor';
+    protected Collection $columnTotals;
+
+    public function __construct(
+        private SaleSummaryReportService $saleSummaryReportService,
+        private array $requestParams
+    ) {
+        request()->merge($this->requestParams);
+
+        if (request()->filled('groupBy')) {
+            $this->groupByColumn = request()->groupBy;
+            // Initialize totals for numeric columns
+        }
+
+        $this->columnTotals = collect([
+            'total_policies' => 0,
+            'total_endorsements' => 0,
+            'total_transaction' => 0,
+            'price_vat_applicable' => 0,
+            'total_vat' => 0,
+            'price_vat_not_applicable' => 0,
+            'discount' => 0,
+            'commission_vat_applicable' => 0,
+            'commission_vat' => 0,
+            'commission_vat_not_applicable' => 0,
+            'endorsements_amount' => 0,
+            'total_price' => 0,
+        ]);
+    }
+
+    /**
+     * Get the data collection for CSV export
+     */
+    public function collection(array $requestParams = []): Collection
     {
-        parent::__construct($data);
+        $request = request()->merge($requestParams);
+
+        $data = $this->saleSummaryReportService->getReportData($request);
+
+        return $data;
+    }
+
+    /**
+     * Get the query builder instance for chunked processing
+     */
+    public function getQuery(array $requestParams = []): ?\Illuminate\Database\Eloquent\Builder
+    {
+        $request = request()->merge($requestParams);
+
+        return $this->saleSummaryReportService->getReportQueryBuilder($request);
+    }
+
+    public function processChunkedQuery($query, array $requestParams, $stream): int
+    {
+        $totalRecords = 0;
+        $chunkSize = 1000;
+
+        LoggerService::info('processChunkedQuery Start');
+
+        $requestParams = request()->merge($requestParams);
+
+        $endorsementsData = $this->saleSummaryReportService->getEndorsementsData($requestParams);
+
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $requestParams, $stream, $endorsementsData) {
+
+            $processedData = $this->saleSummaryReportService->processEndorsementsData($chunk, $endorsementsData, $requestParams);
+
+            $this->saleSummaryReportService->formatData($processedData);
+
+            // Now process ALL records in the chunk (just like the download path does)
+            foreach ($processedData as $record) {
+                fputcsv($stream, $this->map($record));
+                $totalRecords++;
+            }
+        });
+
+        // Write totals rows to file which were calculated during map()
+        $this->postDataRows($stream);
+
+        return $totalRecords;
     }
 
     public function headings(): array
     {
+        $groupByColumn = $this->groupByColumn == 'support_user' ? 'OE/AE' : $this->groupByColumn;
+
         $headings = [
-            ucwords(str_replace('_', ' ', $this->groupByColumn)),
+            ucwords(str_replace('_', ' ', $groupByColumn)),
         ];
 
-        if (in_array($this->groupByColumn, ['advisor'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $headings[] = 'Department';
         }
 
@@ -53,35 +137,43 @@ class SaleSummaryReportExport extends BaseReportsExport
             $quote->{$groupBy} ?? 'N/A',
         ];
 
-        if (in_array($this->groupByColumn, ['advisor'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $values[] = $quote->department ?? 'N/A';
+        }
+
+        $numericValues = collect([
+            'total_policies' => $this->resolveNumberFormat($quote->total_policies ?? 0),
+            'total_endorsements' => $this->resolveNumberFormat($quote->total_endorsements ?? 0),
+            'total_transaction' => $this->resolveNumberFormat($quote->total_transaction ?? 0),
+            'price_vat_applicable' => $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
+            'total_vat' => $this->resolveNumberFormat($quote->total_vat ?? 0),
+            'price_vat_not_applicable' => $this->resolveNumberFormat($quote->price_vat_not_applicable ?? 0),
+            'discount' => $this->resolveNumberFormat($quote->discount ?? 0),
+            'commission_vat_applicable' => $this->resolveNumberFormat($quote->commission_vat_applicable ?? 0),
+            'commission_vat' => $this->resolveNumberFormat($quote->commission_vat ?? 0),
+            'commission_vat_not_applicable' => $this->resolveNumberFormat($quote->commission_vat_not_applicable ?? 0),
+            'endorsements_amount' => $this->resolveNumberFormat($quote->endorsements_amount ?? 0),
+            'total_price' => $this->resolveNumberFormat($quote->total_price ?? 0),
+        ]);
+
+        foreach ($this->columnTotals->keys() as $field) {
+            $this->columnTotals->put($field, $this->columnTotals->get($field, 0) + ($numericValues->get($field) ?? 0));
         }
 
         return [
             ...$values,
-            $this->resolveNumberFormat($quote->total_policies ?? 0),
-            $this->resolveNumberFormat($quote->total_endorsements ?? 0),
-            $this->resolveNumberFormat($quote->total_transaction ?? 0),
-            $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
-            $this->resolveNumberFormat($quote->total_vat ?? 0),
-            $this->resolveNumberFormat($quote->price_vat_not_applicable ?? 0),
-            $this->resolveNumberFormat($quote->discount ?? 0),
-            $this->resolveNumberFormat($quote->commission_vat_applicable ?? 0),
-            $this->resolveNumberFormat($quote->commission_vat ?? 0),
-            $this->resolveNumberFormat($quote->commission_vat_not_applicable ?? 0),
-            $this->resolveNumberFormat($quote->endorsements_amount ?? 0),
-            $this->resolveNumberFormat($quote->total_price ?? 0),
+            ...$numericValues->values()->toArray(),
         ];
     }
 
-    public static function afterSheet(AfterSheet $event)
+    private function postDataRows($stream)
     {
-        $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
-
-        $sumCoumns = ['B', ...$commonColumns];
-        if (in_array($event->getConcernable()->groupByColumn, ['advisor'])) {
-            $sumCoumns = [...$commonColumns, 'N'];
+        $totalsRow = array_fill(0, count($this->map((object) [])), '');
+        $totalsRow[0] = 'Totals';
+        $offset = in_array($this->groupByColumn, ['advisor', 'support_user']) ? 2 : 1; // Adjust for department column
+        foreach ($this->columnTotals->keys() as $index => $key) {
+            $totalsRow[$index + $offset] = $this->resolveNumberFormat($this->columnTotals->get($key));
         }
-        self::performSum($event, $sumCoumns);
+        fputcsv($stream, $totalsRow);
     }
 }

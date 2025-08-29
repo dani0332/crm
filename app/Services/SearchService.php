@@ -230,10 +230,9 @@ class SearchService extends BaseService
             ]);
         }
 
-        // Add department details if not already joined
-        if (! request()->has('department')) {
-            $query->leftJoin('users', 'personal_quotes.advisor_id', 'users.id');
-        }
+        // Always add advisor and support user details for exports
+        $query->leftJoin('users as advisor', 'personal_quotes.advisor_id', 'advisor.id');
+        $query->leftJoin('users as support_user', 'personal_quotes.support_user_id', 'support_user.id');
 
         // Add payment details if not already joined and not filtering by payment fields
         if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))
@@ -255,10 +254,13 @@ class SearchService extends BaseService
             $query->leftJoin('insurance_provider', 'payments.insurance_provider_id', 'insurance_provider.id');
         }
 
-        // Add payment and insurance provider columns
+        // Add payment, insurance provider, advisor, support user, and PCP tag columns
         $excelExportColumns = array_merge($excelExportColumns, [
             'payments.total_price',
             'insurance_provider.text as insurance_provider',
+            'advisor.name as advisor_name',
+            'support_user.name as support_user_name',
+            DB::raw(Customer::formattedPcpTagCase('customer').' as pcp_tag_formatted'),
         ]);
 
         $query->select(array_merge($selectColumns, $excelExportColumns));
@@ -443,13 +445,18 @@ class SearchService extends BaseService
 
             // Filter by department
             if ($request->has('department') && ! isset($request->code)) {
-                $query->join('users', 'personal_quotes.advisor_id', 'users.id');
-                $query->whereIn('users.department_id', $request->department);
+                $query->join('users as advisor_dept', 'personal_quotes.advisor_id', 'advisor_dept.id');
+                $query->whereIn('advisor_dept.department_id', $request->department);
             }
 
             // Filter by advisors
             if ($request->has('advisors') && ! isset($request->code)) {
                 $query->whereIn('personal_quotes.advisor_id', $request->advisors);
+            }
+
+            // Filter by support users
+            if ($request->has('support_users') && ! isset($request->code)) {
+                $query->whereIn('personal_quotes.support_user_id', $request->support_users);
             }
 
             // Filter by tax invoice numbers
