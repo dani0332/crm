@@ -457,7 +457,6 @@ class ApiController extends Controller
     }
     public function assignClaimToQuote(ClaimAssignmentRequest $request)
     {
-       
         return $this->apiService->processClaimAssignment($request);
     }
 }

@@ -8,8 +8,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Models\ClaimRequest;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use App\Pipes\Allocation\Claim\AssignLeadPipe;
 use App\Pipes\Allocation\Claim\FetchLeadPipe;
 use App\Pipes\Allocation\Claim\FinalizeEligibleAdvisorPipe;
@@ -19,6 +17,7 @@ use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Pipeline;
 use App\Pipes\Allocation\Claim\FetchEligibleAdvisorsPipe;
 
@@ -101,18 +100,18 @@ class ClaimAllocationService
 
     public function syncClaimAllocationConfig(int $userId, object $data)
     {
-   
-        // DB::table('claims_lead_allocation_config')->updateOrInsert(
-        //     [
-        //         'user_id' => $userId,
-        //         'quote_type_id' => $data->quoteTypeId,
-        //     ],
-        //     [
-        //         'max_capacity' => 100,
-        //         'updated_at' => now(),
-        //         'created_at' => now(), 
-        //     ]
-        // );
+
+        DB::table('claims_lead_allocation_config')->updateOrInsert(
+            [
+                'user_id' => $userId,
+                'quote_type_id' => $data->quoteTypeId,
+            ],
+            [
+                'max_capacity' => 100,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
     }
 
 }

@@ -48,7 +48,6 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
-   
 
 });
 Route::post('/imcrm/claim/assign-quote', [ApiController::class, 'assignClaimToQuote'])->name('assignClaimToQuote');
