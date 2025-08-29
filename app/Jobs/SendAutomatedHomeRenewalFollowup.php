@@ -8,7 +8,6 @@ use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\Logger\LoggerService;
-use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -38,15 +37,16 @@ class SendAutomatedHomeRenewalFollowup implements ShouldQueue
 
         $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid)->where('quote_type_id', QuoteTypeId::Home)->first();
 
-        if (!$personalQuote) {
+        if (! $personalQuote) {
             LoggerService::info(self::class." - Personal Quote not found for: {$this->quoteUuid}");
+
             return;
         }
 
         LoggerService::startQuoteLogging(QuoteTypes::HOME->refId($personalQuote->uuid));
-        
+
         if ($homeAutomatedFollowupSwitch && $homeAutomatedFollowupSwitch == 1) {
-            
+
             app(HomeEmailService::class)->sendAutomatedHomeRenewalFollowup($personalQuote);
             LoggerService::info(self::class." - Automated Home Renewal Followup sent for quote: {$personalQuote->uuid}");
         } else {

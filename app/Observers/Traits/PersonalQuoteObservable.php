@@ -16,7 +16,6 @@ use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\PersonalQuote;
-use App\Models\QuoteFlowDetails;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BirdService;
@@ -60,9 +59,9 @@ trait PersonalQuoteObservable
             }
             SendAutomatedLifeFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
         }
-        
-        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::Quoted, QuoteStatusEnum::ApplicationPending, QuoteStatusEnum::PaymentPending]) && 
-            $personalQuote->isHome() && 
+
+        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::Quoted, QuoteStatusEnum::ApplicationPending, QuoteStatusEnum::PaymentPending]) &&
+            $personalQuote->isHome() &&
             $personalQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
 
             $isFollowupExecuted = app(BirdService::class)

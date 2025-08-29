@@ -388,8 +388,8 @@ class HomeEmailService extends BaseService
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, $personalQuote->uuid),
             'flowExecutedAt' => $personalQuote->automated_flow_executed_at ?? null,
 
-             // Home quote-related data
-             'automatedFlowExecuted' => ! empty($homeQuote?->automated_flow_executed_at),
+            // Home quote-related data
+            'automatedFlowExecuted' => ! empty($homeQuote?->automated_flow_executed_at),
 
             // Advisor-related data
             'advisorId' => $advisor?->id,
@@ -410,7 +410,6 @@ class HomeEmailService extends BaseService
         return (object) $data;
     }
 
-
     public function sendAutomatedHomeRenewalFollowup(PersonalQuote $personalQuote)
     {
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_AUTOMATED_FOLLOWUPS)->first();
@@ -425,9 +424,9 @@ class HomeEmailService extends BaseService
             }
             // ✅ Use NEW renewal-specific data builder
             $emailData = $this->buildRenewalEmailData(
-                $personalQuote, 
-                $advisor, 
-                WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, 
+                $personalQuote,
+                $advisor,
+                WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
                 $personalQuote->homeQuote
             );
 
