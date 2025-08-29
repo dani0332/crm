@@ -1,9 +1,16 @@
 <script setup>
+import NProgress from 'nprogress';
+import {
+  formattedDateDmyWithTime, formattedDateYmd 
+} from '@/inertia/Composables/utilities.js';
+import { formattedDateYmdWithTime } from '../../Composables/utilities';
+
 const props = defineProps({
   claims: Object,
   claimDropdownOptions: Object,
   statistics: Object,
   filters: Object,
+  complaintStatuses: Object,
 });
 
 const page = usePage();
@@ -12,28 +19,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const quoteTypeIds = page.props.quoteTypeIds;
 const can = permission => useCan(permission);
 
-let availableFilters = {
-  code: '',
-  first_name: '',
-  last_name: '',
-  email: '',
-  mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
-  claim_status_id: '',
-  claim_sub_status_id: '',
-  manager_id: '',
-  assigned_manager_id: '',
-  manager_assigned_date: '',
-  quote_type_id: '',
-  policy_number: '',
-  assigned_status: '',
-  source: '',
-  incident: '',
-  insurance_provider_id: '',
-  claim_type_id: '',
-  claim_request_type_id: '',
-  whatsapp_consent: '',
+let availableFilters = { 
   page: 1,
 };
 
@@ -115,11 +101,12 @@ const managersOptions = computed(() => {
       label: manager.name,
     })) || []
   );
-});
+}); 
+
 const complaintStatusOptions = computed(() => {
   return (
-    props.claimDropdownOptions?.complaintStatuses?.map(status => ({
-      value: status.value,
+    props.complaintStatuses?.map(status => ({
+      value: status.id,
       label: status.text,
     })) || []
   );
@@ -175,6 +162,21 @@ function searchClaims(isValid) {
         delete filters[key],
     );
 
+    // Format dates before sending the request
+    if (filters.created_at_start) {
+      filters.created_at_start = formattedDateYmd(filters.created_at_start);
+    }
+    if (filters.created_at_end) {
+      filters.created_at_end = formattedDateYmd(filters.created_at_end);
+    }
+    if (filters.manager_assigned_date) {
+      filters.manager_assigned_date = formattedDateYmd(filters.manager_assigned_date);
+    }
+    if (filters.next_followup_datetime) {
+      filters.next_followup_datetime = formattedDateYmd(filters.next_followup_datetime);
+    } 
+
+    NProgress.start();
     router.visit(route('claims.index'), {
       method: 'get',
       data: filters,
@@ -183,25 +185,30 @@ function searchClaims(isValid) {
       onBefore: () => (loader.table = true),
       onSuccess: () => (loader.table = false),
     });
+    NProgress.done();
   }
 }
 
 function onReset() {
+  NProgress.start(); 
   router.visit('/claim', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
     onBefore: () => (loader.table = true),
-    onSuccess: () => (loader.table = false),
+    onSuccess: () => (loader.table = false), 
   });
+  NProgress.done(); 
 }
 
 function exportClaims() {
+  NProgress.start();
   loader.export = true;
   window.location.href = '/claim/export?' + new URLSearchParams(filters);
   setTimeout(() => {
     loader.export = false;
   }, 3000);
+  NProgress.done();
 }
 
 // Check if selected line of business is car
@@ -252,9 +259,9 @@ watch(
     <x-form @submit="searchClaims" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-input
-          v-model="filters.ref_id"
+          v-model="filters.code"
           type="text"
-          name="ref_id"
+          name="code"
           label="Ref ID"
           placeholder="Search by Ref ID"
           class="w-full"
@@ -307,6 +314,17 @@ watch(
           format="yyyy-MM-dd"
         />
 
+        
+        <x-select
+          v-model="filters.quote_type_id"
+          label="Line of Business"
+          placeholder="Select Line of Business"
+          :options="lineOfBusinessOptions"
+          filterable
+          filterPlaceholder="Filter Line of Business...."
+          clearable
+        />
+
         <x-select
           v-model="filters.claim_status_id"
           label="Claim Status"
@@ -322,21 +340,11 @@ watch(
           filterable
           filterPlaceholder="Filter Claim Sub Status...."
           clearable
-        />
+        /> 
 
         <x-select
           v-model="filters.manager_id"
-          label="Assigned Claims Manager"
-          placeholder="Select Manager"
-          :options="managersOptions"
-          filterable
-          filterPlaceholder="Filter Manager...."
-          clearable
-        />
-
-        <x-select
-          v-model="filters.manager_id"
-          label="Claims Lead"
+          label="Claims Manager"
           placeholder="Select Manager"
           :options="managersOptions"
           filterable
@@ -351,15 +359,6 @@ watch(
           format="yyyy-MM-dd"
         />
 
-        <x-select
-          v-model="filters.quote_type_id"
-          label="Line of Business"
-          placeholder="Select Line of Business"
-          :options="lineOfBusinessOptions"
-          filterable
-          filterPlaceholder="Filter Line of Business...."
-          clearable
-        />
         <x-input
           v-model="filters.policy_number"
           type="text"
@@ -379,7 +378,7 @@ watch(
           clearable
         />
         <x-select
-          v-model="filters.complaint_status"
+          v-model="filters.complaint_status_id"
           label="Complaint Status"
           placeholder="Select  "
           :options="complaintStatusOptions"
@@ -389,8 +388,8 @@ watch(
         />
 
         <DatePicker
-          v-model="filters.next_follow_up_date"
-          name="next_follow_up_date"
+          v-model="filters.next_followup_datetime"
+          name="next_followup_datetime"
           label="Next Follow Up Date"
           placeholder="Select Assigned Date"
           format="yyyy-MM-dd"
@@ -448,8 +447,8 @@ watch(
           Export
         </x-button>
         <div class="flex gap-3 justify-self-end">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-          <x-button size="sm" color="primary" @click.prevent="onReset">
+          <x-button size="sm" color="#ff5e00" :loading="loader.table" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset" :loading="loader.table">
             Reset
           </x-button>
         </div>
@@ -541,7 +540,7 @@ watch(
       </template>
 
       <template #item-created_at="{ created_at }">
-        {{ created_at }}
+        {{ formattedDateDmyWithTime(created_at) }}
       </template>
     </DataTable>
 

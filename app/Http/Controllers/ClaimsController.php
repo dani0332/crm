@@ -64,11 +64,13 @@ class ClaimsController extends Controller
 
             // Get dropdown data for filters
             $claimDropdownOptions = $this->claimsService->getDropdownData();
+            $complaintStatuses = $this->claimsService->getClaimComplaintStatuses();
 
             return Inertia::render('Claims/Index', [
                 'claims' => $claims,
                 'filters' => $this->claimsService->getFilters($request),
                 'claimDropdownOptions' => $claimDropdownOptions,
+                'complaintStatuses' => $complaintStatuses,
                 'statistics' => [],
             ]);
         } catch (Exception $e) {
@@ -81,6 +83,7 @@ class ClaimsController extends Controller
                 'claims' => collect([]),
                 'filters' => [],
                 'claimDropdownOptions' => [],
+                'complaintStatuses' => [],
                 'statistics' => [],
                 'error' => $e->getMessage(),
             ]);

@@ -138,8 +138,20 @@ class ClaimsService extends BaseService
             $query->where('claim_sub_status_id', $filters['claim_sub_status_id']);
         }
 
+        if (! empty($filters['complaint_status_id'])) {
+            $query->where('complaint_status_id', $filters['complaint_status_id']);
+        }
+
         if (! empty($filters['manager_id'])) {
             $query->where('manager_id', $filters['manager_id']);
+        }
+
+        if (! empty($filters['manager_assigned_date'])) {
+            $query->whereDate('manager_assigned_date', $filters['manager_assigned_date']);
+        }
+
+        if (! empty($filters['next_followup_datetime'])) {
+            $query->whereDate('next_followup_datetime', $filters['next_followup_datetime']);
         }
 
         if (! empty($filters['quote_type_id'])) {
@@ -195,19 +207,16 @@ class ClaimsService extends BaseService
             'created_at_end',
             'claim_status_id',
             'claim_sub_status_id',
-            'manager_id',
-            'assigned_manager_id',
-            'lead_manager_id',
+            'manager_id',  
             'manager_assigned_date',
             'quote_type_id',
             'policy_number',
-            'complaint_status',
-            'next_follow_up_date',
+            'complaint_status_id',
+            'next_followup_datetime',
             'plat_number',
             'car_make',
             'car_model',
-            'model_year',
-            'assigned_status',
+            'model_year', 
         ]);
     }
 
