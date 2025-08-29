@@ -123,7 +123,7 @@ class AmtController extends Controller
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        $this->whereBasedOnRole($data, 'bqr');
+        $this->whereBasedOnRole($data, 'bqr', quoteTypeCode::Business);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
