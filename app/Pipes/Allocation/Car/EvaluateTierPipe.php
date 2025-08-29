@@ -83,7 +83,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
     {
         LoggerService::info("lead payment status is : {$this->lead->payment_status_id} and tier id is : {$this->lead->tier_id} and sic advisor requested is : {$this->lead->sic_advisor_requested}");
 
-        if (($this->lead->payment_status_id == PaymentStatusEnum::AUTHORISED || $this->lead->sic_advisor_requested == 1) && $this->lead->tier_id == TiersIdEnum::TIER_R) {
+        if (($this->lead->isPaymentAuthorizedOrDeclined() || $this->lead->sic_advisor_requested == 1) && $this->lead->tier_id == TiersIdEnum::TIER_R) {
             LoggerService::info('SIC lead payment is made and tier is Tier R');
             $tier = $this->findRenewalLeadTier();
             if (! empty($tier) && $tier->id != $this->lead->tier_id) {
