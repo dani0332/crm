@@ -412,7 +412,7 @@ class QuoteDocumentService extends BaseService
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
                 // If business type of insurance is available but not available in document types then add it to the business document types
-                if($documentTypes->whereIn('code', [DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL])->count() == 0) {
+                if($documentTypes->whereIn('code', [DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL])->count() == 0 && $havePermission) {
                     $businessDocumetTypes[] = DocumentTypeCode::BAL_BS;
                 }
             }
