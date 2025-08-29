@@ -210,7 +210,7 @@ class BorService
     /**
      * Determine the appropriate BOR document type code based on lead LOB
      */
-    public function determineBorDocumentType($quoteType): string
+    public function determineBorDocumentType($quoteType): string | array
     {
         if (!$quoteType) {
             return 'BAL'; // Default to general BAL
@@ -227,7 +227,7 @@ class BorService
             'life' => DocumentTypeCode::BAL_LIFE,
             'cycle' => DocumentTypeCode::BAL_CYCLE,
             'yacht' => DocumentTypeCode::BAL_YACHT,
-            'business' => DocumentTypeCode::BUS_BAL,
+            'business' => [DocumentTypeCode::BUS_BAL, DocumentTypeCode::BAL_BS],
             'group_medical' => DocumentTypeCode::GM_BOL,
         ];
 
@@ -329,7 +329,7 @@ class BorService
             ->where('is_active', 1)
             ->where("quote_type_id", $personalQuote->quote_type_id)
             ->when(isset($quoteObject->business_type_of_insurance_id), function ($query) use ($quoteObject) {
-                $query->where('business_type_of_insurance_id', $quoteObject->business_type_of_insurance_id);
+                $query->where('business_type_of_insurance_id', $quoteObject->business_type_of_insurance_id)->orWhere('business_type_of_insurance_id', null);
             })
             ->first();
         

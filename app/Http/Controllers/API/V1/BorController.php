@@ -153,7 +153,7 @@ class BorController extends Controller
                 $query->where('quote_type_id', $request->input('quote_type_id'));
             })
             ->when($request->has('business_type_of_insurance_id'), function ($query) use ($request) {
-                $query->where('business_type_of_insurance_id', $request->input('business_type_of_insurance_id'));
+                $query->where('business_type_of_insurance_id', $request->input('business_type_of_insurance_id'))->orWhere('business_type_of_insurance_id', null);
             })
             ->where('is_active', 1)
             ->get();
