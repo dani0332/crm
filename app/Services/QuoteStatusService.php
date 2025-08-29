@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -58,6 +59,12 @@ class QuoteStatusService
 
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
+                    if (request('workflow_type') == QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS) {
+                        $updateQuote->quote_status_id = QuoteStatusEnum::FollowedUp;
+                    } else {
+                        $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+                    }
+                    break;
                 case QuoteStatusEnum::FollowedUp:
                     $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
                     break;
