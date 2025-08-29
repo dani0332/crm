@@ -14,7 +14,7 @@ class AssignLeadPipe extends BaseAllocationPipe
     public function handle(AllocationRequest $request, Closure $next)
     {
         $this->setRequest($request);
-    
+
         $this->assign(function () {});
         LoggerService::info('Claim lead assigned to Manager');
 

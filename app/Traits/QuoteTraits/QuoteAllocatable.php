@@ -50,7 +50,7 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailed()
     {
-        
+
         if ($this->advisor_id) {
             // if advisor is already assigned then we don't need to mark it as failed
 
@@ -267,8 +267,8 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailedForClaim()
     {
-        
-            if ($this->manager_id) {
+
+        if ($this->manager_id) {
             // if manager is already assigned then we don't need to mark it as failed
 
             return;

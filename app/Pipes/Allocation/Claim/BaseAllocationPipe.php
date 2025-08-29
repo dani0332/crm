@@ -9,12 +9,12 @@ use App\Enums\UserStatusEnum;
 use App\Models\ClaimRequest;
 use App\Models\User;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use App\Services\ClaimAllocation\ClaimAllocationService;
 
 abstract class BaseAllocationPipe extends ClaimAllocationService
 {
@@ -174,20 +174,20 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         }
 
         LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
-  
+
         $this->lead->manager_id = $advisor->id;
         $this->lead->manager_assigned_date = now();
         $this->lead->assignment_type = $assignmentType;
- 
+
         if (empty($this->lead->lead_assignment_trigger)) {
             LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
             $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
         }
 
         $this->lead->save();
-    
+
         $this->lead->endAllocation();
-       
+
         return [
             'advisor' => $advisor,
             'assignmentType' => $assignmentType,
@@ -200,30 +200,30 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
     protected function assign(?callable $afterAssign = null)
     {
         DB::beginTransaction();
-        
+
         // try {
-            [
-                'advisor' => $advisor,
-                'assignmentType' => $assignmentType,
-                'previousAdvisorId' => $previousAdvisorId,
-                'previousAssignmentType' => $previousAssignmentType,
-                'isReAssignment' => $isReAssignment,
-            ] = $this->assignToAdvisor();
+        [
+            'advisor' => $advisor,
+            'assignmentType' => $assignmentType,
+            'previousAdvisorId' => $previousAdvisorId,
+            'previousAssignmentType' => $previousAssignmentType,
+            'isReAssignment' => $isReAssignment,
+        ] = $this->assignToAdvisor();
 
-            $this->allocationRequest->markAsAllocated();
+        $this->allocationRequest->markAsAllocated();
 
-            DB::commit();
+        DB::commit();
 
-            if ($afterAssign) {
-                $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
-            }
+        if ($afterAssign) {
+            $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
+        }
         // } catch (Exception $e) {
-            // DB::rollBack();
+        // DB::rollBack();
 
-            // LoggerService::error($e->getMessage(), exception: $e);
+        // LoggerService::error($e->getMessage(), exception: $e);
 
-            $this->allocationRequest->markAsFailed();
-            // $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
+        $this->allocationRequest->markAsFailed();
+        // $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
         // }
     }
 

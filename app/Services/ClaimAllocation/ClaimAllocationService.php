@@ -9,6 +9,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Models\ClaimRequest;
 use App\Pipes\Allocation\Claim\AssignLeadPipe;
+use App\Pipes\Allocation\Claim\FetchEligibleAdvisorsPipe;
 use App\Pipes\Allocation\Claim\FetchLeadPipe;
 use App\Pipes\Allocation\Claim\FinalizeEligibleAdvisorPipe;
 use App\Pipes\Allocation\Claim\MakeResponsePipe;
@@ -19,7 +20,6 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Pipeline;
-use App\Pipes\Allocation\Claim\FetchEligibleAdvisorsPipe;
 
 class ClaimAllocationService
 {
@@ -47,7 +47,7 @@ class ClaimAllocationService
 
             return $result;
         } catch (Exception $e) {
- 
+
             return $this->resolveAllocationResponse($allocationRequest, $e);
         }
 
@@ -62,7 +62,7 @@ class ClaimAllocationService
 
         if ($request->isAllocated() || $request->isSameAdvisor()) {
             $message = 'Advisor assigned successfully!';
-          
+
             if ($request->isSameAdvisor()) {
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
             }
@@ -72,7 +72,7 @@ class ClaimAllocationService
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
-        
+
             return $data;
         }
 
