@@ -647,6 +647,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'policy_expiry_date' => $issuePolicyResult?->PolicyExpiryDate,
             'price_vat_applicable' => $issuePolicyResult?->PremiumWithoutVAT,
             'vat' => $issuePolicyResult?->VatAmount,
+            'price_with_vat' => $issuePolicyResult?->PaidAmount,
         ]);
 
         Payment::where('code', $quote->code)->update([
