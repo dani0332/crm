@@ -38,7 +38,6 @@ class ClaimAllocationService
         try {
             $result = Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
-                // VerifyAlreadyInProgressAllocationPipe::class,
                 FetchEligibleAdvisorsPipe::class,
                 FinalizeEligibleAdvisorPipe::class,
                 AssignLeadPipe::class,
