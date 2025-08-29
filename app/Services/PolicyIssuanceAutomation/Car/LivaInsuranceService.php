@@ -1144,16 +1144,15 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         // TODO: need to discusss this with Bilal Saeed, this is issuing while status is processing.
-        /* if (
+        if (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
             $policyIssuance->completed_step === self::UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
         ) {
-            $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = 'All Steps are editable';
 
             return $response;
-        } */
+        }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' testing line#1148', extra: [
             'policyIssuance_status' => $policyIssuance?->status ?? 'null',
