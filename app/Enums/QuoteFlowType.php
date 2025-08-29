@@ -11,8 +11,8 @@ enum QuoteFlowType: int
     case TRAVEL_SIC_FOLLOWUPS = 5;
     case TRAVEL_AUTOMATED_FOLLOWUPS = 6;
     case NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS = 7;
-    case SU_CAR_UPDATE = 36;
-    case SU_TRAVEL_UPDATE = 9;
+    case SU_CAR_UPDATE = 37;
+    case SU_TRAVEL_UPDATE = 38;
     case SU_BIKE_UPDATE = 10;
     case SU_CYCLE_UPDATE = 11;
     case SU_YACHT_UPDATE = 12;
@@ -100,7 +100,6 @@ enum QuoteFlowType: int
             5 => QuoteFlowType::TRAVEL_SIC_FOLLOWUPS,
             6 => QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS,
             7 => QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS,
-            9 => QuoteFlowType::SU_TRAVEL_UPDATE,
             10 => QuoteFlowType::SU_BIKE_UPDATE,
             11 => QuoteFlowType::SU_CYCLE_UPDATE,
             12 => QuoteFlowType::SU_YACHT_UPDATE,
@@ -127,7 +126,8 @@ enum QuoteFlowType: int
             33 => QuoteFlowType::TRADE_NEW_POLICY,
             34 => QuoteFlowType::SU_OTHER_BUSINESS_UPDATE,
             35 => QuoteFlowType::OTHER_BUSINESS_NEW_POLICY,
-            36 => QuoteFlowType::SU_CAR_UPDATE,
+            37 => QuoteFlowType::SU_CAR_UPDATE,
+            38 => QuoteFlowType::SU_TRAVEL_UPDATE,
             8 => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
             9 => QuoteFlowType::MOTOR_PCP_FOLLOWUPS,
             10 => QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA,
