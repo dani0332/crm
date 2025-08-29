@@ -519,12 +519,24 @@ class HomeRenewalService extends RenewalsUploadService
 
     private function createHomeQuoteData(array &$quoteData, array $data): array
     {
-        $quoteData['insurance_provider_id'] = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::whereRaw('LOWER(code) = ?', [strtolower(trim($data['current_insurance_provider']))])->first()->id : null;
-        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['you_are_a']))])->where('key', LookupsEnum::POSSESSION_TYPE)->first()->id : null;
-        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['i_live_in_a']))])->where('key', LookupsEnum::ACCOMMODATION_TYPE)->first()->id : null;
-        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['occupancy_status_for_owners']))])->where('key', LookupsEnum::OWNER_OCCUPANCY_TYPE)->first()->id : null;
-        $quoteData['sub_area_id'] = (! empty($data['location_area'])) ? SubArea::whereRaw('LOWER(text) = ?', [strtolower(trim($data['location_area']))])->first()->id : null;
-        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? Lookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['cover_required']))])->where('key', LookupsEnum::COVERAGE_TYPE)->first()->id : null;
+        $quoteData['insurance_provider_id'] = (! empty($data['current_insurance_provider'])) ? 
+            InsuranceProvider::where('code', trim($data['current_insurance_provider']))->first()?->id : null;
+        
+        $quoteData['possession_type_id'] = (! empty($data['you_are_a'])) ? 
+            $this->renewalsHelperService->getLookupByText(LookupsEnum::POSSESSION_TYPE->value, $data['you_are_a'])?->id : null;
+        
+        $quoteData['accommodation_type_id'] = (! empty($data['i_live_in_a'])) ? 
+            $this->renewalsHelperService->getLookupByText(LookupsEnum::ACCOMMODATION_TYPE->value, $data['i_live_in_a'])?->id : null;
+        
+        $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? 
+            $this->renewalsHelperService->getLookupByText(LookupsEnum::OWNER_OCCUPANCY_TYPE->value, $data['occupancy_status_for_owners'])?->id : null;
+
+            $quoteData['sub_area_id'] = (! empty($data['location_area'])) ? 
+            SubArea::where('text', trim($data['location_area']))->first()?->id : null;
+        
+        $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? 
+            $this->renewalsHelperService->getLookupByText(LookupsEnum::COVERAGE_TYPE->value, $data['cover_required'])?->id : null;
+        
         $quoteData['contents_value_id'] = $this->getContentsAed($data);
         $quoteData['personal_belongings_value_id'] = $this->getPersonalBelongingsAed($data);
         $quoteData['building_value'] = $this->getBuildingAed($data);
@@ -548,7 +560,9 @@ class HomeRenewalService extends RenewalsUploadService
             return null;
         }
 
-        $homeContents = (! empty($data['contents'])) ? RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['contents']))])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
+        $homeContents = (! empty($data['contents'])) ? 
+            $this->renewalsHelperService->getRangeLookupByText(RangeLookupKeyEnums::CONTENT_VALUES->value, $data['contents'])?->id : null;
+        
         LoggerService::info('fn: getContentsAed - contents: '.$homeContents);
 
         return $homeContents;
@@ -556,7 +570,7 @@ class HomeRenewalService extends RenewalsUploadService
 
     private function getPersonalBelongingsAed($data)
     {
-
+        
         LoggerService::info('fn: getPersonalBelongingsAed', [
             'cover_required' => $data['cover_required'],
         ]);
@@ -567,7 +581,9 @@ class HomeRenewalService extends RenewalsUploadService
             return null;
         }
 
-        $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::whereRaw('LOWER(text) = ?', [strtolower(trim($data['personal_belongings']))])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
+        $homePersonalBelongings = (! empty($data['personal_belongings'])) ? 
+            $this->renewalsHelperService->getRangeLookupByText(RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES->value, $data['personal_belongings'])?->id : null;
+        
         LoggerService::info('fn: getPersonalBelongingsAed - personal belongings: '.$homePersonalBelongings);
 
         return $homePersonalBelongings;

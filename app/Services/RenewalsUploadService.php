@@ -2398,7 +2398,7 @@ class RenewalsUploadService
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HOM) {
 
                             if ($leadData->location_area) {
-                                $locationArea = SubArea::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->location_area))])->exists();
+                                $locationArea = SubArea::where('text', trim($leadData->location_area))->exists();
                                 LoggerService::info('fn - uploadedLeadsValidation - location area is '.$leadData->location_area);
                                 if (! $locationArea) {
                                     LoggerService::info('fn - uploadedLeadsValidation - location area is invalid '.$leadData->location_area);
@@ -2417,7 +2417,7 @@ class RenewalsUploadService
                             }
                             if ($leadData->current_insurance_provider) {
                                 LoggerService::info('fn - uploadedLeadsValidation - current insurance provider is '.$leadData->current_insurance_provider);
-                                if (! InsuranceProvider::whereRaw('LOWER(code) = ?', [strtolower(trim($leadData->current_insurance_provider))])->first()) {
+                                if (! InsuranceProvider::where('code', trim($leadData->current_insurance_provider))->first()) {
                                     LoggerService::info('fn - uploadedLeadsValidation - current insurance provider is invalid '.$leadData->current_insurance_provider);
                                     $leadValidationErrors->push('Invalid Current Insurance Provider Text');
                                     break;
@@ -2530,7 +2530,7 @@ class RenewalsUploadService
                                     break;
                                 }
                                 if ($leadData->insurance_provider) {
-                                    $insuranceProvider = InsuranceProvider::whereRaw('LOWER(code) = ?', [strtolower(trim($leadData->insurance_provider))])->first();
+                                    $insuranceProvider = InsuranceProvider::where('code', trim($leadData->insurance_provider))->first();
                                     if (! $insuranceProvider) {
                                         LoggerService::info('fn - uploadedLeadsValidation - insurance provider is invalid '.$leadData->insurance_provider);
                                         $leadValidationErrors->push('Insurance Provider is invalid');
@@ -2539,7 +2539,7 @@ class RenewalsUploadService
                                 }
                                 if ($leadData->plan_name) {
                                     LoggerService::info('fn - uploadedLeadsValidation - plan name: '.$leadData->plan_name);
-                                    $plan = InsuranceProviderPlan::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->plan_name))])
+                                    $plan = InsuranceProviderPlan::where('text', trim($leadData->plan_name))
                                         ->where('quote_type_id', QuoteTypeId::Home)
                                         ->first();
 
