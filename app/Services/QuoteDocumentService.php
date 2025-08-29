@@ -401,7 +401,6 @@ class QuoteDocumentService extends BaseService
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
             })
             ->sortDocumentType()->get();
-
         // Handle documents for quote types like CORPLINE and GroupMedical.
         if ($quoteTypeId == QuoteTypeId::Business) {
             if ($quoteType == quoteTypeCode::CORPLINE) {
@@ -412,6 +411,10 @@ class QuoteDocumentService extends BaseService
                 $businessDocumetTypes = [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::PPR];
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
+                // If business type of insurance is available but not available in document types then add it to the business document types
+                if($documentTypes->whereIn('code', [DocumentTypeCode::BAL_BS, DocumentTypeCode::BUS_BAL])->count() == 0) {
+                    $businessDocumetTypes[] = DocumentTypeCode::BAL_BS;
+                }
             }
             $businessDocumetTypes[] = DocumentTypeCode::AUDIT;
             // Fetch additional business document types based on the specific quote type.
