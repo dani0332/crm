@@ -4,7 +4,6 @@ namespace App\Pipes\Allocation\Handlers;
 
 trait AllocationRequestMarkable
 {
-    
     public function markAsAllocated()
     {
         $this->set('allocated', true);

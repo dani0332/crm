@@ -5,7 +5,6 @@ namespace App\Pipes\Allocation\Claim;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
-use App\Pipes\Allocation\Claim\BaseAllocationPipe;
 
 class VerifyAlreadyInProgressAllocationPipe extends BaseAllocationPipe
 {

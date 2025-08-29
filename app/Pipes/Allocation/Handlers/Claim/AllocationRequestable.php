@@ -2,7 +2,6 @@
 
 namespace App\Pipes\Allocation\Handlers\Claim;
 
-
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 

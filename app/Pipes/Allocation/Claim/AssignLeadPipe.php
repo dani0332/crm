@@ -2,7 +2,6 @@
 
 namespace App\Pipes\Allocation\Claim;
 
-use App\Pipes\Allocation\Claim\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
@@ -16,11 +15,10 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        $this->assign(function () {
-        });
+        $this->assign(function () {});
         LoggerService::info('Claim lead assigned to Manager');
+
         return $next($request);
     }
 
-   
 }

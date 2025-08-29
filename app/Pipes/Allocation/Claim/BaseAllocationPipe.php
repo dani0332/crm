@@ -2,31 +2,27 @@
 
 namespace App\Pipes\Allocation\Claim;
 
-
-
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\UserStatusEnum;
+use App\Models\ClaimRequest;
 use App\Models\User;
-use App\Services\ClaimAllocationService;
+use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Services\NationalityAllocationService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use App\Models\ClaimRequest;
-use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\UserStatusEnum;
-use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\LeadAssignmentTriggerEnum;
 
-abstract class BaseAllocationPipe 
+abstract class BaseAllocationPipe
 {
     public const NOT_FOUND = Response::HTTP_NOT_FOUND;
     public const OK = Response::HTTP_OK;
     public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
     protected AllocationRequest $claimAssignmentRequest;
-    protected ClaimRequest|null $lead = null;
+    protected ?ClaimRequest $lead = null;
 
     protected function setRequest(AllocationRequest $claimAssignmentRequest, bool $startLogging = true)
     {
@@ -40,8 +36,6 @@ abstract class BaseAllocationPipe
             $this->setLead($lead);
         }
     }
-
-
 
     protected function startQuoteLogging()
     {
@@ -72,7 +66,7 @@ abstract class BaseAllocationPipe
 
     protected function getClaimBaseQuery()
     {
-        return  $this->claimAssignmentRequest->model()->where('uuid', $this->claimAssignmentRequest->getQuoteUUID());
+        return $this->claimAssignmentRequest->model()->where('uuid', $this->claimAssignmentRequest->getQuoteUUID());
     }
 
     protected function throw(string $message, int $code = 500)
@@ -88,8 +82,6 @@ abstract class BaseAllocationPipe
     /**
      * Get the base query for selecting eligible advisors for claim allocation.
      *
-     * @param string $onlineStatus
-     * @param array $roles
      * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function getAdvisorBaseQuery(string $onlineStatus, array $roles)
@@ -132,7 +124,6 @@ abstract class BaseAllocationPipe
 
     protected function findAvailableAdvisor($teamId = null)
     {
-        
 
         $statusOrder = $this->getOnlineStatusesInOrder();
 
@@ -195,8 +186,9 @@ abstract class BaseAllocationPipe
         }
 
         $this->lead->save();
-        
+
         $this->lead->endAllocation();
+
         return [
             'advisor' => $advisor,
             'assignmentType' => $assignmentType,
@@ -219,7 +211,6 @@ abstract class BaseAllocationPipe
                 'isReAssignment' => $isReAssignment,
             ] = $this->assignToAdvisor();
 
-         
             $this->claimAssignmentRequest->markAsAllocated();
 
             DB::commit();
@@ -237,8 +228,6 @@ abstract class BaseAllocationPipe
         }
     }
 
-  
-
     protected function verifyIfAdvisorIsSameAsPreviousAdvisor(User $advisor)
     {
         if (! $this->lead->advisor_id) {
@@ -255,5 +244,4 @@ abstract class BaseAllocationPipe
 
     }
 
-  
 }
