@@ -50,6 +50,7 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailed()
     {
+        
         if ($this->advisor_id) {
             // if advisor is already assigned then we don't need to mark it as failed
 
@@ -262,5 +263,32 @@ trait QuoteAllocatable
         return QuoteTag::where('quote_uuid', $this->uuid)
             ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
             ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function markLeadAllocationFailedForClaim()
+    {
+        
+            if ($this->manager_id) {
+            // if manager is already assigned then we don't need to mark it as failed
+
+            return;
+        }
+
+        if ($this->lead_allocation_failed_at) {
+            self::withoutEvents(function () {
+                $this->update([
+                    'lead_allocation_started_at' => null,
+                ]);
+            });
+
+            return; // Already marked as failed
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_failed_at' => now(),
+                'lead_allocation_started_at' => null,
+            ]);
+        });
     }
 }

@@ -420,7 +420,7 @@ class UserController extends Controller
 
         // if Corpline Advisor exists, then set Business Types otherwise set it as empty
         $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ?  request('businessTypes', []) : []);
-   
+
         return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
     }
 

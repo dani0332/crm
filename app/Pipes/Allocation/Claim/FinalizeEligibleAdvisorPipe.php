@@ -12,24 +12,27 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
     public function handle(AllocationRequest $request, Closure $next)
     {
         $this->setRequest($request);
-
+       
         $eligibleAdvisors = $request->get('eligibleAdvisors');
-
-        $availableUserIds = collect($eligibleAdvisors)->pluck('user_id')->toArray();
+        if(empty($eligibleAdvisors)){
+            $this->throw('No eligible advisors found', self::OK);
+        }
+        $availableUserIds = collect($eligibleAdvisors ?? [])->pluck('user_id')->filter()->toArray();
+        $availableUserIds = [];
+  
         LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
 
         $advisorId = $this->getFinalAdvisorId($availableUserIds);
         $advisor = User::find($advisorId);
+        
 
-        if (! $advisor) {
+        if (empty($advisor)) {
             LoggerService::warning('No advisor found');
-
-            $this->claimAssignmentRequest->markAsFailed();
-
+            $this->allocationRequest->markAsFailed();
             $this->throw('Advisor not found', self::OK);
         }
 
-        $this->claimAssignmentRequest->setAdvisor($advisor);
+        $this->allocationRequest->setAdvisor($advisor);
 
         $this->verifyIfAdvisorIsSameAsPreviousAdvisor($advisor);
 
@@ -38,8 +41,7 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 
     private function getFinalAdvisorId($finalEligibleUserIds)
     {
-        // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
-        return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
+        return $finalEligibleUserIds[0] ?? 0;
     }
 
 }

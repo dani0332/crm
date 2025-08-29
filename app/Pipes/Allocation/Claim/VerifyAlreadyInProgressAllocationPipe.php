@@ -23,9 +23,9 @@ class VerifyAlreadyInProgressAllocationPipe extends BaseAllocationPipe
 
             $this->throw('Allocation is in progress', self::OK);
         }
-
+        dd($this->lead);
         $this->lead->startAllocation();
-
+     
         return $next($request);
     }
 }

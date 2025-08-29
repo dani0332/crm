@@ -14,25 +14,26 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 
-abstract class BaseAllocationPipe
+abstract class BaseAllocationPipe extends ClaimAllocationService
 {
     public const NOT_FOUND = Response::HTTP_NOT_FOUND;
     public const OK = Response::HTTP_OK;
     public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
-    protected AllocationRequest $claimAssignmentRequest;
+    protected AllocationRequest $allocationRequest;
     protected ?ClaimRequest $lead = null;
 
-    protected function setRequest(AllocationRequest $claimAssignmentRequest, bool $startLogging = true)
+    protected function setRequest(AllocationRequest $allocationRequest, bool $startLogging = true)
     {
-        $this->claimAssignmentRequest = $claimAssignmentRequest;
+        $this->allocationRequest = $allocationRequest;
 
         if ($startLogging) {
             $this->startQuoteLogging();
         }
 
-        if ($lead = $this->claimAssignmentRequest->getLead()) {
+        if ($lead = $this->allocationRequest->getLead()) {
             $this->setLead($lead);
         }
     }
@@ -40,7 +41,7 @@ abstract class BaseAllocationPipe
     protected function startQuoteLogging()
     {
         LoggerService::startQuoteLogging(
-            $this->claimAssignmentRequest->getQuoteUUID(),
+            $this->allocationRequest->getQuoteUUID(),
             LoggerFeatureEnum::CLAIM_ALLOCATION
         );
     }
@@ -52,21 +53,21 @@ abstract class BaseAllocationPipe
 
     protected function resolveLead()
     {
-        $lead = $this->claimAssignmentRequest->model()->where('uuid', $this->claimAssignmentRequest->getQuoteUUID())->first();
-
+        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID())->first();
         if (! $lead) {
             LoggerService::info('Claim lead not found');
 
             $this->throw('Claim lead not found', self::NOT_FOUND);
         }
-        $this->claimAssignmentRequest->setLead($lead);
+
+        $this->allocationRequest->setLead($lead);
 
         return $lead;
     }
 
     protected function getClaimBaseQuery()
     {
-        return $this->claimAssignmentRequest->model()->where('uuid', $this->claimAssignmentRequest->getQuoteUUID());
+        return $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID());
     }
 
     protected function throw(string $message, int $code = 500)
@@ -92,7 +93,7 @@ abstract class BaseAllocationPipe
             ->join('claims_lead_allocation_config as cla', function ($join) {
                 $join->on('cla.user_id', '=', 'users.id')
                     ->whereColumn('cla.allocation_count', '<', 'cla.max_capacity')
-                    ->where('cla.quote_type_id', $this->claimAssignmentRequest->getQuoteType()->id());
+                    ->where('cla.quote_type_id', $this->allocationRequest->getQuoteType()->id());
             })
             ->join('model_has_roles as mhr', function ($join) {
                 $join->on('mhr.model_id', '=', 'users.id');
@@ -115,7 +116,7 @@ abstract class BaseAllocationPipe
             UserStatusEnum::OFFLINE,
         ];
 
-        if (! $this->claimAssignmentRequest->isReassignmentJob()) {
+        if (! $this->allocationRequest->isReassignmentJob()) {
             $statuses[] = UserStatusEnum::UNAVAILABLE;
         }
 
@@ -154,7 +155,7 @@ abstract class BaseAllocationPipe
 
     protected function resolveAssignmentType()
     {
-        $assignmentType = $this->claimAssignmentRequest->getAssignmentType();
+        $assignmentType = $this->allocationRequest->getAssignmentType();
 
         if (! empty($this->lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
@@ -165,44 +166,42 @@ abstract class BaseAllocationPipe
 
     protected function assignToAdvisor()
     {
-        $advisor = $this->claimAssignmentRequest->getAdvisor();
+        $advisor = $this->allocationRequest->getAdvisor();
         $assignmentType = $this->resolveAssignmentType();
 
-        if (! empty($this->lead->advisor_id)) {
-            LoggerService::info("Was previously assigned to User ID: {$this->lead->advisor_id} and is now being assigned to User ID: {$advisor->id}");
+        if (! empty($this->lead->manager_id)) {
+            LoggerService::info("Was previously assigned to User ID: {$this->lead->manager_id} and is now being assigned to User ID: {$advisor->id}");
         }
 
         LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
-        $previousAssignmentType = $this->lead->assignment_type;
-        $previousAdvisorId = $this->lead->advisor_id;
-        $isReAssignment = ! empty($previousAdvisorId);
-
-        $this->lead->advisor_id = $advisor->id;
+  
+        $this->lead->manager_id = $advisor->id;
+        $this->lead->manager_assigned_date = now();
         $this->lead->assignment_type = $assignmentType;
-
+ 
         if (empty($this->lead->lead_assignment_trigger)) {
             LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
             $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
         }
 
         $this->lead->save();
-
+    
         $this->lead->endAllocation();
-
+       
         return [
             'advisor' => $advisor,
             'assignmentType' => $assignmentType,
-            'previousAdvisorId' => $previousAdvisorId,
-            'previousAssignmentType' => $previousAssignmentType,
-            'isReAssignment' => $isReAssignment,
+            'previousAdvisorId' => $this->lead->manager_id,
+            'previousAssignmentType' => $this->lead->assignment_type,
+            'isReAssignment' => ! empty($this->lead->manager_id),
         ];
     }
 
     protected function assign(?callable $afterAssign = null)
     {
         DB::beginTransaction();
-
-        try {
+        
+        // try {
             [
                 'advisor' => $advisor,
                 'assignmentType' => $assignmentType,
@@ -211,33 +210,33 @@ abstract class BaseAllocationPipe
                 'isReAssignment' => $isReAssignment,
             ] = $this->assignToAdvisor();
 
-            $this->claimAssignmentRequest->markAsAllocated();
+            $this->allocationRequest->markAsAllocated();
 
             DB::commit();
 
             if ($afterAssign) {
                 $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
             }
-        } catch (Exception $e) {
-            DB::rollBack();
+        // } catch (Exception $e) {
+            // DB::rollBack();
 
-            LoggerService::error($e->getMessage(), exception: $e);
+            // LoggerService::error($e->getMessage(), exception: $e);
 
-            $this->claimAssignmentRequest->markAsFailed();
-            $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
-        }
+            $this->allocationRequest->markAsFailed();
+            // $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
+        // }
     }
 
     protected function verifyIfAdvisorIsSameAsPreviousAdvisor(User $advisor)
     {
-        if (! $this->lead->advisor_id) {
+        if (! $this->lead->manager_id) {
             return;
         }
 
-        if ($advisor->id == $this->lead->advisor_id) {
+        if ($advisor->id == $this->lead->manager_id) {
             LoggerService::info('Advisor is same as previous advisor. Skipping for now.');
 
-            $this->claimAssignmentRequest->markAsSameAdvisor();
+            $this->allocationRequest->markAsSameAdvisor();
 
             $this->throw('Eligible Advisor is already assigned to this lead', self::OK);
         }
