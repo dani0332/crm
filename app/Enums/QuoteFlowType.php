@@ -19,7 +19,6 @@ enum QuoteFlowType: int
     case LIFE_BIRTHDAY_WISH = 14;
     case HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 15;
     case SIC_HEALTH_FOLLOWUPS_WA = 10;
-    case CAR_CQF_RENEWAL_FOLLOWUPS = 11;
 
     public function label(): string
     {
