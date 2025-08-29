@@ -13,7 +13,6 @@ use App\Pipes\Allocation\Claim\FetchEligibleAdvisorsPipe;
 use App\Pipes\Allocation\Claim\FetchLeadPipe;
 use App\Pipes\Allocation\Claim\FinalizeEligibleAdvisorPipe;
 use App\Pipes\Allocation\Claim\MakeResponsePipe;
-use App\Pipes\Allocation\Claim\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
