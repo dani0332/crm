@@ -310,7 +310,7 @@ class HomeRenewalService extends RenewalsUploadService
         $quotePlans = app(HomeQuoteService::class)->getQuotePlans($uuid, [
             'getLatestRating' => true,
         ]);
-    
+
         if (isset($quotePlans->quotes)) {
             return true;
         }

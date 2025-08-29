@@ -2446,11 +2446,11 @@ class RenewalsUploadService
                                         LoggerService::info("fn - uploadedLeadsValidation - personal belongings is not required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Personal Belonging is not required with Selected Ownership Status');
                                         break;
-                                       
+
                                     }
                                     if (! $leadData->building) {
                                         LoggerService::info("fn - uploadedLeadsValidation - building is required with selected ownership status $leadData->occupancy_status_for_owners");
-                                        $leadValidationErrors->push('Building is required with Selected Ownership Status'); 
+                                        $leadValidationErrors->push('Building is required with Selected Ownership Status');
                                         break;
                                     }
 
