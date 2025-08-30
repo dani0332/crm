@@ -32,6 +32,8 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             'insurance_provider_code' => 'required|string',
         ];
 
+        $isLivaRenewal = $this->source === LeadSourceEnum::RENEWAL_UPLOAD && $this->insurance_provider_code === InsuranceProvidersEnum::RSA;
+
         if (isset($this->additional_vehicle_transaction_details) && $this->additional_vehicle_transaction_details == true) {
             $rules['rta_transaction_type'] = 'required';
             $rules['traffic_code_number'] = 'required';
@@ -48,6 +50,11 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
                 $rules['plate_color'] = 'required|string';
             }
         } else {
+
+            if(!$isLivaRenewal) {
+                $rules['license_expiry_date'] = 'required|date|after:license_issue_date';                
+            }
+
             $rules['is_insured_and_driver_same'] = 'required|integer';
             $rules['driver_first_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
             $rules['driver_last_name'] = 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s]+$/';
@@ -57,7 +64,6 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
             $rules['uae_driving_experience'] = 'required|numeric|min:0|max:50';
             $rules['home_country_license_issuance'] = 'required';
             $rules['home_country_driving_experience'] = 'required';
-            $rules['license_expiry_date'] = 'required|date|after:license_issue_date';
         }
 
         if ($this->insurance_provider_code === InsuranceProvidersEnum::AXA) {

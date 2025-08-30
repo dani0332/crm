@@ -29,6 +29,7 @@ const carDetail = computed(() => {
 const additionalDriverDetailsForm = useForm({
   quote_type_id: page.props.quoteType.id,
   quote_uuid: page.props.quoteRequest?.uuid,
+  source: page.props.quoteRequest?.source,
   insurance_provider_code: page.props.quoteRequest?.plan?.insurance_provider.code ?? '',
   is_insured_and_driver_same: carDetail.value?.is_insured_and_driver_same?.toString() ?? '',
   driver_first_name: carDetail.value?.driver_first_name ?? '',
@@ -104,6 +105,11 @@ const isGIG = computed(() => {
 
 const isLIVA = computed(() => {
   return page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
+});
+
+const isLivaRenewal = computed(() => {
+  return page.props.quoteRequest?.source === page.props.leadSource.RENEWAL_UPLOAD
+    && page.props.quoteRequest?.plan?.insurance_provider.code === page.props.insuranceProviderCodeEnum.RSA;
 });
 
 const isSUKOON = computed(() => {
@@ -279,7 +285,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           :required="isSUKOON"
           :options="licenseIssuePlaceOptions"
           placeholder="Select License Issue Place"
-          :disabled="hasNotEditPermission"
+          :disabled="hasNotEditPermission || isLivaRenewal"
           label="License Issue Place"
           :tooltip="`Emirate where the driver's license was issued`"
         />
@@ -289,7 +295,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           :rules="isSUKOON ? [isRequired] : []"
           :required="isSUKOON"
           placeholder="License Issue Date"
-          :disabled="hasNotEditPermission"
+          :disabled="hasNotEditPermission || isLivaRenewal"
           label="License Issue Date"
           :tooltip="`Date of issuance of the current driver's license`"
         />
@@ -299,7 +305,7 @@ watch(() => props.insurerPortalSyncData, (driverDetails) => {
           placeholder="License Expiry Date"
           :rules="(! isLIVA) ? [isRequired] : []"
           :required="! isLIVA"
-          :disabled="hasNotEditPermission"
+          :disabled="hasNotEditPermission || isLivaRenewal"
           label="License Expiry Date"
           :tooltip="`Expiry date of the current driver's license`"
         />
