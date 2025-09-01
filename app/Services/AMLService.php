@@ -778,7 +778,7 @@ class AMLService
             'paymentable_type' => $quoteDetails->getMorphClass(),
             'paymentable_id' => $quoteDetails->id,
         ])->first();
-        
+
         // $rtaTransactionType = null;
         // if ($quoteTypeId == QuoteTypes::CAR->id()) {
         //     $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
@@ -814,14 +814,14 @@ class AMLService
         ])->with(['customer', 'insured'])->latest('updated_at')->first();
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
-        
+
         // Handle renewal upload cases - By pass UpdateQuote API and call GetQuote API to filled data and proceed with auto capture
         if ($isRenewalUpload) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Renewal upload - Bypassing Update Quote API call and calling GetQuote API to filled data and proceeding to auto capture - Ref-ID: '.$quoteDetails->code);
-            
+
             try {
                 $getQuoteResponse = $this->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
-                
+
                 if ($getQuoteResponse['success']) {
                     LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Successfully retrieved and updated quote details from insurer - Ref-ID: '.$quoteDetails->code);
                     $insurerAMLStatusForRenewalUpload = $getQuoteResponse['data']['uwApprovalStatus'] == 'Y' ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
@@ -848,10 +848,10 @@ class AMLService
             }
 
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
-            
+
             return true;
         }
-        
+
         try {
             $insuredDetails = $insuredPersonDetails?->insured;
             $insuredKycDetails = $insuredDetails?->insuredKyc;
@@ -966,7 +966,7 @@ class AMLService
     private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $quoteObject, $customerType, $insuredPersonDetails, $screeningResponse): void
     {
         session()->push('insurerAMLScreeningResponse', $screeningResponse);
-        $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;       
+        $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
         $insurePersonName = $insuredPersonDetails?->insured?->first_name.($insuredPersonDetails?->insured?->last_name == 'NULL' || $insuredPersonDetails?->insured?->last_name == null ? '' : ' '.$insuredPersonDetails?->insured?->last_name);
         $kycLogDetails = [
             'quote_request_id' => $quoteDetails->id,
@@ -2210,7 +2210,7 @@ class AMLService
             };
         } catch (\Exception $e) {
             LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception: '.$e->getMessage().' - QuoteUID: '.$quoteUID);
-            
+
             return [
                 'success' => false,
                 'message' => 'Exception occurred: ' . $e->getMessage(),
