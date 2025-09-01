@@ -32,27 +32,27 @@ class CustomerPortalApiService
             config('constants.CUSTOMER_PORTAL_API_USER'),
             config('constants.CUSTOMER_PORTAL_API_PWD')
         )
-        ->withHeaders([
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'x-api-token' => config('constants.CUSTOMER_PORTAL_API_TOKEN'),
-        ])
-        ->timeout((int) config('constants.CUSTOMER_PORTAL_API_TIMEOUT'));
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'x-api-token' => config('constants.CUSTOMER_PORTAL_API_TOKEN'),
+            ])
+            ->timeout((int) config('constants.CUSTOMER_PORTAL_API_TIMEOUT'));
     }
 
     /**
      * Send request to Customer Portal API
      *
-     * @param string $path API endpoint path
-     * @param string $method HTTP method (GET, POST, PUT, DELETE)
-     * @param array $data Request payload
-     * @param bool $isCustomerOperation Whether this is a customer-facing operation
-     * @return object
+     * @param  string  $path  API endpoint path
+     * @param  string  $method  HTTP method (GET, POST, PUT, DELETE)
+     * @param  array  $data  Request payload
+     * @param  bool  $isCustomerOperation  Whether this is a customer-facing operation
+     *
      * @throws \Exception
      */
     public function request(string $path, string $method = 'post', array $data = [], bool $isCustomerOperation = false): object
     {
-        $url = $this->baseUrl . $path;
+        $url = $this->baseUrl.$path;
 
         LoggerService::info('Customer Portal API Request initiated', extra: [
             'url' => $url,
@@ -102,8 +102,7 @@ class CustomerPortalApiService
     /**
      * Create customer account in portal
      *
-     * @param array $customerData Customer information
-     * @return object
+     * @param  array  $customerData  Customer information
      */
     public function createCustomerAccount(array $customerData): object
     {
@@ -118,9 +117,8 @@ class CustomerPortalApiService
     /**
      * Update customer account information
      *
-     * @param string $customerId Customer ID
-     * @param array $customerData Updated customer data
-     * @return object
+     * @param  string  $customerId  Customer ID
+     * @param  array  $customerData  Updated customer data
      */
     public function updateCustomerAccount(string $customerId, array $customerData): object
     {
@@ -136,8 +134,7 @@ class CustomerPortalApiService
     /**
      * Get customer portal information
      *
-     * @param string $customerId Customer ID
-     * @return object
+     * @param  string  $customerId  Customer ID
      */
     public function getCustomerInfo(string $customerId): object
     {
@@ -147,9 +144,8 @@ class CustomerPortalApiService
     /**
      * Sync customer policies to portal
      *
-     * @param string $customerId Customer ID
-     * @param array $policies Customer policies
-     * @return object
+     * @param  string  $customerId  Customer ID
+     * @param  array  $policies  Customer policies
      */
     public function syncCustomerPolicies(string $customerId, array $policies): object
     {
@@ -165,9 +161,8 @@ class CustomerPortalApiService
     /**
      * Send customer notification via portal
      *
-     * @param string $customerId Customer ID
-     * @param array $notificationData Notification data
-     * @return object
+     * @param  string  $customerId  Customer ID
+     * @param  array  $notificationData  Notification data
      */
     public function sendCustomerNotification(string $customerId, array $notificationData): object
     {
@@ -183,9 +178,8 @@ class CustomerPortalApiService
     /**
      * Update customer portal preferences
      *
-     * @param string $customerId Customer ID
-     * @param array $preferences Customer preferences
-     * @return object
+     * @param  string  $customerId  Customer ID
+     * @param  array  $preferences  Customer preferences
      */
     public function updateCustomerPreferences(string $customerId, array $preferences): object
     {
@@ -200,31 +194,30 @@ class CustomerPortalApiService
 
     /**
      * Ping Customer Portal API to check service availability
-     *
-     * @return bool
      */
     public function ping(): bool
     {
         try {
             $response = $this->request('/api/v1/ping', 'get');
+
             return isset($response->status) && $response->status === 'ok';
         } catch (\Exception $e) {
             LoggerService::warning('Customer Portal API ping failed', extra: [
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
      * Get Customer Portal API service health status
-     *
-     * @return array
      */
     public function getHealthStatus(): array
     {
         try {
             $response = $this->request('/api/v1/health', 'get');
+
             return [
                 'status' => 'healthy',
                 'response' => $response,
