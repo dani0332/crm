@@ -265,22 +265,28 @@ const isFieldRequired = (fieldName) => {
     case 'plate_code':
     case 'plate_number':
       return !isGIG.value;
+    case 'chassis_number':
+      return !isLivaRenewal.value;
     case 'engine_number':
-      return !isSUKOON.value;
+      return !isSUKOON.value && !isLivaRenewal.value;
     case 'rta_plate_category':
     case 'plate_color':
       return isGIG.value;
+    case 'vehicle_color':
+      return !isLivaRenewal.value;
     case 'bank_name':
       return !isGIG.value;
     case 'first_registration_date':
+      return !isSUKOON.value && !isLivaRenewal.value;
     case 'certificate_start_date':
       return !isSUKOON.value;
     case 'policy_expiry_date':
+      return isLIVA.value && !isRenewal.value;
     case 'certificate_end_date':
     case 'annual_mileage_estimate':
       return isLIVA.value;
     case 'policy_effective_date':
-      return (!isRenewal.value) ? isLIVA.value : false;
+      return isLIVA.value && !isRenewal.value;
     default:
       return false;
   }
@@ -679,14 +685,14 @@ watch(
           <!-- Chassis Number -->
           <x-input
             v-model="additionalVehicleTransactionDetailsForm.chassis_number"
-            :rules="[isRequired, rules.chassisNumberCheck]"
+            :rules="isFieldRequired('chassis_number') ? [isRequired, rules.chassisNumberCheck] : []"
             @keypress="chassisNumberValidate('keypress')"
             @blur="chassisNumberValidate('blur')"
             placeholder="Chassis Number"
             type="text"
             :error="additionalVehicleTransactionDetailsForm.errors.chassis_number"
             :disabled="isFieldDisabled('chassis_number') || hasNotEditPermission || isLivaRenewal"
-            required
+            :required="isFieldRequired('chassis_number')"
             label="Chassis Number"
             :tooltip="`Vehicle chassis number`"
           />
@@ -721,8 +727,8 @@ watch(
             filterable
             v-model="additionalVehicleTransactionDetailsForm.vehicle_color"
             :options="vehicleColorOptions"
-            :rules="[isRequired]"
-            required
+            :rules="getFieldRules('vehicle_color')"
+            :required="isFieldRequired('vehicle_color')"
             placeholder="Select Vehicle Color"
             :disabled="isFieldDisabled('vehicle_color') || hasNotEditPermission || isLivaRenewal"
             class="w-full"
