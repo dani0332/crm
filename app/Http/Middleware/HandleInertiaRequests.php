@@ -12,7 +12,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
@@ -102,7 +102,7 @@ class HandleInertiaRequests extends Middleware
             'location' => fn () => $request->url(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
-            'insuranceProviderCodeEnum' => InsuranceProvidersEnum::asArray(),
+            'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'documentTypeEnum' => DocumentTypeEnum::asArray(),
             'sendPolicyTypeEnum' => SendPolicyTypeEnum::asArray(),

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\InsuranceProviderEnum;
-use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;

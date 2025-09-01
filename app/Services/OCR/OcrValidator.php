@@ -2,7 +2,7 @@
 
 namespace App\Services\OCR;
 
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,30 +12,30 @@ trait OcrValidator
     {
         return match ($provider) {
             // Car & Home & Group Medical
-            InsurerProviderEnum::GIG_INSURANCE => in_array($quoteType, [
+            InsuranceProviderEnum::AXA->value => in_array($quoteType, [    // GIG_INSURANCE
                 QuoteTypes::CAR,
                 QuoteTypes::HOME,
                 QuoteTypes::GROUP_MEDICAL,
             ]),
             // Car & Home & Group Medical
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE => in_array($quoteType, [
+            InsuranceProviderEnum::OIC->value => in_array($quoteType, [    // SUKOON_OMAN_INSURANCE
                 QuoteTypes::CAR,
                 QuoteTypes::HOME,
                 QuoteTypes::GROUP_MEDICAL,
             ]),
-            InsurerProviderEnum::QATAR_INSURANCE => $quoteType == QuoteTypes::CAR,
-            InsurerProviderEnum::LIVANA_INSURANCE => $quoteType == QuoteTypes::CAR,
-            InsurerProviderEnum::TOKIO_MARINE => $quoteType == QuoteTypes::CAR,
+            InsuranceProviderEnum::QIC->value => $quoteType == QuoteTypes::CAR,    // QATAR_INSURANCE
+            InsuranceProviderEnum::RSA->value => $quoteType == QuoteTypes::CAR,    // LIVANA_INSURANCE
+            InsuranceProviderEnum::TM->value => $quoteType == QuoteTypes::CAR,     // TOKIO_MARINE
 
             // Group Medical
-            InsurerProviderEnum::TAKAFUL_EMARAT_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
-            InsurerProviderEnum::ORIENT_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
-            InsurerProviderEnum::NATIONAL_GENERAL_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
-            InsurerProviderEnum::METLIFE_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
-            InsurerProviderEnum::DUBAI_NATIONAL_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
-            InsurerProviderEnum::DUBAI_INSURANCE_COMPANY => $quoteType == QuoteTypes::GROUP_MEDICAL,
-            InsurerProviderEnum::CIGNA_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
-            InsurerProviderEnum::SALAMA_INSURANCE => $quoteType == QuoteTypes::GROUP_MEDICAL,
+            InsuranceProviderEnum::TE->value => $quoteType == QuoteTypes::GROUP_MEDICAL,    // TAKAFUL_EMARAT_INSURANCE
+            InsuranceProviderEnum::OI2->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // ORIENT_INSURANCE
+            InsuranceProviderEnum::NGI->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // NATIONAL_GENERAL_INSURANCE
+            InsuranceProviderEnum::MTL->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // METLIFE_INSURANCE
+            InsuranceProviderEnum::DNIRC->value => $quoteType == QuoteTypes::GROUP_MEDICAL, // DUBAI_NATIONAL_INSURANCE
+            InsuranceProviderEnum::DIC->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // DUBAI_INSURANCE_COMPANY
+            InsuranceProviderEnum::CIG->value => $quoteType == QuoteTypes::GROUP_MEDICAL,   // CIGNA_INSURANCE
+            InsuranceProviderEnum::SI->value => $quoteType == QuoteTypes::GROUP_MEDICAL,    // SALAMA_INSURANCE
             default => false,
         };
     }
@@ -67,52 +67,52 @@ trait OcrValidator
         ];
 
         return match ($provider) {
-            InsurerProviderEnum::GIG_INSURANCE => [
+            InsuranceProviderEnum::AXA->value => [    // GIG_INSURANCE
                 ...$commonFields,
             ],
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE => [
-                ...$commonFields,
-                'quote.commission_vat_applicable',
-            ],
-            InsurerProviderEnum::QATAR_INSURANCE => [
+            InsuranceProviderEnum::OIC->value => [    // SUKOON_OMAN_INSURANCE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::LIVANA_INSURANCE => [
+            InsuranceProviderEnum::QIC->value => [    // QATAR_INSURANCE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::TOKIO_MARINE => [
+            InsuranceProviderEnum::RSA->value => [    // LIVANA_INSURANCE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::TAKAFUL_EMARAT_INSURANCE => [
+            InsuranceProviderEnum::TM->value => [     // TOKIO_MARINE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::NATIONAL_GENERAL_INSURANCE => [
+            InsuranceProviderEnum::TE->value => [     // TAKAFUL_EMARAT_INSURANCE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::METLIFE_INSURANCE => [
-                ...$commonFields,
-            ],
-            InsurerProviderEnum::DUBAI_NATIONAL_INSURANCE => [
+            InsuranceProviderEnum::NGI->value => [    // NATIONAL_GENERAL_INSURANCE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::DUBAI_INSURANCE_COMPANY => [
+            InsuranceProviderEnum::MTL->value => [    // METLIFE_INSURANCE
+                ...$commonFields,
+            ],
+            InsuranceProviderEnum::DNIRC->value => [  // DUBAI_NATIONAL_INSURANCE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::CIGNA_INSURANCE => [
-                ...$commonFields,
-            ],
-            InsurerProviderEnum::SALAMA_INSURANCE => [
+            InsuranceProviderEnum::DIC->value => [    // DUBAI_INSURANCE_COMPANY
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],
-            InsurerProviderEnum::ORIENT_INSURANCE => [
+            InsuranceProviderEnum::CIG->value => [    // CIGNA_INSURANCE
+                ...$commonFields,
+            ],
+            InsuranceProviderEnum::SI->value => [     // SALAMA_INSURANCE
+                ...$commonFields,
+                'quote.commission_vat_applicable',
+            ],
+            InsuranceProviderEnum::OI2->value => [    // ORIENT_INSURANCE
                 ...$commonFields,
                 'quote.commission_vat_applicable',
             ],

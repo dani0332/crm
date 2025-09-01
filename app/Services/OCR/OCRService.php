@@ -3,7 +3,7 @@
 namespace App\Services\OCR;
 
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
-use App\Enums\InsurerProviderEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -577,16 +577,11 @@ class OCRService
         }
     }
 
-    /**
-     * Get all eligible OCR providers grouped by quote type
-     *
-     * @return array
-     */
     public function getEligibleProviders(): array
     {
         $quoteTypes = QuoteTypes::cases();
         
-        $providers = InsurerProviderEnum::asArray();
+        $providers = InsuranceProviderEnum::asArray();
         
         $eligibleProviders = [];
         $quoteTypeNames = [];

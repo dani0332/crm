@@ -55,8 +55,6 @@ enum InsuranceProviderEnum: string
     case OALLIANZ = 'OALLIANZ';
     case NHICD = 'NHICD';
 
-
-    
     public static function getProviderCode(string $code): ?string
     {
         $provider = self::tryFrom($code);
@@ -77,5 +75,66 @@ enum InsuranceProviderEnum: string
             self::CIG,  // Cigna Insurance
             self::SI,   // Salama Insurance
         ]);
+    }
+    
+    public static function asArray(): array
+    {
+        $result = [];
+        foreach (self::cases() as $case) {
+            $result[$case->name] = $case->value;
+        }
+        return $result;
+    }
+    
+    public static function getProviderCodeFromConstantName(string $constant): ?string
+    {
+        return match ($constant) {
+            'GIG_INSURANCE' => self::AXA->value,
+            'QATAR_INSURANCE' => self::QIC->value,
+            'RAK_INSURANCE' => self::RAK->value,
+            'TOKIO_MARINE' => self::TM->value,
+            'ALLIANCE_INSURANCE' => self::ALNC->value,
+            'ABU_DHABI_NATIONAL_INSURANCE' => self::ADNIC->value,
+            'SUKOON_OMAN_INSURANCE' => self::OIC->value,
+            'WATANIA_TAKAFUL' => self::NT->value,
+            'ORIENT_INSURANCE' => self::OI2->value,
+            'LIVANA_INSURANCE' => self::RSA->value,
+            'EMIRATES_INSURANCE' => self::EI->value,
+            'TAKAFUL_EMARAT_INSURANCE' => self::TE->value,
+            'NATIONAL_GENERAL_INSURANCE' => self::NGI->value,
+            'METLIFE_INSURANCE' => self::MTL->value,
+            'DUBAI_NATIONAL_INSURANCE' => self::DNIRC->value,
+            'DUBAI_INSURANCE_COMPANY' => self::DIC->value,
+            'CIGNA_INSURANCE' => self::CIG->value,
+            'SALAMA_INSURANCE' => self::SI->value,
+            default => null,
+        };
+    }
+    
+    /**
+     * Get a specific constant's value
+     * 
+     * This method is added for compatibility with the BenSampo/laravel-enum package
+     * 
+     * @param string $key The constant name
+     * @return mixed The constant value
+     */
+    public static function getValue(string $key): string
+    {
+        $case = self::tryFrom($key);
+        return $case?->value ?? $key;
+    }
+    
+    /**
+     * Check if a constant exists
+     * 
+     * This method is added for compatibility with the BenSampo/laravel-enum package
+     * 
+     * @param string $key The constant name
+     * @return bool Whether the constant exists
+     */
+    public static function hasKey(string $key): bool
+    {
+        return self::tryFrom($key) !== null;
     }
 }
