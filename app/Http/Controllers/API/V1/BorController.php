@@ -122,6 +122,7 @@ class BorController extends Controller
                 'quote_document_id' => $docIsPresent ? $document->id : $borLog->quote_document_id,
                 'document_id' => $docIsPresent ? $document->doc_uuid : $borLog->document_id,
                 'user_agent' => getUserIpAddress($request),
+                'download_clicked' => $request->download_clicked ?? 0,
                 'insurer_name' => $request->insurer_name,
                 'policy_number' => $request->policy_number,
                 'status' => $docIsPresent ? BorStatusEnum::DOCUMENT_SIGNED : $borLog->status,
