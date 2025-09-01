@@ -315,6 +315,10 @@ class ApiService
             return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
         }
 
+        if ($lead->isAUHLead(false)) {
+            return apiResponse(null, Response::HTTP_OK, 'AUH Leads are not allowed to send OCA Email!');
+        }
+
         if (! $lead->isApplyNowEmailSent()) {
             app(HealthEmailService::class)->initiateApplyNowEmail($lead);
 
