@@ -32,7 +32,6 @@ final class WorkflowTypeEnum extends Enum
     public const LIFE_OCA_EMAIL = 'life_oca_email';
     public const CAR_COMMERCIAL_OCB = 'car_commercial_ocb';
     public const TRAVEL_AIG_WORKFLOW = 'travel_aig_workflow';
-    public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
     public const LIFE_FIC_EMAIL = 'life_fic_email';
     public const LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL = 'life_advance_birthday_wish_email';
     public const LIFE_BIRTHDAY_WISH_EMAIL = 'life_birthday_wish_email';
@@ -40,5 +39,4 @@ final class WorkflowTypeEnum extends Enum
     public const SIC_HEALTH_FOLLOWUPS_WA = 'sic_health_followups_wa';
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
-    public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
 }

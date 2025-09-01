@@ -2398,7 +2398,8 @@ class RenewalsUploadService
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HOM) {
 
                             if ($leadData->location_area) {
-                                $locationArea = SubArea::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->location_area))])->exists();
+                                $locationArea = SubArea::where('text', trim($leadData->location_area))->exists();
+                                LoggerService::info('fn - uploadedLeadsValidation - location area is '.$leadData->location_area);
                                 if (! $locationArea) {
                                     LoggerService::info('fn - uploadedLeadsValidation - location area is invalid '.$leadData->location_area);
                                     $leadValidationErrors->push('Invalid Location Area Text');
@@ -2407,14 +2408,16 @@ class RenewalsUploadService
                             }
 
                             if ($leadData->insurance_type) {
-                                if ($leadData->insurance_type !== QuoteTypeShortCode::HOM) {
+                                LoggerService::info('fn - uploadedLeadsValidation - insurance type is '.$leadData->insurance_type);
+                                if (strtoupper($leadData->insurance_type) !== QuoteTypeShortCode::HOM) {
                                     LoggerService::info('fn - uploadedLeadsValidation - insurance type is invalid '.$leadData->insurance_type);
                                     $leadValidationErrors->push('Invalid Insurance Type Text');
                                     break;
                                 }
                             }
                             if ($leadData->current_insurance_provider) {
-                                if (! InsuranceProvider::where('code', $leadData->current_insurance_provider)->first()) {
+                                LoggerService::info('fn - uploadedLeadsValidation - current insurance provider is '.$leadData->current_insurance_provider);
+                                if (! InsuranceProvider::where('code', trim($leadData->current_insurance_provider))->first()) {
                                     LoggerService::info('fn - uploadedLeadsValidation - current insurance provider is invalid '.$leadData->current_insurance_provider);
                                     $leadValidationErrors->push('Invalid Current Insurance Provider Text');
                                     break;
@@ -2443,6 +2446,7 @@ class RenewalsUploadService
                                         LoggerService::info("fn - uploadedLeadsValidation - personal belongings is not required with selected ownership status $leadData->occupancy_status_for_owners");
                                         $leadValidationErrors->push('Personal Belonging is not required with Selected Ownership Status');
                                         break;
+
                                     }
                                     if (! $leadData->building) {
                                         LoggerService::info("fn - uploadedLeadsValidation - building is required with selected ownership status $leadData->occupancy_status_for_owners");
@@ -2514,6 +2518,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->premium) {
+                                LoggerService::info('fn - uploadedLeadsValidation - premium is '.$leadData->premium);
                                 if (! $leadData->insurance_provider) {
                                     LoggerService::info('fn - uploadedLeadsValidation - insurance provider is required with premium');
                                     $leadValidationErrors->push('Insurance Provider is required with Premium');
@@ -2525,7 +2530,7 @@ class RenewalsUploadService
                                     break;
                                 }
                                 if ($leadData->insurance_provider) {
-                                    $insuranceProvider = InsuranceProvider::whereRaw('LOWER(code) = ?', [strtolower(trim($leadData->insurance_provider))])->first();
+                                    $insuranceProvider = InsuranceProvider::where('code', trim($leadData->insurance_provider))->first();
                                     if (! $insuranceProvider) {
                                         LoggerService::info('fn - uploadedLeadsValidation - insurance provider is invalid '.$leadData->insurance_provider);
                                         $leadValidationErrors->push('Insurance Provider is invalid');
@@ -2534,7 +2539,7 @@ class RenewalsUploadService
                                 }
                                 if ($leadData->plan_name) {
                                     LoggerService::info('fn - uploadedLeadsValidation - plan name: '.$leadData->plan_name);
-                                    $plan = InsuranceProviderPlan::whereRaw('LOWER(text) = ?', [strtolower(trim($leadData->plan_name))])
+                                    $plan = InsuranceProviderPlan::where('text', trim($leadData->plan_name))
                                         ->where('quote_type_id', QuoteTypeId::Home)
                                         ->first();
 
@@ -2546,7 +2551,9 @@ class RenewalsUploadService
                                 }
                             }
                             if (isset($leadData->previous_advisor_email) && ! empty($leadData->previous_advisor_email)) {
+                                LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
                                 if (! $this->renewalsAddonService->getUserInfo($leadData->previous_advisor_email)) {
+                                    LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
                                     $leadValidationErrors->push('Invalid Previous Advisor Email');
                                     break;
                                 }
