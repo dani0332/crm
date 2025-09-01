@@ -6,7 +6,6 @@ use App\Enums\CarPlanType;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Models\CarMake;
