@@ -156,6 +156,7 @@ class AMLService
                 'nationality',
                 'carQuoteRequestDetail',
                 'plan.insuranceProvider',
+                'vehicleDriverDetail',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::HOME->id())->with([
