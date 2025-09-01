@@ -33,21 +33,6 @@ const notification = useToast();
 
 const sectionExpanded = ref(true);
 
-// Handle component updates
-const handleClaimUpdate = response => {
-  console.log('Claim updated:', response);
-  // You can add any additional logic here when claim is updated
-};
-
-const handleDocumentUploaded = document => {
-  console.log('Document uploaded:', document);
-  // You can add any additional logic here when document is uploaded
-};
-
-const handleDocumentDeleted = documentName => {
-  console.log('Document deleted:', documentName);
-  // You can add any additional logic here when document is deleted
-};
 const copyToClipboard = item => {
   copy(item);
   if (copied)
@@ -96,7 +81,6 @@ const copyToClipboard = item => {
     <ClaimDetails
       :claim="claim"
       :dropdowns="dropdowns"
-      @update="handleClaimUpdate"
       :expanded="sectionExpanded"
     />
 
@@ -118,31 +102,27 @@ const copyToClipboard = item => {
       :claim="claim"
       :required-fields-filled="requiredFieldsFilled"
       :dropdowns="dropdowns"
-      @update="handleStatusUpdate"
     />
     <!-- Claim Status Component -->
     <ClaimSubStatusAndCustomerUpdate
       :claim="claim"
       :required-fields-filled="requiredFieldsFilled"
       :dropdowns="dropdowns"
-      @update="handleStatusUpdate"
     />
 
     <!-- Next Follow-Up Update Component -->
-    <NextFollowUpUpdate :claim="claim" @update="handleClaimUpdate" />
+    <NextFollowUpUpdate :claim="claim" />
 
     <!-- Complaint Status Component -->
     <ComplaintStatus
       :claim="claim"
       :complaint-statuses="complaintStatuses"
-      @update="handleClaimUpdate"
     />
 
     <!-- Claim Documents Component -->
     <ClaimDocuments
       :claim="claim"
       :documents="documents"
-      @update="handleClaimUpdate"
       @documentUploaded="handleDocumentUploaded"
       @documentDeleted="handleDocumentDeleted"
       :storage-url="storageUrl"
