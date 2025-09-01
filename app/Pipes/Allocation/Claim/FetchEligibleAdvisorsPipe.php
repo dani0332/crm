@@ -26,6 +26,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
 
         $eligibleAdvisors = $this->fetchEligibleUsersByStatus($lead);
         $request->set('eligibleAdvisors', $eligibleAdvisors);
+
         return $next($request);
     }
 

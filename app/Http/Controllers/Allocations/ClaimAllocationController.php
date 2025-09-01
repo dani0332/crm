@@ -2,22 +2,18 @@
 
 namespace App\Http\Controllers\Allocations;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use App\Enums\RolesEnum;
-use App\Services\Logger\LoggerService;
 use App\Enums\LeadSourceEnum;
-use App\Models\ClaimRequest;
+use App\Enums\RolesEnum;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\ClaimAvailabilityRequest;
+use App\Models\ClaimRequest;
+use App\Models\User;
 use App\Services\ClaimAllocation\ClaimAllocationService;
+use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\DB;
 
 class ClaimAllocationController extends Controller
 {
-   
-
-    
-
     public function index()
     {
         $totalAssignedLeadCount = 0;
@@ -43,8 +39,6 @@ class ClaimAllocationController extends Controller
             'lobSpecificLeadAllocation' => null,
         ];
 
-   
-        
         return inertia('ClaimAllocation/Index', $data);
     }
     private function getClaimManagers()
@@ -70,15 +64,14 @@ class ClaimAllocationController extends Controller
                 ->join('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
                 ->whereIn('r.name', [RolesEnum::ClaimsManager])
                 ->groupBy('users.name', 'users.id', 'la.id');
-          
 
             return $users->get();
         } catch (\Exception $e) {
-            LoggerService::error("claim allocation get advisors error: " . $e->getMessage());
+            LoggerService::error('claim allocation get advisors error: '.$e->getMessage());
+
             return [];
         }
     }
-
 
     private function getQuotesBaseQuery()
     {
@@ -104,14 +97,15 @@ class ClaimAllocationController extends Controller
 
     public function updateAvailability(ClaimAvailabilityRequest $request)
     {
-        if ( empty($request->items)) {
+        if (empty($request->items)) {
             return response()->json([
                 'message' => 'Items not found.',
             ], 404);
         }
         app(ClaimAllocationService::class)->updateAvailability($request->items);
+
         return response()->json([
-            'message' =>'Claim manager status updated successfully.',
+            'message' => 'Claim manager status updated successfully.',
         ], 200);
     }
 
@@ -119,15 +113,15 @@ class ClaimAllocationController extends Controller
     {
 
         if (isset($request->items)) {
-               
-        
-                app(ClaimAllocationService::class)->updateCaps($request->items);
-                return response()->json([
-                    'message' => 'Max Capacity Updated Successfully.',
-                ], 200);
-            } else {
-                return back()->with('info', 'Please select at least one item.');
-            }
+
+            app(ClaimAllocationService::class)->updateCaps($request->items);
+
+            return response()->json([
+                'message' => 'Max Capacity Updated Successfully.',
+            ], 200);
+        } else {
+            return back()->with('info', 'Please select at least one item.');
+        }
     }
 
     public function updateResetCapSwitch(ClaimAvailabilityRequest $request)
@@ -135,8 +129,9 @@ class ClaimAllocationController extends Controller
         $requester = auth()->user();
         if (isset($request->items)) {
             LoggerService::info(self::class."::updateResetCapSwitch - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
-        
+
             app(ClaimAllocationService::class)->resetCap($request->items);
+
             return response()->json([
                 'message' => 'Reset Cap Capacity Updated Successfully.',
             ], 200);
@@ -145,6 +140,5 @@ class ClaimAllocationController extends Controller
             LoggerService::error(self::class."::updateResetCapSwitch - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         }
     }
-
 
 }

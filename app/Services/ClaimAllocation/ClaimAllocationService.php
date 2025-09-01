@@ -7,7 +7,11 @@ namespace App\Services\ClaimAllocation;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\UserStatusEnum;
+use App\Jobs\ClaimReassignJob;
 use App\Models\ClaimRequest;
+use App\Models\ClaimsLeadAllocationConfig;
+use App\Models\User;
 use App\Pipes\Allocation\Claim\AssignLeadPipe;
 use App\Pipes\Allocation\Claim\FetchEligibleAdvisorsPipe;
 use App\Pipes\Allocation\Claim\FetchLeadPipe;
@@ -19,10 +23,6 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Pipeline;
-use App\Models\ClaimsLeadAllocationConfig;
-use App\Enums\UserStatusEnum;
-use App\Models\User;
-use App\Jobs\ClaimReassignJob;
 
 class ClaimAllocationService
 {
@@ -123,10 +123,6 @@ class ClaimAllocationService
 
     /**
      * Increment allocation counters for a user's claim allocation config in an atomic and optimized way.
-     *
-     * @param int $userId
-     * @param int $quoteTypeId
-     * @return bool
      */
     public function updateClaimAllocationConfig(int $userId, int $quoteTypeId): bool
     {
@@ -134,10 +130,10 @@ class ClaimAllocationService
         $updated = ClaimsLeadAllocationConfig::where('user_id', $userId)
             ->where('quote_type_id', $quoteTypeId)
             ->update([
-                'allocation_count'      => DB::raw('allocation_count + 1'),
+                'allocation_count' => DB::raw('allocation_count + 1'),
                 'auto_assignment_count' => DB::raw('auto_assignment_count + 1'),
-                'last_allocated'        => now()->timestamp,
-                'updated_at'            => now(),
+                'last_allocated' => now()->timestamp,
+                'updated_at' => now(),
             ]);
 
         return $updated > 0;
@@ -146,9 +142,8 @@ class ClaimAllocationService
     /**
      * Update claim manager availability and related config in a robust, optimized way.
      *
-     * @param \Illuminate\Http\Request|array $request
-     * @param int $quoteTypeId
-     * @return void
+     * @param  \Illuminate\Http\Request|array  $request
+     * @param  int  $quoteTypeId
      */
     public function updateAvailability($request): void
     {
@@ -167,14 +162,14 @@ class ClaimAllocationService
             ->whereIn('id', $configIds)
             ->get()
             ->keyBy(function ($item) {
-                return $item->user_id . '-' . $item->id;
+                return $item->user_id.'-'.$item->id;
             });
 
         foreach ($items as $item) {
-            $configKey = $item['userId'] . '-' . $item['id'];
+            $configKey = $item['userId'].'-'.$item['id'];
             $claimAllocationConfig = $configs->get($configKey);
 
-            if (!$claimAllocationConfig) {
+            if (! $claimAllocationConfig) {
                 continue;
             }
 
@@ -182,15 +177,15 @@ class ClaimAllocationService
             if (array_key_exists('reason', $item)) {
                 $reason = $item['reason'];
                 if ($reason !== UserStatusEnum::OFFLINE && $reason !== UserStatusEnum::ONLINE) {
-                    LoggerService::info('User status is going to change to : ' . UserStatusEnum::getUserStatusText($reason));
-                    ClaimReassignJob::dispatch( $item['userId']);
+                    LoggerService::info('User status is going to change to : '.UserStatusEnum::getUserStatusText($reason));
+                    ClaimReassignJob::dispatch($item['userId']);
                 }
 
                 /** @var User|null $user */
                 $user = $users->get($item['userId']);
                 if ($user) {
                     $user->status = $reason;
-                    info('user status is going to change on id : ' . $user->id . ' and status : ' . $user->status);
+                    info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
                     $user->save();
                 }
             }
@@ -201,39 +196,38 @@ class ClaimAllocationService
     public function updateCaps($request): void
     {
         $items = is_array($request) ? $request : $request->all();
-        if ( empty($items)) {
+        if (empty($items)) {
             return;
         }
 
         $userIds = collect($items)->pluck('userId')->unique()->toArray();
         $configIds = collect($items)->pluck('id')->unique()->toArray();
-        
+
         $users = User::whereIn('id', $userIds)->get()->keyBy('id');
         $configs = ClaimsLeadAllocationConfig::whereIn('user_id', $userIds)
             ->whereIn('id', $configIds)
             ->get()
             ->keyBy(function ($item) {
-                return $item->user_id . '-' . $item->id;
+                return $item->user_id.'-'.$item->id;
             });
 
-            foreach ($items as $item) {
-                $configKey = $item['userId'] . '-' . $item['id'];
-                $claimAllocationConfig = $configs->get($configKey);
-                if (!$claimAllocationConfig) {
-                    continue;
-                }    
-                // Update max capacity
-                $claimAllocationConfig->max_capacity = (int) $item['maxCap'];
-                $claimAllocationConfig->save();
+        foreach ($items as $item) {
+            $configKey = $item['userId'].'-'.$item['id'];
+            $claimAllocationConfig = $configs->get($configKey);
+            if (! $claimAllocationConfig) {
+                continue;
             }
+            // Update max capacity
+            $claimAllocationConfig->max_capacity = (int) $item['maxCap'];
+            $claimAllocationConfig->save();
+        }
 
-           
     }
-   
+
     public function resetCap($request): void
     {
         $items = is_array($request) ? $request : $request->all();
-        
+
         $userIds = collect($items)->pluck('userId')->unique()->toArray();
         $configIds = collect($items)->pluck('id')->unique()->toArray();
 
@@ -241,20 +235,19 @@ class ClaimAllocationService
             ->whereIn('id', $configIds)
             ->get()
             ->keyBy(function ($item) {
-                return $item->user_id . '-' . $item->id;
+                return $item->user_id.'-'.$item->id;
             });
 
-            foreach ($items as $item) {
-                $configKey = $item['userId'] . '-' . $item['id'];
-                $claimAllocationConfig = $configs->get($configKey);
-                if (!$claimAllocationConfig) {
-                    continue;
-                }    
-                // Update max capacity
-                $claimAllocationConfig->reset_cap = (int) $item['resetCap'];
-                $claimAllocationConfig->save();
+        foreach ($items as $item) {
+            $configKey = $item['userId'].'-'.$item['id'];
+            $claimAllocationConfig = $configs->get($configKey);
+            if (! $claimAllocationConfig) {
+                continue;
             }
-        
+            // Update max capacity
+            $claimAllocationConfig->reset_cap = (int) $item['resetCap'];
+            $claimAllocationConfig->save();
+        }
 
     }
 

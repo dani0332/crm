@@ -328,7 +328,6 @@ class HandleInertiaRequests extends Middleware
                     );
             });
         }
-      
 
         if (auth()->user()->can(PermissionsEnum::BUY_LEADS)) {
             $nav = $nav->add('Buy Leads', '', function (Section $section) {
