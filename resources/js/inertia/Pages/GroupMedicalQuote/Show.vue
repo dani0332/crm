@@ -3,7 +3,7 @@ import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScore
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDetails: Object,
   allowedDuplicateLOB: Array,
@@ -46,6 +46,8 @@ const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
 const leadSource = page.props.leadSource;
+
+let countDays = ref(useDaysSinceStale(props.quote?.stale_at));
 
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -159,11 +161,14 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
         notification.error({
           title: errors.value,
           position: 'top',
         });
+      },
+      onSuccess: response => {
+        countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
+        router.reload({ only: ['quote'] });
       },
     },
   );
@@ -411,7 +416,16 @@ const allowStatusUpdate = computed(() => {
   <div>
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </div>
+      <div></div>
       <div
         class="flex gap-2 mb-3 justify-end"
         v-if="readOnlyMode.isDisable === true"
