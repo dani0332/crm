@@ -281,7 +281,6 @@ const isFieldRequired = (fieldName) => {
     case 'certificate_start_date':
       return !isSUKOON.value;
     case 'policy_expiry_date':
-      return isLIVA.value && !isRenewal.value;
     case 'certificate_end_date':
     case 'annual_mileage_estimate':
       return isLIVA.value;
@@ -819,7 +818,7 @@ watch(
             :rules="getFieldRules('policy_expiry_date')"
             :required="isFieldRequired('policy_expiry_date')"
             placeholder="Policy Expiry Date"
-            :disabled="isLivaRenewal"
+            :disabled="isLIVA"
             :readonly="fieldConfig.policy_expiry_date?.readonly"
             label="Policy Expiry Date"
             :tooltip="`Expiry date of the insurance policy coverage`"
