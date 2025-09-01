@@ -55,12 +55,6 @@ enum InsuranceProviderEnum: string
     case OALLIANZ = 'OALLIANZ';
     case NHICD = 'NHICD';
 
-    public static function getProviderCode(string $code): ?string
-    {
-        $provider = self::tryFrom($code);
-        return $provider?->value;
-    }
-    
     public function isEligibleForAccuracyMatrix(): bool
     {
         return in_array($this, [
@@ -109,32 +103,5 @@ enum InsuranceProviderEnum: string
             'SALAMA_INSURANCE' => self::SI->value,
             default => null,
         };
-    }
-    
-    /**
-     * Get a specific constant's value
-     * 
-     * This method is added for compatibility with the BenSampo/laravel-enum package
-     * 
-     * @param string $key The constant name
-     * @return mixed The constant value
-     */
-    public static function getValue(string $key): string
-    {
-        $case = self::tryFrom($key);
-        return $case?->value ?? $key;
-    }
-    
-    /**
-     * Check if a constant exists
-     * 
-     * This method is added for compatibility with the BenSampo/laravel-enum package
-     * 
-     * @param string $key The constant name
-     * @return bool Whether the constant exists
-     */
-    public static function hasKey(string $key): bool
-    {
-        return self::tryFrom($key) !== null;
     }
 }
