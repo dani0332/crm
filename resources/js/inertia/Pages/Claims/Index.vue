@@ -550,6 +550,7 @@ watch(
               Export
             </x-button>
             <x-button
+              v-if="false"
               size="sm"
               color="emerald"
               :loading="exportLoader"
@@ -559,19 +560,7 @@ watch(
               Export via email
             </x-button>
           </template>
-          <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald" class="mr-3">
-              Export
-            </x-button>
-            <x-button tag="div" size="sm" color="emerald" class="mr-3">
-              Export via email
-            </x-button>
-            <template #tooltip>
-              <span class="font-medium">
-                Created dates or other filter criteria are required to export data.
-              </span>
-            </template>
-          </x-tooltip>
+
         </div>
         <div v-else />
         <div class="flex gap-3 justify-self-end">
