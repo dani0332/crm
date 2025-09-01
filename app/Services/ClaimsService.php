@@ -719,7 +719,7 @@ class ClaimsService extends BaseService
         $claimStatusOpen = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_OPEN)->where('is_active', 1)->first();
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusOpen->id,
@@ -755,9 +755,11 @@ class ClaimsService extends BaseService
 
         if ($isCarQuoteType) {
             $isRequiredFieldsFilled = $claimRequestDetails->plat_number && $claimRequestDetails->car_make && $claimRequestDetails->car_model && $claimRequestDetails->model_year;
+        }else{
+
+            $isRequiredFieldsFilled = $claimRequest->policy_number && $claimRequest->claim_number && $claimRequest->incident_date;
         }
 
-        $isRequiredFieldsFilled = $claimRequest->policy_number && $claimRequest->claim_number && $claimRequest->incident_date;
 
         return $isRequiredFieldsFilled;
     }
@@ -917,7 +919,7 @@ class ClaimsService extends BaseService
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->save();
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusClosed->id,
@@ -932,7 +934,7 @@ class ClaimsService extends BaseService
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->save();
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusClosed->id,
@@ -947,7 +949,7 @@ class ClaimsService extends BaseService
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->save();
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusClosed->id,

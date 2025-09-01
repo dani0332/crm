@@ -109,7 +109,6 @@ const uploadFile = async (doc, filesWithInfo) => {
       preserveState: true,
     });
 
-    emit('documentUploaded', response.data);
   } catch (error) {
     console.error('Upload error:', error);
     errorMsg.value[doc.id] =
@@ -197,7 +196,6 @@ const confirmDeleteDoc = async () => {
       preserveState: true,
     });
 
-    emit('documentDeleted', documentToDelete.value);
   } catch (error) {
     console.error('Delete error:', error);
     notification.error({
