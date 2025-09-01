@@ -230,6 +230,12 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
+        if ($lead->isAUHLead()) {
+            LoggerService::info(self::class." - Skipping Apply Now Email because lead is from AUH for uuid: {$lead->uuid}");
+
+            return;
+        }
+
         LoggerService::info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
         try {
             if (! $lead->isApplicationPending()) {
