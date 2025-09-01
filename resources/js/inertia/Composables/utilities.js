@@ -396,7 +396,6 @@ export function buildCdbidLink(quote_uuid, quote_type_id, customLabel = null)
 {
   if (quote_uuid)
   {
-    console.log(quote_type_id);
     const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
     const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
     return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${customLabel || CDBID}</a>`;
