@@ -75,13 +75,6 @@ const tableHeader = ref([
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
   { text: 'Norm Allo.', value: 'normalAllocationEnabled', sortable: true, width: '100' },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
-  { text: 'BL Cap Limit', value: 'BLMaxCapacity', sortable: true, width: '100' },
-  { text: 'BL Status', value: 'BLStatus', sortable: true, width: '100' },
-  { text: 'BL Assigned', value: 'BLAllocationCount', sortable: true, width: '100',
-    tooltip:
-      'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
-  },
-  { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
   { text: 'Hard Stop', 'value': 'isHardStop', sortable: true},
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
@@ -91,7 +84,6 @@ const canManage = computed(
     !loading.value &&
     hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]),
 );
-
 
 const filters = reactive({
   userBLStatus: null
