@@ -318,9 +318,17 @@ class HandleInertiaRequests extends Middleware
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        // CLAIM_ALLOCATION_DASHBOARD
+                        auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
+                        'Claim Allocation',
+                        route('claim-allocation-dashboard'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
+      
 
         if (auth()->user()->can(PermissionsEnum::BUY_LEADS)) {
             $nav = $nav->add('Buy Leads', '', function (Section $section) {

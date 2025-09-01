@@ -445,8 +445,9 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_AS_AT_REPORT_MANAGER = 'savings-as-at-report-manager';
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
     // End of Savings Permissions
-
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
+    // Claim Allocation Permissions
+    public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
 
     public static function getAdvisorConversionReportPermissions()
     {

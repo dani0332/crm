@@ -174,16 +174,10 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         }
 
         LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
-
         $this->lead->manager_id = $advisor->id;
         $this->lead->manager_assigned_date = now();
-        $this->lead->assignment_type = $assignmentType;
-
-        if (empty($this->lead->lead_assignment_trigger)) {
-            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
-            $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
-        }
-
+    
+        $this->updateClaimAllocationConfig($advisor->id, $this->allocationRequest->getQuoteType()->id());
         $this->lead->save();
 
         $this->lead->endAllocation();
@@ -201,7 +195,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
     {
         DB::beginTransaction();
 
-        // try {
+        try {
         [
             'advisor' => $advisor,
             'assignmentType' => $assignmentType,
@@ -217,14 +211,14 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         if ($afterAssign) {
             $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
         }
-        // } catch (Exception $e) {
-        // DB::rollBack();
+        } catch (Exception $e) {
+        DB::rollBack();
 
-        // LoggerService::error($e->getMessage(), exception: $e);
+        LoggerService::error($e->getMessage(), exception: $e);
 
         $this->allocationRequest->markAsFailed();
-        // $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
-        // }
+        $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
+        }
     }
 
     protected function verifyIfAdvisorIsSameAsPreviousAdvisor(User $advisor)
