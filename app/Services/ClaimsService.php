@@ -755,11 +755,10 @@ class ClaimsService extends BaseService
 
         if ($isCarQuoteType) {
             $isRequiredFieldsFilled = $claimRequestDetails->plat_number && $claimRequestDetails->car_make && $claimRequestDetails->car_model && $claimRequestDetails->model_year;
-        }else{
+        } else {
 
             $isRequiredFieldsFilled = $claimRequest->policy_number && $claimRequest->claim_number && $claimRequest->incident_date;
         }
-
 
         return $isRequiredFieldsFilled;
     }
